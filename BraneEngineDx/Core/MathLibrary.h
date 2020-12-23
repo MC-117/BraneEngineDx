@@ -1,0 +1,350 @@
+#pragma once
+#ifndef _MATHLIBRARY_H_
+
+#include "Config.h"
+
+/*
+* This engine task is based on my own game engine (BraneEngine).
+* BraneEngine use OpenGL as vendor and Eigen as math library, so
+* that I capsulate the DirectXMath library with Eigen style to
+* fit the reused code.
+* Note: the new MathLibrary provide linear operation in column
+* major, while the actual implementation with DirectXMath is in
+* row major.
+*/
+
+struct Vector2f;
+struct Vector3f;
+struct Vector4f;
+struct Matrix3f;
+struct Matrix4f;
+struct Quaternionf;
+struct AffineTransform;
+
+struct Block
+{
+	float* d = NULL;
+	unsigned int rowCount = 0, colCount = 0;
+	unsigned int rowStart = 0, rowNum = 0;
+	unsigned int colStart = 0, colNum = 0;
+
+	Block(float* d, unsigned int rowCount, unsigned int colCount,
+		unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum);
+
+	void validate() const;
+
+	Block row(unsigned int index);
+	Block col(unsigned int index);
+
+	unsigned int rows() const;
+	unsigned int cols() const;
+
+	Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum);
+	const Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum) const;
+
+	float& operator()(unsigned int r, unsigned int c);
+	float operator()(unsigned int r, unsigned int c) const;
+
+	Block& operator=(const Block& b);
+};
+
+struct Vector2f : protected XMFLOAT2
+{
+	Vector2f(float x = 0, float y = 0);
+	Vector2f(const Vector2f& v);
+	Vector2f(const Block& b);
+	Vector2f(const XMFLOAT2& xmf2);
+
+	float& x();
+	float x() const;
+
+	float& y();
+	float y() const;
+
+	static Vector2f Identity();
+	static Vector2f Zero();
+	static Vector2f Ones();
+	static Vector2f UnitX();
+	static Vector2f UnitY();
+
+	float dot(const Vector2f& v) const;
+	Vector2f cross(const Vector2f& v) const;
+	float squaredNorm() const;
+	float norm() const;
+	Vector2f normalized() const;
+	Vector2f& normalize();
+
+	Vector2f cwiseProduct(const Vector2f& v) const;
+
+	Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum);
+	const Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum) const;
+
+	Vector2f& operator=(const Vector2f& v);
+
+	Vector2f& operator-();
+
+	Vector2f operator+(const Vector2f& v) const;
+	Vector2f& operator+=(const Vector2f& v);
+
+	Vector2f operator-(const Vector2f& v) const;
+	Vector2f& operator-=(const Vector2f& v);
+
+	Vector2f operator*(float s) const;
+	Vector2f& operator*=(float s);
+
+	Vector2f operator/(float s) const;
+	Vector2f& operator/=(float s);
+
+	bool operator==(const Vector2f& v) const;
+	bool operator!=(const Vector2f& v) const;
+
+	float& operator[](unsigned int index);
+	float operator[](unsigned int index) const;
+
+	operator Block();
+	operator Block() const;
+};
+
+struct Vector3f : protected XMFLOAT3
+{
+	Vector3f(float x = 0, float y = 0, float z = 0);
+	Vector3f(const Vector3f& v);
+	Vector3f(const Block& b);
+	Vector3f(const XMFLOAT3& xmf3);
+
+	float& x();
+	float x() const;
+
+	float& y();
+	float y() const;
+
+	float& z();
+	float z() const;
+
+	static Vector3f Identity();
+	static Vector3f Zero();
+	static Vector3f Ones();
+	static Vector3f UnitX();
+	static Vector3f UnitY();
+	static Vector3f UnitZ();
+
+	float dot(const Vector3f& v) const;
+	Vector3f cross(const Vector3f& v) const;
+	float squaredNorm() const;
+	float norm() const;
+	Vector3f normalized() const;
+	Vector3f& normalize();
+
+	Vector3f cwiseProduct(const Vector3f& v) const;
+
+	Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum);
+	const Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum) const;
+
+	Vector3f& operator=(const Vector3f& v);
+
+	Vector3f& operator-();
+
+	Vector3f operator+(const Vector3f& v) const;
+	Vector3f& operator+=(const Vector3f& v);
+
+	Vector3f operator-(const Vector3f& v) const;
+	Vector3f& operator-=(const Vector3f& v);
+
+	Vector3f operator*(float s) const;
+	Vector3f& operator*=(float s);
+
+	Vector3f operator/(float s) const;
+	Vector3f& operator/=(float s);
+
+	bool operator==(const Vector3f& v) const;
+	bool operator!=(const Vector3f& v) const;
+
+	float& operator[](unsigned int index);
+	float operator[](unsigned int index) const;
+
+	operator Block();
+	operator Block() const;
+};
+
+struct Vector4f : protected XMFLOAT4
+{
+	Vector4f(float x = 0, float y = 0, float z = 0, float w = 0);
+	Vector4f(const Vector4f& v);
+	Vector4f(const Block& b);
+	Vector4f(const XMFLOAT4& xmf4);
+
+	float& x();
+	float x() const;
+
+	float& y();
+	float y() const;
+
+	float& z();
+	float z() const;
+
+	float& w();
+	float w() const;
+
+	static Vector4f Identity();
+	static Vector4f Zero();
+	static Vector4f Ones();
+	static Vector4f UnitX();
+	static Vector4f UnitY();
+	static Vector4f UnitZ();
+	static Vector4f UnitW();
+
+	float dot(const Vector4f& v) const;
+	float squaredNorm() const;
+	float norm() const;
+	Vector4f normalized() const;
+	Vector4f& normalize();
+	
+	Vector4f cwiseProduct(const Vector4f& v) const;
+
+	Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum);
+	const Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum) const;
+
+	Vector4f& operator=(const Vector4f& v);
+
+	Vector4f& operator-();
+
+	Vector4f operator+(const Vector4f& v) const;
+	Vector4f& operator+=(const Vector4f& v);
+
+	Vector4f operator-(const Vector4f& v) const;
+	Vector4f& operator-=(const Vector4f& v);
+
+	Vector4f operator*(float s) const;
+	Vector4f& operator*=(float s);
+
+	Vector4f operator/(float s) const;
+	Vector4f& operator/=(float s);
+
+	bool operator==(const Vector4f& v) const;
+	bool operator!=(const Vector4f& v) const;
+
+	float& operator[](unsigned int index);
+	float operator[](unsigned int index) const;
+
+	operator Block();
+	operator Block() const;
+};
+
+struct Matrix3f : protected XMFLOAT3X3
+{
+	Matrix3f();
+	Matrix3f(const Matrix3f& m);
+	Matrix3f(const float* pArray);
+	Matrix3f(const Block& b);
+	Matrix3f(const XMFLOAT3X3& xmf3x3);
+	Matrix3f(const XMMATRIX& xmm);
+
+	static Matrix3f Identity();
+
+	Matrix3f inverse() const;
+	Vector3f eulerAngles() const;
+
+	Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum);
+	const Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum) const;
+
+	float& operator()(unsigned int row, unsigned int col);
+	float operator()(unsigned int row, unsigned int col) const;
+
+	Matrix3f& operator=(const Matrix3f& m);
+
+	Matrix3f operator*(float s) const;
+	Matrix3f& operator*=(float s);
+
+	Matrix3f operator*(const Quaternionf& q) const;
+	Matrix3f& operator*(const Quaternionf& q);
+
+	Vector3f operator*(const Vector3f& v) const;
+	Matrix3f operator*(const Matrix3f& m) const;
+	Matrix3f& operator*=(const Matrix3f& m);
+
+	operator Block();
+	operator Block() const;
+};
+
+struct Matrix4f : protected XMFLOAT4X4
+{
+	Matrix4f();
+	Matrix4f(const Matrix4f& m);
+	Matrix4f(const float* pArray);
+	Matrix4f(const Block& b);
+	Matrix4f(const XMFLOAT4X4& xmf4x4);
+	Matrix4f(const XMMATRIX& xmm);
+
+	static Matrix4f Identity();
+
+	Matrix4f inverse() const;
+	bool decompose(Vector3f& pos, Quaternionf& rot, Vector3f& sca) const;
+
+	Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum);
+	const Block block(unsigned int rowStart, unsigned int colStart,
+		unsigned int rowNum, unsigned int colNum) const;
+
+	float& operator()(unsigned int row, unsigned int col);
+	float operator()(unsigned int row, unsigned int col) const;
+
+	Matrix4f& operator=(const Matrix4f& m);
+
+	Matrix4f operator*(float s) const;
+	Matrix4f& operator*=(float s);
+
+	Vector4f operator*(const Vector4f& v) const;
+	Matrix4f operator*(const Matrix4f& m) const;
+	Matrix4f& operator*=(const Matrix4f& m);
+
+	operator Block();
+	operator Block() const;
+};
+
+struct Quaternionf : public Vector4f
+{
+	Quaternionf(float w = 0, float x = 0, float y = 0, float z = 0);
+	Quaternionf(const Quaternionf& q);
+	Quaternionf(const XMFLOAT4& xmf4);
+	Quaternionf(const Matrix3f& m);
+
+	static Quaternionf Identity();
+	static Quaternionf FromEularAngles(const Vector3f& rollPicthYaw);
+	static Quaternionf FromTwoVectors(const Vector3f& a, const Vector3f& b);
+	static Quaternionf FromAngleAxis(float angle, const Vector3f& axis);
+
+	Quaternionf normalized() const;
+	Quaternionf& normalize();
+
+	Quaternionf& setIdentity();
+	Quaternionf& setFromEularAngles(const Vector3f& rollPicthYaw);
+	Quaternionf& setFromTwoVectors(const Vector3f& a, const Vector3f& b);
+	Quaternionf& setFromAngleAxis(float angle, const Vector3f& axis);
+	Quaternionf inverse() const;
+	Quaternionf slerp(float t, const Quaternionf& q) const;
+	Matrix3f toRotationMatrix() const;
+
+	Quaternionf& operator=(const Quaternionf& q);
+	Quaternionf& operator=(const Matrix3f& m);
+
+	Vector3f operator*(const Vector3f& v) const;
+
+	Quaternionf operator*(const Quaternionf& q) const;
+	Quaternionf& operator*=(const Quaternionf& q);
+
+	Quaternionf operator*(float s) const;
+	Quaternionf& operator*=(const float& s);
+};
+
+#endif // !_MATHLIBRARY_H_
