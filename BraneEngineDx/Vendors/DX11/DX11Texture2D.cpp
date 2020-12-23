@@ -1,0 +1,253 @@
+#include "DX11Texture2D.h"
+
+#ifdef VENDOR_USE_DX11
+
+DX11Texture2DInfo::DX11Texture2DInfo(const Texture2DInfo & info)
+{
+	texture2DDesc.Format = toDX11InternalType(info.internalType);
+	texture2DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	texture2DDesc.Usage = D3D11_USAGE_DEFAULT;
+	texture2DDesc.SampleDesc.Count = 1;
+	texture2DDesc.SampleDesc.Quality = 0;
+	samplerDesc.Filter = toDX11FilterType(info.minFilterType, info.magFilterType);
+	samplerDesc.AddressU = toDX11WrapType(info.wrapSType);
+	samplerDesc.AddressV = toDX11WrapType(info.wrapTType);
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	memcpy(samplerDesc.BorderColor, &info.borderColor, sizeof(float) * 4);
+}
+
+D3D11_TEXTURE_ADDRESS_MODE DX11Texture2DInfo::toDX11WrapType(const TexWrapType & type)
+{
+	switch (type)
+	{
+	case TW_Repeat:
+		return D3D11_TEXTURE_ADDRESS_WRAP;
+	case TW_Mirror:
+		return D3D11_TEXTURE_ADDRESS_MIRROR;
+	case TW_Clamp:
+		return D3D11_TEXTURE_ADDRESS_CLAMP;
+	case TW_Clamp_Edge:
+		return D3D11_TEXTURE_ADDRESS_CLAMP;
+	case TW_Border:
+		return D3D11_TEXTURE_ADDRESS_BORDER;
+	case TW_Mirror_Once:
+		return D3D11_TEXTURE_ADDRESS_MIRROR_ONCE;
+	}
+	return D3D11_TEXTURE_ADDRESS_WRAP;
+}
+
+D3D11_FILTER DX11Texture2DInfo::toDX11FilterType(const TexFilter& minType, const TexFilter& magType)
+{
+	D3D11_FILTER_TYPE minFT = D3D11_FILTER_TYPE_POINT,
+		magFT = D3D11_FILTER_TYPE_POINT,
+		mipFT = D3D11_FILTER_TYPE_POINT;
+	switch (minType)
+	{
+	case TF_Point:
+		break;
+	case TF_Linear:
+		minFT = D3D11_FILTER_TYPE_LINEAR;
+		break;
+	case TF_Point_Mip_Point:
+		break;
+	case TF_Linear_Mip_Point:
+		minFT = D3D11_FILTER_TYPE_LINEAR;
+		break;
+	case TF_Point_Mip_Linear:
+		mipFT = D3D11_FILTER_TYPE_LINEAR;
+		break;
+	case TF_Linear_Mip_Linear:
+		minFT = D3D11_FILTER_TYPE_LINEAR;
+		mipFT = D3D11_FILTER_TYPE_LINEAR;
+		break;
+	}
+	switch (magType)
+	{
+	case TF_Point:
+		break;
+	case TF_Linear:
+		magFT = D3D11_FILTER_TYPE_LINEAR;
+		break;
+	case TF_Point_Mip_Point:
+		break;
+	case TF_Linear_Mip_Point:
+		magFT = D3D11_FILTER_TYPE_LINEAR;
+		break;
+	case TF_Point_Mip_Linear:
+		mipFT = D3D11_FILTER_TYPE_LINEAR;
+		break;
+	case TF_Linear_Mip_Linear:
+		magFT = D3D11_FILTER_TYPE_LINEAR;
+		mipFT = D3D11_FILTER_TYPE_LINEAR;
+		break;
+	}
+	return D3D11_ENCODE_BASIC_FILTER(minFT, magFT, mipFT, 0);
+}
+
+DXGI_FORMAT DX11Texture2DInfo::toDX11InternalType(const TexInternalType & type)
+{
+	switch (type)
+	{
+	case TIT_Default:
+		return DXGI_FORMAT_UNKNOWN;
+	case TIT_R:
+		return DXGI_FORMAT_R8_UNORM;
+	case TIT_RG:
+		return DXGI_FORMAT_R8G8_UNORM;
+	case TIT_RGBA:
+		return DXGI_FORMAT_R8G8B8A8_UNORM;
+	case TIT_SRGBA:
+		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	case TIT_Depth:
+		return DXGI_FORMAT_D32_FLOAT;
+	}
+	return DXGI_FORMAT_UNKNOWN;
+}
+
+DXGI_FORMAT DX11Texture2DInfo::toDX11ColorType(const TexInternalType& type)
+{
+	switch (type)
+	{
+	case TIT_Default:
+		return DXGI_FORMAT_UNKNOWN;
+	case TIT_R:
+		return DXGI_FORMAT_R8_UNORM;
+	case TIT_RG:
+		return DXGI_FORMAT_R8G8_UNORM;
+	case TIT_RGBA:
+		return DXGI_FORMAT_R8G8B8A8_UNORM;
+	case TIT_SRGBA:
+		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	case TIT_Depth:
+		return DXGI_FORMAT_D32_FLOAT;
+	}
+	return DXGI_FORMAT_UNKNOWN;
+}
+
+DX11Texture2D::DX11Texture2D(const DX11Context& context, Texture2DDesc & desc)
+	: dxContext(context), ITexture2D(desc), info(desc.info)
+{
+	info.texture2DDesc.Width = desc.width;
+	info.texture2DDesc.Height = desc.height;
+}
+
+DX11Texture2D::~DX11Texture2D()
+{
+	release();
+}
+
+bool DX11Texture2D::isValid() const
+{
+	return false;
+}
+
+void DX11Texture2D::release()
+{
+	if (dx11Texture2DView != NULL) {
+		dx11Texture2DView->Release();
+		dx11Texture2DView = NULL;
+	}
+	if (dx11Texture2D != NULL) {
+		dx11Texture2D->Release();
+		dx11Texture2DView = NULL;
+	}
+	desc.textureHandle = 0;
+}
+
+unsigned int DX11Texture2D::bind()
+{
+	if (desc.textureHandle)
+		return desc.textureHandle;
+	if (info.texture2DDesc.Format == DXGI_FORMAT_UNKNOWN)
+		info.texture2DDesc.Format = getColorType(desc.channel, DXGI_FORMAT_UNKNOWN);
+	if (desc.autoGenMip) {
+		info.texture2DDesc.MipLevels = 1;
+		D3D11_SUBRESOURCE_DATA initData = { desc.data, desc.width * desc.channel * sizeof(unsigned char), 0 };
+		dxContext.device->CreateTexture2D(&info.texture2DDesc, &initData, &dx11Texture2D);
+		desc.mipLevel = 1 + floor(log2(max(desc.width, desc.height)));
+	}
+	else {
+		info.texture2DDesc.MipLevels = desc.mipLevel;
+		D3D11_SUBRESOURCE_DATA* initData = new D3D11_SUBRESOURCE_DATA[desc.mipLevel];
+		int offset = 0;
+		int _width = desc.width, _height = desc.height;
+		for (int level = 0; level < desc.mipLevel; level++) {
+			initData[level].pSysMem = (const void*)(desc.data + offset);
+			initData[level].SysMemPitch = _width * desc.channel * sizeof(unsigned char);
+			initData[level].SysMemSlicePitch = 0;
+			offset += desc.channel * _width * _height * sizeof(char);
+			_width /= 2, _height /= 2;
+		}
+		dxContext.device->CreateTexture2D(&info.texture2DDesc, initData, &dx11Texture2D);
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = info.texture2DDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = info.texture2DDesc.MipLevels;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	dxContext.device->CreateShaderResourceView(dx11Texture2D, &srvDesc, &dx11Texture2DView);
+	desc.textureHandle = (unsigned int)dx11Texture2DView;
+
+	return desc.textureHandle;
+}
+
+unsigned int DX11Texture2D::resize(unsigned int width, unsigned int height)
+{
+	if (desc.width == width && desc.height == height && desc.textureHandle != 0)
+		return desc.textureHandle;
+	if (desc.data == NULL) {
+		ITexture::resize(width, height);
+		if (desc.textureHandle != 0) {
+			release();
+		}
+		bind();
+	}
+	return desc.textureHandle;
+}
+
+bool DX11Texture2D::assign(unsigned int width, unsigned int height, unsigned channel, const Texture2DInfo & info, unsigned int texHandle, unsigned int bindType)
+{
+	if (desc.data != NULL)
+		return false;
+	desc.width = width;
+	desc.height = height;
+	desc.channel = channel;
+	desc.info = info;
+	this->info = info;
+	desc.bindType = bindType;
+	desc.textureHandle = texHandle;
+	dx11Texture2DView = (ID3D11ShaderResourceView*)texHandle;
+	dx11Texture2DView->GetResource((ID3D11Resource**)&dx11Texture2D);
+	return true;
+}
+
+DXGI_FORMAT DX11Texture2D::getColorType(unsigned int channel, DXGI_FORMAT internalType)
+{
+	if (internalType == DXGI_FORMAT_UNKNOWN) {
+		switch (channel)
+		{
+		case 1:
+			internalType = DXGI_FORMAT_R8_UNORM;
+			break;
+		case 2:
+			internalType = DXGI_FORMAT_R8G8_UNORM;
+			break;
+		case 4:
+			internalType = DXGI_FORMAT_R8G8B8A8_UNORM;
+			break;
+		}
+		return internalType;
+	}
+	else if (internalType == DXGI_FORMAT_D32_FLOAT)
+		return DXGI_FORMAT_D32_FLOAT;
+	else if (internalType == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
+		return DXGI_FORMAT_R8G8B8A8_UNORM;
+	return internalType;
+}
+
+#endif // VENDOR_USE_DX11
