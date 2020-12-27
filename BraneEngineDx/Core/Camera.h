@@ -5,6 +5,8 @@
 #include "Transform.h"
 #include "CameraRender.h"
 #include "AnimationClip.h"
+#include "GPUBuffer.h"
+#include "RenderTarget.h"
 
 struct CameraData
 {
@@ -74,7 +76,7 @@ public:
 	static Matrix4f lookAt(Vector3f const& eye, Vector3f const& center, Vector3f const& up);
 	static Matrix4f viewport(int x, int y, int width, int height, float zNear, float zFar);
 protected:
-	GLBuffer cameraDataBuffer = GLBuffer(GL_UNIFORM_BUFFER, sizeof(CameraData));
+	GPUBuffer cameraDataBuffer = GPUBuffer(GB_Constant, sizeof(CameraData));
 };
 
 #endif // !_CAMERA_H_

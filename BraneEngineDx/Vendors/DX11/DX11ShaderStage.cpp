@@ -1,5 +1,7 @@
 #include "DX11ShaderStage.h"
 
+#ifdef VENDOR_USE_DX11
+
 DX11ShaderStage::DX11ShaderStage(const DX11Context& context, const ShaderStageDesc& desc)
     : dxContext(context), ShaderStage(desc)
 {
@@ -14,12 +16,32 @@ unsigned int DX11ShaderStage::compile(const string& code, string& errorString)
 {
 	ID3DBlob* errorBlob;
 	if (FAILED(D3DCompile(code.c_str(), code.size() * sizeof(char), name.c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"main", getShaderVersion(stageType), D3DCOMPILE_ENABLE_STRICTNESS, 0, &dx11ShaderBlob, &errorBlob)))
+		"main", getShaderVersion(stageType), D3DCOMPILE_ENABLE_STRICTNESS, 0, &dx11ShaderBlob, &errorBlob))) {
 		errorString = (const char*)errorBlob->GetBufferPointer();
-	errorBlob->Release();
-	if (FAILED(createShader(dxContext.device, stageType, dx11ShaderBlob, &dx11Shader)))
 		return 0;
+	}
+	errorBlob->Release();
+	if (FAILED(createShader(dxContext.device, stageType, dx11ShaderBlob, &dx11Shader))) {
+		errorString = "DX11 Create Shader failed";
+		return 0;
+	}
 	shaderId = (unsigned int)dx11Shader;
+
+	if (FAILED(D3DReflect(dx11ShaderBlob->GetBufferPointer(), dx11ShaderBlob->GetBufferSize(),
+			IID_PPV_ARGS(&dx11ShaderReflector)))) {
+		if (!errorString.empty())
+			errorString += '\n';
+		errorString += "D3DReflect: reflection error";
+	}
+
+	dx11MatInsBufReflector = dx11ShaderReflector->GetConstantBufferByIndex(MAT_INS_BIND_INDEX);
+	if (dx11MatInsBufReflector != NULL) {
+		D3D11_SHADER_BUFFER_DESC bufDesc;
+		dx11MatInsBufReflector->GetDesc(&bufDesc);
+		if (bufDesc.Name != MatInsBufName)
+			dx11MatInsBufReflector = NULL;
+	}
+
     return shaderId;
 }
 
@@ -32,6 +54,10 @@ void DX11ShaderStage::release()
 	if (dx11Shader != NULL) {
 		dx11Shader->Release();
 		dx11Shader = NULL;
+	}
+	if (dx11ShaderReflector != NULL) {
+		dx11ShaderReflector->Release();
+		dx11ShaderReflector = NULL;
 	}
 	shaderId = 0;
 }
@@ -83,6 +109,7 @@ HRESULT DX11ShaderStage::createShader(ID3D11Device* device, ShaderStageType type
 }
 
 unsigned int DX11ShaderProgram::nextProgramID = 1;
+DX11ShaderProgram* DX11ShaderProgram::currentDx11Program = NULL;
 
 DX11ShaderProgram::DX11ShaderProgram(const DX11Context& context) : dxContext(context)
 {
@@ -92,6 +119,10 @@ DX11ShaderProgram::DX11ShaderProgram(const DX11Context& context) : dxContext(con
 
 DX11ShaderProgram::~DX11ShaderProgram()
 {
+	if (matInsBuf != NULL)
+		matInsBuf->Release();
+	if (currentDx11Program == this)
+		currentDx11Program = NULL;
 }
 
 unsigned int DX11ShaderProgram::bind()
@@ -120,8 +151,49 @@ unsigned int DX11ShaderProgram::bind()
 			dxContext.deviceContext->DSSetShader((ID3D11DomainShader*)b->second->getShaderID(), NULL, 0);
 			break;
 		}
+		if (dx11MatInsBufReflector == NULL) {
+			DX11ShaderStage* dss = (DX11ShaderStage*)b->second;
+			dx11MatInsBufReflector = dss->dx11MatInsBufReflector;
+		}
 	}
-	dxContext.deviceContext->
+	if (matInsBuf == NULL) {
+		D3D11_SHADER_BUFFER_DESC bufDesc;
+		dx11MatInsBufReflector->GetDesc(&bufDesc);
+		D3D11_BUFFER_DESC cbDesc;
+		ZeroMemory(&cbDesc, sizeof(D3D11_BUFFER_DESC));
+		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+		cbDesc.ByteWidth = bufDesc.Size;
+		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		dxContext.device->CreateBuffer(&cbDesc, NULL, &matInsBuf);
+		matInsBufSize = bufDesc.Size;
+		matInsBufHost = (unsigned char*)malloc(matInsBufSize);
+	}
+	if (matInsBuf != NULL)
+		for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e; b++) {
+			switch (b->first)
+			{
+			case Vertex_Shader_Stage:
+				dxContext.deviceContext->VSSetConstantBuffers(MAT_INS_BIND_INDEX, 1, &matInsBuf);
+				break;
+			case Fragment_Shader_Stage:
+				dxContext.deviceContext->PSSetConstantBuffers(MAT_INS_BIND_INDEX, 1, &matInsBuf);
+				break;
+			case Geometry_Shader_Stage:
+				dxContext.deviceContext->GSSetConstantBuffers(MAT_INS_BIND_INDEX, 1, &matInsBuf);
+				break;
+			case Compute_Shader_Stage:
+				dxContext.deviceContext->CSSetConstantBuffers(MAT_INS_BIND_INDEX, 1, &matInsBuf);
+				break;
+			case Tessellation_Control_Shader_Stage:
+				dxContext.deviceContext->HSSetConstantBuffers(MAT_INS_BIND_INDEX, 1, &matInsBuf);
+				break;
+			case Tessellation_Evalution_Shader_Stage:
+				dxContext.deviceContext->DSSetConstantBuffers(MAT_INS_BIND_INDEX, 1, &matInsBuf);
+				break;
+			}
+		}
+	currentDx11Program = this;
 	currentProgram = programId;
     return programId;
 }
@@ -136,6 +208,124 @@ bool DX11ShaderProgram::dispatchCompute(unsigned int dimX, unsigned int dimY, un
 	return true;
 }
 
+DX11ShaderProgram::AttributeDesc DX11ShaderProgram::getAttributeOffset(const string& name)
+{
+	auto iter = attributes.find(name);
+	if (iter != attributes.end())
+		return iter->second;
+	AttributeDesc desc = { name, false, -1, 0, -1 };
+	if (dx11MatInsBufReflector != NULL) {
+		D3D11_SHADER_VARIABLE_DESC vdesc;
+		auto var = dx11MatInsBufReflector->GetVariableByName(name.c_str());
+		if (var != NULL) {
+			var->GetDesc(&vdesc);
+			if (vdesc.Name == name) {
+				desc.offset = vdesc.StartOffset;
+				desc.size = vdesc.Size;
+			}
+		}
+	}
+	if (desc.offset == -1)
+		for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e; b++) {
+			DX11ShaderStage* dss = (DX11ShaderStage*)b->second;
+			if (dss->dx11ShaderReflector)
+				continue;
+			if (desc.offset == -1) {
+				desc.isTex = true;
+				D3D11_SHADER_INPUT_BIND_DESC bdesc;
+				if (SUCCEEDED(dss->dx11ShaderReflector->GetResourceBindingDescByName(name.c_str(), &bdesc))) {
+					if (bdesc.Name == name) {
+						desc.offset = bdesc.BindPoint;
+						desc.size = 1;
+						desc.meta = b->first;
+					}
+				}
+			}
+			if (desc.offset != -1) {
+				attributes.emplace(make_pair(name, desc));
+				break;
+			}
+		}
+	return desc;
+}
+
 void DX11ShaderProgram::memoryBarrier(unsigned int bitEnum)
 {
 }
+
+void DX11ShaderProgram::uploadData()
+{
+	if (matInsBuf == NULL || matInsBufHost == NULL || matInsBufSize == 0)
+		return;
+	D3D11_MAPPED_SUBRESOURCE mpd;
+	dxContext.deviceContext->Map(matInsBuf, 0, D3D11_MAP_WRITE_DISCARD, 0, &mpd);
+	memcpy_s(mpd.pData, matInsBufSize, matInsBufHost, matInsBufSize);
+	dxContext.deviceContext->Unmap(matInsBuf, 0);
+}
+
+void DX11ShaderProgram::uploadAttribute(const string& name, unsigned int size, void* data)
+{
+	if (matInsBufHost == NULL)
+		return;
+	AttributeDesc desc = getAttributeOffset(name);
+	if (desc.isTex || desc.offset == -1 || desc.size < size)
+		return;
+	memcpy_s(matInsBufHost + desc.offset, desc.size, data, size);
+}
+
+void DX11ShaderProgram::uploadTexture(const string& name, ID3D11ShaderResourceView* tex, ID3D11SamplerState* sample)
+{
+	if (tex == NULL)
+		return;
+	AttributeDesc desc = getAttributeOffset(name);
+	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
+		return;
+	switch (desc.meta)
+	{
+	case Vertex_Shader_Stage:
+		dxContext.deviceContext->VSSetShaderResources(desc.offset, 1, &tex);
+		if (sample != NULL)
+			dxContext.deviceContext->VSSetSamplers(desc.offset, 1, &sample);
+		break;
+	case Fragment_Shader_Stage:
+		dxContext.deviceContext->PSSetShaderResources(desc.offset, 1, &tex);
+		if (sample != NULL)
+			dxContext.deviceContext->PSSetSamplers(desc.offset, 1, &sample);
+		break;
+	case Geometry_Shader_Stage:
+		dxContext.deviceContext->GSSetShaderResources(desc.offset, 1, &tex);
+		if (sample != NULL)
+			dxContext.deviceContext->GSSetSamplers(desc.offset, 1, &sample);
+		break;
+	case Compute_Shader_Stage:
+		dxContext.deviceContext->CSSetShaderResources(desc.offset, 1, &tex);
+		if (sample != NULL)
+			dxContext.deviceContext->CSSetSamplers(desc.offset, 1, &sample);
+		break;
+	case Tessellation_Control_Shader_Stage:
+		dxContext.deviceContext->HSSetShaderResources(desc.offset, 1, &tex);
+		if (sample != NULL)
+			dxContext.deviceContext->HSSetSamplers(desc.offset, 1, &sample);
+		break;
+	case Tessellation_Evalution_Shader_Stage:
+		dxContext.deviceContext->DSSetShaderResources(desc.offset, 1, &tex);
+		if (sample != NULL)
+			dxContext.deviceContext->DSSetSamplers(desc.offset, 1, &sample);
+		break;
+	default:
+		return;
+	}
+}
+
+void DX11ShaderProgram::uploadImage(const string& name, ID3D11UnorderedAccessView* tex)
+{
+	if (tex == NULL)
+		return;
+	AttributeDesc desc = getAttributeOffset(name);
+	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
+		return;
+	if (desc.meta == Compute_Shader_Stage)
+		dxContext.deviceContext->CSGetUnorderedAccessViews(desc.offset, 1, &tex);
+}
+
+#endif // VENDOR_USE_DX11

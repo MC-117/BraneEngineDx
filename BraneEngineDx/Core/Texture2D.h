@@ -11,6 +11,7 @@ public:
 	bool isStandard = false;
 
 	Texture2D(bool isStandard = true);
+	Texture2D(ITexture2D* vendorTexture);
 	Texture2D(const Texture2DInfo& info, bool isStandard = true);
 	Texture2D(const string& file, bool isStandard = true);
 	Texture2D(Color color, unsigned int width, unsigned int height, unsigned int channel, bool isStandard = false);
@@ -25,10 +26,11 @@ public:
 	virtual int getChannel() const;
 
 	virtual unsigned int getTextureID() const;
+	virtual void* getVendorTexture() const;
 
 	void setAutoGenMip(bool value);
 
-	virtual bool assign(unsigned int width, unsigned int height, unsigned channel, const Texture2DInfo& info, unsigned int texID, unsigned int bindType = GL_TEXTURE_2D);
+	virtual bool assign(unsigned int width, unsigned int height, unsigned channel, const Texture2DInfo& info, unsigned int texID, unsigned int bindType = 0);
 	virtual bool load(const string& file);
 	virtual unsigned int bind();
 	virtual unsigned int resize(unsigned int width, unsigned int height);
@@ -48,6 +50,7 @@ public:
 	static bool loadDefaultTexture();
 	static unsigned char* loadImageBytes(const char* file, int* w, int* h, int* c);
 protected:
+	bool readOnly = false;
 	Texture2DDesc desc;
 	ITexture2D* vendorTexture = NULL;
 	static bool isLoad;

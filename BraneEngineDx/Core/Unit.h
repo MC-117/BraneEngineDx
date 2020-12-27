@@ -2,7 +2,7 @@
 #ifndef _UNIT_H_
 #define _UNIT_H_
 
-#include "MathLibrary.h"
+#include "Config.h"
 
 template<class T>
 struct Unit2D
@@ -369,21 +369,6 @@ public:
 	Time getInterval(int index);
 	Time getDuration();
 	string toString();
-};
-
-struct DrawArraysIndirectCommand {
-	unsigned int  count;
-	unsigned int  instanceCount;
-	unsigned int  first;
-	unsigned int  baseInstance;
-};
-
-struct DrawElementsIndirectCommand {
-	int count;
-	int instanceCount;
-	int firstIndex;
-	int baseVertex;
-	int baseInstance;
 };
 
 struct Particle

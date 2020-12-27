@@ -8,7 +8,7 @@
 REG_VENDOR_DEC(DX11Vendor);
 REG_VENDOR_IMP(DX11Vendor, "DX11");
 
-DX11Vendor::DX11Vendor()
+DX11Vendor::DX11Vendor() : StaticMeshData(dxContext)
 {
 	name = "DX11";
 }
@@ -112,6 +112,63 @@ ShaderStage* DX11Vendor::newShaderStage(const ShaderStageDesc& desc) const
 ShaderProgram* DX11Vendor::newShaderProgram() const
 {
 	return new DX11ShaderProgram(dxContext);
+}
+
+IMaterial* DX11Vendor::newMaterial(MaterialDesc& desc) const
+{
+	return new DX11Material(dxContext, desc);
+}
+
+IRenderTarget* DX11Vendor::newRenderTarget(RenderTargetDesc& desc) const
+{
+	return new DX11RenderTarget(dxContext, desc);
+}
+
+IGPUBuffer* DX11Vendor::newGPUBuffer(GPUBufferDesc& desc) const
+{
+	return new DX11GPUBuffer(dxContext, desc);
+}
+
+MeshPartDesc DX11Vendor::newMeshPart(unsigned int vertCount, unsigned int elementCount)
+{
+	DX11MeshData* data = NULL;
+	if (StaticMeshData.isGenerated()) {
+		for (auto b = MeshDataCollection.begin(), e = MeshDataCollection.end(); b != e; b++) {
+			if ((*b)->type == MT_Mesh && !(*b)->isGenerated()) {
+				data = (DX11MeshData*)*b;
+				break;
+			}
+		}
+	}
+	else
+		data = &StaticMeshData;
+	if (data == NULL) {
+		data = new DX11MeshData(dxContext);
+	}
+	MeshPartDesc desc = { data, (unsigned int)data->vertices.size(), vertCount, (unsigned int)data->elements.size(), elementCount };
+	data->vertices.resize(data->vertices.size() + vertCount);
+	data->uvs.resize(data->uvs.size() + vertCount);
+	data->normals.resize(data->normals.size() + vertCount);
+	data->elements.resize(data->elements.size() + elementCount);
+	return desc;
+}
+
+SkeletonMeshPartDesc DX11Vendor::newSkeletonMeshPart(unsigned int vertCount, unsigned int elementCount, unsigned int boneCount, unsigned int morphVertCount, unsigned int morphCount)
+{
+	SkeletonMeshData* data = NULL;
+	data = new DX11SkeletonMeshData(dxContext);
+	SkeletonMeshPartDesc desc = { data, (unsigned int)data->vertices.size(), vertCount, (unsigned int)data->elements.size(), elementCount };
+	if (morphCount > 0)
+		desc.morphMeshData = &data->morphMeshData;
+	data->vertices.resize(data->vertices.size() + vertCount);
+	data->uvs.resize(data->uvs.size() + vertCount);
+	data->normals.resize(data->normals.size() + vertCount);
+	data->boneIndexes.resize(data->boneIndexes.size() + vertCount, Vector4u::Zero());
+	data->weights.resize(data->weights.size() + vertCount, Vector4f::Zero());
+	data->elements.resize(data->elements.size() + elementCount);
+	data->boneCount = boneCount;
+	data->morphMeshData.init(morphVertCount, morphCount);
+	return desc;
 }
 
 bool DX11Vendor::createDevice(HWND hWnd, unsigned int width, unsigned int height)

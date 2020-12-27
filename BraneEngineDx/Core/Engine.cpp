@@ -481,11 +481,9 @@ void Engine::setup()
 			throw runtime_error("Vendor setup failed");
 	}
 
-	int argc = 1;
-	char* argv = "BraneEnigne";
-	if (!alutInit(NULL, NULL)) {
-		//throw runtime_error("ALUT init failed");
-	}
+	//if (!alutInit(NULL, NULL)) {
+	//	//throw runtime_error("ALUT init failed");
+	//}
 
 	// Setup Dear ImGui context
 	ImGui::CreateContext();
@@ -571,7 +569,7 @@ void Engine::clean()
 			throw runtime_error("Vendor clean failed");
 	}
 
-	alutExit();
+	//alutExit();
 }
 
 void resizeWindow(int width, int height)

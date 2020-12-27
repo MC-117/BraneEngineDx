@@ -1,4 +1,5 @@
 #include "DX11Texture2D.h"
+#include "../../Core/Utility.h"
 
 #ifdef VENDOR_USE_DX11
 
@@ -7,7 +8,7 @@ DX11Texture2DInfo::DX11Texture2DInfo(const Texture2DInfo & info)
 	texture2DDesc.Format = toDX11InternalType(info.internalType);
 	texture2DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	texture2DDesc.Usage = D3D11_USAGE_DEFAULT;
-	texture2DDesc.SampleDesc.Count = 1;
+	texture2DDesc.SampleDesc.Count = info.sampleCount;
 	texture2DDesc.SampleDesc.Quality = 0;
 	samplerDesc.Filter = toDX11FilterType(info.minFilterType, info.magFilterType);
 	samplerDesc.AddressU = toDX11WrapType(info.wrapSType);
@@ -18,6 +19,25 @@ DX11Texture2DInfo::DX11Texture2DInfo(const Texture2DInfo & info)
 	samplerDesc.MinLOD = 0;
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	memcpy(samplerDesc.BorderColor, &info.borderColor, sizeof(float) * 4);
+}
+
+DX11Texture2DInfo& DX11Texture2DInfo::operator=(const Texture2DInfo& info)
+{
+	texture2DDesc.Format = toDX11InternalType(info.internalType);
+	texture2DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	texture2DDesc.Usage = D3D11_USAGE_DEFAULT;
+	texture2DDesc.SampleDesc.Count = info.sampleCount;
+	texture2DDesc.SampleDesc.Quality = 0;
+	samplerDesc.Filter = toDX11FilterType(info.minFilterType, info.magFilterType);
+	samplerDesc.AddressU = toDX11WrapType(info.wrapSType);
+	samplerDesc.AddressV = toDX11WrapType(info.wrapTType);
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	memcpy(samplerDesc.BorderColor, &info.borderColor, sizeof(float) * 4);
+	return *this;
 }
 
 D3D11_TEXTURE_ADDRESS_MODE DX11Texture2DInfo::toDX11WrapType(const TexWrapType & type)
@@ -129,10 +149,8 @@ DXGI_FORMAT DX11Texture2DInfo::toDX11ColorType(const TexInternalType& type)
 }
 
 DX11Texture2D::DX11Texture2D(const DX11Context& context, Texture2DDesc & desc)
-	: dxContext(context), ITexture2D(desc), info(desc.info)
+	: dxContext(context), ITexture2D(desc)
 {
-	info.texture2DDesc.Width = desc.width;
-	info.texture2DDesc.Height = desc.height;
 }
 
 DX11Texture2D::~DX11Texture2D()
@@ -162,6 +180,9 @@ unsigned int DX11Texture2D::bind()
 {
 	if (desc.textureHandle)
 		return desc.textureHandle;
+	info = desc.info;
+	info.texture2DDesc.Width = desc.width;
+	info.texture2DDesc.Height = desc.height;
 	if (info.texture2DDesc.Format == DXGI_FORMAT_UNKNOWN)
 		info.texture2DDesc.Format = getColorType(desc.channel, DXGI_FORMAT_UNKNOWN);
 	if (desc.autoGenMip) {
@@ -184,15 +205,11 @@ unsigned int DX11Texture2D::bind()
 		}
 		dxContext.device->CreateTexture2D(&info.texture2DDesc, initData, &dx11Texture2D);
 	}
-
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = info.texture2DDesc.Format;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = info.texture2DDesc.MipLevels;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	dxContext.device->CreateShaderResourceView(dx11Texture2D, &srvDesc, &dx11Texture2DView);
-	desc.textureHandle = (unsigned int)dx11Texture2DView;
-
+	if (dx11Texture2DView != NULL)
+		dx11Texture2DView->Release();
+	if (dx11Sampler != NULL)
+		dx11Sampler->Release();
+	desc.textureHandle = (unsigned int)dx11Texture2D;
 	return desc.textureHandle;
 }
 
@@ -210,6 +227,77 @@ unsigned int DX11Texture2D::resize(unsigned int width, unsigned int height)
 	return desc.textureHandle;
 }
 
+ID3D11ShaderResourceView* DX11Texture2D::getSRV()
+{
+	if (bind() == 0)
+		return NULL;
+	if (!isClassOf<ID3D11ShaderResourceView>(dx11Texture2DView)) {
+		if (dx11Texture2DView != NULL)
+			dx11Texture2DView->Release();
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = info.texture2DDesc.Format;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MipLevels = info.texture2DDesc.MipLevels;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		dxContext.device->CreateShaderResourceView(dx11Texture2D, &srvDesc, (ID3D11ShaderResourceView**)&dx11Texture2DView);
+	}
+	return (ID3D11ShaderResourceView*)dx11Texture2DView;
+}
+
+ID3D11SamplerState* DX11Texture2D::getSampler()
+{
+	if (bind() == 0)
+		return NULL;
+	if (dx11Sampler != NULL)
+		return dx11Sampler;
+	dxContext.device->CreateSamplerState(&info.samplerDesc, &dx11Sampler);
+	return dx11Sampler;
+}
+
+ID3D11UnorderedAccessView* DX11Texture2D::getUAV(unsigned int mipLevel)
+{
+	if (bind() == 0)
+		return NULL;
+	if (!isClassOf<ID3D11UnorderedAccessView>(dx11Texture2DView)) {
+		if (dx11Texture2DView != NULL)
+			dx11Texture2DView->Release();
+		D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+		uavDesc.Format = info.texture2DDesc.Format;
+		uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+		uavDesc.Texture2D.MipSlice = mipLevel;
+		dxContext.device->CreateUnorderedAccessView(dx11Texture2D, &uavDesc, (ID3D11UnorderedAccessView**)&dx11Texture2DView);
+	}
+	else {
+		ID3D11UnorderedAccessView* uav = (ID3D11UnorderedAccessView*)dx11Texture2DView;
+		D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+		uav->GetDesc(&uavDesc);
+		if (uavDesc.Texture2D.MipSlice != mipLevel) {
+			uav->Release();
+			uavDesc.Format = info.texture2DDesc.Format;
+			uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+			uavDesc.Texture2D.MipSlice = mipLevel;
+			dxContext.device->CreateUnorderedAccessView(dx11Texture2D, &uavDesc, (ID3D11UnorderedAccessView**)&dx11Texture2DView);
+		}
+	}
+	return (ID3D11UnorderedAccessView*)dx11Texture2DView;
+}
+
+ID3D11DepthStencilView* DX11Texture2D::getDSV(unsigned int mipLevel)
+{
+	if (bind() == 0)
+		return NULL;
+	if (!isClassOf<ID3D11DepthStencilView>(dx11Texture2DView)) {
+		if (dx11Texture2DView != NULL)
+			dx11Texture2DView->Release();
+		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+		dsvDesc.Format = info.texture2DDesc.Format;
+		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+		dsvDesc.Texture2D.MipSlice = mipLevel;
+		dxContext.device->CreateDepthStencilView(dx11Texture2D, &dsvDesc, (ID3D11DepthStencilView**)&dx11Texture2DView);
+	}
+	return (ID3D11DepthStencilView*)dx11Texture2DView;
+}
+
 bool DX11Texture2D::assign(unsigned int width, unsigned int height, unsigned channel, const Texture2DInfo & info, unsigned int texHandle, unsigned int bindType)
 {
 	if (desc.data != NULL)
@@ -221,8 +309,8 @@ bool DX11Texture2D::assign(unsigned int width, unsigned int height, unsigned cha
 	this->info = info;
 	desc.bindType = bindType;
 	desc.textureHandle = texHandle;
-	dx11Texture2DView = (ID3D11ShaderResourceView*)texHandle;
-	dx11Texture2DView->GetResource((ID3D11Resource**)&dx11Texture2D);
+	dx11Texture2D = (ID3D11Texture2D*)texHandle;
+	dx11Texture2DView = NULL;
 	return true;
 }
 

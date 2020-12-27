@@ -18,14 +18,10 @@
 #include <filesystem>
 #include <chrono>
 
+#include <windows.h>
+
 #include "../ThirdParty/ImGui/imgui.h"
 #include "../ThirdParty/ImGui/ImGuizmo.h"
-
-#ifdef VENDOR_USE_DX11
-#include <d3d11.h>
-#include <DirectXMath.h>
-using namespace DirectX;
-#endif // VENDOR_USE_DX11
 
 #include "Brane.h"
 #include "MathLibrary.h"
@@ -40,6 +36,7 @@ using namespace DirectX;
 #define TRANS_INDEX_BIND_INDEX 5
 #define LIGHT_BIND_INDEX 6
 #define CAM_BIND_INDEX 7
+#define MAT_INS_BIND_INDEX 8
 
 using namespace std;
 constexpr auto PI = 3.1415926535897932346f;

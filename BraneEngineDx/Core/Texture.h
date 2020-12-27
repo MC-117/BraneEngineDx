@@ -3,6 +3,7 @@
 #define _TEXTURE_H_
 
 #include "Unit.h"
+#include "ITexture.h"
 
 class Texture
 {
@@ -21,7 +22,25 @@ public:
 
 	virtual unsigned int bind();
 	virtual unsigned int getTextureID() const;
+	virtual void* getVendorTexture() const;
 	virtual unsigned int resize(unsigned int width, unsigned int height);
+};
+
+struct Image
+{
+	Texture* texture = NULL;
+	unsigned int level = 0;
+	bool layered = false;
+	unsigned layer = 0;
+	unsigned int access = 0;
+	unsigned int format = 0;
+
+	unsigned int binding = -1;
+	bool isValid() const;
+
+	Image(Texture* texture = NULL, unsigned int level = 0);
+	Image(const Image& img);
+	Image& operator=(const Image& img);
 };
 
 #endif // !_TEXTURE_H_

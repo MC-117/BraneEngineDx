@@ -4,7 +4,13 @@
 
 #include "Serialization.h"
 
-enum ShapeComplexType {
+enum ShapeTopologyType
+{
+	STT_Point, STT_Line, STT_Triangle, STT_TriangleStrip, STT_Quad
+};
+
+enum ShapeComplexType
+{
 	SIMPLE, COMPLEX, NONESHAPE
 };
 
@@ -12,7 +18,7 @@ class Shape : public Serializable {
 public:
 	Serialize(Shape);
 
-	int renderMode = GL_TRIANGLES;
+	ShapeTopologyType renderMode = STT_Triangle;
 	Range<Vector3f> bound;
 
 	Shape();

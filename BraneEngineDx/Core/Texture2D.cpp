@@ -1,6 +1,6 @@
 #include "Texture2D.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "../ThirdParty/STB/stb_image.h"
 #include "Utility.h"
 #include <fstream>
 #include "Asset.h"
@@ -81,6 +81,12 @@ Texture2D::Texture2D(bool isStandard) : isStandard(isStandard)
 {
 }
 
+Texture2D::Texture2D(ITexture2D* vendorTexture)
+{
+	readOnly = true;
+	this->vendorTexture = vendorTexture;
+}
+
 Texture2D::Texture2D(const Texture2DInfo & info, bool isStandard) : isStandard(isStandard)
 {
 	desc.info = info;
@@ -134,7 +140,7 @@ Texture2D::Texture2D(unsigned int width, unsigned int height, unsigned int chann
 
 Texture2D::~Texture2D()
 {
-	if (vendorTexture != NULL)
+	if (!readOnly && vendorTexture != NULL)
 		delete vendorTexture;
 	if (desc.data != NULL)
 		delete[] desc.data;
@@ -168,6 +174,11 @@ int Texture2D::getChannel() const
 unsigned int Texture2D::getTextureID() const
 {
 	return desc.textureHandle;
+}
+
+void* Texture2D::getVendorTexture() const
+{
+	return vendorTexture;
 }
 
 void Texture2D::setAutoGenMip(bool value)
@@ -221,6 +232,8 @@ unsigned int Texture2D::bind()
 
 unsigned int Texture2D::resize(unsigned int width, unsigned int height)
 {
+	if (readOnly)
+		return 0;
 	newVendorTexture();
 	return vendorTexture->resize(width, height);
 }

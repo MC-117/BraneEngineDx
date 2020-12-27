@@ -205,7 +205,7 @@ inline CurveValue<Quaternionf>::CurveValue(const Quaternionf & value, float inTa
 
 inline Quaternionf CurveValue<Quaternionf>::lerp(CurveValue<Quaternionf> target, float r)
 {
-	r = max(min(r, 1), 0);
+	r = max(min(r, 1.0f), 0.0f);
 	if (mode == Step)
 		return value;
 	if (mode == target.mode) {

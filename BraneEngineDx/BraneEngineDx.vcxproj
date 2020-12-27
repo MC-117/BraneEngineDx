@@ -82,9 +82,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -125,6 +129,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>IrrXML.lib;assimp-vc142-mtd.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -142,6 +147,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>IrrXML.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -154,6 +160,8 @@
     <ClInclude Include="Core\Curve.h" />
     <ClInclude Include="Core\Engine.h" />
     <ClInclude Include="Core\Events.h" />
+    <ClInclude Include="Core\Geometry.h" />
+    <ClInclude Include="Core\Importer.h" />
     <ClInclude Include="Core\Input.h" />
     <ClInclude Include="Core\IRendering.h" />
     <ClInclude Include="Core\ITexture.h" />
@@ -167,6 +175,7 @@
     <ClInclude Include="Core\Shader.h" />
     <ClInclude Include="Core\ShaderStage.h" />
     <ClInclude Include="Core\Shape.h" />
+    <ClInclude Include="Core\SkeletonMeshData.h" />
     <ClInclude Include="Core\SkeletonPose.h" />
     <ClInclude Include="Core\Texture.h" />
     <ClInclude Include="Core\Texture2D.h" />
@@ -180,6 +189,12 @@
     <ClInclude Include="Core\IMaterial.h" />
     <ClInclude Include="Core\GPUBuffer.h" />
     <ClInclude Include="Core\IGPUBuffer.h" />
+    <ClInclude Include="Core\IRenderTarget.h" />
+    <ClInclude Include="Core\MeshData.h" />
+    <ClInclude Include="Vendors\DX11\DX11SkeletonMeshData.h" />
+    <ClInclude Include="Vendors\DX11\DX11MeshData.h" />
+    <ClInclude Include="Vendors\DX11\DX11RenderTarget.h" />
+    <ClInclude Include="Vendors\DX11\DX11Material.h" />
     <ClInclude Include="Vendors\DX11\DX11GPUBuffer.h" />
     <ClInclude Include="Vendors\DX11\DX11ShaderStage.h" />
     <ClInclude Include="resource.h" />
@@ -207,6 +222,8 @@
     <ClCompile Include="Core\Console.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
     <ClCompile Include="Core\Events.cpp" />
+    <ClCompile Include="Core\Geometry.cpp" />
+    <ClCompile Include="Core\Importer.cpp" />
     <ClCompile Include="Core\Input.cpp" />
     <ClCompile Include="Core\IVendor.cpp" />
     <ClCompile Include="Core\Material.cpp" />
@@ -218,6 +235,7 @@
     <ClCompile Include="Core\Shader.cpp" />
     <ClCompile Include="Core\ShaderStage.cpp" />
     <ClCompile Include="Core\Shape.cpp" />
+    <ClCompile Include="Core\SkeletonMeshData.cpp" />
     <ClCompile Include="Core\SkeletonPose.cpp" />
     <ClCompile Include="Core\Texture.cpp" />
     <ClCompile Include="Core\Texture2D.cpp" />
@@ -231,6 +249,12 @@
     <ClCompile Include="Core\IMaterial.cpp" />
     <ClCompile Include="Core\GPUBuffer.cpp" />
     <ClCompile Include="Core\IGPUBuffer.cpp" />
+    <ClCompile Include="Core\IRenderTarget.cpp" />
+    <ClCompile Include="Core\MeshData.cpp" />
+    <ClCompile Include="Vendors\DX11\DX11SkeletonMeshData.cpp" />
+    <ClCompile Include="Vendors\DX11\DX11MeshData.cpp" />
+    <ClCompile Include="Vendors\DX11\DX11RenderTarget.cpp" />
+    <ClCompile Include="Vendors\DX11\DX11Material.cpp" />
     <ClCompile Include="Vendors\DX11\DX11GPUBuffer.cpp" />
     <ClCompile Include="Vendors\DX11\DX11ShaderStage.cpp" />
     <ClCompile Include="ThirdParty\ImGui\ImGuizmo.cpp" />

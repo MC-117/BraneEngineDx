@@ -1,124 +1,11 @@
 #include "Mesh.h"
 #include "Utility.h"
 #include <fstream>
-#ifdef PHYSICS_USE_BULLET
-#include <BulletCollision\Gimpact\btGImpactShape.h>
-#include <BulletCollision\Gimpact\btTriangleShapeEx.h>
-#endif
 #ifdef PHYSICS_USE_PHYSX
 #include "PhysicalWorld.h"
 #include <NvClothExt/ClothFabricCooker.h>
 #endif
 #include "Importer.h"
-
-set<MeshData*> MeshData::MeshDataCollection;
-MeshData MeshData::StaticMeshData;
-
-unsigned int MeshData::currentVao = NULL;
-
-MeshData::MeshData()
-{
-	MeshDataCollection.insert(this);
-}
-
-unsigned int MeshData::getVAO() const
-{
-	return vao;
-}
-
-unsigned int MeshData::bindShape()
-{
-	if (vao != 0 && vao == currentVao)
-		return vao;
-	glBindVertexArray(0);
-	if (vao == NULL || vbo == NULL || (ubo == NULL && uvs.size() != 0) || (nbo == NULL && normals.size() != 0) || ibo == NULL) {
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-
-		glGenBuffers(1, &vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size() * 3, vertices.begin()->data(), GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-		if (uvs.size() != 0) {
-			glGenBuffers(1, &ubo);
-			glBindBuffer(GL_ARRAY_BUFFER, ubo);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * uvs.size() * 2, uvs.begin()->data(), GL_STATIC_DRAW);
-			glEnableVertexAttribArray(1);
-			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-		}
-
-		if (normals.size() != 0) {
-			glGenBuffers(1, &nbo);
-			glBindBuffer(GL_ARRAY_BUFFER, nbo);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * normals.size() * 3, normals.begin()->data(), GL_STATIC_DRAW);
-			glEnableVertexAttribArray(2);
-			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		}
-
-		glGenBuffers(1, &ibo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * elements.size() * 3, elements.begin()->data(), GL_STATIC_DRAW);
-
-		glBindVertexArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	}
-	/*else {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * vertices.size() * 3, vertices.begin()->data());
-
-		if (uvs.size() != 0) {
-			glBindBuffer(GL_ARRAY_BUFFER, ubo);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * uvs.size() * 2, uvs.begin()->data());
-		}
-
-		if (normals.size() != 0) {
-			glBindBuffer(GL_ARRAY_BUFFER, nbo);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * normals.size() * 3, normals.begin()->data());
-		}
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}*/
-	glBindVertexArray(vao);
-	return vao;
-}
-
-bool MeshData::isGenerated()
-{
-	return vao != NULL;
-}
-
-bool MeshData::isType(const type_info & type)
-{
-	return type.hash_code() == id;
-}
-
-MeshPart MeshData::newMeshPart(unsigned int vertCount, unsigned int elementCount)
-{
-	MeshData* data = NULL;
-	if (StaticMeshData.isGenerated()) {
-		TypeID id = typeid(MeshData).hash_code();
-		for (auto b = MeshDataCollection.begin(), e = MeshDataCollection.end(); b != e; b++) {
-			if ((*b)->id == id && !(*b)->isGenerated()) {
-				data = *b;
-				break;
-			}
-		}
-	}
-	else
-		data = &StaticMeshData;
-	if (data == NULL) {
-		data = new MeshData();
-	}
-	MeshPart part = { data, (unsigned int)data->vertices.size(), vertCount, (unsigned int)data->elements.size(), elementCount };
-	data->vertices.resize(data->vertices.size() + vertCount);
-	data->uvs.resize(data->uvs.size() + vertCount);
-	data->normals.resize(data->normals.size() + vertCount);
-	data->elements.resize(data->elements.size() + elementCount);
-	return part;
-}
 
 MeshPart::MeshPart()
 {
@@ -133,6 +20,15 @@ MeshPart::MeshPart(const MeshPart & part)
 	elementCount = part.elementCount;
 	mesh = part.mesh;
 	partIndex = part.partIndex;
+}
+
+MeshPart::MeshPart(const MeshPartDesc& desc)
+{
+	meshData = desc.meshData;
+	vertexFirst = desc.vertexFirst;
+	vertexCount = desc.vertexCount;
+	elementFirst = desc.elementFirst;
+	elementCount = desc.elementCount;
 }
 
 MeshPart::MeshPart(MeshData * meshData, unsigned int vertexFirst, unsigned int vertexCount,
@@ -155,26 +51,14 @@ bool MeshPart::isMorph()
 	return skm->partHasMorph[partIndex];
 }
 
-unsigned int MeshPart::bindShape()
-{
-	if (meshData == NULL)
-		return 0;
-	return meshData->bindShape();
-}
-
 MeshPart MeshPart::clone() const
 {
-	MeshPart part = MeshData::newMeshPart(vertexCount, elementCount);
+	MeshPart part = VendorManager::getInstance().getVendor().newMeshPart(vertexCount, elementCount);
 	memcpy(part.vertex(0).data(), vertex(0).data(), sizeof(Vector3f) * vertexCount);
 	memcpy(part.normal(0).data(), normal(0).data(), sizeof(Vector3f) * vertexCount);
 	memcpy(part.uv(0).data(), uv(0).data(), sizeof(Vector2f) * vertexCount);
-	memcpy(part.element(0).data(), element(0).data(), sizeof(Matrix<unsigned int, 3, 1>) * elementCount);
+	memcpy(part.element(0).data(), element(0).data(), sizeof(Vector3u) * elementCount);
 	return part;
-}
-
-DrawElementsIndirectCommand MeshPart::drawCommand(int instanceCount, int baseInstance)
-{
-	return { (int)elementCount * 3, instanceCount, (int)elementFirst * 3, (int)vertexFirst, baseInstance };
 }
 
 Mesh::Mesh() : Shape::Shape()
@@ -202,16 +86,16 @@ Mesh::Mesh(int faceVertCount, int faceCount, float* vert, float* uv, float* norm
 	switch (vertexPerFace)
 	{
 	case 1:
-		renderMode = GL_POINTS;
+		renderMode = STT_Point;
 		break;
 	case 2:
-		renderMode = GL_LINES;
+		renderMode = STT_Line;
 		break;
 	case 3:
-		renderMode = GL_TRIANGLES;
+		renderMode = STT_Triangle;
 		break;
 	case 4:
-		renderMode = GL_QUADS;
+		renderMode = STT_Quad;
 		break;
 	default:
 		break;
@@ -220,10 +104,12 @@ Mesh::Mesh(int faceVertCount, int faceCount, float* vert, float* uv, float* norm
 
 Mesh::~Mesh()
 {
+#if ENABLE_PHYSICS
 	if (collisionMesh)
 		collisionMesh->release();
 	if (fabricMesh)
 		fabricMesh->decRefCount();
+#endif
 }
 
 void Mesh::setTotalMeshPart(const MeshPart & part)
@@ -248,16 +134,16 @@ void Mesh::resize(int vertexPerFace, int faceCount, int vertexCount)
 	switch (vertexPerFace)
 	{
 	case 1:
-		renderMode = GL_POINTS;
+		renderMode = STT_Point;
 		break;
 	case 2:
-		renderMode = GL_LINES;
+		renderMode = STT_Line;
 		break;
 	case 3:
-		renderMode = GL_TRIANGLES;
+		renderMode = STT_Triangle;
 		break;
 	case 4:
-		renderMode = GL_QUADS;
+		renderMode = STT_Quad;
 		break;
 	default:
 		break;
@@ -282,18 +168,7 @@ void Mesh::clone(const Mesh & mesh)
 	}
 }
 
-unsigned int Mesh::bindShape()
-{
-	int i = totalMeshPart.bindShape();
-	return i;
-}
-
-void Mesh::drawCall()
-{
-	DrawElementsIndirectCommand cmd = totalMeshPart.drawCommand(1, 0);
-	glDrawArraysIndirect(renderMode, &cmd);
-}
-
+#if ENABLE_PHYSICS
 CollisionShape * Mesh::generateComplexCollisionShape(const Vector3f& scale)
 {
 #ifdef PHYSICS_USE_BULLET
@@ -457,6 +332,7 @@ PFabric * Mesh::generateCloth(const vector<unsigned int>& partIndexs)
 	}
 	return *fabricMeshPart;
 }
+#endif
 
 Mesh & Mesh::operator=(Mesh & mesh)
 {
@@ -471,6 +347,7 @@ Mesh & Mesh::operator=(Mesh & mesh)
 	return *this;
 }
 
+#if ENABLE_PHYSICS
 unsigned long long Mesh::meshPartIdHash(const vector<unsigned int>& partIndexs)
 {
 	vector<unsigned int> indexs = partIndexs;
@@ -482,142 +359,4 @@ unsigned long long Mesh::meshPartIdHash(const vector<unsigned int>& partIndexs)
 	}
 	return hash;
 }
-
-bool Mesh::ObjReader::load(string path, Mesh & mesh)
-{
-	Importer imp = Importer(path, aiProcessPreset_TargetRealtime_MaxQuality);
-	return imp.getMesh(mesh);
-	/*string line;
-	vector<vector<float>> vert;
-	vector<vector<float>> uv;
-	vector<vector<float>> norm;
-	vector<vector<unsigned int>> index;
-	map<string, MeshPart> meshParts;
-	MeshPart* currentMeshPart = NULL;
-	int vertPerFace = 0;
-	fstream f;
-	f.open(path, ios::in);
-	if (!f.is_open()) {
-		cout << "Something Went Wrong When Opening Objfiles" << endl;
-		return false;
-	}
-
-	while (getline(f, line)) {
-		if (line.empty())
-			continue;
-		vector<string> parameters = split(line, ' ');
-		if (parameters.size() == 0)
-			continue;
-		else if (parameters[0][0] == '#') {
-
-		}
-		else if (parameters[0] == "v") {
-			if (parameters.size() != 4) {
-				cout << "This obj file is broken" << endl;
-				return false;
-			}
-			vector<GLfloat> Point;
-			for (int i = 1; i < 4; i++) {
-				GLfloat xyz = atof(parameters[i].c_str());
-				Point.push_back(xyz);
-			}
-			vert.push_back(Point);
-		}
-		else if (parameters[0] == "vt") {
-			if (parameters.size() != 3) {
-				cout << "This obj file is broken" << endl;
-				return false;
-			}
-			vector<GLfloat>Point;
-			for (int i = 1; i < 3; i++) {
-				GLfloat xy = atof(parameters[i].c_str());
-				Point.push_back(xy);
-			}
-			uv.push_back(Point);
-		}
-		else if (parameters[0] == "vn") {
-			if (parameters.size() != 4) {
-				cout << "This obj file is broken" << endl;
-				return false;
-			}
-			vector<GLfloat>Point;
-			for (int i = 1; i < 4; i++) {
-				GLfloat xyz = atof(parameters[i].c_str());
-				Point.push_back(xyz);
-			}
-			norm.push_back(Point);
-		}
-		else if (parameters[0] == "f") {
-			if (parameters.size() < 3) {
-				cout << "This obj file is broken" << endl;
-				return false;
-			}
-			if (vertPerFace == 0)
-				vertPerFace = parameters.size() - 1;
-			if (currentMeshPart == NULL) {
-				currentMeshPart = &meshParts.insert(pair<string, MeshPart>("Default", { 0, (unsigned int)(index.size() * vertPerFace), 0 })).first->second;
-			}
-			for (int i = 1; i < parameters.size(); i++) {
-				vector<string> info = split(parameters[i], '/');
-				vector<unsigned int> indexSet;
-				if (info.size() != 3) {
-					cout << "This obj file is broken" << endl;
-					return false;
-				}
-				for (int j = 0; j < info.size(); j++)
-					indexSet.push_back(atoi(info[j].c_str()) - 1);
-				index.push_back(indexSet);
-			}
-		}
-		else if (parameters[0] == "usemtl") {
-			if (parameters.size() != 2) {
-				cout << "This obj file is broken" << endl;
-				return false;
-			}
-			if (currentMeshPart != NULL) {
-				currentMeshPart->vertexCount = index.size() * vertPerFace - currentMeshPart->vertexFirst;
-			}
-			currentMeshPart = &meshParts.insert(pair<string, MeshPart>(parameters[1], { 0, (unsigned int)(index.size() * vertPerFace), 0 })).first->second;
-		}
-	}
-	f.close();
-	if (currentMeshPart != NULL) {
-		currentMeshPart->vertexCount = index.size() * vertPerFace - currentMeshPart->vertexFirst;
-	}
-	MeshPart totalPart = MeshData::newMeshPart(index.size() * vertPerFace);
-	mesh.totalMeshPart = totalPart;
-	for (auto b = meshParts.begin(), e = meshParts.end(); b != e; b++) {
-		b->second.vertexFirst += totalPart.vertexFirst;
-		b->second.meshData = totalPart.meshData;
-		mesh.addMeshPart(b->first, b->second);
-	}
-	mesh.resize(vertPerFace, index.size());
-	Matrix<float, 3, 2> bound;
-	bound << FLT_MAX, FLT_MIN,
-		FLT_MAX, FLT_MIN,
-		FLT_MAX, FLT_MIN;
-	for (int i = 0; i < index.size(); i++) {
-		for (int j = 0; j < 3; j++) {
-			float t = vert[index[i][0]][j];
-			if (t < bound(j, 0)) {
-				if (bound(j, 0) != FLT_MAX && bound(j, 0) > bound(j, 1))
-					bound(j, 1) = bound(j, 0);
-				bound(j, 0) = t;
-			}
-			else if (t > bound(j, 1))
-				bound(j, 1) = t;
-			totalPart.vertex(i)(j) = t;
-		}
-		if (uv.size() != 0) {
-			totalPart.uv(i)(0) = uv[index[i][1]][0];
-			totalPart.uv(i)(1) = uv[index[i][1]][1];
-		}
-		if (norm.size() != 0) {
-			totalPart.normal(i)(0) = norm[index[i][2]][0];
-			totalPart.normal(i)(1) = norm[index[i][2]][1];
-			totalPart.normal(i)(2) = norm[index[i][2]][2];
-		}
-	}
-	mesh.bound = bound;
-	return true;*/
-}
+#endif

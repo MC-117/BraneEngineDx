@@ -1,5 +1,4 @@
 #include "Camera.h"
-#include "PhysicalWorld.h"
 #include "Geometry.h"
 
 Camera::Camera(string name) : ::Transform::Transform(name), _cameraRender(new CameraRender()),cameraRender(*_cameraRender)

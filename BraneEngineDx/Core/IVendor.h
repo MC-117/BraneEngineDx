@@ -3,7 +3,11 @@
 #define _IVENDOR_H_
 
 #include "ITexture.h"
+#include "IMaterial.h"
 #include "ShaderStage.h"
+#include "IRenderTarget.h"
+#include "IGPUBuffer.h"
+#include "SkeletonMeshData.h"
 
 struct EngineConfig
 {
@@ -79,6 +83,12 @@ public:
 	virtual ITexture2D* newTexture2D(Texture2DDesc& desc) const = 0;
 	virtual ShaderStage* newShaderStage(const ShaderStageDesc& desc) const = 0;
 	virtual ShaderProgram* newShaderProgram() const = 0;
+	virtual IMaterial* newMaterial(MaterialDesc& desc) const = 0;
+	virtual IRenderTarget* newRenderTarget(RenderTargetDesc& desc) const = 0;
+	virtual IGPUBuffer* newGPUBuffer(GPUBufferDesc& desc) const = 0;
+	virtual MeshPartDesc newMeshPart(unsigned int vertCount, unsigned int elementCount) = 0;
+	virtual SkeletonMeshPartDesc newSkeletonMeshPart(unsigned int vertCount, unsigned int elementCount,
+		unsigned int boneCount, unsigned int morphVertCount, unsigned int morphCount) = 0;
 protected:
 	string name;
 };

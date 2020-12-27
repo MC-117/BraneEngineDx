@@ -2,7 +2,8 @@
 #ifndef _IMATERIAL_H_
 #define _IMATERIAL_H_
 
-#include "Unit.h"
+#include "Texture.h"
+#include "Shader.h"
 
 struct MaterialBaseInfo
 {
@@ -20,17 +21,32 @@ struct MaterialBaseInfo
 	float fovy;
 };
 
+struct MaterialDesc
+{
+	Shader* shader = NULL;
+	unsigned int currentPass = 0;
+	unsigned int passNum = 1;
+	Unit2Du localSize = { 1, 1 };
+	map<string, MatAttribute<float>> scalarField;
+	map<string, MatAttribute<int>> countField;
+	map<string, MatAttribute<Color>> colorField;
+	map<string, MatAttribute<Texture*>> textureField;
+	map<string, MatAttribute<Image>> imageField;
+};
+
 class IMaterial
 {
 public:
-	virtual void processBaseData(const MaterialBaseInfo& info) const = 0;
+	MaterialDesc& desc;
+
+	IMaterial(MaterialDesc& desc);
+
 	virtual void processBaseData();
 	virtual void processScalarData();
 	virtual void processCountData();
 	virtual void processColorData();
 	virtual void processTextureData();
 	virtual void processImageData();
-	virtual void processInstanceData();
 };
 
 #endif // !_IMATERIAL_H_

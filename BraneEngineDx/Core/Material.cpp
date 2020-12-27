@@ -15,24 +15,26 @@ Shader Material::defaultDepthShader;
 Material Material::defaultDepthMaterial(Material::defaultDepthShader);
 bool Material::isLoadDefaultMaterial = false;
 
-Material::Material(Shader & shader) : shader(&shader)
+Material::Material(Shader & shader)
 {
-	colorField.insert(pair<string, MatAttribute<Color>>(string("baseColor"), MatAttribute<Color>({ 255, 255, 255, 255 })));
+	desc.shader = &shader;
+	desc.colorField.insert(pair<string, MatAttribute<Color>>(string("baseColor"), MatAttribute<Color>({ 255, 255, 255, 255 })));
 }
 
-Material::Material(const Material & material) : shader(material.shader)
+Material::Material(const Material & material)
 {
-	currentPass = 0;
-	passNum = material.passNum;
+	desc.shader = material.desc.shader;
+	desc.currentPass = 0;
+	desc.passNum = material.desc.passNum;
 	isTwoSide = material.isTwoSide;
 	cullFront = material.cullFront;
 	canCastShadow = material.canCastShadow;
 	isDeferred = material.isDeferred;
-	scalarField = material.scalarField;
-	countField = material.countField;
-	colorField = material.colorField;
-	textureField = material.textureField;
-	imageField = material.imageField;
+	desc.scalarField = material.desc.scalarField;
+	desc.countField = material.desc.countField;
+	desc.colorField = material.desc.colorField;
+	desc.textureField = material.desc.textureField;
+	desc.imageField = material.desc.imageField;
 }
 
 Material::~Material()
@@ -48,20 +50,20 @@ Material & Material::instantiate()
 
 bool Material::isNull() const
 {
-	return shader == NULL || shader->isNull();
+	return desc.shader == NULL || desc.shader->isNull();
 }
 
 Shader * Material::getShader() const
 {
-	return shader;
+	return desc.shader;
 }
 
 string Material::getShaderName() const
 {
-	if (shader == NULL)
+	if (desc.shader == NULL)
 		return "";
 	else
-		return shader->name;
+		return desc.shader->name;
 }
 
 bool Material::setBaseColor(const Color & color)
@@ -76,7 +78,7 @@ Color Material::getBaseColor()
 
 int Material::getRenderOrder()
 {
-	return shader == NULL ? -1 : shader->renderOrder;
+	return desc.shader == NULL ? -1 : desc.shader->renderOrder;
 }
 
 void Material::setTwoSide(bool b)
@@ -86,13 +88,13 @@ void Material::setTwoSide(bool b)
 
 void Material::setPass(unsigned int pass)
 {
-	this->currentPass = pass;
+	desc.currentPass = pass;
 }
 
 bool Material::setScalar(const string & name, const float value)
 {
-	auto iter = scalarField.find(name);
-	if (iter == scalarField.end())
+	auto iter = desc.scalarField.find(name);
+	if (iter == desc.scalarField.end())
 		return false;
 	iter->second.val = value;
 	return true;
@@ -100,8 +102,8 @@ bool Material::setScalar(const string & name, const float value)
 
 bool Material::setCount(const string & name, const int value)
 {
-	auto iter = countField.find(name);
-	if (iter == countField.end())
+	auto iter = desc.countField.find(name);
+	if (iter == desc.countField.end())
 		return false;
 	iter->second.val = value;
 	return true;
@@ -109,8 +111,8 @@ bool Material::setCount(const string & name, const int value)
 
 bool Material::setColor(const string & name, const Color & value)
 {
-	auto iter = colorField.find(name);
-	if (iter == colorField.end())
+	auto iter = desc.colorField.find(name);
+	if (iter == desc.colorField.end())
 		return false;
 	iter->second.val = value;
 	return true;
@@ -118,8 +120,8 @@ bool Material::setColor(const string & name, const Color & value)
 
 bool Material::setTexture(const string & name, Texture & value)
 {
-	auto iter = textureField.find(name);
-	if (iter == textureField.end())
+	auto iter = desc.textureField.find(name);
+	if (iter == desc.textureField.end())
 		return false;
 	iter->second.val = &value;
 	return true;
@@ -127,8 +129,8 @@ bool Material::setTexture(const string & name, Texture & value)
 
 bool Material::setImage(const string & name, const Image & value)
 {
-	auto iter = imageField.find(name);
-	if (iter == imageField.end())
+	auto iter = desc.imageField.find(name);
+	if (iter == desc.imageField.end())
 		return false;
 	iter->second.val = value;
 	return true;
@@ -136,255 +138,170 @@ bool Material::setImage(const string & name, const Image & value)
 
 unsigned int Material::getPassNum()
 {
-	return passNum;
+	return desc.passNum;
 }
 
 Unit2Du Material::getLocalSize()
 {
-	return localSize;
+	return desc.localSize;
 }
 
 float * Material::getScaler(const string & name)
 {
-	auto iter = scalarField.find(name);
-	if (iter == scalarField.end())
+	auto iter = desc.scalarField.find(name);
+	if (iter == desc.scalarField.end())
 		return NULL;
 	return &iter->second.val;
 }
 
 int * Material::getCount(const string & name)
 {
-	auto iter = countField.find(name);
-	if (iter == countField.end())
+	auto iter = desc.countField.find(name);
+	if (iter == desc.countField.end())
 		return NULL;
 	return &iter->second.val;
 }
 
 Color * Material::getColor(const string & name)
 {
-	auto iter = colorField.find(name);
-	if (iter == colorField.end())
+	auto iter = desc.colorField.find(name);
+	if (iter == desc.colorField.end())
 		return NULL;
 	return &iter->second.val;
 }
 
 Texture ** Material::getTexture(const string & name)
 {
-	auto iter = textureField.find(name);
-	if (iter == textureField.end())
+	auto iter = desc.textureField.find(name);
+	if (iter == desc.textureField.end())
 		return NULL;
 	return &iter->second.val;
 }
 
 Image * Material::getImage(const string & name)
 {
-	auto iter = imageField.find(name);
-	if (iter == imageField.end())
+	auto iter = desc.imageField.find(name);
+	if (iter == desc.imageField.end())
 		return NULL;
 	return &iter->second.val;
 }
 
 map<string, MatAttribute<float>>& Material::getScalarField()
 {
-	return scalarField;
+	return desc.scalarField;
 }
 
 map<string, MatAttribute<int>>& Material::getCountField()
 {
-	return countField;
+	return desc.countField;
 }
 
 map<string, MatAttribute<Color>>& Material::getColorField()
 {
-	return colorField;
+	return desc.colorField;
 }
 
 map<string, MatAttribute<Texture*>>& Material::getTextureField()
 {
-	return textureField;
+	return desc.textureField;
 }
 
 map<string, MatAttribute<Image>>& Material::getImageField()
 {
-	return imageField;
+	return desc.imageField;
 }
 
 const map<string, MatAttribute<float>>& Material::getScalarField() const
 {
-	return scalarField;
+	return desc.scalarField;
 }
 
 const map<string, MatAttribute<Color>>& Material::getColorField() const
 {
-	return colorField;
+	return desc.colorField;
 }
 
 const map<string, MatAttribute<Texture*>>& Material::getTextureField() const
 {
-	return textureField;
+	return desc.textureField;
 }
 
 const map<string, MatAttribute<Image>>& Material::getImageField() const
 {
-	return imageField;
+	return desc.imageField;
 }
 
 void Material::addScalar(const pair<string, MatAttribute<float>>& attr)
 {
-	scalarField.insert(attr);
+	desc.scalarField.insert(attr);
 	//scalarField[attr.first] = attr.second;
 }
 
 void Material::addCount(const pair<string, MatAttribute<int>>& attr)
 {
-	countField.insert(attr);
+	desc.countField.insert(attr);
 }
 
 void Material::addColor(const pair<string, MatAttribute<Color>>& attr)
 {
-	colorField[attr.first] = attr.second;
+	desc.colorField[attr.first] = attr.second;
 }
 
 void Material::addDefaultTexture(const pair<string, MatAttribute<string>>& attr)
 {
 	if (attr.second.val == "black")
-		textureField[attr.first] = &Texture2D::blackRGBDefaultTex;
+		desc.textureField[attr.first] = &Texture2D::blackRGBDefaultTex;
 	else if (attr.second.val == "white")
-		textureField[attr.first] = &Texture2D::whiteRGBDefaultTex;
+		desc.textureField[attr.first] = &Texture2D::whiteRGBDefaultTex;
 	else if (attr.second.val == "brdfLUT")
-		textureField[attr.first] = &Texture2D::brdfLUTTex;
+		desc.textureField[attr.first] = &Texture2D::brdfLUTTex;
 	else if (attr.second.val == "defaultLut")
-		textureField[attr.first] = &Texture2D::defaultLUTTex;
+		desc.textureField[attr.first] = &Texture2D::defaultLUTTex;
 	else
-		textureField[attr.first] = &Texture2D::whiteRGBDefaultTex;
+		desc.textureField[attr.first] = &Texture2D::whiteRGBDefaultTex;
 }
 
 void Material::addDefaultImage(const pair<string, unsigned int>& attr)
 {
 	Image img;
 	img.binding = attr.second;
-	imageField[attr.first] = img;
-}
-
-void Material::processBaseData(const MaterialBaseInfo & info)
-{
-	unsigned int pid = ShaderProgram::getCurrentProgramID();
-	int paLoc = Shader::getAttributeIndex(pid, "pass");
-	int pLoc = Shader::getAttributeIndex(pid, "pmat");
-	int proLoc = Shader::getAttributeIndex(pid, "promat");
-	int vLoc = Shader::getAttributeIndex(pid, "vmat");
-	int lLoc = Shader::getAttributeIndex(pid, "lmat");
-	int cLoc = Shader::getAttributeIndex(pid, "camPos");
-	int cDir = Shader::getAttributeIndex(pid, "camDir");
-	int cUp = Shader::getAttributeIndex(pid, "camUp");
-	int cLeft = Shader::getAttributeIndex(pid, "camLeft");
-	int vsLoc = Shader::getAttributeIndex(pid, "viewSize");
-	int zN = Shader::getAttributeIndex(pid, "zNear");
-	int zF = Shader::getAttributeIndex(pid, "zFar");
-	if (paLoc != -1)
-		glUniform1i(paLoc, currentPass);
-	if (pLoc != -1)
-		glUniformMatrix4fv(pLoc, 1, 0, info.projectionViewMat.data());
-	if (proLoc != -1)
-		glUniformMatrix4fv(proLoc, 1, 0, info.projectionMat.data());
-	if (vLoc != -1)
-		glUniformMatrix4fv(vLoc, 1, 0, info.viewMat.data());
-	if (lLoc != -1)
-		glUniformMatrix4fv(lLoc, 1, 0, info.lightSpaceMat.data());
-	if (cLoc != -1)
-		glUniform3f(cLoc, info.cameraLoc.x(), info.cameraLoc.y(), info.cameraLoc.z());
-	if (cDir != -1)
-		glUniform3f(cDir, info.cameraDir.x(), info.cameraDir.y(), info.cameraDir.z());
-	if (cUp != -1)
-		glUniform3f(cUp, info.cameraUp.x(), info.cameraUp.y(), info.cameraUp.z());
-	if (cLeft != -1)
-		glUniform3f(cLeft, info.cameraLeft.x(), info.cameraLeft.y(), info.cameraLeft.z());
-	if (vsLoc != -1)
-		glUniform2f(vsLoc, info.viewSize.x(), info.viewSize.y());
-	if (zN != -1)
-		glUniform1f(zN, info.zNear);
-	if (zF != -1)
-		glUniform1f(zF, info.zFar);
+	desc.imageField[attr.first] = img;
 }
 
 void Material::processBaseData()
 {
-	unsigned int pid = ShaderProgram::getCurrentProgramID();
-	int paLoc = Shader::getAttributeIndex(pid, "pass");
-	if (paLoc != -1)
-		glProgramUniform1i(pid, paLoc, currentPass);
+	newVendorMaterial();
+	vendorMaterial->processBaseData();
 }
 
 void Material::processScalarData()
 {
-	unsigned int pid = ShaderProgram::getCurrentProgramID();
-	for (auto b = scalarField.begin(), e = scalarField.end(); b != e; b++) {
-		if (b->second.idx == -1)
-			if ((b->second.idx = Shader::getAttributeIndex(pid, b->first)) == -1)
-				continue;
-		glUniform1f(b->second.idx, b->second.val);
-	}
+	newVendorMaterial();
+	vendorMaterial->processScalarData();
 }
 
 void Material::processCountData()
 {
-	unsigned int pid = ShaderProgram::getCurrentProgramID();
-	for (auto b = countField.begin(), e = countField.end(); b != e; b++) {
-		if (b->second.idx == -1)
-			if ((b->second.idx = Shader::getAttributeIndex(pid, b->first)) == -1)
-				continue;
-		glUniform1i(b->second.idx, b->second.val);
-	}
+	newVendorMaterial();
+	vendorMaterial->processCountData();
 }
 
 void Material::processColorData()
 {
-	unsigned int pid = ShaderProgram::getCurrentProgramID();
-	for (auto b = colorField.begin(), e = colorField.end(); b != e; b++) {
-		if (b->second.idx == -1)
-			if ((b->second.idx = Shader::getAttributeIndex(pid, b->first)) == -1)
-				continue;
-		glUniform4f(b->second.idx, b->second.val.r, b->second.val.g, b->second.val.b, b->second.val.a);
-	}
+	newVendorMaterial();
+	vendorMaterial->processColorData();
 }
 
 void Material::processTextureData()
 {
-	unsigned int pid = ShaderProgram::getCurrentProgramID();
-	int i = 0;
-	for (auto b = textureField.begin(), e = textureField.end(); b != e; b++) {
-		if (b->second.val == NULL)
-			b->second.val = &Texture2D::whiteRGBADefaultTex;
-		if (b->second.idx == -1)
-			if ((b->second.idx = Shader::getAttributeIndex(pid, b->first)) == -1)
-				continue;
-		if (b->second.val->isValid()) {
-			glActiveTexture(GL_TEXTURE0 + i);
-			unsigned int tid = b->second.val->bind();
-			//if (tid != 0)
-			//glUniform1i(b->second.idx, i);
-			glUniform1i(b->second.idx, i);
-			i++;
-		}
-	}
+	newVendorMaterial();
+	vendorMaterial->processTextureData();
 }
 
 void Material::processImageData()
 {
-	unsigned int pid = ShaderProgram::getCurrentProgramID();
-	for (auto b = imageField.begin(), e = imageField.end(); b != e; b++) {
-		if (b->second.idx == -1)
-			if ((b->second.idx = Shader::getAttributeIndex(pid, b->first)) == -1)
-				continue;
-		Image& img = b->second.val;
-		if (img.isValid()) {
-			unsigned int tid = img.texture->getTextureID();
-			if (tid == 0)
-				tid = img.texture->bind();
-			glUniform1i(b->second.idx, img.binding);
-			glBindImageTexture(img.binding, tid, img.level, img.layered ? GL_TRUE : GL_FALSE, img.layer, img.access, img.format);
-		}
-	}
+	newVendorMaterial();
+	vendorMaterial->processImageData();
 }
 
 void Material::processInstanceData()
@@ -420,6 +337,16 @@ bool Material::loadDefaultMaterial()
 	AssetManager::registAsset(*ass);*/
 	isLoadDefaultMaterial = true;
 	return true;
+}
+
+void Material::newVendorMaterial()
+{
+	if (vendorMaterial == NULL) {
+		vendorMaterial = VendorManager::getInstance().getVendor().newMaterial(desc);
+		if (vendorMaterial == NULL) {
+			throw runtime_error("Vendor new Material failed");
+		}
+	}
 }
 
 bool Material::MaterialLoader::loadMaterial(Material& material, const string & file)
@@ -505,17 +432,17 @@ bool Material::MaterialLoader::loadMaterial(Material& material, const string & f
 			else if (s[0] == "pass") {
 				if (s.size() == 2) {
 					int passNum = atoi(s[1].c_str());
-					material.passNum = passNum < 1 ? 1 : passNum;
+					material.desc.passNum = passNum < 1 ? 1 : passNum;
 				}
 			}
 			else if (s[0] == "localsize") {
 				if (s.size() > 1) {
 					int x = atoi(s[1].c_str());
-					material.localSize.x = x < 1 ? 1 : x;
+					material.desc.localSize.x = x < 1 ? 1 : x;
 				}
 				if (s.size() > 2) {
 					int y = atoi(s[2].c_str());
-					material.localSize.y = y < 1 ? 1 : y;
+					material.desc.localSize.y = y < 1 ? 1 : y;
 				}
 			}
 			else {
@@ -920,39 +847,4 @@ pair<string, unsigned int> Material::MaterialLoader::parseImage(const string & s
 	else
 		throw runtime_error("Error parameter");
 	return pair<string, unsigned int>("", -1);
-}
-
-bool Image::isValid() const
-{
-	return binding != -1 && texture != NULL && texture->isValid();
-}
-
-Image::Image(Texture * texture, unsigned int level)
-	: texture(texture), level(level)
-{
-}
-
-Image::Image(const Image & img)
-{
-	texture = img.texture;
-	level = img.level;
-	layered = img.layered;
-	layer = img.layer;
-	access = img.access;
-	format = img.format;
-
-	binding = img.binding;
-}
-
-Image & Image::operator=(const Image & img)
-{
-	texture = img.texture;
-	level = img.level;
-	layered = img.layered;
-	layer = img.layer;
-	access = img.access;
-	format = img.format;
-	if (binding == -1)
-		binding = img.binding;
-	return *this;
 }

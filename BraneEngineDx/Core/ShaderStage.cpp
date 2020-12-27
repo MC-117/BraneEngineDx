@@ -95,6 +95,8 @@ ShaderProgram::ShaderProgram(ShaderStage & meshStage)
 
 ShaderProgram::~ShaderProgram()
 {
+	if (currentProgram == programId)
+		currentProgram = 0;
 }
 
 bool ShaderProgram::isComputable() const
@@ -140,12 +142,21 @@ unsigned int ShaderProgram::getProgramID()
 	return programId;
 }
 
+ShaderProgram::AttributeDesc ShaderProgram::getAttributeOffset(const string& name)
+{
+	return { "", false, -1, 0, -1 };
+}
+
 unsigned int ShaderProgram::getCurrentProgramID()
 {
 	return currentProgram;
 }
 
 void ShaderProgram::memoryBarrier(unsigned int bitEnum)
+{
+}
+
+void ShaderProgram::uploadData()
 {
 }
 
