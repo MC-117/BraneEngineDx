@@ -3,38 +3,9 @@
 #define _MESH_H_
 
 #include "Shape.h"
+#include "MeshData.h"
 
 struct MeshPart;
-
-class MeshData
-{
-public:
-	static set<MeshData*> MeshDataCollection;
-	static MeshData StaticMeshData;
-
-	vector<Vector3f> vertices;
-	vector<Vector2f> uvs;
-	vector<Vector3f> normals;
-	vector<Matrix<unsigned int, 3, 1>> elements;
-
-	MeshData();
-
-	unsigned int getVAO() const;
-	virtual unsigned int bindShape();
-	bool isGenerated();
-	bool isType(const type_info& type);
-
-	static MeshPart newMeshPart(unsigned int vertCount, unsigned int elementCount);
-protected:
-	unsigned int vao = NULL;
-	unsigned int vbo = NULL;
-	unsigned int ibo = NULL;
-	unsigned int ubo = NULL;
-	unsigned int nbo = NULL;
-	TypeID id = typeid(MeshData).hash_code();
-	static unsigned int currentVao;
-};
-
 class Mesh;
 
 struct MeshPart
@@ -49,6 +20,7 @@ struct MeshPart
 
 	MeshPart();
 	MeshPart(const MeshPart& part);
+	MeshPart(const MeshPartDesc& desc);
 	MeshPart(MeshData* meshData, unsigned int vertexFirst, unsigned int vertexCount,
 		unsigned int indexFirst, unsigned int indexCount);
 
@@ -74,7 +46,7 @@ struct MeshPart
 			throw overflow_error("MeshPart normal access overflow");
 		return meshData->normals[vertexFirst + index];
 	}
-	inline Matrix<unsigned int, 3, 1>& element(unsigned int index) {
+	inline Vector3u& element(unsigned int index) {
 		if (index >= elementCount)
 			throw overflow_error("MeshPart index access overflow");
 		return meshData->elements[elementFirst + index];
@@ -95,15 +67,13 @@ struct MeshPart
 			throw overflow_error("MeshPart normal access overflow");
 		return meshData->normals[vertexFirst + index];
 	}
-	inline Matrix<unsigned int, 3, 1>& element(unsigned int index) const  {
+	inline Vector3u& element(unsigned int index) const  {
 		if (index >= elementCount)
 			throw overflow_error("MeshPart index access overflow");
 		return meshData->elements[elementFirst + index];
 	}
 
-	virtual unsigned int bindShape();
 	MeshPart clone() const;
-	DrawElementsIndirectCommand drawCommand(int instanceCount, int baseInstance);
 };
 
 class Mesh : public Shape
@@ -128,21 +98,15 @@ public:
 	void resize(int vertexPerFace, int faceCount, int vertexCount);
 	void clone(const Mesh& mesh);
 
-	virtual unsigned int bindShape();
-	virtual void drawCall();
+#if ENABLE_PHYSICS
 	virtual CollisionShape* generateComplexCollisionShape(const Vector3f& scale = Vector3f(1, 1, 1));
 	virtual PFabric* generateCloth();
 	virtual PFabric* generateCloth(unsigned int partIndex);
 	virtual PFabric* generateCloth(const vector<unsigned int>& partIndexs);
+#endif
 
 	Mesh& operator=(Mesh& mesh);
-
-	static class ObjReader
-	{
-	public:
-		static bool load(string path, Mesh& mesh);
-	};
-#ifdef PHYSICS_USE_PHYSX
+#if ENABLE_PHYSICS
 protected:
 	PxBase* collisionMesh = NULL;
 	PFabric* fabricMesh = NULL;

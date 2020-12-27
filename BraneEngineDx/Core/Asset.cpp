@@ -513,7 +513,7 @@ MaterialAssetInfo::MaterialAssetInfo() : AssetInfo("Material")
 
 void * MaterialAssetInfo::load(const string& name, const string & path, const vector<string>& settings, const vector<void*>& dependences) const
 {
-	namespace FS = experimental::filesystem;
+	namespace FS = filesystem;
 	string ext = FS::path(path).extension().generic_string();
 	Material* mat = NULL;
 	if (!_stricmp(ext.c_str(), ".mat")) {
@@ -539,28 +539,6 @@ void * MaterialAssetInfo::load(const string& name, const string & path, const ve
 }
 
 AssetInfo & MaterialAssetInfo::getInstance()
-{
-	return assetInfo;
-}
-
-AudioDataAssetInfo AudioDataAssetInfo::assetInfo;
-
-AudioDataAssetInfo::AudioDataAssetInfo() : AssetInfo("AudioData")
-{
-	properties = { };
-}
-
-void * AudioDataAssetInfo::load(const string & name, const string & path, const vector<string>& settings, const vector<void*>& dependences) const
-{
-	AudioData* audio = new AudioData(name);
-	if (!audio->load(path)) {
-		delete audio;
-		return NULL;
-	}
-	return audio;
-}
-
-AssetInfo & AudioDataAssetInfo::getInstance()
 {
 	return assetInfo;
 }

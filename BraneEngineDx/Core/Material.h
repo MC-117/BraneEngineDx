@@ -2,26 +2,8 @@
 #ifndef _MATERIAL_H_
 #define _MATERIAL_H_
 
-#include "IMaterial.h"
-#include "Shader.h"
+#include "IVendor.h"
 #include "Texture2D.h"
-
-struct Image
-{
-	Texture* texture = NULL;
-	unsigned int level = 0;
-	bool layered = false;
-	unsigned layer = 0;
-	unsigned int access = GL_READ_WRITE;
-	unsigned int format = GL_RGBA8;
-
-	unsigned int binding = -1;
-	bool isValid() const;
-
-	Image(Texture* texture = NULL, unsigned int level = 0);
-	Image(const Image& img);
-	Image& operator=(const Image& img);
-};
 
 class Material
 {
@@ -86,7 +68,6 @@ public:
 	void addDefaultTexture(const pair<string, MatAttribute<string>>& attr);
 	void addDefaultImage(const pair<string, unsigned int>& attr);
 
-	void processBaseData(const MaterialBaseInfo& info);
 	void processBaseData();
 	void processScalarData();
 	void processCountData();
@@ -113,17 +94,11 @@ public:
 		static pair<string, unsigned int> parseImage(const string& src);
 	};
 protected:
-	Shader* shader = NULL;
-	unsigned int currentPass = 0;
-	unsigned int passNum = 1;
-	Unit2Du localSize = { 1, 1 };
-	map<string, MatAttribute<float>> scalarField;
-	map<string, MatAttribute<int>> countField;
-	map<string, MatAttribute<Color>> colorField;
-	map<string, MatAttribute<Texture*>> textureField;
-	map<string, MatAttribute<Image>> imageField;
+	MaterialDesc desc;
+	IMaterial* vendorMaterial = NULL;
 
 	static bool isLoadDefaultMaterial;
+	void newVendorMaterial();
 };
 
 #endif // !_MATERIAL_H_

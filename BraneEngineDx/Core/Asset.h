@@ -3,7 +3,6 @@
 #define _ASSER_H_
 
 //#include "PostProcessingCamera.h"
-//#include "Mesh.h"
 //#include "MeshRender.h"
 //#include "MeshActor.h"
 //#include "SkySphere.h"
@@ -14,14 +13,16 @@
 #include "Utility.h"
 #include "Transform.h"
 #include "World.h"
-//#include "Importer.h"
+#include "Importer.h"
+#include "Material.h"
+#include "Geometry.h"
+#include "Mesh.h"
+#include "SkeletonMesh.h"
 //#include "SkeletonMeshActor.h"
 //#include "Character.h"
 //#include "SpringArm.h"
 //#include "CapsuleActor.h"
-//#include "IKSolver.h"
 //#include "ParticleSystem.h"
-//#include <boost\bimap.hpp>
 
 class Asset;
 class Agent;
@@ -115,15 +116,6 @@ class MaterialAssetInfo : public AssetInfo {
 	MaterialAssetInfo();
 public:
 	static MaterialAssetInfo assetInfo;
-
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
-	static AssetInfo& getInstance();
-};
-
-class AudioDataAssetInfo : public AssetInfo {
-	AudioDataAssetInfo();
-public:
-	static AudioDataAssetInfo assetInfo;
 
 	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();

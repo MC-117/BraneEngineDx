@@ -207,6 +207,33 @@
     <ClInclude Include="Vendors\DX11\DX11GPUBuffer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Vendors\DX11\DX11Material.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\IRenderTarget.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendors\DX11\DX11RenderTarget.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Geometry.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Importer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendors\DX11\DX11MeshData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\MeshData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\SkeletonMeshData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendors\DX11\DX11SkeletonMeshData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -336,6 +363,33 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Vendors\DX11\DX11GPUBuffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendors\DX11\DX11Material.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\IRenderTarget.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendors\DX11\DX11RenderTarget.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Geometry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Importer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendors\DX11\DX11MeshData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\MeshData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\SkeletonMeshData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendors\DX11\DX11SkeletonMeshData.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

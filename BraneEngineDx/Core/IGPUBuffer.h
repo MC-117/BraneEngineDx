@@ -6,16 +6,12 @@
 
 enum GPUBufferType
 {
-
-};
-
-enum GPUBufferAccess
-{
-
+	GB_Constant, GB_Storage
 };
 
 struct GPUBufferDesc
 {
+	GPUBufferType type = GB_Constant;
 	unsigned int cellSize = 0;
 	unsigned int size = 0;
 	unsigned int capacity = 0;
@@ -30,6 +26,7 @@ public:
 	IGPUBuffer(GPUBufferDesc& desc);
 	virtual ~IGPUBuffer();
 
+	virtual unsigned int bind() = 0;
 	virtual unsigned int resize(unsigned int size) = 0;
 	virtual unsigned int bindBase(unsigned int index) = 0;
 	virtual unsigned int uploadSubData(unsigned int first, unsigned int size, void* data) = 0;

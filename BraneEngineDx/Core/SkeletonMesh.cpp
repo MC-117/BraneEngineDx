@@ -1,6 +1,35 @@
 #include "SkeletonMesh.h"
+#include "Shader.h"
+#include "Utility.h"
 
-unsigned int BoneData::addChild(const string& name, const Matrix4f& offsetMatrix, const Matrix4f& transformMatrix)
+SkeletonMeshPart::SkeletonMeshPart() : MeshPart()
+{
+}
+
+SkeletonMeshPart::SkeletonMeshPart(const SkeletonMeshPartDesc& desc)
+{
+	meshData = desc.meshData;
+	vertexFirst = desc.vertexFirst;
+	vertexCount = desc.vertexCount;
+	elementFirst = desc.elementFirst;
+	elementCount = desc.elementCount;
+	morphMeshData = desc.morphMeshData;
+}
+
+SkeletonMeshPart::SkeletonMeshPart(SkeletonMeshData * meshData, unsigned int vertexFirst, unsigned int vertexCount, unsigned int indexFirst, unsigned int indexCount, MorphMeshData* morphData) :
+	MeshPart(meshData, vertexFirst, vertexCount, indexFirst, indexCount), morphMeshData(morphData)
+{
+}
+
+SkeletonMeshPart::operator MeshPart()
+{
+	MeshPart p = { meshData, vertexFirst, vertexCount, elementFirst, elementCount };
+	p.mesh = mesh;
+	p.partIndex = partIndex;
+	return p;
+}
+
+unsigned int BoneData::addChild(const string & name, const Matrix4f & offsetMatrix, const Matrix4f & transformMatrix)
 {
 	if (skeletonData == NULL)
 		return -1;
@@ -9,17 +38,17 @@ unsigned int BoneData::addChild(const string& name, const Matrix4f& offsetMatrix
 		name, (unsigned int)skeletonData->boneList.size(),
 		(unsigned int)children.size(), offsetMatrix,
 		transformMatrix, skeletonData, this
-		});
+	});
 	children.push_back(&skeletonData->boneList.back());
 	return skeletonData->boneList.size() - 1;
 }
 
-BoneData* BoneData::getParent()
+BoneData * BoneData::getParent()
 {
 	return parent;
 }
 
-void BoneData::setParent(BoneData* parent)
+void BoneData::setParent(BoneData * parent)
 {
 	this->parent = parent;
 	if (parent == NULL)
@@ -28,18 +57,18 @@ void BoneData::setParent(BoneData* parent)
 	parent->children.push_back(this);
 }
 
-BoneData* BoneData::getChild(unsigned int index)
+BoneData * BoneData::getChild(unsigned int index)
 {
 	return index < children.size() ? children[index] : NULL;
 }
 
-BoneData* BoneData::getSibling(unsigned int index)
+BoneData * BoneData::getSibling(unsigned int index)
 {
 	unsigned int i = siblingIndex + index;
 	return parent == NULL ? NULL : (i < parent->children.size() ? parent->children[i] : NULL);
 }
 
-BoneData* BoneData::getNext(BoneData* limitBone)
+BoneData * BoneData::getNext(BoneData* limitBone)
 {
 	BoneData* b = getChild();
 	if (b == NULL) {
@@ -62,7 +91,7 @@ BoneData* BoneData::getNext(BoneData* limitBone)
 	return b;
 }
 
-BoneData* SkeletonData::getBoneData(const string& name)
+BoneData * SkeletonData::getBoneData(const string & name)
 {
 	auto iter = boneName.find(name);
 	if (iter == boneName.end())
@@ -70,7 +99,12 @@ BoneData* SkeletonData::getBoneData(const string& name)
 	return &boneList[iter->second];
 }
 
-BoneData* SkeletonData::getBoneData(unsigned int index)
+BoneData * SkeletonData::getBoneData(unsigned int index)
 {
 	return index < boneList.size() ? &boneList[index] : NULL;
+}
+
+void SkeletonMesh::updateMorphWeights(vector<float>& weights)
+{
+	((SkeletonMeshData*)totalMeshPart.meshData)->updateMorphWeights(weights);
 }

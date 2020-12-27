@@ -163,8 +163,3 @@ unsigned int Shader::getCurrentProgramId()
 {
 	return ShaderProgram::getCurrentProgramID();
 }
-
-int Shader::getAttributeIndex(unsigned int programId, const string & name)
-{
-	return glGetUniformLocation(programId, name.c_str());
-}

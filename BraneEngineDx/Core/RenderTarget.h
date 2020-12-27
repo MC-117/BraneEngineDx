@@ -33,34 +33,14 @@ public:
 	unsigned int getFBO();
 	virtual void resize(unsigned int width, unsigned int height);
 
-	virtual void blitFrom(const RenderTarget& renderTarget, GLbitfield bit = GL_COLOR_BUFFER_BIT);
-
 protected:
-	unsigned int multisampleIndex = 0, depthIndex = 0, multisampleDepthIndex = 0;
-	unsigned int multisampleFbo = 0, fbo = 0;
-	unsigned int rbo = 0;
-	int width = 0, height = 0, channel = 0;
-	bool depthOnly = false;
-	bool withDepthStencil = false;
-	int multisampleLevel = 0;
-	bool inited = false;
+	RenderTargetDesc desc;
+	IRenderTarget* vendorRenderTarget = NULL;
 
-	struct RTInfo
-	{
-		unsigned int index;
-		string name;
-		unsigned int mipLevel;
-		Texture* texture;
-	};
-
-	map<string, int> textures;
-	vector<RTInfo> textureList;
-
-	Texture* depthTexure = NULL;
-	Texture2D internalDepthTexure;
-	Texture2D internalMultisampleDepthTexure;
+	Texture2D* internalDepthTexure = NULL;
 
 	static unsigned int currentFbo;
+	void newVendorRenderTarget();
 };
 
 #endif // !_RENDERTARGET_H_

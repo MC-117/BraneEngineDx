@@ -51,6 +51,14 @@ protected:
 class ShaderProgram
 {
 public:
+	struct AttributeDesc
+	{
+		string name;
+		bool isTex;
+		unsigned int offset;
+		unsigned int size;
+		unsigned int meta;
+	};
 	string name;
 	unsigned int renderOrder = 0;
 	Enum<ShaderFeature> shaderType;
@@ -70,15 +78,19 @@ public:
 	bool setMeshStage(ShaderStage& meshStage);
 	bool addShaderStage(ShaderStage& stage);
 	// Bind this program to assemble the shader rendering pipeline
-	// return the unique program id
+	// return the unique program id.
 	virtual unsigned int bind();
+	// Get byte offset or index of shader attribute by name, which
+	// is specified by vendor implementation.
+	virtual AttributeDesc getAttributeOffset(const string& name);
 	virtual bool dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ);
 	virtual void memoryBarrier(unsigned int bitEnum);
-	// Get unique program id of this program to specify a unqiue program
+	virtual void uploadData();
+	// Get unique program id of this program to specify a unqiue program.
 	unsigned int getProgramID();
 
 	// Get program id of current actived shader program to
-	// avoid repeatlly pipeline switching
+	// avoid repeatlly pipeline switching.
 	static unsigned int getCurrentProgramID();
 protected:
 	ShaderStageType meshStageType = None_Shader_Stage;

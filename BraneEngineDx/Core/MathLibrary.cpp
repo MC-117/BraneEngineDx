@@ -150,6 +150,11 @@ Vector2f Vector2f::UnitY()
 	return Vector2f(0, 1);
 }
 
+float* Vector2f::data() const
+{
+	return (float*)this;
+}
+
 float Vector2f::dot(const Vector2f& v) const
 {
 	return x() * v.x() + y() * v.y();
@@ -389,6 +394,11 @@ Vector3f Vector3f::UnitZ()
 	return Vector3f(0, 0, 1);
 }
 
+float* Vector3f::data() const
+{
+	return (float*)this;
+}
+
 float Vector3f::dot(const Vector3f& v) const
 {
 	return x() * v.x() + y() * v.y() + z() * v.z();
@@ -547,6 +557,205 @@ Vector3f::operator Block() const
 	return Block((float*)this, 3, 1, 0, 0, 3, 1);
 }
 
+Vector3u::Vector3u(float x, float y, float z)
+	: _x(x), _y(y), _z(z)
+{
+}
+
+Vector3u::Vector3u(const Vector3u& v)
+{
+	_x = v._x;
+	_y = v._y;
+	_z = v._z;
+}
+
+unsigned int& Vector3u::x()
+{
+	return _x;
+}
+
+unsigned int Vector3u::x() const
+{
+	return _x;
+}
+
+unsigned int& Vector3u::y()
+{
+	return _y;
+}
+
+unsigned int Vector3u::y() const
+{
+	return _y;
+}
+
+unsigned int& Vector3u::z()
+{
+	return _z;
+}
+
+unsigned int Vector3u::z() const
+{
+	return _z;
+}
+
+Vector3u Vector3u::Identity()
+{
+	return Vector3u(1, 0, 0);
+}
+
+Vector3u Vector3u::Zero()
+{
+	return Vector3u();
+}
+
+Vector3u Vector3u::Ones()
+{
+	return Vector3u(1, 1, 1);
+}
+
+Vector3u Vector3u::UnitX()
+{
+	return Vector3u(1, 0, 0);
+}
+
+Vector3u Vector3u::UnitY()
+{
+	return Vector3u(0, 1, 0);
+}
+
+Vector3u Vector3u::UnitZ()
+{
+	return Vector3u(0, 0, 1);
+}
+
+unsigned int* Vector3u::data() const
+{
+	return (unsigned int*)this;
+}
+
+float Vector3u::dot(const Vector3u& v) const
+{
+	return Vector3f(_x, _y, _z).dot(Vector3f(v._x, v._y, v._z));
+}
+
+Vector3f Vector3u::cross(const Vector3u& v) const
+{
+	return Vector3f(_x, _y, _z).cross(Vector3f(v._x, v._y, v._z));
+}
+
+float Vector3u::squaredNorm() const
+{
+	return Vector3f(_x, _y, _z).squaredNorm();
+}
+
+float Vector3u::norm() const
+{
+	return Vector3f(_x, _y, _z).norm();
+}
+
+Vector3f Vector3u::normalized() const
+{
+	return Vector3f(_x, _y, _z).normalized();
+}
+
+Vector3u Vector3u::cwiseProduct(const Vector3u& v) const
+{
+	return Vector3u(_x * v._x, _y * v._y, _z * v._z);
+}
+
+Vector3u& Vector3u::operator=(const Vector3u& v)
+{
+	_x = v._x;
+	_y = v._y;
+	_z = v._z;
+	return *this;
+}
+
+Vector3u& Vector3u::operator-()
+{
+	_x = -_x;
+	_y = -_y;
+	_z = -_z;
+	return *this;
+}
+
+Vector3u Vector3u::operator+(const Vector3u& v) const
+{
+	return Vector3u(_x + v._x, _y + v._y, _z + v._z);
+}
+
+Vector3u& Vector3u::operator+=(const Vector3u& v)
+{
+	_x += v._x;
+	_y += v._y;
+	_z += v._z;
+	return *this;
+}
+
+Vector3u Vector3u::operator-(const Vector3u& v) const
+{
+	return Vector3u(_x - v._x, _y - v._y, _z - v._z);
+}
+
+Vector3u& Vector3u::operator-=(const Vector3u& v)
+{
+	_x -= v._x;
+	_y -= v._y;
+	_z -= v._z;
+	return *this;
+}
+
+Vector3u Vector3u::operator*(unsigned int s) const
+{
+	return Vector3u(_x * s, _y * s, _z * s);
+}
+
+Vector3u& Vector3u::operator*=(unsigned int s)
+{
+	_x *= s;
+	_y *= s;
+	_z *= s;
+	return *this;
+}
+
+Vector3u Vector3u::operator/(unsigned int s) const
+{
+	return Vector3u(_x / s, _y / s, _z / s);
+}
+
+Vector3u& Vector3u::operator/=(unsigned int s)
+{
+	_x /= s;
+	_y /= s;
+	_z /= s;
+	return *this;
+}
+
+bool Vector3u::operator==(const Vector3u& v) const
+{
+	return _x == v._x && _y == v._y && _z == v._z;
+}
+
+bool Vector3u::operator!=(const Vector3u& v) const
+{
+	return _x != v._x || _y != v._y || _z != v._z;
+}
+
+unsigned int& Vector3u::operator[](unsigned int index)
+{
+	if (index > 2)
+		throw overflow_error("Vector3f only has 3 elements");
+	return ((unsigned int*)this)[index];
+}
+
+unsigned int Vector3u::operator[](unsigned int index) const
+{
+	if (index > 2)
+		throw overflow_error("Vector3f only has 3 elements");
+	return ((unsigned int*)this)[index];
+}
+
 Vector4f::Vector4f(float x, float y, float z, float w) : XMFLOAT4(x, y, z, w)
 {
 }
@@ -642,6 +851,11 @@ Vector4f Vector4f::UnitZ()
 Vector4f Vector4f::UnitW()
 {
 	return Vector4f(0, 0, 0, 1);
+}
+
+float* Vector4f::data() const
+{
+	return (float*)this;
 }
 
 float Vector4f::dot(const Vector4f& v) const
@@ -801,6 +1015,222 @@ Vector4f::operator Block() const
 	return Block((float*)this, 4, 1, 0, 0, 4, 1);
 }
 
+Vector4u::Vector4u(float x, float y, float z, float w)
+	: _x(x), _y(y), _z(z), _w(w)
+{
+}
+
+Vector4u::Vector4u(const Vector4u& v)
+{
+	_x = v._x;
+	_y = v._y;
+	_z = v._z;
+	_w = v._w;
+}
+
+unsigned int& Vector4u::x()
+{
+	return _x;
+}
+
+unsigned int Vector4u::x() const
+{
+	return _x;
+}
+
+unsigned int& Vector4u::y()
+{
+	return _y;
+}
+
+unsigned int Vector4u::y() const
+{
+	return _y;
+}
+
+unsigned int& Vector4u::z()
+{
+	return _z;
+}
+
+unsigned int Vector4u::z() const
+{
+	return _z;
+}
+
+unsigned int& Vector4u::w()
+{
+	return _w;
+}
+
+unsigned int Vector4u::w() const
+{
+	return _w;
+}
+
+Vector4u Vector4u::Identity()
+{
+	return Vector4u(1, 0, 0, 0);
+}
+
+Vector4u Vector4u::Zero()
+{
+	return Vector4u();
+}
+
+Vector4u Vector4u::Ones()
+{
+	return Vector4u(1, 1, 1, 1);
+}
+
+Vector4u Vector4u::UnitX()
+{
+	return Vector4u(1, 0, 0, 0);
+}
+
+Vector4u Vector4u::UnitY()
+{
+	return Vector4u(0, 1, 0, 0);
+}
+
+Vector4u Vector4u::UnitZ()
+{
+	return Vector4u(0, 0, 1, 0);
+}
+
+Vector4u Vector4u::UnitW()
+{
+	return Vector4u(0, 0, 0, 1);
+}
+
+unsigned int* Vector4u::data() const
+{
+	return (unsigned int*)this;
+}
+
+float Vector4u::dot(const Vector4u& v) const
+{
+	return Vector4f(_x, _y, _z, _w).dot(Vector4f(v._x, v._y, v._z, _w));
+}
+
+float Vector4u::squaredNorm() const
+{
+	return Vector4f(_x, _y, _z, _w).squaredNorm();
+}
+
+float Vector4u::norm() const
+{
+	return Vector4f(_x, _y, _z, _w).norm();
+}
+
+Vector4f Vector4u::normalized() const
+{
+	return Vector4f(_x, _y, _z, _w).normalized();
+}
+
+Vector4u Vector4u::cwiseProduct(const Vector4u& v) const
+{
+	return Vector4u(_x * v._x, _y * v._y, _z * v._z, _w * v._w);
+}
+
+Vector4u& Vector4u::operator=(const Vector4u& v)
+{
+	_x = v._x;
+	_y = v._y;
+	_z = v._z;
+	_w = v._w;
+	return *this;
+}
+
+Vector4u& Vector4u::operator-()
+{
+	_x = -_x;
+	_y = -_y;
+	_z = -_z;
+	_w = -_w;
+	return *this;
+}
+
+Vector4u Vector4u::operator+(const Vector4u& v) const
+{
+	return Vector4u(_x + v._x, _y + v._y, _z + v._z, _w + v._w);
+}
+
+Vector4u& Vector4u::operator+=(const Vector4u& v)
+{
+	_x += v._x;
+	_y += v._y;
+	_z += v._z;
+	_w += v._w;
+	return *this;
+}
+
+Vector4u Vector4u::operator-(const Vector4u& v) const
+{
+	return Vector4u(_x - v._x, _y - v._y, _z - v._z, _w - v._w);
+}
+
+Vector4u& Vector4u::operator-=(const Vector4u& v)
+{
+	_x -= v._x;
+	_y -= v._y;
+	_z -= v._z;
+	_w -= v._w;
+	return *this;
+}
+
+Vector4u Vector4u::operator*(unsigned int s) const
+{
+	return Vector4u(_x * s, _y * s, _z * s, _w * s);
+}
+
+Vector4u& Vector4u::operator*=(unsigned int s)
+{
+	_x *= s;
+	_y *= s;
+	_z *= s;
+	_w *= s;
+	return *this;
+}
+
+Vector4u Vector4u::operator/(unsigned int s) const
+{
+	return Vector4u(_x / s, _y / s, _z / s, _w / s);
+}
+
+Vector4u& Vector4u::operator/=(unsigned int s)
+{
+	_x /= s;
+	_y /= s;
+	_z /= s;
+	_w /= s;
+	return *this;
+}
+
+bool Vector4u::operator==(const Vector4u& v) const
+{
+	return _x == v._x && _y == v._y && _z == v._z && _w == v._w;
+}
+
+bool Vector4u::operator!=(const Vector4u& v) const
+{
+	return _x != v._x || _y != v._y || _z != v._z || _w != v._w;
+}
+
+unsigned int& Vector4u::operator[](unsigned int index)
+{
+	if (index > 3)
+		throw overflow_error("Vector4f only has 4 elements");
+	return ((unsigned int*)this)[index];
+}
+
+unsigned int Vector4u::operator[](unsigned int index) const
+{
+	if (index > 3)
+		throw overflow_error("Vector4f only has 4 elements");
+	return ((unsigned int*)this)[index];
+}
+
 Matrix3f::Matrix3f() : XMFLOAT3X3()
 {
 }
@@ -837,6 +1267,20 @@ Matrix3f Matrix3f::Identity()
 	);
 }
 
+Matrix3f Matrix3f::Zero()
+{
+	return XMFLOAT3X3(
+		0.f, 0.f, 0.f,
+		0.f, 0.f, 0.f,
+		0.f, 0.f, 0.f
+	);
+}
+
+float* Matrix3f::data() const
+{
+	return (float*)this;
+}
+
 Matrix3f Matrix3f::inverse() const
 {
 	XMFLOAT3X3 out;
@@ -851,7 +1295,7 @@ Vector3f Matrix3f::eulerAngles() const
 	float m00 = (*this)(0, 0), m01 = (*this)(0, 1), m02 = (*this)(0, 2);
 	float d = sqrt(m00 * m00 + m01 * m01);
 	if (ox > 0) {
-		ox -= PI;
+		ox -= 3.1415926535897932346f;
 		oy = atan2(-m02, -d);
 	}
 	else
@@ -998,6 +1442,21 @@ Matrix4f Matrix4f::Identity()
 		0.f, 0.f, 1.f, 0.f,
 		0.f, 0.f, 0.f, 1.f
 	);
+}
+
+Matrix4f Matrix4f::Zero()
+{
+	return XMFLOAT4X4(
+		0.f, 0.f, 0.f, 0.f,
+		0.f, 0.f, 0.f, 0.f,
+		0.f, 0.f, 0.f, 0.f,
+		0.f, 0.f, 0.f, 0.f
+	);
+}
+
+float* Matrix4f::data() const
+{
+	return (float*)this;
 }
 
 Matrix4f Matrix4f::inverse() const

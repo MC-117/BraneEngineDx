@@ -3,6 +3,8 @@
 #define _CAMERARENDER_H_
 
 #include "Render.h"
+#include "Material.h"
+#include "RenderTarget.h"
 
 class CameraRender : public Render
 {

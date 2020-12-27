@@ -5,9 +5,6 @@
 #include "Object.h"
 #include "Shape.h"
 
-#if ENABLE_PHYSICS
-struct ContactInfo;
-class RigidBody;
 enum PhysicalType
 {
 	STATIC, DYNAMIC, NOCOLLISIOIN
@@ -21,6 +18,10 @@ struct PhysicalMaterial
 	PhysicalMaterial(float mass = 0, PhysicalType physicalType = STATIC)
 		: mass(mass), physicalType(physicalType) { }
 };
+
+#if ENABLE_PHYSICS
+struct ContactInfo;
+class RigidBody;
 #endif
 
 class Transform : public Object

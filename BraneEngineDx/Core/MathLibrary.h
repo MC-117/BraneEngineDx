@@ -1,7 +1,7 @@
 #pragma once
 #ifndef _MATHLIBRARY_H_
 
-#include "Config.h"
+#include <DirectXMath.h>
 
 /*
 * This engine task is based on my own game engine (BraneEngine).
@@ -23,7 +23,7 @@ struct AffineTransform;
 
 struct Block
 {
-	float* d = NULL;
+	float* d = nullptr;
 	unsigned int rowCount = 0, colCount = 0;
 	unsigned int rowStart = 0, rowNum = 0;
 	unsigned int colStart = 0, colNum = 0;
@@ -51,12 +51,12 @@ struct Block
 	Block& operator=(const Block& b);
 };
 
-struct Vector2f : protected XMFLOAT2
+struct Vector2f : protected DirectX::XMFLOAT2
 {
 	Vector2f(float x = 0, float y = 0);
 	Vector2f(const Vector2f& v);
 	Vector2f(const Block& b);
-	Vector2f(const XMFLOAT2& xmf2);
+	Vector2f(const DirectX::XMFLOAT2& xmf2);
 
 	float& x();
 	float x() const;
@@ -69,6 +69,8 @@ struct Vector2f : protected XMFLOAT2
 	static Vector2f Ones();
 	static Vector2f UnitX();
 	static Vector2f UnitY();
+
+	float* data() const;
 
 	float dot(const Vector2f& v) const;
 	Vector2f cross(const Vector2f& v) const;
@@ -110,12 +112,12 @@ struct Vector2f : protected XMFLOAT2
 	operator Block() const;
 };
 
-struct Vector3f : protected XMFLOAT3
+struct Vector3f : protected DirectX::XMFLOAT3
 {
 	Vector3f(float x = 0, float y = 0, float z = 0);
 	Vector3f(const Vector3f& v);
 	Vector3f(const Block& b);
-	Vector3f(const XMFLOAT3& xmf3);
+	Vector3f(const DirectX::XMFLOAT3& xmf3);
 
 	float& x();
 	float x() const;
@@ -132,6 +134,8 @@ struct Vector3f : protected XMFLOAT3
 	static Vector3f UnitX();
 	static Vector3f UnitY();
 	static Vector3f UnitZ();
+
+	float* data() const;
 
 	float dot(const Vector3f& v) const;
 	Vector3f cross(const Vector3f& v) const;
@@ -173,12 +177,69 @@ struct Vector3f : protected XMFLOAT3
 	operator Block() const;
 };
 
-struct Vector4f : protected XMFLOAT4
+struct Vector3u
+{
+protected:
+	unsigned int _x = 0, _y = 0, _z = 0;
+public:
+	Vector3u(float x = 0, float y = 0, float z = 0);
+	Vector3u(const Vector3u& v);
+
+	unsigned int& x();
+	unsigned int x() const;
+
+	unsigned int& y();
+	unsigned int y() const;
+
+	unsigned int& z();
+	unsigned int z() const;
+
+	static Vector3u Identity();
+	static Vector3u Zero();
+	static Vector3u Ones();
+	static Vector3u UnitX();
+	static Vector3u UnitY();
+	static Vector3u UnitZ();
+
+	unsigned int* data() const;
+
+	float dot(const Vector3u& v) const;
+	Vector3f cross(const Vector3u& v) const;
+	float squaredNorm() const;
+	float norm() const;
+	Vector3f normalized() const;
+
+	Vector3u cwiseProduct(const Vector3u& v) const;
+
+	Vector3u& operator=(const Vector3u& v);
+
+	Vector3u& operator-();
+
+	Vector3u operator+(const Vector3u& v) const;
+	Vector3u& operator+=(const Vector3u& v);
+
+	Vector3u operator-(const Vector3u& v) const;
+	Vector3u& operator-=(const Vector3u& v);
+
+	Vector3u operator*(unsigned int s) const;
+	Vector3u& operator*=(unsigned int s);
+
+	Vector3u operator/(unsigned int s) const;
+	Vector3u& operator/=(unsigned int s);
+
+	bool operator==(const Vector3u& v) const;
+	bool operator!=(const Vector3u& v) const;
+
+	unsigned int& operator[](unsigned int index);
+	unsigned int operator[](unsigned int index) const;
+};
+
+struct Vector4f : protected DirectX::XMFLOAT4
 {
 	Vector4f(float x = 0, float y = 0, float z = 0, float w = 0);
 	Vector4f(const Vector4f& v);
 	Vector4f(const Block& b);
-	Vector4f(const XMFLOAT4& xmf4);
+	Vector4f(const DirectX::XMFLOAT4& xmf4);
 
 	float& x();
 	float x() const;
@@ -199,6 +260,8 @@ struct Vector4f : protected XMFLOAT4
 	static Vector4f UnitY();
 	static Vector4f UnitZ();
 	static Vector4f UnitW();
+
+	float* data() const;
 
 	float dot(const Vector4f& v) const;
 	float squaredNorm() const;
@@ -239,16 +302,79 @@ struct Vector4f : protected XMFLOAT4
 	operator Block() const;
 };
 
-struct Matrix3f : protected XMFLOAT3X3
+struct Vector4u
+{
+protected:
+	unsigned int _x = 0, _y = 0, _z = 0, _w = 0;
+public:
+	Vector4u(float x = 0, float y = 0, float z = 0, float w = 0);
+	Vector4u(const Vector4u& v);
+
+	unsigned int& x();
+	unsigned int x() const;
+
+	unsigned int& y();
+	unsigned int y() const;
+
+	unsigned int& z();
+	unsigned int z() const;
+
+	unsigned int& w();
+	unsigned int w() const;
+
+	static Vector4u Identity();
+	static Vector4u Zero();
+	static Vector4u Ones();
+	static Vector4u UnitX();
+	static Vector4u UnitY();
+	static Vector4u UnitZ();
+	static Vector4u UnitW();
+
+	unsigned int* data() const;
+
+	float dot(const Vector4u& v) const;
+	float squaredNorm() const;
+	float norm() const;
+	Vector4f normalized() const;
+
+	Vector4u cwiseProduct(const Vector4u& v) const;
+
+	Vector4u& operator=(const Vector4u& v);
+
+	Vector4u& operator-();
+
+	Vector4u operator+(const Vector4u& v) const;
+	Vector4u& operator+=(const Vector4u& v);
+
+	Vector4u operator-(const Vector4u& v) const;
+	Vector4u& operator-=(const Vector4u& v);
+
+	Vector4u operator*(unsigned int s) const;
+	Vector4u& operator*=(unsigned int s);
+
+	Vector4u operator/(unsigned int s) const;
+	Vector4u& operator/=(unsigned int s);
+
+	bool operator==(const Vector4u& v) const;
+	bool operator!=(const Vector4u& v) const;
+
+	unsigned int& operator[](unsigned int index);
+	unsigned int operator[](unsigned int index) const;
+};
+
+struct Matrix3f : protected DirectX::XMFLOAT3X3
 {
 	Matrix3f();
 	Matrix3f(const Matrix3f& m);
 	Matrix3f(const float* pArray);
 	Matrix3f(const Block& b);
-	Matrix3f(const XMFLOAT3X3& xmf3x3);
-	Matrix3f(const XMMATRIX& xmm);
+	Matrix3f(const DirectX::XMFLOAT3X3& xmf3x3);
+	Matrix3f(const DirectX::XMMATRIX& xmm);
 
 	static Matrix3f Identity();
+	static Matrix3f Zero();
+
+	float* data() const;
 
 	Matrix3f inverse() const;
 	Vector3f eulerAngles() const;
@@ -277,16 +403,19 @@ struct Matrix3f : protected XMFLOAT3X3
 	operator Block() const;
 };
 
-struct Matrix4f : protected XMFLOAT4X4
+struct Matrix4f : protected DirectX::XMFLOAT4X4
 {
 	Matrix4f();
 	Matrix4f(const Matrix4f& m);
 	Matrix4f(const float* pArray);
 	Matrix4f(const Block& b);
-	Matrix4f(const XMFLOAT4X4& xmf4x4);
-	Matrix4f(const XMMATRIX& xmm);
+	Matrix4f(const DirectX::XMFLOAT4X4& xmf4x4);
+	Matrix4f(const DirectX::XMMATRIX& xmm);
 
 	static Matrix4f Identity();
+	static Matrix4f Zero();
+
+	float* data() const;
 
 	Matrix4f inverse() const;
 	bool decompose(Vector3f& pos, Quaternionf& rot, Vector3f& sca) const;
@@ -316,7 +445,7 @@ struct Quaternionf : public Vector4f
 {
 	Quaternionf(float w = 0, float x = 0, float y = 0, float z = 0);
 	Quaternionf(const Quaternionf& q);
-	Quaternionf(const XMFLOAT4& xmf4);
+	Quaternionf(const DirectX::XMFLOAT4& xmf4);
 	Quaternionf(const Matrix3f& m);
 
 	static Quaternionf Identity();

@@ -19,8 +19,9 @@ public:
 	DX11GPUBuffer(const DX11Context& context, GPUBufferDesc& desc);
 	virtual ~DX11GPUBuffer();
 
+	virtual unsigned int bind();
 	virtual unsigned int resize(unsigned int size);
-	virtual unsigned int release();
+	virtual void release();
 	virtual unsigned int bindBase(unsigned int index);
 	virtual unsigned int uploadSubData(unsigned int first, unsigned int size, void* data);
 };

@@ -27,6 +27,7 @@ struct Texture2DInfo
 	TexFilter magFilterType;
 	TexInternalType internalType = TIT_Default;
 	Color borderColor = { 0, 0, 0, 0 };
+	unsigned int sampleCount = 1;
 
 	Texture2DInfo(
 		TexWrapType wrapSType = TW_Repeat,
@@ -34,13 +35,15 @@ struct Texture2DInfo
 		TexFilter minFilterType = TF_Linear,
 		TexFilter magFilterType = TF_Linear,
 		TexInternalType internalType = TIT_Default,
-		Color borderColor = { 0, 0, 0, 0 }) :
+		Color borderColor = { 0, 0, 0, 0 },
+		unsigned int sampleCount = 1) :
 		wrapSType(wrapSType),
 		wrapTType(wrapTType),
 		minFilterType(minFilterType),
 		magFilterType(magFilterType),
 		internalType(internalType),
-		borderColor(borderColor) { }
+		borderColor(borderColor),
+		sampleCount(sampleCount) { }
 
 	Texture2DInfo(const Texture2DInfo& info)
 	{

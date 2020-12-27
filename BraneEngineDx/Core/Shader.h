@@ -27,8 +27,6 @@ public:
 	bool isValid() const;
 	bool isComputable() const;
 
-	static int getAttributeIndex(unsigned int programId, const string& name);
-
 	bool setMeshStageAdapter(ShaderAdapter& adapter);
 	ShaderAdapter* getMeshStageAdapter();
 	bool addShaderAdapter(ShaderAdapter& adapter);

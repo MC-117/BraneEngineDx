@@ -67,12 +67,6 @@ void CameraRender::render(RenderInfo& info)
 {
 	if (isValid() && !material.isNull()) {
 		renderTarget.SetMultisampleFrame();
-
 		renderTarget.setTexture(material);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport(0, 0, size.x , size.y);
-		material.processShader(projectionViewMat, transformMat, info.lightSpaceMat, cameraLoc, cameraDir);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}
 }
