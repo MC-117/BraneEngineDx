@@ -234,6 +234,42 @@
     <ClInclude Include="Vendors\DX11\DX11SkeletonMeshData.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\RenderPool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCommandList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\GUI\GUI.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\GUI\UIControl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\GUI\UIWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\PointLight.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DirectLight.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Light.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ShadowCameraRender.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ShadowCamera.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendors\DX11\DX11RenderExecution.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\IRenderExecution.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -390,6 +426,42 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Vendors\DX11\DX11SkeletonMeshData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCommandList.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderPool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\GUI\GUI.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\GUI\UIControl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\GUI\UIWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\PointLight.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Directlight.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Light.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ShadowCamera.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ShadowCameraRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendors\DX11\DX11RenderExecution.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\IRenderExecution.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

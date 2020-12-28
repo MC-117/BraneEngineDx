@@ -173,6 +173,30 @@ void RenderTarget::resize(unsigned int width, unsigned int height)
 	vendorRenderTarget->resize(width, height);
 }
 
+void RenderTarget::clearColor(const Color& color)
+{
+	newVendorRenderTarget();
+	vendorRenderTarget->clearColor(color);
+}
+
+void RenderTarget::clearColors(const vector<Color>& colors)
+{
+	newVendorRenderTarget();
+	vendorRenderTarget->clearColors(colors);
+}
+
+void RenderTarget::clearDepth(float depth)
+{
+	newVendorRenderTarget();
+	vendorRenderTarget->clearDepth(depth);
+}
+
+void RenderTarget::clearStencil(unsigned char stencil)
+{
+	newVendorRenderTarget();
+	vendorRenderTarget->clearStencil(stencil);
+}
+
 void RenderTarget::newVendorRenderTarget()
 {
 	if (vendorRenderTarget == NULL) {

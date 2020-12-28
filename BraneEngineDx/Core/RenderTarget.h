@@ -32,7 +32,10 @@ public:
 	virtual void SetMultisampleFrame();
 	unsigned int getFBO();
 	virtual void resize(unsigned int width, unsigned int height);
-
+	virtual void clearColor(const Color& color);
+	virtual void clearColors(const vector<Color>& colors);
+	virtual void clearDepth(float depth);
+	virtual void clearStencil(unsigned char stencil);
 protected:
 	RenderTargetDesc desc;
 	IRenderTarget* vendorRenderTarget = NULL;

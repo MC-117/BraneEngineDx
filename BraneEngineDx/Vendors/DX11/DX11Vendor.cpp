@@ -254,6 +254,69 @@ void DX11Vendor::cleanupRenderTarget()
 		}
 }
 
+IRenderExecution* DX11Vendor::newRenderExecution()
+{
+	return new DX11RenderExecution(dxContext);
+}
+
+void DX11Vendor::setRenderPreState()
+{
+	dxContext.deviceContext->OMSetBlendState(blendOffWriteOff, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOnTestOnLEqual, 0);
+}
+
+void DX11Vendor::setRenderGeomtryState()
+{
+	dxContext.deviceContext->OMSetBlendState(blendOffWriteOn, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOnTestOnLEqual, 0);
+}
+
+void DX11Vendor::setRenderOpaqueState()
+{
+	dxContext.deviceContext->OMSetBlendState(blendOffWriteOn, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOnTestOnLEqual, 0);
+}
+
+void DX11Vendor::setRenderAlphaState()
+{
+	dxContext.deviceContext->OMSetBlendState(blendOffWriteOnAlphaTest, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOnTestOnLEqual, 0);
+}
+
+void DX11Vendor::setRenderTransparentState()
+{
+	dxContext.deviceContext->OMSetBlendState(blendOnWriteOn, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOffTestOnLEqual, 0);
+}
+
+void DX11Vendor::setRenderOverlayState()
+{
+	dxContext.deviceContext->OMSetBlendState(blendOnWriteOn, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOffTestOffLEqual, 0);
+}
+
+void DX11Vendor::setCullState(CullType type)
+{
+	if (type == Cull_Back)
+		dxContext.deviceContext->RSSetState(rasterizerCullBack);
+	else if (type == Cull_Front)
+		dxContext.deviceContext->RSSetState(rasterizerCullFront);
+	else
+		dxContext.deviceContext->RSSetState(rasterizerCullOff);
+}
+
+void DX11Vendor::setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h)
+{
+	D3D11_VIEWPORT vp;
+	vp.TopLeftX = x;
+	vp.TopLeftY = y;
+	vp.Width = w;
+	vp.Height = h;
+	vp.MinDepth = 0;
+	vp.MaxDepth = 1;
+	dxContext.deviceContext->RSSetViewports(1, &vp);
+}
+
 void DX11Vendor::resizeSwapChain(HWND hWnd, int width, int height)
 {
 	DXGI_SWAP_CHAIN_DESC sd;

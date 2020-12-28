@@ -3,6 +3,7 @@
 #ifdef VENDOR_USE_DX11
 
 unsigned int DX11RenderTarget::nextDxFrameID = 1;
+DX11RenderTarget* DX11RenderTarget::currentRenderTarget = NULL;
 
 DX11RenderTarget::DX11RenderTarget(const DX11Context& context, RenderTargetDesc& desc)
     : dxContext(context), IRenderTarget(desc)
@@ -27,9 +28,12 @@ unsigned int DX11RenderTarget::bindFrame()
 	if (!desc.inited) {
 		resize(desc.width, desc.height);
 		desc.inited = true;
+		desc.frameID = dxFrameID;
 	}
+	if (currentRenderTarget == this)
+		return desc.frameID;
 	dxContext.deviceContext->OMSetRenderTargets(dx11RTVs.size(), dx11RTVs.data(), dx11DSV);
-	desc.frameID = dxFrameID;
+	currentRenderTarget = this;
     return desc.frameID;
 }
 
@@ -93,6 +97,37 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 
 void DX11RenderTarget::SetMultisampleFrame()
 {
+}
+
+void DX11RenderTarget::clearColor(const Color& color)
+{
+	if (dx11RTVs.empty())
+		return;
+	auto rt = dx11RTVs.front();
+	if (rt != NULL)
+		dxContext.deviceContext->ClearRenderTargetView(rt, (const float*)&color);
+}
+
+void DX11RenderTarget::clearColors(const vector<Color>& colors)
+{
+	for (int i = 0; i < dx11RTVs.size(); i++) {
+		if (i >= colors.size())
+			break;
+		if (dx11RTVs[i] != NULL)
+			dxContext.deviceContext->ClearRenderTargetView(dx11RTVs[i], (const float*)&colors[i]);
+	}
+}
+
+void DX11RenderTarget::clearDepth(float depth)
+{
+	if (dx11DSV != NULL)
+		dxContext.deviceContext->ClearDepthStencilView(dx11DSV, D3D11_CLEAR_DEPTH, depth, 0);
+}
+
+void DX11RenderTarget::clearStencil(unsigned char stencil)
+{
+	if (dx11DSV != NULL)
+		dxContext.deviceContext->ClearDepthStencilView(dx11DSV, D3D11_CLEAR_STENCIL, 0, stencil);
 }
 
 #endif // VENDOR_USE_DX11

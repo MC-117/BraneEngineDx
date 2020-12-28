@@ -15,6 +15,7 @@
 #include "DX11GPUBuffer.h"
 #include "DX11MeshData.h"
 #include "DX11SkeletonMeshData.h"
+#include "DX11RenderExecution.h"
 
 class DX11Vendor : public IVendor
 {
@@ -46,6 +47,17 @@ public:
 	virtual MeshPartDesc newMeshPart(unsigned int vertCount, unsigned int elementCount);
 	virtual SkeletonMeshPartDesc newSkeletonMeshPart(unsigned int vertCount, unsigned int elementCount,
 		unsigned int boneCount, unsigned int morphVertCount, unsigned int morphCount);
+	virtual IRenderExecution* newRenderExecution();
+
+	virtual void setRenderPreState();
+	virtual void setRenderGeomtryState();
+	virtual void setRenderOpaqueState();
+	virtual void setRenderAlphaState();
+	virtual void setRenderTransparentState();
+	virtual void setRenderOverlayState();
+	virtual void setCullState(CullType type);
+	virtual void setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+
 protected:
 
 	bool enableDebugLayer = true;
@@ -56,11 +68,29 @@ protected:
 
 	set<MeshData*> MeshDataCollection;
 	DX11MeshData StaticMeshData;
+	
+	ID3D11RasterizerState* rasterizerCullOff = NULL;
+	ID3D11RasterizerState* rasterizerCullBack = NULL;
+	ID3D11RasterizerState* rasterizerCullFront = NULL;
+	                                                            // Render Order:
+	ID3D11BlendState* blendOffWriteOff = NULL;                  //    0 - 500
+	ID3D11BlendState* blendOffWriteOn = NULL;                   //  500 - 2449
+	ID3D11BlendState* blendOffWriteOnAlphaTest = NULL;          // 2450 - 2499
+	ID3D11BlendState* blendOnWriteOn = NULL;                    // 2500 -
+
+	ID3D11DepthStencilState* depthWriteOnTestOnLEqual = NULL;   //    0 - 2499
+	ID3D11DepthStencilState* depthWriteOffTestOnLEqual = NULL;  // 2500 - 4999
+	ID3D11DepthStencilState* depthWriteOffTestOffLEqual = NULL; // 5000 - 
+
+	Color clearColor;
 
 	bool createDevice(HWND hWnd, unsigned int width, unsigned int height);
 	void cleanupDevice();
 	void createRenderTarget();
 	void cleanupRenderTarget();
+	// TO-DO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	void createRenderStates();
+	void cleanupRenderStates();
 	void resizeSwapChain(HWND hWnd, int width, int height);
 };
 

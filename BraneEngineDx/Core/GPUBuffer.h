@@ -11,6 +11,7 @@ public:
 	~GPUBuffer();
 
 	unsigned int size() const;
+	unsigned int capacity() const;
 	bool empty() const;
 
 	unsigned int bind();
