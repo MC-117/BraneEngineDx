@@ -129,6 +129,12 @@ unsigned int DX11ShaderProgram::bind()
 {
 	if (currentProgram == programId)
 		return programId;
+	dxContext.deviceContext->VSSetShader(NULL, NULL, 0);
+	dxContext.deviceContext->PSSetShader(NULL, NULL, 0);
+	dxContext.deviceContext->GSSetShader(NULL, NULL, 0);
+	dxContext.deviceContext->CSSetShader(NULL, NULL, 0);
+	dxContext.deviceContext->HSSetShader(NULL, NULL, 0);
+	dxContext.deviceContext->DSSetShader(NULL, NULL, 0);
 	for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e; b++) {
 		switch (b->first)
 		{

@@ -29,3 +29,15 @@ void IRenderTarget::resize(unsigned int width, unsigned int height)
 void IRenderTarget::SetMultisampleFrame()
 {
 }
+
+void IRenderTarget::clearColor(const Color& color)
+{
+}
+
+void IRenderTarget::clearColors(const vector<Color>& colors)
+{
+}
+
+void IRenderTarget::clearDepthStencil(float depth, unsigned int stencil)
+{
+}

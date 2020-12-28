@@ -162,6 +162,21 @@ enum TransformSpace {
 	WORLD, LOCAL, RELATE
 };
 
+struct DrawArraysIndirectCommand {
+	unsigned int count;
+	unsigned int instanceCount;
+	unsigned int first;
+	unsigned int baseInstance;
+};
+
+struct DrawElementsIndirectCommand {
+	unsigned int count;
+	unsigned int instanceCount;
+	unsigned int firstIndex;
+	unsigned int baseVertex;
+	unsigned int baseInstance;
+};
+
 template<class T>
 struct MatAttribute
 {

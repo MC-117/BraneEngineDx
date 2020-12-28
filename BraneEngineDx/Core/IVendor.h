@@ -8,6 +8,7 @@
 #include "IRenderTarget.h"
 #include "IGPUBuffer.h"
 #include "SkeletonMeshData.h"
+#include "IRenderExecution.h"
 
 struct EngineConfig
 {
@@ -57,6 +58,11 @@ type##Register::type##Register()\
 	VendorManager::getInstance().regist(name, []()->IVendor* { return new type(); });\
 }\
 
+enum CullType
+{
+	Cull_Off, Cull_Back, Cull_Front
+};
+
 class IVendor
 {
 public:
@@ -89,6 +95,16 @@ public:
 	virtual MeshPartDesc newMeshPart(unsigned int vertCount, unsigned int elementCount) = 0;
 	virtual SkeletonMeshPartDesc newSkeletonMeshPart(unsigned int vertCount, unsigned int elementCount,
 		unsigned int boneCount, unsigned int morphVertCount, unsigned int morphCount) = 0;
+	virtual IRenderExecution* newRenderExecution() = 0;
+
+	virtual void setRenderPreState() = 0;
+	virtual void setRenderGeomtryState() = 0;
+	virtual void setRenderOpaqueState() = 0;
+	virtual void setRenderAlphaState() = 0;
+	virtual void setRenderTransparentState() = 0;
+	virtual void setRenderOverlayState() = 0;
+	virtual void setCullState(CullType type) = 0;
+	virtual void setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h) = 0;
 protected:
 	string name;
 };

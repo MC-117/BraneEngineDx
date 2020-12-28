@@ -40,6 +40,11 @@ public:
 	virtual unsigned int bindFrame();
 	virtual void resize(unsigned int width, unsigned int height);
 	virtual void SetMultisampleFrame();
+
+	virtual void clearColor(const Color& color);
+	virtual void clearColors(const vector<Color>& colors);
+	virtual void clearDepth(float depth);
+	virtual void clearStencil(unsigned int stencil);
 };
 
 #endif // !_IRENDERTARGET_H_

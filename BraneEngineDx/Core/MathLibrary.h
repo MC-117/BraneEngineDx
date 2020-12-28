@@ -14,8 +14,11 @@
 */
 
 struct Vector2f;
+struct Vector2u;
 struct Vector3f;
+struct Vector3u;
 struct Vector4f;
+struct Vector4u;
 struct Matrix3f;
 struct Matrix4f;
 struct Quaternionf;
@@ -110,6 +113,59 @@ struct Vector2f : protected DirectX::XMFLOAT2
 
 	operator Block();
 	operator Block() const;
+};
+
+struct Vector2u
+{
+protected:
+	unsigned int _x = 0, _y = 0;
+public:
+	Vector2u(float x = 0, float y = 0);
+	Vector2u(const Vector2u& v);
+
+	unsigned int& x();
+	unsigned int x() const;
+
+	unsigned int& y();
+	unsigned int y() const;
+
+	static Vector2u Identity();
+	static Vector2u Zero();
+	static Vector2u Ones();
+	static Vector2u UnitX();
+	static Vector2u UnitY();
+
+	unsigned int* data() const;
+
+	float dot(const Vector2u& v) const;
+	Vector2f cross(const Vector2u& v) const;
+	float squaredNorm() const;
+	float norm() const;
+	Vector2f normalized() const;
+
+	Vector2u cwiseProduct(const Vector2u& v) const;
+
+	Vector2u& operator=(const Vector2u& v);
+
+	Vector2u& operator-();
+
+	Vector2u operator+(const Vector2u& v) const;
+	Vector2u& operator+=(const Vector2u& v);
+
+	Vector2u operator-(const Vector2u& v) const;
+	Vector2u& operator-=(const Vector2u& v);
+
+	Vector2u operator*(unsigned int s) const;
+	Vector2u& operator*=(unsigned int s);
+
+	Vector2u operator/(unsigned int s) const;
+	Vector2u& operator/=(unsigned int s);
+
+	bool operator==(const Vector2u& v) const;
+	bool operator!=(const Vector2u& v) const;
+
+	unsigned int& operator[](unsigned int index);
+	unsigned int operator[](unsigned int index) const;
 };
 
 struct Vector3f : protected DirectX::XMFLOAT3

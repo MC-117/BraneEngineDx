@@ -19,6 +19,11 @@ unsigned int GPUBuffer::size() const
 	return desc.size;
 }
 
+unsigned int GPUBuffer::capacity() const
+{
+	return desc.capacity;
+}
+
 bool GPUBuffer::empty() const
 {
 	return desc.size == 0;

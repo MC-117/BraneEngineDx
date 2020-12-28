@@ -13,6 +13,7 @@ class DX11RenderTarget : public IRenderTarget
 {
 public:
 	static unsigned int nextDxFrameID;
+	static DX11RenderTarget* currentRenderTarget;
 	unsigned int dxFrameID = 0;
 	const DX11Context& dxContext;
 	vector<ID3D11RenderTargetView*> dx11RTVs;
@@ -27,6 +28,10 @@ public:
 	virtual unsigned int bindFrame();
 	virtual void resize(unsigned int width, unsigned int height);
 	virtual void SetMultisampleFrame();
+	virtual void clearColor(const Color& color);
+	virtual void clearColors(const vector<Color>& colors);
+	virtual void clearDepth(float depth);
+	virtual void clearStencil(unsigned char stencil);
 };
 
 #endif // !_DX11RENDERTARGET_H_

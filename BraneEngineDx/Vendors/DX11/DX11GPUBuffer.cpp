@@ -39,7 +39,7 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 
 		if (desc.type == GB_Storage) {
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-			srvDesc.Format = DXGI_FORMAT_R32G32B32A32_TYPELESS;
+			srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 			srvDesc.Buffer.FirstElement = 0;
 			srvDesc.Buffer.NumElements = bd.ByteWidth;
@@ -98,12 +98,9 @@ unsigned int DX11GPUBuffer::bindBase(unsigned int index)
 
 unsigned int DX11GPUBuffer::uploadSubData(unsigned int first, unsigned int size, void* data)
 {
-	if (first + size > desc.size) {
-		throw overflow_error("GL buffer access overflow");
-	}
-	bind();
+	resize(size);
 	D3D11_MAPPED_SUBRESOURCE mpd;
-	dxContext.deviceContext->Map(dx11Buffer, 0, D3D11_MAP_WRITE, 0, &mpd);
+	dxContext.deviceContext->Map(dx11Buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mpd);
 	memcpy_s((char*)mpd.pData + first * desc.cellSize, size * desc.cellSize, data, size * desc.cellSize);
 	dxContext.deviceContext->Unmap(dx11Buffer, 0);
     return desc.id;

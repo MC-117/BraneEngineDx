@@ -1,6 +1,9 @@
 #include "MathLibrary.h"
+#include <iostream>
 
 namespace dx = DirectX;
+using namespace DirectX;
+using namespace std;
 
 Block::Block(float* d, unsigned int rowCount, unsigned int colCount, 
 	unsigned int rowStart, unsigned int colStart,
@@ -311,6 +314,183 @@ Vector2f::operator Block()
 Vector2f::operator Block() const
 {
 	return Block((float*)this, 2, 1, 0, 0, 2, 1);
+}
+
+Vector2u::Vector2u(float x, float y)
+	: _x(x), _y(y)
+{
+}
+
+Vector2u::Vector2u(const Vector2u& v)
+{
+	_x = v._x;
+	_y = v._y;
+}
+
+unsigned int& Vector2u::x()
+{
+	return _x;
+}
+
+unsigned int Vector2u::x() const
+{
+	return _x;
+}
+
+unsigned int& Vector2u::y()
+{
+	return _y;
+}
+
+unsigned int Vector2u::y() const
+{
+	return _y;
+}
+
+Vector2u Vector2u::Identity()
+{
+	return Vector2u(1, 0);
+}
+
+Vector2u Vector2u::Zero()
+{
+	return Vector2u();
+}
+
+Vector2u Vector2u::Ones()
+{
+	return Vector2u(1, 1);
+}
+
+Vector2u Vector2u::UnitX()
+{
+	return Vector2u(1, 0);
+}
+
+Vector2u Vector2u::UnitY()
+{
+	return Vector2u(0, 1);
+}
+
+unsigned int* Vector2u::data() const
+{
+	return (unsigned int*)this;
+}
+
+float Vector2u::dot(const Vector2u& v) const
+{
+	return Vector2f(_x, _y).dot(Vector2f(v._x, v._y));
+}
+
+Vector2f Vector2u::cross(const Vector2u& v) const
+{
+	return Vector2f(_x, _y).cross(Vector2f(v._x, v._y));
+}
+
+float Vector2u::squaredNorm() const
+{
+	return Vector2f(_x, _y).squaredNorm();
+}
+
+float Vector2u::norm() const
+{
+	return Vector2f(_x, _y).norm();
+}
+
+Vector2f Vector2u::normalized() const
+{
+	return Vector2f(_x, _y).normalized();
+}
+
+Vector2u Vector2u::cwiseProduct(const Vector2u& v) const
+{
+	return Vector2u(_x * v._x, _y * v._y);
+}
+
+Vector2u& Vector2u::operator=(const Vector2u& v)
+{
+	_x = v._x;
+	_y = v._y;
+	return *this;
+}
+
+Vector2u& Vector2u::operator-()
+{
+	_x = -_x;
+	_y = -_y;
+	return *this;
+}
+
+Vector2u Vector2u::operator+(const Vector2u& v) const
+{
+	return Vector2u(_x + v._x, _y + v._y);
+}
+
+Vector2u& Vector2u::operator+=(const Vector2u& v)
+{
+	_x += v._x;
+	_y += v._y;
+	return *this;
+}
+
+Vector2u Vector2u::operator-(const Vector2u& v) const
+{
+	return Vector2u(_x - v._x, _y - v._y);
+}
+
+Vector2u& Vector2u::operator-=(const Vector2u& v)
+{
+	_x -= v._x;
+	_y -= v._y;
+	return *this;
+}
+
+Vector2u Vector2u::operator*(unsigned int s) const
+{
+	return Vector2u(_x * s, _y * s);
+}
+
+Vector2u& Vector2u::operator*=(unsigned int s)
+{
+	_x *= s;
+	_y *= s;
+	return *this;
+}
+
+Vector2u Vector2u::operator/(unsigned int s) const
+{
+	return Vector2u(_x / s, _y / s);
+}
+
+Vector2u& Vector2u::operator/=(unsigned int s)
+{
+	_x /= s;
+	_y /= s;
+	return *this;
+}
+
+bool Vector2u::operator==(const Vector2u& v) const
+{
+	return _x == v._x && _y == v._y;
+}
+
+bool Vector2u::operator!=(const Vector2u& v) const
+{
+	return _x != v._x || _y != v._y;
+}
+
+unsigned int& Vector2u::operator[](unsigned int index)
+{
+	if (index > 1)
+		throw overflow_error("Vector2u only has 2 elements");
+	return ((unsigned int*)this)[index];
+}
+
+unsigned int Vector2u::operator[](unsigned int index) const
+{
+	if (index > 1)
+		throw overflow_error("Vector2u only has 2 elements");
+	return ((unsigned int*)this)[index];
 }
 
 Vector3f::Vector3f(float x, float y, float z) : XMFLOAT3(x, y, z)
@@ -745,14 +925,14 @@ bool Vector3u::operator!=(const Vector3u& v) const
 unsigned int& Vector3u::operator[](unsigned int index)
 {
 	if (index > 2)
-		throw overflow_error("Vector3f only has 3 elements");
+		throw overflow_error("Vector3u only has 3 elements");
 	return ((unsigned int*)this)[index];
 }
 
 unsigned int Vector3u::operator[](unsigned int index) const
 {
 	if (index > 2)
-		throw overflow_error("Vector3f only has 3 elements");
+		throw overflow_error("Vector3u only has 3 elements");
 	return ((unsigned int*)this)[index];
 }
 
@@ -1220,14 +1400,14 @@ bool Vector4u::operator!=(const Vector4u& v) const
 unsigned int& Vector4u::operator[](unsigned int index)
 {
 	if (index > 3)
-		throw overflow_error("Vector4f only has 4 elements");
+		throw overflow_error("Vector4u only has 4 elements");
 	return ((unsigned int*)this)[index];
 }
 
 unsigned int Vector4u::operator[](unsigned int index) const
 {
 	if (index > 3)
-		throw overflow_error("Vector4f only has 4 elements");
+		throw overflow_error("Vector4u only has 4 elements");
 	return ((unsigned int*)this)[index];
 }
 
