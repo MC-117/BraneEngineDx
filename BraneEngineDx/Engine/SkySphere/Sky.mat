@@ -1,0 +1,101 @@
+#order 1000
+#material
+Color sunColor: 255, 204, 102, 255
+Color cloudColor: 213, 230, 255, 255
+Color zenithColor: 41, 68, 145, 255
+Color horizonColor: 200, 210, 210, 255
+Color overallColor: 140, 140, 140, 255
+Color lightDirection: 1, 0, 0, 1
+Scalar cloudOpacity: 1
+Scalar sunBrightness: 2
+Scalar starBrightness: 0
+Scalar sunHeight: 1
+Scalar sunRadius: 0.0003
+Scalar radius: 3276800
+Scalar time: 0
+Scalar cloudSpeed: 2
+Scalar lowNoisePower: 1
+Scalar highNoisePower: 4
+Scalar horizonFalloff: 8
+Texture cloudNoiseMap: black
+Texture skyMap: black
+Texture starMap: black
+
+#vertex
+#version 460
+#include "../Shaders/lib/TransformData_def.hmat"
+#include "../Shaders/lib/CameraData_Def.hmat"
+#include "../Shaders/lib/MeshData_Def.hmat"
+
+out vec3 LocalPos;
+out vec3 WorldPos;
+out vec2 TexCoords;
+void main() {
+    mat4 fm = Transforms[ObjectIDs[gl_InstanceID + gl_BaseInstance]];
+    gl_Position = camData.pmat * fm * vec4(pos.x, pos.y, pos.z, 1.0);
+    LocalPos = pos;
+    vec4 w = fm * vec4(pos.x, pos.y, pos.z, 1.0);
+    WorldPos = w.xyz / w.w;
+    TexCoords = uv;
+    TexCoords.y = 1 - TexCoords.y;
+}
+
+#fragment
+#version 460
+#include "../Shaders/lib/CameraData_Def.hmat"
+
+uniform vec4 sunColor;
+uniform vec4 cloudColor;
+uniform vec4 zenithColor;
+uniform vec4 horizonColor;
+uniform vec4 overallColor;
+uniform vec4 lightDirection;
+uniform float cloudOpacity;
+uniform float starBrightness;
+uniform float sunBrightness;
+uniform float sunHeight;
+uniform float sunRadius;
+uniform float radius;
+uniform float time;
+uniform float cloudSpeed;
+uniform float lowNoisePower;
+uniform float highNoisePower;
+uniform float horizonFalloff;
+uniform sampler2D cloudNoiseMap;
+uniform sampler2D skyMap;
+uniform sampler2D starMap;
+in vec3 LocalPos;
+in vec3 WorldPos;
+in vec2 TexCoords;
+out vec4 oCol;
+
+float sphereMask(float pos, float center, float radius, float hardness) {
+    return clamp((1 - abs(pos - center) / radius) / (1 - hardness), 0, 1);
+}
+
+void main() {
+    vec3 cameraVector = normalize(WorldPos - camData.camPos);
+    float cutoff = clamp(dot(cameraVector, vec3(0, 0, 1)), 0, 1);
+    float cloudAlpha = cloudOpacity * (1 - clamp((LocalPos / radius * -10).b, 0, 1));
+    float offset = time * cloudSpeed;
+    float cloud = texture(cloudNoiseMap, vec2(offset + TexCoords.x, TexCoords.y)).r;
+    float sky = texture(skyMap, vec2(offset + TexCoords.x, TexCoords.y)).r;
+    cloudAlpha = mix(0, mix(sky, cloud, cutoff), cloudAlpha);
+    float power = texture(cloudNoiseMap, TexCoords).r;
+    power = mix(lowNoisePower, highNoisePower, power);
+    power = pow(cloudAlpha, power);
+    vec4 rimLight = cloudColor * power;
+    power *= power;
+    float sunVal = dot(normalize(lightDirection.xyz), cameraVector);
+    rimLight += clamp(pow(sphereMask(sunVal, 1, 1.3, 0), 10), 0, 1) * sunColor * power * 0.4;
+    vec4 sunCol = sphereMask(sunVal, 1, sunRadius, 0) * sunBrightness * sunColor;
+    cutoff = clamp(pow(1 - cutoff, horizonFalloff), 0, 1);
+    vec4 SkyCol = zenithColor + texture(starMap, TexCoords) * starBrightness * sunHeight;
+    SkyCol = mix(SkyCol, horizonColor, cutoff);
+    oCol = sunCol + SkyCol;
+    oCol = mix(oCol, rimLight, clamp(power, 0, 1)) * overallColor * 1.5;
+    // float gamma = 1.8;
+    // vec3 mapped = vec3(1.0) - exp(-oCol.xyz);
+    // mapped = pow(mapped, vec3(1.0 / gamma));
+    // oCol = vec4(mapped, 1.0);
+}

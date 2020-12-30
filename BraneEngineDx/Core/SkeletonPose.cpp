@@ -83,16 +83,20 @@ bool SkeletonPose::lerpAbove(const SkeletonPose & pose, const string & name, flo
 
 bool SkeletonPose::makeAddition(const SkeletonPose & pose, float value)
 {
+	return false;
 }
 
 bool SkeletonPose::makeAdditionAbove(const SkeletonPose & pose, const string & name, float value, bool includeSelf)
 {
+	return false;
 }
 
 bool SkeletonPose::applyAddition(const SkeletonPose & pose, float value)
 {
+	return false;
 }
 
 bool SkeletonPose::applyAdditionAbove(const SkeletonPose & pose, const string & name, float value, bool includeSelf)
 {
+	return false;
 }

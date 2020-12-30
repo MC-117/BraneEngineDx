@@ -2,7 +2,7 @@
 
 Color Light::ambient = { 255, 255, 255, 255 };
 
-Light::Light(const string& name, Color color, float intensity, float attenuation, Shape boundShape) : ::Transform::Transform(name), boundShape(boundShape)
+Light::Light(const string& name, Color color, float intensity, float attenuation, Shape boundShape) : Transform(name), boundShape(boundShape)
 {
 	this->color = color;
 	this->intensity = intensity;
@@ -33,7 +33,7 @@ unsigned int Light::getRenders(vector<Render*>& renders)
 
 void Light::preRender()
 {
-	Render::transformMat = ::Transform::transformMat;
+	Render::transformMat = Transform::transformMat;
 }
 
 void Light::render(RenderInfo & info)

@@ -1,0 +1,10 @@
+#include "Bindings_Def.hmat"
+layout (std430, binding = MORPHDATA_BIND_INDEX) buffer CB1
+{
+    float4 nMorphV;
+    float4 morphData[];
+};
+layout (std430, binding = MORPHWEIGHT_BIND_INDEX) buffer CB2
+{
+    float morphWeight[];
+};

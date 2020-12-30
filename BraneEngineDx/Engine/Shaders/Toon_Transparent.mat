@@ -1,0 +1,19 @@
+#order 2500
+#material
+Color baseColor: 255, 255, 255, 255
+Texture colorMap: white
+Color shadowColor: 150, 150, 150, 255
+Color highlightColor: 50, 50, 50, 255
+Color rimColor: 50, 50, 50, 255
+Color overColor: 255, 255, 255, 255
+Scalar shadowCut: 0.5
+Scalar shadowCutSmooth: 0.0
+Scalar highlightCut: 0.999
+Scalar highlightCutSmooth: 0.0
+Scalar rimCut: 0.8
+Scalar rimCutSmooth: 0.0
+Scalar normalScale: 1.0
+Texture normalMap: black
+Texture depthMap: white
+#vertex use default
+#fragment use toon_fragment

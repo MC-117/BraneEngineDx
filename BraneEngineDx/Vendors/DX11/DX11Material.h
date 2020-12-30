@@ -13,10 +13,10 @@
 class DX11Material : public IMaterial
 {
 public:
-	const DX11Context& dxContext;
+	DX11Context& dxContext;
 	vector<ID3D11UnorderedAccessView*> dx11UAVs;
 
-	DX11Material(const DX11Context& context, MaterialDesc& desc);
+	DX11Material(DX11Context& context, MaterialDesc& desc);
 
 	virtual void processBaseData();
 	virtual void processScalarData();

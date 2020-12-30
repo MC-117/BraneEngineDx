@@ -1,0 +1,5 @@
+#order 5000
+#material
+Color baseColor: 34, 166, 242, 255
+#vertex use position
+#fragment use pure_color_fragment

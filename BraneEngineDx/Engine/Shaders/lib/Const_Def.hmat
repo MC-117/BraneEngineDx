@@ -1,0 +1,6 @@
+#define LOCAL_SIZE_1D 1024
+#define LOCAL_SIZE_2D 16
+#define MAX_SHARED_SIZE_1D 12288
+#define MAX_SHARED_SIZE_2D 96
+
+const float PI = 3.14159265359;

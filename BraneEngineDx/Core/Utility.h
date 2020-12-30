@@ -36,6 +36,20 @@ string& validateRelativePath(string& path);
 string getFilePath(const string& path, const string& pwd);
 bool readHeadFile(const string& codeLine, string& code, const string& envPath = "", unordered_set<string>& headFiles = unordered_set<string>());
 
+struct FileDlgDesc
+{
+	string title;
+	string filter;
+	string initDir;
+	HWND own;
+	bool save = false;
+	bool addToRecent = true;
+	string filePath;
+	string fileName;
+};
+
+bool openFileDlg(FileDlgDesc& desc);
+
 template<class TT, class ST>
 inline bool isClassOf(ST* ptr)
 {

@@ -12,13 +12,13 @@ class DX11ShaderStage : public ShaderStage
 {
 public:
 	const string MatInsBufName = "MatInsBuf";
-	const DX11Context& dxContext;
+	DX11Context& dxContext;
 	ID3DBlob* dx11ShaderBlob = NULL;
 	ID3D11DeviceChild* dx11Shader = NULL;
 	ID3D11ShaderReflection* dx11ShaderReflector = NULL;
 	ID3D11ShaderReflectionConstantBuffer* dx11MatInsBufReflector = NULL;
 
-	DX11ShaderStage(const DX11Context& context, const ShaderStageDesc& desc);
+	DX11ShaderStage(DX11Context& context, const ShaderStageDesc& desc);
 	virtual ~DX11ShaderStage();
 
 	virtual unsigned int compile(const string& code, string& errorString);
@@ -33,14 +33,14 @@ class DX11ShaderProgram : public ShaderProgram
 public:
 	static unsigned int nextProgramID;
 	static DX11ShaderProgram* currentDx11Program;
-	const DX11Context& dxContext;
+	DX11Context& dxContext;
 	ID3D11ShaderReflectionConstantBuffer* dx11MatInsBufReflector = NULL;
 	ID3D11Buffer* matInsBuf = NULL;
 	unsigned char* matInsBufHost = NULL;
 	unsigned int matInsBufSize = 0;
 	unordered_map<string, AttributeDesc> attributes;
 
-	DX11ShaderProgram(const DX11Context& context);
+	DX11ShaderProgram(DX11Context& context);
 	virtual ~DX11ShaderProgram();
 
 	virtual unsigned int bind();

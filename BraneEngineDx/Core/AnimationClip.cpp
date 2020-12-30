@@ -32,17 +32,17 @@ TransformAnimationPlayer::TransformAnimationPlayer()
 {
 }
 
-TransformAnimationPlayer::TransformAnimationPlayer(::Transform & target)
+TransformAnimationPlayer::TransformAnimationPlayer(Transform & target)
 	: targetTransform(&target)
 {
 }
 
-TransformAnimationPlayer::TransformAnimationPlayer(::Transform & target, TransformAnimationData & animationData)
+TransformAnimationPlayer::TransformAnimationPlayer(Transform & target, TransformAnimationData & animationData)
 	: targetTransform(&target), transformAnimationData(&animationData)
 {
 }
 
-void TransformAnimationPlayer::setTargetTransform(::Transform & target)
+void TransformAnimationPlayer::setTargetTransform(Transform & target)
 {
 	targetTransform = &target;
 	reset();
@@ -447,7 +447,7 @@ void AnimationClip::setAnimationClipData(AnimationClipData & clipData)
 	reset();
 }
 
-bool AnimationClip::setTargetTransform(::Transform & target)
+bool AnimationClip::setTargetTransform(Transform & target)
 {
 	if (animationClipData == NULL)
 		return false;
@@ -458,7 +458,7 @@ bool AnimationClip::setTargetTransform(::Transform & target)
 	return true;
 }
 
-bool AnimationClip::setTargetTransform(const string & name, ::Transform & target)
+bool AnimationClip::setTargetTransform(const string & name, Transform & target)
 {
 	if (animationClipData == NULL)
 		return false;
@@ -687,7 +687,7 @@ void BlendSpaceAnimation::removeAllAnimationClipData()
 	animationWeights.clear();
 }
 
-bool BlendSpaceAnimation::setTargetTransform(::Transform & target)
+bool BlendSpaceAnimation::setTargetTransform(Transform & target)
 {
 	if (!isValid())
 		return false;
@@ -698,7 +698,7 @@ bool BlendSpaceAnimation::setTargetTransform(::Transform & target)
 	return true;
 }
 
-bool BlendSpaceAnimation::setTargetTransform(const string & name, ::Transform & target)
+bool BlendSpaceAnimation::setTargetTransform(const string & name, Transform & target)
 {
 	if (!isValid())
 		return false;
@@ -818,7 +818,7 @@ bool BlendSpaceAnimation::update(float deltaTime)
 			data.add(d.mutiply(animationWeights[i].second));
 		}
 		transformDatas[t] = data;
-		::Transform* trans = targetTransforms[t];
+		Transform* trans = targetTransforms[t];
 		if (trans != NULL) {
 			trans->setPosition(data.position);
 			trans->setRotation(data.rotation);

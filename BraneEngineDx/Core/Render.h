@@ -20,7 +20,6 @@ struct RenderInfo
 	Unit2Di viewSize;
 	float fovy;
 	RenderMode mode;
-	unsigned int clearMode = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT;
 	bool depthWrite = true;
 	bool alphaTest = false;
 	RenderCommandList* cmdList = NULL;
@@ -35,7 +34,6 @@ struct RenderInfo
 		Unit2Di viewSize = { 0, 0 },
 		float fovy = 0,
 		RenderMode mode = Forward,
-		unsigned int clearMode = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
 		bool depthWrite = true,
 		bool alphaTest = false);
 

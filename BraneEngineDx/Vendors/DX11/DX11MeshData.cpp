@@ -4,7 +4,7 @@
 
 ID3D11InputLayout* DX11MeshData::dx11MeshDataInputLayout = NULL;
 
-DX11MeshData::DX11MeshData(const DX11Context& context) : dxContext(context)
+DX11MeshData::DX11MeshData(DX11Context& context) : dxContext(context)
 {
 }
 

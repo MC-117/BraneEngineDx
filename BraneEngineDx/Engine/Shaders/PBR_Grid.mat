@@ -1,0 +1,288 @@
+#order 1000
+#material
+Color baseColor: 255, 255, 255, 255
+Color chessColor: 255, 255, 255, 255
+Color lineColor: 255, 255, 255, 255
+Color gridOffset: 0, 0, 0, 255
+Scalar gridSpace: 10
+Scalar patternX: 100
+Scalar patternY: 100
+Texture colorMap: white
+Scalar metallic: 0.5
+Texture metallicMap: white
+Scalar roughness: 0.5
+Texture roughnessMap: white
+Scalar ao: 1.0
+Texture aoMap: white
+Scalar normalScale: 1
+Texture normalMap: black
+Scalar emission: 0
+Texture emissionMap: white
+Texture depthMap: white
+#vertex
+#version 460 core
+#include "lib/TransformData_def.hmat"
+#include "lib/CameraData_Def.hmat"
+#include "lib/Light_Def.hmat"
+#include "lib/MeshData_Def.hmat"
+
+out float3 WorldPos;
+out float3 WorldScale;
+out float3 Normal;
+out float3 LocalNormal;
+out float2 TexCoords;
+out float4 lightSpacePos;
+
+float3 getScale(float4x4 tmat)
+{
+    float3 scale;
+    scale[0] = length(float3(tmat[0][0], tmat[1][0], tmat[2][0]));
+    scale[1] = length(float3(tmat[0][1], tmat[1][1], tmat[2][1]));
+    scale[2] = length(float3(tmat[0][2], tmat[1][2], tmat[2][2]));
+    return scale;
+}
+
+void main()
+{
+   float4x4 fm = Transforms[ObjectIDs[gl_InstanceID + gl_BaseInstance]];
+   WorldPos = (fm * float4(pos.x, pos.y, pos.z, 1.0)).xyz;
+   gl_Position = camData.pmat * float4(WorldPos, 1.0);
+   lightSpacePos = directLight.lmat * float4(WorldPos, 1.0);
+   TexCoords = uv;
+   TexCoords.y = 1 - TexCoords.y;
+   Normal = normalize(float3x3(fm) * norm);
+   LocalNormal = norm;
+   WorldScale = getScale(fm);
+}
+
+#vertex skeleton
+#version 460 core
+#include "lib/TransformData_def.hmat"
+#include "lib/CameraData_Def.hmat"
+#include "lib/Light_Def.hmat"
+#include "lib/SkeletonMeshData_Def.hmat"
+
+out float3 WorldPos;
+out float3 WorldScale;
+out float3 Normal;
+out float3 LocalNormal;
+out float2 TexCoords;
+out float4 lightSpacePos;
+
+float4x4 getFinalMat()
+{
+    float tw = weights[0] + weights[1] + weights[2] + weights[3];
+    uint bid = ObjectIDs[gl_InstanceID + gl_BaseInstance];
+    float4x4 fm = Transforms[bid + boneId[0]] * weights[0] / tw;
+    if (weights[1] != 0)
+        fm += Transforms[bid + boneId[1]] * weights[1] / tw;
+    if (weights[2] != 0)
+        fm += Transforms[bid + boneId[2]] * weights[2] / tw;
+    if (weights[3] != 0)
+        fm += Transforms[bid + boneId[3]] * weights[3] / tw;
+    return fm;
+}
+
+float3 getScale(float4x4 tmat)
+{
+    float3 scale;
+    scale[0] = length(float3(tmat[0][0], tmat[1][0], tmat[2][0]));
+    scale[1] = length(float3(tmat[0][1], tmat[1][1], tmat[2][1]));
+    scale[2] = length(float3(tmat[0][2], tmat[1][2], tmat[2][2]));
+    return scale;
+}
+
+void main()
+{
+   float4x4 fm = getFinalMat();
+   WorldPos = (fm * float4(pos.x, pos.y, pos.z, 1.0)).xyz;
+   gl_Position = camData.pmat * float4(WorldPos, 1.0);
+   lightSpacePos = directLight.lmat * float4(WorldPos, 1.0);
+   TexCoords = uv;
+   TexCoords.y = 1 - TexCoords.y;
+   Normal = normalize(float3x3(fm) * norm);
+   LocalNormal = norm;
+   WorldScale = getScale(fm);
+}
+
+#vertex skeleton morph
+#version 460 core
+#include "lib/TransformData_def.hmat"
+#include "lib/CameraData_Def.hmat"
+#include "lib/Light_Def.hmat"
+#include "lib/SkeletonMeshData_Def.hmat"
+#include "lib/MorphData_def.hmat"
+
+out float3 WorldPos;
+out float3 WorldScale;
+out float3 Normal;
+out float3 LocalNormal;
+out float2 TexCoords;
+out float4 lightSpacePos;
+
+float3 morphPos()
+{
+    uint nMorph = uint(nMorphV);
+    uint base = gl_VertexID * nMorph;
+    float3 w = float3(0, 0, 0);
+    for (uint i = 0; i < nMorph; i++) {
+        w += morphData[(base + i) * 2].xyz * morphWeight[i];
+    }
+    return pos + w;
+}
+
+float3 morphNorm()
+{
+    uint nMorph = uint(nMorphV);
+    uint base = gl_VertexID * nMorph;
+    float3 w = float3(0, 0, 0);
+    for (uint i = 0; i < nMorph; i++) {
+        w += morphData[(base + i) * 2 + 1].xyz * morphWeight[i];
+    }
+    return norm + w;
+}
+
+float4x4 getFinalMat()
+{
+    float tw = weights[0] + weights[1] + weights[2] + weights[3];
+    uint bid = ObjectIDs[gl_InstanceID + gl_BaseInstance];
+    float4x4 fm = Transforms[bid + boneId[0]] * weights[0] / tw;
+    if (weights[1] != 0)
+        fm += Transforms[bid + boneId[1]] * weights[1] / tw;
+    if (weights[2] != 0)
+        fm += Transforms[bid + boneId[2]] * weights[2] / tw;
+    if (weights[3] != 0)
+        fm += Transforms[bid + boneId[3]] * weights[3] / tw;
+    return fm;
+}
+
+float3 getScale(float4x4 tmat)
+{
+    float3 scale;
+    scale[0] = length(float3(tmat[0][0], tmat[1][0], tmat[2][0]));
+    scale[1] = length(float3(tmat[0][1], tmat[1][1], tmat[2][1]));
+    scale[2] = length(float3(tmat[0][2], tmat[1][2], tmat[2][2]));
+    return scale;
+}
+
+void main()
+{
+   float4x4 fm = getFinalMat();
+   WorldPos = (fm * float4(morphPos(), 1.0)).xyz;
+   gl_Position = camData.pmat * float4(WorldPos, 1.0);
+   lightSpacePos = directLight.lmat * float4(WorldPos, 1.0);
+   TexCoords = uv;
+   TexCoords.y = 1 - TexCoords.y;
+   LocalNormal = morphNorm();
+   Normal = normalize(float3x3(fm) * LocalNormal);
+   WorldScale = getScale(fm);
+}
+
+#fragment
+#version 460 core
+
+#include "lib/Light_Def.hmat"
+#include "lib/CameraData_Def.hmat"
+
+layout (location = 0) out float4 FragColor;
+in float2 TexCoords;
+in float3 WorldPos;
+in float3 WorldScale;
+in float3 Normal;
+in float3 LocalNormal;
+in float4 lightSpacePos;
+
+uniform float4 baseColor;
+uniform float4 chessColor;
+uniform float4 lineColor;
+uniform float4 pointColor;
+uniform float4 gridOffset;
+uniform float gridSpace;
+uniform float patternX;
+uniform float patternY;
+uniform sampler2D colorMap;
+uniform float metallic;
+uniform sampler2D metallicMap;
+uniform float roughness;
+uniform sampler2D roughnessMap;
+uniform float ao;
+uniform sampler2D aoMap;
+uniform float normalScale;
+uniform sampler2D normalMap;
+uniform float emission;
+uniform sampler2D emissionMap;
+uniform sampler2D depthMap;
+
+#include "lib/PBR_Lib.hmat"
+#include "lib/Basic_FS_Lib.hmat"
+
+float2 getUVScale(float3 scale, float3 N)
+{
+    float3 a = round(normalize(pow(abs(N), float3(8.0))));
+    float2 yz = float2(scale.y, scale.z);
+    float2 xz = float2(scale.x, scale.z);
+    float2 xy = float2(scale.x, scale.y);
+    return mix(mix(yz, xy, a.z), xz, a.y);
+}
+
+float4 getUVs(float2 UV)
+{
+    float4 re;
+    UV += gridOffset.xy;
+    re.xy = UV * 50.0 / (patternX + patternY);
+    re.zw = UV * 100.0 / gridSpace;
+    return re;
+}
+
+float4 getGirdInfo(sampler2D tex, float4 UVs)
+{
+    float4 info;
+    float4 bc = texture(tex, UVs.xy);
+    float4 sc = texture(tex, UVs.zw);
+    info.r = bc.b;
+    info.g = bc.r + sc.g;
+    info.b = bc.r;
+    info.a = bc.b * bc.a;
+    return info;
+}
+
+void main() {
+    float3 N = normalize(cotangent(Normal, WorldPos, TexCoords) * ((normalize(texture(normalMap, TexCoords) * 2 - 1)).xyz) * normalScale);
+    float3 V = normalize(camData.camPos - WorldPos);
+
+    float4 info = getGirdInfo(colorMap, getUVs(TexCoords * getUVScale(WorldScale, LocalNormal)));
+    float4 colorMul = baseColor;
+    colorMul = mix(colorMul, chessColor, info.r);
+    colorMul = mix(colorMul, lineColor, info.g);
+
+    float3 albedo = colorMul.rgb;
+    float alpha = colorMul.a;
+    float _roughness = roughness * texture(roughnessMap, TexCoords).r;
+    float _metallic = metallic * texture(metallicMap, TexCoords).r;
+    float _ao = ao * texture(aoMap, TexCoords).r;
+
+    float3 F0 = float3(0.04); 
+    F0 = mix(F0, albedo, _metallic);
+
+    // reflectance equation
+    float3 Lo = float3(0.0);
+
+    if (directLight.intensity != 0) {
+        Lo += PBR_Lo_DirectLight(directLight, N, V, albedo, _metallic, _roughness) * ShadowCalculation(depthMap, lightSpacePos, N, directLight.direction);
+    }
+
+    for(int i = 0; i < pointLightCount; ++i) {
+        if (pointLights[i].intensity != 0) {
+            Lo += PBR_Lo_PointLight(pointLights[i], WorldPos, N, V, albedo, _metallic, _roughness);
+        }
+    }
+
+    float3 ambient = PBR_Ambient(albedo, _ao);
+    float3 emissionColor = texture(emissionMap, TexCoords).rgb;
+    float3 color = ambient + Lo;//float3(emission.r * emissionColor.r, emission.g * emissionColor.g, emission.b * emissionColor.b);
+
+    color = color / (color + float3(1.0));
+    color = pow(color, float3(1.0/2.2)) + (emission * baseColor).rgb * emissionColor;
+
+    FragColor = float4(color, alpha);
+}

@@ -25,7 +25,7 @@ public:
 	virtual int getHeight() const;
 	virtual int getChannel() const;
 
-	virtual unsigned int getTextureID() const;
+	virtual unsigned long long getTextureID();
 	virtual void* getVendorTexture() const;
 
 	void setAutoGenMip(bool value);

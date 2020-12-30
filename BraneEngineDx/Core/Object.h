@@ -3,6 +3,7 @@
 #define _OBJECT_H_
 
 #include "Events.h"
+#include "Render.h"
 #include "Serialization.h"
 
 class Render;

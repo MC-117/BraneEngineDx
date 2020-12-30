@@ -12,7 +12,9 @@ RenderPool::RenderPool(Camera & defaultCamera) : defaultCamera(defaultCamera)
 
 void RenderPool::setViewportSize(Unit2Di size)
 {
-	if (camera != NULL)
+	if (camera == NULL)
+		defaultCamera.setSize(size);
+	else
 		camera->setSize(size);
 	gui.onSceneResize(size);
 }
@@ -82,11 +84,7 @@ void RenderPool::render(bool guiOnly)
 
 		timer.record("Objects");
 
-		/*glDisable(GL_ALPHA_TEST);
-		glDepthMask(GL_TRUE);*/
-		glDepthMask(GL_TRUE);
-		glDisable(GL_ALPHA_TEST);
-		glEnable(GL_DEPTH_TEST);
+		vendor.setRenderPostState();
 		currentCamera.cameraRender.render(info);
 		currentCamera.cameraRender.postRender();
 

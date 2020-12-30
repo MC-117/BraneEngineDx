@@ -2,7 +2,7 @@
 
 #ifdef VENDOR_USE_DX11
 
-DX11ShaderStage::DX11ShaderStage(const DX11Context& context, const ShaderStageDesc& desc)
+DX11ShaderStage::DX11ShaderStage(DX11Context& context, const ShaderStageDesc& desc)
     : dxContext(context), ShaderStage(desc)
 {
 }
@@ -111,7 +111,7 @@ HRESULT DX11ShaderStage::createShader(ID3D11Device* device, ShaderStageType type
 unsigned int DX11ShaderProgram::nextProgramID = 1;
 DX11ShaderProgram* DX11ShaderProgram::currentDx11Program = NULL;
 
-DX11ShaderProgram::DX11ShaderProgram(const DX11Context& context) : dxContext(context)
+DX11ShaderProgram::DX11ShaderProgram(DX11Context& context) : dxContext(context)
 {
 	programId = nextProgramID;
 	nextProgramID++;

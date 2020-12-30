@@ -24,7 +24,8 @@ bool DX11Vendor::windowSetup(EngineConfig & config, WindowContext & context)
 
 bool DX11Vendor::setup(const EngineConfig & config, const WindowContext & context)
 {
-	if (!createDevice(context._hwnd, context.screenSize.x, context.screenSize.y))
+	dxContext.setHWnd(context._hwnd);
+	if (!dxContext.createDevice(context.screenSize.x, context.screenSize.y))
 		return false;
 	return true;
 }
@@ -33,7 +34,7 @@ bool DX11Vendor::imGuiInit(const EngineConfig & config, const WindowContext & co
 {
 	if (!ImGui_ImplWin32_Init(context._hwnd))
 		return false;
-	if (!ImGui_ImplDX11_Init(this->dxContext.device, this->dxContext.deviceContext))
+	if (!ImGui_ImplDX11_Init(dxContext.device, dxContext.deviceContext))
 		return false;
 }
 
@@ -66,21 +67,17 @@ bool DX11Vendor::imGuiShutdown(const EngineConfig & config, const WindowContext 
 
 bool DX11Vendor::clean(const EngineConfig & config, const WindowContext & context)
 {
-	cleanupDevice();
+	dxContext.cleanupDevice();
 	return true;
 }
 
 bool DX11Vendor::guiOnlyRender(const Color & clearColor)
 {
-	
 	return true;
 }
 
 bool DX11Vendor::resizeWindow(const EngineConfig & config, const WindowContext & context, unsigned int width, unsigned int height)
 {
-	cleanupRenderTarget();
-	resizeSwapChain(context._hwnd, width, height);
-	createRenderTarget();
 	return true;
 }
 
@@ -99,32 +96,32 @@ DX11Vendor::WndProcFunc DX11Vendor::getWndProcFunc()
 	return ImGui_ImplWin32_WndProcHandler;
 }
 
-ITexture2D * DX11Vendor::newTexture2D(Texture2DDesc& desc) const
+ITexture2D * DX11Vendor::newTexture2D(Texture2DDesc& desc)
 {
 	return new DX11Texture2D(dxContext, desc);
 }
 
-ShaderStage* DX11Vendor::newShaderStage(const ShaderStageDesc& desc) const
+ShaderStage* DX11Vendor::newShaderStage(const ShaderStageDesc& desc)
 {
 	return new DX11ShaderStage(dxContext, desc);
 }
 
-ShaderProgram* DX11Vendor::newShaderProgram() const
+ShaderProgram* DX11Vendor::newShaderProgram()
 {
 	return new DX11ShaderProgram(dxContext);
 }
 
-IMaterial* DX11Vendor::newMaterial(MaterialDesc& desc) const
+IMaterial* DX11Vendor::newMaterial(MaterialDesc& desc)
 {
 	return new DX11Material(dxContext, desc);
 }
 
-IRenderTarget* DX11Vendor::newRenderTarget(RenderTargetDesc& desc) const
+IRenderTarget* DX11Vendor::newRenderTarget(RenderTargetDesc& desc)
 {
 	return new DX11RenderTarget(dxContext, desc);
 }
 
-IGPUBuffer* DX11Vendor::newGPUBuffer(GPUBufferDesc& desc) const
+IGPUBuffer* DX11Vendor::newGPUBuffer(GPUBufferDesc& desc)
 {
 	return new DX11GPUBuffer(dxContext, desc);
 }
@@ -171,89 +168,6 @@ SkeletonMeshPartDesc DX11Vendor::newSkeletonMeshPart(unsigned int vertCount, uns
 	return desc;
 }
 
-bool DX11Vendor::createDevice(HWND hWnd, unsigned int width, unsigned int height)
-{
-	DXGI_SWAP_CHAIN_DESC sd;
-	ZeroMemory(&sd, sizeof(sd));
-	sd.BufferCount = g_backBufferNum;
-	sd.BufferDesc.Width = width;
-	sd.BufferDesc.Height = height;
-	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	sd.BufferDesc.RefreshRate.Numerator = 60;
-	sd.BufferDesc.RefreshRate.Denominator = 1;
-	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.OutputWindow = hWnd;
-	sd.SampleDesc.Count = 1;
-	sd.SampleDesc.Quality = 0;
-	sd.Windowed = TRUE;
-
-	D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
-	UINT createDeviceFlags = 0;
-	if (enableDebugLayer)
-		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-	D3D_FEATURE_LEVEL FeatureLevelsRequested = D3D_FEATURE_LEVEL_11_0;
-	UINT numLevelsRequested = 1;
-	D3D_FEATURE_LEVEL FeatureLevelsSupported;
-
-	if (FAILED(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,
-			createDeviceFlags, &featureLevel, 1, D3D11_SDK_VERSION, &dxContext.device,
-			&FeatureLevelsSupported, &dxContext.deviceContext)))
-		return false;
-
-	if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&dxContext.dxgiFactory))))
-		return false;
-
-	dxContext.dxgiFactory->CreateSwapChain(dxContext.device, &sd, &dxContext.swapChain);
-
-	createRenderTarget();
-	return true;
-}
-
-void DX11Vendor::cleanupDevice()
-{
-	dxContext.swapChain->SetFullscreenState(false, nullptr);
-	cleanupRenderTarget();
-	if (dxContext.swapChain) {
-		dxContext.swapChain->Release();
-		dxContext.swapChain = NULL;
-	}
-	if (dxContext.dxgiFactory) {
-		dxContext.dxgiFactory->Release();
-		dxContext.dxgiFactory = NULL;
-	}
-	if (dxContext.device) {
-		dxContext.device->Release();
-		dxContext.device = NULL;
-	}
-	if (dxContext.deviceContext) {
-		dxContext.deviceContext->Release();
-		dxContext.deviceContext = NULL;
-	}
-}
-
-void DX11Vendor::createRenderTarget()
-{
-	g_pBackBuffers.resize(g_backBufferNum);
-	g_pRenderTargetViews.resize(g_backBufferNum);
-	ID3D11Texture2D* pBackBuffer = NULL;
-	ID3D11RenderTargetView* pRenderTargetView = NULL;
-	for (UINT i = 0; i < g_backBufferNum; i++) {
-		dxContext.swapChain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer));
-		dxContext.deviceContext->OMSetRenderTargets(i, &pRenderTargetView, NULL);
-		g_pBackBuffers[i] = pBackBuffer;
-		g_pRenderTargetViews[i] = pRenderTargetView;
-	}
-}
-
-void DX11Vendor::cleanupRenderTarget()
-{
-	for (UINT i = 0; i < g_backBufferNum; i++)
-		if (g_pRenderTargetViews[i]) {
-			g_pRenderTargetViews[i]->Release();
-			g_pRenderTargetViews[i] = NULL;
-		}
-}
-
 IRenderExecution* DX11Vendor::newRenderExecution()
 {
 	return new DX11RenderExecution(dxContext);
@@ -261,48 +175,54 @@ IRenderExecution* DX11Vendor::newRenderExecution()
 
 void DX11Vendor::setRenderPreState()
 {
-	dxContext.deviceContext->OMSetBlendState(blendOffWriteOff, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOnTestOnLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOff, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual, 0);
 }
 
 void DX11Vendor::setRenderGeomtryState()
 {
-	dxContext.deviceContext->OMSetBlendState(blendOffWriteOn, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOnTestOnLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOn, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual, 0);
 }
 
 void DX11Vendor::setRenderOpaqueState()
 {
-	dxContext.deviceContext->OMSetBlendState(blendOffWriteOn, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOnTestOnLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOn, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual, 0);
 }
 
 void DX11Vendor::setRenderAlphaState()
 {
-	dxContext.deviceContext->OMSetBlendState(blendOffWriteOnAlphaTest, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOnTestOnLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOnAlphaTest, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual, 0);
 }
 
 void DX11Vendor::setRenderTransparentState()
 {
-	dxContext.deviceContext->OMSetBlendState(blendOnWriteOn, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOffTestOnLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOnLEqual, 0);
 }
 
 void DX11Vendor::setRenderOverlayState()
 {
-	dxContext.deviceContext->OMSetBlendState(blendOnWriteOn, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(depthWriteOffTestOffLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual, 0);
+}
+
+void DX11Vendor::setRenderPostState()
+{
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn, NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual, 0);
 }
 
 void DX11Vendor::setCullState(CullType type)
 {
 	if (type == Cull_Back)
-		dxContext.deviceContext->RSSetState(rasterizerCullBack);
+		dxContext.deviceContext->RSSetState(dxContext.rasterizerCullBack);
 	else if (type == Cull_Front)
-		dxContext.deviceContext->RSSetState(rasterizerCullFront);
+		dxContext.deviceContext->RSSetState(dxContext.rasterizerCullFront);
 	else
-		dxContext.deviceContext->RSSetState(rasterizerCullOff);
+		dxContext.deviceContext->RSSetState(dxContext.rasterizerCullOff);
 }
 
 void DX11Vendor::setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h)
@@ -315,17 +235,6 @@ void DX11Vendor::setViewport(unsigned int x, unsigned int y, unsigned int w, uns
 	vp.MinDepth = 0;
 	vp.MaxDepth = 1;
 	dxContext.deviceContext->RSSetViewports(1, &vp);
-}
-
-void DX11Vendor::resizeSwapChain(HWND hWnd, int width, int height)
-{
-	DXGI_SWAP_CHAIN_DESC sd;
-	dxContext.swapChain->GetDesc(&sd);
-	sd.OutputWindow = hWnd;
-	sd.BufferDesc.Width = width;
-	sd.BufferDesc.Height = height;
-	dxContext.swapChain->Release();
-	dxContext.dxgiFactory->CreateSwapChain(dxContext.device, &sd, &dxContext.swapChain);
 }
 
 #endif // VENDOR_USE_DX11

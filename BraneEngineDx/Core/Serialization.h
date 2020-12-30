@@ -11,7 +11,9 @@ class Serialization;
 class SerializationManager
 {
 public:
-	static map<string, Serialization*> serializationList;
+	// Using StaticVar class to solve the problem that some SerializationInfo objects
+	// will be constructed before this variable constructed
+	static StaticVar<map<string, Serialization*>> serializationList;
 
 	static Serialization* getSerialization(const string& type);
 };

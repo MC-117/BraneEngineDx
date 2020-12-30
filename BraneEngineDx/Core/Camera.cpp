@@ -1,15 +1,15 @@
 #include "Camera.h"
 #include "Geometry.h"
 
-Camera::Camera(string name) : ::Transform::Transform(name), _cameraRender(new CameraRender()),cameraRender(*_cameraRender)
+Camera::Camera(string name) : Transform(name), _cameraRender(new CameraRender()),cameraRender(*_cameraRender)
 {
 }
 
-Camera::Camera(CameraRender & cameraRender, string name) : ::Transform::Transform(name), cameraRender(cameraRender)
+Camera::Camera(CameraRender & cameraRender, string name) : Transform(name), cameraRender(cameraRender)
 {
 }
 
-Camera::Camera(RenderTarget & renderTarget, Material & material, string name) : ::Transform::Transform(name), _cameraRender(new CameraRender(renderTarget, material)), cameraRender(*_cameraRender)
+Camera::Camera(RenderTarget & renderTarget, Material & material, string name) : Transform(name), _cameraRender(new CameraRender(renderTarget, material)), cameraRender(*_cameraRender)
 {
 }
 
@@ -44,9 +44,67 @@ Matrix4f Camera::getViewMatrix() const
 	return Camera::lookAt(cameraRender.cameraLoc, cameraRender.cameraLoc + cameraRender.cameraDir, cameraRender.cameraUp);
 }
 
+Color hsv2rgb(float h, float s, float v, float a = 1)
+{
+	float      hh, p, q, t, ff;
+	long        i;
+	Color         out;
+	out.a = a;
+	if (s <= 0.0) {       // < is bogus, just shuts up warnings
+		out.r = v;
+		out.g = v;
+		out.b = v;
+		return out;
+	}
+	hh = h;
+	if (hh >= 360.0) hh = 0.0;
+	hh /= 60.0;
+	i = (long)hh;
+	ff = hh - i;
+	p = v * (1.0 - s);
+	q = v * (1.0 - (s * ff));
+	t = v * (1.0 - (s * (1.0 - ff)));
+
+	switch (i) {
+	case 0:
+		out.r = v;
+		out.g = t;
+		out.b = p;
+		break;
+	case 1:
+		out.r = q;
+		out.g = v;
+		out.b = p;
+		break;
+	case 2:
+		out.r = p;
+		out.g = v;
+		out.b = t;
+		break;
+
+	case 3:
+		out.r = p;
+		out.g = q;
+		out.b = v;
+		break;
+	case 4:
+		out.r = t;
+		out.g = p;
+		out.b = v;
+		break;
+	case 5:
+	default:
+		out.r = v;
+		out.g = p;
+		out.b = q;
+		break;
+	}
+	return out;
+}
+
 void Camera::tick(float deltaTime)
 {
-	::Transform::tick(deltaTime);
+	Transform::tick(deltaTime);
 	if (animationClip.update(deltaTime)) {
 		map<unsigned int, float>* curveData = animationClip.getCurveCurrentValue();
 		if (curveData != NULL && !curveData->empty()) {
@@ -58,11 +116,14 @@ void Camera::tick(float deltaTime)
 				distance = iter->second;
 		}
 	}
+	float s = 0.001;
+	float h = sin(Time::duration().toMillisecond() * s) * 180 + 180;
+	clearColor = hsv2rgb(h, 1, 1);
 }
 
 void Camera::afterTick()
 {
-	::Transform::afterTick();
+	Transform::afterTick();
 	cameraRender.cameraDir = getForward(WORLD);
 	cameraRender.cameraUp = getUpward(WORLD);
 	cameraRender.cameraLeft = getRightward(WORLD);
@@ -111,9 +172,9 @@ bool Camera::isActive()
 void Camera::uploadCameraData()
 {
 	CameraData data;
-	data.projectionViewMat = cameraRender.projectionViewMat;
-	data.projectionMat = getProjectionMatrix();
-	data.viewMat = getViewMatrix();
+	data.projectionViewMat = MATRIX_UPLOAD_OP(cameraRender.projectionViewMat);
+	data.projectionMat = MATRIX_UPLOAD_OP(getProjectionMatrix());
+	data.viewMat = MATRIX_UPLOAD_OP(getViewMatrix());
 	data.cameraLoc = cameraRender.cameraLoc;
 	data.cameraDir = cameraRender.cameraDir;
 	data.cameraUp = cameraRender.cameraUp;

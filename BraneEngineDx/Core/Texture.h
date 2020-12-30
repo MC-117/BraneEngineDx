@@ -21,7 +21,7 @@ public:
 	virtual int getChannel() const;
 
 	virtual unsigned int bind();
-	virtual unsigned int getTextureID() const;
+	virtual unsigned long long getTextureID();
 	virtual void* getVendorTexture() const;
 	virtual unsigned int resize(unsigned int width, unsigned int height);
 };

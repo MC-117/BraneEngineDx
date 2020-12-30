@@ -1,0 +1,79 @@
+#adapter name toon_fragment
+#fragment
+#version 460 core
+
+#include "../lib/Light_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+
+layout (location = 0) out float4 FragColor;
+//layout (location = 1) out float4 ssnMask;
+in float3 Normal;
+in float2 TexCoords;
+in float4 lightSpacePos;
+in float3 WorldPos;
+
+uniform float4 baseColor;
+uniform float4 shadowColor;
+uniform float4 highlightColor;
+uniform float4 rimColor;
+uniform float4 overColor;
+uniform float shadowCut;
+uniform float shadowCutSmooth;
+uniform float highlightCut;
+uniform float highlightCutSmooth;
+uniform float rimCut;
+uniform float rimCutSmooth;
+uniform float normalScale;
+uniform sampler2D colorMap;
+uniform sampler2D aoMap;
+uniform sampler2D normalMap;
+uniform sampler2D depthMap;
+
+#include "../lib/Toon_Lib.hmat"
+
+float ShadowCalculation(float4 fragPosLightSpace, float3 N, float3 L)
+{
+    float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+
+    if (projCoords.z >= 1.0) {
+        return 1.0;
+    }
+    
+    projCoords = projCoords * 0.5 + 0.5;
+
+    float currentDepth = projCoords.z;
+    
+    float shadow = 0.0;
+    float bias = 0;//max(0.00005 * (1.0 - dot(N, L)), 0.000005);
+
+    float2 texelSize = 1.0 / textureSize(depthMap, 0);
+    for(int x = -3; x <= 3; ++x)
+    {
+        for(int y = -3; y <= 3; ++y)
+        {
+            float pcfDepth = texture(depthMap, projCoords.xy + float2(x, y) * texelSize).r;
+            shadow += currentDepth - bias > pcfDepth ? 0.0 : 1.0;
+        }
+    }
+    shadow /= 49.0;
+    return shadow;
+}
+
+void main()
+{
+    float3 N = normalize(cotangent(Normal, WorldPos, TexCoords) * ((normalize(texture(normalMap, TexCoords) * 2 - 1)).xyz) * normalScale);
+    float3 V = normalize(camData.camPos - WorldPos);
+    float4 albedo = texture(colorMap, TexCoords);
+    float4 ao = texture(aoMap, TexCoords);
+    float a = albedo.a * baseColor.a;
+    float3 L = normalize(directLight.direction);
+    float3 H = normalize(V + L);
+    float4 ambience = mix(baseColor, highlightColor, smoothToon(float4(1.0f), float4(0.0f), dot(N, H), highlightCut, highlightCutSmooth));
+    ambience = mix(shadowColor, ambience, ShadowCalculation(lightSpacePos, N, L));
+    ambience = smoothToon(ambience, shadowColor, dot(N, L), shadowCut, shadowCutSmooth);
+    ambience = smoothToon(rimColor, ambience, fresnelSchlick(dot(N, normalize(camData.camPos - WorldPos)), 0.33f), rimCut, rimCutSmooth);
+    FragColor = albedo * ambience * ao;
+    FragColor.a = a;
+    FragColor *= overColor;
+    //ssnMask = float4(1);
+}

@@ -1,0 +1,72 @@
+#include "Const_Def.hmat"
+
+float3x3 cotangent( float3 N, float3 p, float2 uv )
+{
+    // get edge vectors of the pixel triangle
+    float3 dp1 = dFdx( p );
+    float3 dp2 = dFdy( p );
+    float2 duv1 = dFdx( uv );
+    float2 duv2 = dFdy( uv );
+
+    // solve the linear system
+    float3 dp2perp = cross( dp2, N );
+    float3 dp1perp = cross( N, dp1 );
+    float3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+    float3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+
+    // construct a scale-invariant frame 
+    float invmax = inversesqrt( max( dot(T,T), dot(B,B) ) );
+    return float3x3( T * invmax, B * invmax, N );
+}
+
+float fresnelSchlick(float cosTheta, float F0)
+{
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+float3 fresnelSchlick(float cosTheta, float3 F0)
+{
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+float3 fresnelSchlick(float cosTheta, float3 F0, float roughness)
+{
+    return F0 + (max(float3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+float ShadowCalculation(in sampler2D depthMap, float4 fragPosLightSpace, float3 N, float3 L)
+{
+    float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+
+    if (projCoords.z >= 1.0) {
+        return 1.0;
+    }
+    
+    projCoords = projCoords * 0.5 + 0.5;
+
+    float currentDepth = projCoords.z;
+    
+    float shadow = 0.0;
+    float bias = 0;//max(0.0000005 * (1.0 - dot(N, L)), 0.00000005);
+
+    float2 texelSize = 1.0 / textureSize(depthMap, 0);
+    for(int x = -3; x <= 3; ++x)
+    {
+        for(int y = -3; y <= 3; ++y)
+        {
+            float pcfDepth = texture(depthMap, projCoords.xy + float2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth ? 0.0 : 1.0;        
+        }
+    }
+    shadow /= 49.0;
+    return shadow;
+}
+
+float2 sphereProj(float3 v)
+{
+    float3 zp = normalize(float3(v.xy, 0.0f));
+    float s = v.y >= 0 ? (0.25 - zp.x * 0.25) : (0.75 + zp.x * 0.25);
+    float tp = dot(zp, v);
+    float t = v.z >= 0 ? (1 - tp * 0.5) : (tp * 0.5);
+    return float2(s, t);
+}

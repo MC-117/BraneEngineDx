@@ -23,11 +23,8 @@ public:
 	static void setup();
 	static void start();
 	static void clean();
+	static void mainLoop();
 };
-
-void resizeWindow(int width, int height);
-
-void engineMainLoop();
 
 LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 

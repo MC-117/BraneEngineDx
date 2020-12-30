@@ -25,7 +25,7 @@ struct CameraData
 	Vector2f user2;
 };
 
-class Camera : public ::Transform
+class Camera : public Transform
 {
 private:
 	CameraRender* _cameraRender = NULL;
@@ -76,7 +76,7 @@ public:
 	static Matrix4f lookAt(Vector3f const& eye, Vector3f const& center, Vector3f const& up);
 	static Matrix4f viewport(int x, int y, int width, int height, float zNear, float zFar);
 protected:
-	GPUBuffer cameraDataBuffer = GPUBuffer(GB_Constant, sizeof(CameraData));
+	GPUBuffer cameraDataBuffer = GPUBuffer(GB_Storage, sizeof(CameraData));
 };
 
 #endif // !_CAMERA_H_

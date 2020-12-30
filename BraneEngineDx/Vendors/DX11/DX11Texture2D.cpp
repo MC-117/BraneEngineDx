@@ -6,8 +6,9 @@
 DX11Texture2DInfo::DX11Texture2DInfo(const Texture2DInfo & info)
 {
 	texture2DDesc.Format = toDX11InternalType(info.internalType);
-	texture2DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	texture2DDesc.BindFlags = info.internalType == TIT_Depth ? D3D11_BIND_DEPTH_STENCIL : D3D11_BIND_SHADER_RESOURCE;
 	texture2DDesc.Usage = D3D11_USAGE_DEFAULT;
+	texture2DDesc.ArraySize = 1;
 	texture2DDesc.SampleDesc.Count = info.sampleCount;
 	texture2DDesc.SampleDesc.Quality = 0;
 	samplerDesc.Filter = toDX11FilterType(info.minFilterType, info.magFilterType);
@@ -24,8 +25,9 @@ DX11Texture2DInfo::DX11Texture2DInfo(const Texture2DInfo & info)
 DX11Texture2DInfo& DX11Texture2DInfo::operator=(const Texture2DInfo& info)
 {
 	texture2DDesc.Format = toDX11InternalType(info.internalType);
-	texture2DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	texture2DDesc.BindFlags = info.internalType == TIT_Depth ? D3D11_BIND_DEPTH_STENCIL : D3D11_BIND_SHADER_RESOURCE;
 	texture2DDesc.Usage = D3D11_USAGE_DEFAULT;
+	texture2DDesc.ArraySize = 1;
 	texture2DDesc.SampleDesc.Count = info.sampleCount;
 	texture2DDesc.SampleDesc.Quality = 0;
 	samplerDesc.Filter = toDX11FilterType(info.minFilterType, info.magFilterType);
@@ -148,7 +150,7 @@ DXGI_FORMAT DX11Texture2DInfo::toDX11ColorType(const TexInternalType& type)
 	return DXGI_FORMAT_UNKNOWN;
 }
 
-DX11Texture2D::DX11Texture2D(const DX11Context& context, Texture2DDesc & desc)
+DX11Texture2D::DX11Texture2D(DX11Context& context, Texture2DDesc & desc)
 	: dxContext(context), ITexture2D(desc)
 {
 }
@@ -161,6 +163,11 @@ DX11Texture2D::~DX11Texture2D()
 bool DX11Texture2D::isValid() const
 {
 	return false;
+}
+
+unsigned long long DX11Texture2D::getTextureID()
+{
+	return (unsigned long long)getSRV();
 }
 
 void DX11Texture2D::release()
@@ -183,12 +190,19 @@ unsigned int DX11Texture2D::bind()
 	info = desc.info;
 	info.texture2DDesc.Width = desc.width;
 	info.texture2DDesc.Height = desc.height;
+	if (desc.info.sampleCount > 1) {
+		unsigned int q = 0;
+		dxContext.device->CheckMultisampleQualityLevels(info.texture2DDesc.Format, desc.info.sampleCount, &q);
+		if (q != 0)
+			--q;
+		info.texture2DDesc.SampleDesc.Quality = q;
+	}
 	if (info.texture2DDesc.Format == DXGI_FORMAT_UNKNOWN)
 		info.texture2DDesc.Format = getColorType(desc.channel, DXGI_FORMAT_UNKNOWN);
 	if (desc.autoGenMip) {
 		info.texture2DDesc.MipLevels = 1;
 		D3D11_SUBRESOURCE_DATA initData = { desc.data, desc.width * desc.channel * sizeof(unsigned char), 0 };
-		dxContext.device->CreateTexture2D(&info.texture2DDesc, &initData, &dx11Texture2D);
+		dxContext.device->CreateTexture2D(&info.texture2DDesc, desc.data ? &initData : NULL, &dx11Texture2D);
 		desc.mipLevel = 1 + floor(log2(max(desc.width, desc.height)));
 	}
 	else {
@@ -204,6 +218,8 @@ unsigned int DX11Texture2D::bind()
 			_width /= 2, _height /= 2;
 		}
 		dxContext.device->CreateTexture2D(&info.texture2DDesc, initData, &dx11Texture2D);
+		if (initData != NULL)
+			delete[] initData;
 	}
 	if (dx11Texture2DView != NULL)
 		dx11Texture2DView->Release();
@@ -231,7 +247,10 @@ ID3D11ShaderResourceView* DX11Texture2D::getSRV()
 {
 	if (bind() == 0)
 		return NULL;
-	if (!isClassOf<ID3D11ShaderResourceView>(dx11Texture2DView)) {
+	ID3D11ShaderResourceView* q = NULL;
+	if (dx11Texture2DView != NULL)
+		dx11Texture2DView->QueryInterface(IID_PPV_ARGS(&q));
+	if (q == NULL) {
 		if (dx11Texture2DView != NULL)
 			dx11Texture2DView->Release();
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -258,7 +277,10 @@ ID3D11UnorderedAccessView* DX11Texture2D::getUAV(unsigned int mipLevel)
 {
 	if (bind() == 0)
 		return NULL;
-	if (!isClassOf<ID3D11UnorderedAccessView>(dx11Texture2DView)) {
+	ID3D11UnorderedAccessView* q = NULL;
+	if (dx11Texture2DView != NULL)
+		dx11Texture2DView->QueryInterface(IID_PPV_ARGS(&q));
+	if (q == NULL) {
 		if (dx11Texture2DView != NULL)
 			dx11Texture2DView->Release();
 		D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
@@ -286,7 +308,10 @@ ID3D11DepthStencilView* DX11Texture2D::getDSV(unsigned int mipLevel)
 {
 	if (bind() == 0)
 		return NULL;
-	if (!isClassOf<ID3D11DepthStencilView>(dx11Texture2DView)) {
+	ID3D11DepthStencilView* q = NULL;
+	if (dx11Texture2DView != NULL)
+		dx11Texture2DView->QueryInterface(IID_PPV_ARGS(&q));
+	if (q == NULL) {
 		if (dx11Texture2DView != NULL)
 			dx11Texture2DView->Release();
 		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};

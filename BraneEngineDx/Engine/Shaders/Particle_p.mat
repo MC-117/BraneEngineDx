@@ -1,0 +1,43 @@
+#order 2500
+#material
+Texture colorMap: white
+#vertex
+#version 460 core
+#include "lib/ParticleData_Def.hmat"
+#include "lib/CameraData_Def.hmat"
+
+out Particle particle;
+
+void main()
+{
+    particle = Particles[gl_InstanceID + gl_BaseInstance];
+    gl_Position = camData.pmat * float4(particle.pos, 1.0);
+    gl_PointSize = particle.scale.x;
+}
+
+#fragment
+#version 410 core
+
+struct Particle
+{
+    float3 pos;
+    float lifetime;
+    float3 scale;
+    float maxLifetime;
+    float3 velocity;
+    float type;
+    float3 acceleration;
+    float extSca;
+    float4 extVec;
+    float4 color;
+};
+
+uniform sampler2D colorMap;
+in Particle particle;
+in float2 UV;
+layout (location = 0) out float4 FragColor;
+
+void main()
+{
+    FragColor = particle.color;// * texture(colorMap, UV);
+}

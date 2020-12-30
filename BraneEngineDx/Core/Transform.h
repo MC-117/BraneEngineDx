@@ -89,7 +89,7 @@ public:
 	virtual void scaling(float x, float y, float z);
 	virtual void scaling(const Vector3f& v);
 
-	virtual void attachTo(::Transform& target, const AttachRuleEnum& rule = KeepWorld);
+	virtual void attachTo(Transform& target, const AttachRuleEnum& rule = KeepWorld);
 
 	virtual void setParent(Object& parent);
 
@@ -115,6 +115,6 @@ struct ContactInfo {
 	Vector3f location;
 	Vector3f normal;
 	Vector3f impact;
-	::Transform* otherObject = NULL;
+	Transform* otherObject = NULL;
 	void* physicalObject = NULL;
 };

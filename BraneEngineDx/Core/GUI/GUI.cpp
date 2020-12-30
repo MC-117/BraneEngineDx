@@ -110,6 +110,8 @@ void GUI::render(RenderInfo& info)
 	ImGui::Render();
 	//ImGuiIO& io = ImGui::GetIO();
 
+	RenderTarget::defaultRenderTarget.bindFrame();
+
 	/*----- Vendor ImGui draw frame -----*/
 	{
 		if (!vendor.imGuiDrawFrame(Engine::engineConfig, Engine::windowContext))

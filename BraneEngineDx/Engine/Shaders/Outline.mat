@@ -1,0 +1,9 @@
+#order 1100
+#cullfront true
+#castshadow false
+#material
+Color baseColor: 0, 0, 0, 255
+Scalar borderWidth: 0.1
+Scalar refenceDistance: 0
+#vertex use outline
+#fragment use pure_color_fragment

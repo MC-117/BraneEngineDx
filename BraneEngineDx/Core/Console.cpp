@@ -27,7 +27,7 @@ void Console::pushLog(list<_LOG>& buf, LogState state, const std::string fmt_str
 	std::unique_ptr<char[]> formatted;
 	while (1) {
 		formatted.reset(new char[n]); /* Wrap the plain char array into the unique_ptr */
-		strcpy(&formatted[0], fmt_str.c_str());
+		memcpy_s(&formatted[0], fmt_str.size(), fmt_str.c_str(), fmt_str.size());
 		final_n = vsnprintf(&formatted[0], n, fmt_str.c_str(), ap);
 		if (final_n < 0 || final_n >= n)
 			n += abs(final_n - n + 1);

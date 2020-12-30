@@ -91,7 +91,7 @@ struct Vector2f : protected DirectX::XMFLOAT2
 
 	Vector2f& operator=(const Vector2f& v);
 
-	Vector2f& operator-();
+	Vector2f operator-();
 
 	Vector2f operator+(const Vector2f& v) const;
 	Vector2f& operator+=(const Vector2f& v);
@@ -147,7 +147,7 @@ public:
 
 	Vector2u& operator=(const Vector2u& v);
 
-	Vector2u& operator-();
+	Vector2f operator-();
 
 	Vector2u operator+(const Vector2u& v) const;
 	Vector2u& operator+=(const Vector2u& v);
@@ -209,7 +209,7 @@ struct Vector3f : protected DirectX::XMFLOAT3
 
 	Vector3f& operator=(const Vector3f& v);
 
-	Vector3f& operator-();
+	Vector3f operator-();
 
 	Vector3f operator+(const Vector3f& v) const;
 	Vector3f& operator+=(const Vector3f& v);
@@ -269,7 +269,7 @@ public:
 
 	Vector3u& operator=(const Vector3u& v);
 
-	Vector3u& operator-();
+	Vector3f operator-();
 
 	Vector3u operator+(const Vector3u& v) const;
 	Vector3u& operator+=(const Vector3u& v);
@@ -334,7 +334,7 @@ struct Vector4f : protected DirectX::XMFLOAT4
 
 	Vector4f& operator=(const Vector4f& v);
 
-	Vector4f& operator-();
+	Vector4f operator-();
 
 	Vector4f operator+(const Vector4f& v) const;
 	Vector4f& operator+=(const Vector4f& v);
@@ -397,7 +397,7 @@ public:
 
 	Vector4u& operator=(const Vector4u& v);
 
-	Vector4u& operator-();
+	Vector4f operator-();
 
 	Vector4u operator+(const Vector4u& v) const;
 	Vector4u& operator+=(const Vector4u& v);
@@ -433,6 +433,8 @@ struct Matrix3f : protected DirectX::XMFLOAT3X3
 	float* data() const;
 
 	Matrix3f inverse() const;
+	Matrix3f transpose() const;
+	Matrix3f& transposeInPlace();
 	Vector3f eulerAngles() const;
 
 	Block block(unsigned int rowStart, unsigned int colStart,
@@ -474,6 +476,8 @@ struct Matrix4f : protected DirectX::XMFLOAT4X4
 	float* data() const;
 
 	Matrix4f inverse() const;
+	Matrix4f transpose() const;
+	Matrix4f& transposeInPlace();
 	bool decompose(Vector3f& pos, Quaternionf& rot, Vector3f& sca) const;
 
 	Block block(unsigned int rowStart, unsigned int colStart,

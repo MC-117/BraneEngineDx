@@ -1,0 +1,4 @@
+#order 10
+#material
+#vertex use position
+#fragment use empty_fragment

@@ -83,7 +83,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>ThirdParty\assimp-5.0.1\lib\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -127,9 +127,9 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>IrrXML.lib;assimp-vc142-mtd.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlibstaticd.lib;IrrXMLd.lib;assimp-vc142-mtd.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -143,16 +143,18 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>IrrXML.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlibstatic.lib;IrrXML.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Core\Actor.h" />
     <ClInclude Include="Core\AnimationClip.h" />
     <ClInclude Include="Core\Asset.h" />
+    <ClInclude Include="Core\Bone.h" />
     <ClInclude Include="Core\Camera.h" />
     <ClInclude Include="Core\CameraRender.h" />
     <ClInclude Include="Core\Config.h" />
@@ -162,7 +164,18 @@
     <ClInclude Include="Core\Engine.h" />
     <ClInclude Include="Core\Events.h" />
     <ClInclude Include="Core\Geometry.h" />
+    <ClInclude Include="Core\GrassMeshActor.h" />
+    <ClInclude Include="Core\GUI\AssetBrowser.h" />
+    <ClInclude Include="Core\GUI\AssetLoadWindow.h" />
+    <ClInclude Include="Core\GUI\BlendSpaceWindow.h" />
+    <ClInclude Include="Core\GUI\ConsoleWindow.h" />
+    <ClInclude Include="Core\GUI\DebugLogWindow.h" />
+    <ClInclude Include="Core\GUI\EditorWindow.h" />
     <ClInclude Include="Core\GUI\GUI.h" />
+    <ClInclude Include="Core\GUI\InspectorWindow.h" />
+    <ClInclude Include="Core\GUI\MaterialWindow.h" />
+    <ClInclude Include="Core\GUI\SerializationEditor.h" />
+    <ClInclude Include="Core\GUI\TextureViewer.h" />
     <ClInclude Include="Core\GUI\UIControl.h" />
     <ClInclude Include="Core\GUI\UIWindow.h" />
     <ClInclude Include="Core\Importer.h" />
@@ -173,6 +186,8 @@
     <ClInclude Include="Core\Light.h" />
     <ClInclude Include="Core\Material.h" />
     <ClInclude Include="Core\Mesh.h" />
+    <ClInclude Include="Core\MeshActor.h" />
+    <ClInclude Include="Core\MeshRender.h" />
     <ClInclude Include="Core\Object.h" />
     <ClInclude Include="Core\PointLight.h" />
     <ClInclude Include="Core\Render.h" />
@@ -185,8 +200,11 @@
     <ClInclude Include="Core\ShadowCamera.h" />
     <ClInclude Include="Core\ShadowCameraRender.h" />
     <ClInclude Include="Core\Shape.h" />
+    <ClInclude Include="Core\SkeletonMeshActor.h" />
     <ClInclude Include="Core\SkeletonMeshData.h" />
+    <ClInclude Include="Core\SkeletonMeshRender.h" />
     <ClInclude Include="Core\SkeletonPose.h" />
+    <ClInclude Include="Core\StaticVar.h" />
     <ClInclude Include="Core\Texture.h" />
     <ClInclude Include="Core\Texture2D.h" />
     <ClInclude Include="Core\Transform.h" />
@@ -227,8 +245,10 @@
     <ClInclude Include="Vendors\DX11\imgui_impl_win32.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Actor.cpp" />
     <ClCompile Include="Core\AnimationClip.cpp" />
     <ClCompile Include="Core\Asset.cpp" />
+    <ClCompile Include="Core\Bone.cpp" />
     <ClCompile Include="Core\Camera.cpp" />
     <ClCompile Include="Core\CameraRender.cpp" />
     <ClCompile Include="Core\Console.cpp" />
@@ -236,7 +256,18 @@
     <ClCompile Include="Core\Engine.cpp" />
     <ClCompile Include="Core\Events.cpp" />
     <ClCompile Include="Core\Geometry.cpp" />
+    <ClCompile Include="Core\GrassMeshActor.cpp" />
+    <ClCompile Include="Core\GUI\AssetBrowser.cpp" />
+    <ClCompile Include="Core\GUI\AssetLoadWindow.cpp" />
+    <ClCompile Include="Core\GUI\BlendSpaceWindow.cpp" />
+    <ClCompile Include="Core\GUI\ConsoleWindow.cpp" />
+    <ClCompile Include="Core\GUI\DebugLogWindow.cpp" />
+    <ClCompile Include="Core\GUI\EditorWindow.cpp" />
     <ClCompile Include="Core\GUI\GUI.cpp" />
+    <ClCompile Include="Core\GUI\InspectorWindow.cpp" />
+    <ClCompile Include="Core\GUI\MaterialWindow.cpp" />
+    <ClCompile Include="Core\GUI\SerializationEditor.cpp" />
+    <ClCompile Include="Core\GUI\TextureViewer.cpp" />
     <ClCompile Include="Core\GUI\UIControl.cpp" />
     <ClCompile Include="Core\GUI\UIWindow.cpp" />
     <ClCompile Include="Core\Importer.cpp" />
@@ -245,6 +276,8 @@
     <ClCompile Include="Core\Light.cpp" />
     <ClCompile Include="Core\Material.cpp" />
     <ClCompile Include="Core\Mesh.cpp" />
+    <ClCompile Include="Core\MeshActor.cpp" />
+    <ClCompile Include="Core\MeshRender.cpp" />
     <ClCompile Include="Core\Object.cpp" />
     <ClCompile Include="Core\PointLight.cpp" />
     <ClCompile Include="Core\Render.cpp" />
@@ -257,7 +290,9 @@
     <ClCompile Include="Core\ShadowCamera.cpp" />
     <ClCompile Include="Core\ShadowCameraRender.cpp" />
     <ClCompile Include="Core\Shape.cpp" />
+    <ClCompile Include="Core\SkeletonMeshActor.cpp" />
     <ClCompile Include="Core\SkeletonMeshData.cpp" />
+    <ClCompile Include="Core\SkeletonMeshRender.cpp" />
     <ClCompile Include="Core\SkeletonPose.cpp" />
     <ClCompile Include="Core\Texture.cpp" />
     <ClCompile Include="Core\Texture2D.cpp" />
@@ -274,6 +309,9 @@
     <ClCompile Include="Core\IRenderTarget.cpp" />
     <ClCompile Include="Core\MeshData.cpp" />
     <ClCompile Include="Core\IRenderExecution.cpp" />
+    <ClCompile Include="initial.cpp" />
+    <ClCompile Include="tool.cpp" />
+    <ClCompile Include="Vendors\DX11\DX11.cpp" />
     <ClCompile Include="Vendors\DX11\DX11RenderExecution.cpp" />
     <ClCompile Include="Vendors\DX11\DX11SkeletonMeshData.cpp" />
     <ClCompile Include="Vendors\DX11\DX11MeshData.cpp" />

@@ -5,7 +5,7 @@
 unsigned int DX11RenderTarget::nextDxFrameID = 1;
 DX11RenderTarget* DX11RenderTarget::currentRenderTarget = NULL;
 
-DX11RenderTarget::DX11RenderTarget(const DX11Context& context, RenderTargetDesc& desc)
+DX11RenderTarget::DX11RenderTarget(DX11Context& context, RenderTargetDesc& desc)
     : dxContext(context), IRenderTarget(desc)
 {
 	dxFrameID = nextDxFrameID;
@@ -25,6 +25,12 @@ ITexture2D* DX11RenderTarget::getInternalDepthTexture()
 
 unsigned int DX11RenderTarget::bindFrame()
 {
+	if (isDefault()) {
+		desc.inited = true;
+		dxContext.deviceContext->OMSetRenderTargets(dx11RTVs.size(), dx11RTVs.data(), dx11DSV);
+		currentRenderTarget = this;
+		return 0;
+	}
 	if (!desc.inited) {
 		resize(desc.width, desc.height);
 		desc.inited = true;
@@ -43,7 +49,20 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 		return;
 	desc.width = width;
 	desc.height = height;
-	if (desc.depthOnly) {
+	if (isDefault()) {
+		dxContext.createSwapChain(width, height, desc.multisampleLevel);
+		ID3D11Texture2D* screenTex = NULL;
+		dxContext.swapChain->GetBuffer(0, IID_PPV_ARGS(&screenTex));
+		if (dx11RTVs.size() != 1)
+			dx11RTVs.resize(1, NULL);
+		ID3D11RenderTargetView* rtv = dx11RTVs[0];
+		if (rtv != NULL)
+			rtv->Release();
+		if (FAILED(dxContext.device->CreateRenderTargetView(screenTex, NULL, &rtv)))
+			throw runtime_error("DX11: Create default render target view failed");
+		dx11RTVs[0] = rtv;
+	}
+	else if (desc.depthOnly) {
 		if (desc.depthTexure != NULL) {
 			if (desc.depthTexure->resize(width, height) == 0)
 				throw runtime_error("DX11: Resize depth texture failed");
@@ -72,31 +91,27 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 				throw runtime_error("DX11: Create render target view failed");
 			dx11RTVs[i] = rtv;
 		}
-		if (desc.withDepthStencil) {
-			if (dx11DepthTex == NULL) {
-				dx11DepthTexDesc.autoGenMip = true;
-				dx11DepthTexDesc.channel = 1;
-				dx11DepthTexDesc.width = width;
-				dx11DepthTexDesc.height = height;
-				dx11DepthTexDesc.info.internalType = TIT_Depth;
-				dx11DepthTexDesc.info.wrapSType = TW_Clamp;
-				dx11DepthTexDesc.info.wrapTType = TW_Clamp;
-				dx11DepthTexDesc.info.magFilterType = TF_Point;
-				dx11DepthTexDesc.info.minFilterType = TF_Point;
-				dx11DepthTexDesc.info.sampleCount = desc.multisampleLevel;
-				dx11DepthTex = new DX11Texture2D(dxContext, dx11DepthTexDesc);
-
-			}
-			dx11DepthTex->resize(width, height);
-			dx11DSV = dx11DepthTex->getDSV(0);
-			if (dx11DSV == NULL)
-				throw runtime_error("DX11: Create DSV failed");
-		}
 	}
-}
+	if (desc.depthTexure == NULL && desc.withDepthStencil) {
+		if (dx11DepthTex == NULL) {
+			dx11DepthTexDesc.autoGenMip = true;
+			dx11DepthTexDesc.channel = 1;
+			dx11DepthTexDesc.width = width;
+			dx11DepthTexDesc.height = height;
+			dx11DepthTexDesc.info.internalType = TIT_Depth;
+			dx11DepthTexDesc.info.wrapSType = TW_Clamp;
+			dx11DepthTexDesc.info.wrapTType = TW_Clamp;
+			dx11DepthTexDesc.info.magFilterType = TF_Point;
+			dx11DepthTexDesc.info.minFilterType = TF_Point;
+			dx11DepthTexDesc.info.sampleCount = desc.multisampleLevel;
+			dx11DepthTex = new DX11Texture2D(dxContext, dx11DepthTexDesc);
 
-void DX11RenderTarget::SetMultisampleFrame()
-{
+		}
+		dx11DepthTex->resize(width, height);
+		dx11DSV = dx11DepthTex->getDSV(0);
+		if (dx11DSV == NULL)
+			throw runtime_error("DX11: Create DSV failed");
+	}
 }
 
 void DX11RenderTarget::clearColor(const Color& color)
@@ -110,11 +125,16 @@ void DX11RenderTarget::clearColor(const Color& color)
 
 void DX11RenderTarget::clearColors(const vector<Color>& colors)
 {
+	if (colors.empty())
+		return;
 	for (int i = 0; i < dx11RTVs.size(); i++) {
-		if (i >= colors.size())
-			break;
+		const Color* color;
+		if (i < colors.size())
+			color = &colors[i];
+		else
+			color = &colors.back();
 		if (dx11RTVs[i] != NULL)
-			dxContext.deviceContext->ClearRenderTargetView(dx11RTVs[i], (const float*)&colors[i]);
+			dxContext.deviceContext->ClearRenderTargetView(dx11RTVs[i], (const float*)color);
 	}
 }
 

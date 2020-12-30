@@ -2,7 +2,7 @@
 
 #ifdef VENDOR_USE_DX11
 
-DX11GPUBuffer::DX11GPUBuffer(const DX11Context& context, GPUBufferDesc& desc)
+DX11GPUBuffer::DX11GPUBuffer(DX11Context& context, GPUBufferDesc& desc)
     : dxContext(context), IGPUBuffer(desc)
 {
 }
@@ -19,8 +19,8 @@ unsigned int DX11GPUBuffer::bind()
 
 unsigned int DX11GPUBuffer::resize(unsigned int size)
 {
-	if (desc.cellSize % 16 != 0)
-		throw runtime_error("GPUBuffer must be aligned by 16 bytes");
+	/*if (desc.cellSize % 16 != 0)
+		throw runtime_error("GPUBuffer must be aligned by 16 bytes");*/
 	if (size == 0) {
 		release();
 	}
@@ -33,7 +33,9 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 		bd.Usage = D3D11_USAGE_DYNAMIC;
 		bd.ByteWidth = desc.capacity * desc.cellSize;
 		bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		bd.BindFlags = desc.type == GB_Constant ? D3D11_BIND_CONSTANT_BUFFER : D3D11_BIND_SHADER_RESOURCE;
+		bd.BindFlags = desc.type == GB_Storage ? D3D11_BIND_SHADER_RESOURCE : D3D11_BIND_CONSTANT_BUFFER;
+		if (desc.type == GB_Command)
+			bd.MiscFlags = D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS;
 		if (FAILED(dxContext.device->CreateBuffer(&bd, NULL, &dx11Buffer)))
 			throw runtime_error("CreateBuffer failed");
 
@@ -42,7 +44,7 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 			srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 			srvDesc.Buffer.FirstElement = 0;
-			srvDesc.Buffer.NumElements = bd.ByteWidth;
+			srvDesc.Buffer.NumElements = size;
 			if (FAILED(dxContext.device->CreateShaderResourceView(dx11Buffer, &srvDesc, &dx11BufferView)))
 				throw runtime_error("CreateShaderResourceView failed");
 			desc.id = (unsigned int)dx11BufferView;
@@ -98,6 +100,8 @@ unsigned int DX11GPUBuffer::bindBase(unsigned int index)
 
 unsigned int DX11GPUBuffer::uploadSubData(unsigned int first, unsigned int size, void* data)
 {
+	if (size == 0)
+		return desc.id;
 	resize(size);
 	D3D11_MAPPED_SUBRESOURCE mpd;
 	dxContext.deviceContext->Map(dx11Buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mpd);

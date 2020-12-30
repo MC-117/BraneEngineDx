@@ -86,12 +86,12 @@ public:
 	typedef LRESULT(*WndProcFunc)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	virtual WndProcFunc getWndProcFunc();
 
-	virtual ITexture2D* newTexture2D(Texture2DDesc& desc) const = 0;
-	virtual ShaderStage* newShaderStage(const ShaderStageDesc& desc) const = 0;
-	virtual ShaderProgram* newShaderProgram() const = 0;
-	virtual IMaterial* newMaterial(MaterialDesc& desc) const = 0;
-	virtual IRenderTarget* newRenderTarget(RenderTargetDesc& desc) const = 0;
-	virtual IGPUBuffer* newGPUBuffer(GPUBufferDesc& desc) const = 0;
+	virtual ITexture2D* newTexture2D(Texture2DDesc& desc) = 0;
+	virtual ShaderStage* newShaderStage(const ShaderStageDesc& desc) = 0;
+	virtual ShaderProgram* newShaderProgram() = 0;
+	virtual IMaterial* newMaterial(MaterialDesc& desc) = 0;
+	virtual IRenderTarget* newRenderTarget(RenderTargetDesc& desc) = 0;
+	virtual IGPUBuffer* newGPUBuffer(GPUBufferDesc& desc) = 0;
 	virtual MeshPartDesc newMeshPart(unsigned int vertCount, unsigned int elementCount) = 0;
 	virtual SkeletonMeshPartDesc newSkeletonMeshPart(unsigned int vertCount, unsigned int elementCount,
 		unsigned int boneCount, unsigned int morphVertCount, unsigned int morphCount) = 0;
@@ -103,6 +103,7 @@ public:
 	virtual void setRenderAlphaState() = 0;
 	virtual void setRenderTransparentState() = 0;
 	virtual void setRenderOverlayState() = 0;
+	virtual void setRenderPostState() = 0;
 	virtual void setCullState(CullType type) = 0;
 	virtual void setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h) = 0;
 protected:

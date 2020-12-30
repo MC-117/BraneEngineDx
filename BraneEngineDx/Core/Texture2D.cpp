@@ -85,6 +85,7 @@ Texture2D::Texture2D(ITexture2D* vendorTexture)
 {
 	readOnly = true;
 	this->vendorTexture = vendorTexture;
+	desc = vendorTexture->desc;
 }
 
 Texture2D::Texture2D(const Texture2DInfo & info, bool isStandard) : isStandard(isStandard)
@@ -171,9 +172,10 @@ int Texture2D::getChannel() const
 	return desc.channel;
 }
 
-unsigned int Texture2D::getTextureID() const
+unsigned long long Texture2D::getTextureID()
 {
-	return desc.textureHandle;
+	newVendorTexture();
+	return vendorTexture->getTextureID();
 }
 
 void* Texture2D::getVendorTexture() const

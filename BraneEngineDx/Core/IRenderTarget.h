@@ -31,9 +31,13 @@ class IRenderTarget
 {
 public:
 	RenderTargetDesc& desc;
+	static RenderTargetDesc* defaultRenderTargetDesc;
+	static IRenderTarget* defaultRenderTarget;
 
 	IRenderTarget(RenderTargetDesc& desc);
 	virtual ~IRenderTarget();
+
+	virtual bool isDefault() const;
 
 	virtual void setDepthOnly(Texture* depthTex);
 	virtual ITexture2D* getInternalDepthTexture();

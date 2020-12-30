@@ -12,6 +12,7 @@ enum MeshType
 class MeshData
 {
 public:
+	static MeshData* currentMeshData;
 	MeshType type = MT_Mesh;
 	vector<Vector3f> vertices;
 	vector<Vector2f> uvs;
@@ -22,8 +23,6 @@ public:
 
 	virtual bool isGenerated() const = 0;
 	virtual void bindShape() = 0;
-protected:
-	static MeshData* currentMeshData;
 };
 
 struct MeshPartDesc

@@ -1,0 +1,23 @@
+#include "Bindings_Def.hmat"
+
+struct CameraData
+{
+    float4x4 pmat;
+    float4x4 promat;
+    float4x4 vmat;
+    float3 camPos;
+    float zNear;
+    float3 camDir;
+    float zFar;
+    float3 camUp;
+    float fovy;
+    float3 camLeft;
+    float user1;
+    float2 viewSize;
+    float2 user2;
+};
+
+layout (std140, binding = CAM_BIND_INDEX) uniform CamB
+{
+    CameraData camData;
+};

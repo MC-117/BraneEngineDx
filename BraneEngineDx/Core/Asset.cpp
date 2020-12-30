@@ -98,8 +98,7 @@ void * Asset::intance(vector<string> settings, const string & displayName)
 		else
 			_name = displayName;
 		if (n != 0) {
-			char id[10];
-			_name += itoa(n, id, 10);
+			_name += to_string(n);
 		}
 		res = agentInfo->instance(asset[0], settings, _name);
 		if (res != NULL)
@@ -126,8 +125,7 @@ vector<void*> Asset::intance(vector<string> settings, unsigned int num, const st
 			string nm = _name;
 			int n = start + i;
 			if (n != 0) {
-				char id[10];
-				nm += itoa(n, id, 10);
+				nm += to_string(n);
 			}
 			void* ag = agentInfo->instance(asset[0], settings, nm);
 			if (ag == NULL) {
@@ -169,8 +167,7 @@ vector<void*> Agent::intance(vector<string> settings, unsigned int num, const st
 			string nm = _name;
 			int n = start + i;
 			if (n != 0) {
-				char id[10];
-				nm += itoa(n, id, 10);
+				nm += to_string(n);
 			}
 			void* ag = agentInfo.instance(asset[0], settings, nm);
 			if (ag == NULL) {
@@ -359,7 +356,7 @@ AssetInfo & Texture2DAssetInfo::getInstance()
 	return assetInfo;
 }
 
-bool setTransform(const string & str, ::Transform * trans)
+bool setTransform(const string & str, Transform * trans)
 {
 	vector<pair<bool, string>> re;
 	if (!splitPattern(str, '{', '}', re, [](bool b, string& str) -> bool { trim(str, " \t\n"); return b || (!b && !str.empty()); }) && re.size() == 6)

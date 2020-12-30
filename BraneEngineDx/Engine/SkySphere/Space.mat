@@ -1,0 +1,58 @@
+#order 1000
+#material
+Color sunColor: 255, 204, 102, 255
+Color overallColor: 140, 140, 140, 255
+Color lightDirection: 1, 0, 0, 1
+Scalar sunBrightness: 2
+Scalar sunHeight: 1
+Scalar sunRadius: 0.0003
+Scalar radius: 3276800
+Texture skyMap: black
+
+#vertex
+#version 460
+#include "../Shaders/lib/TransformData_def.hmat"
+#include "../Shaders/lib/CameraData_Def.hmat"
+#include "../Shaders/lib/MeshData_Def.hmat"
+
+out vec3 LocalPos;
+out vec3 WorldPos;
+out vec2 TexCoords;
+void main() {
+    gl_Position = camData.pmat * Transforms[gl_InstanceID + gl_BaseInstance] * vec4(pos.x, pos.y, pos.z, 1.0);
+    LocalPos = pos;
+    vec4 w = Transforms[gl_InstanceID + gl_BaseInstance] * vec4(pos.x, pos.y, pos.z, 1.0);
+    WorldPos = w.xyz / w.w;
+    TexCoords = uv;
+    TexCoords.y = 1 - TexCoords.y;
+}
+
+#fragment
+#version 460
+#include "../Shaders/lib/CameraData_Def.hmat"
+
+uniform vec4 sunColor;
+uniform vec4 overallColor;
+uniform vec4 lightDirection;
+uniform float sunBrightness;
+uniform float sunHeight;
+uniform float sunRadius;
+uniform float radius;
+uniform sampler2D skyMap;
+in vec3 LocalPos;
+in vec3 WorldPos;
+in vec2 TexCoords;
+out vec4 oCol;
+
+float sphereMask(float pos, float center, float radius, float hardness) {
+    return clamp((1 - abs(pos - center) / radius) / (1 - hardness), 0, 1);
+}
+
+void main() {
+    vec3 cameraVector = normalize(WorldPos - camData.camPos);
+    float sunVal = dot(normalize(lightDirection.xyz), cameraVector);
+    vec4 sunCol = sphereMask(sunVal, 1, sunRadius, 0) * sunBrightness * sunColor;
+    vec4 SkyCol = texture(skyMap, TexCoords);
+    oCol = sunCol + SkyCol;
+    oCol = oCol * overallColor * 1.5;
+}
