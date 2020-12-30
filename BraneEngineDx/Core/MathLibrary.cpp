@@ -221,11 +221,9 @@ Vector2f& Vector2f::operator=(const Vector2f& v)
 	return *this;
 }
 
-Vector2f& Vector2f::operator-()
+Vector2f Vector2f::operator-()
 {
-	x() = -x();
-	y() = -y();
-	return *this;
+	return Vector2f(-x(), -y());
 }
 
 Vector2f Vector2f::operator+(const Vector2f& v) const
@@ -414,11 +412,9 @@ Vector2u& Vector2u::operator=(const Vector2u& v)
 	return *this;
 }
 
-Vector2u& Vector2u::operator-()
+Vector2f Vector2u::operator-()
 {
-	_x = -_x;
-	_y = -_y;
-	return *this;
+	return Vector2f(-(float)_x, -(float)_y);
 }
 
 Vector2u Vector2u::operator+(const Vector2u& v) const
@@ -643,12 +639,9 @@ Vector3f& Vector3f::operator=(const Vector3f& v)
 	return *this;
 }
 
-Vector3f& Vector3f::operator-()
+Vector3f Vector3f::operator-()
 {
-	x() = -x();
-	y() = -y();
-	z() = -z();
-	return *this;
+	return Vector3f(-x(), -y(), -z());
 }
 
 Vector3f Vector3f::operator+(const Vector3f& v) const
@@ -852,12 +845,9 @@ Vector3u& Vector3u::operator=(const Vector3u& v)
 	return *this;
 }
 
-Vector3u& Vector3u::operator-()
+Vector3f Vector3u::operator-()
 {
-	_x = -_x;
-	_y = -_y;
-	_z = -_z;
-	return *this;
+	return Vector3f(-(float)_x, -(float)_y, -(float)_z);
 }
 
 Vector3u Vector3u::operator+(const Vector3u& v) const
@@ -1096,13 +1086,9 @@ Vector4f& Vector4f::operator=(const Vector4f& v)
 	return *this;
 }
 
-Vector4f& Vector4f::operator-()
+Vector4f Vector4f::operator-()
 {
-	x() = -x();
-	y() = -y();
-	z() = -z();
-	w() = -w();
-	return *this;
+	return Vector4f(-x(), -y(), -z(), -w());
 }
 
 Vector4f Vector4f::operator+(const Vector4f& v) const
@@ -1322,13 +1308,9 @@ Vector4u& Vector4u::operator=(const Vector4u& v)
 	return *this;
 }
 
-Vector4u& Vector4u::operator-()
+Vector4f Vector4u::operator-()
 {
-	_x = -_x;
-	_y = -_y;
-	_z = -_z;
-	_w = -_w;
-	return *this;
+	return Vector4f(-(float)_x, -(float)_y, -(float)_z, -(float)_w);
 }
 
 Vector4u Vector4u::operator+(const Vector4u& v) const
@@ -1468,6 +1450,19 @@ Matrix3f Matrix3f::inverse() const
 	return out;
 }
 
+Matrix3f Matrix3f::transpose() const
+{
+	XMFLOAT3X3 out;
+	dx::XMStoreFloat3x3(&out, dx::XMMatrixTranspose(dx::XMLoadFloat3x3(this)));
+	return out;
+}
+
+Matrix3f& Matrix3f::transposeInPlace()
+{
+	dx::XMStoreFloat3x3(this, dx::XMMatrixTranspose(dx::XMLoadFloat3x3(this)));
+	return *this;
+}
+
 Vector3f Matrix3f::eulerAngles() const
 {
 	float ox, oy, oz;
@@ -1547,13 +1542,13 @@ Matrix3f& Matrix3f::operator*=(float s)
 Matrix3f Matrix3f::operator*(const Quaternionf& q) const
 {
 	XMFLOAT3X3 out;
-	dx::XMStoreFloat3x3(&out, dx::XMMatrixMultiply(dx::XMMatrixRotationQuaternion(*(XMVECTOR*)&q), dx::XMLoadFloat3x3(this)));
+	dx::XMStoreFloat3x3(&out, dx::XMMatrixMultiply(dx::XMMatrixRotationQuaternion(dx::XMLoadFloat4((XMFLOAT4*)&q)), dx::XMLoadFloat3x3(this)));
 	return out;
 }
 
 Matrix3f& Matrix3f::operator*(const Quaternionf& q)
 {
-	dx::XMStoreFloat3x3(this, dx::XMMatrixMultiply(dx::XMMatrixRotationQuaternion(*(XMVECTOR*)&q), dx::XMLoadFloat3x3(this)));
+	dx::XMStoreFloat3x3(this, dx::XMMatrixMultiply(dx::XMMatrixRotationQuaternion(dx::XMLoadFloat4((XMFLOAT4*)&q)), dx::XMLoadFloat3x3(this)));
 	return *this;
 }
 
@@ -1642,14 +1637,27 @@ float* Matrix4f::data() const
 Matrix4f Matrix4f::inverse() const
 {
 	XMFLOAT4X4 out;
-	dx::XMStoreFloat4x4(&out, dx::XMMatrixInverse(NULL, *(XMMATRIX*)this));
+	dx::XMStoreFloat4x4(&out, dx::XMMatrixInverse(NULL, dx::XMLoadFloat4x4(this)));
 	return out;
+}
+
+Matrix4f Matrix4f::transpose() const
+{
+	XMFLOAT4X4 out;
+	dx::XMStoreFloat4x4(&out, dx::XMMatrixTranspose(dx::XMLoadFloat4x4(this)));
+	return out;
+}
+
+Matrix4f& Matrix4f::transposeInPlace()
+{
+	dx::XMStoreFloat4x4(this, dx::XMMatrixTranspose(dx::XMLoadFloat4x4(this)));
+	return *this;
 }
 
 bool Matrix4f::decompose(Vector3f& pos, Quaternionf& rot, Vector3f& sca) const
 {
 	XMVECTOR _sca, _rot, _pos;
-	if (dx::XMMatrixDecompose(&_sca, &_rot, &_pos, *(XMMATRIX*)this)) {
+	if (dx::XMMatrixDecompose(&_sca, &_rot, &_pos, dx::XMLoadFloat4x4(this))) {
 		dx::XMStoreFloat3((XMFLOAT3*)&pos, _pos);
 		dx::XMStoreFloat4((XMFLOAT4*)&rot, _rot);
 		dx::XMStoreFloat3((XMFLOAT3*)&sca, _sca);
@@ -1718,20 +1726,20 @@ Matrix4f& Matrix4f::operator*=(float s)
 Vector4f Matrix4f::operator*(const Vector4f& v) const
 {
 	XMFLOAT4 out;
-	dx::XMStoreFloat4(&out, dx::XMVector4Transform(*(XMVECTOR*)&v, *(XMMATRIX*)this));
+	dx::XMStoreFloat4(&out, dx::XMVector4Transform(dx::XMLoadFloat4((XMFLOAT4*)&v), dx::XMLoadFloat4x4(this)));
 	return out;
 }
 
 Matrix4f Matrix4f::operator*(const Matrix4f& m) const
 {
 	XMFLOAT4X4 out;
-	dx::XMStoreFloat4x4(&out, dx::XMMatrixMultiply(*(XMMATRIX*)&m, *(XMMATRIX*)this));
+	dx::XMStoreFloat4x4(&out, dx::XMMatrixMultiply(dx::XMLoadFloat4x4(&m), dx::XMLoadFloat4x4(this)));
 	return out;
 }
 
 Matrix4f& Matrix4f::operator*=(const Matrix4f& m)
 {
-	dx::XMStoreFloat4x4(this, XMMatrixMultiply(*(XMMATRIX*)&m, *(XMMATRIX*)this));
+	dx::XMStoreFloat4x4(this, dx::XMMatrixMultiply(dx::XMLoadFloat4x4(&m), dx::XMLoadFloat4x4(this)));
 	return *this;
 }
 
@@ -1785,13 +1793,13 @@ Quaternionf Quaternionf::FromAngleAxis(float angle, const Vector3f& axis)
 Quaternionf Quaternionf::normalized() const
 {
 	XMFLOAT4 out;
-	dx::XMStoreFloat4(&out, dx::XMQuaternionNormalize(*(XMVECTOR*)this));
+	dx::XMStoreFloat4(&out, dx::XMQuaternionNormalize(dx::XMLoadFloat4(this)));
 	return out;
 }
 
 Quaternionf& Quaternionf::normalize()
 {
-	dx::XMStoreFloat4(this, dx::XMQuaternionNormalize(*(XMVECTOR*)this));
+	dx::XMStoreFloat4(this, dx::XMQuaternionNormalize(dx::XMLoadFloat4(this)));
 	return *this;
 }
 
@@ -1831,21 +1839,21 @@ Quaternionf& Quaternionf::setFromAngleAxis(float angle, const Vector3f& axis)
 Quaternionf Quaternionf::inverse() const
 {
 	XMFLOAT4 out;
-	dx::XMStoreFloat4(&out, dx::XMQuaternionInverse(*(XMVECTOR*)this));
+	dx::XMStoreFloat4(&out, dx::XMQuaternionInverse(dx::XMLoadFloat4(this)));
 	return out;
 }
 
 Quaternionf Quaternionf::slerp(float t, const Quaternionf& q) const
 {
 	XMFLOAT4 out;
-	dx::XMStoreFloat4(&out, dx::XMQuaternionSlerp(*(XMVECTOR*)this, *(XMVECTOR*)&q, t));
+	dx::XMStoreFloat4(&out, dx::XMQuaternionSlerp(dx::XMLoadFloat4(this), dx::XMLoadFloat4(&q), t));
 	return out;
 }
 
 Matrix3f Quaternionf::toRotationMatrix() const
 {
 	XMFLOAT3X3 out;
-	dx::XMStoreFloat3x3(&out, dx::XMMatrixRotationQuaternion(*(XMVECTOR*)this));
+	dx::XMStoreFloat3x3(&out, dx::XMMatrixRotationQuaternion(dx::XMLoadFloat4(this)));
 	return out;
 }
 
@@ -1864,29 +1872,29 @@ Quaternionf& Quaternionf::operator=(const Matrix3f& m)
 Vector3f Quaternionf::operator*(const Vector3f& v) const
 {
 	XMFLOAT3 out;
-	dx::XMStoreFloat3(&out, dx::XMVector3Rotate(dx::XMLoadFloat3((XMFLOAT3*)&v), *(XMVECTOR*)this));
+	dx::XMStoreFloat3(&out, dx::XMVector3Rotate(dx::XMLoadFloat3((XMFLOAT3*)&v), dx::XMLoadFloat4(this)));
 	return out;
 }
 
 Quaternionf Quaternionf::operator*(const Quaternionf& q) const
 {
 	XMFLOAT4 out;
-	dx::XMStoreFloat4(&out, dx::XMQuaternionMultiply(*(XMVECTOR*)&q, *(XMVECTOR*)this));
+	dx::XMStoreFloat4(&out, dx::XMQuaternionMultiply(dx::XMLoadFloat4(&q), dx::XMLoadFloat4(this)));
 	return out;
 }
 
 Quaternionf& Quaternionf::operator*=(const Quaternionf& q)
 {
-	dx::XMStoreFloat4(this, dx::XMQuaternionMultiply(*(XMVECTOR*)&q, *(XMVECTOR*)this));
+	dx::XMStoreFloat4(this, dx::XMQuaternionMultiply(dx::XMLoadFloat4(&q), dx::XMLoadFloat4(this)));
 	return *this;
 }
 
 Quaternionf Quaternionf::operator*(float s) const
 {
-	Matrix4f mat = dx::XMMatrixRotationQuaternion(*(XMVECTOR*)this);
+	Matrix4f mat = dx::XMMatrixRotationQuaternion(dx::XMLoadFloat4(this));
 	mat *= s;
 	XMFLOAT4 out;
-	dx::XMStoreFloat4(&out, dx::XMQuaternionRotationMatrix(*(XMMATRIX*)&mat));
+	dx::XMStoreFloat4(&out, dx::XMQuaternionRotationMatrix(dx::XMLoadFloat4x4((XMFLOAT4X4*)&mat)));
 	return out;
 }
 
@@ -1894,6 +1902,6 @@ Quaternionf& Quaternionf::operator*=(const float& s)
 {
 	Matrix4f mat = dx::XMMatrixRotationQuaternion(*(XMVECTOR*)this);
 	mat *= s;
-	dx::XMStoreFloat4(this, dx::XMQuaternionRotationMatrix(*(XMMATRIX*)&mat));
+	dx::XMStoreFloat4(this, dx::XMQuaternionRotationMatrix(dx::XMLoadFloat4x4((XMFLOAT4X4*)&mat)));
 	return *this;
 }

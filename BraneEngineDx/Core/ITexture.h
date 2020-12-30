@@ -74,6 +74,8 @@ public:
 
 	virtual void release() { }
 
+	virtual unsigned long long getTextureID() = 0;
+
 	virtual unsigned int bind() { return 0; }
 	virtual unsigned int resize(unsigned int width, unsigned int height)
 	{ desc.width = width; desc.height = height; return 0; }

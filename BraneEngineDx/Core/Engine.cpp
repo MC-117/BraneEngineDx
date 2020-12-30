@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 #include "Engine.h"
+#include "../resource.h"
 #include "Console.h"
 #include "../ThirdParty/ImGui/imgui_internal.h"
 
@@ -246,17 +247,17 @@ void main(int argc, char** argv) {
 }
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
-	try {
+	//try {
 		Engine::windowContext._hinstance = hInstance;
 		Engine::config();
 		Engine::setup();
 		Engine::start();
 		Engine::clean();
-	}
+	/*}
 	catch (exception e) {
 		MessageBoxA(NULL, e.what(), "Error", MB_ICONERROR);
 		return -1;
-	}
+	}*/
 	return 0;
 }
 
@@ -285,33 +286,41 @@ void Engine::setViewportSize(int width, int height)
 	if (!windowContext._fullscreen)
 		windowContext.screenSize = { width, height };
 	world.setViewportSize(width, height);
+	/*----- Vendor resize window -----*/
+	{
+		if (!VendorManager::getInstance().getVendor().resizeWindow(Engine::engineConfig, Engine::windowContext, width, height))
+			throw runtime_error("Vendor resie window failed");
+	}
 }
 
 void Engine::createWindow(unsigned int width, unsigned int height)
 {
-	WNDCLASSEX wcex;
-	wcex.cbSize = sizeof(WNDCLASSEXW);
+	WNDCLASSEX wcex = { 0 };
+	wcex.cbSize = sizeof(WNDCLASSEX);
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
 	wcex.lpfnWndProc = wndProc;
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = windowContext._hinstance;
-	wcex.hIcon = LoadIcon(wcex.hInstance, "IDI_ICON1");
-	wcex.hCursor = LoadCursor(nullptr, "IDC_ARROW");
-	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wcex.hIcon = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_ICON1));
+	wcex.hCursor = LoadCursor(wcex.hInstance, IDC_ARROW);
+	wcex.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
 	wcex.lpszMenuName = nullptr;
 	wcex.lpszClassName = "BraneEngine";
-	wcex.hIconSm = LoadIcon(wcex.hInstance, "IDI_ICON1");
+	wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
 	if (!RegisterClassEx(&wcex))
 		throw runtime_error("Register Window Class Failed");
 
 	RECT rc = { 0, 0, width, height };
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
-	HWND hwnd = CreateWindowEx(0, "BraneEngine", "BraneEngine", WS_OVERLAPPEDWINDOW,
+	HWND hwnd = CreateWindowEx(WS_EX_ACCEPTFILES, "BraneEngine", "BraneEngine", WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, wcex.hInstance,
 		nullptr);
-	if (hwnd == NULL)
-		throw runtime_error("Create Window Failed");
+	if (hwnd == NULL) {
+		char error[100];
+		sprintf_s(error, "Create Window Failed(0x%x)", GetLastError());
+		throw runtime_error(error);
+	}
 	windowContext._hwnd = hwnd;
 }
 
@@ -458,8 +467,6 @@ void Engine::setup()
 	if (!PhysicalWorld::init())
 		throw runtime_error("Physics Engine init failed");
 #endif
-
-	setViewportSize(engineConfig.screenWidth, engineConfig.screenHeight);
 	RECT rect;
 	GetWindowRect(GetDesktopWindow(), &rect);
 	windowContext.fullscreenSize = { rect.right - rect.left, rect.bottom - rect.top };
@@ -480,6 +487,7 @@ void Engine::setup()
 		if (!vendor.setup(engineConfig, windowContext))
 			throw runtime_error("Vendor setup failed");
 	}
+	setViewportSize(engineConfig.screenWidth, engineConfig.screenHeight);
 
 	//if (!alutInit(NULL, NULL)) {
 	//	//throw runtime_error("ALUT init failed");
@@ -528,7 +536,7 @@ void Engine::start()
 			DispatchMessage(&msg);
 		}
 		else {
-			engineMainLoop();
+			mainLoop();
 			if (!init) {
 				if (!show) {
 					ShowWindow(windowContext._hwnd, SW_SHOWDEFAULT);
@@ -572,21 +580,12 @@ void Engine::clean()
 	//alutExit();
 }
 
-void resizeWindow(int width, int height)
-{
-	Engine::setViewportSize(width, height);
-	/*----- Vendor resize window -----*/
-	{
-		if (!VendorManager::getInstance().getVendor().resizeWindow(Engine::engineConfig, Engine::windowContext, width, height))
-			throw runtime_error("Vendor resie window failed");
-	}
-}
-
-void engineMainLoop()
+void Engine::mainLoop()
 {
 	Timer timer;
 	if (world.willQuit()) {
-		CloseWindow(Engine::windowContext._hwnd);
+		PostQuitMessage(0);
+		//CloseWindow(Engine::windowContext._hwnd);
 	}
 	timer.record("PollEvent");
 	world.tick(0);
@@ -628,22 +627,21 @@ LRESULT wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		else if (wParam == SIZE_MAXIMIZED) {
 			m_Minimized = false;
 			m_Maximized = true;
-			resizeWindow(width, height);
+			Engine::setViewportSize(width, height);
 		}
 		else if (wParam == SIZE_RESTORED) {
 			if (m_Minimized) {
 				m_Minimized = false;
-				resizeWindow(width, height);
+				Engine::setViewportSize(width, height);
 			}
 			else if (m_Maximized) {
 				m_Maximized = false;
-				resizeWindow(width, height);
+				Engine::setViewportSize(width, height);
 			}
 			else if (m_Resizing) {
-
 			}
 			else {
-				resizeWindow(width, height);
+				Engine::setViewportSize(width, height);
 			}
 		}
 		return 0;
@@ -652,9 +650,9 @@ LRESULT wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return 0;
 	case WM_EXITSIZEMOVE:
 		m_Resizing = false;
-		resizeWindow(width, height);
+		Engine::setViewportSize(width, height);
 		return 0;
-	case WM_DESTROY:
+	case WM_CLOSE:
 		PostQuitMessage(0);
 		return 0;
 	case WM_SYSCOMMAND:
@@ -666,5 +664,5 @@ LRESULT wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		((MINMAXINFO*)lParam)->ptMinTrackSize.y = 480;
 		return 0;
 	}
-	return 0;
+	return DefWindowProc(hWnd, message, wParam, lParam);
 }

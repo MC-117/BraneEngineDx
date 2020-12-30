@@ -1,0 +1,35 @@
+#order 2500
+#material
+Scalar uvScale: 0
+Texture colorMap: white
+Texture noiseMap: white
+#vertex use particle
+#geometry use particle
+#fragment
+#version 410 core
+
+struct Particle
+{
+    float3 pos;
+    float lifetime;
+    float3 scale;
+    float maxLifetime;
+    float3 velocity;
+    float type;
+    float3 acceleration;
+    float extSca;
+    float4 extVec;
+    float4 color;
+};
+
+uniform sampler2D colorMap;
+uniform sampler2D noiseMap;
+in Particle particle;
+in float2 UV;
+layout (location = 0) out float4 FragColor;
+
+void main()
+{
+    FragColor = particle.color * texture(colorMap, UV);
+    FragColor.a = FragColor.a * texture(noiseMap, UV).r;
+}

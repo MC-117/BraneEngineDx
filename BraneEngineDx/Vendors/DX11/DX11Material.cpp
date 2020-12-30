@@ -2,7 +2,7 @@
 
 #ifdef VENDOR_USE_DX11
 
-DX11Material::DX11Material(const DX11Context& context, MaterialDesc& desc)
+DX11Material::DX11Material(DX11Context& context, MaterialDesc& desc)
 	: dxContext(context), IMaterial(desc)
 {
 }

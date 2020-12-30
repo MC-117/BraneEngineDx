@@ -1,6 +1,14 @@
 #include "Serialization.h"
 
-map<string, Serialization*> SerializationManager::serializationList;
+StaticVar<map<string, Serialization*>> SerializationManager::serializationList;
+
+Serialization* SerializationManager::getSerialization(const string& type)
+{
+	auto iter = serializationList->find(type);
+	if (iter == serializationList->end())
+		return NULL;
+	return iter->second;
+}
 
 void SerializationInfo::clear()
 {
@@ -275,16 +283,16 @@ Serializable * Serialization::clone(Serializable & object)
 
 Serialization::Serialization(const string & type) : type(type)
 {
-	auto iter = SerializationManager::serializationList.find(type);
-	if (iter == SerializationManager::serializationList.end())
-		SerializationManager::serializationList.insert(pair<string, Serialization*>(type, this));
+	auto iter = SerializationManager::serializationList->find(type);
+	if (iter == SerializationManager::serializationList->end())
+		SerializationManager::serializationList->insert(pair<string, Serialization*>(type, this));
 }
 
 Serialization::Serialization(const char * type) : type(type)
 {
-	auto iter = SerializationManager::serializationList.find(type);
-	if (iter == SerializationManager::serializationList.end())
-		SerializationManager::serializationList.insert(pair<string, Serialization*>(type, this));
+	auto iter = SerializationManager::serializationList->find(type);
+	if (iter == SerializationManager::serializationList->end())
+		SerializationManager::serializationList->insert(pair<string, Serialization*>(type, this));
 }
 
 SerializationInfoParser::SerializationInfoParser(istream & is) : stream(is)
@@ -703,14 +711,6 @@ void SerializationInfoWriter::write(const SerializationInfo & info, bool showTyp
 		}
 		stream << " }";
 	}
-}
-
-Serialization * SerializationManager::getSerialization(const string & type)
-{
-	auto iter = serializationList.find(type);
-	if (iter == serializationList.end())
-		return NULL;
-	return iter->second;
 }
 
 SerializeInstance(SVector2f);

@@ -1,0 +1,64 @@
+#adapter name pbr_fragment
+#fragment
+#version 460 core
+
+#include "../lib/Light_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+
+layout (location = 0) out float4 FragColor;
+in float2 TexCoords;
+in float3 WorldPos;
+in float3 Normal;
+in float4 lightSpacePos;
+
+uniform float4 baseColor;
+uniform sampler2D colorMap;
+uniform float metallic;
+uniform sampler2D metallicMap;
+uniform float roughness;
+uniform sampler2D roughnessMap;
+uniform float ao;
+uniform sampler2D aoMap;
+uniform float normalScale;
+uniform sampler2D normalMap;
+uniform float emission;
+uniform sampler2D emissionMap;
+uniform sampler2D depthMap;
+
+#include "../lib/PBR_Lib.hmat"
+#include "../lib/Basic_FS_Lib.hmat"
+
+void main() {
+    float3 N = normalize(cotangent(Normal, WorldPos, TexCoords) * ((normalize(texture(normalMap, TexCoords) * 2 - 1)).xyz) * normalScale) ;
+    float3 V = normalize(camData.camPos - WorldPos);
+    float3 albedo = baseColor.rgb * texture(colorMap, TexCoords).rgb;
+    float alpha = baseColor.a * texture(colorMap, TexCoords).a;
+    float _roughness = roughness * texture(roughnessMap, TexCoords).r;
+    float _metallic = metallic * texture(metallicMap, TexCoords).r;
+    float _ao = ao * texture(aoMap, TexCoords).r;
+
+    float3 F0 = float3(0.04); 
+    F0 = mix(F0, albedo, _metallic);
+
+    // reflectance equation
+    float3 Lo = float3(0.0);
+
+    if (directLight.intensity != 0) {
+        Lo += PBR_Lo_DirectLight(directLight, N, V, albedo, _metallic, _roughness) * ShadowCalculation(depthMap, lightSpacePos, N, directLight.direction);
+    }
+
+    for(int i = 0; i < pointLightCount; ++i) {
+        if (pointLights[i].intensity != 0) {
+            Lo += PBR_Lo_PointLight(pointLights[i], WorldPos, N, V, albedo, _metallic, _roughness);
+        }
+    }
+
+    float3 ambient = PBR_Ambient(albedo, _ao);
+    float3 emissionColor = texture(emissionMap, TexCoords).rgb;
+    float3 color = ambient + Lo;//float3(emission.r * emissionColor.r, emission.g * emissionColor.g, emission.b * emissionColor.b);
+
+    color = color / (color + float3(1.0));
+    color = pow(color, float3(1.0/2.2)) + (emission * baseColor).rgb * emissionColor;
+
+    FragColor = float4(color, alpha);
+}

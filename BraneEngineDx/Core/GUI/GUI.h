@@ -5,8 +5,6 @@
 #include "../Unit.h"
 #include "UIControl.h"
 
-
-
 class GUI
 {
 public:

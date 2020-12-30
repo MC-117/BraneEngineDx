@@ -1,6 +1,6 @@
 #include "DX11RenderExecution.h"
 
-DX11RenderExecution::DX11RenderExecution(const DX11Context& context)
+DX11RenderExecution::DX11RenderExecution(DX11Context& context)
 	: dxContext(context)
 {
 	ZeroMemory(&cmdBufferDesc, sizeof(cmdBufferDesc));

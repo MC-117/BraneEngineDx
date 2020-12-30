@@ -1,0 +1,171 @@
+#order 1000
+#material
+Color baseColor: 255, 255, 255, 255
+Color chessColor: 255, 255, 255, 255
+Color lineColor: 255, 255, 255, 255
+Color pointColor: 255, 255, 255, 255
+Color gridOffset: 0, 0, 0, 255
+Scalar chessSpace: 20
+Scalar lineSpace: 10
+Scalar lineWidth: 2
+Scalar pointSpace: 20
+Scalar pointWidth: 4
+Scalar UseLocalSpace: 0
+Texture colorMap: white
+Scalar metallic: 0.5
+Texture metallicMap: white
+Scalar roughness: 0.5
+Texture roughnessMap: white
+Scalar ao: 1.0
+Texture aoMap: white
+Color reflectionColor: 255, 255, 255, 255
+Texture reflectionMap: black
+Texture irradianceMap: black
+Scalar normalScale: 1
+Texture normalMap: black
+Scalar emission: 0
+Texture emissionMap: white
+Texture brdfLUT: brdfLUT
+Texture depthMap: white
+#vertex use default
+#fragment
+#version 460 core
+
+#include "lib/Light_Def.hmat"
+#include "lib/CameraData_Def.hmat"
+
+layout (location = 0) out float4 FragColor;
+in float2 TexCoords;
+in float3 WorldPos;
+in float3 LocalPos;
+in float3 Normal;
+in float4 lightSpacePos;
+
+uniform float4 baseColor;
+uniform float4 chessColor;
+uniform float4 lineColor;
+uniform float4 pointColor;
+uniform float4 gridOffset;
+uniform float chessSpace;
+uniform float lineSpace;
+uniform float lineWidth;
+uniform float pointSpace;
+uniform float pointWidth;
+uniform float UseLocalSpace;
+uniform sampler2D colorMap;
+uniform float metallic;
+uniform sampler2D metallicMap;
+uniform float roughness;
+uniform sampler2D roughnessMap;
+uniform float ao;
+uniform sampler2D aoMap;
+uniform float4 reflectionColor;
+uniform sampler2D reflectionMap;
+uniform sampler2D irradianceMap;
+uniform float normalScale;
+uniform sampler2D normalMap;
+uniform float emission;
+uniform sampler2D emissionMap;
+uniform sampler2D brdfLUT;
+uniform sampler2D depthMap;
+
+#include "lib/PBR_Lib.hmat"
+#include "lib/Basic_FS_Lib.hmat"
+
+float getChess(float3 pos, float space)
+{
+    float3 modp = mod(pos, space * 2);
+    return modp.x < space ^^ modp.y < space ^^ modp.z < space ? 0 : 1;
+}
+
+float3 getLine3(float3 pos, float space, float width, float3 N)
+{
+    float3 modp = mod(abs(pos), space) - float3(space / 2);
+    float3 amodp = smoothstep(0, width * 0.3, abs(modp) - float3(space / 2 - width));
+    if (amodp.x != 0)
+        if ((1 - abs(dot(N, float3(1, 0, 0)))) <= 0.0001)
+            amodp.x = 0;
+    if (amodp.y != 0)
+        if ((1 - abs(dot(N, float3(0, 1, 0)))) <= 0.0001)
+            amodp.y = 0;
+    if (amodp.z != 0)
+        if ((1 - abs(dot(N, float3(0, 0, 1)))) <= 0.0001)
+            amodp.z = 0;
+    return amodp;
+}
+
+float getLine(float3 pos, float space, float width, float3 N)
+{
+    float3 line = getLine3(pos, space, width, N);
+    float v = line.x + line.y + line.z;
+    return max(max(line.x, line.y), line.z);
+}
+
+float getPoint(float3 pos, float space, float width, float3 N)
+{
+    float3 line = getLine3(pos, space, width, N);
+    float v = line.x + line.y + line.z;
+    return v >= 2 ? 1 : 0;
+}
+
+void main() {
+    float3 N = normalize(cotangent(Normal, WorldPos, TexCoords) * ((normalize(texture(normalMap, TexCoords) * 2 - 1)).xyz) * normalScale) ;
+    float3 V = normalize(camData.camPos - WorldPos);
+
+    float4 colorMul = baseColor;
+    float3 gridPos = (UseLocalSpace == 0 ? WorldPos : LocalPos) + gridOffset.xyz;
+    colorMul = mix(colorMul, chessColor, getChess(gridPos, chessSpace));
+    colorMul = mix(colorMul, lineColor, getLine(gridPos, lineSpace, lineWidth, N));
+    colorMul = mix(colorMul, pointColor, getPoint(gridPos, pointSpace, pointWidth, N));
+
+    float4 colorMapValue = texture(colorMap, TexCoords);
+    float3 albedo = colorMul.rgb * colorMapValue.rgb;
+    float alpha = colorMul.a * colorMapValue.a;
+    float _roughness = roughness * texture(roughnessMap, TexCoords).r;
+    float _metallic = metallic * texture(metallicMap, TexCoords).r;
+    float _ao = ao * texture(aoMap, TexCoords).r;
+
+    float3 F0 = float3(0.04); 
+    F0 = mix(F0, albedo, _metallic);
+
+    // reflectance equation
+    float3 Lo = float3(0.0);
+
+    if (directLight.intensity != 0) {
+        Lo += PBR_Lo_DirectLight(directLight, N, V, albedo, _metallic, _roughness) * ShadowCalculation(depthMap, lightSpacePos, N, directLight.direction);
+    }
+
+    for(int i = 0; i < pointLightCount; ++i) {
+        if (pointLights[i].intensity != 0) {
+            Lo += PBR_Lo_PointLight(pointLights[i], WorldPos, N, V, albedo, _metallic, _roughness);
+        }
+    }
+
+    // IBL
+    float3 L = normalize(-reflect(-V, N));
+    float3 H = normalize(L + V);
+    float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0, _roughness);
+    float3 kD = 1.0 - F;
+    kD *= 1.0 - metallic;
+    float2 coord = sphereProj(-L);
+    coord.y = 1 - coord.y;
+    float3 rel = textureLod(reflectionMap, coord, roughness * (textureQueryLevels(reflectionMap) - 1)).xyz;
+    float3 irrad = texture(irradianceMap, coord).xyz;
+
+    coord = float2(max(dot(N, V), 0.0), roughness);
+    coord.y = 1 - coord.y;
+    float2 envBRDF = texture(brdfLUT, coord).rg;
+    float3 Le = rel * (F * envBRDF.x + envBRDF.y);
+    float3 iblAmbient = kD * irrad * albedo + Le;
+    float3 pbrAmbient = float3(0.03) * albedo;
+
+    // Combination
+    float3 ambient = mix(pbrAmbient, iblAmbient, reflectionColor.xyz) * _ao;
+    float3 emissionColor = texture(emissionMap, TexCoords).rgb;
+    float3 color = ambient + Lo;//float3(emission.r * emissionColor.r, emission.g * emissionColor.g, emission.b * emissionColor.b);
+
+    color = color / (color + float3(1.0));
+    color = pow(color, float3(1.0/2.2)) + (emission * emissionColor).rgb;
+
+    FragColor = float4(color, alpha);
+}

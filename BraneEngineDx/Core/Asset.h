@@ -3,22 +3,18 @@
 #define _ASSER_H_
 
 //#include "PostProcessingCamera.h"
-//#include "MeshRender.h"
-//#include "MeshActor.h"
+#include "MeshRender.h"
+#include "MeshActor.h"
 //#include "SkySphere.h"
-//#include "DirectLight.h"
-//#include "PointLight.h"
+#include "DirectLight.h"
+#include "PointLight.h"
 //#include "CollisionActor.h"
 //#include "VehicleActor.h"
-#include "Utility.h"
-#include "Transform.h"
 #include "World.h"
 #include "Importer.h"
-#include "Material.h"
-#include "Geometry.h"
 #include "Mesh.h"
 #include "SkeletonMesh.h"
-//#include "SkeletonMeshActor.h"
+#include "SkeletonMeshActor.h"
 //#include "Character.h"
 //#include "SpringArm.h"
 //#include "CapsuleActor.h"
@@ -106,7 +102,7 @@ public:
 	static AssetInfo& getInstance();
 };
 
-bool setTransform(const string& str, ::Transform *trans);
+bool setTransform(const string& str, Transform *trans);
 bool setMaterial(const string& str, Material* src);
 Material* toMaterial(const string& str, Material* src);
 bool toPhysicalMaterial(const string& str, PhysicalMaterial& pm);

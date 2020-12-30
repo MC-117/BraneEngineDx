@@ -18,16 +18,16 @@ struct TransformAnimationData
 class TransformAnimationPlayer
 {
 public:
-	::Transform* targetTransform = NULL;
+	Transform* targetTransform = NULL;
 	TransformAnimationData* transformAnimationData = NULL;
 	CurvePlayer<float, Vector3f> positionCurvePlayer;
 	CurvePlayer<float, Quaternionf> rotationCurvePlayer;
 	CurvePlayer<float, Vector3f> scaleCurvePlayer;
 
 	TransformAnimationPlayer();
-	TransformAnimationPlayer(::Transform& target);
-	TransformAnimationPlayer(::Transform& target, TransformAnimationData& animationData);
-	void setTargetTransform(::Transform& target);
+	TransformAnimationPlayer(Transform& target);
+	TransformAnimationPlayer(Transform& target, TransformAnimationData& animationData);
+	void setTargetTransform(Transform& target);
 	void setAnimationData(TransformAnimationData& animationData);
 	TransformData& getTransformData();
 	TransformData getTransformData(float timeRate);
@@ -107,8 +107,8 @@ public:
 	virtual map<unsigned int, float>* getCurveCurrentValue();
 	virtual void mapCurveChannel(const vector<string>& names);
 	virtual void setAnimationClipData(AnimationClipData& clipData);
-	virtual bool setTargetTransform(::Transform& target);
-	virtual bool setTargetTransform(const string& name, ::Transform& target);
+	virtual bool setTargetTransform(Transform& target);
+	virtual bool setTargetTransform(const string& name, Transform& target);
 	virtual bool update(float deltaTime);
 	virtual void getTransformData(vector<TransformData>& data);
 	virtual TransformData* getTransformData(const string& name);
@@ -130,7 +130,7 @@ public:
 	SkeletonData* skeletonData = NULL;
 	Vector2f blendWeight;
 	vector<pair<unsigned int, float>> animationWeights;
-	vector<::Transform*> targetTransforms;
+	vector<Transform*> targetTransforms;
 	vector<TransformData> transformDatas;
 	vector<pair<Vector2f, AnimationClip*>> animationClipWrap;
 
@@ -143,8 +143,8 @@ public:
 	virtual bool addAnimationClipData(const Vector2f& pos, AnimationClipData& clipData);
 	virtual bool removeAnimationClipData(unsigned int index);
 	virtual void removeAllAnimationClipData();
-	virtual bool setTargetTransform(::Transform& target);
-	virtual bool setTargetTransform(const string& name, ::Transform& target);
+	virtual bool setTargetTransform(Transform& target);
+	virtual bool setTargetTransform(const string& name, Transform& target);
 	virtual void setBlendWeight(const Vector2f& weight);
 	virtual unsigned int getWeights(vector<pair<unsigned int, float>>& weights);
 	virtual bool update(float deltaTime);

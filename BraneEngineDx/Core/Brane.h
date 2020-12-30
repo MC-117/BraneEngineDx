@@ -6,6 +6,7 @@
 #include <map>
 #include <list>
 #include <typeinfo>
+#include "StaticVar.h"
 
 typedef unsigned int TypeID;
 
@@ -18,8 +19,8 @@ public:
 	static void* find(TypeID type, const std::string& name);
 	static std::list<void*> findAll(TypeID type, const std::string& name);
 protected:
-	static std::map<void*, std::pair<TypeID, std::list<void*>*>> entityBook;
-	static std::map<TypeID, std::map<std::string, std::list<void*>>> nameBook;
+	static StaticVar<std::map<void*, std::pair<TypeID, std::list<void*>*>>> entityBook;
+	static StaticVar<std::map<TypeID, std::map<std::string, std::list<void*>>>> nameBook;
 };
 
 #endif // !_BRANE_H_

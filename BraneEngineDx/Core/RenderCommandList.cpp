@@ -5,6 +5,7 @@
 #include "PointLight.h"
 #include "Console.h"
 #include "IVendor.h"
+#include "Engine.h"
 
 bool TransDataTag::operator<(const TransDataTag & tag) const
 {
@@ -31,9 +32,9 @@ RenderCommandList::LightDataPack RenderCommandList::lightDataPack;
 unsigned int RenderCommandList::MeshTransformData::setMeshTransform(const Matrix4f & transformMat)
 {
 	if (batchCount >= transforms.size())
-		transforms.emplace_back(transformMat);
+		transforms.emplace_back(MATRIX_UPLOAD_OP(transformMat));
 	else
-		transforms[batchCount] = transformMat;
+		transforms[batchCount] = MATRIX_UPLOAD_OP(transformMat);
 	batchCount++;
 	return batchCount - 1;
 }
@@ -45,7 +46,7 @@ unsigned int RenderCommandList::MeshTransformData::setMeshTransform(const vector
 		transforms.resize(size);
 	}
 	for (int i = batchCount; i < size; i++)
-		transforms[i] = transformMats[i - batchCount];
+		transforms[i] = MATRIX_UPLOAD_OP(transformMats[i - batchCount]);
 	unsigned int id = batchCount;
 	batchCount = size;
 	return id;
@@ -55,7 +56,7 @@ bool RenderCommandList::MeshTransformData::updataMeshTransform(const Matrix4f & 
 {
 	if (base >= batchCount)
 		return false;
-	transforms[base] = transformMat;
+	transforms[base] = MATRIX_UPLOAD_OP(transformMat);
 	return true;
 }
 
@@ -64,7 +65,7 @@ bool RenderCommandList::MeshTransformData::updataMeshTransform(const vector<Matr
 	if (base + transformMats.size() >= batchCount)
 		return false;
 	for (int i = base; i < transformMats.size(); i++)
-		transforms[i] = transformMats[i];
+		transforms[i] = MATRIX_UPLOAD_OP(transformMats[i]);
 	return true;
 }
 
@@ -624,7 +625,12 @@ void RenderCommandList::excuteCommand()
 	lightDataPack.uploadLight();
 	timer.record("Upload");
 	Time setupTime, uploadBaseTime, uploadInsTime, execTime;
-	for (auto camB = commandList.begin(), camE = commandList.end(); camB != camE; camB++) {
+	if (commandList.empty()) {
+		World* world = Engine::getCurrentWorld();
+		if (world != NULL)
+			RenderTarget::defaultRenderTarget.clearColor(world->getCurrentCamera().clearColor);
+	}
+	else for (auto camB = commandList.begin(), camE = commandList.end(); camB != camE; camB++) {
 		Time t = Time::now();
 		camB->first->cameraRender.preRender();
 		camB->first->cameraRender.renderTarget.clearColor(camB->first->clearColor);
@@ -729,7 +735,7 @@ void RenderCommandList::LightDataPack::setLight(Light * light)
 	if (directLight != NULL) {
 		directLightData.direction = directLight->getForward(WORLD);
 		directLightData.intensity = directLight->intensity;
-		directLightData.lightSpaceMat = directLight->getLightSpaceMatrix();
+		directLightData.lightSpaceMat = directLight->getLightSpaceMatrix().transpose();
 		directLightData.color = Vector3f(directLight->color.r, directLight->color.g, directLight->color.b);
 	}
 	PointLight* pointLight = dynamic_cast<PointLight*>(light);

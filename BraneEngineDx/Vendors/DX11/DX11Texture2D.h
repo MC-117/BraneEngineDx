@@ -26,16 +26,17 @@ struct DX11Texture2DInfo
 class DX11Texture2D : public ITexture2D
 {
 public:
-	const DX11Context& dxContext;
+	DX11Context& dxContext;
 	DX11Texture2DInfo info;
 	ID3D11Texture2D* dx11Texture2D = NULL;
 	ID3D11View* dx11Texture2DView = NULL;
 	ID3D11SamplerState* dx11Sampler = NULL;
 
-	DX11Texture2D(const DX11Context& context, Texture2DDesc& desc);
+	DX11Texture2D(DX11Context& context, Texture2DDesc& desc);
 	~DX11Texture2D();
 
 	virtual bool isValid() const;
+	virtual unsigned long long getTextureID();
 
 	virtual void release();
 

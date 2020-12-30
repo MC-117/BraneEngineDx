@@ -1,11 +1,19 @@
 #include "IRenderTarget.h"
 
+RenderTargetDesc* IRenderTarget::defaultRenderTargetDesc = NULL;
+IRenderTarget* IRenderTarget::defaultRenderTarget = NULL;
+
 IRenderTarget::IRenderTarget(RenderTargetDesc& desc) : desc(desc)
 {
 }
 
 IRenderTarget::~IRenderTarget()
 {
+}
+
+bool IRenderTarget::isDefault() const
+{
+    return this == defaultRenderTarget;
 }
 
 void IRenderTarget::setDepthOnly(Texture* depthTex)
@@ -38,6 +46,10 @@ void IRenderTarget::clearColors(const vector<Color>& colors)
 {
 }
 
-void IRenderTarget::clearDepthStencil(float depth, unsigned int stencil)
+void IRenderTarget::clearDepth(float depth)
+{
+}
+
+void IRenderTarget::clearStencil(unsigned int stencil)
 {
 }

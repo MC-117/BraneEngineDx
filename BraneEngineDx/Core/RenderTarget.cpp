@@ -5,6 +5,11 @@ unsigned int RenderTarget::currentFbo = 0;
 
 RenderTarget::RenderTarget()
 {
+	if (isDefault()) {
+		desc.channel = 4;
+		desc.withDepthStencil = true;
+		desc.multisampleLevel = 1;
+	}
 }
 
 RenderTarget::RenderTarget(int width, int height, int channel, bool withDepthStencil, int multisampleLevel)
@@ -38,7 +43,7 @@ bool RenderTarget::isValid()
 
 bool RenderTarget::isDefault()
 {
-	return desc.width == 0 && desc.height == 0 && desc.channel == 0 && desc.frameID == 0;
+	return this == &defaultRenderTarget;
 }
 
 bool RenderTarget::isDepthOnly()
@@ -48,11 +53,9 @@ bool RenderTarget::isDepthOnly()
 
 unsigned int RenderTarget::bindFrame()
 {
-	if (isDefault()) {
-		return 0;
-	}
 	newVendorRenderTarget();
-	return vendorRenderTarget->bindFrame();
+	vendorRenderTarget->bindFrame();
+	return isDefault() ? 0 : desc.frameID;
 }
 
 void RenderTarget::addTexture(const string & name, Texture & texture, unsigned int mipLevel)
@@ -199,7 +202,14 @@ void RenderTarget::clearStencil(unsigned char stencil)
 
 void RenderTarget::newVendorRenderTarget()
 {
-	if (vendorRenderTarget == NULL) {
+	if (isDefault()) {
+		if (IRenderTarget::defaultRenderTargetDesc == NULL)
+			IRenderTarget::defaultRenderTargetDesc = &desc;
+		if (IRenderTarget::defaultRenderTarget == NULL)
+			IRenderTarget::defaultRenderTarget = VendorManager::getInstance().getVendor().newRenderTarget(desc);
+		vendorRenderTarget = IRenderTarget::defaultRenderTarget;
+	}
+	else if (vendorRenderTarget == NULL) {
 		vendorRenderTarget = VendorManager::getInstance().getVendor().newRenderTarget(desc);
 		if (vendorRenderTarget == NULL) {
 			throw runtime_error("Vendor new RenderTarget failed");

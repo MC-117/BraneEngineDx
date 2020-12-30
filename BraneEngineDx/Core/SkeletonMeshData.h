@@ -3,7 +3,6 @@
 #define _SKELETONMESHDATA_H_
 
 #include "MeshData.h"
-#include "GPUBuffer.h"
 
 class MorphMeshData
 {
@@ -16,15 +15,10 @@ public:
 	unsigned int vertexCount = 0;
 	unsigned int morphCount = 0;
 
-	GPUBuffer morphWeightBuffer = GPUBuffer(GB_Storage, sizeof(float));
-	GPUBuffer verticesAndNormalBuffer = GPUBuffer(GB_Storage, sizeof(float));
-
 	MorphMeshData();
 	MorphMeshData(unsigned int vertexCount, unsigned int morphCount);
 
 	void init(unsigned int vertexCount, unsigned int morphCount);
-
-	void bindBase(unsigned int meshId, unsigned int weightId);
 };
 
 class SkeletonMeshData : public MeshData

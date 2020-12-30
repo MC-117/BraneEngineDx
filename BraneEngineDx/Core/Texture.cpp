@@ -46,7 +46,7 @@ unsigned int Texture::bind()
 	return 0;
 }
 
-unsigned int Texture::getTextureID() const
+unsigned long long Texture::getTextureID()
 {
 	return 0;
 }

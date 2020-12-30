@@ -2,6 +2,7 @@
 //#include "MaterialLoader.h"
 #include <fstream>
 #include "Utility.h"
+#include "Console.h"
 
 SerializeInstance(World);
 
@@ -14,7 +15,7 @@ void renderTick(World* w)
 			w->renderPool.render();
 }
 
-World::World() : ::Transform::Transform("RootWorld")
+World::World() : Transform("RootWorld")
 {
 	if (defaultCamera.parent == NULL)
 		*this += defaultCamera;
@@ -29,8 +30,10 @@ World::~World()
 void World::begin()
 {
 	lastTime = currentTime = startTime = getCurrentTime();
+#if ENABLE_PHYSICS
 	physicalWorld.setGravity({ 0.f, 0.f, -10.f });
-	::Transform::begin();
+#endif
+	Transform::begin();
 	iter.reset();
 	while (iter.next())
 		iter.current().begin();
@@ -55,7 +58,7 @@ void World::tick(float deltaTime)
 	//	}
 	//	destroyList.clear();
 	//}
-	::Transform::tick(dt);
+	Transform::tick(dt);
 	iter.reset();
 	while (iter.next()) {
 		Object& obj = iter.current();
@@ -92,7 +95,7 @@ void World::tick(float deltaTime)
 
 void World::afterTick()
 {
-	::Transform::afterTick();
+	Transform::afterTick();
 	iter.reset();
 	while (iter.next())
 		iter.current().afterTick();
@@ -115,9 +118,7 @@ void World::end()
 		Object* obj = &iter.current();
 		delete obj;
 	}
-	if (renderThread != NULL)
-		delete renderThread;
-	::Transform::end();
+	Transform::end();
 }
 
 void World::quit()
@@ -179,11 +180,6 @@ void World::addUIControl(UIControl * uc)
 	renderPool.gui += uc;
 }
 
-void World::bindUI(void(*uiDraw)(GUI&))
-{
-	renderPool.gui.uiHandler += uiDraw;
-}
-
 Camera & World::getCurrentCamera()
 {
 	if (camera == NULL)
@@ -218,18 +214,18 @@ void World::switchToDefaultCamera()
 
 void World::updateListener()
 {
-	if (camera != NULL) {
+	/*if (camera != NULL) {
 		Vector3f pos = camera->getPosition(WORLD);
 		alListener3f(AL_POSITION, pos[0], pos[1], pos[2]);
 		Vector3f f = camera->getForward(WORLD), u = camera->getUpward(WORLD);
 		float v[6] = { f[0], f[1], f[2], u[0], u[1], u[2] };
 		alListenerfv(AL_ORIENTATION, v);
-	}
+	}*/
 }
 
 void World::setMainVolume(float v)
 {
-	alListenerf(AL_GAIN, v);
+	/*alListenerf(AL_GAIN, v);*/
 }
 
 void World::setViewportSize(int width, int height)
@@ -293,7 +289,7 @@ bool World::saveTransform(const string & path)
 		if (t != NULL) {
 			char str[1000];
 			Vector3f rot = t->getEulerAngle();
-			sprintf(str, ": %f, %f, %f, %f, %f, %f, %f, %f, %f\n", t->position.x(), t->position.y(), t->position.z(),
+			sprintf_s(str, ": %f, %f, %f, %f, %f, %f, %f, %f, %f\n", t->position.x(), t->position.y(), t->position.z(),
 				rot.x(), rot.y(), rot.z(), t->scale.x(), t->scale.y(), t->scale.z());
 			data += t->name + str;
 		}
@@ -346,14 +342,14 @@ Serializable * World::instantiate(const SerializationInfo & from)
 
 bool World::deserialize(const SerializationInfo & from)
 {
-	if (!::Transform::deserialize(from))
+	if (!Transform::deserialize(from))
 		return false;
 	return true;
 }
 
 bool World::serialize(SerializationInfo & to)
 {
-	if (!::Transform::serialize(to))
+	if (!Transform::serialize(to))
 		return false;
 	to.type = "World";
 	return true;

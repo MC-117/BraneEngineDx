@@ -5,6 +5,7 @@
 #include "Utility.h"
 #include "SkeletonMesh.h"
 #include "RenderTarget.h"
+#include "GPUBuffer.h"
 #include "IRenderExecution.h"
 
 class Camera;

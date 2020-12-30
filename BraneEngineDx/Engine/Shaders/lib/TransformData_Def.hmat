@@ -1,0 +1,9 @@
+#include "Bindings_Def.hmat"
+layout (std430, binding = TRANS_BIND_INDEX) buffer CB0
+{
+    float4x4 Transforms[];
+};
+layout (std430, binding = TRANS_INDEX_BIND_INDEX) buffer CB5
+{
+    uint ObjectIDs[];
+};

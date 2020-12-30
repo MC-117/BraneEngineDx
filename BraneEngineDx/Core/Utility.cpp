@@ -244,6 +244,32 @@ bool readHeadFile(const string& codeLine, string& code, const string& envPath, u
 	return true;
 }
 
+bool openFileDlg(FileDlgDesc& desc)
+{
+	OPENFILENAME ofn = { 0 };
+	char filePath[MAX_PATH] = { 0 };
+	char fileName[FILENAME_MAX] = { 0 };
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = desc.own;
+	ofn.lpstrFile = filePath;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrFileTitle = fileName;
+	ofn.nMaxFileTitle = FILENAME_MAX;
+	ofn.lpstrInitialDir = desc.initDir.c_str();
+	ofn.lpstrTitle = desc.title.c_str();
+	ofn.lpstrFilter = desc.filter.c_str();
+	ofn.nFilterIndex = 1;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	if (desc.addToRecent)
+		ofn.Flags |= OFN_DONTADDTORECENT;
+	bool res = desc.save ? GetSaveFileName(&ofn) : GetOpenFileName(&ofn);
+	if (res) {
+		desc.filePath = filePath;
+		desc.fileName = fileName;
+	}
+	return res;
+}
+
 namespace ImGui {
 
 	void PlotTimeLine(const char* label, PlotTimeLineData(*values_getter)(void* data, int idx), void* data, int values_count, int values_offset, ImVec2 frame_size)

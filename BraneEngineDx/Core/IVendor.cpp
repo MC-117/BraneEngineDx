@@ -89,7 +89,7 @@ IVendor & VendorManager::getVendor()
 void VendorManager::instantiateVendor(const string & name)
 {
 	if (name.empty() || name == "__Auto__") {
-		instantiateVendor("OpenGL");
+		instantiateVendor("DX11");
 		return;
 	}
 	auto iter = vendorNames.find(name);

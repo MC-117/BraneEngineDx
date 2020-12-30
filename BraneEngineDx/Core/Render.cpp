@@ -107,7 +107,6 @@ RenderInfo::RenderInfo(Matrix4f projectionViewMat,
 	Unit2Di viewSize,
 	float fovy,
 	RenderMode mode,
-	unsigned int clearMode,
 	bool depthWrite,
 	bool alphaTest) : projectionViewMat(projectionViewMat),
 	lightSpaceMat(lightSpaceMat),
@@ -116,7 +115,6 @@ RenderInfo::RenderInfo(Matrix4f projectionViewMat,
 	viewSize(viewSize),
 	fovy(fovy),
 	mode(mode),
-	clearMode(clearMode),
 	depthWrite(depthWrite),
 	alphaTest(alphaTest)
 {
@@ -129,7 +127,6 @@ RenderInfo::RenderInfo(const RenderInfo & info)
 	viewSize = info.viewSize;
 	mode = info.mode;
 	fovy = info.fovy;
-	clearMode = info.clearMode;
 	depthWrite = info.depthWrite;
 	alphaTest = info.alphaTest;
 }
@@ -141,7 +138,6 @@ RenderInfo & RenderInfo::operator=(const RenderInfo & info)
 	viewSize = info.viewSize;
 	mode = info.mode;
 	fovy = info.fovy;
-	clearMode = info.clearMode;
 	depthWrite = info.depthWrite;
 	alphaTest = info.alphaTest;
 	return *this;

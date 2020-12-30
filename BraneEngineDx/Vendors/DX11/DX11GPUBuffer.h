@@ -12,11 +12,11 @@
 class DX11GPUBuffer : public IGPUBuffer
 {
 public:
-	const DX11Context& dxContext;
+	DX11Context& dxContext;
 	ID3D11Buffer* dx11Buffer;
 	ID3D11ShaderResourceView* dx11BufferView;
 
-	DX11GPUBuffer(const DX11Context& context, GPUBufferDesc& desc);
+	DX11GPUBuffer(DX11Context& context, GPUBufferDesc& desc);
 	virtual ~DX11GPUBuffer();
 
 	virtual unsigned int bind();

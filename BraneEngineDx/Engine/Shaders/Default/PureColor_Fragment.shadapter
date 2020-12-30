@@ -1,0 +1,10 @@
+#adapter name pure_color_fragment
+#fragment
+#version 410 core
+
+uniform float4 baseColor;
+layout (location = 0) out float4 FragColor;
+void main()
+{
+    FragColor = baseColor;
+}

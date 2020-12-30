@@ -1,0 +1,82 @@
+#include "Light_Def.hmat"
+#include "Basic_FS_Lib.hmat"
+
+float D_GGX_TR(float3 N, float3 H, float a)
+{
+    float a2 = a*a;
+    a2 *= a2;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH*NdotH;
+
+    float nom = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return nom / denom;
+}
+
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
+    float nom   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+
+    return nom / denom;
+}
+
+float GeometrySmith(float3 N, float3 V, float3 L, float k)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx1 = GeometrySchlickGGX(NdotV, k);
+    float ggx2 = GeometrySchlickGGX(NdotL, k);
+
+    return ggx1 * ggx2;
+}
+
+float3 PBR_Lo(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, float metallic, float roughness)
+{
+    float3 H = normalize(V + L);
+    
+    // cook-torrance brdf
+    float NDF = D_GGX_TR(N, H, roughness);
+    float G = GeometrySmith(N, V, L, roughness);
+    float3 F0 = float3(0.04); 
+    F0 = mix(F0, albedo, metallic);
+    float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+    float3 kS = F;
+    float3 kD = float3(1.0) - kS;
+    kD *= 1.0 - metallic;
+
+    float3 nominator = NDF * G * F;
+    float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001; 
+    float3 specular = nominator / denominator;
+
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(N, L), 0.0);
+    return (kD * albedo / PI + specular) * radiance * NdotL;
+}
+
+float3 PBR_Lo_DirectLight(DirectLight directLight, float3 N, float3 V, float3 albedo, float metallic, float roughness)
+{
+    float3 L = normalize(directLight.direction);
+    float3 radiance = directLight.color * directLight.intensity;
+    return PBR_Lo(N, V, L, radiance, albedo, metallic, roughness);
+}
+
+float3 PBR_Lo_PointLight(PointLight pointLight, float3 worldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness)
+{
+    float3 L = normalize(pointLight.pos - worldPos);
+    float distance = length(pointLight.pos - worldPos);
+    float attenuation = 1.0 / (distance * distance);
+    float3 radiance = pointLight.color * pointLight.intensity * attenuation;
+    return PBR_Lo(N, V, L, radiance, albedo, metallic, roughness);
+}
+
+float3 PBR_Ambient(float3 albedo, float ao)
+{
+    return float3(0.03) * albedo * ao;
+}

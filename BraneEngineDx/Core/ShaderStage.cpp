@@ -144,7 +144,7 @@ unsigned int ShaderProgram::getProgramID()
 
 ShaderProgram::AttributeDesc ShaderProgram::getAttributeOffset(const string& name)
 {
-	return { "", false, -1, 0, -1 };
+	return { "", false, (unsigned int)-1, 0, (unsigned int)-1 };
 }
 
 unsigned int ShaderProgram::getCurrentProgramID()
@@ -378,7 +378,7 @@ ShaderStage * ShaderAdapter::compileShaderStage(const Enum<ShaderFeature>& featu
 	ShaderStage* stage = addShaderStage(feature);
 	if (!stage->isValid()) {
 		string errorStr;
-		if (stage->compile(code, errorStr) == -1) {
+		if (stage->compile(code, errorStr) == 0) {
 			const char* shaderTypeName = ShaderStage::enumShaderStageType(stageType);
 			Console::log("%s Shader\n%s", shaderTypeName, code.c_str());
 			Console::error("%s (%s Shader) compile failed:\n%s", name.c_str(), shaderTypeName, errorStr.c_str());

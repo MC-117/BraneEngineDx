@@ -4,7 +4,7 @@
 
 ID3D11InputLayout* DX11SkeletonMeshData::dx11SkeletonMeshDataInputLayout = NULL;
 
-DX11SkeletonMeshData::DX11SkeletonMeshData(const DX11Context& context)
+DX11SkeletonMeshData::DX11SkeletonMeshData(DX11Context& context)
     : dxContext(context)
 {
 }
@@ -120,7 +120,7 @@ void DX11SkeletonMeshData::bindShape()
 	if (dx11BoneWeightBuffer == NULL) {
 		bDesc.ByteWidth = weights.size() * sizeof(Vector4f);
 		bDesc.Usage = D3D11_USAGE_IMMUTABLE;
-		bDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		bDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 		initData.pSysMem = weights.data()->data();
 		initData.SysMemPitch = 0;
@@ -128,6 +128,53 @@ void DX11SkeletonMeshData::bindShape()
 
 		if (FAILED(dxContext.device->CreateBuffer(&bDesc, &initData, &dx11BoneWeightBuffer)))
 			throw runtime_error("DX11: Create bone weight buffer failed");
+	}
+
+	if (morphMeshData.morphCount != 0 && morphMeshData.vertexCount != 0) {
+		if (dx11MorphVNBuffer == NULL) {
+			bDesc.ByteWidth = morphMeshData.verticesAndNormals.size() * sizeof(Vector4f);
+			bDesc.Usage = D3D11_USAGE_IMMUTABLE;
+			bDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+			initData.pSysMem = morphMeshData.verticesAndNormals.data()->data();
+			initData.SysMemPitch = 0;
+			initData.SysMemSlicePitch = 0;
+
+			if (FAILED(dxContext.device->CreateBuffer(&bDesc, &initData, &dx11MorphVNBuffer)))
+				throw runtime_error("DX11: Create morph mesh buffer failed");
+
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+			srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+			srvDesc.Buffer.FirstElement = 0;
+			srvDesc.Buffer.NumElements = morphMeshData.verticesAndNormals.size();
+			if (FAILED(dxContext.device->CreateShaderResourceView(dx11MorphVNBuffer, &srvDesc, &dx11MorphVNView)))
+				throw runtime_error("Create Morph vertices and normals SRV failed");
+		}
+
+		if (dx11MorphWeightBuffer == NULL) {
+			bDesc.ByteWidth = morphMeshData.morphCount * sizeof(float);
+			bDesc.Usage = D3D11_USAGE_DYNAMIC;
+			bDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+			bDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+			initData.pSysMem = new float[morphMeshData.morphCount]();
+			initData.SysMemPitch = 0;
+			initData.SysMemSlicePitch = 0;
+
+			if (FAILED(dxContext.device->CreateBuffer(&bDesc, &initData, &dx11MorphWeightBuffer)))
+				throw runtime_error("DX11: Create morph weight buffer failed");
+
+			delete initData.pSysMem;
+
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+			srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+			srvDesc.Buffer.FirstElement = 0;
+			srvDesc.Buffer.NumElements = morphMeshData.morphCount;
+			if (FAILED(dxContext.device->CreateShaderResourceView(dx11MorphWeightBuffer, &srvDesc, &dx11MorphVNView)))
+				throw runtime_error("Create Morph Weight SRV failed");
+		}
 	}
 
 	ID3D11Buffer* buffers[] = {
@@ -150,7 +197,23 @@ void DX11SkeletonMeshData::bindShape()
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	dxContext.deviceContext->IASetIndexBuffer(dx11ElementBuffer, DXGI_FORMAT_R32_UINT, 0);
 	dxContext.deviceContext->IASetInputLayout(dx11SkeletonMeshDataInputLayout);
+
+	if (dx11MorphVNView != NULL)
+		dxContext.deviceContext->VSSetShaderResources(MORPHDATA_BIND_INDEX, 1, &dx11MorphVNView);
+	if (dx11MorphWeightView != NULL)
+		dxContext.deviceContext->VSSetShaderResources(MORPHWEIGHT_BIND_INDEX, 1, &dx11MorphWeightView);
 	currentMeshData = this;
+}
+
+void DX11SkeletonMeshData::updateMorphWeights(vector<float>& weights)
+{
+	if (dx11MorphWeightBuffer != NULL) {
+		D3D11_MAPPED_SUBRESOURCE mpd;
+		size_t size = weights.size() * sizeof(float);
+		dxContext.deviceContext->Map(dx11MorphWeightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mpd);
+		memcpy_s((char*)mpd.pData, size, weights.data(), size);
+		dxContext.deviceContext->Unmap(dx11MorphWeightBuffer, 0);
+	}
 }
 
 void DX11SkeletonMeshData::release()
