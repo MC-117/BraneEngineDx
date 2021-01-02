@@ -6,7 +6,7 @@
 
 enum GPUBufferType
 {
-	GB_Constant, GB_Storage, GB_Command
+	GB_Constant, GB_Storage, GB_Command, GB_Index, GB_Struct
 };
 
 struct GPUBufferDesc

@@ -69,7 +69,9 @@ bool MeshRender::setMaterial(int index, Material & material)
 void MeshRender::fillMaterialsByDefault()
 {
 	if (outlineMaterial == NULL) {
-		outlineMaterial = &getAssetByPath<Material>("Engine/Shaders/Outline.mat")->instantiate();
+		outlineMaterial = getAssetByPath<Material>("Engine/Shaders/Outline.mat");
+		if (outlineMaterial != NULL)
+			outlineMaterial = &outlineMaterial->instantiate();
 	}
 }
 

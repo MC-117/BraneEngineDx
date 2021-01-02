@@ -17,7 +17,7 @@ struct CameraData
     float2 user2;
 };
 
-layout (std140, binding = CAM_BIND_INDEX) uniform CamB
+tbuffer CameraDataBuf : register(CAM_BIND_INDEX)
 {
     CameraData camData;
 };

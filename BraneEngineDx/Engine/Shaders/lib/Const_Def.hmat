@@ -3,4 +3,8 @@
 #define MAX_SHARED_SIZE_1D 12288
 #define MAX_SHARED_SIZE_2D 96
 
-const float PI = 3.14159265359;
+static const float PI = 3.14159265359;
+
+#define Float2(x) float2(x, x)
+#define Float3(x) float3(x, x, x)
+#define Float4(x) float4(x, x, x, x)

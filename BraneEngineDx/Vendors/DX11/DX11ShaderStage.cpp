@@ -20,12 +20,13 @@ unsigned int DX11ShaderStage::compile(const string& code, string& errorString)
 		errorString = (const char*)errorBlob->GetBufferPointer();
 		return 0;
 	}
-	errorBlob->Release();
+	if (errorBlob != NULL)
+		errorBlob->Release();
 	if (FAILED(createShader(dxContext.device, stageType, dx11ShaderBlob, &dx11Shader))) {
 		errorString = "DX11 Create Shader failed";
 		return 0;
 	}
-	shaderId = (unsigned int)dx11Shader;
+	shaderId = (unsigned long long)dx11Shader;
 
 	if (FAILED(D3DReflect(dx11ShaderBlob->GetBufferPointer(), dx11ShaderBlob->GetBufferSize(),
 			IID_PPV_ARGS(&dx11ShaderReflector)))) {
@@ -34,11 +35,13 @@ unsigned int DX11ShaderStage::compile(const string& code, string& errorString)
 		errorString += "D3DReflect: reflection error";
 	}
 
-	dx11MatInsBufReflector = dx11ShaderReflector->GetConstantBufferByIndex(MAT_INS_BIND_INDEX);
+	dx11MatInsBufReflector = dx11ShaderReflector->GetConstantBufferByName(MatInsBufName.c_str());
 	if (dx11MatInsBufReflector != NULL) {
 		D3D11_SHADER_BUFFER_DESC bufDesc;
-		dx11MatInsBufReflector->GetDesc(&bufDesc);
-		if (bufDesc.Name != MatInsBufName)
+		ZeroMemory(&bufDesc, sizeof(D3D11_SHADER_BUFFER_DESC));
+		if (FAILED(dx11MatInsBufReflector->GetDesc(&bufDesc)))
+			dx11MatInsBufReflector = NULL;
+		else if (bufDesc.Name != MatInsBufName)
 			dx11MatInsBufReflector = NULL;
 	}
 
@@ -163,17 +166,21 @@ unsigned int DX11ShaderProgram::bind()
 		}
 	}
 	if (matInsBuf == NULL) {
-		D3D11_SHADER_BUFFER_DESC bufDesc;
-		dx11MatInsBufReflector->GetDesc(&bufDesc);
-		D3D11_BUFFER_DESC cbDesc;
-		ZeroMemory(&cbDesc, sizeof(D3D11_BUFFER_DESC));
-		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-		cbDesc.ByteWidth = bufDesc.Size;
-		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		dxContext.device->CreateBuffer(&cbDesc, NULL, &matInsBuf);
-		matInsBufSize = bufDesc.Size;
-		matInsBufHost = (unsigned char*)malloc(matInsBufSize);
+		if (dx11MatInsBufReflector != NULL) {
+			D3D11_SHADER_BUFFER_DESC bufDesc;
+			ZeroMemory(&bufDesc, sizeof(D3D11_SHADER_BUFFER_DESC));
+			if (SUCCEEDED(dx11MatInsBufReflector->GetDesc(&bufDesc))) {
+				D3D11_BUFFER_DESC cbDesc;
+				ZeroMemory(&cbDesc, sizeof(D3D11_BUFFER_DESC));
+				cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+				cbDesc.ByteWidth = bufDesc.Size;
+				cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+				cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+				dxContext.device->CreateBuffer(&cbDesc, NULL, &matInsBuf);
+				matInsBufSize = bufDesc.Size;
+				matInsBufHost = (unsigned char*)malloc(matInsBufSize);
+			}
+		}
 	}
 	if (matInsBuf != NULL)
 		for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e; b++) {
@@ -222,23 +229,26 @@ DX11ShaderProgram::AttributeDesc DX11ShaderProgram::getAttributeOffset(const str
 	AttributeDesc desc = { name, false, -1, 0, -1 };
 	if (dx11MatInsBufReflector != NULL) {
 		D3D11_SHADER_VARIABLE_DESC vdesc;
+		ZeroMemory(&vdesc, sizeof(D3D11_SHADER_VARIABLE_DESC));
 		auto var = dx11MatInsBufReflector->GetVariableByName(name.c_str());
 		if (var != NULL) {
-			var->GetDesc(&vdesc);
-			if (vdesc.Name == name) {
-				desc.offset = vdesc.StartOffset;
-				desc.size = vdesc.Size;
+			if (SUCCEEDED(var->GetDesc(&vdesc))) {
+				if (vdesc.Name == name) {
+					desc.offset = vdesc.StartOffset;
+					desc.size = vdesc.Size;
+				}
 			}
 		}
 	}
 	if (desc.offset == -1)
 		for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e; b++) {
 			DX11ShaderStage* dss = (DX11ShaderStage*)b->second;
-			if (dss->dx11ShaderReflector)
+			if (dss->dx11ShaderReflector == NULL)
 				continue;
 			if (desc.offset == -1) {
 				desc.isTex = true;
 				D3D11_SHADER_INPUT_BIND_DESC bdesc;
+				ZeroMemory(&bdesc, sizeof(D3D11_SHADER_INPUT_BIND_DESC));
 				if (SUCCEEDED(dss->dx11ShaderReflector->GetResourceBindingDescByName(name.c_str(), &bdesc))) {
 					if (bdesc.Name == name) {
 						desc.offset = bdesc.BindPoint;

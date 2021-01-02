@@ -1,3 +1,2 @@
-#include "MeshData_Def.hmat"
-layout (location = 3) in ufloat4 boneId;
-layout (location = 4) in float4 weights;
+#include "Basic_VS_Lib.hmat"
+#define SKELETON_MAIN main(float3 pos : POSITION, float2 uv : TEXCOORD, float3 norm : NORMAL, uint4 boneId : BONEINDEX, float4 weights : BONEWEIGHT, uint vertexID : SV_VERTEXID, uint instanceID : SV_InstanceID)

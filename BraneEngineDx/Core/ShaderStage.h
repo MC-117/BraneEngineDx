@@ -33,7 +33,7 @@ public:
 	virtual bool isValid();
 
 	virtual unsigned int compile(const string& code, string& errorString);
-	virtual unsigned int getShaderID() const;
+	virtual unsigned long long getShaderID() const;
 	ShaderStageType getShaderStageType() const;
 	Enum<ShaderFeature> getShaderFeature() const;
 
@@ -44,7 +44,7 @@ protected:
 	ShaderStageType stageType;
 	Enum<ShaderFeature> shaderFeature = Shader_Default;
 	string code;
-	unsigned int shaderId = 0;
+	unsigned long long shaderId = 0;
 };
 
 // Abstract class of shader program(render pipeline) for vendor to implement

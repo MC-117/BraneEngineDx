@@ -752,15 +752,16 @@ void RenderCommandList::LightDataPack::setLight(Light * light)
 void RenderCommandList::LightDataPack::uploadLight()
 {
 	directLightData.pointLightCount = pointLightDatas.size();
-	lightBuffer.resize(directLightData.pointLightCount + 3);
-	lightBuffer.uploadSubData(0, 3, &directLightData);
-	if (directLightData.pointLightCount != 0)
-		lightBuffer.uploadSubData(3, directLightData.pointLightCount, pointLightDatas.data());
+	directLightBuffer.uploadData(1, &directLightData);
+	if (directLightData.pointLightCount > 0)
+		pointLightBuffer.uploadData(directLightData.pointLightCount, &directLightData);
 }
 
 void RenderCommandList::LightDataPack::bindLight()
 {
-	lightBuffer.bindBase(LIGHT_BIND_INDEX);
+	directLightBuffer.bindBase(DIRECT_LIGHT_BIND_INDEX);
+	if (directLightData.pointLightCount > 0)
+		pointLightBuffer.bindBase(POINT_LIGHT_BIND_INDEX);
 }
 
 void RenderCommandList::LightDataPack::clean()

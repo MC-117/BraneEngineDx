@@ -116,9 +116,6 @@ void Camera::tick(float deltaTime)
 				distance = iter->second;
 		}
 	}
-	float s = 0.001;
-	float h = sin(Time::duration().toMillisecond() * s) * 180 + 180;
-	clearColor = hsv2rgb(h, 1, 1);
 }
 
 void Camera::afterTick()

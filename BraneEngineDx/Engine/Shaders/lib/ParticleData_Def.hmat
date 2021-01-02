@@ -14,7 +14,4 @@ struct Particle
     float4 color;
 };
 
-layout (std430, binding = PARTICLE_BIND_INDEX) buffer ParticleBuffer
-{
-    Particle Particles[];
-};
+StructuredBuffer<Particle> Particles : register(PARTICLE_BIND_INDEX);
