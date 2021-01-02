@@ -25,7 +25,7 @@ void DX11SkeletonMeshData::bindShape()
 		return;
 
 	if (dx11SkeletonMeshDataInputLayout == NULL) {
-		const char* signatureShader = "void main(float3 pos : POSITION, float2 uv : TEXCORD, float3 normal : NORMAL, uint4 bondId : BONEINDEX, float4 weight : BONEWEIGHT) { }";
+		const char* signatureShader = "void main(float3 pos : POSITION, float2 uv : TEXCORD, float3 normal : NORMAL, uint4 bondId : BONEINDEX, float4 weights : BONEWEIGHT) { }";
 		const size_t len = strlen(signatureShader);
 		ID3DBlob* sigBlob;
 		ID3DBlob* errorBlob;

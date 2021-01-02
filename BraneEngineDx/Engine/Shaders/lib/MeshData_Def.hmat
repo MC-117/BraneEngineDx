@@ -1,3 +1,2 @@
-layout (location = 0) in float3 pos;
-layout (location = 1) in float2 uv;
-layout (location = 2) in float3 norm;
+#include "Basic_VS_Lib.hmat"
+#define MESH_MAIN main(float3 pos : POSITION, float2 uv : TEXCOORD, float3 norm : NORMAL, uint vertexID : SV_VERTEXID, uint instanceID : SV_InstanceID)

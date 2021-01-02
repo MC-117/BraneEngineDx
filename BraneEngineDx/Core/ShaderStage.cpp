@@ -28,7 +28,7 @@ unsigned int ShaderStage::compile(const string & code, string & errorString)
 	return shaderId;
 }
 
-unsigned int ShaderStage::getShaderID() const
+unsigned long long ShaderStage::getShaderID() const
 {
 	return shaderId;
 }
@@ -373,6 +373,35 @@ ShaderStage * ShaderAdapter::addShaderStage(const Enum<ShaderFeature> & feature)
 		return iter->second;
 }
 
+void addSpace(string& str, unsigned int num)
+{
+	for (int s = 0; s < num; s++)
+		str += ' ';
+}
+
+string addLineNum(const string& code)
+{
+	string out;
+	unsigned int spaces = 0;
+	for (auto c : code) {
+		if (c == '\n')
+			spaces++;
+	}
+	spaces = log10(spaces) + 1;
+	unsigned int lines = 1;
+	addSpace(out, spaces - 1);
+	out += "1 ";
+	for (auto c : code) {
+		out += c;
+		if (c == '\n') {
+			lines++;
+			addSpace(out, spaces - log10(lines + 1));
+			out += to_string(lines) + ' ';
+		}
+	}
+	return out;
+}
+
 ShaderStage * ShaderAdapter::compileShaderStage(const Enum<ShaderFeature>& feature, const string & code)
 {
 	ShaderStage* stage = addShaderStage(feature);
@@ -380,7 +409,7 @@ ShaderStage * ShaderAdapter::compileShaderStage(const Enum<ShaderFeature>& featu
 		string errorStr;
 		if (stage->compile(code, errorStr) == 0) {
 			const char* shaderTypeName = ShaderStage::enumShaderStageType(stageType);
-			Console::log("%s Shader\n%s", shaderTypeName, code.c_str());
+			Console::log("%s Shader\n%s", shaderTypeName, addLineNum(code).c_str());
 			Console::error("%s (%s Shader) compile failed:\n%s", name.c_str(), shaderTypeName, errorStr.c_str());
 		}
 	}

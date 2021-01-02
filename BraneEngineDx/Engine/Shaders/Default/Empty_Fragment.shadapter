@@ -1,6 +1,5 @@
 #adapter name empty_fragment
 #fragment
-#version 410 core
 
 void main()
 {

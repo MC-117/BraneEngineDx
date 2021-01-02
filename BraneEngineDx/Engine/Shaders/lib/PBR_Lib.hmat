@@ -40,11 +40,10 @@ float3 PBR_Lo(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, floa
 {
     float3 H = normalize(V + L);
     
-    // cook-torrance brdf
     float NDF = D_GGX_TR(N, H, roughness);
     float G = GeometrySmith(N, V, L, roughness);
     float3 F0 = float3(0.04); 
-    F0 = mix(F0, albedo, metallic);
+    F0 = lerp(F0, albedo, metallic);
     float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
     float3 kS = F;
@@ -55,7 +54,6 @@ float3 PBR_Lo(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, floa
     float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001; 
     float3 specular = nominator / denominator;
 
-    // add to outgoing radiance Lo
     float NdotL = max(dot(N, L), 0.0);
     return (kD * albedo / PI + specular) * radiance * NdotL;
 }

@@ -24,7 +24,7 @@ void DX11MeshData::bindShape()
 		return;
 
 	if (dx11MeshDataInputLayout == NULL) {
-		const char* signatureShader = "void main(float3 pos : POSITION, float2 uv : TEXCORD, float3 normal : NORMAL) { }";
+		const char* signatureShader = "void main(float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL) { }";
 		const size_t len = strlen(signatureShader);
 		ID3DBlob* sigBlob;
 		ID3DBlob* errorBlob;
@@ -34,7 +34,7 @@ void DX11MeshData::bindShape()
 		}
 		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[3] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
 		if (FAILED(dxContext.device->CreateInputLayout(inputLayoutDesc, 3, sigBlob->GetBufferPointer(),
@@ -42,7 +42,8 @@ void DX11MeshData::bindShape()
 			throw runtime_error("DX11: Create mesh input layout failed");
 		}
 		sigBlob->Release();
-		errorBlob->Release();
+		if (errorBlob != NULL)
+			errorBlob->Release();
 	}
 
 	D3D11_BUFFER_DESC bDesc = {};

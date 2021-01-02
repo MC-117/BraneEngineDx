@@ -1,10 +1,12 @@
 #adapter name pure_color_fragment
 #fragment
-#version 410 core
+#include "../lib/Basic_FS_Lib.hmat"
 
+DEF_MAT_BEGIN
 uniform float4 baseColor;
-layout (location = 0) out float4 FragColor;
-void main()
+DEF_MAT_END
+
+float4 DEFAULT_FS_MAIN : SV_TARGET
 {
-    FragColor = baseColor;
+    return baseColor;
 }

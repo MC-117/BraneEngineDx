@@ -25,7 +25,11 @@ DX11Texture2DInfo::DX11Texture2DInfo(const Texture2DInfo & info)
 DX11Texture2DInfo& DX11Texture2DInfo::operator=(const Texture2DInfo& info)
 {
 	texture2DDesc.Format = toDX11InternalType(info.internalType);
-	texture2DDesc.BindFlags = info.internalType == TIT_Depth ? D3D11_BIND_DEPTH_STENCIL : D3D11_BIND_SHADER_RESOURCE;
+	texture2DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	if (info.internalType == TIT_Depth)
+		texture2DDesc.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
+	else
+		texture2DDesc.BindFlags |= D3D11_BIND_RENDER_TARGET;
 	texture2DDesc.Usage = D3D11_USAGE_DEFAULT;
 	texture2DDesc.ArraySize = 1;
 	texture2DDesc.SampleDesc.Count = info.sampleCount;
@@ -125,7 +129,7 @@ DXGI_FORMAT DX11Texture2DInfo::toDX11InternalType(const TexInternalType & type)
 	case TIT_SRGBA:
 		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	case TIT_Depth:
-		return DXGI_FORMAT_D32_FLOAT;
+		return DXGI_FORMAT_R32_TYPELESS;
 	}
 	return DXGI_FORMAT_UNKNOWN;
 }
@@ -145,7 +149,7 @@ DXGI_FORMAT DX11Texture2DInfo::toDX11ColorType(const TexInternalType& type)
 	case TIT_SRGBA:
 		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	case TIT_Depth:
-		return DXGI_FORMAT_D32_FLOAT;
+		return DXGI_FORMAT_R32_FLOAT;
 	}
 	return DXGI_FORMAT_UNKNOWN;
 }
@@ -202,7 +206,8 @@ unsigned int DX11Texture2D::bind()
 	if (desc.autoGenMip) {
 		info.texture2DDesc.MipLevels = 1;
 		D3D11_SUBRESOURCE_DATA initData = { desc.data, desc.width * desc.channel * sizeof(unsigned char), 0 };
-		dxContext.device->CreateTexture2D(&info.texture2DDesc, desc.data ? &initData : NULL, &dx11Texture2D);
+		if (FAILED(dxContext.device->CreateTexture2D(&info.texture2DDesc, desc.data ? &initData : NULL, &dx11Texture2D)))
+			throw runtime_error("DX11Texture2D: CreateTexture2D failed");
 		desc.mipLevel = 1 + floor(log2(max(desc.width, desc.height)));
 	}
 	else {
@@ -217,7 +222,8 @@ unsigned int DX11Texture2D::bind()
 			offset += desc.channel * _width * _height * sizeof(char);
 			_width /= 2, _height /= 2;
 		}
-		dxContext.device->CreateTexture2D(&info.texture2DDesc, initData, &dx11Texture2D);
+		if (FAILED(dxContext.device->CreateTexture2D(&info.texture2DDesc, initData, &dx11Texture2D)))
+			throw runtime_error("DX11Texture2D: CreateTexture2D failed");
 		if (initData != NULL)
 			delete[] initData;
 	}
@@ -254,11 +260,12 @@ ID3D11ShaderResourceView* DX11Texture2D::getSRV()
 		if (dx11Texture2DView != NULL)
 			dx11Texture2DView->Release();
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Format = info.texture2DDesc.Format;
+		srvDesc.Format = desc.info.internalType == TIT_Depth ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
 		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = info.texture2DDesc.MipLevels;
 		srvDesc.Texture2D.MostDetailedMip = 0;
-		dxContext.device->CreateShaderResourceView(dx11Texture2D, &srvDesc, (ID3D11ShaderResourceView**)&dx11Texture2DView);
+		if (FAILED(dxContext.device->CreateShaderResourceView(dx11Texture2D, &srvDesc, (ID3D11ShaderResourceView**)&dx11Texture2DView)))
+			throw runtime_error("DX11Tetxture2D: CreateShaderResourceView failed");
 	}
 	return (ID3D11ShaderResourceView*)dx11Texture2DView;
 }
@@ -269,7 +276,8 @@ ID3D11SamplerState* DX11Texture2D::getSampler()
 		return NULL;
 	if (dx11Sampler != NULL)
 		return dx11Sampler;
-	dxContext.device->CreateSamplerState(&info.samplerDesc, &dx11Sampler);
+	if (FAILED(dxContext.device->CreateSamplerState(&info.samplerDesc, &dx11Sampler)))
+		throw runtime_error("DX11 create sampler state failed");
 	return dx11Sampler;
 }
 
@@ -284,10 +292,11 @@ ID3D11UnorderedAccessView* DX11Texture2D::getUAV(unsigned int mipLevel)
 		if (dx11Texture2DView != NULL)
 			dx11Texture2DView->Release();
 		D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-		uavDesc.Format = info.texture2DDesc.Format;
+		uavDesc.Format = desc.info.internalType == TIT_Depth ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
 		uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 		uavDesc.Texture2D.MipSlice = mipLevel;
-		dxContext.device->CreateUnorderedAccessView(dx11Texture2D, &uavDesc, (ID3D11UnorderedAccessView**)&dx11Texture2DView);
+		if (FAILED(dxContext.device->CreateUnorderedAccessView(dx11Texture2D, &uavDesc, (ID3D11UnorderedAccessView**)&dx11Texture2DView)))
+			throw runtime_error("DX11Tetxture2D: CreateUnorderedAccessView failed");
 	}
 	else {
 		ID3D11UnorderedAccessView* uav = (ID3D11UnorderedAccessView*)dx11Texture2DView;
@@ -295,10 +304,11 @@ ID3D11UnorderedAccessView* DX11Texture2D::getUAV(unsigned int mipLevel)
 		uav->GetDesc(&uavDesc);
 		if (uavDesc.Texture2D.MipSlice != mipLevel) {
 			uav->Release();
-			uavDesc.Format = info.texture2DDesc.Format;
+			uavDesc.Format = desc.info.internalType == TIT_Depth ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
 			uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 			uavDesc.Texture2D.MipSlice = mipLevel;
-			dxContext.device->CreateUnorderedAccessView(dx11Texture2D, &uavDesc, (ID3D11UnorderedAccessView**)&dx11Texture2DView);
+			if (FAILED(dxContext.device->CreateUnorderedAccessView(dx11Texture2D, &uavDesc, (ID3D11UnorderedAccessView**)&dx11Texture2DView)))
+				throw runtime_error("DX11Tetxture2D: CreateUnorderedAccessView failed");
 		}
 	}
 	return (ID3D11UnorderedAccessView*)dx11Texture2DView;
@@ -315,10 +325,11 @@ ID3D11DepthStencilView* DX11Texture2D::getDSV(unsigned int mipLevel)
 		if (dx11Texture2DView != NULL)
 			dx11Texture2DView->Release();
 		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-		dsvDesc.Format = info.texture2DDesc.Format;
+		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
 		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 		dsvDesc.Texture2D.MipSlice = mipLevel;
-		dxContext.device->CreateDepthStencilView(dx11Texture2D, &dsvDesc, (ID3D11DepthStencilView**)&dx11Texture2DView);
+		if (FAILED(dxContext.device->CreateDepthStencilView(dx11Texture2D, &dsvDesc, (ID3D11DepthStencilView**)&dx11Texture2DView)))
+			throw runtime_error("DX11Tetxture2D: CreateDepthStencilView failed");
 	}
 	return (ID3D11DepthStencilView*)dx11Texture2DView;
 }
@@ -356,8 +367,6 @@ DXGI_FORMAT DX11Texture2D::getColorType(unsigned int channel, DXGI_FORMAT intern
 		}
 		return internalType;
 	}
-	else if (internalType == DXGI_FORMAT_D32_FLOAT)
-		return DXGI_FORMAT_D32_FLOAT;
 	else if (internalType == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
 		return DXGI_FORMAT_R8G8B8A8_UNORM;
 	return internalType;

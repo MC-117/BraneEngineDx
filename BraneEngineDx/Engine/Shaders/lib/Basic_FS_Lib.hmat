@@ -1,21 +1,24 @@
 #include "Const_Def.hmat"
+#include "Bindings_Def.hmat"
+#include "Basic_VS_Lib.hmat"
+#define FS_DEF_OUT_BEGIN struct FragmentOut {
+#define FS_DEF_OUT_END };
+#define FS_DEF_OUT_COLOR(col, id) float4 col : SV_TARGET##id
+#define DEFAULT_FS_MAIN main(DefaultVertexOut fin)
 
-float3x3 cotangent( float3 N, float3 p, float2 uv )
+float3x3 cotangent(float3 N, float3 p, float2 uv)
 {
-    // get edge vectors of the pixel triangle
-    float3 dp1 = dFdx( p );
-    float3 dp2 = dFdy( p );
-    float2 duv1 = dFdx( uv );
-    float2 duv2 = dFdy( uv );
+    float3 dp1 = ddx(p);
+    float3 dp2 = ddy(p);
+    float2 duv1 = ddx(uv);
+    float2 duv2 = ddy(uv);
 
-    // solve the linear system
-    float3 dp2perp = cross( dp2, N );
-    float3 dp1perp = cross( N, dp1 );
+    float3 dp2perp = cross(dp2, N);
+    float3 dp1perp = cross(N, dp1);
     float3 T = dp2perp * duv1.x + dp1perp * duv2.x;
     float3 B = dp2perp * duv1.y + dp1perp * duv2.y;
 
-    // construct a scale-invariant frame 
-    float invmax = inversesqrt( max( dot(T,T), dot(B,B) ) );
+    float invmax = rsqrt(max(dot(T,T), dot(B,B)));
     return float3x3( T * invmax, B * invmax, N );
 }
 
@@ -31,10 +34,11 @@ float3 fresnelSchlick(float cosTheta, float3 F0)
 
 float3 fresnelSchlick(float cosTheta, float3 F0, float roughness)
 {
-    return F0 + (max(float3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+    float r = 1.0 - roughness;
+    return F0 + (max(float3(r, r, r), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-float ShadowCalculation(in sampler2D depthMap, float4 fragPosLightSpace, float3 N, float3 L)
+float ShadowCalculation(in Texture2D depthMap, in SamplerState depthMapSampler, float4 fragPosLightSpace, float3 N, float3 L)
 {
     float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
 
@@ -49,12 +53,14 @@ float ShadowCalculation(in sampler2D depthMap, float4 fragPosLightSpace, float3 
     float shadow = 0.0;
     float bias = 0;//max(0.0000005 * (1.0 - dot(N, L)), 0.00000005);
 
-    float2 texelSize = 1.0 / textureSize(depthMap, 0);
+    float2 texelSize;
+    depthMap.GetDimensions(texelSize.x, texelSize.y);
+    texelSize = 1.0 / texelSize;
     for(int x = -3; x <= 3; ++x)
     {
         for(int y = -3; y <= 3; ++y)
         {
-            float pcfDepth = texture(depthMap, projCoords.xy + float2(x, y) * texelSize).r; 
+            float pcfDepth = SAMPLE_TEX(depthMap, projCoords.xy + float2(x, y) * texelSize).r; 
             shadow += currentDepth - bias > pcfDepth ? 0.0 : 1.0;        
         }
     }

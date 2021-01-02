@@ -1,10 +1,57 @@
 #define VERTEX_MAX_BONE 4
 
-#define TRANS_BIND_INDEX 0
-#define MORPHDATA_BIND_INDEX 1
-#define MORPHWEIGHT_BIND_INDEX 2
-#define PARTICLE_BIND_INDEX 3
-#define MODIFIER_BIND_INDEX 4
-#define TRANS_INDEX_BIND_INDEX 5
-#define LIGHT_BIND_INDEX 6
-#define CAM_BIND_INDEX 7
+#define MAT_INS_BIND_INDEX b0
+#define TRANS_BIND_INDEX t0
+#define TRANS_INDEX_BIND_INDEX t1
+#define MORPHDATA_BIND_INDEX t2
+#define MORPHWEIGHT_BIND_INDEX t3
+#define PARTICLE_BIND_INDEX t4
+#define CAM_BIND_INDEX t5
+#define DIRECT_LIGHT_BIND_INDEX t6
+#define POINT_LIGHT_BIND_INDEX t7
+
+#define __T0 t8
+#define __T1 t9
+#define __T2 t10
+#define __T3 t11
+#define __T4 t12
+#define __T5 t13
+#define __T6 t14
+#define __T7 t15
+#define __T8 t16
+#define __T9 t17
+#define __T10 t18
+#define __T11 t19
+#define __T12 t20
+#define __T13 t21
+#define __T14 t22
+#define __T15 t23
+
+#define __S0 s8
+#define __S1 s9
+#define __S2 s10
+#define __S3 s11
+#define __S4 s12
+#define __S5 s13
+#define __S6 s14
+#define __S7 s15
+#define __S8 s16
+#define __S9 s17
+#define __S10 s18
+#define __S11 s19
+#define __S12 s20
+#define __S13 s21
+#define __S14 s22
+#define __S15 s23
+
+#define TEX_BINDING(i) register(__T##i)
+#define SAMPLE_BINDING(i) register(__S##i)
+#define DEF_TEX2D(tex, id) \
+Texture2D tex : TEX_BINDING(id);\
+SamplerState tex##Sampler : SAMPLE_BINDING(id);
+
+// Only work for pattern [tex] and [tex]Sampler.
+#define SAMPLE_TEX(tex, uv) (tex.Sample(tex##Sampler, (uv)))
+
+#define DEF_MAT_BEGIN cbuffer MatInsBuf : register(MAT_INS_BIND_INDEX) {
+#define DEF_MAT_END };

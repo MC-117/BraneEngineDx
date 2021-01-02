@@ -117,8 +117,8 @@ protected:
 		MeshTransformData staticMeshTransformData;
 		map<TransTag, MeshTransformIndex> staticMeshTransformIndex;
 
-		GPUBuffer transformBuffer = GPUBuffer(GB_Storage, 16 * sizeof(float));
-		GPUBuffer transformIndexBuffer = GPUBuffer(GB_Storage, sizeof(unsigned int));
+		GPUBuffer transformBuffer = GPUBuffer(GB_Struct, 16 * sizeof(float));
+		GPUBuffer transformIndexBuffer = GPUBuffer(GB_Index, sizeof(unsigned int));
 
 		void setUpdateStatic();
 
@@ -137,7 +137,7 @@ protected:
 		void bindTransforms();
 		void clean();
 		void cleanStatic();
-		void cleanStatic(unsigned int base, unsigned int count); // TO-FIX
+		void cleanStatic(unsigned int base, unsigned int count);
 		void cleanPartStatic(MeshPart* meshPart = NULL, Material* material = NULL);
 	};
 	struct MeshDataRenderPack : public IRenderPack
@@ -160,7 +160,7 @@ protected:
 	{
 		unsigned int totalParticleCount = 0;
 		map<Material*, ParticleData> particles;
-		GPUBuffer particleBuffer = GPUBuffer(GB_Storage, sizeof(Particle));
+		GPUBuffer particleBuffer = GPUBuffer(GB_Struct, sizeof(Particle));
 
 		ParticleData* setParticles(Material* material, const list<Particle>& particles);
 		ParticleData* setParticles(Material* material, const vector<Particle>& particles);
@@ -196,7 +196,8 @@ protected:
 	{
 		DirectLightData directLightData;
 		vector<PointLightData> pointLightDatas;
-		GPUBuffer lightBuffer = GPUBuffer(GB_Storage, sizeof(PointLightData));
+		GPUBuffer directLightBuffer = GPUBuffer(GB_Storage, sizeof(DirectLightData));
+		GPUBuffer pointLightBuffer = GPUBuffer(GB_Struct, sizeof(PointLightData));
 
 		RenderTarget* shadowTarget = NULL;
 

@@ -1,0 +1,8 @@
+struct DefaultVertexOut
+{
+    float4 svPos : SV_POSITION;
+    float4 lightSpacePos : LIGHTSAPCEPOS;
+    float3 Normal : NORMAL;
+    float3 WorldPos : WOLRDPOS;
+    float2 TexCoords : TEXCOORD;
+};

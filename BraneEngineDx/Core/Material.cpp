@@ -250,15 +250,15 @@ void Material::addColor(const pair<string, MatAttribute<Color>>& attr)
 void Material::addDefaultTexture(const pair<string, MatAttribute<string>>& attr)
 {
 	if (attr.second.val == "black")
-		desc.textureField[attr.first] = &Texture2D::blackRGBDefaultTex;
+		desc.textureField[attr.first] = &Texture2D::blackRGBADefaultTex;
 	else if (attr.second.val == "white")
-		desc.textureField[attr.first] = &Texture2D::whiteRGBDefaultTex;
+		desc.textureField[attr.first] = &Texture2D::whiteRGBADefaultTex;
 	else if (attr.second.val == "brdfLUT")
 		desc.textureField[attr.first] = &Texture2D::brdfLUTTex;
 	else if (attr.second.val == "defaultLut")
 		desc.textureField[attr.first] = &Texture2D::defaultLUTTex;
 	else
-		desc.textureField[attr.first] = &Texture2D::whiteRGBDefaultTex;
+		desc.textureField[attr.first] = &Texture2D::whiteRGBADefaultTex;
 }
 
 void Material::addDefaultImage(const pair<string, unsigned int>& attr)
@@ -317,15 +317,15 @@ bool Material::loadDefaultMaterial()
 {
 	if (isLoadDefaultMaterial)
 		return true;
-	if (!MaterialLoader::loadMaterial(defaultMaterial, "Engine/Shaders/Default.mat")) {
+	/*if (!MaterialLoader::loadMaterial(defaultMaterial, "Engine/Shaders/Default.mat")) {
 		return false;
-	}
+	}*/
 	/*Asset* ass = new Asset(&MaterialAssetInfo::assetInfo, "Default", "Engine/Shaders/Default.mat");
 	ass->asset[0] = &defaultMaterial;
 	AssetManager::registAsset(*ass);*/
-	if (!MaterialLoader::loadMaterial(defaultParticleMaterial, "Engine/Shaders/Particle.mat")) {
+	/*if (!MaterialLoader::loadMaterial(defaultParticleMaterial, "Engine/Shaders/Particle.mat")) {
 		return false;
-	}
+	}*/
 	/*ass = new Asset(&MaterialAssetInfo::assetInfo, "Particle", "Engine/Shaders/Particle.mat");
 	ass->asset[0] = &defaultParticleMaterial;
 	AssetManager::registAsset(*ass);*/
