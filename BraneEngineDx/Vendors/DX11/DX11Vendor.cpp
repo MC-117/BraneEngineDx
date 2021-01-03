@@ -54,7 +54,7 @@ bool DX11Vendor::imGuiDrawFrame(const EngineConfig & config, const WindowContext
 
 bool DX11Vendor::swap(const EngineConfig & config, const WindowContext & context)
 {
-	dxContext.swapChain->Present(config.vsnyc ? 0 : 1, 0);
+	dxContext.swapChain->Present(config.vsnyc ? 1 : 0, 0);
 	return true;
 }
 

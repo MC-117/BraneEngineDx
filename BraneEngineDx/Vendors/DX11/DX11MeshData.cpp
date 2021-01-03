@@ -35,7 +35,7 @@ void DX11MeshData::bindShape()
 		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[3] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
 		if (FAILED(dxContext.device->CreateInputLayout(inputLayoutDesc, 3, sigBlob->GetBufferPointer(),
 				sigBlob->GetBufferSize(), &dx11MeshDataInputLayout))) {
@@ -114,7 +114,7 @@ void DX11MeshData::bindShape()
 	};
 	UINT offsets[] = { 0, 0, 0 };
 
-	dxContext.deviceContext->IASetVertexBuffers(0, 2, buffers, strides, offsets);
+	dxContext.deviceContext->IASetVertexBuffers(0, 3, buffers, strides, offsets);
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	dxContext.deviceContext->IASetIndexBuffer(dx11ElementBuffer, DXGI_FORMAT_R32_UINT, 0);
 	dxContext.deviceContext->IASetInputLayout(dx11MeshDataInputLayout);

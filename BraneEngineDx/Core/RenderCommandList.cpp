@@ -634,7 +634,7 @@ void RenderCommandList::excuteCommand()
 		Time t = Time::now();
 		camB->first->cameraRender.preRender();
 		camB->first->cameraRender.renderTarget.clearColor(camB->first->clearColor);
-		camB->first->cameraRender.renderTarget.clearDepth(0);
+		camB->first->cameraRender.renderTarget.clearDepth(1);
 		vendor.setViewport(0, 0, camB->first->size.x, camB->first->size.y);
 
 		camB->first->uploadCameraData();

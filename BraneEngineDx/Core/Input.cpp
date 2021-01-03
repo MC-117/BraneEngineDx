@@ -172,7 +172,7 @@ bool Input::readDevice(LPDIRECTINPUTDEVICE8 pDIDevice, void * pBuffer, long lSiz
 		pDIDevice->Acquire();
 		if (SUCCEEDED(hr = pDIDevice->GetDeviceState(lSize, pBuffer)))
 			break;
-		if (hr != DIERR_INPUTLOST || hr != DIERR_NOTACQUIRED)
+		if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
 			return false;
 		if (FAILED(pDIDevice->Acquire()))
 			return false;

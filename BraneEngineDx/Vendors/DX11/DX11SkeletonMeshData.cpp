@@ -36,7 +36,7 @@ void DX11SkeletonMeshData::bindShape()
 		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[5] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "TEXCORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "BONEINDEX", 0, DXGI_FORMAT_R32G32B32A32_UINT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "BONEWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 4, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
@@ -193,7 +193,7 @@ void DX11SkeletonMeshData::bindShape()
 	};
 	UINT offsets[] = { 0, 0, 0, 0, 0 };
 
-	dxContext.deviceContext->IASetVertexBuffers(0, 4, buffers, strides, offsets);
+	dxContext.deviceContext->IASetVertexBuffers(0, 5, buffers, strides, offsets);
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	dxContext.deviceContext->IASetIndexBuffer(dx11ElementBuffer, DXGI_FORMAT_R32_UINT, 0);
 	dxContext.deviceContext->IASetInputLayout(dx11SkeletonMeshDataInputLayout);

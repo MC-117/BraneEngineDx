@@ -1,93 +1,93 @@
-[Log][0:0:0:199]Engine/Shaders/Default/Default_Default.shadapter load
-[Log][0:0:0:246]Engine/Shaders/Default/Default_Position.shadapter load
-[Log][0:0:0:248]Engine/Shaders/Default/Empty_Fragment.shadapter load
-[Log][0:0:0:256]Engine/Shaders/Default/PureColor_Fragment.shadapter load
-[Log][0:0:0:357]Engine/Shaders/Default/Toon_Fragment.shadapter load
-[Log][0:0:0:414]Engine/Banner folder
-[Log][0:0:0:464]Engine/Banner/Banner.png load
-[Log][0:0:0:498]Engine/Banner/Banne_old.png load
-[Log][0:0:0:498]Engine/Fonts folder
-[Log][0:0:0:499]Engine/Icons folder
-[Log][0:0:0:504]Engine/Icons/Animation_Icon.png load
-[Log][0:0:0:531]Engine/Icons/AssetFile_Icon.png load
-[Log][0:0:0:550]Engine/Icons/Audio_Icon.png load
-[Log][0:0:0:559]Engine/Icons/Folder_Icon.png load
-[Log][0:0:0:569]Engine/Icons/Material_Icon.png load
-[Log][0:0:0:589]Engine/Icons/Model_Icon.png load
-[Log][0:0:0:603]Engine/Icons/Python_Icon.png load
-[Log][0:0:0:620]Engine/Icons/SkeletonMesh_Icon.png load
-[Log][0:0:0:620]Engine/LUTS folder
-[Log][0:0:0:689]Engine/LUTS/arapaho_lut.png load
-[Log][0:0:0:760]Engine/LUTS/aspen_lut.png load
-[Log][0:0:0:831]Engine/LUTS/BlacKkKlansman_lut.png load
-[Log][0:0:0:901]Engine/LUTS/bluegreen_lut.png load
-[Log][0:0:0:971]Engine/LUTS/C-8120-STD_lut.png load
-[Log][0:0:1:42]Engine/LUTS/C-9730-STD_lut.png load
-[Log][0:0:1:112]Engine/LUTS/darkest_hour_lut.png load
-[Log][0:0:1:182]Engine/LUTS/F-6800-STD_lut.png load
-[Log][0:0:1:255]Engine/LUTS/F-8700-STD_lut.png load
-[Log][0:0:1:327]Engine/LUTS/F-8700-V2-STD_lut.png load
-[Log][0:0:1:398]Engine/LUTS/greygreen_lut.png load
-[Log][0:0:1:468]Engine/LUTS/H-9110-STD_lut.png load
-[Log][0:0:1:537]Engine/LUTS/humble_lut.png load
-[Log][0:0:1:605]Engine/LUTS/kodak-5205-fuji_lut.png load
-[Log][0:0:1:679]Engine/LUTS/oldman_lut.png load
-[Log][0:0:1:749]Engine/LUTS/sedona_lut.png load
-[Log][0:0:1:818]Engine/LUTS/W-8370-STD_lut.png load
-[Log][0:0:1:886]Engine/LUTS/W-ARAPAHO-33-STD_lut.png load
-[Log][0:0:1:951]Engine/LUTS/X-6500-STD_lut.png load
-[Log][0:0:2:20]Engine/LUTS/X-9400-STD_lut.png load
-[Log][0:0:2:21]Engine/Shaders folder
-[Log][0:0:2:22]Engine/Shaders/ClearColor.mat load
-[Log][0:0:2:22]Engine/Shaders/Default folder
-[Warn][0:0:2:22]Engine/Shaders/Default/Default_Default.shadapter unknown file type
-[Error][0:0:2:23]Engine/Shaders/Default/Default_Default.shadapter Default_Default load failed
-[Warn][0:0:2:23]Engine/Shaders/Default/Default_Position.shadapter unknown file type
-[Error][0:0:2:23]Engine/Shaders/Default/Default_Position.shadapter Default_Position load failed
-[Warn][0:0:2:23]Engine/Shaders/Default/Empty_Fragment.shadapter unknown file type
-[Error][0:0:2:24]Engine/Shaders/Default/Empty_Fragment.shadapter Empty_Fragment load failed
-[Warn][0:0:2:24]Engine/Shaders/Default/PureColor_Fragment.shadapter unknown file type
-[Error][0:0:2:24]Engine/Shaders/Default/PureColor_Fragment.shadapter PureColor_Fragment load failed
-[Warn][0:0:2:24]Engine/Shaders/Default/Toon_Fragment.shadapter unknown file type
-[Error][0:0:2:24]Engine/Shaders/Default/Toon_Fragment.shadapter Toon_Fragment load failed
-[Log][0:0:2:25]Engine/Shaders/Depth.mat load
-[Log][0:0:2:25]Engine/Shaders/lib folder
-[Warn][0:0:2:26]Engine/Shaders/lib/Basic_FS_Lib.hmat unknown file type
-[Error][0:0:2:26]Engine/Shaders/lib/Basic_FS_Lib.hmat Basic_FS_Lib load failed
-[Warn][0:0:2:26]Engine/Shaders/lib/Basic_VS_Lib.hmat unknown file type
-[Error][0:0:2:26]Engine/Shaders/lib/Basic_VS_Lib.hmat Basic_VS_Lib load failed
-[Warn][0:0:2:27]Engine/Shaders/lib/Bindings_Def.hmat unknown file type
-[Error][0:0:2:27]Engine/Shaders/lib/Bindings_Def.hmat Bindings_Def load failed
-[Warn][0:0:2:27]Engine/Shaders/lib/CameraData_Def.hmat unknown file type
-[Error][0:0:2:27]Engine/Shaders/lib/CameraData_Def.hmat CameraData_Def load failed
-[Warn][0:0:2:27]Engine/Shaders/lib/Const_Def.hmat unknown file type
-[Error][0:0:2:28]Engine/Shaders/lib/Const_Def.hmat Const_Def load failed
-[Warn][0:0:2:28]Engine/Shaders/lib/Light_Def.hmat unknown file type
-[Error][0:0:2:28]Engine/Shaders/lib/Light_Def.hmat Light_Def load failed
-[Warn][0:0:2:28]Engine/Shaders/lib/MeshData_Def.hmat unknown file type
-[Error][0:0:2:29]Engine/Shaders/lib/MeshData_Def.hmat MeshData_Def load failed
-[Warn][0:0:2:29]Engine/Shaders/lib/MorphData_Def.hmat unknown file type
-[Error][0:0:2:29]Engine/Shaders/lib/MorphData_Def.hmat MorphData_Def load failed
-[Warn][0:0:2:29]Engine/Shaders/lib/ParticleData_Def.hmat unknown file type
-[Error][0:0:2:30]Engine/Shaders/lib/ParticleData_Def.hmat ParticleData_Def load failed
-[Warn][0:0:2:30]Engine/Shaders/lib/PBR_Lib.hmat unknown file type
-[Error][0:0:2:30]Engine/Shaders/lib/PBR_Lib.hmat PBR_Lib load failed
-[Warn][0:0:2:30]Engine/Shaders/lib/SkeletonMeshData_Def.hmat unknown file type
-[Error][0:0:2:30]Engine/Shaders/lib/SkeletonMeshData_Def.hmat SkeletonMeshData_Def load failed
-[Warn][0:0:2:31]Engine/Shaders/lib/Toon_Lib.hmat unknown file type
-[Error][0:0:2:31]Engine/Shaders/lib/Toon_Lib.hmat Toon_Lib load failed
-[Warn][0:0:2:31]Engine/Shaders/lib/TransformData_Def.hmat unknown file type
-[Error][0:0:2:31]Engine/Shaders/lib/TransformData_Def.hmat TransformData_Def load failed
-[Log][0:0:2:34]Engine/Shaders/Toon.mat load
-[Log][0:0:2:34]Engine/Shapes folder
-[Log][0:0:2:46]Engine/Shapes/column.fbx load
-[Log][0:0:2:74]Engine/Shapes/Cone.fbx load
-[Log][0:0:2:88]Engine/Shapes/hemisphere.fbx load
-[Log][0:0:2:97]Engine/Shapes/UnitBox.obj load
-[Log][0:0:2:118]Engine/Shapes/UnitSphere.fbx load
-[Log][0:0:2:119]Engine/SkySphere folder
-[Log][0:0:2:148]Engine/SkySphere/Clouds.tga load
-[Log][0:0:2:157]Vertex Shader
+[Log][0:0:0:320]Engine/Shaders/Default/Default_Default.shadapter load
+[Log][0:0:0:367]Engine/Shaders/Default/Default_Position.shadapter load
+[Log][0:0:0:370]Engine/Shaders/Default/Empty_Fragment.shadapter load
+[Log][0:0:0:378]Engine/Shaders/Default/PureColor_Fragment.shadapter load
+[Log][0:0:0:477]Engine/Shaders/Default/Toon_Fragment.shadapter load
+[Log][0:0:0:532]Engine/Banner folder
+[Log][0:0:0:581]Engine/Banner/Banner.png load
+[Log][0:0:0:614]Engine/Banner/Banne_old.png load
+[Log][0:0:0:614]Engine/Fonts folder
+[Log][0:0:0:615]Engine/Icons folder
+[Log][0:0:0:620]Engine/Icons/Animation_Icon.png load
+[Log][0:0:0:644]Engine/Icons/AssetFile_Icon.png load
+[Log][0:0:0:662]Engine/Icons/Audio_Icon.png load
+[Log][0:0:0:671]Engine/Icons/Folder_Icon.png load
+[Log][0:0:0:680]Engine/Icons/Material_Icon.png load
+[Log][0:0:0:700]Engine/Icons/Model_Icon.png load
+[Log][0:0:0:713]Engine/Icons/Python_Icon.png load
+[Log][0:0:0:729]Engine/Icons/SkeletonMesh_Icon.png load
+[Log][0:0:0:729]Engine/LUTS folder
+[Log][0:0:0:797]Engine/LUTS/arapaho_lut.png load
+[Log][0:0:0:866]Engine/LUTS/aspen_lut.png load
+[Log][0:0:0:935]Engine/LUTS/BlacKkKlansman_lut.png load
+[Log][0:0:1:3]Engine/LUTS/bluegreen_lut.png load
+[Log][0:0:1:71]Engine/LUTS/C-8120-STD_lut.png load
+[Log][0:0:1:141]Engine/LUTS/C-9730-STD_lut.png load
+[Log][0:0:1:210]Engine/LUTS/darkest_hour_lut.png load
+[Log][0:0:1:280]Engine/LUTS/F-6800-STD_lut.png load
+[Log][0:0:1:348]Engine/LUTS/F-8700-STD_lut.png load
+[Log][0:0:1:416]Engine/LUTS/F-8700-V2-STD_lut.png load
+[Log][0:0:1:485]Engine/LUTS/greygreen_lut.png load
+[Log][0:0:1:555]Engine/LUTS/H-9110-STD_lut.png load
+[Log][0:0:1:622]Engine/LUTS/humble_lut.png load
+[Log][0:0:1:688]Engine/LUTS/kodak-5205-fuji_lut.png load
+[Log][0:0:1:761]Engine/LUTS/oldman_lut.png load
+[Log][0:0:1:832]Engine/LUTS/sedona_lut.png load
+[Log][0:0:1:900]Engine/LUTS/W-8370-STD_lut.png load
+[Log][0:0:1:968]Engine/LUTS/W-ARAPAHO-33-STD_lut.png load
+[Log][0:0:2:33]Engine/LUTS/X-6500-STD_lut.png load
+[Log][0:0:2:101]Engine/LUTS/X-9400-STD_lut.png load
+[Log][0:0:2:101]Engine/Shaders folder
+[Log][0:0:2:102]Engine/Shaders/ClearColor.mat load
+[Log][0:0:2:102]Engine/Shaders/Default folder
+[Warn][0:0:2:102]Engine/Shaders/Default/Default_Default.shadapter unknown file type
+[Error][0:0:2:103]Engine/Shaders/Default/Default_Default.shadapter Default_Default load failed
+[Warn][0:0:2:103]Engine/Shaders/Default/Default_Position.shadapter unknown file type
+[Error][0:0:2:103]Engine/Shaders/Default/Default_Position.shadapter Default_Position load failed
+[Warn][0:0:2:103]Engine/Shaders/Default/Empty_Fragment.shadapter unknown file type
+[Error][0:0:2:104]Engine/Shaders/Default/Empty_Fragment.shadapter Empty_Fragment load failed
+[Warn][0:0:2:104]Engine/Shaders/Default/PureColor_Fragment.shadapter unknown file type
+[Error][0:0:2:104]Engine/Shaders/Default/PureColor_Fragment.shadapter PureColor_Fragment load failed
+[Warn][0:0:2:104]Engine/Shaders/Default/Toon_Fragment.shadapter unknown file type
+[Error][0:0:2:105]Engine/Shaders/Default/Toon_Fragment.shadapter Toon_Fragment load failed
+[Log][0:0:2:105]Engine/Shaders/Depth.mat load
+[Log][0:0:2:105]Engine/Shaders/lib folder
+[Warn][0:0:2:106]Engine/Shaders/lib/Basic_FS_Lib.hmat unknown file type
+[Error][0:0:2:106]Engine/Shaders/lib/Basic_FS_Lib.hmat Basic_FS_Lib load failed
+[Warn][0:0:2:106]Engine/Shaders/lib/Basic_VS_Lib.hmat unknown file type
+[Error][0:0:2:106]Engine/Shaders/lib/Basic_VS_Lib.hmat Basic_VS_Lib load failed
+[Warn][0:0:2:107]Engine/Shaders/lib/Bindings_Def.hmat unknown file type
+[Error][0:0:2:107]Engine/Shaders/lib/Bindings_Def.hmat Bindings_Def load failed
+[Warn][0:0:2:107]Engine/Shaders/lib/CameraData_Def.hmat unknown file type
+[Error][0:0:2:107]Engine/Shaders/lib/CameraData_Def.hmat CameraData_Def load failed
+[Warn][0:0:2:108]Engine/Shaders/lib/Const_Def.hmat unknown file type
+[Error][0:0:2:108]Engine/Shaders/lib/Const_Def.hmat Const_Def load failed
+[Warn][0:0:2:108]Engine/Shaders/lib/Light_Def.hmat unknown file type
+[Error][0:0:2:108]Engine/Shaders/lib/Light_Def.hmat Light_Def load failed
+[Warn][0:0:2:108]Engine/Shaders/lib/MeshData_Def.hmat unknown file type
+[Error][0:0:2:109]Engine/Shaders/lib/MeshData_Def.hmat MeshData_Def load failed
+[Warn][0:0:2:109]Engine/Shaders/lib/MorphData_Def.hmat unknown file type
+[Error][0:0:2:109]Engine/Shaders/lib/MorphData_Def.hmat MorphData_Def load failed
+[Warn][0:0:2:109]Engine/Shaders/lib/ParticleData_Def.hmat unknown file type
+[Error][0:0:2:110]Engine/Shaders/lib/ParticleData_Def.hmat ParticleData_Def load failed
+[Warn][0:0:2:110]Engine/Shaders/lib/PBR_Lib.hmat unknown file type
+[Error][0:0:2:110]Engine/Shaders/lib/PBR_Lib.hmat PBR_Lib load failed
+[Warn][0:0:2:110]Engine/Shaders/lib/SkeletonMeshData_Def.hmat unknown file type
+[Error][0:0:2:111]Engine/Shaders/lib/SkeletonMeshData_Def.hmat SkeletonMeshData_Def load failed
+[Warn][0:0:2:111]Engine/Shaders/lib/Toon_Lib.hmat unknown file type
+[Error][0:0:2:111]Engine/Shaders/lib/Toon_Lib.hmat Toon_Lib load failed
+[Warn][0:0:2:111]Engine/Shaders/lib/TransformData_Def.hmat unknown file type
+[Error][0:0:2:111]Engine/Shaders/lib/TransformData_Def.hmat TransformData_Def load failed
+[Log][0:0:2:113]Engine/Shaders/Toon.mat load
+[Log][0:0:2:114]Engine/Shapes folder
+[Log][0:0:2:120]Engine/Shapes/column.fbx load
+[Log][0:0:2:146]Engine/Shapes/Cone.fbx load
+[Log][0:0:2:159]Engine/Shapes/hemisphere.fbx load
+[Log][0:0:2:167]Engine/Shapes/UnitBox.obj load
+[Log][0:0:2:187]Engine/Shapes/UnitSphere.fbx load
+[Log][0:0:2:188]Engine/SkySphere folder
+[Log][0:0:2:208]Engine/SkySphere/Clouds.tga load
+[Log][0:0:2:217]Vertex Shader
   1 #version 460
   2 #define VERTEX_MAX_BONE 4
   3 #define MAT_INS_BIND_INDEX b0
@@ -197,11 +197,11 @@
 107     TexCoords.y = 1 - TexCoords.y;
 108 }
 109 
-[Error][0:0:2:158]Sky.mat (Vertex Shader) compile failed:
+[Error][0:0:2:217]Sky.mat (Vertex Shader) compile failed:
 C:\Users\MC117\Documents\Visual Studio 2019\Projects\BraneEngineDx\BraneEngineDx\Sky.mat(1,2-8): error X1504: invalid preprocessor command 'version'
 C:\Users\MC117\Documents\Visual Studio 2019\Projects\BraneEngineDx\BraneEngineDx\Sky.mat(97,1-3): error X3000: syntax error: unexpected token 'out'
 
-[Log][0:0:2:163]Fragment Shader
+[Log][0:0:2:223]Fragment Shader
   1 #version 460
   2 layout(early_fragment_tests) in;
   3 #define VERTEX_MAX_BONE 4
@@ -329,13 +329,13 @@ C:\Users\MC117\Documents\Visual Studio 2019\Projects\BraneEngineDx\BraneEngineDx
 125     // oCol = vec4(mapped, 1.0);
 126 }
 127 
-[Error][0:0:2:164]Sky.mat (Fragment Shader) compile failed:
+[Error][0:0:2:223]Sky.mat (Fragment Shader) compile failed:
 C:\Users\MC117\Documents\Visual Studio 2019\Projects\BraneEngineDx\BraneEngineDx\Sky.mat(1,2-8): error X1504: invalid preprocessor command 'version'
 C:\Users\MC117\Documents\Visual Studio 2019\Projects\BraneEngineDx\BraneEngineDx\Sky.mat(2,1-6): error X3000: unrecognized identifier 'layout'
 
-[Log][0:0:2:164]Engine/SkySphere/Sky.mat load
-[Log][0:0:2:214]Engine/SkySphere/Sky.tga load
-[Log][0:0:2:223]Vertex Shader
+[Log][0:0:2:223]Engine/SkySphere/Sky.mat load
+[Log][0:0:2:267]Engine/SkySphere/Sky.tga load
+[Log][0:0:2:275]Vertex Shader
   1 #version 460
   2 #define VERTEX_MAX_BONE 4
   3 #define MAT_INS_BIND_INDEX b0
@@ -444,11 +444,11 @@ C:\Users\MC117\Documents\Visual Studio 2019\Projects\BraneEngineDx\BraneEngineDx
 106     TexCoords.y = 1 - TexCoords.y;
 107 }
 108 
-[Error][0:0:2:223]Space.mat (Vertex Shader) compile failed:
+[Error][0:0:2:276]Space.mat (Vertex Shader) compile failed:
 C:\Users\MC117\Documents\Visual Studio 2019\Projects\BraneEngineDx\BraneEngineDx\Space.mat(1,2-8): error X1504: invalid preprocessor command 'version'
 C:\Users\MC117\Documents\Visual Studio 2019\Projects\BraneEngineDx\BraneEngineDx\Space.mat(97,1-3): error X3000: syntax error: unexpected token 'out'
 
-[Log][0:0:2:229]Fragment Shader
+[Log][0:0:2:290]Fragment Shader
  1 #version 460
  2 layout(early_fragment_tests) in;
  3 #define VERTEX_MAX_BONE 4
@@ -546,30 +546,31 @@ C:\Users\MC117\Documents\Visual Studio 2019\Projects\BraneEngineDx\BraneEngineDx
 95     oCol = oCol * overallColor * 1.5;
 96 }
 97 
-[Error][0:0:2:229]Space.mat (Fragment Shader) compile failed:
+[Error][0:0:2:290]Space.mat (Fragment Shader) compile failed:
 C:\Users\MC117\Documents\Visual Studio 2019\Projects\BraneEngineDx\BraneEngineDx\Space.mat(1,2-8): error X1504: invalid preprocessor command 'version'
 C:\Users\MC117\Documents\Visual Studio 2019\Projects\BraneEngineDx\BraneEngineDx\Space.mat(2,1-6): error X3000: unrecognized identifier 'layout'
 
-[Log][0:0:2:230]Engine/SkySphere/Space.mat load
-[Log][0:0:2:489]Engine/SkySphere/Sphere.obj load
-[Log][0:0:2:568]Engine/SkySphere/Sphere1.obj load
-[Log][0:0:2:573]Engine/SkySphere/Stars.tga load
-[Log][0:0:2:573]Engine/Textures folder
-[Error][0:0:2:574]Engine/Textures/Black.png Black load failed
-[Error][0:0:2:574]Engine/Textures/default_lut.png default_lut load failed
-[Log][0:0:2:576]Engine/Textures/Default_N.png load
-[Log][0:0:2:604]Engine/Textures/env.jpg load
-[Log][0:0:2:607]Engine/Textures/env_ir.tga load
-[Log][0:0:2:616]Engine/Textures/env_prefilter.mip load
-[Log][0:0:2:669]Engine/Textures/GridInfo.png load
-[Error][0:0:2:669]Engine/Textures/ibl_brdf_lut.png ibl_brdf_lut load failed
-[Log][0:0:2:747]Engine/Textures/ibl_hdr_radiance.png load
-[Log][0:0:2:749]Engine/Textures/Smoke.tga load
-[Log][0:0:2:800]Engine/Textures/SmokeNoise.png load
-[Log][0:0:2:878]Engine/Textures/SpaceBox.tga load
-[Log][0:0:2:881]Engine/Textures/SpaceBox_irr.tga load
-[Log][0:0:2:907]Engine/Textures/SpaceBox_prefilter.mip load
-[Log][0:0:3:187]Engine/Textures/ssaoRand.png load
-[Log][0:0:3:264]Engine/Textures/ssaoRand1.jpg load
-[Log][0:0:3:299]Engine/Textures/StarTexP.tga load
-[Error][0:0:3:299]Engine/Textures/White.png White load failed
+[Log][0:0:2:291]Engine/SkySphere/Space.mat load
+[Log][0:0:2:613]Engine/SkySphere/Sphere.obj load
+[Log][0:0:2:717]Engine/SkySphere/Sphere1.obj load
+[Log][0:0:2:721]Engine/SkySphere/Stars.tga load
+[Log][0:0:2:721]Engine/Textures folder
+[Error][0:0:2:722]Engine/Textures/Black.png Black load failed
+[Error][0:0:2:722]Engine/Textures/default_lut.png default_lut load failed
+[Log][0:0:2:727]Engine/Textures/Default_N.png load
+[Log][0:0:2:762]Engine/Textures/env.jpg load
+[Log][0:0:2:765]Engine/Textures/env_ir.tga load
+[Log][0:0:2:770]Engine/Textures/env_prefilter.mip load
+[Log][0:0:2:828]Engine/Textures/GridInfo.png load
+[Error][0:0:2:829]Engine/Textures/ibl_brdf_lut.png ibl_brdf_lut load failed
+[Log][0:0:2:915]Engine/Textures/ibl_hdr_radiance.png load
+[Log][0:0:2:916]Engine/Textures/Smoke.tga load
+[Log][0:0:2:964]Engine/Textures/SmokeNoise.png load
+[Log][0:0:3:38]Engine/Textures/SpaceBox.tga load
+[Log][0:0:3:41]Engine/Textures/SpaceBox_irr.tga load
+[Log][0:0:3:61]Engine/Textures/SpaceBox_prefilter.mip load
+[Log][0:0:3:343]Engine/Textures/ssaoRand.png load
+[Log][0:0:3:418]Engine/Textures/ssaoRand1.jpg load
+[Log][0:0:3:443]Engine/Textures/StarTexP.tga load
+[Error][0:0:3:443]Engine/Textures/White.png White load failed
+[Log][0:0:4:132]Content/Student.fbx load

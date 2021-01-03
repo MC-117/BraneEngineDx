@@ -725,6 +725,27 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 				if (ImGui::Combo("MSAA", &massLevel, "None\0""4x\0""8x\0""16x\0")) {
 					cam->cameraRender.renderTarget.setMultisampleLevel(massLevel * 4);
 				}
+				ostringstream otext;
+				Matrix4f promat = cam->getProjectionMatrix();
+				for (int i = 0; i < 4; i++) {
+					otext << promat(i, 0) << ", " <<
+						promat(i, 1) << ", " <<
+						promat(i, 2) << ", " <<
+						promat(i, 3) << ",\n";
+				}
+				string protext = otext.rdbuf()->str();
+				ImGui::InputTextMultiline("Promat", &protext, { -1, 90 }, ImGuiInputTextFlags_ReadOnly);
+
+				otext.clear();
+				promat = cam->getViewMatrix();
+				for (int i = 0; i < 4; i++) {
+					otext << promat(i, 0) << ", " <<
+						promat(i, 1) << ", " <<
+						promat(i, 2) << ", " <<
+						promat(i, 3) << ",\n";
+				}
+				string vtext = otext.rdbuf()->str();
+				ImGui::InputTextMultiline("Matrix", &vtext, { -1, 90 }, ImGuiInputTextFlags_ReadOnly);
 			}
 			if (ImGui::CollapsingHeader("Animation")) {
 				if (ImGui::Button("Add Select Camera Animation", { -1, 40 })) {

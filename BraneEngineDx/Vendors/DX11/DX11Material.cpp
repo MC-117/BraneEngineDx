@@ -69,4 +69,12 @@ void DX11Material::processImageData()
 	}
 }
 
+void DX11Material::postprocess()
+{
+	DX11ShaderProgram* program = DX11ShaderProgram::currentDx11Program;
+	if (program == NULL)
+		return;
+	program->uploadData();
+}
+
 #endif // VENDOR_USE_DX11

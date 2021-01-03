@@ -477,7 +477,7 @@ void Engine::setup()
 			throw runtime_error("Vendor window setup failed");
 	}
 
-	createWindow(windowContext.screenSize.x, windowContext.screenSize.y);
+	createWindow(engineConfig.screenWidth, engineConfig.screenHeight);
 
 	world.input.setHWND(windowContext._hwnd);
 	//ShowWindow(_hwnd, SW_HIDE);

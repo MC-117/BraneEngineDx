@@ -29,6 +29,8 @@ bool Brane::born(TypeID type, void* ptr, const std::string& name)
 
 bool Brane::vanish(TypeID type, void* ptr)
 {
+	if (entityBook.get() == NULL)
+		return false;
 	auto iter = entityBook->find(ptr);
 	if (iter == entityBook->end())
 		return false;

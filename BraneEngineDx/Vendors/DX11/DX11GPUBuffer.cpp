@@ -42,17 +42,22 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 		if (FAILED(dxContext.device->CreateBuffer(&bd, NULL, &dx11Buffer)))
 			throw runtime_error("CreateBuffer failed");
 
-		if (desc.type == GB_Storage) {
+		if (desc.type != GB_Constant) {
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-			if (desc.type == GB_Struct)
-				srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-			else if (desc.type == GB_Index)
-				srvDesc.Format = DXGI_FORMAT_R32_UINT;
-			else
-				srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 			srvDesc.Buffer.FirstElement = 0;
-			srvDesc.Buffer.NumElements = ceil(desc.capacity * desc.cellSize / sizeof(float));
+			if (desc.type == GB_Struct) {
+				srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+				srvDesc.Buffer.NumElements = desc.capacity;
+			}
+			else if (desc.type == GB_Index) {
+				srvDesc.Format = DXGI_FORMAT_R32_UINT;
+				srvDesc.Buffer.NumElements = ceil(desc.capacity * desc.cellSize / sizeof(float));
+			}
+			else {
+				srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+				srvDesc.Buffer.NumElements = ceil(desc.capacity * desc.cellSize / sizeof(float));
+			}
 			if (FAILED(dxContext.device->CreateShaderResourceView(dx11Buffer, &srvDesc, &dx11BufferView)))
 				throw runtime_error("CreateShaderResourceView failed");
 			desc.id = (unsigned int)dx11BufferView;
