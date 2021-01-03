@@ -190,6 +190,9 @@ void Camera::bindCameraData()
 
 Matrix4f Camera::perspective(float fovy, float aspect, float zNear, float zFar)
 {
+	DirectX::XMFLOAT4X4 xmf44;
+	DirectX::XMStoreFloat4x4(&xmf44, DirectX::XMMatrixPerspectiveFovRH(fovy * PI / 180.0, aspect, zNear, zFar));
+	return xmf44;
 	float tanHalfFovy = tan(fovy * PI / 360.0);
 
 	Matrix4f Result = Matrix4f::Zero();
@@ -203,6 +206,9 @@ Matrix4f Camera::perspective(float fovy, float aspect, float zNear, float zFar)
 
 Matrix4f Camera::orthotropic(float left, float right, float bottom, float top, float zNear, float zFar)
 {
+	DirectX::XMFLOAT4X4 xmf44;
+	DirectX::XMStoreFloat4x4(&xmf44, DirectX::XMMatrixOrthographicOffCenterRH(left, right, bottom, top, zNear, zFar));
+	return xmf44;
 	Matrix4f Result = Matrix4f::Identity();
 	Result(0, 0) = 2 / (right - left);
 	Result(1, 1) = 2 / (top - bottom);
@@ -215,6 +221,10 @@ Matrix4f Camera::orthotropic(float left, float right, float bottom, float top, f
 
 Matrix4f Camera::lookAt(Vector3f const & eye, Vector3f const & center, Vector3f const & up)
 {
+	DirectX::XMFLOAT4X4 xmf44;
+	DirectX::XMStoreFloat4x4(&xmf44, DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&eye),
+		DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&center), DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&up)));
+	return xmf44;
 	Vector3f W(center - eye);
 	Vector3f U(W.cross(up));
 	Vector3f V(U.cross(W));

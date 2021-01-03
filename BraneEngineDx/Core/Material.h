@@ -74,6 +74,7 @@ public:
 	void processColorData();
 	void processTextureData();
 	void processImageData();
+	void postprocess();
 	void processInstanceData();
 
 	static bool loadDefaultMaterial();

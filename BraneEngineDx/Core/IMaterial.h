@@ -47,6 +47,7 @@ public:
 	virtual void processColorData();
 	virtual void processTextureData();
 	virtual void processImageData();
+	virtual void postprocess();
 };
 
 #endif // !_IMATERIAL_H_

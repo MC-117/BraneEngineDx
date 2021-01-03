@@ -28,6 +28,7 @@ inline StaticVar<T>::~StaticVar()
 {
 	if (_this)
 		_this->T::~T();
+	_this = nullptr;
 }
 
 template<class T>

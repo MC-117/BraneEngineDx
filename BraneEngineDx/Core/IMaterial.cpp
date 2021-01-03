@@ -27,3 +27,7 @@ void IMaterial::processTextureData()
 void IMaterial::processImageData()
 {
 }
+
+void IMaterial::postprocess()
+{
+}

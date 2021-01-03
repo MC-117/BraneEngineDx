@@ -61,6 +61,7 @@ void DX11Context::createSwapChain(unsigned int width, unsigned int height, unsig
 	sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
+	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.OutputWindow = hWnd;
 	sd.SampleDesc.Count = multisampleLevels;
@@ -69,7 +70,7 @@ void DX11Context::createSwapChain(unsigned int width, unsigned int height, unsig
 
 	if (multisampleLevels > 1) {
 		unsigned int q = 0;
-		device->CheckMultisampleQualityLevels(DXGI_FORMAT_B8G8R8A8_UNORM, multisampleLevels, &q);
+		device->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, multisampleLevels, &q);
 		if (q != 0)
 			--q;
 		sd.SampleDesc.Quality = q;
@@ -84,7 +85,7 @@ void DX11Context::createRenderState()
 	ZeroMemory(&rastDesc, sizeof(D3D11_RASTERIZER_DESC));
 	rastDesc.FillMode = D3D11_FILL_SOLID;
 	rastDesc.CullMode = D3D11_CULL_NONE;
-	rastDesc.FrontCounterClockwise = false;
+	rastDesc.FrontCounterClockwise = true;
 	rastDesc.DepthClipEnable = true;
 	device->CreateRasterizerState(&rastDesc, &rasterizerCullOff);
 
@@ -129,7 +130,7 @@ void DX11Context::createRenderState()
 	ZeroMemory(&dsDesc, sizeof dsDesc);
 	dsDesc.DepthEnable = true;
 	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
 	device->CreateDepthStencilState(&dsDesc, &depthWriteOnTestOnLEqual);
 
 	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;

@@ -5,7 +5,7 @@
 #include "../lib/Light_Def.hmat"
 #include "../lib/MeshData_Def.hmat"
 
-#define mul(a, b) mul(b, a)
+//#define mul(a, b) mul(b, a)
 
 DefaultVertexOut MESH_MAIN
 {
@@ -26,7 +26,7 @@ DefaultVertexOut MESH_MAIN
 #include "../lib/Light_Def.hmat"
 #include "../lib/SkeletonMeshData_Def.hmat"
 
-#define mul(a, b) mul(b, a)
+//#define mul(a, b) mul(b, a)
 
 DefaultVertexOut SKELETON_MAIN
 {
@@ -48,7 +48,7 @@ DefaultVertexOut SKELETON_MAIN
 #include "../lib/SkeletonMeshData_Def.hmat"
 #include "../lib/MorphData_def.hmat"
 
-#define mul(a, b) mul(b, a)
+//#define mul(a, b) mul(b, a)
 
 float3 morphPos(in uint vertexID, in float3 pos)
 {

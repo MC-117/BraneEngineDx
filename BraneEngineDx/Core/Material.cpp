@@ -304,6 +304,12 @@ void Material::processImageData()
 	vendorMaterial->processImageData();
 }
 
+void Material::postprocess()
+{
+	newVendorMaterial();
+	vendorMaterial->postprocess();
+}
+
 void Material::processInstanceData()
 {
 	processScalarData();
@@ -311,6 +317,7 @@ void Material::processInstanceData()
 	processColorData();
 	processTextureData();
 	processImageData();
+	postprocess();
 }
 
 bool Material::loadDefaultMaterial()

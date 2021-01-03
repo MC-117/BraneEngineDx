@@ -8,5 +8,5 @@ DEF_MAT_END
 
 float4 DEFAULT_FS_MAIN : SV_TARGET
 {
-    return baseColor;
+    return float4(1, 0, 0, 1);
 }

@@ -45,7 +45,7 @@
 // BraneEngine used to be a OpenGL based engine with Eigen
 // math library (column-major default), so using macro to
 // specify matrix upload operation.
-#define MATRIX_UPLOAD_OP(mat) (mat)
+#define MATRIX_UPLOAD_OP(mat) (mat).transpose()
 
 using namespace std;
 constexpr auto PI = 3.1415926535897932346f;
