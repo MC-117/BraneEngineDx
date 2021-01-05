@@ -41,8 +41,8 @@ FragmentOut DEFAULT_FS_MAIN
     float a = albedo.a * baseColor.a;
     float3 L = normalize(directLight.direction);
     float3 H = normalize(V + L);
-    float4 ambience = lerp(baseColor, highlightColor, smoothToon(float4(1.0f, 1.0f, 1.0f, 1.0f),
-        float4(0.0f, 0.0f, 0.0f, 0.0f), dot(N, H), highlightCut, highlightCutSmooth));
+    float4 ambience = lerp(baseColor, highlightColor, smoothToon(Float4(1.0f),
+        Float4(0.0f), dot(N, H), highlightCut, highlightCutSmooth));
     ambience = lerp(shadowColor, ambience, ShadowCalculation(depthMap, depthMapSampler, fin.lightSpacePos, N, L));
     ambience = smoothToon(ambience, shadowColor, dot(N, L), shadowCut, shadowCutSmooth);
     ambience = smoothToon(rimColor, ambience, fresnelSchlick(dot(N, normalize(camData.camPos - fin.WorldPos)), 0.33f), rimCut, rimCutSmooth);

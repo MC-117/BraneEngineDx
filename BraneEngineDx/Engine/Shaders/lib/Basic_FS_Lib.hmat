@@ -76,3 +76,10 @@ float2 sphereProj(float3 v)
     float t = v.z >= 0 ? (1 - tp * 0.5) : (tp * 0.5);
     return float2(s, t);
 }
+
+uint getLodLevels(in Texture2D tex)
+{
+    uint w, h, l;
+    tex.GetDimensions(0, w, h, l);
+    return l;
+}

@@ -19,8 +19,9 @@ void AssetLoadWindow::onRenderWindow(GUIRenderInfo & info)
 			thread td = thread([](char* str) {
 				FileDlgDesc desc;
 				desc.title = "Browse";
-				desc.filter = "obj(*.obj)\0*.obj\0fbx(*.fbx)\0*.fbx\0pmx(*.pmx)\0*.pmx\0";
+				desc.filter = "fbx(*.fbx)\0*.fbx\0obj(*.obj)\0*.obj\0pmx(*.pmx)\0*.pmx\0";
 				desc.initDir = "Content";
+				desc.defFileExt = "fbx";
 				if (openFileDlg(desc)) {
 					strcpy_s(str, MAX_PATH, desc.filePath.c_str());
 				}

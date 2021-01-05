@@ -735,7 +735,7 @@ void RenderCommandList::LightDataPack::setLight(Light * light)
 	if (directLight != NULL) {
 		directLightData.direction = directLight->getForward(WORLD);
 		directLightData.intensity = directLight->intensity;
-		directLightData.lightSpaceMat = directLight->getLightSpaceMatrix().transpose();
+		directLightData.lightSpaceMat = MATRIX_UPLOAD_OP(directLight->getLightSpaceMatrix());
 		directLightData.color = Vector3f(directLight->color.r, directLight->color.g, directLight->color.b);
 	}
 	PointLight* pointLight = dynamic_cast<PointLight*>(light);
@@ -754,7 +754,7 @@ void RenderCommandList::LightDataPack::uploadLight()
 	directLightData.pointLightCount = pointLightDatas.size();
 	directLightBuffer.uploadData(1, &directLightData);
 	if (directLightData.pointLightCount > 0)
-		pointLightBuffer.uploadData(directLightData.pointLightCount, &directLightData);
+		pointLightBuffer.uploadData(directLightData.pointLightCount, pointLightDatas.data());
 }
 
 void RenderCommandList::LightDataPack::bindLight()

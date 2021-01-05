@@ -14,13 +14,15 @@ SkeletonMeshRender::~SkeletonMeshRender()
 
 void SkeletonMeshRender::fillMaterialsByDefault()
 {
-	for (int i = 0; i < materials.size(); i++) {
+	/*for (int i = 0; i < materials.size(); i++) {
 		if (materials[i] == NULL) {
 			materials[i] = &Material::defaultMaterial;
 		}
-	}
+	}*/
 	if (outlineMaterial == NULL) {
-		outlineMaterial = &getAssetByPath<Material>("Engine/Shaders/Outline.mat")->instantiate();
+		outlineMaterial = getAssetByPath<Material>("Engine/Shaders/Outline.mat");
+		if (outlineMaterial != NULL)
+			outlineMaterial = &outlineMaterial->instantiate();
 	}
 }
 

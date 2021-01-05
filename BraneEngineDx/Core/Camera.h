@@ -39,7 +39,7 @@ public:
 	float fov = 90;
 	float aspect = 1280.0f / 720.0f;
 	float left = 0, right = 0, top = 0, bottom = 0;
-	float zNear = 0.1, zFar = 10000000;
+	float zNear = 0.1, zFar = 1000000;
 	float distance = 0;
 	bool active = false;
 

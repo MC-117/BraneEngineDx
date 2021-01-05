@@ -17,11 +17,15 @@ Bone::Bone(const string & name) : Actor(name),
 	loadDefaultResource();
 	sphereMeshRender.canCastShadow = false;
 	coneMeshRender.canCastShadow = false;
+	sphereMeshRender.hidden = true;
+	coneMeshRender.hidden = true;
 }
 
 void Bone::prerender()
 {
 	Actor::prerender();
+	if (sphereMeshRender.hidden && coneMeshRender.hidden)
+		return;
 	Matrix4f _transformMat = transformMat;
 	_transformMat(0, 0) /= scale.x();
 	_transformMat(1, 1) /= scale.y();

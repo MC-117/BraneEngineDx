@@ -31,6 +31,8 @@ public:
 	virtual void clearColors(const vector<Color>& colors);
 	virtual void clearDepth(float depth);
 	virtual void clearStencil(unsigned char stencil);
+
+	void cleanInput();
 };
 
 #endif // !_DX11RENDERTARGET_H_

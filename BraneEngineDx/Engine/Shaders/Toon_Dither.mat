@@ -1,0 +1,87 @@
+#order 2450
+#material
+Color baseColor: 255, 255, 255, 255
+Texture colorMap: white
+Color shadowColor: 150, 150, 150, 255
+Color highlightColor: 50, 50, 50, 255
+Color rimColor: 50, 50, 50, 255
+Color overColor: 255, 255, 255, 255
+Scalar shadowCut: 0.5
+Scalar shadowCutSmooth: 0.0
+Scalar highlightCut: 0.999
+Scalar highlightCutSmooth: 0.0
+Scalar rimCut: 0.8
+Scalar rimCutSmooth: 0.0
+Scalar normalScale: 1.0
+Texture normalMap: black
+Texture depthMap: white
+#vertex use default
+#fragment
+
+#include "lib/Light_Def.hmat"
+#include "lib/CameraData_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 baseColor;
+uniform float4 reflectionColor;
+uniform float4 shadowColor;
+uniform float4 highlightColor;
+uniform float4 rimColor;
+uniform float4 overColor;
+uniform float shadowCut;
+uniform float shadowCutSmooth;
+uniform float highlightCut;
+uniform float highlightCutSmooth;
+uniform float rimCut;
+uniform float rimCutSmooth;
+uniform float normalScale;
+uniform float roughness;
+DEF_MAT_END
+
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(aoMap, 1);
+DEF_TEX2D(roughnessMap, 2);
+DEF_TEX2D(reflectionMap, 3);
+DEF_TEX2D(normalMap, 4);
+DEF_TEX2D(depthMap, 5);
+
+static const float4x4 thresholdMatrix = float4x4(
+1.0 / 17.0,  9.0 / 17.0,  3.0 / 17.0, 11.0 / 17.0,
+13.0 / 17.0,  5.0 / 17.0, 15.0 / 17.0,  7.0 / 17.0,
+4.0 / 17.0, 12.0 / 17.0,  2.0 / 17.0, 10.0 / 17.0,
+16.0 / 17.0,  8.0 / 17.0, 14.0 / 17.0,  6.0 / 17.0
+);
+
+#include "lib/Toon_Lib.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+//FS_DEF_OUT_COLOR(ssnMask, 0);
+FS_DEF_OUT_END
+
+FragmentOut DEFAULT_FS_MAIN
+{
+    FragmentOut fout;
+    float3 N = mul(((normalize(SAMPLE_TEX(normalMap, fin.TexCoords) * 2 - 1)).xyz),
+        cotangent(fin.Normal, fin.WorldPos, fin.TexCoords)) * normalScale;
+    float3 V = normalize(camData.camPos - fin.WorldPos);
+    float4 albedo = SAMPLE_TEX(colorMap, fin.TexCoords);
+    float4 ao = SAMPLE_TEX(aoMap, fin.TexCoords);
+    float a = albedo.a * baseColor.a;
+    int2 pos = int2(int(fin.svPos.x), int(fin.svPos.y));
+    if (a < thresholdMatrix[(pos.x % 4)][(pos.y % 4)])
+        discard;
+        
+    float3 L = normalize(directLight.direction);
+    float3 H = normalize(V + L);
+    float4 ambience = lerp(baseColor, highlightColor, smoothToon(Float4(1.0f),
+        Float4(0.0f), dot(N, H), highlightCut, highlightCutSmooth));
+    ambience = lerp(shadowColor, ambience, ShadowCalculation(depthMap, depthMapSampler, fin.lightSpacePos, N, L));
+    ambience = smoothToon(ambience, shadowColor, dot(N, L), shadowCut, shadowCutSmooth);
+    ambience = smoothToon(rimColor, ambience, fresnelSchlick(dot(N, normalize(camData.camPos - fin.WorldPos)), 0.33f), rimCut, rimCutSmooth);
+    fout.FragColor = albedo * ambience * ao;
+    fout.FragColor.a = a;
+    fout.FragColor *= overColor;
+    //fout.ssnMask = float4(1);
+    return fout;
+}

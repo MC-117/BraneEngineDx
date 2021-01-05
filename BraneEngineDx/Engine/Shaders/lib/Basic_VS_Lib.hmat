@@ -4,5 +4,6 @@ struct DefaultVertexOut
     float4 lightSpacePos : LIGHTSAPCEPOS;
     float3 Normal : NORMAL;
     float3 WorldPos : WOLRDPOS;
+    float3 LocalPos : LOCALPOS;
     float2 TexCoords : TEXCOORD;
 };
