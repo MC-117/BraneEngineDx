@@ -324,6 +324,12 @@
     <ClInclude Include="Core\Bone.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Cameras\DebugCamera.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Actors\SkySphere.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -576,6 +582,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\Bone.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Cameras\DebugCamera.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Actors\SkySphere.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -13,7 +13,7 @@ public:
 	T* operator->();
 	operator T* ();
 private:
-	T* _this = nullptr;
+	T* _this;
 	char _data[sizeof(T)];
 	T* allocate();
 };
@@ -26,9 +26,10 @@ inline StaticVar<T>::StaticVar()
 template<class T>
 inline StaticVar<T>::~StaticVar()
 {
-	if (_this)
+	if (_this) {
 		_this->T::~T();
-	_this = nullptr;
+		_this = nullptr;
+	}
 }
 
 template<class T>

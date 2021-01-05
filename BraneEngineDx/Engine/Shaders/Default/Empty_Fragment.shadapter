@@ -1,6 +1,7 @@
 #adapter name empty_fragment
 #fragment
+#include "../lib/Basic_FS_Lib.hmat"
 
-void main()
+void DEFAULT_FS_MAIN
 {
 }

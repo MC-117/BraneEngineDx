@@ -56,7 +56,7 @@ unsigned int GPUBuffer::uploadSubData(unsigned int first, unsigned int size, voi
 unsigned int GPUBuffer::uploadData(unsigned int size, void* data)
 {
 	newVendorGPUBuffer();
-	return vendorGPUBuffer->uploadSubData(0, size, data);
+	return vendorGPUBuffer->uploadData(size, data);
 }
 
 void GPUBuffer::newVendorGPUBuffer()

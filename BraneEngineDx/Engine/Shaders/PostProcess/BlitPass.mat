@@ -1,0 +1,18 @@
+#material
+Texture screenMap
+#vertex use postprocess
+#fragment postprocess
+#include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/PostProcess_Def.hmat"
+
+DEF_TEX2D(screenMap, 0);
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+FS_DEF_OUT_END
+
+FragmentOut DEFAULT_FS_MAIN
+{
+    FragmentOut fout;
+    fout.FragColor = SAMPLE_TEX_LOD(screenMap, UV, 0);
+}

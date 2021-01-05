@@ -41,11 +41,12 @@ struct FileDlgDesc
 	string title;
 	string filter;
 	string initDir;
-	HWND own;
+	HWND own = NULL;
 	bool save = false;
 	bool addToRecent = true;
 	string filePath;
 	string fileName;
+	string defFileExt;
 };
 
 bool openFileDlg(FileDlgDesc& desc);

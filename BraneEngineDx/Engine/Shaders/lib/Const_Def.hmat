@@ -5,6 +5,6 @@
 
 static const float PI = 3.14159265359;
 
-#define Float2(x) float2(x, x)
-#define Float3(x) float3(x, x, x)
-#define Float4(x) float4(x, x, x, x)
+float2 Float2(float x) { return float2(x, x); }
+float3 Float3(float x) { return float3(x, x, x); }
+float4 Float4(float x) { return float4(x, x, x, x); }

@@ -130,7 +130,7 @@ void DX11Context::createRenderState()
 	ZeroMemory(&dsDesc, sizeof dsDesc);
 	dsDesc.DepthEnable = true;
 	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	device->CreateDepthStencilState(&dsDesc, &depthWriteOnTestOnLEqual);
 
 	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;

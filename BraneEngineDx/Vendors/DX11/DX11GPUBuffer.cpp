@@ -52,11 +52,11 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 			}
 			else if (desc.type == GB_Index) {
 				srvDesc.Format = DXGI_FORMAT_R32_UINT;
-				srvDesc.Buffer.NumElements = ceil(desc.capacity * desc.cellSize / sizeof(float));
+				srvDesc.Buffer.NumElements = ceil(desc.capacity * desc.cellSize / (float)sizeof(int));
 			}
 			else {
-				srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-				srvDesc.Buffer.NumElements = ceil(desc.capacity * desc.cellSize / sizeof(float));
+				srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+				srvDesc.Buffer.NumElements = ceil(desc.capacity * desc.cellSize / (float)(sizeof(float) * 4));
 			}
 			if (FAILED(dxContext.device->CreateShaderResourceView(dx11Buffer, &srvDesc, &dx11BufferView)))
 				throw runtime_error("CreateShaderResourceView failed");
@@ -113,11 +113,21 @@ unsigned int DX11GPUBuffer::bindBase(unsigned int index)
     return desc.id;
 }
 
+unsigned int DX11GPUBuffer::uploadData(unsigned int size, void* data)
+{
+	resize(size);
+	if (size == 0)
+		return desc.id;
+	D3D11_MAPPED_SUBRESOURCE mpd;
+	dxContext.deviceContext->Map(dx11Buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mpd);
+	memcpy_s((char*)mpd.pData, size * desc.cellSize, data, size * desc.cellSize);
+	dxContext.deviceContext->Unmap(dx11Buffer, 0);
+}
+
 unsigned int DX11GPUBuffer::uploadSubData(unsigned int first, unsigned int size, void* data)
 {
 	if (size == 0)
 		return desc.id;
-	resize(size);
 	D3D11_MAPPED_SUBRESOURCE mpd;
 	dxContext.deviceContext->Map(dx11Buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mpd);
 	memcpy_s((char*)mpd.pData + first * desc.cellSize, size * desc.cellSize, data, size * desc.cellSize);

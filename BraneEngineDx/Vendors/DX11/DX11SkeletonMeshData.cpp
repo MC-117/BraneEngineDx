@@ -25,7 +25,7 @@ void DX11SkeletonMeshData::bindShape()
 		return;
 
 	if (dx11SkeletonMeshDataInputLayout == NULL) {
-		const char* signatureShader = "void main(float3 pos : POSITION, float2 uv : TEXCORD, float3 normal : NORMAL, uint4 bondId : BONEINDEX, float4 weights : BONEWEIGHT) { }";
+		const char* signatureShader = "void main(float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL, uint4 bondId : BONEINDEX, float4 weights : BONEWEIGHT) { }";
 		const size_t len = strlen(signatureShader);
 		ID3DBlob* sigBlob;
 		ID3DBlob* errorBlob;
@@ -35,7 +35,7 @@ void DX11SkeletonMeshData::bindShape()
 		}
 		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[5] = {
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "BONEINDEX", 0, DXGI_FORMAT_R32G32B32A32_UINT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "BONEWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 4, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
@@ -44,8 +44,10 @@ void DX11SkeletonMeshData::bindShape()
 			sigBlob->GetBufferSize(), &dx11SkeletonMeshDataInputLayout))) {
 			throw runtime_error("DX11: Create skeleton mesh input layout failed");
 		}
-		sigBlob->Release();
-		errorBlob->Release();
+		if (sigBlob != NULL)
+			sigBlob->Release();
+		if (errorBlob != NULL)
+			errorBlob->Release();
 	}
 
 	D3D11_BUFFER_DESC bDesc = {};

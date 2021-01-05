@@ -4,15 +4,11 @@
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/MeshData_Def.hmat"
 
-//#define mul(a, b) mul(b, a)
-
 DefaultVertexOut MESH_MAIN
 {
     DefaultVertexOut vout;
     vout.svPos = mul(float4(pos, 1.0), Transforms[ObjectIDs[instanceID]]);
-    vout.svPos = float4(camData.pmat._12,
-    camData.pmat._23, camData.pmat._34, 1.0);
-    //vout.svPos = mul(camData.pmat, vout.svPos);
+    vout.svPos = mul(vout.svPos, camData.pmat);
     return vout;
 }
 #vertex skeleton
@@ -20,13 +16,10 @@ DefaultVertexOut MESH_MAIN
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/SkeletonMeshData_Def.hmat"
 
-//#define mul(a, b) mul(b, a)
-
 DefaultVertexOut SKELETON_MAIN
 {
     DefaultVertexOut vout;
     vout.svPos = mul(mul(float4(pos, 1.0), getFinalMat(instanceID, weights, boneId)), camData.pmat);
-    vout.svPos /= vout.svPos.w;
     return vout;
 }
 #vertex skeleton morph
@@ -34,8 +27,6 @@ DefaultVertexOut SKELETON_MAIN
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/SkeletonMeshData_Def.hmat"
 #include "../lib/MorphData_def.hmat"
-
-//#define mul(a, b) mul(b, a)
 
 float3 morphPos(in uint vertexID, in float3 pos)
 {
@@ -64,6 +55,5 @@ DefaultVertexOut SKELETON_MAIN
     float4 worldPos = mul(float4(morphPos(vertexID, pos), 1.0), getFinalMat(instanceID, weights, boneId));
     DefaultVertexOut vout;
     vout.svPos = mul(worldPos, camData.pmat);
-    vout.svPos /= vout.svPos.w;
     return vout;
 }

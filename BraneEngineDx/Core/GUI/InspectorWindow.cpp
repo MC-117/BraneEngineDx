@@ -39,6 +39,7 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 				desc.title = "asset";
 				desc.filter = "asset(*.asset)\0*.asset\0";
 				desc.initDir = "Content";
+				desc.defFileExt = "asset";
 				if (openFileDlg(desc)) {
 					ifstream f = ifstream(desc.filePath);
 					SerializationInfoParser parser = SerializationInfoParser(f);
@@ -64,6 +65,7 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 				desc.filter = "asset(*.asset)\0*.asset\0";
 				desc.initDir = "Content";
 				desc.save = true;
+				desc.defFileExt = "asset";
 				if (openFileDlg(desc)) {
 					SerializationInfo info;
 					if (!tar->serialize(info)) {
@@ -940,6 +942,7 @@ void InspectorWindow::showMaterial(multimap<string, unsigned int>& meshPartNames
 							filesystem::path ep = Engine::windowContext.executionPath;
 							desc.initDir = ep.replace_filename("Content").generic_u8string().c_str();
 							desc.save = true;
+							desc.defFileExt = "imat";
 							desc.addToRecent = false;
 							if (openFileDlg(desc)) {
 								if (!Material::MaterialLoader::saveMaterialInstance(desc.filePath, *mat))

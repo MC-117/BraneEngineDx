@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Actors\SkySphere.h" />
     <ClInclude Include="Core\Actor.h" />
     <ClInclude Include="Core\AnimationClip.h" />
     <ClInclude Include="Core\Asset.h" />
@@ -220,6 +221,7 @@
     <ClInclude Include="Core\IRenderTarget.h" />
     <ClInclude Include="Core\MeshData.h" />
     <ClInclude Include="Core\IRenderExecution.h" />
+    <ClInclude Include="Cameras\DebugCamera.h" />
     <ClInclude Include="Vendors\DX11\DX11RenderExecution.h" />
     <ClInclude Include="Vendors\DX11\DX11SkeletonMeshData.h" />
     <ClInclude Include="Vendors\DX11\DX11MeshData.h" />
@@ -245,6 +247,7 @@
     <ClInclude Include="Vendors\DX11\imgui_impl_win32.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Actors\SkySphere.cpp" />
     <ClCompile Include="Core\Actor.cpp" />
     <ClCompile Include="Core\AnimationClip.cpp" />
     <ClCompile Include="Core\Asset.cpp" />
@@ -309,6 +312,7 @@
     <ClCompile Include="Core\IRenderTarget.cpp" />
     <ClCompile Include="Core\MeshData.cpp" />
     <ClCompile Include="Core\IRenderExecution.cpp" />
+    <ClCompile Include="Cameras\DebugCamera.cpp" />
     <ClCompile Include="initial.cpp" />
     <ClCompile Include="tool.cpp" />
     <ClCompile Include="Vendors\DX11\DX11.cpp" />

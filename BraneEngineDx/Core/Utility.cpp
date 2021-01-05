@@ -259,6 +259,7 @@ bool openFileDlg(FileDlgDesc& desc)
 	ofn.lpstrTitle = desc.title.c_str();
 	ofn.lpstrFilter = desc.filter.c_str();
 	ofn.nFilterIndex = 1;
+	ofn.lpstrDefExt = desc.defFileExt.c_str();
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 	if (desc.addToRecent)
 		ofn.Flags |= OFN_DONTADDTORECENT;

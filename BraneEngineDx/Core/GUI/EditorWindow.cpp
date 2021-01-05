@@ -462,7 +462,28 @@ void EditorWindow::objectContextMenu(Object * obj)
 	if (obj == NULL || isClassOf<World>(obj))
 		serStr = "Save World";
 	else if (ImGui::MenuItem("Save")) {
-
+		thread td = thread([](Object* tar) {
+			FileDlgDesc desc;
+			desc.title = "asset";
+			desc.filter = "asset(*.asset)\0*.asset\0";
+			desc.initDir = "Content";
+			desc.save = true;
+			desc.defFileExt = "asset";
+			if (openFileDlg(desc)) {
+				SerializationInfo info;
+				info.add("children");
+				if (!tar->serialize(info)) {
+					MessageBox(NULL, "Serialize failed", "Error", MB_OK);
+					return;
+				}
+				ofstream f = ofstream(desc.filePath);
+				SerializationInfoWriter writer = SerializationInfoWriter(f);
+				writer.write(info);
+				f.close();
+				MessageBox(NULL, "Complete", "Info", MB_OK);
+			}
+		}, &target);
+		td.detach();
 	}
 	if (ImGui::MenuItem(serStr)) {
 		thread td = thread([](Object* tar) {
@@ -471,6 +492,7 @@ void EditorWindow::objectContextMenu(Object * obj)
 			desc.filter = "asset(*.asset)\0*.asset\0";
 			desc.initDir = "Content";
 			desc.save = true;
+			desc.defFileExt = "asset";
 			if (openFileDlg(desc)) {
 				SerializationInfo info;
 				if (!tar->serialize(info)) {

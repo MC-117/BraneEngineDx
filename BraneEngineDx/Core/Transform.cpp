@@ -144,7 +144,7 @@ Quaternionf Transform::getRotation(TransformSpace space)
 
 Vector3f Transform::getEulerAngle(TransformSpace space)
 {
-	return getRotation(space).toRotationMatrix().eulerAngles() / (PI * 180);
+	return getRotation(space).toRotationMatrix().eulerAngles() / PI * 180;
 }
 
 Vector3f(Transform::getScale)(TransformSpace space)

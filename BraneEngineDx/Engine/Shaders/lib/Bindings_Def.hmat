@@ -52,6 +52,7 @@ SamplerState tex##Sampler : SAMPLE_BINDING(id);
 
 // Only work for pattern [tex] and [tex]Sampler.
 #define SAMPLE_TEX(tex, uv) (tex.Sample(tex##Sampler, (uv)))
+#define SAMPLE_TEX_LOD(tex, uv, lod) (tex.SampleLevel(tex##Sampler, (uv), (lod)))
 
 #define DEF_MAT_BEGIN cbuffer MatInsBuf : register(MAT_INS_BIND_INDEX) {
 #define DEF_MAT_END };

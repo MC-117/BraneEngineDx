@@ -1,0 +1,100 @@
+#adapter name outline
+#vertex
+#include "../lib/TransformData_def.hmat"
+#include "../lib/CameraData_Def.hmat"
+#include "../lib/MeshData_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float borderWidth;
+uniform float refenceDistance;
+uniform float4 baseColor;
+DEF_MAT_END
+
+DefaultVertexOut MESH_MAIN
+{
+    float4x4 fm = Transforms[ObjectIDs[instanceID]];
+    float sca = 1;
+    if (refenceDistance != 0) {
+        float3 vec = mul(float4(pos, 1.0), fm).xyz - camData.camPos;
+        float dist = dot(vec, camData.camDir);
+        sca = dist / refenceDistance;
+    }
+    DefaultVertexOut vout;
+    vout.svPos = mul(mul(float4(pos + borderWidth * sca * normalize(norm), 1.0), fm), camData.pmat);
+    return vout;
+}
+
+#vertex skeleton
+#include "../lib/TransformData_def.hmat"
+#include "../lib/CameraData_Def.hmat"
+#include "../lib/SkeletonMeshData_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float borderWidth;
+uniform float refenceDistance;
+uniform float4 baseColor;
+DEF_MAT_END
+
+DefaultVertexOut SKELETON_MAIN
+{
+    float4x4 fm = getFinalMat(instanceID, weights, boneId);
+    float sca = 1;
+    if (refenceDistance != 0) {
+        float3 vec = mul(float4(pos, 1.0), fm).xyz - camData.camPos;
+        float dist = dot(vec, camData.camDir);
+        sca = dist / refenceDistance;
+    }
+    DefaultVertexOut vout;
+    vout.svPos = mul(mul(float4(pos + borderWidth * sca * normalize(norm), 1.0), fm), camData.pmat);
+    return vout;
+}
+
+#vertex skeleton morph
+#include "../lib/TransformData_def.hmat"
+#include "../lib/CameraData_Def.hmat"
+#include "../lib/SkeletonMeshData_Def.hmat"
+#include "../lib/MorphData_def.hmat"
+
+DEF_MAT_BEGIN
+uniform float borderWidth;
+uniform float refenceDistance;
+uniform float4 baseColor;
+DEF_MAT_END
+
+float3 morphPos(in uint vertexID, in float3 pos)
+{
+    uint nMorph = morphData[0].x;
+    uint base = vertexID * nMorph;
+    float3 w = float3(0, 0, 0);
+    for (uint i = 0; i < nMorph; i++) {
+        w += morphData[(base + i) * 2 + 1].xyz * morphWeight[i];
+    }
+    return pos + w;
+}
+
+float3 morphNorm(in uint vertexID, in float3 norm)
+{
+    uint nMorph = morphData[0].x;
+    uint base = vertexID * nMorph;
+    float3 w = float3(0, 0, 0);
+    for (uint i = 0; i < nMorph; i++) {
+        w += morphData[(base + i) * 2 + 2].xyz * morphWeight[i];
+    }
+    return norm + w;
+}
+
+DefaultVertexOut SKELETON_MAIN
+{
+    float4x4 fm = getFinalMat(instanceID, weights, boneId);
+    float3 mpos = morphPos(vertexID, pos);
+    float3 mnorm = morphNorm(vertexID, norm);
+    float sca = 1;
+    if (refenceDistance != 0) {
+        float3 vec = mul(float4(mpos, 1.0), fm).xyz - camData.camPos;
+        float dist = dot(vec, camData.camDir);
+        sca = dist / refenceDistance;
+    }
+    DefaultVertexOut vout;
+    vout.svPos = mul(mul(float4(pos + borderWidth * sca * normalize(norm), 1.0), fm), camData.pmat);
+    return vout;
+}

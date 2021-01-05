@@ -29,6 +29,7 @@ public:
 	virtual unsigned int bind() = 0;
 	virtual unsigned int resize(unsigned int size) = 0;
 	virtual unsigned int bindBase(unsigned int index) = 0;
+	virtual unsigned int uploadData(unsigned int size, void* data) = 0;
 	virtual unsigned int uploadSubData(unsigned int first, unsigned int size, void* data) = 0;
 };
 

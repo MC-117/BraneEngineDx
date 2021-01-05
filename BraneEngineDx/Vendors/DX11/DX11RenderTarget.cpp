@@ -27,6 +27,7 @@ unsigned int DX11RenderTarget::bindFrame()
 {
 	if (isDefault()) {
 		desc.inited = true;
+		cleanInput();
 		dxContext.deviceContext->OMSetRenderTargets(dx11RTVs.size(), dx11RTVs.data(), dx11DSV);
 		currentRenderTarget = this;
 		return 0;
@@ -38,6 +39,7 @@ unsigned int DX11RenderTarget::bindFrame()
 	}
 	if (currentRenderTarget == this)
 		return desc.frameID;
+	cleanInput();
 	dxContext.deviceContext->OMSetRenderTargets(dx11RTVs.size(), dx11RTVs.data(), dx11DSV);
 	currentRenderTarget = this;
     return desc.frameID;
@@ -148,6 +150,17 @@ void DX11RenderTarget::clearStencil(unsigned char stencil)
 {
 	if (dx11DSV != NULL)
 		dxContext.deviceContext->ClearDepthStencilView(dx11DSV, D3D11_CLEAR_STENCIL, 0, stencil);
+}
+
+void DX11RenderTarget::cleanInput()
+{
+	const int size = D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - TEX_START_BIND_INDEX;
+	ID3D11ShaderResourceView* srvs[size] = { NULL };
+	dxContext.deviceContext->VSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
+	dxContext.deviceContext->PSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
+	dxContext.deviceContext->GSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
+	dxContext.deviceContext->HSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
+	dxContext.deviceContext->DSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
 }
 
 #endif // VENDOR_USE_DX11

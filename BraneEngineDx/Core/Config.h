@@ -38,6 +38,7 @@
 #define CAM_BIND_INDEX 5
 #define DIRECT_LIGHT_BIND_INDEX 6
 #define POINT_LIGHT_BIND_INDEX 7
+#define TEX_START_BIND_INDEX 8
 
 // DxMath default matrix is row-major, while HLSL only accept
 // matrix with column-major. Thus, engine will apply extra

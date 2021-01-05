@@ -36,6 +36,7 @@ void BlendSpaceWindow::onRenderWindow(GUIRenderInfo & info)
 			desc.title = "asset";
 			desc.filter = "asset(*.asset)\0*.asset\0";
 			desc.initDir = "Content";
+			desc.defFileExt = "asset";
 			if (openFileDlg(desc)) {
 				ifstream f = ifstream(desc.filePath);
 				SerializationInfoParser parser = SerializationInfoParser(f);
@@ -62,6 +63,7 @@ void BlendSpaceWindow::onRenderWindow(GUIRenderInfo & info)
 			desc.filter = "asset(*.asset)\0*.asset\0";
 			desc.initDir = "Content";
 			desc.save = true;
+			desc.defFileExt = "asset";
 			if (openFileDlg(desc)) {
 				SerializationInfo info;
 				if (tar->serialize(info)) {
