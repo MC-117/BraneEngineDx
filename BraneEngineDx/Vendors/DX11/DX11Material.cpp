@@ -7,11 +7,17 @@ DX11Material::DX11Material(DX11Context& context, MaterialDesc& desc)
 {
 }
 
+void DX11Material::preprocess()
+{
+	dxContext.clearUAV();
+	dxContext.clearSRV();
+}
+
 void DX11Material::processBaseData()
 {
 	DX11ShaderProgram* program = DX11ShaderProgram::currentDx11Program;
 	if (program != NULL)
-		program->uploadAttribute("pass", sizeof(float), &desc.currentPass);
+		program->uploadAttribute("passID", sizeof(int), &desc.currentPass);
 }
 
 void DX11Material::processScalarData()
@@ -47,7 +53,7 @@ void DX11Material::processTextureData()
 	if (program == NULL)
 		return;
 	for (auto b = desc.textureField.begin(), e = desc.textureField.end(); b != e; b++) {
-		if (b->second.val->bind() == 0)
+		if (b->second.val == NULL || b->second.val->bind() == 0)
 			continue;
 		DX11Texture2D* tex = (DX11Texture2D*)b->second.val->getVendorTexture();
 		program->uploadTexture(b->first, tex->getSRV(), tex->getSampler());

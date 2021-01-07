@@ -16,6 +16,8 @@
 #include <string>
 #include <shellapi.h>
 
+#include "../../Core/Config.h"
+
 struct DX11Context
 {
 	bool enableDebugLayer = true;
@@ -45,6 +47,9 @@ struct DX11Context
 	void createSwapChain(unsigned int width, unsigned int height, unsigned int multisampleLevels);
 	void createRenderState();
 	void cleanupRenderState();
+
+	void clearSRV();
+	void clearUAV();
 };
 
 #endif // !_DX12_H_

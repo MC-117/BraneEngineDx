@@ -106,6 +106,8 @@ public:
 	virtual void setRenderPostState() = 0;
 	virtual void setCullState(CullType type) = 0;
 	virtual void setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h) = 0;
+
+	virtual void postProcessCall() = 0;
 protected:
 	string name;
 };

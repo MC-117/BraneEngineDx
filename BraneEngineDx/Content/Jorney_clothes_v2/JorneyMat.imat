@@ -1,0 +1,19 @@
+#material Engine/Shaders/Toon.mat
+#twoside true
+#castshadow true
+Scalar highlightCut: 0.999000
+Scalar highlightCutSmooth: 0.000000
+Scalar normalScale: 1.000000
+Scalar rimCut: 0.580000
+Scalar rimCutSmooth: 0.500000
+Scalar shadowCut: 0.500000
+Scalar shadowCutSmooth: 0.200000
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color highlightColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color overColor: 0.575385, 0.575379, 0.575379, 1.000000
+Color rimColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color shadowColor: 0.588235, 0.588235, 0.588235, 1.000000
+Texture aoMap: Content/Jorney_clothes_v2/Cloth and Character_Mixed_AO.png
+Texture colorMap: Content/Jorney_clothes_v2/Cloth and Character_Base_Color_v4.png
+Texture depthMap: white
+Texture normalMap: Content/Jorney_clothes_v2/Cloth and Character_Normal.png

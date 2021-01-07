@@ -7,8 +7,9 @@
 DefaultVertexOut MESH_MAIN
 {
     DefaultVertexOut vout;
-    vout.svPos = mul(float4(pos, 1.0), Transforms[ObjectIDs[instanceID]]);
+    vout.svPos = mul(float4(pos, 1.0), getFinalMat(objID));
     vout.svPos = mul(vout.svPos, camData.pmat);
+    vout.LocalPos = pos;
     return vout;
 }
 #vertex skeleton
@@ -19,7 +20,8 @@ DefaultVertexOut MESH_MAIN
 DefaultVertexOut SKELETON_MAIN
 {
     DefaultVertexOut vout;
-    vout.svPos = mul(mul(float4(pos, 1.0), getFinalMat(instanceID, weights, boneId)), camData.pmat);
+    vout.svPos = mul(mul(float4(pos, 1.0), getFinalMat(objID, weights, boneId)), camData.pmat);
+    vout.LocalPos = pos;
     return vout;
 }
 #vertex skeleton morph
@@ -28,32 +30,11 @@ DefaultVertexOut SKELETON_MAIN
 #include "../lib/SkeletonMeshData_Def.hmat"
 #include "../lib/MorphData_def.hmat"
 
-float3 morphPos(in uint vertexID, in float3 pos)
-{
-    uint nMorph = morphData[0].x;
-    uint base = vertexID * nMorph;
-    float3 w = float3(0, 0, 0);
-    for (uint i = 0; i < nMorph; i++) {
-        w += morphData[(base + i) * 2 + 1].xyz * morphWeight[i];
-    }
-    return pos + w;
-}
-
-float3 morphNorm(in uint vertexID, in float3 norm)
-{
-    uint nMorph = morphData[0].x;
-    uint base = vertexID * nMorph;
-    float3 w = float3(0, 0, 0);
-    for (uint i = 0; i < nMorph; i++) {
-        w += morphData[(base + i) * 2 + 2].xyz * morphWeight[i];
-    }
-    return norm + w;
-}
-
 DefaultVertexOut SKELETON_MAIN
 {
-    float4 worldPos = mul(float4(morphPos(vertexID, pos), 1.0), getFinalMat(instanceID, weights, boneId));
+    float4 worldPos = mul(float4(morphPos(vertexID, pos), 1.0), getFinalMat(objID, weights, boneId));
     DefaultVertexOut vout;
     vout.svPos = mul(worldPos, camData.pmat);
+    vout.LocalPos = pos;
     return vout;
 }

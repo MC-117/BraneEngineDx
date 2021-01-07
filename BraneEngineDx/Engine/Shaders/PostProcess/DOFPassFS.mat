@@ -12,14 +12,18 @@ Texture screenMap
 Texture depthMap
 #vertex use postprocess
 #fragment postprocess
-#version 460
+#include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/PostProcess_Def.hmat"
 
 #include "../lib/Const_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 
-layout (location = 0) out float4 FragColor;
-in float2 UV;
-uniform int pass;
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+FS_DEF_OUT_END
+
+DEF_MAT_BEGIN
+uniform int passID;
 uniform float blurRadius;
 uniform float blurIter;
 uniform float blurNear;
@@ -28,13 +32,15 @@ uniform float blurSmoothNear;
 uniform float blurSmoothFar;
 uniform float blurNearIntensity;
 uniform float blurFarIntensity;
-uniform sampler2D dofMap;
-uniform sampler2D screenMap;
-uniform sampler2D depthMap;
+DEF_MAT_END
 
-const uint dofKernelN = 57;
+DEF_TEX2D(dofMap, 0);
+DEF_TEX2D(screenMap, 1);
+DEF_TEX2D(depthMap, 2);
 
-const float2 dofKernel[57] = float2[](
+static const uint dofKernelN = 57;
+
+static const float2 dofKernel[57] = {
     float2(0.000000, 0.000000),
 
     float2(0.461940, 0.191342), float2(0.191342, 0.461940), float2(-0.191342, 0.461940), float2(-0.461940, 0.191342),
@@ -53,35 +59,38 @@ const float2 dofKernel[57] = float2[](
     float2(-0.951590, -1.159516), float2(-0.707095, -1.322882), float2(-0.435427, -1.435411), float2(-0.147026, -1.492777),
     float2(0.147026, -1.492777), float2(0.435427, -1.435411), float2(0.707095, -1.322882), float2(0.951590, -1.159516),
     float2(1.159516, -0.951590), float2(1.322882, -0.707095), float2(1.435411, -0.435427), float2(1.492777, -0.147026)
-);
+};
 
-void main() {
-	if (pass == 0) {
+FragmentOut DEFAULT_PP_MAIN
+{
+	FragmentOut fout;
+	if (passID == 0) {
         float weight = 0;
-        float3 c = float3(0);
+        float3 c = Float3(0);
         int n = blurIter < 1 ? 1 : (blurIter < 2 ? 9 : (blurIter < 3 ? 25 : 57));
         for (int i = 0; i < n; i++) {
             float2 off = dofKernel[i] * blurRadius;
             off /= camData.viewSize;
-            float linearDepth = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear - (2.0 * texture(depthMap, UV + off).r - 1.0) * (camData.zFar - camData.zNear));
+            float linearDepth = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear - (2.0 * SAMPLE_TEX(depthMap, pin.UV + off).r - 1.0) * (camData.zFar - camData.zNear));
             float rate = (1 - smoothstep(blurNear, blurNear + blurSmoothNear, linearDepth)) +
                 smoothstep(blurFar - blurSmoothFar, blurFar, linearDepth);
             if (rate != 0) {
-                float3 cc = texture(screenMap, UV + off * rate).rgb;
+                float3 cc = SAMPLE_TEX(screenMap, pin.UV + off * rate).rgb;
                 float w = length(cc) + 0.1;
                 weight += w;
                 c += cc * w;
             }
         }
-        FragColor.rgb = c / weight;//((1 + n) * n);
-        FragColor.a = 1.0;
+        fout.FragColor.rgb = c / weight;//((1 + n) * n);
+        fout.FragColor.a = 1.0;
     }
-    else if (pass == 1) {
-        float linearDepth = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear - (2.0 * texture(depthMap, UV).r - 1.0) * (camData.zFar - camData.zNear));
-        float4 blurC = texture(dofMap, UV);
-        float4 screenC = texture(screenMap, UV);
+    else if (passID == 1) {
+        float linearDepth = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear - (2.0 * SAMPLE_TEX(depthMap, pin.UV).r - 1.0) * (camData.zFar - camData.zNear));
+        float4 blurC = SAMPLE_TEX(dofMap, pin.UV);
+        float4 screenC = SAMPLE_TEX(screenMap, pin.UV);
         float rate = (1 - smoothstep(blurNear, blurNear + blurSmoothNear, linearDepth)) * blurNearIntensity +
             smoothstep(blurFar - blurSmoothFar, blurFar, linearDepth) * blurFarIntensity;
-        FragColor = mix(screenC, blurC, rate);
+        fout.FragColor = lerp(screenC, blurC, rate);
     }
+    return fout;
 }

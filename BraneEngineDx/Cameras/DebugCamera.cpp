@@ -1,7 +1,7 @@
 #include "DebugCamera.h"
 #include "../Core/Engine.h"
 
-DebugCamera::DebugCamera(string name) : Camera(name)
+DebugCamera::DebugCamera(string name) : PostProcessingCamera(name)
 {
 	events.registerFunc("SetCameraSpeed", [](void* obj, float v) {
 		((DebugCamera*)obj)->cameraSpeed = v;

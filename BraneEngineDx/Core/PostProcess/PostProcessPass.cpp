@@ -1,6 +1,7 @@
 #include "PostProcessPass.h"
-#include "Camera.h"
-#include "Asset.h"
+#include "../Camera.h"
+#include "../Asset.h"
+#include "../Console.h"
 
 SerializeInstance(PostProcessPass);
 
@@ -116,7 +117,7 @@ void PostProcessPass::render(RenderInfo & info)
 		for (int i = 0; i < material->getPassNum(); i++) {
 			material->setPass(i);
 			material->processBaseData();
-			glDrawArraysIndirect(GL_TRIANGLE_STRIP, &cmd);
+			VendorManager::getInstance().getVendor().postProcessCall();
 		}
 		material->setPass(0);
 	}

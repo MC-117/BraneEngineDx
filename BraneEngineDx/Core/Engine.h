@@ -17,7 +17,7 @@ public:
 
 	static World* getCurrentWorld();
 	static void setViewportSize(int width, int height);
-	static void createWindow(unsigned int width, unsigned int height);
+	static void createWindow(unsigned int width, unsigned int height, const string& title);
 	static void toggleFullscreen();
 	static void config();
 	static void setup();

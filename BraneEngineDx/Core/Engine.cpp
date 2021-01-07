@@ -4,6 +4,7 @@
 #include "Engine.h"
 #include "../resource.h"
 #include "Console.h"
+#include "GUI/WindowsUI/LoadingUI.h"
 #include "../ThirdParty/ImGui/imgui_internal.h"
 
 World world;
@@ -21,7 +22,7 @@ void SetTopWindow(HWND hWnd)
 	AttachThreadInput(dwCurID, dwForeID, FALSE);
  }
 
-void loadAssets(const char* path, vector<string>& delayLoadAsset)
+void loadAssets(LoadingUI& log, const char* path, vector<string>& delayLoadAsset)
 {
 	namespace FS = filesystem;
 	for (auto& p : FS::recursive_directory_iterator(path)) {
@@ -143,9 +144,11 @@ void loadAssets(const char* path, vector<string>& delayLoadAsset)
 			else if (!_stricmp(ext.c_str(), ".mat")) {
 				asset = AssetManager::loadAsset("Material", name, path, { "" }, {});
 			}
+#ifdef AUDIO_USE_OPENAL
 			else if (!_stricmp(ext.c_str(), ".wav")) {
 				asset = AssetManager::loadAsset("AudioData", name, path, {}, {});
 			}
+#endif // AUDIO_USE_OPENAL
 			else if (!_stricmp(ext.c_str(), ".asset")) {
 				asset = AssetManager::loadAsset("AssetFile", name, path, {}, {});
 			}
@@ -157,18 +160,16 @@ void loadAssets(const char* path, vector<string>& delayLoadAsset)
 				ignore = true;
 			}
 			else {
+				log.setText(path + " unknown file type");
 				Console::warn("%s unknown file type", path.c_str());
 			}
 			if (!delay && !ignore) {
 				if (asset == NULL) {
-#ifdef UNICODE
-					wchar_t* namewc = A2W(name.c_str());
-#else
-					const char* nameStr = name.c_str();
-#endif // UNICODE
+					log.setText(path + ' ' + name + " load failed");
 					Console::error("%s %s load failed", path.c_str(), name.c_str());
 				}
 				else {
+					log.setText(path + " load");
 					Console::log("%s load", path.c_str());
 				}
 			}
@@ -176,12 +177,13 @@ void loadAssets(const char* path, vector<string>& delayLoadAsset)
 				delete ini;
 		}
 		else {
+			log.setText(path + " folder");
 			Console::log("%s folder", path.c_str());
 		}
 	}
 }
 
-void loadAssets(bool loadDefaultAsset, bool loadEngineAsset, bool loadContentAsset)
+void loadAssets(LoadingUI& log, bool loadDefaultAsset, bool loadEngineAsset, bool loadContentAsset)
 {
 	vector<string> delayLoadAsset;
 	namespace FS = filesystem;
@@ -209,10 +211,10 @@ void loadAssets(bool loadDefaultAsset, bool loadEngineAsset, bool loadContentAss
 	}
 
 	if (loadEngineAsset)
-		loadAssets("Engine", delayLoadAsset);
+		loadAssets(log, "Engine", delayLoadAsset);
 	if (loadContentAsset) {
 		if (FS::exists("Content")) {
-			loadAssets("Content", delayLoadAsset);
+			loadAssets(log, "Content", delayLoadAsset);
 		}
 	}
 	for (int i = 0; i < delayLoadAsset.size(); i++) {
@@ -226,14 +228,16 @@ void loadAssets(bool loadDefaultAsset, bool loadEngineAsset, bool loadContentAss
 			asset = AssetManager::loadAsset("Material", name, path, { "" }, {});
 		}
 		else {
+			log.setText(path + " unknown file type");
 			Console::warn("%s unknown file type", path.c_str());
 			continue;
 		}
 		if (asset == NULL) {
-			const wchar_t* namewc = p.filename().c_str();
+			log.setText(path + ' ' + name + " load failed");
 			Console::error("%s %s load failed", path.c_str(), name.c_str());
 		}
 		else {
+			log.setText(path + " load");
 			Console::log("%s load", path.c_str());
 		}
 	}
@@ -293,7 +297,7 @@ void Engine::setViewportSize(int width, int height)
 	}
 }
 
-void Engine::createWindow(unsigned int width, unsigned int height)
+void Engine::createWindow(unsigned int width, unsigned int height, const string& title)
 {
 	WNDCLASSEX wcex = { 0 };
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -313,7 +317,7 @@ void Engine::createWindow(unsigned int width, unsigned int height)
 
 	RECT rc = { 0, 0, width, height };
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
-	HWND hwnd = CreateWindowEx(WS_EX_ACCEPTFILES, "BraneEngine", "BraneEngine", WS_OVERLAPPEDWINDOW,
+	HWND hwnd = CreateWindowEx(WS_EX_ACCEPTFILES, "BraneEngine", title.c_str(), WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, wcex.hInstance,
 		nullptr);
 	if (hwnd == NULL) {
@@ -459,7 +463,6 @@ void Engine::setup()
 		GetModuleFileName(NULL, execPath, MAX_PATH);
 		windowContext.executionPath = execPath;
 	}
-
 	VendorManager::getInstance().instantiateVendor(engineConfig.vendorName);
 
 	IVendor& vendor = VendorManager::getInstance().getVendor();
@@ -476,10 +479,12 @@ void Engine::setup()
 		if (!vendor.windowSetup(engineConfig, windowContext))
 			throw runtime_error("Vendor window setup failed");
 	}
+	
+	createWindow(engineConfig.screenWidth, engineConfig.screenHeight, "BraneEngine v" + string(ENGINE_VERSION) + " | Vendor Api: " + vendor.getName());
+	world.input.setHWND(windowContext._hwnd); 
+	
+	LoadingUI loadingUI("Engine/Banner/Banner.bmp", windowContext._hinstance);
 
-	createWindow(engineConfig.screenWidth, engineConfig.screenHeight);
-
-	world.input.setHWND(windowContext._hwnd);
 	//ShowWindow(_hwnd, SW_HIDE);
 
 	/*----- Vendor setup -----*/
@@ -489,9 +494,12 @@ void Engine::setup()
 	}
 	setViewportSize(engineConfig.screenWidth, engineConfig.screenHeight);
 
-	//if (!alutInit(NULL, NULL)) {
-	//	//throw runtime_error("ALUT init failed");
-	//}
+#ifdef AUDIO_USE_OPENAL
+	if (!alutInit(NULL, NULL)) {
+		Console::error("ALUT init failed");
+		//throw runtime_error("ALUT init failed");
+	}
+#endif // AUDIO_USE_OPENAL
 
 	// Setup Dear ImGui context
 	ImGui::CreateContext();
@@ -510,15 +518,19 @@ void Engine::setup()
 		if (!vendor.imGuiInit(engineConfig, windowContext))
 			throw runtime_error("Vendor ImGui init failed");
 	}
+	loadingUI.setText("Start BraneEngine");
+	loadingUI.doModelAsync();
+	loadAssets(loadingUI, engineConfig.loadDefaultAsset, engineConfig.loadEngineAsset, engineConfig.loadContentAsset);
 
-	loadAssets(engineConfig.loadDefaultAsset, engineConfig.loadEngineAsset, engineConfig.loadContentAsset);
-
+	loadingUI.setText("Initial...");
 	if (engineConfig.guiOnly) {
 		world.setGUIOnly(true);
 		InitialTool();
 	}
 	else
 		InitialWorld();
+
+	loadingUI.close();
 
 	if (engineConfig.fullscreen)
 		toggleFullscreen();
@@ -539,8 +551,11 @@ void Engine::start()
 			mainLoop();
 			if (!init) {
 				if (!show) {
-					ShowWindow(windowContext._hwnd, SW_SHOWDEFAULT);
-					SetTopWindow(windowContext._hwnd);
+					ShowWindow(windowContext._hwnd, SW_SHOW);
+					//SetTopWindow(windowContext._hwnd);
+					SetForegroundWindow(windowContext._hwnd);
+					BringWindowToTop(windowContext._hwnd);
+					SetActiveWindow(windowContext._hwnd);
 					show = true;
 				}
 			}
@@ -658,11 +673,9 @@ LRESULT wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_SYSCOMMAND:
 		if ((wParam & 0xfff0) == SC_KEYMENU)
 			return 0;
+		else if ((wParam & 0xfff0) == SC_MINIMIZE)
+			return 0;
 		break;
-	case WM_GETMINMAXINFO:
-		((MINMAXINFO*)lParam)->ptMinTrackSize.x = 960;
-		((MINMAXINFO*)lParam)->ptMinTrackSize.y = 480;
-		return 0;
 	}
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }

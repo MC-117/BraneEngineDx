@@ -444,16 +444,16 @@ void * RenderCommandList::getMeshPartTransform(MeshPart * meshPart, Material * m
 void * RenderCommandList::setMeshPartTransform(MeshPart * meshPart, Material * material, unsigned int transformIndex)
 {
 	void* re = meshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex);
-	if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
-		meshTransformDataPack.setMeshPartTransform(meshPart, &Material::defaultDepthMaterial, transformIndex);
+	/*if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
+		meshTransformDataPack.setMeshPartTransform(meshPart, &Material::defaultDepthMaterial, transformIndex);*/
 	return re;
 }
 
 void * RenderCommandList::setMeshPartTransform(MeshPart * meshPart, Material * material, void * transformIndex)
 {
 	void* re = meshTransformDataPack.setMeshPartTransform(meshPart, material, (MeshTransformIndex*)transformIndex);
-	if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
-		meshTransformDataPack.setMeshPartTransform(meshPart, &Material::defaultDepthMaterial, (MeshTransformIndex*)transformIndex);
+	/*if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
+		meshTransformDataPack.setMeshPartTransform(meshPart, &Material::defaultDepthMaterial, (MeshTransformIndex*)transformIndex);*/
 	return re;
 }
 

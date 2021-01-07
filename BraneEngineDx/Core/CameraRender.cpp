@@ -18,10 +18,8 @@ Texture2D * CameraRender::getSceneBlurTex()
 
 void CameraRender::setSize(Unit2Di size)
 {
-	if (size != this->size) {
-		renderTarget.resize(size.x, size.y);
-		this->size = size;
-	}
+	renderTarget.resize(size.x, size.y);
+	this->size = size;
 }
 
 void CameraRender::addExtraRenderTex(string & name, const Texture2DInfo& info)

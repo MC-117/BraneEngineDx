@@ -27,13 +27,19 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 	else if (size > desc.capacity || size < desc.capacity / 2) {
 		release();
 		desc.capacity = size * 1.5;
+		unsigned int alignedSize = ceil(desc.capacity * desc.cellSize / 16.0f) * 16;
 
 		D3D11_BUFFER_DESC bd;
 		ZeroMemory(&bd, sizeof(bd));
 		bd.Usage = D3D11_USAGE_DYNAMIC;
-		bd.ByteWidth = desc.capacity * desc.cellSize;
+		bd.ByteWidth = alignedSize;
 		bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		bd.BindFlags = desc.type == GB_Constant ? D3D11_BIND_CONSTANT_BUFFER : D3D11_BIND_SHADER_RESOURCE;
+		if (desc.type == GB_Constant)
+			bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		else if (desc.type == GB_Index)
+			bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		else
+			bd.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 		bd.StructureByteStride = desc.cellSize;
 		if (desc.type == GB_Struct)
 			bd.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
@@ -42,7 +48,7 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 		if (FAILED(dxContext.device->CreateBuffer(&bd, NULL, &dx11Buffer)))
 			throw runtime_error("CreateBuffer failed");
 
-		if (desc.type != GB_Constant) {
+		if (desc.type != GB_Constant && desc.type != GB_Index) {
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 			srvDesc.Buffer.FirstElement = 0;
@@ -50,13 +56,9 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 				srvDesc.Format = DXGI_FORMAT_UNKNOWN;
 				srvDesc.Buffer.NumElements = desc.capacity;
 			}
-			else if (desc.type == GB_Index) {
-				srvDesc.Format = DXGI_FORMAT_R32_UINT;
-				srvDesc.Buffer.NumElements = ceil(desc.capacity * desc.cellSize / (float)sizeof(int));
-			}
 			else {
 				srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-				srvDesc.Buffer.NumElements = ceil(desc.capacity * desc.cellSize / (float)(sizeof(float) * 4));
+				srvDesc.Buffer.NumElements = alignedSize / 16;
 			}
 			if (FAILED(dxContext.device->CreateShaderResourceView(dx11Buffer, &srvDesc, &dx11BufferView)))
 				throw runtime_error("CreateShaderResourceView failed");
@@ -86,20 +88,30 @@ void DX11GPUBuffer::release()
 
 unsigned int DX11GPUBuffer::bindBase(unsigned int index)
 {
-	if (dx11BufferView == NULL)
-		return 0;
 	switch (desc.type)
 	{
 	case GB_Constant:
+		if (dx11Buffer == NULL)
+			return 0;
 		dxContext.deviceContext->VSSetConstantBuffers(index, 1, &dx11Buffer);
 		dxContext.deviceContext->PSSetConstantBuffers(index, 1, &dx11Buffer);
 		dxContext.deviceContext->GSSetConstantBuffers(index, 1, &dx11Buffer);
 		dxContext.deviceContext->HSSetConstantBuffers(index, 1, &dx11Buffer);
 		dxContext.deviceContext->DSSetConstantBuffers(index, 1, &dx11Buffer);
 		break;
-	case GB_Storage:
 	case GB_Index:
+	{
+		if (dx11Buffer == NULL)
+			return 0;
+		unsigned int strides = sizeof(unsigned int);
+		unsigned int offset = 0;
+		dxContext.deviceContext->IASetVertexBuffers(TRANS_INDEX_BIND_INDEX, 1, &dx11Buffer, &strides, &offset);
+		break;
+	}
+	case GB_Storage:
 	case GB_Struct:
+		if (dx11BufferView == NULL)
+			return 0;
 		dxContext.deviceContext->VSSetShaderResources(index, 1, &dx11BufferView);
 		dxContext.deviceContext->PSSetShaderResources(index, 1, &dx11BufferView);
 		dxContext.deviceContext->GSSetShaderResources(index, 1, &dx11BufferView);

@@ -246,6 +246,8 @@ bool readHeadFile(const string& codeLine, string& code, const string& envPath, u
 
 bool openFileDlg(FileDlgDesc& desc)
 {
+	char cwd[MAX_PATH] = { 0 };
+	GetCurrentDirectory(MAX_PATH, cwd);
 	OPENFILENAME ofn = { 0 };
 	char filePath[MAX_PATH] = { 0 };
 	char fileName[FILENAME_MAX] = { 0 };
@@ -268,6 +270,7 @@ bool openFileDlg(FileDlgDesc& desc)
 		desc.filePath = filePath;
 		desc.fileName = fileName;
 	}
+	SetCurrentDirectory(cwd);
 	return res;
 }
 

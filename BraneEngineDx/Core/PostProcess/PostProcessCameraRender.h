@@ -2,8 +2,8 @@
 #ifndef _POSTPROCESSCAMERA_H_
 #define _POSTPROCESSCAMERA_H_
 
-#include "CameraRender.h"
-#include "DirectLight.h"
+#include "../CameraRender.h"
+#include "../DirectLight.h"
 #include "PostProcessGraph.h"
 
 #define SSAORES 0.5

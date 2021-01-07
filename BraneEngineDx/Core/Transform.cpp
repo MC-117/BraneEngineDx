@@ -584,7 +584,7 @@ bool Transform::serialize(SerializationInfo & to)
 		return false;
 	to.type = "Transform";
 	to.set("position", SVector3f(position));
-	to.set("rotation", SVector3f(rotation.toRotationMatrix().eulerAngles() / (PI * 180)));
+	to.set("rotation", SVector3f(getEulerAngle()));
 	to.set("scale", SVector3f(scale));
 #if ENABLE_PHYSICS
 	if (rigidBody == NULL || rigidBody->shape == NULL)

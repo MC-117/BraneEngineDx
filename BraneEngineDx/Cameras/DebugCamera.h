@@ -2,9 +2,9 @@
 #ifndef _DEBUGCAMERA_H_
 #define _DEBUGCAMERA_H_
 
-#include "../Core/Camera.h"
+#include "../Core/PostProcess/PostProcessingCamera.h"
 
-class DebugCamera : public Camera
+class DebugCamera : public PostProcessingCamera
 {
 public:
 	float cameraSpeed = 1;

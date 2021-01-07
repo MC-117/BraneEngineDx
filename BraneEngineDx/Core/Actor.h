@@ -4,10 +4,18 @@
 
 #include "Transform.h"
 
+#ifdef AUDIO_USE_OPENAL
+#include "AudioSource.h"
+#endif // AUDIO_USE_OPENAL
+
 class Actor : public Transform
 {
 public:
 	Serialize(Actor);
+
+#ifdef AUDIO_USE_OPENAL
+	vector<AudioSource*> audioSources;
+#endif // AUDIO_USE_OPENAL
 
 	Actor(string name = "Actor");
 	~Actor();
@@ -20,6 +28,9 @@ public:
 
 	virtual void setHidden(bool value);
 	virtual bool isHidden();
+#ifdef AUDIO_USE_OPENAL
+	virtual AudioSource* addAudioSource(AudioData& audioData);
+#endif // AUDIO_USE_OPENAL
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);

@@ -68,6 +68,7 @@ public:
 	void addDefaultTexture(const pair<string, MatAttribute<string>>& attr);
 	void addDefaultImage(const pair<string, unsigned int>& attr);
 
+	void preprocess();
 	void processBaseData();
 	void processScalarData();
 	void processCountData();

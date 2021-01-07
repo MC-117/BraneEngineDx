@@ -8,10 +8,11 @@
 DefaultVertexOut MESH_MAIN
 {
     DefaultVertexOut vout;
-    float4x4 fm = Transforms[ObjectIDs[instanceID]];
+    float4x4 fm = getFinalMat(objID);
     float4 _WorldPos = mul(float4(pos, 1.0), fm);
     vout.svPos = mul(_WorldPos, camData.pmat);
     vout.WorldPos = _WorldPos.xyz;
+    vout.LocalPos = pos;
     vout.Normal = normalize(mul(norm, (float3x3)(fm)));
     vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
     vout.TexCoords = uv;
@@ -27,9 +28,10 @@ DefaultVertexOut MESH_MAIN
 DefaultVertexOut SKELETON_MAIN
 {
     DefaultVertexOut vout;
-    float4x4 fm = getFinalMat(instanceID, weights, boneId);
+    float4x4 fm = getFinalMat(objID, weights, boneId);
     float4 _WorldPos = mul(float4(pos, 1.0), fm);
     vout.WorldPos = _WorldPos.xyz;
+    vout.LocalPos = pos;
     vout.svPos = mul(_WorldPos, camData.pmat);
     vout.Normal = normalize(mul(norm, (float3x3)(fm)));
     vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
@@ -44,36 +46,15 @@ DefaultVertexOut SKELETON_MAIN
 #include "../lib/SkeletonMeshData_Def.hmat"
 #include "../lib/MorphData_def.hmat"
 
-float3 morphPos(in uint vertexID, in float3 pos)
-{
-    uint nMorph = morphData[0].x;
-    uint base = vertexID * nMorph;
-    float3 w = float3(0, 0, 0);
-    for (uint i = 0; i < nMorph; i++) {
-        w += morphData[(base + i) * 2 + 1].xyz * morphWeight[i];
-    }
-    return pos + w;
-}
-
-float3 morphNorm(in uint vertexID, in float3 norm)
-{
-    uint nMorph = morphData[0].x;
-    uint base = vertexID * nMorph;
-    float3 w = float3(0, 0, 0);
-    for (uint i = 0; i < nMorph; i++) {
-        w += morphData[(base + i) * 2 + 2].xyz * morphWeight[i];
-    }
-    return norm + w;
-}
-
 DefaultVertexOut SKELETON_MAIN
 {
     DefaultVertexOut vout;
-    float4x4 fm = getFinalMat(instanceID, weights, boneId);
-    float4 _WorldPos = mul(float4(morphPos(instanceID, pos), 1.0), fm);
+    float4x4 fm = getFinalMat(objID, weights, boneId);
+    float4 _WorldPos = mul(float4(morphPos(objID, pos), 1.0), fm);
     vout.WorldPos = _WorldPos.xyz;
+    vout.LocalPos = pos;
     vout.svPos = mul(_WorldPos, camData.pmat);
-    vout.Normal = normalize(mul(morphNorm(instanceID, norm), (float3x3)(fm)));
+    vout.Normal = normalize(mul(morphNorm(objID, norm), (float3x3)(fm)));
     vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;

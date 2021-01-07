@@ -24,7 +24,7 @@ void DX11MeshData::bindShape()
 		return;
 
 	if (dx11MeshDataInputLayout == NULL) {
-		const char* signatureShader = "void main(float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL) { }";
+		const char* signatureShader = "void main(uint objID : OBJID, float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL) { }";
 		const size_t len = strlen(signatureShader);
 		ID3DBlob* sigBlob;
 		ID3DBlob* errorBlob;
@@ -32,12 +32,13 @@ void DX11MeshData::bindShape()
 				"main", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &sigBlob, &errorBlob))) {
 			throw runtime_error((const char*)errorBlob->GetBufferPointer());
 		}
-		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[3] = {
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[4] = {
+			{ "OBJID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
-		if (FAILED(dxContext.device->CreateInputLayout(inputLayoutDesc, 3, sigBlob->GetBufferPointer(),
+		if (FAILED(dxContext.device->CreateInputLayout(inputLayoutDesc, 4, sigBlob->GetBufferPointer(),
 				sigBlob->GetBufferSize(), &dx11MeshDataInputLayout))) {
 			throw runtime_error("DX11: Create mesh input layout failed");
 		}
@@ -49,13 +50,13 @@ void DX11MeshData::bindShape()
 	D3D11_BUFFER_DESC bDesc = {};
 	ZeroMemory(&bDesc, sizeof(D3D11_BUFFER_DESC));
 	D3D11_SUBRESOURCE_DATA initData;
-	initData.pSysMem = vertices.data()->data();
 
 	if (dx11VertexBuffer == NULL) {
 		bDesc.ByteWidth = vertices.size() * sizeof(Vector3f);
 		bDesc.Usage = D3D11_USAGE_IMMUTABLE;
 		bDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
+		initData.pSysMem = vertices.data()->data();
 		initData.SysMemPitch = 0;
 		initData.SysMemSlicePitch = 0;
 
@@ -114,7 +115,7 @@ void DX11MeshData::bindShape()
 	};
 	UINT offsets[] = { 0, 0, 0 };
 
-	dxContext.deviceContext->IASetVertexBuffers(0, 3, buffers, strides, offsets);
+	dxContext.deviceContext->IASetVertexBuffers(1, 3, buffers, strides, offsets);
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	dxContext.deviceContext->IASetIndexBuffer(dx11ElementBuffer, DXGI_FORMAT_R32_UINT, 0);
 	dxContext.deviceContext->IASetInputLayout(dx11MeshDataInputLayout);

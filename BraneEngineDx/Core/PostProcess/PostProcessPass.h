@@ -2,7 +2,7 @@
 #ifndef _POSTPROCESSPASS_H_
 #define _POSTPROCESSPASS_H_
 
-#include "Render.h"
+#include "../Render.h"
 
 struct PostProcessResource
 {

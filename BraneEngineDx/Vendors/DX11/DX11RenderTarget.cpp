@@ -27,7 +27,7 @@ unsigned int DX11RenderTarget::bindFrame()
 {
 	if (isDefault()) {
 		desc.inited = true;
-		cleanInput();
+		dxContext.clearSRV();
 		dxContext.deviceContext->OMSetRenderTargets(dx11RTVs.size(), dx11RTVs.data(), dx11DSV);
 		currentRenderTarget = this;
 		return 0;
@@ -36,10 +36,11 @@ unsigned int DX11RenderTarget::bindFrame()
 		resize(desc.width, desc.height);
 		desc.inited = true;
 		desc.frameID = dxFrameID;
+		currentRenderTarget = NULL;
 	}
 	if (currentRenderTarget == this)
 		return desc.frameID;
-	cleanInput();
+	dxContext.clearSRV();
 	dxContext.deviceContext->OMSetRenderTargets(dx11RTVs.size(), dx11RTVs.data(), dx11DSV);
 	currentRenderTarget = this;
     return desc.frameID;
@@ -80,8 +81,9 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 				rtv->Release();
 				rtv = NULL;
 			}
+			desc.textureList[i].texture->bind();
 			DX11Texture2D* tex = (DX11Texture2D*)desc.textureList[i].texture->getVendorTexture();
-			tex->desc.info.sampleCount = desc.multisampleLevel;
+			tex->desc.info.sampleCount = desc.multisampleLevel == 0 ? 1 : desc.multisampleLevel;
 			if (tex->resize(width, height) == 0)
 				throw runtime_error("DX11: Resize texture failed");
 			D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
@@ -107,7 +109,6 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 			dx11DepthTexDesc.info.minFilterType = TF_Point;
 			dx11DepthTexDesc.info.sampleCount = desc.multisampleLevel;
 			dx11DepthTex = new DX11Texture2D(dxContext, dx11DepthTexDesc);
-
 		}
 		dx11DepthTex->resize(width, height);
 		dx11DSV = dx11DepthTex->getDSV(0);
@@ -150,17 +151,6 @@ void DX11RenderTarget::clearStencil(unsigned char stencil)
 {
 	if (dx11DSV != NULL)
 		dxContext.deviceContext->ClearDepthStencilView(dx11DSV, D3D11_CLEAR_STENCIL, 0, stencil);
-}
-
-void DX11RenderTarget::cleanInput()
-{
-	const int size = D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - TEX_START_BIND_INDEX;
-	ID3D11ShaderResourceView* srvs[size] = { NULL };
-	dxContext.deviceContext->VSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
-	dxContext.deviceContext->PSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
-	dxContext.deviceContext->GSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
-	dxContext.deviceContext->HSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
-	dxContext.deviceContext->DSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
 }
 
 #endif // VENDOR_USE_DX11

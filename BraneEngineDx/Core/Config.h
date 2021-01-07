@@ -1,6 +1,7 @@
 #pragma once
 #define ENGINE_VERSION "0.1.0"
 #define VENDOR_USE_DX11
+#define AUDIO_USE_OPENAL
 #define ENABLE_PHYSICS 0
 
 #include "StaticVar.h"
@@ -31,14 +32,14 @@
 
 #define MAT_INS_BIND_INDEX 0
 #define TRANS_BIND_INDEX 0
-#define TRANS_INDEX_BIND_INDEX 1
-#define MORPHDATA_BIND_INDEX 2
-#define MORPHWEIGHT_BIND_INDEX 3
-#define PARTICLE_BIND_INDEX 4
-#define CAM_BIND_INDEX 5
-#define DIRECT_LIGHT_BIND_INDEX 6
-#define POINT_LIGHT_BIND_INDEX 7
-#define TEX_START_BIND_INDEX 8
+#define TRANS_INDEX_BIND_INDEX 0
+#define MORPHDATA_BIND_INDEX 1
+#define MORPHWEIGHT_BIND_INDEX 2
+#define PARTICLE_BIND_INDEX 3
+#define CAM_BIND_INDEX 4
+#define DIRECT_LIGHT_BIND_INDEX 5
+#define POINT_LIGHT_BIND_INDEX 6
+#define TEX_START_BIND_INDEX 7
 
 // DxMath default matrix is row-major, while HLSL only accept
 // matrix with column-major. Thus, engine will apply extra

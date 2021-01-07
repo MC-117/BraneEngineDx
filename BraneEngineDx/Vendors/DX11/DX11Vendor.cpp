@@ -237,4 +237,11 @@ void DX11Vendor::setViewport(unsigned int x, unsigned int y, unsigned int w, uns
 	dxContext.deviceContext->RSSetViewports(1, &vp);
 }
 
+void DX11Vendor::postProcessCall()
+{
+	dxContext.deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	dxContext.deviceContext->Draw(4, 0);
+	dxContext.deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
 #endif // VENDOR_USE_DX11

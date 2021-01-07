@@ -23,9 +23,9 @@ void PostProcessGraph::addPostProcessPass(PostProcessPass & pass)
 
 void PostProcessGraph::addDefaultPasses()
 {
-	addPostProcessPass(*new SSAOPass());
+	//addPostProcessPass(*new SSAOPass());
 	addPostProcessPass(*new BloomPass());
-	addPostProcessPass(*new DOFPass());
+	//addPostProcessPass(*new DOFPass());
 	addPostProcessPass(*new ToneMapPass());
 	addPostProcessPass(*new BlitPass());
 }
@@ -42,6 +42,8 @@ void PostProcessGraph::resize(Unit2Di size)
 	for (auto b = passes.begin(), e = passes.end(); b != e; b++) {
 		(*b)->resize(size);
 	}
+	if (resource.finalRenderTarget != NULL)
+		resource.finalRenderTarget->resize(size.x, size.y);
 }
 
 Serializable * PostProcessGraph::instantiate(const SerializationInfo & from)

@@ -46,7 +46,7 @@ FragmentOut DEFAULT_FS_MAIN
     ambience = lerp(shadowColor, ambience, ShadowCalculation(depthMap, depthMapSampler, fin.lightSpacePos, N, L));
     ambience = smoothToon(ambience, shadowColor, dot(N, L), shadowCut, shadowCutSmooth);
     ambience = smoothToon(rimColor, ambience, fresnelSchlick(dot(N, normalize(camData.camPos - fin.WorldPos)), 0.33f), rimCut, rimCutSmooth);
-    fout.FragColor = albedo * ambience * ao;
+    fout.FragColor = albedo * ambience * ao.r;
     fout.FragColor.a = a;
     fout.FragColor *= overColor;
     //fout.ssnMask = float4(1);
