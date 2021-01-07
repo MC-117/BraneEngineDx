@@ -4,6 +4,10 @@ IMaterial::IMaterial(MaterialDesc& desc) : desc(desc)
 {
 }
 
+void IMaterial::preprocess()
+{
+}
+
 void IMaterial::processBaseData()
 {
 }

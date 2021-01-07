@@ -1,5 +1,5 @@
 #include "PostProcessCameraRender.h"
-#include "Console.h"
+#include "../Console.h"
 
 PostProcessCameraRender::PostProcessCameraRender(RenderTarget & renderTarget, Material & material) : CameraRender(renderTarget, material)
 {

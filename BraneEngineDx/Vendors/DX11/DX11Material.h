@@ -18,6 +18,7 @@ public:
 
 	DX11Material(DX11Context& context, MaterialDesc& desc);
 
+	virtual void preprocess();
 	virtual void processBaseData();
 	virtual void processScalarData();
 	virtual void processCountData();

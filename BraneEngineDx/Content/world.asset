@@ -1,0 +1,29 @@
+World { children: None { Camera: Transform { children: None {  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: -0, y: 0, z: 0,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }, DebugCamera: PostProcessingCamera { children: None {  }, position: SVector3f { x: -40.8586, y: -60.8658, z: 63.0334,  }, postProcessingGraph: PostProcessGraph { Bloom: PostProcessPass { enable: "true", material: "#material Engine/Shaders/PostProcess/BloomPassFS.mat
+#twoside false
+#castshadow true
+Scalar bloomDarkIntensity: 2.500000
+Scalar bloomLightIntensity: 5.000000
+Scalar bloomThreshold: 0.700000
+Scalar exposure: 3.000000
+Scalar gamma: 0.250000
+Scalar height: 132.000000
+Scalar width: 232.000000
+Count bloomIter: 6
+Count bloomLevel: 9
+Color baseColor: 1.000000, 0.999990, 0.999990, 1.000000
+Texture sampleMap: white
+Texture screenMap: white
+", name: "Bloom",  }, ToneMap: PostProcessPass { enable: "true", material: "#material Engine/Shaders/PostProcess/ToneMapPass.mat
+#twoside false
+#castshadow true
+Scalar exposure: 3.000000
+Scalar gamma: 0.250000
+Scalar lutBlend: 0.700000
+Scalar vignettePower: 2.000000
+Scalar vignetteRate: 0.000000
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color vignetteColor: 0.000000, 0.000000, 0.000000, 1.000000
+Texture lutMap: Engine/LUTS/X-6500-STD_lut.png
+Texture ssaoMap: white
+Image imageMap: binding(0)
+", name: "ToneMap",  },  }, rotation: SVector3f { x: 167.263, y: 171.263, z: -123.954,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }, DirLight: Transform { children: None {  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: -0, y: -45, z: -45,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }, Floor: MeshActor { children: None {  }, materials: AssetSearch [ { path: "Content/GroundM.imat", pathType: "path",  },  ], mesh: AssetSearch { path: "Engine/Shapes/UnitBox.obj", pathType: "path",  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: -0, y: 0, z: -0,  }, scale: SVector3f { x: 2000, y: 2000, z: 1,  },  }, Grass: GrassMeshActor { density: 200, bound: SVector2f { x: 2000, y: 2000,  }, children: None {  }, materials: AssetSearch [ { path: "Content/Scene/Material/GrassM1.imat", pathType: "path",  }, { path: "Content/Scene/Material/GrassM2.imat", pathType: "path",  }, { path: "Content/Scene/Material/GrassM3.imat", pathType: "path",  },  ], mesh: AssetSearch { path: "Content/Scene/Mesh/Grass.fbx", pathType: "path",  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: -0, y: 0, z: -0,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }, Input: Object { children: None {  },  }, Jorney: MeshActor { children: None {  }, materials: AssetSearch [ { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  },  ], mesh: AssetSearch { path: "Content/Jorney_clothes_v2/Jorney_clothes_v3.fbx", pathType: "path",  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: 90, y: 0, z: -0,  }, scale: SVector3f { x: 0.5, y: 0.5, z: 0.5,  },  }, SkySphere: Actor { children: None {  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: -0, y: 0, z: 0,  }, scale: SVector3f { x: 50, y: 50, z: 50,  },  },  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: -0, y: 0, z: -0,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }

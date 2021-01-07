@@ -144,11 +144,9 @@ void Camera::afterTick()
 
 void Camera::setSize(Unit2Di size)
 {
-	if (this->size != size) {
-		this->size = size;
-		cameraRender.setSize(size);
-		aspect = size.x / (float)size.y;
-	}
+	this->size = size;
+	cameraRender.setSize(size);
+	aspect = size.x / (float)size.y;
 }
 
 void Camera::setMode(CameraMode mode)

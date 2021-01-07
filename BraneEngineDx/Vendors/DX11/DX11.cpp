@@ -163,3 +163,22 @@ void DX11Context::cleanupRenderState()
 	if (depthWriteOffTestOffLEqual != NULL)
 		depthWriteOffTestOffLEqual->Release();
 }
+
+void DX11Context::clearSRV()
+{
+	const int size = D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - TEX_START_BIND_INDEX;
+	ID3D11ShaderResourceView* srvs[size] = { NULL };
+	deviceContext->VSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
+	deviceContext->PSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
+	deviceContext->GSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
+	deviceContext->HSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
+	deviceContext->DSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
+	deviceContext->CSSetShaderResources(TEX_START_BIND_INDEX, size, srvs);
+}
+
+void DX11Context::clearUAV()
+{
+	ID3D11UnorderedAccessView* srvs[D3D11_PS_CS_UAV_REGISTER_COUNT] = { NULL };
+	unsigned int offs[D3D11_PS_CS_UAV_REGISTER_COUNT] = { -1 };
+	deviceContext->CSSetUnorderedAccessViews(0, D3D11_PS_CS_UAV_REGISTER_COUNT, srvs, offs);
+}

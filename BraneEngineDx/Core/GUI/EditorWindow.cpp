@@ -6,6 +6,7 @@
 #include "AssetBrowser.h"
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 #include "../GrassMeshActor.h"
+#include "../PostProcess/PostProcessingCamera.h"
 
 EditorWindow::EditorWindow(Object & object, Material& baseMat, string name, bool defaultShow) : UIWindow(object, name, defaultShow), baseMat(baseMat)
 {
@@ -372,7 +373,7 @@ void EditorWindow::objectContextMenu(Object * obj)
 				}
 				ImGui::EndMenu();
 			}
-			/*if (ImGui::BeginMenu("PostProcessingCamera##PostProcessingCameraMenu")) {
+			if (ImGui::BeginMenu("PostProcessingCamera##PostProcessingCameraMenu")) {
 				ImGui::InputText("Name", &newObjectName);
 				if (Brane::find(typeid(Object).hash_code(), newObjectName) == NULL) {
 					if (ImGui::Button("Create", { -1, 36 })) {
@@ -384,7 +385,7 @@ void EditorWindow::objectContextMenu(Object * obj)
 					ImGui::Text("Name exists");
 				}
 				ImGui::EndMenu();
-			}*/
+			}
 			ImGui::EndMenu();
 		}
 

@@ -25,7 +25,7 @@ void DX11SkeletonMeshData::bindShape()
 		return;
 
 	if (dx11SkeletonMeshDataInputLayout == NULL) {
-		const char* signatureShader = "void main(float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL, uint4 bondId : BONEINDEX, float4 weights : BONEWEIGHT) { }";
+		const char* signatureShader = "void main(uint objID : OBJID, float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL, uint4 bondId : BONEINDEX, float4 weights : BONEWEIGHT) { }";
 		const size_t len = strlen(signatureShader);
 		ID3DBlob* sigBlob;
 		ID3DBlob* errorBlob;
@@ -33,14 +33,15 @@ void DX11SkeletonMeshData::bindShape()
 			"main", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &sigBlob, &errorBlob))) {
 			throw runtime_error((const char*)errorBlob->GetBufferPointer());
 		}
-		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[5] = {
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "BONEINDEX", 0, DXGI_FORMAT_R32G32B32A32_UINT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "BONEWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 4, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[6] = {
+			{ "OBJID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "BONEINDEX", 0, DXGI_FORMAT_R32G32B32A32_UINT, 4, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "BONEWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 5, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
-		if (FAILED(dxContext.device->CreateInputLayout(inputLayoutDesc, 5, sigBlob->GetBufferPointer(),
+		if (FAILED(dxContext.device->CreateInputLayout(inputLayoutDesc, 6, sigBlob->GetBufferPointer(),
 			sigBlob->GetBufferSize(), &dx11SkeletonMeshDataInputLayout))) {
 			throw runtime_error("DX11: Create skeleton mesh input layout failed");
 		}
@@ -53,13 +54,13 @@ void DX11SkeletonMeshData::bindShape()
 	D3D11_BUFFER_DESC bDesc = {};
 	ZeroMemory(&bDesc, sizeof(D3D11_BUFFER_DESC));
 	D3D11_SUBRESOURCE_DATA initData;
-	initData.pSysMem = vertices.data()->data();
 
 	if (dx11VertexBuffer == NULL) {
 		bDesc.ByteWidth = vertices.size() * sizeof(Vector3f);
 		bDesc.Usage = D3D11_USAGE_IMMUTABLE;
 		bDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
+		initData.pSysMem = vertices.data()->data();
 		initData.SysMemPitch = 0;
 		initData.SysMemSlicePitch = 0;
 
@@ -195,7 +196,7 @@ void DX11SkeletonMeshData::bindShape()
 	};
 	UINT offsets[] = { 0, 0, 0, 0, 0 };
 
-	dxContext.deviceContext->IASetVertexBuffers(0, 5, buffers, strides, offsets);
+	dxContext.deviceContext->IASetVertexBuffers(1, 5, buffers, strides, offsets);
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	dxContext.deviceContext->IASetIndexBuffer(dx11ElementBuffer, DXGI_FORMAT_R32_UINT, 0);
 	dxContext.deviceContext->IASetInputLayout(dx11SkeletonMeshDataInputLayout);

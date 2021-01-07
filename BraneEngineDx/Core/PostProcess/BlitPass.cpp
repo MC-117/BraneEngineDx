@@ -1,5 +1,6 @@
 #include "BlitPass.h"
-#include "Asset.h"
+#include "../Asset.h"
+#include "../Console.h"
 
 BlitPass::BlitPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -34,13 +35,14 @@ void BlitPass::render(RenderInfo & info)
 	program->bind();
 	resource->finalRenderTarget->bindFrame();
 	material->processInstanceData();
-	DrawElementsIndirectCommand cmd = { 4, 1, 0, 0 };
+	IVendor& vendor = VendorManager::getInstance().getVendor();
 	for (int i = 0; i < material->getPassNum(); i++) {
 		material->setPass(i);
 		material->processBaseData();
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport(0, 0, size.x, size.y);
-		glDrawArraysIndirect(GL_TRIANGLE_STRIP, &cmd);
+		resource->finalRenderTarget->clearColor({ 0, 0, 0, 0 });
+		resource->finalRenderTarget->clearDepth(1);
+		vendor.setViewport(0, 0, size.x, size.y);
+		vendor.postProcessCall();
 	}
 	material->setPass(0);
 }

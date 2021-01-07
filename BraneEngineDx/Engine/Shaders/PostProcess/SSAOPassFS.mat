@@ -12,13 +12,16 @@ Texture ssaoKernalMap
 Texture depthMap
 #vertex use postprocess
 #fragment postprocess
-#version 460
-
+#include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/PostProcess_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 
-layout (location = 0) out float4 FragColor;
-in float2 UV;
-uniform int pass;
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+FS_DEF_OUT_END
+
+DEF_MAT_BEGIN
+uniform int passID;
 uniform float ssaoRadius;
 uniform float ssaoIntensity;
 uniform float ssaoArea;
@@ -27,11 +30,13 @@ uniform float ssaoCutoff;
 uniform float ssaobias;
 uniform int ssaoBlurIter;
 uniform float screenScale;
-uniform sampler2D ssaoMap;
-uniform sampler2D ssaoKernalMap;
-uniform sampler2D depthMap;
+DEF_MAT_END
 
-const float3 sample_sphere[16] = float3[](
+DEF_TEX2D(ssaoMap, 0);
+DEF_TEX2D(ssaoKernalMap, 1);
+DEF_TEX2D(depthMap, 2);
+
+const float3 sample_sphere[16] = {
     float3( 0.5381, 0.1856,-0.4319), float3( 0.1379, 0.2486, 0.4430),
     float3( 0.3371, 0.5679,-0.0057), float3(-0.6999,-0.0451,-0.0019),
     float3( 0.0689,-0.1598,-0.8547), float3( 0.0560, 0.0069,-0.1843),
@@ -40,19 +45,19 @@ const float3 sample_sphere[16] = float3[](
     float3( 0.0103,-0.5869, 0.0046), float3(-0.0897,-0.4940, 0.3287),
     float3( 0.7119,-0.0154,-0.0918), float3(-0.0533, 0.0596,-0.5411),
     float3( 0.0352,-0.0631, 0.5460), float3(-0.4776, 0.2847,-0.0271)
-);
+};
 
-float3 normalFromDepth(float depth, float2 texcoords) 
+float3 normalFromDepth(in float depth, in float2 texcoords) 
 {
 	float2 offset1 = float2(0.0,0.0001);
 	float2 offset2 = float2(0.0001,0.0);
 	float2 offset3 = float2(0.0,-0.0001);
 	float2 offset4 = float2(-0.0001,0.0);
 
-	float depth1 = texture2D(depthMap, texcoords + offset1).r;
-	float depth2 = texture2D(depthMap, texcoords + offset2).r;
-	float depth3 = texture2D(depthMap, texcoords + offset3).r;
-	float depth4 = texture2D(depthMap, texcoords + offset4).r;
+	float depth1 = SAMPLE_TEX(depthMap, texcoords + offset1).r;
+	float depth2 = SAMPLE_TEX(depthMap, texcoords + offset2).r;
+	float depth3 = SAMPLE_TEX(depthMap, texcoords + offset3).r;
+	float depth4 = SAMPLE_TEX(depthMap, texcoords + offset4).r;
 
 	float3 p1 = float3(offset1, depth1 - depth);
 	float3 p2 = float3(offset2, depth2 - depth);
@@ -77,10 +82,12 @@ float3 reflection(float3 v1,float3 v2)
     return result;
 }
 
-void main() {
+FragmentOut DEFAULT_PP_MAIN
+{
+	FragmentOut fout;
 	float width = floor(camData.viewSize.x * screenScale);
 	float height = floor(camData.viewSize.y * screenScale);
-    if (pass == 0) {
+    if (passID == 0) {
         // float3 pos = reconstructPos();
         // float AO = 0.0;
 
@@ -103,11 +110,11 @@ void main() {
         // AO = 1.0 - AO / 16.0;
         // oCol0.rgb = float3(AO * AO);
         // oCol0.a = 1.0;
-        float depth = texture2D(depthMap, UV).r;
-        float3 normal = normalFromDepth(depth, UV);
+        float depth = SAMPLE_TEX(depthMap, pin.UV).r;
+        float3 normal = normalFromDepth(depth, pin.UV);
         if (depth < ssaoCutoff && abs(dot(normal, float3(0, 0, 1))) < (1 - ssaobias)) {
-            float3 random = normalize(texture2D(ssaoKernalMap, UV * 8.0).rgb);
-            float3 position = float3(UV.x,UV.y,depth);
+            float3 random = normalize(SAMPLE_TEX(ssaoKernalMap, pin.UV * 8.0).rgb);
+            float3 position = float3(pin.UV.x,pin.UV.y,depth);
             float radiusDepth = ssaoRadius/depth;
             float occlusion = 0.0;
             //float bias = max(ssaobias * dot(normal, float3(0, 0, 1)), ssaobias * 0.1);
@@ -119,7 +126,7 @@ void main() {
                 if (dot(ray,normal) > 0) {
                     float3 hemiRay = position + ray;
                 
-                    float occDepth = texture2D(depthMap, clamp(hemiRay.xy,0.0,1.0)).r;
+                    float occDepth = SAMPLE_TEX(depthMap, clamp(hemiRay.xy,0.0,1.0)).r;
                     float difference = depth - occDepth;
 
                     occlusion += smoothstep(ssaoFalloff, ssaoArea, (depth >= occDepth ? 1.0 : 0.0) * (1 - smoothstep(0, 1, abs(difference) / ssaoRadius)));
@@ -132,31 +139,32 @@ void main() {
             ao = 1 - ao;
             float final = clamp(ao * ao,0.0,1.0);
 
-            FragColor = float4(final,final,final,1);
+            fout.FragColor = float4(final,final,final,1);
         }
         else
-            FragColor = float4(1);
+            fout.FragColor = Float4(1);
     }
-    else if (pass == 1) {
-        float4 c = float4(0);
+    else if (passID == 1) {
+        float4 c = Float4(0);
         int n = clamp(ssaoBlurIter, 0, 30);
         float ssaoOffset = -0.02 * n + 0.6;
         for (int i = 0; i < n; i++) {
-            c += texture(ssaoMap, UV - float2(0, ssaoOffset / height * i));
-            c += texture(ssaoMap, UV + float2(0, ssaoOffset / height * i));
+            c += SAMPLE_TEX(ssaoMap, pin.UV - float2(0, ssaoOffset / height * i));
+            c += SAMPLE_TEX(ssaoMap, pin.UV + float2(0, ssaoOffset / height * i));
         }
-        FragColor = c / (n * 2.0);
-        FragColor.a = 1.0;
+        fout.FragColor = c / (n * 2.0);
+        fout.FragColor.a = 1.0;
     }
-    else if (pass == 2) {
-        float4 c = float4(0);
+    else if (passID == 2) {
+        float4 c = Float4(0);
         int n = clamp(ssaoBlurIter, 0, 30);
         float ssaoOffset = -0.02 * n + 0.6;
         for (int i = 0; i < n; i++) {
-            c += texture(ssaoMap, UV - float2(ssaoOffset / width * i, 0));
-            c += texture(ssaoMap, UV + float2(ssaoOffset / width * i, 0));
+            c += SAMPLE_TEX(ssaoMap, pin.UV - float2(ssaoOffset / width * i, 0));
+            c += SAMPLE_TEX(ssaoMap, pin.UV + float2(ssaoOffset / width * i, 0));
         }
-        FragColor = c / (n * 2.0);
-        FragColor.a = 1.0;
+        fout.FragColor = c / (n * 2.0);
+        fout.FragColor.a = 1.0;
     }
+    return fout;
 }

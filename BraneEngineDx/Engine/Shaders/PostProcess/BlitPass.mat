@@ -11,8 +11,9 @@ FS_DEF_OUT_BEGIN
 FS_DEF_OUT_COLOR(FragColor, 0);
 FS_DEF_OUT_END
 
-FragmentOut DEFAULT_FS_MAIN
+FragmentOut DEFAULT_PP_MAIN
 {
     FragmentOut fout;
-    fout.FragColor = SAMPLE_TEX_LOD(screenMap, UV, 0);
+    fout.FragColor = SAMPLE_TEX(screenMap, pin.UV);
+    return fout;
 }

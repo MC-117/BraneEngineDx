@@ -1,7 +1,6 @@
 #include "ToneMapPass.h"
-#include "Asset.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#include "../Asset.h"
+#include "../Console.h"
 
 ToneMapPass::ToneMapPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -43,9 +42,7 @@ void ToneMapPass::render(RenderInfo & info)
 		localSize.x = ceilf(size.x / (float)localSize.x);
 		localSize.y = ceilf(size.y / (float)localSize.y);
 		material->setPass(0);
-		material->processBaseData();
 		material->processInstanceData();
 		program->dispatchCompute(localSize.x, localSize.y, 1);
-		program->memoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	}
 }

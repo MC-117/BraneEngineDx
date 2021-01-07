@@ -1,5 +1,6 @@
 #include "SSAOPass.h"
-#include "Asset.h"
+#include "../Asset.h"
+#include "../Console.h"
 
 SSAOPass::SSAOPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -44,6 +45,7 @@ void SSAOPass::render(RenderInfo & info)
 	}
 	if (*pScreenScale > 0 && !program->isComputable()) {
 		Unit2Di ssaoSize = { size.x * *pScreenScale, size.y * *pScreenScale };
+		IVendor& vendor = VendorManager::getInstance().getVendor();
 
 		program->bind();
 		info.camera->bindCameraData();
@@ -51,16 +53,16 @@ void SSAOPass::render(RenderInfo & info)
 		ssaoRenderTarget.resize(ssaoSize.x, ssaoSize.y);
 		screenRenderTarget.resize(ssaoSize.x, ssaoSize.y);
 
-		DrawElementsIndirectCommand cmd = { 4, 1, 0, 0 };
+		ssaoRenderTarget.bindFrame();
 
 		material->setPass(0);
 		material->processBaseData();
 		material->processInstanceData();
 
-		ssaoRenderTarget.bindFrame();
+		vendor.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
+		vendor.postProcessCall();
 
-		glViewport(0, 0, ssaoSize.x, ssaoSize.y);
-		glDrawArraysIndirect(GL_TRIANGLE_STRIP, &cmd);
+		screenRenderTarget.bindFrame();
 
 		material->setPass(1);
 		material->processBaseData();
@@ -68,10 +70,10 @@ void SSAOPass::render(RenderInfo & info)
 		*pSsaoMap = &ssaoMap;
 		material->processTextureData();
 
-		screenRenderTarget.bindFrame();
+		vendor.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
+		vendor.postProcessCall();
 
-		glViewport(0, 0, ssaoSize.x, ssaoSize.y);
-		glDrawArraysIndirect(GL_TRIANGLE_STRIP, &cmd);
+		ssaoRenderTarget.bindFrame();
 
 		material->setPass(2);
 		material->processBaseData();
@@ -79,10 +81,8 @@ void SSAOPass::render(RenderInfo & info)
 		*pSsaoMap = &screenMap;
 		material->processTextureData();
 
-		ssaoRenderTarget.bindFrame();
-
-		glViewport(0, 0, ssaoSize.x, ssaoSize.y);
-		glDrawArraysIndirect(GL_TRIANGLE_STRIP, &cmd);
+		vendor.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
+		vendor.postProcessCall();
 
 		resource->ssaoTexture = &ssaoMap;
 	}

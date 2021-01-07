@@ -1,0 +1,70 @@
+#order 1000
+#material
+Color baseColor: 255, 255, 255, 255
+Texture colorMap: white
+Color shadowColor: 150, 150, 150, 255
+Color highlightColor: 255, 255, 255, 255
+Color rimColor: 255, 255, 255, 255
+Color overColor: 255, 255, 255, 255
+Color uvScale: 1.0, 1.0, 0.0, 0.0
+Scalar shadowCut: 0.5
+Scalar shadowCutSmooth: 0.0
+Scalar highlightCut: 0.999
+Scalar highlightCutSmooth: 0.0
+Scalar rimCut: 0.8
+Scalar rimCutSmooth: 0.0
+Scalar normalScale: 1.0
+Texture normalMap: black
+Texture depthMap: white
+#vertex use default
+#fragment
+#include "lib/Light_Def.hmat"
+#include "lib/CameraData_Def.hmat"
+#include "lib/Toon_Lib.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+//FS_DEF_OUT_COLOR(ssnMask, 0);
+FS_DEF_OUT_END
+
+DEF_MAT_BEGIN
+uniform float4 baseColor;
+uniform float4 shadowColor;
+uniform float4 highlightColor;
+uniform float4 rimColor;
+uniform float4 overColor;
+uniform float4 uvScale;
+uniform float shadowCut;
+uniform float shadowCutSmooth;
+uniform float highlightCut;
+uniform float highlightCutSmooth;
+uniform float rimCut;
+uniform float rimCutSmooth;
+uniform float normalScale;
+DEF_MAT_END
+
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(normalMap, 1);
+DEF_TEX2D(depthMap, 2);
+
+FragmentOut DEFAULT_FS_MAIN
+{
+    FragmentOut fout;
+    float2 UV = fin.TexCoords * uvScale.xy;
+    float3 N = mul(((normalize(SAMPLE_TEX(normalMap, UV) * 2 - 1)).xyz),
+        cotangent(fin.Normal, fin.WorldPos, UV)) * normalScale;
+    float3 V = normalize(camData.camPos - fin.WorldPos);
+    float4 albedo = SAMPLE_TEX(colorMap, UV);
+    float a = albedo.a * baseColor.a;
+    float3 L = normalize(directLight.direction);
+    float3 H = normalize(V + L);
+    float4 ambience = lerp(baseColor, highlightColor, smoothToon(Float4(1.0f), Float4(0.0f), dot(N, H), highlightCut, highlightCutSmooth));
+    ambience = lerp(shadowColor, ambience, ShadowCalculation(depthMap, depthMapSampler, fin.lightSpacePos, N, L));
+    ambience = smoothToon(ambience, shadowColor, dot(N, L), shadowCut, shadowCutSmooth);
+    ambience = smoothToon(rimColor, ambience, fresnelSchlick(dot(N, normalize(camData.camPos - fin.WorldPos)), 0.33f), rimCut, rimCutSmooth);
+    fout.FragColor = albedo * ambience;
+    fout.FragColor.a = a;
+    fout.FragColor *= overColor;
+    //fout.ssnMask = float4(1);
+    return fout;
+}

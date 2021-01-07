@@ -41,6 +41,7 @@ public:
 
 	IMaterial(MaterialDesc& desc);
 
+	virtual void preprocess();
 	virtual void processBaseData();
 	virtual void processScalarData();
 	virtual void processCountData();

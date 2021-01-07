@@ -540,6 +540,30 @@ AssetInfo & MaterialAssetInfo::getInstance()
 	return assetInfo;
 }
 
+#ifdef AUDIO_USE_OPENAL
+AudioDataAssetInfo AudioDataAssetInfo::assetInfo;
+
+AudioDataAssetInfo::AudioDataAssetInfo() : AssetInfo("AudioData")
+{
+	properties = { };
+}
+
+void* AudioDataAssetInfo::load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const
+{
+	AudioData* audio = new AudioData(name);
+	if (!audio->load(path)) {
+		delete audio;
+		return NULL;
+	}
+	return audio;
+}
+
+AssetInfo& AudioDataAssetInfo::getInstance()
+{
+	return assetInfo;
+}
+#endif // AUDIO_USE_OPENAL
+
 MeshAssetInfo MeshAssetInfo::assetInfo;
 
 MeshAssetInfo::MeshAssetInfo() : AssetInfo("Mesh")

@@ -117,6 +117,17 @@ public:
 	static AssetInfo& getInstance();
 };
 
+#ifdef AUDIO_USE_OPENAL
+class AudioDataAssetInfo : public AssetInfo {
+	AudioDataAssetInfo();
+public:
+	static AudioDataAssetInfo assetInfo;
+
+	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
+	static AssetInfo& getInstance();
+};
+#endif // AUDIO_USE_OPENAL
+
 class MeshAssetInfo : public AssetInfo {
 	MeshAssetInfo();
 public:

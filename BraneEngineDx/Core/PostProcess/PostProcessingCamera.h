@@ -2,7 +2,7 @@
 #ifndef _POSTPROCESSINGCAMERA_H_
 #define _POSTPROCESSINGCAMERA_H_
 
-#include "Camera.h"
+#include "../Camera.h"
 #include "PostProcessCameraRender.h"
 
 class PostProcessingCamera : public Camera

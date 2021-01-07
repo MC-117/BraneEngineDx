@@ -1,6 +1,7 @@
 #include "BloomPass.h"
-#include "Camera.h"
-#include "Asset.h"
+#include "../Camera.h"
+#include "../Asset.h"
+#include "../Console.h"
 
 BloomPass::BloomPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -94,55 +95,47 @@ void BloomPass::render(RenderInfo & info)
 
 		program->bind();
 
-		DrawElementsIndirectCommand cmd = { 4, 1, 0, 0 };
+		IVendor& vendor = VendorManager::getInstance().getVendor();
 
 		material->setPass(0);
-		material->processBaseData();
-		material->processInstanceData();
 
 		for (int i = 0; i < bloomLevel; i++) {
 			int scalar = pow(2, i);
 
 			*pWidth = size.x / scalar;
 			*pHeight = size.y / scalar;
-
-			material->processScalarData();
 
 			bloomRenderTarget.setTextureMipLevel(0, i);
 			bloomRenderTarget.bindFrame();
 
-			glViewport(0, 0, *pWidth, *pHeight);
+			material->processInstanceData();
 
-			glDrawArraysIndirect(GL_TRIANGLE_STRIP, &cmd);
+			vendor.setViewport(0, 0, *pWidth, *pHeight);
+			vendor.postProcessCall();
 		}
 
 		material->setPass(1);
-		material->processBaseData();
 
 		*sampleMap = &bloomMap;
-		material->processTextureData();
 
 		for (int i = 0; i < bloomLevel; i++) {
 			int scalar = pow(2, i);
 
 			*pWidth = size.x / scalar;
 			*pHeight = size.y / scalar;
-
-			material->processScalarData();
 
 			screenRenderTarget.setTextureMipLevel(0, i);
 			screenRenderTarget.bindFrame();
 
-			glViewport(0, 0, *pWidth, *pHeight);
+			material->processInstanceData();
 
-			glDrawArraysIndirect(GL_TRIANGLE_STRIP, &cmd);
+			vendor.setViewport(0, 0, *pWidth, *pHeight);
+			vendor.postProcessCall();
 		}
 
 		material->setPass(2);
-		material->processBaseData();
 
 		*sampleMap = &screenMap;
-		material->processTextureData();
 
 		for (int i = 0; i < bloomLevel; i++) {
 			int scalar = pow(2, i);
@@ -150,27 +143,27 @@ void BloomPass::render(RenderInfo & info)
 			*pWidth = size.x / scalar;
 			*pHeight = size.y / scalar;
 
-			material->processScalarData();
-
 			bloomRenderTarget.setTextureMipLevel(0, i);
 			bloomRenderTarget.bindFrame();
 
-			glViewport(0, 0, *pWidth, *pHeight);
+			material->processInstanceData();
 
-			glDrawArraysIndirect(GL_TRIANGLE_STRIP, &cmd);
+			vendor.setViewport(0, 0, *pWidth, *pHeight);
+			vendor.postProcessCall();
 		}
 
 		material->setPass(3);
-		material->processBaseData();
 
 		*sampleMap = &bloomMap;
 		*pScreenMap = resource->screenTexture;
-		material->processTextureData();
 
 		screenRenderTarget.setTextureMipLevel(0, 0);
 		screenRenderTarget.bindFrame();
-		glViewport(0, 0, size.x, size.y);
-		glDrawArraysIndirect(GL_TRIANGLE_STRIP, &cmd);
+
+		material->processInstanceData();
+
+		vendor.setViewport(0, 0, size.x, size.y);
+		vendor.postProcessCall();
 
 		resource->screenTexture = &screenMap;
 	}

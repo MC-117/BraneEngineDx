@@ -268,6 +268,12 @@ void Material::addDefaultImage(const pair<string, unsigned int>& attr)
 	desc.imageField[attr.first] = img;
 }
 
+void Material::preprocess()
+{
+	newVendorMaterial();
+	vendorMaterial->preprocess();
+}
+
 void Material::processBaseData()
 {
 	newVendorMaterial();
@@ -312,6 +318,8 @@ void Material::postprocess()
 
 void Material::processInstanceData()
 {
+	preprocess();
+	processBaseData();
 	processScalarData();
 	processCountData();
 	processColorData();

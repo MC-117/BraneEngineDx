@@ -340,8 +340,10 @@ void DX11ShaderProgram::uploadImage(const string& name, ID3D11UnorderedAccessVie
 	AttributeDesc desc = getAttributeOffset(name);
 	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
 		return;
-	if (desc.meta == Compute_Shader_Stage)
-		dxContext.deviceContext->CSGetUnorderedAccessViews(desc.offset, 1, &tex);
+	if (desc.meta == Compute_Shader_Stage) {
+		unsigned int c = 0;
+		dxContext.deviceContext->CSSetUnorderedAccessViews(desc.offset, 1, &tex, NULL);
+	}
 }
 
 #endif // VENDOR_USE_DX11

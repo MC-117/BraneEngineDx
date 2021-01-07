@@ -175,6 +175,9 @@ struct DrawElementsIndirectCommand {
 	unsigned int firstIndex;
 	unsigned int baseVertex;
 	unsigned int baseInstance;
+	unsigned int pad0;
+	unsigned int pad1;
+	unsigned int pad2;
 };
 
 template<class T>

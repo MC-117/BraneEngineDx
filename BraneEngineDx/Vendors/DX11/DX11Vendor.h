@@ -59,6 +59,7 @@ public:
 	virtual void setCullState(CullType type);
 	virtual void setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 
+	virtual void postProcessCall();
 protected:
 	unsigned int defaultMultisampleLevels = 0;
 	DX11Context dxContext;

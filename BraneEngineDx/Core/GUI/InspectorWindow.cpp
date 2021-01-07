@@ -6,7 +6,7 @@
 #include "BlendSpaceWindow.h"
 #include "TextureViewer.h"
 #include "../Console.h"
-//#include "PostProcessingCamera.h"
+#include "../PostProcess/PostProcessingCamera.h"
 
 InspectorWindow::InspectorWindow(Object & object, string name, bool defaultShow) : UIWindow(object, name, defaultShow)
 {
@@ -287,6 +287,30 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 					ImGui::OpenPopup("ActorCollision");
 				}
 				ImGui::Separator();
+#ifdef AUDIO_USE_OPENAL
+				ImGui::Text("AudioSource: %d", a->audioSources.size());
+				if (assignAsset != NULL && assignAsset->assetInfo.type == "AudioData") {
+					if (ImGui::Button("Add Selected Audio", { -1, 36 })) {
+						AudioData* auData = (AudioData*)assignAsset->load();
+						if (auData != NULL)
+							a->addAudioSource(*auData);
+					}
+				}
+				ImGui::Separator();
+				for (int i = 0; i < a->audioSources.size(); i++) {
+					ImGui::Text(a->audioSources[i]->audioData->name.c_str());
+					ImGui::SameLine();
+					if (a->audioSources[i]->getState() == AudioSource::Playing) {
+						if (ImGui::Button(("Pause##Pause" + to_string(i)).c_str()))
+							a->audioSources[i]->pause();
+						ImGui::SameLine();
+						if (ImGui::Button(("Stop##Stop" + to_string(i)).c_str()))
+							a->audioSources[i]->stop();
+					}
+					else if (ImGui::Button(("Play##Play" + to_string(i)).c_str()))
+						a->audioSources[i]->play();
+				}
+#endif // AUDIO_USE_OPENAL
 				/*ParticleSystem* ps = dynamic_cast<ParticleSystem*>(&obj);
 				if (ps != NULL) {
 					if (ImGui::CollapsingHeader("ParticleSystem")) {
@@ -554,6 +578,10 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 							if (ImGui::Button(str, { -20, 36 })) {
 								sma->activeAnimationClip(b->second);
 								base->play();
+#ifdef AUDIO_USE_OPENAL
+								if (b->second < sma->audioSources.size())
+									sma->audioSources[b->second]->play();
+#endif // AUDIO_USE_OPENAL
 							}
 							ImGui::SameLine();
 							bool loop = base->isLoop();
@@ -577,9 +605,19 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 								ImGui::Separator();
 								if (ImGui::Button("Pause", { -1, 36 })) {
 									sma->animationClip->pause();
+#ifdef AUDIO_USE_OPENAL
+									for (int i = 0; i < sma->audioSources.size(); i++) {
+										sma->audioSources[i]->pause();
+									}
+#endif // AUDIO_USE_OPENAL
 								}
 								if (ImGui::Button("Stop", { -1, 36 })) {
 									sma->animationClip->stop();
+#ifdef AUDIO_USE_OPENAL
+									for (int i = 0; i < sma->audioSources.size(); i++) {
+										sma->audioSources[i]->stop();
+									}
+#endif // AUDIO_USE_OPENAL
 								}
 							}
 						}
@@ -772,56 +810,79 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 						animIndexes.push_back(b->second);
 					}
 					ImGui::Combo("Anim", &activeAnimIndex, animStr.c_str());
+
+#ifdef AUDIO_USE_OPENAL
+					string audioStr;
+					if (chr->audioSources.empty())
+						activeAudioIndex = -1;
+					else for (auto b = chr->audioSources.begin(), e = chr->audioSources.end(); b != e; b++) {
+						audioStr += (*b)->audioData->name + '\0';
+					}
+					ImGui::Combo("Audio", &activeAudioIndex, audioStr.c_str());
+#endif // AUDIO_USE_OPENAL
+
 					if (cam->animationClip.animationClipData != NULL && activeAnimIndex >= 0) {
 						if (cam->animationClip.playing()) {
 							if (ImGui::Button("Pause")) {
 								cam->animationClip.pause();
 								chr->activeAnimationClip(animIndexes[activeAnimIndex]);
 								chr->animationClip->pause();
+#ifdef AUDIO_USE_OPENAL
+								if (activeAudioIndex >= 0)
+									chr->audioSources[activeAudioIndex]->pause();
+#endif // AUDIO_USE_OPENAL
 							}
 							if (ImGui::Button("Stop")) {
 								cam->animationClip.stop();
 								chr->activeAnimationClip(animIndexes[activeAnimIndex]);
 								chr->animationClip->stop();
+#ifdef AUDIO_USE_OPENAL
+								if (activeAudioIndex >= 0)
+									chr->audioSources[activeAudioIndex]->stop();
+#endif // AUDIO_USE_OPENAL
 							}
 						}
 						else if (ImGui::Button("Play")) {
 							cam->animationClip.play();
 							chr->activeAnimationClip(animIndexes[activeAnimIndex]);
 							chr->animationClip->play();
+#ifdef AUDIO_USE_OPENAL
+							if (activeAudioIndex >= 0)
+								chr->audioSources[activeAudioIndex]->play();
+#endif // AUDIO_USE_OPENAL
 						}
 					}
 				}
 			}
-			//if (ImGui::CollapsingHeader("Postprocess")) {
-			//	/*if (cam->cameraRender.material.isNull())
-			//		ImGui::TextColored(ImVec4(0.4, 0.5, 1, 1), "No Material");
-			//	else {
-			//		multimap<string, unsigned int> names = { { "PostMaterial", 0 } };
-			//		vector<Material*> mat = { &cam->cameraRender.material };
-			//		showMaterial(names, mat, info.gui);
-			//	}*/
-			//	PostProcessingCamera* ppCam = dynamic_cast<PostProcessingCamera*>(cam);
-			//	if (ppCam == NULL)
-			//		ImGui::TextColored(ImVec4(0.4, 0.5, 1, 1), "No PostProcess");
-			//	else {
-			//		PostProcessGraph& graph = ppCam->postProcessCameraRender.graph;
-			//		int i = 0;
-			//		for (auto b = graph.passes.begin(), e = graph.passes.end(); b != e; b++, i++) {
-			//			ImGui::PushID(i);
-			//			if (ImGui::CollapsingHeader((*b)->getName().c_str())) {
-			//				bool enable = (*b)->getEnable();
-			//				if (ImGui::Checkbox("Enable", &enable))
-			//					(*b)->setEnable(enable);
-			//				multimap<string, unsigned int> names = { { "Material", 0 } };
-			//				vector<Material*> mat = { (*b)->getMaterial() };
-			//				showMaterial(names, mat, info.gui);
-			//				(*b)->setMaterial(mat[0]);
-			//			}
-			//			ImGui::PopID();
-			//		}
-			//	}
-			//}
+			if (ImGui::CollapsingHeader("Postprocess")) {
+				/*if (cam->cameraRender.material.isNull())
+					ImGui::TextColored(ImVec4(0.4, 0.5, 1, 1), "No Material");
+				else {
+					multimap<string, unsigned int> names = { { "PostMaterial", 0 } };
+					vector<Material*> mat = { &cam->cameraRender.material };
+					showMaterial(names, mat, info.gui);
+				}*/
+				PostProcessingCamera* ppCam = dynamic_cast<PostProcessingCamera*>(cam);
+				if (ppCam == NULL)
+					ImGui::TextColored(ImVec4(0.4, 0.5, 1, 1), "No PostProcess");
+				else {
+					PostProcessGraph& graph = ppCam->postProcessCameraRender.graph;
+					int i = 0;
+					for (auto b = graph.passes.begin(), e = graph.passes.end(); b != e; b++, i++) {
+						ImGui::PushID(i);
+						if (ImGui::CollapsingHeader((*b)->getName().c_str())) {
+							bool enable = (*b)->getEnable();
+							if (ImGui::Checkbox("Enable", &enable))
+								(*b)->setEnable(enable);
+							multimap<string, unsigned int> names = { { "Material", 0 } };
+							vector<Material*> mat = { (*b)->getMaterial() };
+							showMaterial(names, mat, info.gui);
+							(*b)->setMaterial(mat[0]);
+						}
+						ImGui::PopID();
+					}
+				}
+			}
 		}
 		ImGui::EndGroup();
 	}

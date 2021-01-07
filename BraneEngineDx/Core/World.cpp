@@ -19,7 +19,8 @@ World::World() : Transform("RootWorld")
 {
 	if (defaultCamera.parent == NULL)
 		*this += defaultCamera;
-	switchToDefaultCamera();
+	defaultCamera.setActive(true);
+	renderPool.switchToDefaultCamera();
 	*this += input;
 }
 
@@ -43,7 +44,7 @@ void World::tick(float deltaTime)
 {
 	timer.reset();
 	currentTime = getCurrentTime();
-	float dt = (currentTime - lastTime) / 1000.0f;
+	float dt = (currentTime - lastTime) * 0.000000001f;
 	lastTime = currentTime;
 	//if (!destroyList.empty()) {
 	//	for (auto b = destroyList.begin(), e = destroyList.end(); b != e; b++) {
@@ -357,7 +358,5 @@ bool World::serialize(SerializationInfo & to)
 
 int64_t World::getCurrentTime()
 {
-	timeb t;
-	ftime(&t);
-	return t.time * 1000 + t.millitm;
+	return Time::now().toNanosecond();
 }

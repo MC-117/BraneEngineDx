@@ -391,23 +391,29 @@ void ChildrenInstantiateObject(const SerializationInfo& from, Object* pObj, Inst
 		}
 		for (auto b = ___child->sublists.begin(), e = ___child->sublists.end(); b != e; b++) {
 			if (b->serialization != NULL) {
+				bool skip = false;
 				for (int i = 0; i < pObj->children.size(); i++) {
 					Object* obj = pObj->children[i];
 					if (obj->isInternal() && obj->name == b->name) {
 						ChildrenInstantiateObject(*b, obj);
-						continue;
+						skip = true;
+						break;
 					}
 				}
 				if (rule == IR_Default) {}
 				else if (rule == IR_WorldUniqueName) {
 					if (Brane::find(typeid(Object).hash_code(), b->name) != NULL)
-						continue;
+						skip = true;
 				}
 				else if (rule == IR_ExistUniqueName) {
 					for (int i = 0; i < pObj->children.size(); i++)
-						if (pObj->children[i]->name == b->name)
-							continue;
+						if (pObj->children[i]->name == b->name) {
+							skip = true;
+							break;
+						}
 				}
+				if (skip)
+					continue;
 				Serializable* ser = b->serialization->instantiate(*b);
 				if (ser != NULL) {
 					Object* cobj = dynamic_cast<Object*>(ser);

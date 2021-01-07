@@ -82,13 +82,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>ThirdParty\assimp-5.0.1\lib\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -101,6 +101,9 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -117,6 +120,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -129,8 +135,11 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>zlibstaticd.lib;IrrXMLd.lib;assimp-vc142-mtd.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>alut64.lib;OpenAL32.lib;zlibstaticd.lib;IrrXMLd.lib;assimp-vc142-mtd.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -147,14 +156,18 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>zlibstatic.lib;IrrXML.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>alut64.lib;OpenAL32.lib;zlibstatic.lib;IrrXML.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Actors\SkySphere.h" />
     <ClInclude Include="Core\Actor.h" />
     <ClInclude Include="Core\AnimationClip.h" />
     <ClInclude Include="Core\Asset.h" />
+    <ClInclude Include="Core\AudioSource.h" />
     <ClInclude Include="Core\Bone.h" />
     <ClInclude Include="Core\Camera.h" />
     <ClInclude Include="Core\CameraRender.h" />
@@ -191,6 +204,15 @@
     <ClInclude Include="Core\MeshRender.h" />
     <ClInclude Include="Core\Object.h" />
     <ClInclude Include="Core\PointLight.h" />
+    <ClInclude Include="Core\PostProcess\BlitPass.h" />
+    <ClInclude Include="Core\PostProcess\BloomPass.h" />
+    <ClInclude Include="Core\PostProcess\DOFPass.h" />
+    <ClInclude Include="Core\PostProcess\PostProcessCameraRender.h" />
+    <ClInclude Include="Core\PostProcess\PostProcessGraph.h" />
+    <ClInclude Include="Core\PostProcess\PostProcessingCamera.h" />
+    <ClInclude Include="Core\PostProcess\PostProcessPass.h" />
+    <ClInclude Include="Core\PostProcess\SSAOPass.h" />
+    <ClInclude Include="Core\PostProcess\ToneMapPass.h" />
     <ClInclude Include="Core\Render.h" />
     <ClInclude Include="Core\RenderCommandList.h" />
     <ClInclude Include="Core\RenderPool.h" />
@@ -222,6 +244,7 @@
     <ClInclude Include="Core\MeshData.h" />
     <ClInclude Include="Core\IRenderExecution.h" />
     <ClInclude Include="Cameras\DebugCamera.h" />
+    <ClInclude Include="Core\GUI\WindowsUI\LoadingUI.h" />
     <ClInclude Include="Vendors\DX11\DX11RenderExecution.h" />
     <ClInclude Include="Vendors\DX11\DX11SkeletonMeshData.h" />
     <ClInclude Include="Vendors\DX11\DX11MeshData.h" />
@@ -251,6 +274,7 @@
     <ClCompile Include="Core\Actor.cpp" />
     <ClCompile Include="Core\AnimationClip.cpp" />
     <ClCompile Include="Core\Asset.cpp" />
+    <ClCompile Include="Core\AudioSource.cpp" />
     <ClCompile Include="Core\Bone.cpp" />
     <ClCompile Include="Core\Camera.cpp" />
     <ClCompile Include="Core\CameraRender.cpp" />
@@ -283,6 +307,15 @@
     <ClCompile Include="Core\MeshRender.cpp" />
     <ClCompile Include="Core\Object.cpp" />
     <ClCompile Include="Core\PointLight.cpp" />
+    <ClCompile Include="Core\PostProcess\BlitPass.cpp" />
+    <ClCompile Include="Core\PostProcess\BloomPass.cpp" />
+    <ClCompile Include="Core\PostProcess\DOFPass.cpp" />
+    <ClCompile Include="Core\PostProcess\PostProcessCameraRender.cpp" />
+    <ClCompile Include="Core\PostProcess\PostProcessGraph.cpp" />
+    <ClCompile Include="Core\PostProcess\PostProcessingCamera.cpp" />
+    <ClCompile Include="Core\PostProcess\PostProcessPass.cpp" />
+    <ClCompile Include="Core\PostProcess\SSAOPass.cpp" />
+    <ClCompile Include="Core\PostProcess\ToneMapPass.cpp" />
     <ClCompile Include="Core\Render.cpp" />
     <ClCompile Include="Core\RenderCommandList.cpp" />
     <ClCompile Include="Core\RenderPool.cpp" />
@@ -314,6 +347,7 @@
     <ClCompile Include="Core\IRenderExecution.cpp" />
     <ClCompile Include="Cameras\DebugCamera.cpp" />
     <ClCompile Include="initial.cpp" />
+    <ClCompile Include="Core\GUI\WindowsUI\LoadingUI.cpp" />
     <ClCompile Include="tool.cpp" />
     <ClCompile Include="Vendors\DX11\DX11.cpp" />
     <ClCompile Include="Vendors\DX11\DX11RenderExecution.cpp" />

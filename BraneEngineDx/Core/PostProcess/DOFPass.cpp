@@ -1,5 +1,6 @@
 #include "DOFPass.h"
-#include "Asset.h"
+#include "../Asset.h"
+#include "../Console.h"
 
 DOFPass::DOFPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -37,7 +38,7 @@ void DOFPass::render(RenderInfo & info)
 		return;
 	}
 	if (!program->isComputable()) {
-		DrawElementsIndirectCommand cmd = { 4, 1, 0, 0 };
+		IVendor& vendor = VendorManager::getInstance().getVendor();
 
 		program->bind();
 		info.camera->bindCameraData();
@@ -45,27 +46,28 @@ void DOFPass::render(RenderInfo & info)
 		*pDofMap = NULL;
 		*pScreenMap = resource->screenTexture;
 
+		dofRenderTarget.bindFrame();
+
 		material->setPass(0);
 		material->processBaseData();
 		material->processInstanceData();
 
-		dofRenderTarget.bindFrame();
-		glViewport(0, 0, size.x, size.y);
+		vendor.setViewport(0, 0, size.x, size.y);
 
-		glDrawArraysIndirect(GL_TRIANGLE_STRIP, &cmd);
-
+		vendor.postProcessCall();
 
 		*pDofMap = &dofMap;
 		*pScreenMap = resource->screenTexture;
+
+		screenRenderTarget.bindFrame();
 
 		material->setPass(1);
 		material->processBaseData();
 		material->processTextureData();
 
-		screenRenderTarget.bindFrame();
-		glViewport(0, 0, size.x, size.y);
+		vendor.setViewport(0, 0, size.x, size.y);
 
-		glDrawArraysIndirect(GL_TRIANGLE_STRIP, &cmd);
+		vendor.postProcessCall();
 
 		resource->screenTexture = &screenMap;
 	}
