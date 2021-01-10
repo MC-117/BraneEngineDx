@@ -146,8 +146,9 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 		world.quit();
 
 #ifdef AUDIO_USE_OPENAL
+	float mainVolume = world.audioListener.getVolume();
 	if (ImGui::SliderFloat("Volume", &mainVolume, 0, 1)) {
-		world.setMainVolume(mainVolume);
+		world.audioListener.setVolume(mainVolume);
 	}
 #endif // AUDIO_USE_OPENAL
 	ImGui::TextColored(ImVec4(1, 1, 0, 1), "Objects");

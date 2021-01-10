@@ -10,7 +10,6 @@ public:
 	Material& baseMat;
 	Object* selectedObj = NULL;
 	bool alwaysShow = false;
-	float mainVolume = 1;
 	Object* parentObj = NULL;
 	SerializationInfo copyInfo;
 
