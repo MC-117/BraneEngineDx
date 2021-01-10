@@ -34,9 +34,18 @@ void ESCMenu::onPreAction(GUIRenderInfo& info)
 	}
 }
 
+void TextCenter(std::string text) {
+	float font_size = ImGui::GetFontSize() * text.size() / 2;
+	ImGui::SameLine(
+		ImGui::GetWindowSize().x / 2 -
+		font_size + (font_size / 2)
+	);
+	ImGui::Text(text.c_str());
+}
+
 void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 {
-	ImVec2 ws = { 200, 142 };
+	ImVec2 ws = { 200, 202 };
 	ImGui::SetWindowSize(ws, ImGuiCond_Always);
 	ImGui::SetWindowPos({ (info.viewSize.x - ws.x) * 0.5f, (info.viewSize.y - ws.y) * 0.5f }, ImGuiCond_Always);
 	ImVec2 size = { ImGui::GetWindowContentRegionWidth(), 40 };
@@ -45,6 +54,7 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 	if (world == NULL)
 		return;
 
+	TextCenter("Menu");
 	if (ImGui::Button("Play", size)) {
 		bool ok = true;
 		Object* obj = (Object*)Brane::find(typeid(Object).hash_code(), "Miku");
@@ -99,8 +109,16 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 			miku->animationClip->play();
 			cam.animationClip.play();
 			audioSource->play();
+			info.gui.hideAllUIControl();
+			world->input.setCursorHidden(true);
 		}
 	}
+#ifdef AUDIO_USE_OPENAL
+	int mainVolume = world->audioListener.getVolume() * 100;
+	if (ImGui::SliderInt("Volume", &mainVolume, 0, 100)) {
+		world->audioListener.setVolume(mainVolume / 100.f);
+	}
+#endif // AUDIO_USE_OPENAL
 	if (ImGui::Button("ShowEditor", size)) {
 		UIControl* uc = info.gui.getUIControl("Editor");
 		bool b = false;

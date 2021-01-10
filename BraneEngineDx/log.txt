@@ -1,300 +1,300 @@
-[Log][0:0:0:960]Engine/Shaders/Default/Default_Default.shadapter load
-[Log][0:0:0:999]Engine/Shaders/Default/Default_Outline.shadapter load
-[Log][0:0:1:32]Engine/Shaders/Default/Default_Position.shadapter load
-[Log][0:0:1:34]Engine/Shaders/Default/Default_PostProcess.shadapter load
-[Log][0:0:1:36]Engine/Shaders/Default/Empty_Fragment.shadapter load
-[Log][0:0:1:85]Engine/Shaders/Default/PBR_Fragment.shadapter load
-[Log][0:0:1:145]Engine/Shaders/Default/PBR_IBL_Fragment.shadapter load
-[Log][0:0:1:148]Engine/Shaders/Default/PureColor_Fragment.shadapter load
-[Log][0:0:1:175]Engine/Shaders/Default/Toon_Fragment.shadapter load
-[Log][0:0:1:208]Engine/Shaders/Default/Toon_IBL_Fragment.shadapter load
-[Log][0:0:1:218]Engine/Banner folder
-[Log][0:0:1:223]Engine/Banner/Banner.bmp load
-[Error][0:0:1:224]Engine/Banner/Banner.png Banner load failed
-[Log][0:0:1:229]Engine/Banner/Banne_old.png load
-[Log][0:0:1:230]Engine/Fonts folder
-[Log][0:0:1:230]Engine/Icons folder
-[Log][0:0:1:232]Engine/Icons/Animation_Icon.png load
-[Log][0:0:1:234]Engine/Icons/AssetFile_Icon.png load
-[Log][0:0:1:235]Engine/Icons/Audio_Icon.png load
-[Log][0:0:1:237]Engine/Icons/Folder_Icon.png load
-[Log][0:0:1:238]Engine/Icons/Material_Icon.png load
-[Log][0:0:1:240]Engine/Icons/Model_Icon.png load
-[Log][0:0:1:242]Engine/Icons/Python_Icon.png load
-[Log][0:0:1:243]Engine/Icons/SkeletonMesh_Icon.png load
-[Log][0:0:1:244]Engine/LUTS folder
-[Log][0:0:1:250]Engine/LUTS/arapaho_lut.png load
-[Log][0:0:1:256]Engine/LUTS/aspen_lut.png load
-[Log][0:0:1:263]Engine/LUTS/BlacKkKlansman_lut.png load
-[Log][0:0:1:270]Engine/LUTS/bluegreen_lut.png load
-[Log][0:0:1:276]Engine/LUTS/C-8120-STD_lut.png load
-[Log][0:0:1:284]Engine/LUTS/C-9730-STD_lut.png load
-[Log][0:0:1:290]Engine/LUTS/darkest_hour_lut.png load
-[Log][0:0:1:296]Engine/LUTS/F-6800-STD_lut.png load
-[Log][0:0:1:302]Engine/LUTS/F-8700-STD_lut.png load
-[Log][0:0:1:308]Engine/LUTS/F-8700-V2-STD_lut.png load
-[Log][0:0:1:315]Engine/LUTS/greygreen_lut.png load
-[Log][0:0:1:321]Engine/LUTS/H-9110-STD_lut.png load
-[Log][0:0:1:327]Engine/LUTS/humble_lut.png load
-[Log][0:0:1:333]Engine/LUTS/kodak-5205-fuji_lut.png load
-[Log][0:0:1:340]Engine/LUTS/oldman_lut.png load
-[Log][0:0:1:347]Engine/LUTS/sedona_lut.png load
-[Log][0:0:1:354]Engine/LUTS/W-8370-STD_lut.png load
-[Log][0:0:1:360]Engine/LUTS/W-ARAPAHO-33-STD_lut.png load
-[Log][0:0:1:365]Engine/LUTS/X-6500-STD_lut.png load
-[Log][0:0:1:371]Engine/LUTS/X-9400-STD_lut.png load
-[Log][0:0:1:372]Engine/Shaders folder
-[Log][0:0:1:372]Engine/Shaders/ClearColor.mat load
-[Log][0:0:1:373]Engine/Shaders/Default folder
-[Warn][0:0:1:373]Engine/Shaders/Default/Default_Default.shadapter unknown file type
-[Error][0:0:1:374]Engine/Shaders/Default/Default_Default.shadapter Default_Default load failed
-[Warn][0:0:1:374]Engine/Shaders/Default/Default_Outline.shadapter unknown file type
-[Error][0:0:1:375]Engine/Shaders/Default/Default_Outline.shadapter Default_Outline load failed
-[Warn][0:0:1:375]Engine/Shaders/Default/Default_Position.shadapter unknown file type
-[Error][0:0:1:375]Engine/Shaders/Default/Default_Position.shadapter Default_Position load failed
-[Warn][0:0:1:376]Engine/Shaders/Default/Default_PostProcess.shadapter unknown file type
-[Error][0:0:1:376]Engine/Shaders/Default/Default_PostProcess.shadapter Default_PostProcess load failed
-[Warn][0:0:1:376]Engine/Shaders/Default/Empty_Fragment.shadapter unknown file type
-[Error][0:0:1:377]Engine/Shaders/Default/Empty_Fragment.shadapter Empty_Fragment load failed
-[Warn][0:0:1:377]Engine/Shaders/Default/PBR_Fragment.shadapter unknown file type
-[Error][0:0:1:378]Engine/Shaders/Default/PBR_Fragment.shadapter PBR_Fragment load failed
-[Warn][0:0:1:378]Engine/Shaders/Default/PBR_IBL_Fragment.shadapter unknown file type
-[Error][0:0:1:378]Engine/Shaders/Default/PBR_IBL_Fragment.shadapter PBR_IBL_Fragment load failed
-[Warn][0:0:1:379]Engine/Shaders/Default/PureColor_Fragment.shadapter unknown file type
-[Error][0:0:1:380]Engine/Shaders/Default/PureColor_Fragment.shadapter PureColor_Fragment load failed
-[Warn][0:0:1:380]Engine/Shaders/Default/Toon_Fragment.shadapter unknown file type
-[Error][0:0:1:381]Engine/Shaders/Default/Toon_Fragment.shadapter Toon_Fragment load failed
-[Warn][0:0:1:381]Engine/Shaders/Default/Toon_IBL_Fragment.shadapter unknown file type
-[Error][0:0:1:381]Engine/Shaders/Default/Toon_IBL_Fragment.shadapter Toon_IBL_Fragment load failed
-[Log][0:0:1:382]Engine/Shaders/Depth.mat load
-[Log][0:0:1:410]Engine/Shaders/Grass_Toon.mat load
-[Log][0:0:1:410]Engine/Shaders/lib folder
-[Warn][0:0:1:411]Engine/Shaders/lib/Basic_FS_Lib.hmat unknown file type
-[Error][0:0:1:411]Engine/Shaders/lib/Basic_FS_Lib.hmat Basic_FS_Lib load failed
-[Warn][0:0:1:411]Engine/Shaders/lib/Basic_VS_Lib.hmat unknown file type
-[Error][0:0:1:412]Engine/Shaders/lib/Basic_VS_Lib.hmat Basic_VS_Lib load failed
-[Warn][0:0:1:413]Engine/Shaders/lib/Bindings_Def.hmat unknown file type
-[Error][0:0:1:413]Engine/Shaders/lib/Bindings_Def.hmat Bindings_Def load failed
-[Warn][0:0:1:413]Engine/Shaders/lib/CameraData_Def.hmat unknown file type
-[Error][0:0:1:414]Engine/Shaders/lib/CameraData_Def.hmat CameraData_Def load failed
-[Warn][0:0:1:414]Engine/Shaders/lib/Const_Def.hmat unknown file type
-[Error][0:0:1:414]Engine/Shaders/lib/Const_Def.hmat Const_Def load failed
-[Warn][0:0:1:415]Engine/Shaders/lib/Light_Def.hmat unknown file type
-[Error][0:0:1:415]Engine/Shaders/lib/Light_Def.hmat Light_Def load failed
-[Warn][0:0:1:416]Engine/Shaders/lib/MeshData_Def.hmat unknown file type
-[Error][0:0:1:416]Engine/Shaders/lib/MeshData_Def.hmat MeshData_Def load failed
-[Warn][0:0:1:416]Engine/Shaders/lib/MorphData_Def.hmat unknown file type
-[Error][0:0:1:417]Engine/Shaders/lib/MorphData_Def.hmat MorphData_Def load failed
-[Warn][0:0:1:417]Engine/Shaders/lib/ParticleData_Def.hmat unknown file type
-[Error][0:0:1:418]Engine/Shaders/lib/ParticleData_Def.hmat ParticleData_Def load failed
-[Warn][0:0:1:418]Engine/Shaders/lib/PBR_Lib.hmat unknown file type
-[Error][0:0:1:418]Engine/Shaders/lib/PBR_Lib.hmat PBR_Lib load failed
-[Warn][0:0:1:419]Engine/Shaders/lib/PostProcess_Def.hmat unknown file type
-[Error][0:0:1:419]Engine/Shaders/lib/PostProcess_Def.hmat PostProcess_Def load failed
-[Warn][0:0:1:420]Engine/Shaders/lib/SkeletonMeshData_Def.hmat unknown file type
-[Error][0:0:1:420]Engine/Shaders/lib/SkeletonMeshData_Def.hmat SkeletonMeshData_Def load failed
-[Warn][0:0:1:420]Engine/Shaders/lib/Toon_Lib.hmat unknown file type
-[Error][0:0:1:421]Engine/Shaders/lib/Toon_Lib.hmat Toon_Lib load failed
-[Warn][0:0:1:421]Engine/Shaders/lib/TransformData_Def.hmat unknown file type
-[Error][0:0:1:421]Engine/Shaders/lib/TransformData_Def.hmat TransformData_Def load failed
-[Error][0:0:1:422]Engine/Shaders/Outline.mat Outline load failed
-[Log][0:0:1:423]Engine/Shaders/PBR_IBL_Transparent.mat load
-[Log][0:0:1:423]Engine/Shaders/PostProcess folder
-[Log][0:0:1:426]Engine/Shaders/PostProcess/BlitPass.mat load
-[Log][0:0:1:444]Engine/Shaders/PostProcess/BloomPassFS.mat load
-[Log][0:0:1:466]Engine/Shaders/PostProcess/DOFPassFS.mat load
-[Log][0:0:1:581]Engine/Shaders/PostProcess/SSAOPassFS.mat load
-[Log][0:0:1:604]Engine/Shaders/PostProcess/ToneMapPass.mat load
-[Log][0:0:1:605]Engine/Shaders/Toon.mat load
-[Log][0:0:1:635]Engine/Shaders/Toon_Dither.mat load
+[Log][0:0:0:965]Engine/Shaders/Default/Default_Default.shadapter load
+[Log][0:0:1:5]Engine/Shaders/Default/Default_Outline.shadapter load
+[Log][0:0:1:38]Engine/Shaders/Default/Default_Position.shadapter load
+[Log][0:0:1:40]Engine/Shaders/Default/Default_PostProcess.shadapter load
+[Log][0:0:1:42]Engine/Shaders/Default/Empty_Fragment.shadapter load
+[Log][0:0:1:90]Engine/Shaders/Default/PBR_Fragment.shadapter load
+[Log][0:0:1:148]Engine/Shaders/Default/PBR_IBL_Fragment.shadapter load
+[Log][0:0:1:152]Engine/Shaders/Default/PureColor_Fragment.shadapter load
+[Log][0:0:1:178]Engine/Shaders/Default/Toon_Fragment.shadapter load
+[Log][0:0:1:209]Engine/Shaders/Default/Toon_IBL_Fragment.shadapter load
+[Log][0:0:1:221]Engine/Banner folder
+[Log][0:0:1:225]Engine/Banner/Banner.bmp load
+[Error][0:0:1:226]Engine/Banner/Banner.png Banner load failed
+[Log][0:0:1:232]Engine/Banner/Banne_old.png load
+[Log][0:0:1:232]Engine/Fonts folder
+[Log][0:0:1:232]Engine/Icons folder
+[Log][0:0:1:234]Engine/Icons/Animation_Icon.png load
+[Log][0:0:1:236]Engine/Icons/AssetFile_Icon.png load
+[Log][0:0:1:238]Engine/Icons/Audio_Icon.png load
+[Log][0:0:1:240]Engine/Icons/Folder_Icon.png load
+[Log][0:0:1:241]Engine/Icons/Material_Icon.png load
+[Log][0:0:1:243]Engine/Icons/Model_Icon.png load
+[Log][0:0:1:245]Engine/Icons/Python_Icon.png load
+[Log][0:0:1:246]Engine/Icons/SkeletonMesh_Icon.png load
+[Log][0:0:1:247]Engine/LUTS folder
+[Log][0:0:1:253]Engine/LUTS/arapaho_lut.png load
+[Log][0:0:1:259]Engine/LUTS/aspen_lut.png load
+[Log][0:0:1:267]Engine/LUTS/BlacKkKlansman_lut.png load
+[Log][0:0:1:275]Engine/LUTS/bluegreen_lut.png load
+[Log][0:0:1:282]Engine/LUTS/C-8120-STD_lut.png load
+[Log][0:0:1:288]Engine/LUTS/C-9730-STD_lut.png load
+[Log][0:0:1:294]Engine/LUTS/darkest_hour_lut.png load
+[Log][0:0:1:301]Engine/LUTS/F-6800-STD_lut.png load
+[Log][0:0:1:307]Engine/LUTS/F-8700-STD_lut.png load
+[Log][0:0:1:314]Engine/LUTS/F-8700-V2-STD_lut.png load
+[Log][0:0:1:321]Engine/LUTS/greygreen_lut.png load
+[Log][0:0:1:328]Engine/LUTS/H-9110-STD_lut.png load
+[Log][0:0:1:334]Engine/LUTS/humble_lut.png load
+[Log][0:0:1:341]Engine/LUTS/kodak-5205-fuji_lut.png load
+[Log][0:0:1:348]Engine/LUTS/oldman_lut.png load
+[Log][0:0:1:355]Engine/LUTS/sedona_lut.png load
+[Log][0:0:1:361]Engine/LUTS/W-8370-STD_lut.png load
+[Log][0:0:1:367]Engine/LUTS/W-ARAPAHO-33-STD_lut.png load
+[Log][0:0:1:373]Engine/LUTS/X-6500-STD_lut.png load
+[Log][0:0:1:379]Engine/LUTS/X-9400-STD_lut.png load
+[Log][0:0:1:379]Engine/Shaders folder
+[Log][0:0:1:380]Engine/Shaders/ClearColor.mat load
+[Log][0:0:1:380]Engine/Shaders/Default folder
+[Warn][0:0:1:381]Engine/Shaders/Default/Default_Default.shadapter unknown file type
+[Error][0:0:1:381]Engine/Shaders/Default/Default_Default.shadapter Default_Default load failed
+[Warn][0:0:1:381]Engine/Shaders/Default/Default_Outline.shadapter unknown file type
+[Error][0:0:1:382]Engine/Shaders/Default/Default_Outline.shadapter Default_Outline load failed
+[Warn][0:0:1:382]Engine/Shaders/Default/Default_Position.shadapter unknown file type
+[Error][0:0:1:382]Engine/Shaders/Default/Default_Position.shadapter Default_Position load failed
+[Warn][0:0:1:383]Engine/Shaders/Default/Default_PostProcess.shadapter unknown file type
+[Error][0:0:1:383]Engine/Shaders/Default/Default_PostProcess.shadapter Default_PostProcess load failed
+[Warn][0:0:1:384]Engine/Shaders/Default/Empty_Fragment.shadapter unknown file type
+[Error][0:0:1:384]Engine/Shaders/Default/Empty_Fragment.shadapter Empty_Fragment load failed
+[Warn][0:0:1:385]Engine/Shaders/Default/PBR_Fragment.shadapter unknown file type
+[Error][0:0:1:385]Engine/Shaders/Default/PBR_Fragment.shadapter PBR_Fragment load failed
+[Warn][0:0:1:385]Engine/Shaders/Default/PBR_IBL_Fragment.shadapter unknown file type
+[Error][0:0:1:386]Engine/Shaders/Default/PBR_IBL_Fragment.shadapter PBR_IBL_Fragment load failed
+[Warn][0:0:1:386]Engine/Shaders/Default/PureColor_Fragment.shadapter unknown file type
+[Error][0:0:1:387]Engine/Shaders/Default/PureColor_Fragment.shadapter PureColor_Fragment load failed
+[Warn][0:0:1:387]Engine/Shaders/Default/Toon_Fragment.shadapter unknown file type
+[Error][0:0:1:387]Engine/Shaders/Default/Toon_Fragment.shadapter Toon_Fragment load failed
+[Warn][0:0:1:388]Engine/Shaders/Default/Toon_IBL_Fragment.shadapter unknown file type
+[Error][0:0:1:388]Engine/Shaders/Default/Toon_IBL_Fragment.shadapter Toon_IBL_Fragment load failed
+[Log][0:0:1:389]Engine/Shaders/Depth.mat load
+[Log][0:0:1:415]Engine/Shaders/Grass_Toon.mat load
+[Log][0:0:1:416]Engine/Shaders/lib folder
+[Warn][0:0:1:416]Engine/Shaders/lib/Basic_FS_Lib.hmat unknown file type
+[Error][0:0:1:417]Engine/Shaders/lib/Basic_FS_Lib.hmat Basic_FS_Lib load failed
+[Warn][0:0:1:417]Engine/Shaders/lib/Basic_VS_Lib.hmat unknown file type
+[Error][0:0:1:417]Engine/Shaders/lib/Basic_VS_Lib.hmat Basic_VS_Lib load failed
+[Warn][0:0:1:418]Engine/Shaders/lib/Bindings_Def.hmat unknown file type
+[Error][0:0:1:418]Engine/Shaders/lib/Bindings_Def.hmat Bindings_Def load failed
+[Warn][0:0:1:419]Engine/Shaders/lib/CameraData_Def.hmat unknown file type
+[Error][0:0:1:419]Engine/Shaders/lib/CameraData_Def.hmat CameraData_Def load failed
+[Warn][0:0:1:420]Engine/Shaders/lib/Const_Def.hmat unknown file type
+[Error][0:0:1:420]Engine/Shaders/lib/Const_Def.hmat Const_Def load failed
+[Warn][0:0:1:420]Engine/Shaders/lib/Light_Def.hmat unknown file type
+[Error][0:0:1:421]Engine/Shaders/lib/Light_Def.hmat Light_Def load failed
+[Warn][0:0:1:421]Engine/Shaders/lib/MeshData_Def.hmat unknown file type
+[Error][0:0:1:421]Engine/Shaders/lib/MeshData_Def.hmat MeshData_Def load failed
+[Warn][0:0:1:422]Engine/Shaders/lib/MorphData_Def.hmat unknown file type
+[Error][0:0:1:422]Engine/Shaders/lib/MorphData_Def.hmat MorphData_Def load failed
+[Warn][0:0:1:423]Engine/Shaders/lib/ParticleData_Def.hmat unknown file type
+[Error][0:0:1:423]Engine/Shaders/lib/ParticleData_Def.hmat ParticleData_Def load failed
+[Warn][0:0:1:423]Engine/Shaders/lib/PBR_Lib.hmat unknown file type
+[Error][0:0:1:424]Engine/Shaders/lib/PBR_Lib.hmat PBR_Lib load failed
+[Warn][0:0:1:424]Engine/Shaders/lib/PostProcess_Def.hmat unknown file type
+[Error][0:0:1:425]Engine/Shaders/lib/PostProcess_Def.hmat PostProcess_Def load failed
+[Warn][0:0:1:425]Engine/Shaders/lib/SkeletonMeshData_Def.hmat unknown file type
+[Error][0:0:1:425]Engine/Shaders/lib/SkeletonMeshData_Def.hmat SkeletonMeshData_Def load failed
+[Warn][0:0:1:426]Engine/Shaders/lib/Toon_Lib.hmat unknown file type
+[Error][0:0:1:426]Engine/Shaders/lib/Toon_Lib.hmat Toon_Lib load failed
+[Warn][0:0:1:426]Engine/Shaders/lib/TransformData_Def.hmat unknown file type
+[Error][0:0:1:427]Engine/Shaders/lib/TransformData_Def.hmat TransformData_Def load failed
+[Error][0:0:1:427]Engine/Shaders/Outline.mat Outline load failed
+[Log][0:0:1:428]Engine/Shaders/PBR_IBL_Transparent.mat load
+[Log][0:0:1:428]Engine/Shaders/PostProcess folder
+[Log][0:0:1:431]Engine/Shaders/PostProcess/BlitPass.mat load
+[Log][0:0:1:448]Engine/Shaders/PostProcess/BloomPassFS.mat load
+[Log][0:0:1:470]Engine/Shaders/PostProcess/DOFPassFS.mat load
+[Log][0:0:1:582]Engine/Shaders/PostProcess/SSAOPassFS.mat load
+[Log][0:0:1:605]Engine/Shaders/PostProcess/ToneMapPass.mat load
+[Log][0:0:1:606]Engine/Shaders/Toon.mat load
+[Log][0:0:1:636]Engine/Shaders/Toon_Dither.mat load
 [Log][0:0:1:636]Engine/Shaders/Toon_IBL.mat load
-[Log][0:0:1:636]Engine/Shaders/Toon_Transparent.mat load
+[Log][0:0:1:637]Engine/Shaders/Toon_Transparent.mat load
 [Log][0:0:1:662]Engine/Shaders/Toon_UV.mat load
 [Log][0:0:1:663]Engine/Shapes folder
-[Log][0:0:1:665]Engine/Shapes/column.fbx load
+[Log][0:0:1:664]Engine/Shapes/column.fbx load
 [Log][0:0:1:667]Engine/Shapes/Cone.fbx load
 [Log][0:0:1:668]Engine/Shapes/hemisphere.fbx load
 [Log][0:0:1:673]Engine/Shapes/UnitBox.obj load
 [Log][0:0:1:675]Engine/Shapes/UnitSphere.fbx load
 [Log][0:0:1:675]Engine/SkySphere folder
-[Log][0:0:1:685]Engine/SkySphere/Clouds.tga load
+[Log][0:0:1:686]Engine/SkySphere/Clouds.tga load
 [Log][0:0:1:702]Engine/SkySphere/Sky.mat load
-[Log][0:0:1:721]Engine/SkySphere/Sky.tga load
-[Log][0:0:1:727]Engine/SkySphere/Space.mat load
-[Log][0:0:1:744]Engine/SkySphere/Sphere.obj load
-[Log][0:0:1:752]Engine/SkySphere/Sphere1.obj load
-[Log][0:0:1:754]Engine/SkySphere/Stars.tga load
-[Log][0:0:1:755]Engine/Textures folder
-[Error][0:0:1:755]Engine/Textures/Black.png Black load failed
-[Error][0:0:1:756]Engine/Textures/default_lut.png default_lut load failed
-[Log][0:0:1:756]Engine/Textures/Default_N.png load
-[Log][0:0:1:762]Engine/Textures/env.jpg load
-[Log][0:0:1:763]Engine/Textures/env_ir.tga load
-[Log][0:0:1:766]Engine/Textures/env_prefilter.mip load
-[Log][0:0:1:770]Engine/Textures/GridInfo.png load
-[Error][0:0:1:770]Engine/Textures/ibl_brdf_lut.png ibl_brdf_lut load failed
-[Log][0:0:1:778]Engine/Textures/ibl_hdr_radiance.png load
-[Log][0:0:1:779]Engine/Textures/Smoke.tga load
-[Log][0:0:1:784]Engine/Textures/SmokeNoise.png load
-[Log][0:0:1:821]Engine/Textures/SpaceBox.tga load
-[Log][0:0:1:822]Engine/Textures/SpaceBox_irr.tga load
-[Log][0:0:1:833]Engine/Textures/SpaceBox_prefilter.mip load
-[Log][0:0:1:863]Engine/Textures/ssaoRand.png load
-[Log][0:0:1:877]Engine/Textures/ssaoRand1.jpg load
-[Log][0:0:1:895]Engine/Textures/StarTexP.tga load
-[Error][0:0:1:896]Engine/Textures/White.png White load failed
-[Log][0:0:1:897]Content/Jorney_clothes_v2 folder
-[Log][0:0:1:900]Content/Jorney_clothes_v2/Cloth and Character_Ambient_occlusion.png load
-[Log][0:0:1:936]Content/Jorney_clothes_v2/Cloth and Character_Base_Color_v1.png load
-[Log][0:0:1:972]Content/Jorney_clothes_v2/Cloth and Character_Base_Color_v2.png load
-[Log][0:0:2:9]Content/Jorney_clothes_v2/Cloth and Character_Base_Color_v3.png load
-[Log][0:0:2:46]Content/Jorney_clothes_v2/Cloth and Character_Base_Color_v4.png load
-[Log][0:0:2:64]Content/Jorney_clothes_v2/Cloth and Character_Emissive.png load
-[Log][0:0:2:90]Content/Jorney_clothes_v2/Cloth and Character_Height.png load
-[Log][0:0:2:103]Content/Jorney_clothes_v2/Cloth and Character_Metallic.png load
-[Log][0:0:2:128]Content/Jorney_clothes_v2/Cloth and Character_Mixed_AO.png load
-[Log][0:0:2:223]Content/Jorney_clothes_v2/Cloth and Character_Normal.png load
-[Log][0:0:2:336]Content/Jorney_clothes_v2/Cloth and Character_Normal_OpenGL.png load
-[Log][0:0:2:366]Content/Jorney_clothes_v2/Cloth and Character_Roughness.png load
-[Log][0:0:2:482]Content/Jorney_clothes_v2/Jorney_clothes_v3.fbx load
-[Log][0:0:2:486]Content/MorphTest.fbx load
+[Log][0:0:1:723]Engine/SkySphere/Sky.tga load
+[Log][0:0:1:729]Engine/SkySphere/Space.mat load
+[Log][0:0:1:746]Engine/SkySphere/Sphere.obj load
+[Log][0:0:1:755]Engine/SkySphere/Sphere1.obj load
+[Log][0:0:1:756]Engine/SkySphere/Stars.tga load
+[Log][0:0:1:757]Engine/Textures folder
+[Error][0:0:1:757]Engine/Textures/Black.png Black load failed
+[Error][0:0:1:758]Engine/Textures/default_lut.png default_lut load failed
+[Log][0:0:1:758]Engine/Textures/Default_N.png load
+[Log][0:0:1:764]Engine/Textures/env.jpg load
+[Log][0:0:1:765]Engine/Textures/env_ir.tga load
+[Log][0:0:1:768]Engine/Textures/env_prefilter.mip load
+[Log][0:0:1:772]Engine/Textures/GridInfo.png load
+[Error][0:0:1:773]Engine/Textures/ibl_brdf_lut.png ibl_brdf_lut load failed
+[Log][0:0:1:781]Engine/Textures/ibl_hdr_radiance.png load
+[Log][0:0:1:782]Engine/Textures/Smoke.tga load
+[Log][0:0:1:787]Engine/Textures/SmokeNoise.png load
+[Log][0:0:1:823]Engine/Textures/SpaceBox.tga load
+[Log][0:0:1:825]Engine/Textures/SpaceBox_irr.tga load
+[Log][0:0:1:835]Engine/Textures/SpaceBox_prefilter.mip load
+[Log][0:0:1:864]Engine/Textures/ssaoRand.png load
+[Log][0:0:1:879]Engine/Textures/ssaoRand1.jpg load
+[Log][0:0:1:897]Engine/Textures/StarTexP.tga load
+[Error][0:0:1:897]Engine/Textures/White.png White load failed
+[Log][0:0:1:898]Content/Jorney_clothes_v2 folder
+[Log][0:0:1:902]Content/Jorney_clothes_v2/Cloth and Character_Ambient_occlusion.png load
+[Log][0:0:1:938]Content/Jorney_clothes_v2/Cloth and Character_Base_Color_v1.png load
+[Log][0:0:1:974]Content/Jorney_clothes_v2/Cloth and Character_Base_Color_v2.png load
+[Log][0:0:2:10]Content/Jorney_clothes_v2/Cloth and Character_Base_Color_v3.png load
+[Log][0:0:2:48]Content/Jorney_clothes_v2/Cloth and Character_Base_Color_v4.png load
+[Log][0:0:2:66]Content/Jorney_clothes_v2/Cloth and Character_Emissive.png load
+[Log][0:0:2:91]Content/Jorney_clothes_v2/Cloth and Character_Height.png load
+[Log][0:0:2:104]Content/Jorney_clothes_v2/Cloth and Character_Metallic.png load
+[Log][0:0:2:130]Content/Jorney_clothes_v2/Cloth and Character_Mixed_AO.png load
+[Log][0:0:2:226]Content/Jorney_clothes_v2/Cloth and Character_Normal.png load
+[Log][0:0:2:337]Content/Jorney_clothes_v2/Cloth and Character_Normal_OpenGL.png load
+[Log][0:0:2:367]Content/Jorney_clothes_v2/Cloth and Character_Roughness.png load
+[Log][0:0:2:483]Content/Jorney_clothes_v2/Jorney_clothes_v3.fbx load
+[Log][0:0:2:487]Content/MorphTest.fbx load
 [Log][0:0:2:487]Content/Scene folder
-[Log][0:0:2:487]Content/Scene/MagicMiku folder
+[Log][0:0:2:488]Content/Scene/MagicMiku folder
 [Log][0:0:2:633]Content/Scene/MagicMiku/Idle_MagicMiku.charanim load
 [Log][0:0:2:646]Content/Scene/MagicMiku/MagicMiku.asset load
-[Log][0:0:3:359]Content/Scene/MagicMiku/MagicMiku.pmx load
-[Log][0:0:3:399]Content/Scene/MagicMiku/MagicMiku_C.png load
-[Log][0:0:3:426]Content/Scene/MagicMiku/MagicMiku_C2.jpg load
-[Log][0:0:3:453]Content/Scene/MagicMiku/MagicMiku_chouapoa.jpg load
+[Log][0:0:3:360]Content/Scene/MagicMiku/MagicMiku.pmx load
+[Log][0:0:3:400]Content/Scene/MagicMiku/MagicMiku_C.png load
+[Log][0:0:3:427]Content/Scene/MagicMiku/MagicMiku_C2.jpg load
+[Log][0:0:3:454]Content/Scene/MagicMiku/MagicMiku_chouapoa.jpg load
 [Log][0:0:3:493]Content/Scene/MagicMiku/MagicMiku_glowingpart.jpg load
 [Log][0:0:3:518]Content/Scene/MagicMiku/MagicMiku_Hair01.png load
 [Log][0:0:3:566]Content/Scene/MagicMiku/MagicMiku_Hair02.png load
-[Log][0:0:3:609]Content/Scene/MagicMiku/MagicMiku_head.png load
-[Log][0:0:3:650]Content/Scene/MagicMiku/MagicMiku_outfit1.jpg load
-[Log][0:0:3:692]Content/Scene/MagicMiku/MagicMiku_outfit2.jpg load
-[Log][0:0:3:729]Content/Scene/MagicMiku/MagicMiku_skin.png load
-[Log][0:0:3:762]Content/Scene/MagicMiku/MagicMiku_skin2.png load
-[Log][0:0:3:768]Content/Scene/MagicMiku/MagicMiku_under.jpg load
-[Log][0:0:3:779]Content/Scene/MagicMiku/Run_MagicMiku.charanim load
+[Log][0:0:3:608]Content/Scene/MagicMiku/MagicMiku_head.png load
+[Log][0:0:3:649]Content/Scene/MagicMiku/MagicMiku_outfit1.jpg load
+[Log][0:0:3:690]Content/Scene/MagicMiku/MagicMiku_outfit2.jpg load
+[Log][0:0:3:727]Content/Scene/MagicMiku/MagicMiku_skin.png load
+[Log][0:0:3:760]Content/Scene/MagicMiku/MagicMiku_skin2.png load
+[Log][0:0:3:766]Content/Scene/MagicMiku/MagicMiku_under.jpg load
+[Log][0:0:3:777]Content/Scene/MagicMiku/Run_MagicMiku.charanim load
 [Log][0:0:3:798]Content/Scene/MagicMiku/Walk_MagicMiku.charanim load
 [Log][0:0:3:822]Content/Scene/MagicMiku/Weekender Girl.wav load
-[Log][0:0:3:847]Content/Scene/MagicMiku/Weekender_Girl_camera.camanim load
-[Log][0:0:3:848]Content/Scene/Material folder
-[Log][0:0:3:848]Content/Scene/Mesh folder
-[Log][0:0:3:851]Content/Scene/Mesh/Grass.fbx load
-[Log][0:0:3:851]Content/Scene/Texture folder
-[Log][0:0:3:903]Content/Scene/Texture/Noise.png load
-[Log][0:0:3:908]Content/Scene/Texture/Plate1.png load
-[Log][0:0:3:910]Content/Scene/Texture/Plate1_Mask.png load
-[Log][0:0:3:914]Content/Scene/Texture/Plate2.png load
-[Log][0:0:3:916]Content/Scene/Texture/Plate2_Mask.png load
-[Log][0:0:3:920]Content/Scene/Texture/Plate3.png load
-[Log][0:0:3:922]Content/Scene/Texture/Plate3_Mask.png load
-[Log][0:0:4:29]Content/Scene/Texture/tk4eaafr_2K_Albedo.jpg load
-[Log][0:0:4:166]Content/Scene/Texture/tk4eaafr_2K_Normal.jpg load
-[Log][0:0:4:166]Content/Student folder
-[Log][0:0:4:195]Content/Student/ST001.jpg load
-[Log][0:0:4:204]Content/Student/ST002.jpg load
-[Log][0:0:4:249]Content/Student/Student.fbx load
-[Log][0:0:4:249]Content/Student/StudentPack.asset load
-[Log][0:0:4:252]Content/TestSkeleton.fbx load
-[Log][0:0:4:253]Content/world.asset load
-[Warn][0:0:4:253]When loading Content/GroundM.imat, 'white' is not found.
-[Log][0:0:4:253]Content/GroundM.imat load
-[Warn][0:0:4:254]When loading Content/Jorney_clothes_v2/JorneyMat.imat, 'white' is not found.
-[Log][0:0:4:254]Content/Jorney_clothes_v2/JorneyMat.imat load
-[Warn][0:0:4:254]When loading Content/Scene/MagicMiku/MagicMiku_arm glove.imat, 'white' is not found.
-[Log][0:0:4:255]Content/Scene/MagicMiku/MagicMiku_arm glove.imat load
-[Warn][0:0:4:255]When loading Content/Scene/MagicMiku/MagicMiku_belt b.imat, 'white' is not found.
-[Log][0:0:4:255]Content/Scene/MagicMiku/MagicMiku_belt b.imat load
-[Warn][0:0:4:255]When loading Content/Scene/MagicMiku/MagicMiku_belt gear black.imat, 'white' is not found.
-[Log][0:0:4:256]Content/Scene/MagicMiku/MagicMiku_belt gear black.imat load
-[Warn][0:0:4:256]When loading Content/Scene/MagicMiku/MagicMiku_belt gear blue.imat, 'white' is not found.
-[Log][0:0:4:256]Content/Scene/MagicMiku/MagicMiku_belt gear blue.imat load
-[Warn][0:0:4:257]When loading Content/Scene/MagicMiku/MagicMiku_belt gear gold.imat, 'white' is not found.
-[Log][0:0:4:257]Content/Scene/MagicMiku/MagicMiku_belt gear gold.imat load
-[Warn][0:0:4:257]When loading Content/Scene/MagicMiku/MagicMiku_Belt heart.imat, 'white' is not found.
-[Log][0:0:4:258]Content/Scene/MagicMiku/MagicMiku_Belt heart.imat load
-[Warn][0:0:4:258]When loading Content/Scene/MagicMiku/MagicMiku_belt w.imat, 'white' is not found.
-[Log][0:0:4:258]Content/Scene/MagicMiku/MagicMiku_belt w.imat load
-[Warn][0:0:4:258]When loading Content/Scene/MagicMiku/MagicMiku_belt.imat, 'white' is not found.
-[Log][0:0:4:259]Content/Scene/MagicMiku/MagicMiku_belt.imat load
-[Warn][0:0:4:259]When loading Content/Scene/MagicMiku/MagicMiku_body.imat, 'white' is not found.
-[Log][0:0:4:259]Content/Scene/MagicMiku/MagicMiku_body.imat load
-[Warn][0:0:4:260]When loading Content/Scene/MagicMiku/MagicMiku_button arm.imat, 'white' is not found.
-[Log][0:0:4:260]Content/Scene/MagicMiku/MagicMiku_button arm.imat load
-[Warn][0:0:4:260]When loading Content/Scene/MagicMiku/MagicMiku_dress.imat, 'white' is not found.
-[Log][0:0:4:261]Content/Scene/MagicMiku/MagicMiku_dress.imat load
-[Warn][0:0:4:261]When loading Content/Scene/MagicMiku/MagicMiku_eyeball.imat, 'white' is not found.
-[Log][0:0:4:261]Content/Scene/MagicMiku/MagicMiku_eyeball.imat load
-[Warn][0:0:4:261]When loading Content/Scene/MagicMiku/MagicMiku_eyes.imat, 'white' is not found.
-[Log][0:0:4:262]Content/Scene/MagicMiku/MagicMiku_eyes.imat load
-[Warn][0:0:4:262]When loading Content/Scene/MagicMiku/MagicMiku_face01.imat, 'white' is not found.
-[Log][0:0:4:262]Content/Scene/MagicMiku/MagicMiku_face01.imat load
-[Warn][0:0:4:263]When loading Content/Scene/MagicMiku/MagicMiku_face02.imat, 'white' is not found.
-[Log][0:0:4:263]Content/Scene/MagicMiku/MagicMiku_face02.imat load
-[Warn][0:0:4:263]When loading Content/Scene/MagicMiku/MagicMiku_Facial01.imat, 'white' is not found.
-[Log][0:0:4:264]Content/Scene/MagicMiku/MagicMiku_Facial01.imat load
-[Warn][0:0:4:264]When loading Content/Scene/MagicMiku/MagicMiku_Facial02.imat, 'white' is not found.
-[Log][0:0:4:264]Content/Scene/MagicMiku/MagicMiku_Facial02.imat load
-[Warn][0:0:4:264]When loading Content/Scene/MagicMiku/MagicMiku_glove.imat, 'white' is not found.
-[Log][0:0:4:265]Content/Scene/MagicMiku/MagicMiku_glove.imat load
-[Warn][0:0:4:265]When loading Content/Scene/MagicMiku/MagicMiku_glowing part blue.imat, 'white' is not found.
-[Log][0:0:4:265]Content/Scene/MagicMiku/MagicMiku_glowing part blue.imat load
-[Warn][0:0:4:265]When loading Content/Scene/MagicMiku/MagicMiku_glowing part pink.imat, 'white' is not found.
-[Log][0:0:4:266]Content/Scene/MagicMiku/MagicMiku_glowing part pink.imat load
-[Warn][0:0:4:266]When loading Content/Scene/MagicMiku/MagicMiku_gold button.imat, 'white' is not found.
-[Log][0:0:4:266]Content/Scene/MagicMiku/MagicMiku_gold button.imat load
-[Warn][0:0:4:267]When loading Content/Scene/MagicMiku/MagicMiku_Hair01.imat, 'white' is not found.
-[Log][0:0:4:267]Content/Scene/MagicMiku/MagicMiku_Hair01.imat load
-[Warn][0:0:4:267]When loading Content/Scene/MagicMiku/MagicMiku_Hair03.imat, 'white' is not found.
-[Log][0:0:4:268]Content/Scene/MagicMiku/MagicMiku_Hair03.imat load
-[Warn][0:0:4:268]When loading Content/Scene/MagicMiku/MagicMiku_hat.imat, 'white' is not found.
-[Log][0:0:4:269]Content/Scene/MagicMiku/MagicMiku_hat.imat load
-[Warn][0:0:4:269]When loading Content/Scene/MagicMiku/MagicMiku_headset.imat, 'white' is not found.
-[Log][0:0:4:269]Content/Scene/MagicMiku/MagicMiku_headset.imat load
-[Warn][0:0:4:269]When loading Content/Scene/MagicMiku/MagicMiku_HL.imat, 'white' is not found.
-[Log][0:0:4:270]Content/Scene/MagicMiku/MagicMiku_HL.imat load
-[Warn][0:0:4:270]When loading Content/Scene/MagicMiku/MagicMiku_neck frills.imat, 'white' is not found.
-[Log][0:0:4:271]Content/Scene/MagicMiku/MagicMiku_neck frills.imat load
-[Warn][0:0:4:271]When loading Content/Scene/MagicMiku/MagicMiku_neck tie.imat, 'white' is not found.
-[Log][0:0:4:271]Content/Scene/MagicMiku/MagicMiku_neck tie.imat load
-[Warn][0:0:4:271]When loading Content/Scene/MagicMiku/MagicMiku_neck.imat, 'white' is not found.
-[Log][0:0:4:272]Content/Scene/MagicMiku/MagicMiku_neck.imat load
-[Warn][0:0:4:272]When loading Content/Scene/MagicMiku/MagicMiku_New.imat, 'white' is not found.
-[Log][0:0:4:272]Content/Scene/MagicMiku/MagicMiku_New.imat load
-[Warn][0:0:4:273]When loading Content/Scene/MagicMiku/MagicMiku_oral cavity.imat, 'white' is not found.
-[Log][0:0:4:273]Content/Scene/MagicMiku/MagicMiku_oral cavity.imat load
-[Warn][0:0:4:273]When loading Content/Scene/MagicMiku/MagicMiku_shoes  sole.imat, 'white' is not found.
-[Log][0:0:4:274]Content/Scene/MagicMiku/MagicMiku_shoes  sole.imat load
-[Warn][0:0:4:274]When loading Content/Scene/MagicMiku/MagicMiku_shoes black.imat, 'white' is not found.
-[Log][0:0:4:274]Content/Scene/MagicMiku/MagicMiku_shoes black.imat load
-[Warn][0:0:4:274]When loading Content/Scene/MagicMiku/MagicMiku_shoes glowing part.imat, 'white' is not found.
-[Log][0:0:4:275]Content/Scene/MagicMiku/MagicMiku_shoes glowing part.imat load
-[Warn][0:0:4:275]When loading Content/Scene/MagicMiku/MagicMiku_shoes white.imat, 'white' is not found.
-[Log][0:0:4:275]Content/Scene/MagicMiku/MagicMiku_shoes white.imat load
-[Warn][0:0:4:276]When loading Content/Scene/MagicMiku/MagicMiku_socks.imat, 'white' is not found.
-[Log][0:0:4:276]Content/Scene/MagicMiku/MagicMiku_socks.imat load
-[Warn][0:0:4:276]When loading Content/Scene/MagicMiku/MagicMiku_tongue.imat, 'white' is not found.
-[Log][0:0:4:277]Content/Scene/MagicMiku/MagicMiku_tongue.imat load
-[Warn][0:0:4:277]When loading Content/Scene/MagicMiku/MagicMiku_tooth.imat, 'white' is not found.
-[Log][0:0:4:277]Content/Scene/MagicMiku/MagicMiku_tooth.imat load
-[Warn][0:0:4:277]When loading Content/Scene/MagicMiku/MagicMiku_top.imat, 'white' is not found.
-[Log][0:0:4:278]Content/Scene/MagicMiku/MagicMiku_top.imat load
-[Warn][0:0:4:278]When loading Content/Scene/MagicMiku/MagicMiku_underdress.imat, 'white' is not found.
-[Log][0:0:4:278]Content/Scene/MagicMiku/MagicMiku_underdress.imat load
-[Warn][0:0:4:279]When loading Content/Scene/Material/GrassM1.imat, 'white' is not found.
-[Log][0:0:4:279]Content/Scene/Material/GrassM1.imat load
-[Warn][0:0:4:279]When loading Content/Scene/Material/GrassM2.imat, 'white' is not found.
-[Log][0:0:4:279]Content/Scene/Material/GrassM2.imat load
-[Warn][0:0:4:280]When loading Content/Scene/Material/GrassM3.imat, 'white' is not found.
-[Log][0:0:4:280]Content/Scene/Material/GrassM3.imat load
-[Warn][0:0:4:280]When loading Content/Student/Student_BagM.imat, 'white' is not found.
-[Warn][0:0:4:280]When loading Content/Student/Student_BagM.imat, 'white' is not found.
-[Log][0:0:4:281]Content/Student/Student_BagM.imat load
-[Warn][0:0:4:281]When loading Content/Student/Student_BodyM.imat, 'white' is not found.
-[Warn][0:0:4:281]When loading Content/Student/Student_BodyM.imat, 'white' is not found.
-[Log][0:0:4:281]Content/Student/Student_BodyM.imat load
-[Warn][0:0:4:332]When loading Memory, 'white' is not found.
-[Warn][0:0:4:332]When loading Memory, 'white' is not found.
-[Warn][0:0:4:332]When loading Memory, 'white' is not found.
+[Log][0:0:3:846]Content/Scene/MagicMiku/Weekender_Girl_camera.camanim load
+[Log][0:0:3:847]Content/Scene/Material folder
+[Log][0:0:3:847]Content/Scene/Mesh folder
+[Log][0:0:3:849]Content/Scene/Mesh/Grass.fbx load
+[Log][0:0:3:850]Content/Scene/Texture folder
+[Log][0:0:3:902]Content/Scene/Texture/Noise.png load
+[Log][0:0:3:906]Content/Scene/Texture/Plate1.png load
+[Log][0:0:3:908]Content/Scene/Texture/Plate1_Mask.png load
+[Log][0:0:3:912]Content/Scene/Texture/Plate2.png load
+[Log][0:0:3:914]Content/Scene/Texture/Plate2_Mask.png load
+[Log][0:0:3:918]Content/Scene/Texture/Plate3.png load
+[Log][0:0:3:920]Content/Scene/Texture/Plate3_Mask.png load
+[Log][0:0:4:24]Content/Scene/Texture/tk4eaafr_2K_Albedo.jpg load
+[Log][0:0:4:158]Content/Scene/Texture/tk4eaafr_2K_Normal.jpg load
+[Log][0:0:4:158]Content/Student folder
+[Log][0:0:4:186]Content/Student/ST001.jpg load
+[Log][0:0:4:195]Content/Student/ST002.jpg load
+[Log][0:0:4:240]Content/Student/Student.fbx load
+[Log][0:0:4:240]Content/Student/StudentPack.asset load
+[Log][0:0:4:243]Content/TestSkeleton.fbx load
+[Log][0:0:4:244]Content/world.asset load
+[Warn][0:0:4:244]When loading Content/GroundM.imat, 'white' is not found.
+[Log][0:0:4:244]Content/GroundM.imat load
+[Warn][0:0:4:245]When loading Content/Jorney_clothes_v2/JorneyMat.imat, 'white' is not found.
+[Log][0:0:4:245]Content/Jorney_clothes_v2/JorneyMat.imat load
+[Warn][0:0:4:245]When loading Content/Scene/MagicMiku/MagicMiku_arm glove.imat, 'white' is not found.
+[Log][0:0:4:246]Content/Scene/MagicMiku/MagicMiku_arm glove.imat load
+[Warn][0:0:4:246]When loading Content/Scene/MagicMiku/MagicMiku_belt b.imat, 'white' is not found.
+[Log][0:0:4:246]Content/Scene/MagicMiku/MagicMiku_belt b.imat load
+[Warn][0:0:4:246]When loading Content/Scene/MagicMiku/MagicMiku_belt gear black.imat, 'white' is not found.
+[Log][0:0:4:247]Content/Scene/MagicMiku/MagicMiku_belt gear black.imat load
+[Warn][0:0:4:247]When loading Content/Scene/MagicMiku/MagicMiku_belt gear blue.imat, 'white' is not found.
+[Log][0:0:4:247]Content/Scene/MagicMiku/MagicMiku_belt gear blue.imat load
+[Warn][0:0:4:248]When loading Content/Scene/MagicMiku/MagicMiku_belt gear gold.imat, 'white' is not found.
+[Log][0:0:4:248]Content/Scene/MagicMiku/MagicMiku_belt gear gold.imat load
+[Warn][0:0:4:248]When loading Content/Scene/MagicMiku/MagicMiku_Belt heart.imat, 'white' is not found.
+[Log][0:0:4:248]Content/Scene/MagicMiku/MagicMiku_Belt heart.imat load
+[Warn][0:0:4:249]When loading Content/Scene/MagicMiku/MagicMiku_belt w.imat, 'white' is not found.
+[Log][0:0:4:249]Content/Scene/MagicMiku/MagicMiku_belt w.imat load
+[Warn][0:0:4:249]When loading Content/Scene/MagicMiku/MagicMiku_belt.imat, 'white' is not found.
+[Log][0:0:4:250]Content/Scene/MagicMiku/MagicMiku_belt.imat load
+[Warn][0:0:4:250]When loading Content/Scene/MagicMiku/MagicMiku_body.imat, 'white' is not found.
+[Log][0:0:4:251]Content/Scene/MagicMiku/MagicMiku_body.imat load
+[Warn][0:0:4:251]When loading Content/Scene/MagicMiku/MagicMiku_button arm.imat, 'white' is not found.
+[Log][0:0:4:251]Content/Scene/MagicMiku/MagicMiku_button arm.imat load
+[Warn][0:0:4:251]When loading Content/Scene/MagicMiku/MagicMiku_dress.imat, 'white' is not found.
+[Log][0:0:4:252]Content/Scene/MagicMiku/MagicMiku_dress.imat load
+[Warn][0:0:4:252]When loading Content/Scene/MagicMiku/MagicMiku_eyeball.imat, 'white' is not found.
+[Log][0:0:4:252]Content/Scene/MagicMiku/MagicMiku_eyeball.imat load
+[Warn][0:0:4:253]When loading Content/Scene/MagicMiku/MagicMiku_eyes.imat, 'white' is not found.
+[Log][0:0:4:253]Content/Scene/MagicMiku/MagicMiku_eyes.imat load
+[Warn][0:0:4:253]When loading Content/Scene/MagicMiku/MagicMiku_face01.imat, 'white' is not found.
+[Log][0:0:4:254]Content/Scene/MagicMiku/MagicMiku_face01.imat load
+[Warn][0:0:4:254]When loading Content/Scene/MagicMiku/MagicMiku_face02.imat, 'white' is not found.
+[Log][0:0:4:254]Content/Scene/MagicMiku/MagicMiku_face02.imat load
+[Warn][0:0:4:254]When loading Content/Scene/MagicMiku/MagicMiku_Facial01.imat, 'white' is not found.
+[Log][0:0:4:255]Content/Scene/MagicMiku/MagicMiku_Facial01.imat load
+[Warn][0:0:4:255]When loading Content/Scene/MagicMiku/MagicMiku_Facial02.imat, 'white' is not found.
+[Log][0:0:4:255]Content/Scene/MagicMiku/MagicMiku_Facial02.imat load
+[Warn][0:0:4:255]When loading Content/Scene/MagicMiku/MagicMiku_glove.imat, 'white' is not found.
+[Log][0:0:4:256]Content/Scene/MagicMiku/MagicMiku_glove.imat load
+[Warn][0:0:4:256]When loading Content/Scene/MagicMiku/MagicMiku_glowing part blue.imat, 'white' is not found.
+[Log][0:0:4:257]Content/Scene/MagicMiku/MagicMiku_glowing part blue.imat load
+[Warn][0:0:4:257]When loading Content/Scene/MagicMiku/MagicMiku_glowing part pink.imat, 'white' is not found.
+[Log][0:0:4:257]Content/Scene/MagicMiku/MagicMiku_glowing part pink.imat load
+[Warn][0:0:4:257]When loading Content/Scene/MagicMiku/MagicMiku_gold button.imat, 'white' is not found.
+[Log][0:0:4:258]Content/Scene/MagicMiku/MagicMiku_gold button.imat load
+[Warn][0:0:4:258]When loading Content/Scene/MagicMiku/MagicMiku_Hair01.imat, 'white' is not found.
+[Log][0:0:4:258]Content/Scene/MagicMiku/MagicMiku_Hair01.imat load
+[Warn][0:0:4:259]When loading Content/Scene/MagicMiku/MagicMiku_Hair03.imat, 'white' is not found.
+[Log][0:0:4:259]Content/Scene/MagicMiku/MagicMiku_Hair03.imat load
+[Warn][0:0:4:259]When loading Content/Scene/MagicMiku/MagicMiku_hat.imat, 'white' is not found.
+[Log][0:0:4:260]Content/Scene/MagicMiku/MagicMiku_hat.imat load
+[Warn][0:0:4:260]When loading Content/Scene/MagicMiku/MagicMiku_headset.imat, 'white' is not found.
+[Log][0:0:4:260]Content/Scene/MagicMiku/MagicMiku_headset.imat load
+[Warn][0:0:4:260]When loading Content/Scene/MagicMiku/MagicMiku_HL.imat, 'white' is not found.
+[Log][0:0:4:261]Content/Scene/MagicMiku/MagicMiku_HL.imat load
+[Warn][0:0:4:261]When loading Content/Scene/MagicMiku/MagicMiku_neck frills.imat, 'white' is not found.
+[Log][0:0:4:261]Content/Scene/MagicMiku/MagicMiku_neck frills.imat load
+[Warn][0:0:4:262]When loading Content/Scene/MagicMiku/MagicMiku_neck tie.imat, 'white' is not found.
+[Log][0:0:4:262]Content/Scene/MagicMiku/MagicMiku_neck tie.imat load
+[Warn][0:0:4:262]When loading Content/Scene/MagicMiku/MagicMiku_neck.imat, 'white' is not found.
+[Log][0:0:4:262]Content/Scene/MagicMiku/MagicMiku_neck.imat load
+[Warn][0:0:4:263]When loading Content/Scene/MagicMiku/MagicMiku_New.imat, 'white' is not found.
+[Log][0:0:4:263]Content/Scene/MagicMiku/MagicMiku_New.imat load
+[Warn][0:0:4:263]When loading Content/Scene/MagicMiku/MagicMiku_oral cavity.imat, 'white' is not found.
+[Log][0:0:4:264]Content/Scene/MagicMiku/MagicMiku_oral cavity.imat load
+[Warn][0:0:4:264]When loading Content/Scene/MagicMiku/MagicMiku_shoes  sole.imat, 'white' is not found.
+[Log][0:0:4:264]Content/Scene/MagicMiku/MagicMiku_shoes  sole.imat load
+[Warn][0:0:4:264]When loading Content/Scene/MagicMiku/MagicMiku_shoes black.imat, 'white' is not found.
+[Log][0:0:4:265]Content/Scene/MagicMiku/MagicMiku_shoes black.imat load
+[Warn][0:0:4:265]When loading Content/Scene/MagicMiku/MagicMiku_shoes glowing part.imat, 'white' is not found.
+[Log][0:0:4:265]Content/Scene/MagicMiku/MagicMiku_shoes glowing part.imat load
+[Warn][0:0:4:266]When loading Content/Scene/MagicMiku/MagicMiku_shoes white.imat, 'white' is not found.
+[Log][0:0:4:266]Content/Scene/MagicMiku/MagicMiku_shoes white.imat load
+[Warn][0:0:4:266]When loading Content/Scene/MagicMiku/MagicMiku_socks.imat, 'white' is not found.
+[Log][0:0:4:267]Content/Scene/MagicMiku/MagicMiku_socks.imat load
+[Warn][0:0:4:267]When loading Content/Scene/MagicMiku/MagicMiku_tongue.imat, 'white' is not found.
+[Log][0:0:4:267]Content/Scene/MagicMiku/MagicMiku_tongue.imat load
+[Warn][0:0:4:268]When loading Content/Scene/MagicMiku/MagicMiku_tooth.imat, 'white' is not found.
+[Log][0:0:4:268]Content/Scene/MagicMiku/MagicMiku_tooth.imat load
+[Warn][0:0:4:268]When loading Content/Scene/MagicMiku/MagicMiku_top.imat, 'white' is not found.
+[Log][0:0:4:269]Content/Scene/MagicMiku/MagicMiku_top.imat load
+[Warn][0:0:4:269]When loading Content/Scene/MagicMiku/MagicMiku_underdress.imat, 'white' is not found.
+[Log][0:0:4:269]Content/Scene/MagicMiku/MagicMiku_underdress.imat load
+[Warn][0:0:4:270]When loading Content/Scene/Material/GrassM1.imat, 'white' is not found.
+[Log][0:0:4:270]Content/Scene/Material/GrassM1.imat load
+[Warn][0:0:4:270]When loading Content/Scene/Material/GrassM2.imat, 'white' is not found.
+[Log][0:0:4:270]Content/Scene/Material/GrassM2.imat load
+[Warn][0:0:4:271]When loading Content/Scene/Material/GrassM3.imat, 'white' is not found.
+[Log][0:0:4:271]Content/Scene/Material/GrassM3.imat load
+[Warn][0:0:4:271]When loading Content/Student/Student_BagM.imat, 'white' is not found.
+[Warn][0:0:4:271]When loading Content/Student/Student_BagM.imat, 'white' is not found.
+[Log][0:0:4:272]Content/Student/Student_BagM.imat load
+[Warn][0:0:4:272]When loading Content/Student/Student_BodyM.imat, 'white' is not found.
+[Warn][0:0:4:272]When loading Content/Student/Student_BodyM.imat, 'white' is not found.
+[Log][0:0:4:272]Content/Student/Student_BodyM.imat load
+[Warn][0:0:4:323]When loading Memory, 'white' is not found.
+[Warn][0:0:4:323]When loading Memory, 'white' is not found.
+[Warn][0:0:4:323]When loading Memory, 'white' is not found.
