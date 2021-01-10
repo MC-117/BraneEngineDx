@@ -8,6 +8,14 @@ UIControl::UIControl(Object& object, string name, bool defaultShow)
 	this->show = defaultShow;
 }
 
+UIControl::~UIControl()
+{
+}
+
+void UIControl::onPreAction(GUIRenderInfo& info)
+{
+}
+
 void UIControl::render(GUIRenderInfo& info)
 {
 }

@@ -28,6 +28,14 @@ public:
 	static HRESULT createShader(ID3D11Device* device, ShaderStageType type, ID3DBlob* pShaderBlob, ID3D11DeviceChild** ppShader);
 };
 
+struct DrawInfo
+{
+	unsigned int baseVertex;
+	unsigned int passID;
+	unsigned int user1;
+	unsigned int user2;
+};
+
 class DX11ShaderProgram : public ShaderProgram
 {
 public:
@@ -38,6 +46,8 @@ public:
 	ID3D11Buffer* matInsBuf = NULL;
 	unsigned char* matInsBufHost = NULL;
 	unsigned int matInsBufSize = 0;
+	DrawInfo drawInfo;
+	ID3D11Buffer* drawInfoBuf = NULL;
 	unordered_map<string, AttributeDesc> attributes;
 
 	DX11ShaderProgram(DX11Context& context);
@@ -48,11 +58,14 @@ public:
 	virtual AttributeDesc getAttributeOffset(const string& name);
 	virtual bool dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ);
 	virtual void memoryBarrier(unsigned int bitEnum);
+	virtual void uploadDrawInfo();
 	virtual void uploadData();
 
 	virtual void uploadAttribute(const string& name, unsigned int size, void* data);
 	virtual void uploadTexture(const string& name, ID3D11ShaderResourceView* tex, ID3D11SamplerState* sample);
 	virtual void uploadImage(const string& name, ID3D11UnorderedAccessView* tex);
+
+	void bindCBToStage(unsigned int index, ID3D11Buffer* buffer);
 };
 
 #endif // !_DX11SHADERSTAGE_H_

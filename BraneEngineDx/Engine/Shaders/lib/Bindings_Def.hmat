@@ -1,6 +1,7 @@
 #define VERTEX_MAX_BONE 4
 
-#define MAT_INS_BIND_INDEX b0
+#define DRAW_INFO_BIND_INDEX b0
+#define MAT_INS_BIND_INDEX b1
 #define TRANS_BIND_INDEX t0
 #define MORPHDATA_BIND_INDEX t1
 #define MORPHWEIGHT_BIND_INDEX t2
@@ -8,6 +9,23 @@
 #define CAM_BIND_INDEX t4
 #define DIRECT_LIGHT_BIND_INDEX t5
 #define POINT_LIGHT_BIND_INDEX t6
+
+#define __B0 b2
+#define __B1 b3
+#define __B2 b4
+#define __B3 b5
+#define __B4 b6
+#define __B5 b7
+#define __B6 b8
+#define __B7 b9
+#define __B8 b10
+#define __B9 b11
+#define __B10 b12
+#define __B11 b13
+#define __B12 b14
+#define __B13 b15
+#define __B14 b16
+#define __B15 b17
 
 #define __T0 t7
 #define __T1 t8
@@ -55,3 +73,11 @@ SamplerState tex##Sampler : SAMPLE_BINDING(id);
 
 #define DEF_MAT_BEGIN cbuffer MatInsBuf : register(MAT_INS_BIND_INDEX) {
 #define DEF_MAT_END };
+
+cbuffer DrawInfoBuf : register(DRAW_INFO_BIND_INDEX)
+{
+    uniform uint baseVertex;
+    uniform uint passID;
+    uniform uint user1;
+    uniform uint user2;
+};

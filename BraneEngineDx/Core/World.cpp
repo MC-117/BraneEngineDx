@@ -101,7 +101,9 @@ void World::afterTick()
 	while (iter.next())
 		iter.current().afterTick();
 	timer.record("Aftertick");
+#ifdef AUDIO_USE_OPENAL
 	updateListener();
+#endif // AUDIO_USE_OPENAL
 	iter.reset();
 	while (iter.next())
 		iter.current().prerender();
@@ -213,21 +215,25 @@ void World::switchToDefaultCamera()
 	renderPool.switchToDefaultCamera();
 }
 
+#ifdef AUDIO_USE_OPENAL
 void World::updateListener()
 {
-	/*if (camera != NULL) {
-		Vector3f pos = camera->getPosition(WORLD);
-		alListener3f(AL_POSITION, pos[0], pos[1], pos[2]);
-		Vector3f f = camera->getForward(WORLD), u = camera->getUpward(WORLD);
-		float v[6] = { f[0], f[1], f[2], u[0], u[1], u[2] };
-		alListenerfv(AL_ORIENTATION, v);
-	}*/
+	if (camera != NULL) {
+		audioListener.setPoseture(
+			camera->getPosition(WORLD),
+			camera->getForward(WORLD),
+			camera->getUpward(WORLD));
+		audioListener.update();
+	}
 }
+#endif // AUDIO_USE_OPENAL
 
+#ifdef AUDIO_USE_OPENAL
 void World::setMainVolume(float v)
 {
-	/*alListenerf(AL_GAIN, v);*/
+	audioListener.setVolume(v);
 }
+#endif // AUDIO_USE_OPENAL
 
 void World::setViewportSize(int width, int height)
 {

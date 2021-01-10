@@ -68,6 +68,20 @@ protected:
 	unsigned int sbo = AL_NONE;
 };
 
+class AudioListener
+{
+public:
+	Vector3f position;
+	Vector3f forward;
+	Vector3f upward;
+	float volume = 1;
+
+	virtual float getVolume() const;
+	virtual void setVolume(float v);
+	virtual void setPoseture(const Vector3f& position, const Vector3f& forward, const Vector3f& upward);
+	virtual void update();
+};
+
 #endif // !_AUDIOSOURCE_H_
 
 #endif // AUDIO_USE_OPENAL

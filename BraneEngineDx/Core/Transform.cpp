@@ -527,11 +527,20 @@ bool Transform::deserialize(const SerializationInfo & from)
 {
 	if (!Object::deserialize(from))
 		return false;
-	SVector3f pos, rot, sca;
+	SVector3f pos, sca;
 	if (from.get("position", pos))
 		setPosition(pos.x, pos.y, pos.z);
-	if (from.get("rotation", rot))
-		setRotation(rot.x, rot.y, rot.z);
+	const SerializationInfo* rotInfo = from.get("rotation");
+	if (rotInfo->type == "SQuaternionf") {
+		SQuaternionf rot;
+		if (from.get("rotation", rot))
+			setRotation(rot);
+	}
+	else if (rotInfo->type == "SVector3f") {
+		SVector3f rot;
+		if (from.get("rotation", rot))
+			setRotation(rot.x, rot.y, rot.z);
+	}
 	if (from.get("scale", sca))
 		setScale(sca.x, sca.y, sca.z);
 #if ENABLE_PHYSICS
@@ -584,7 +593,7 @@ bool Transform::serialize(SerializationInfo & to)
 		return false;
 	to.type = "Transform";
 	to.set("position", SVector3f(position));
-	to.set("rotation", SVector3f(getEulerAngle()));
+	to.set("rotation", SQuaternionf(rotation));
 	to.set("scale", SVector3f(scale));
 #if ENABLE_PHYSICS
 	if (rigidBody == NULL || rigidBody->shape == NULL)

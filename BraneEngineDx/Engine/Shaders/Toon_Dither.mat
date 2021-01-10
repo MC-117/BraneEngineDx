@@ -14,6 +14,7 @@ Scalar rimCut: 0.8
 Scalar rimCutSmooth: 0.0
 Scalar normalScale: 1.0
 Texture normalMap: black
+Texture aoMap: white
 Texture depthMap: white
 #vertex use default
 #fragment

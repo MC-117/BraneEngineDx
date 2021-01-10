@@ -75,25 +75,60 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 	}
 	else {
 		dx11RTVs.resize(desc.textureList.size());
-		for (int i = 0; i < desc.textureList.size(); i++) {
-			ID3D11RenderTargetView* rtv = dx11RTVs[i];
-			if (rtv != NULL) {
-				rtv->Release();
-				rtv = NULL;
+		if (desc.multisampleLevel > 1) {
+			multisampleTexs.resize(desc.textureList.size());
+			for (int i = 0; i < desc.textureList.size(); i++) {
+				DX11Texture2D* tex = (DX11Texture2D*)desc.textureList[i].texture->getVendorTexture();
+				MSTex& mstex = multisampleTexs[i];
+				if (mstex.tex == NULL) {
+					mstex.desc = tex->desc;
+					mstex.desc.data = NULL;
+					mstex.desc.mipLevel = 1;
+					mstex.desc.textureHandle = 0;
+					mstex.tex = new DX11Texture2D(dxContext, mstex.desc);
+				}
+				mstex.desc.info.sampleCount = desc.multisampleLevel;
+				if (tex->resize(width, height) == 0)
+					throw runtime_error("DX11: Resize texture failed");
+				if (mstex.tex->resize(width, height) == 0)
+					throw runtime_error("DX11: Resize ms texture failed");
+
+				ID3D11RenderTargetView* rtv = dx11RTVs[i];
+				if (rtv != NULL) {
+					rtv->Release();
+					rtv = NULL;
+				}
+				D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+				ZeroMemory(&rtvDesc, sizeof(D3D11_RENDER_TARGET_VIEW_DESC));
+				rtvDesc.Format = mstex.tex->info.texture2DDesc.Format;
+				rtvDesc.Texture2D.MipSlice = desc.textureList[i].mipLevel;
+				rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+				if (FAILED(dxContext.device->CreateRenderTargetView(mstex.tex->dx11Texture2D, &rtvDesc, &rtv)))
+					throw runtime_error("DX11: Create render target view failed");
+				dx11RTVs[i] = rtv;
 			}
-			desc.textureList[i].texture->bind();
-			DX11Texture2D* tex = (DX11Texture2D*)desc.textureList[i].texture->getVendorTexture();
-			tex->desc.info.sampleCount = desc.multisampleLevel == 0 ? 1 : desc.multisampleLevel;
-			if (tex->resize(width, height) == 0)
-				throw runtime_error("DX11: Resize texture failed");
-			D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-			ZeroMemory(&rtvDesc, sizeof(D3D11_RENDER_TARGET_VIEW_DESC));
-			rtvDesc.Format = tex->info.texture2DDesc.Format;
-			rtvDesc.Texture2D.MipSlice = desc.textureList[i].mipLevel;
-			rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-			if (FAILED(dxContext.device->CreateRenderTargetView(tex->dx11Texture2D, &rtvDesc, &rtv)))
-				throw runtime_error("DX11: Create render target view failed");
-			dx11RTVs[i] = rtv;
+		}
+		else {
+			for (int i = 0; i < desc.textureList.size(); i++) {
+				ID3D11RenderTargetView* rtv = dx11RTVs[i];
+				if (rtv != NULL) {
+					rtv->Release();
+					rtv = NULL;
+				}
+				desc.textureList[i].texture->bind();
+				DX11Texture2D* tex = (DX11Texture2D*)desc.textureList[i].texture->getVendorTexture();
+				tex->desc.info.sampleCount = desc.multisampleLevel == 0 ? 1 : desc.multisampleLevel;
+				if (tex->resize(width, height) == 0)
+					throw runtime_error("DX11: Resize texture failed");
+				D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+				ZeroMemory(&rtvDesc, sizeof(D3D11_RENDER_TARGET_VIEW_DESC));
+				rtvDesc.Format = tex->info.texture2DDesc.Format;
+				rtvDesc.Texture2D.MipSlice = desc.textureList[i].mipLevel;
+				rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+				if (FAILED(dxContext.device->CreateRenderTargetView(tex->dx11Texture2D, &rtvDesc, &rtv)))
+					throw runtime_error("DX11: Create render target view failed");
+				dx11RTVs[i] = rtv;
+			}
 		}
 	}
 	if (desc.depthTexure == NULL && desc.withDepthStencil) {
@@ -107,13 +142,50 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 			dx11DepthTexDesc.info.wrapTType = TW_Clamp;
 			dx11DepthTexDesc.info.magFilterType = TF_Point;
 			dx11DepthTexDesc.info.minFilterType = TF_Point;
-			dx11DepthTexDesc.info.sampleCount = desc.multisampleLevel;
+			dx11DepthTexDesc.info.sampleCount = 1;
 			dx11DepthTex = new DX11Texture2D(dxContext, dx11DepthTexDesc);
 		}
 		dx11DepthTex->resize(width, height);
-		dx11DSV = dx11DepthTex->getDSV(0);
-		if (dx11DSV == NULL)
-			throw runtime_error("DX11: Create DSV failed");
+		if (desc.multisampleLevel > 1) {
+			if (multisampleDepthTex == NULL) {
+				multisampleDepthTexDesc.autoGenMip = true;
+				multisampleDepthTexDesc.channel = 1;
+				multisampleDepthTexDesc.width = width;
+				multisampleDepthTexDesc.height = height;
+				multisampleDepthTexDesc.info.internalType = TIT_Depth;
+				multisampleDepthTexDesc.info.wrapSType = TW_Clamp;
+				multisampleDepthTexDesc.info.wrapTType = TW_Clamp;
+				multisampleDepthTexDesc.info.magFilterType = TF_Point;
+				multisampleDepthTexDesc.info.minFilterType = TF_Point;
+				multisampleDepthTexDesc.info.sampleCount = desc.multisampleLevel;
+				multisampleDepthTex = new DX11Texture2D(dxContext, multisampleDepthTexDesc);
+			}
+			multisampleDepthTex->resize(width, height);
+			dx11DSV = multisampleDepthTex->getDSV(0);
+			if (dx11DSV == NULL)
+				throw runtime_error("DX11: Create DSV failed");
+		}
+		else {
+			dx11DSV = dx11DepthTex->getDSV(0);
+			if (dx11DSV == NULL)
+				throw runtime_error("DX11: Create DSV failed");
+		}
+	}
+}
+
+void DX11RenderTarget::SetMultisampleFrame()
+{
+	if (desc.multisampleLevel > 1) {
+		for (int i = 0; i < desc.textureList.size(); i++) {
+			DX11Texture2D* tex = (DX11Texture2D*)desc.textureList[i].texture->getVendorTexture();
+			desc.textureList[i].texture->bind();
+			dxContext.deviceContext->ResolveSubresource(tex->dx11Texture2D, 0,
+				multisampleTexs[i].tex->dx11Texture2D, 0, tex->info.texture2DDesc.Format);
+		}
+		if (desc.withDepthStencil) {
+			dxContext.deviceContext->ResolveSubresource(dx11DepthTex->dx11Texture2D, 0,
+				multisampleDepthTex->dx11Texture2D, 0, DXGI_FORMAT_R32_FLOAT);
+		}
 	}
 }
 

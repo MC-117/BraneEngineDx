@@ -1,0 +1,93 @@
+#adapter name pbr_ibl_fragment
+#fragment
+
+#include "../lib/Light_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 baseColor;
+uniform float metallic;
+uniform float roughness;
+uniform float ao;
+uniform float4 reflectionColor;
+uniform float normalScale;
+uniform float emission;
+DEF_MAT_END
+
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(metallicMap, 1);
+DEF_TEX2D(roughnessMap, 2);
+DEF_TEX2D(aoMap, 3);
+DEF_TEX2D(reflectionMap, 4);
+DEF_TEX2D(irradianceMap, 5);
+DEF_TEX2D(normalMap, 6);
+DEF_TEX2D(brdfLUT, 7);
+DEF_TEX2D(depthMap, 8);
+Texture2D emissionMap : TEX_BINDING(9);
+
+#include "../lib/PBR_Lib.hmat"
+#include "../lib/Basic_FS_Lib.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+FS_DEF_OUT_END
+
+FragmentOut DEFAULT_FS_MAIN
+{
+    FragmentOut fout;
+    float3x3 TBN = cotangent(fin.Normal, fin.WorldPos, fin.TexCoords);
+    float3 tN = normalize(SAMPLE_TEX(normalMap, fin.TexCoords).xyz * 2 - 1) * normalScale;
+    float3 N = normalize(mul(tN, TBN));
+    float3 V = normalize(camData.camPos - fin.WorldPos);
+    float3 albedo = baseColor.rgb * SAMPLE_TEX(colorMap, fin.TexCoords).rgb;
+    float alpha = baseColor.a * SAMPLE_TEX(colorMap, fin.TexCoords).a;
+    float _roughness = roughness * SAMPLE_TEX(roughnessMap, fin.TexCoords).r;
+    float _metallic = metallic * SAMPLE_TEX(metallicMap, fin.TexCoords).r;
+    float _ao = ao * SAMPLE_TEX(aoMap, fin.TexCoords).r;
+
+    float3 F0 = Float3(0.04); 
+    F0 = lerp(F0, albedo, _metallic);
+
+    // reflectance equation
+    float3 Lo = Float3(0.0);
+
+    if (directLight.intensity != 0) {
+        Lo += PBR_Lo_DirectLight(directLight, N, V, albedo, _metallic, _roughness) *
+            ShadowCalculation(depthMap, depthMapSampler, fin.lightSpacePos, N, directLight.direction);
+    }
+
+    for(int i = 0; i < pointLightCount; ++i) {
+        if (pointLights[i].intensity != 0) {
+            Lo += PBR_Lo_PointLight(pointLights[i], fin.WorldPos, N, V, albedo, _metallic, _roughness);
+        }
+    }
+
+    // IBL
+    float3 L = normalize(-reflect(-V, N));
+    float3 H = normalize(L + V);
+    float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0, _roughness);
+    float3 kD = 1.0 - F;
+    kD *= 1.0 - metallic;
+    float2 coord = sphereProj(-L);
+    coord.y = 1 - coord.y;
+    float3 rel = SAMPLE_TEX_LOD(reflectionMap, coord, _roughness * (getLodLevels(reflectionMap) - 1)).xyz;
+    float3 irrad = SAMPLE_TEX(irradianceMap, coord).xyz;
+
+    coord = float2(max(dot(N, V), 0.0), _roughness);
+    coord.y = 1 - coord.y;
+    float2 envBRDF = SAMPLE_TEX(brdfLUT, coord).rg;
+    float3 Le = rel * (F * envBRDF.x + envBRDF.y);
+    float3 iblAmbient = kD * irrad * albedo + Le;
+    float3 pbrAmbient = Float3(0.03) * albedo;
+
+    // Combination
+    float3 ambient = (pbrAmbient + iblAmbient * reflectionColor.xyz) * _ao;
+    float3 emissionColor = emissionMap.Sample(colorMapSampler, fin.TexCoords).rgb;
+    float3 color = ambient + Lo;
+
+    color = color / (color + Float3(1.0));
+    color = pow(color, Float3(1.0/2.2)) + (emission * baseColor).rgb * emissionColor;
+
+    fout.FragColor = float4(color, alpha);
+    return fout;
+}

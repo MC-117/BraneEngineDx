@@ -50,11 +50,11 @@ DefaultVertexOut SKELETON_MAIN
 {
     DefaultVertexOut vout;
     float4x4 fm = getFinalMat(objID, weights, boneId);
-    float4 _WorldPos = mul(float4(morphPos(objID, pos), 1.0), fm);
+    float4 _WorldPos = mul(float4(morphPos(vertexID, pos), 1.0), fm);
     vout.WorldPos = _WorldPos.xyz;
     vout.LocalPos = pos;
     vout.svPos = mul(_WorldPos, camData.pmat);
-    vout.Normal = normalize(mul(morphNorm(objID, norm), (float3x3)(fm)));
+    vout.Normal = normalize(mul(morphNorm(vertexID, norm), (float3x3)(fm)));
     vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;

@@ -4,6 +4,10 @@ UIWindow::UIWindow(Object & object, string name, bool defaultShow) : UIControl(o
 {
 }
 
+UIWindow::~UIWindow()
+{
+}
+
 void UIWindow::setBackgroundImg(Texture2D & img)
 {
 	backgroundTex = &img;

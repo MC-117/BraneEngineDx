@@ -381,6 +381,9 @@ void Engine::config()
 	conf.get(".vsnyc", boolStr);
 	if (boolStr == "true")
 		engineConfig.vsnyc = true;
+	float msaa = engineConfig.msaa;
+	conf.get(".msaa", msaa);
+	engineConfig.msaa = msaa;
 	float screenWidth = engineConfig.screenWidth, screenHeight = engineConfig.screenHeight;
 	conf.get(".screenWidth", screenWidth);
 	engineConfig.screenWidth = screenWidth;

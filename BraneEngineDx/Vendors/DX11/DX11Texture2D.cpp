@@ -9,6 +9,8 @@ DX11Texture2DInfo::DX11Texture2DInfo(const Texture2DInfo & info)
 	texture2DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	if (info.internalType == TIT_Depth)
 		texture2DDesc.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
+	else if (info.sampleCount > 1)
+		texture2DDesc.BindFlags |= D3D11_BIND_RENDER_TARGET;
 	else
 		texture2DDesc.BindFlags |= D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
 	texture2DDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -32,6 +34,8 @@ DX11Texture2DInfo& DX11Texture2DInfo::operator=(const Texture2DInfo& info)
 	texture2DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	if (info.internalType == TIT_Depth)
 		texture2DDesc.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
+	else if (info.sampleCount > 1)
+		texture2DDesc.BindFlags |= D3D11_BIND_RENDER_TARGET;
 	else
 		texture2DDesc.BindFlags |= D3D11_BIND_RENDER_TARGET | D3D11_BIND_UNORDERED_ACCESS;
 	texture2DDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -211,7 +215,10 @@ unsigned int DX11Texture2D::bind()
 		if (desc.data) {
 			info.texture2DDesc.MiscFlags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
 		}
-		info.texture2DDesc.MipLevels = 1 + floor(log2(max(desc.width, desc.height)));
+		if (desc.info.sampleCount <= 1)
+			info.texture2DDesc.MipLevels = 1 + floor(log2(max(desc.width, desc.height)));
+		else
+			info.texture2DDesc.MipLevels = 1;
 		//D3D11_SUBRESOURCE_DATA initData = { desc.data, desc.width * desc.channel * sizeof(unsigned char), 0 };
 		if (FAILED(dxContext.device->CreateTexture2D(&info.texture2DDesc, NULL, &dx11Texture2D)))
 			throw runtime_error("DX11Texture2D: CreateTexture2D failed");
@@ -289,9 +296,14 @@ ID3D11ShaderResourceView* DX11Texture2D::getSRV()
 			dx11Texture2DView->Release();
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = desc.info.internalType == TIT_Depth ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
-		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MipLevels = info.texture2DDesc.MipLevels;
-		srvDesc.Texture2D.MostDetailedMip = 0;
+		if (desc.info.sampleCount > 1) {
+			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
+		}
+		else {
+			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			srvDesc.Texture2D.MipLevels = info.texture2DDesc.MipLevels;
+			srvDesc.Texture2D.MostDetailedMip = 0;
+		}
 		if (FAILED(dxContext.device->CreateShaderResourceView(dx11Texture2D, &srvDesc, (ID3D11ShaderResourceView**)&dx11Texture2DView)))
 			throw runtime_error("DX11Tetxture2D: CreateShaderResourceView failed");
 	}
@@ -354,8 +366,13 @@ ID3D11DepthStencilView* DX11Texture2D::getDSV(unsigned int mipLevel)
 			dx11Texture2DView->Release();
 		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-		dsvDesc.Texture2D.MipSlice = mipLevel;
+		if (desc.info.sampleCount > 1) {
+			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+		}
+		else {
+			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+			dsvDesc.Texture2D.MipSlice = mipLevel;
+		}
 		if (FAILED(dxContext.device->CreateDepthStencilView(dx11Texture2D, &dsvDesc, (ID3D11DepthStencilView**)&dx11Texture2DView)))
 			throw runtime_error("DX11Tetxture2D: CreateDepthStencilView failed");
 	}

@@ -172,3 +172,28 @@ AudioSource::AudioState AudioSource::getState()
 }
 
 #endif // AUDIO_USE_OPENAL
+
+float AudioListener::getVolume() const
+{
+	return volume;
+}
+
+void AudioListener::setVolume(float v)
+{
+	volume = v;
+	alListenerf(AL_GAIN, v);
+}
+
+void AudioListener::setPoseture(const Vector3f& position, const Vector3f& forward, const Vector3f& upward)
+{
+	this->position = position;
+	this->forward = forward;
+	this->upward = upward;
+}
+
+void AudioListener::update()
+{
+	alListener3f(AL_POSITION, position[0], position[1], position[2]);
+	float v[6] = { forward[0], forward[1], forward[2], upward[0], upward[1], upward[2] };
+	alListenerfv(AL_ORIENTATION, v);
+}

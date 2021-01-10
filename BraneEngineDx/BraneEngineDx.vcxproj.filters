@@ -363,6 +363,12 @@
     <ClInclude Include="Core\AudioSource.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\GUI\MatBranchModifier.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\GUI\ESCMenu.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -654,6 +660,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\AudioSource.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\GUI\MatBranchModifier.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\GUI\ESCMenu.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

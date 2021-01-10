@@ -30,4 +30,5 @@ void DebugCamera::tick(float deltaTime)
 		rotate(0, 0, -m.x * deltaTime * 5, WORLD);
 		rotate(0, m.y * deltaTime * 5, 0);
 	}
+	PostProcessingCamera::tick(deltaTime);
 }

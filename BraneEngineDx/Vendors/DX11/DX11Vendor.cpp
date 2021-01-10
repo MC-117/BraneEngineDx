@@ -54,6 +54,7 @@ bool DX11Vendor::imGuiDrawFrame(const EngineConfig & config, const WindowContext
 
 bool DX11Vendor::swap(const EngineConfig & config, const WindowContext & context)
 {
+	dxContext.deviceContext->Flush();
 	dxContext.swapChain->Present(config.vsnyc ? 1 : 0, 0);
 	return true;
 }
@@ -141,6 +142,7 @@ MeshPartDesc DX11Vendor::newMeshPart(unsigned int vertCount, unsigned int elemen
 		data = &StaticMeshData;
 	if (data == NULL) {
 		data = new DX11MeshData(dxContext);
+		MeshDataCollection.insert(data);
 	}
 	MeshPartDesc desc = { data, (unsigned int)data->vertices.size(), vertCount, (unsigned int)data->elements.size(), elementCount };
 	data->vertices.resize(data->vertices.size() + vertCount);
@@ -154,6 +156,7 @@ SkeletonMeshPartDesc DX11Vendor::newSkeletonMeshPart(unsigned int vertCount, uns
 {
 	SkeletonMeshData* data = NULL;
 	data = new DX11SkeletonMeshData(dxContext);
+	MeshDataCollection.insert(data);
 	SkeletonMeshPartDesc desc = { data, (unsigned int)data->vertices.size(), vertCount, (unsigned int)data->elements.size(), elementCount };
 	if (morphCount > 0)
 		desc.morphMeshData = &data->morphMeshData;
@@ -239,6 +242,7 @@ void DX11Vendor::setViewport(unsigned int x, unsigned int y, unsigned int w, uns
 
 void DX11Vendor::postProcessCall()
 {
+	DX11ShaderProgram::currentDx11Program->uploadDrawInfo();
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	dxContext.deviceContext->Draw(4, 0);
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

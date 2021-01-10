@@ -4,6 +4,7 @@
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 #include "../Camera.h"
 #include "../Console.h"
+#include "GUI.h"
 
 ConsoleWindow::ConsoleWindow(Object & object, string name, bool defaultShow) : UIWindow(object, name, defaultShow)
 {
@@ -167,6 +168,25 @@ void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
 					}
 					ImGui::TreePop();
 				}
+			}
+			ImGui::EndChild();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Windows")) {
+			ImGui::BeginChild("Windows_Area", { 0, 0 }, false, ImGuiWindowFlags_HorizontalScrollbar);
+			ImVec2 size = { ImGui::GetWindowContentRegionWidth() / 2 - 4, 40 };
+			bool enter = false;
+			for (auto b = info.gui.uiControls.begin(), e = info.gui.uiControls.end(); b != e; b++) {
+				string str;
+				if (b->second->show)
+					str = "Hide ";
+				else
+					str = "Show ";
+				if (ImGui::Button((str + b->second->name).c_str(), size))
+					b->second->show = !b->second->show;
+				if (!enter)
+					ImGui::SameLine();
+				enter = !enter;
 			}
 			ImGui::EndChild();
 			ImGui::EndTabItem();

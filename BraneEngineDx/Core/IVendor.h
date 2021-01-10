@@ -20,6 +20,7 @@ struct EngineConfig
 	bool loadEngineAsset = true;
 	bool loadContentAsset = true;
 	bool vsnyc = false;
+	unsigned int msaa = 1;
 	unsigned int screenWidth = 960, screenHeight = 640;
 };
 

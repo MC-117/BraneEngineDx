@@ -16,8 +16,7 @@ void DX11Material::preprocess()
 void DX11Material::processBaseData()
 {
 	DX11ShaderProgram* program = DX11ShaderProgram::currentDx11Program;
-	if (program != NULL)
-		program->uploadAttribute("passID", sizeof(int), &desc.currentPass);
+	program->drawInfo.passID = desc.currentPass;
 }
 
 void DX11Material::processScalarData()

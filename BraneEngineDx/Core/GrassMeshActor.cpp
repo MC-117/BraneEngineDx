@@ -46,7 +46,7 @@ void GrassMeshActor::begin()
 void GrassMeshActor::tick(float delteTime)
 {
 	MeshActor::tick(delteTime);
-	float time = Engine::getCurrentWorld()->getEngineTime() / 1000.f;
+	float time = Engine::getCurrentWorld()->getEngineTime() * 0.000000001f;
 	for (auto b = meshRender.materials.begin(), e = meshRender.materials.end(); b != e; b++)
 		if (*b != NULL)
 			(*b)->setScalar("time", time);

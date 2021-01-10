@@ -33,8 +33,9 @@ FS_DEF_OUT_END
 FragmentOut DEFAULT_FS_MAIN
 {
     FragmentOut fout;
-    float3 N = mul(((normalize(SAMPLE_TEX(normalMap, fin.TexCoords) * 2 - 1)).xyz),
-        cotangent(fin.Normal, fin.WorldPos, fin.TexCoords)) * normalScale;
+    float3x3 TBN = cotangent(fin.Normal, fin.WorldPos, fin.TexCoords);
+    float3 tN = normalize(SAMPLE_TEX(normalMap, fin.TexCoords).xyz * 2 - 1) * normalScale;
+    float3 N = normalize(mul(tN, TBN));
     float3 V = normalize(camData.camPos - fin.WorldPos);
     float4 albedo = SAMPLE_TEX(colorMap, fin.TexCoords);
     float4 ao = SAMPLE_TEX(aoMap, fin.TexCoords);

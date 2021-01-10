@@ -14,6 +14,7 @@ public:
 	bool showCloseButton = true;
 
 	UIWindow(Object& object, string name = "UIWindow", bool defaultShow = false);
+	virtual ~UIWindow();
 
 	void setBackgroundImg(Texture2D& img);
 	void setBackgroundColor(Color color);
