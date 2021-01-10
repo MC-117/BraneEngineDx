@@ -6,6 +6,7 @@
 #endif
 #include "Input.h"
 #include "Transform.h"
+#include "AudioSource.h"
 #include "Camera.h"
 #include "RenderPool.h"
 
@@ -18,6 +19,10 @@ public:
 #endif
 
 	Unit2Di screenSize = { 1280, 720 };
+
+#ifdef AUDIO_USE_OPENAL
+	AudioListener audioListener;
+#endif // AUDIO_USE_OPENAL
 
 	Camera defaultCamera;
 	RenderPool renderPool = RenderPool(defaultCamera);
@@ -48,8 +53,10 @@ public:
 	void switchCamera(Camera& camera);
 	void switchToDefaultCamera();
 
+#ifdef AUDIO_USE_OPENAL
 	void updateListener();
 	void setMainVolume(float v);
+#endif // AUDIO_USE_OPENAL
 	
 	void setViewportSize(int width, int height);
 	int64_t getEngineTime();

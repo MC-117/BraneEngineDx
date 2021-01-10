@@ -30,9 +30,16 @@
 
 #define VERTEX_MAX_BONE 4
 
-#define MAT_INS_BIND_INDEX 0
-#define TRANS_BIND_INDEX 0
+// constant buffer register
+#define DRAW_INFO_BIND_INDEX 0
+#define MAT_INS_BIND_INDEX 1
+#define CB_START_BIND_INDEX 2
+
+// input slot
 #define TRANS_INDEX_BIND_INDEX 0
+
+// texture register
+#define TRANS_BIND_INDEX 0
 #define MORPHDATA_BIND_INDEX 1
 #define MORPHWEIGHT_BIND_INDEX 2
 #define PARTICLE_BIND_INDEX 3
@@ -50,4 +57,4 @@
 #define MATRIX_UPLOAD_OP(mat) (mat).transpose()
 
 using namespace std;
-constexpr auto PI = 3.1415926535897932346f;
+constexpr float PI = 3.141592653589793238462643383279502884197169399375105820974944592307816406L;

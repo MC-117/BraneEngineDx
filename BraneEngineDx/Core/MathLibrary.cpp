@@ -1470,7 +1470,7 @@ Vector3f Matrix3f::eulerAngles() const
 	float m00 = (*this)(0, 0), m01 = (*this)(0, 1), m02 = (*this)(0, 2);
 	float d = sqrt(m00 * m00 + m01 * m01);
 	if (ox > 0) {
-		ox -= 3.1415926535897932346f;
+		ox -= 3.141592653589793238462643383279502884197169399375105820974944592307816406L;
 		oy = atan2(-m02, -d);
 	}
 	else

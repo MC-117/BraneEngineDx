@@ -21,7 +21,6 @@ FS_DEF_OUT_COLOR(FragColor, 0);
 FS_DEF_OUT_END
 
 DEF_MAT_BEGIN
-uniform int passID;
 uniform float ssaoRadius;
 uniform float ssaoIntensity;
 uniform float ssaoArea;

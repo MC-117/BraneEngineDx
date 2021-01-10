@@ -89,6 +89,9 @@ void GUI::render(RenderInfo& info)
 	GUIRenderInfo _info = { viewSize, sceneBlurTex, info.cmdList, *this };
 	focusControl = NULL;
 
+	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++)
+		b->second->onPreAction(_info);
+
 	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++) {
 		if (b->second->show)
 			b->second->render(_info);

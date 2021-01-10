@@ -1,0 +1,18 @@
+#material Engine/Shaders/Toon.mat
+#twoside false
+#castshadow true
+Scalar highlightCut: 0.999000
+Scalar highlightCutSmooth: 0.000000
+Scalar normalScale: 1.000000
+Scalar rimCut: 0.800000
+Scalar rimCutSmooth: 0.000000
+Scalar shadowCut: 0.468750
+Scalar shadowCutSmooth: 0.000000
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color highlightColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color overColor: 0.576471, 0.576471, 0.576471, 1.000000
+Color rimColor: 0.196078, 0.196078, 0.196078, 1.000000
+Color shadowColor: 0.749020, 0.776471, 0.960784, 1.000000
+Texture colorMap: Content/Scene/MagicMiku/MagicMiku_chouapoa.jpg
+Texture depthMap: white
+Texture normalMap: Engine/Textures/Default_N.png

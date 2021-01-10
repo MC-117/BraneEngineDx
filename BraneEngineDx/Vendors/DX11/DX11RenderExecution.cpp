@@ -1,4 +1,5 @@
 #include "DX11RenderExecution.h"
+#include "DX11ShaderStage.h"
 
 DX11RenderExecution::DX11RenderExecution(DX11Context& context)
 	: dxContext(context)
@@ -30,8 +31,11 @@ void DX11RenderExecution::executeParticle(const vector<DrawArraysIndirectCommand
 	dxContext.deviceContext->Map(cmdBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cmdmappedData);
 	memcpy_s(cmdmappedData.pData, cmdBufferDesc.ByteWidth, cmds.data(), cmdBufferDesc.ByteWidth);
 	dxContext.deviceContext->Unmap(cmdBuffer, 0);
-	for (int i = 0; i < cmds.size(); i++)
+	for (int i = 0; i < cmds.size(); i++) {
+		DX11ShaderProgram::currentDx11Program->drawInfo.baseVertex = cmds[i].first;
+		DX11ShaderProgram::currentDx11Program->uploadDrawInfo();
 		dxContext.deviceContext->DrawIndexedInstancedIndirect(cmdBuffer, sizeof(DrawArraysIndirectCommand) * i);
+	}
 }
 
 void DX11RenderExecution::executeMesh(const vector<DrawElementsIndirectCommand>& cmds)
@@ -47,7 +51,10 @@ void DX11RenderExecution::executeMesh(const vector<DrawElementsIndirectCommand>&
 	dxContext.deviceContext->Map(cmdBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cmdmappedData);
 	memcpy_s(cmdmappedData.pData, cmdBufferDesc.ByteWidth, cmds.data(), cmdBufferDesc.ByteWidth);
 	dxContext.deviceContext->Unmap(cmdBuffer, 0);
-	for (int i = 0; i < cmds.size(); i++)
+	for (int i = 0; i < cmds.size(); i++) {
+		DX11ShaderProgram::currentDx11Program->drawInfo.baseVertex = cmds[i].baseVertex;
+		DX11ShaderProgram::currentDx11Program->uploadDrawInfo();
 		//dxContext.deviceContext->DrawIndexedInstanced(cmds[i].count, cmds[i].instanceCount, cmds[i].firstIndex, cmds[i].baseVertex, cmds[i].baseInstance);
 		dxContext.deviceContext->DrawIndexedInstancedIndirect(cmdBuffer, sizeof(DrawElementsIndirectCommand) * i);
+	}
 }

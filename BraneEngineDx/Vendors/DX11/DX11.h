@@ -20,7 +20,7 @@
 
 struct DX11Context
 {
-	bool enableDebugLayer = true;
+	bool enableDebugLayer = false;
 	HWND hWnd = NULL;
 	IDXGIFactory1* dxgiFactory = NULL;
 	ID3D11DeviceContext* deviceContext = NULL;

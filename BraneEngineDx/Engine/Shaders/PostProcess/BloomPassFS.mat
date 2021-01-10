@@ -20,7 +20,6 @@ FS_DEF_OUT_COLOR(FragColor, 0);
 FS_DEF_OUT_END
 
 DEF_MAT_BEGIN
-uniform int passID;
 uniform int bloomLevel;
 uniform int bloomIter;
 uniform float width;

@@ -42,12 +42,12 @@ float3 PBR_Lo(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, floa
     
     float NDF = D_GGX_TR(N, H, roughness);
     float G = GeometrySmith(N, V, L, roughness);
-    float3 F0 = float3(0.04); 
+    float3 F0 = Float3(0.04); 
     F0 = lerp(F0, albedo, metallic);
     float3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
 
     float3 kS = F;
-    float3 kD = float3(1.0) - kS;
+    float3 kD = Float3(1.0) - kS;
     kD *= 1.0 - metallic;
 
     float3 nominator = NDF * G * F;
@@ -58,14 +58,14 @@ float3 PBR_Lo(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, floa
     return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
-float3 PBR_Lo_DirectLight(DirectLight directLight, float3 N, float3 V, float3 albedo, float metallic, float roughness)
+float3 PBR_Lo_DirectLight(in DirectLight directLight, float3 N, float3 V, float3 albedo, float metallic, float roughness)
 {
     float3 L = normalize(directLight.direction);
     float3 radiance = directLight.color * directLight.intensity;
     return PBR_Lo(N, V, L, radiance, albedo, metallic, roughness);
 }
 
-float3 PBR_Lo_PointLight(PointLight pointLight, float3 worldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness)
+float3 PBR_Lo_PointLight(in PointLight pointLight, float3 worldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness)
 {
     float3 L = normalize(pointLight.pos - worldPos);
     float distance = length(pointLight.pos - worldPos);
@@ -76,5 +76,5 @@ float3 PBR_Lo_PointLight(PointLight pointLight, float3 worldPos, float3 N, float
 
 float3 PBR_Ambient(float3 albedo, float ao)
 {
-    return float3(0.03) * albedo * ao;
+    return Float3(0.03) * albedo * ao;
 }

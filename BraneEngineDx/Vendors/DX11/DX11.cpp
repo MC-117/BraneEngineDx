@@ -61,7 +61,7 @@ void DX11Context::createSwapChain(unsigned int width, unsigned int height, unsig
 	sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
-	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.OutputWindow = hWnd;
 	sd.SampleDesc.Count = multisampleLevels;
@@ -70,7 +70,7 @@ void DX11Context::createSwapChain(unsigned int width, unsigned int height, unsig
 
 	if (multisampleLevels > 1) {
 		unsigned int q = 0;
-		device->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, multisampleLevels, &q);
+		device->CheckMultisampleQualityLevels(DXGI_FORMAT_B8G8R8A8_UNORM, multisampleLevels, &q);
 		if (q != 0)
 			--q;
 		sd.SampleDesc.Quality = q;

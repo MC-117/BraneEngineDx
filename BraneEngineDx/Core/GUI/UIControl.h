@@ -30,7 +30,9 @@ public:
 	Events events;
 
 	UIControl(Object& object, string name = "UIControl", bool defaultShow = false);
+	virtual ~UIControl();
 
+	virtual void onPreAction(GUIRenderInfo& info);
 	virtual void render(GUIRenderInfo& info);
 	virtual void onPostAction(GUIPostInfo& info);
 	virtual void onSceneResize(Unit2Di size);

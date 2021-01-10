@@ -144,9 +144,12 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 		return;
 	if (ImGui::Button("Quit Editor", size))
 		world.quit();
+
+#ifdef AUDIO_USE_OPENAL
 	if (ImGui::SliderFloat("Volume", &mainVolume, 0, 1)) {
 		world.setMainVolume(mainVolume);
 	}
+#endif // AUDIO_USE_OPENAL
 	ImGui::TextColored(ImVec4(1, 1, 0, 1), "Objects");
 	ImGui::BeginChild("ObjectsView", { -0.1f, -0.1f });
 

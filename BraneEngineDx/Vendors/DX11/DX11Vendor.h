@@ -63,7 +63,7 @@ public:
 protected:
 	unsigned int defaultMultisampleLevels = 0;
 	DX11Context dxContext;
-	set<DX11MeshData*> MeshDataCollection;
+	set<MeshData*> MeshDataCollection;
 	DX11MeshData StaticMeshData;
 };
 

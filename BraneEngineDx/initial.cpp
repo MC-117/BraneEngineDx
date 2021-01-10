@@ -1,13 +1,15 @@
 #include "Core\Engine.h"
 #include "Core\Console.h"
 #include "Core\GUI\EditorWindow.h"
+#include "Core\GUI\ESCMenu.h"
 #include "Core\GUI\DebugLogWindow.h"
+#include "Core\GUI\MatBranchModifier.h"
 #include "Cameras\DebugCamera.h"
 #include "Actors\SkySphere.h"
 
 void InitialWorld()
 {
-	//world.input.setCursorHidden(true);
+	world.input.setCursorHidden(true);
 
 	DirectLight& dirLight = *new DirectLight("DirLight");
 	dirLight.setRotation(0, -45, -45);
@@ -22,15 +24,20 @@ void InitialWorld()
 	world += debugCamera;
 	world.switchCamera(debugCamera);
 
-	EditorWindow& editorWindow = *new EditorWindow(world, Material::nullMaterial, "Editor", true);
+	ESCMenu& escMenu = *new ESCMenu("ESCMenu");
+	world += escMenu;
+
+	EditorWindow& editorWindow = *new EditorWindow(world, Material::nullMaterial, "Editor", false);
 	editorWindow.blurBackground = true;
 	editorWindow.showCloseButton = false;
 	world += editorWindow;
-	editorWindow.show = true;
 
 	DebugLogWindow& debugLogWindow = *new DebugLogWindow("DebugLogWindow", true);
 	world += debugLogWindow;
 	debugLogWindow.show = true;
+
+	MatBranchModifier& matBranchModifier = *new MatBranchModifier("MatBranchModifier", false);
+	world += matBranchModifier;
 
 	SerializationInfo* info = getAssetByPath<SerializationInfo>(Engine::engineConfig.startMapPath);
 	if (info == NULL) {
@@ -40,4 +47,5 @@ void InitialWorld()
 
 	world.loadWorld(*info);
 	world.deserialize(*info);
+	world.getCurrentCamera().cameraRender.renderTarget.setMultisampleLevel(Engine::engineConfig.msaa);
 }

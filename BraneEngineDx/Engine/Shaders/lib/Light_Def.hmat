@@ -22,13 +22,4 @@ tbuffer DirectLightBuffer : register(DIRECT_LIGHT_BIND_INDEX)
     uint pointLightCount;
 };
 
-Buffer<float> pointLights : register(POINT_LIGHT_BIND_INDEX);
-
-void getPointLight(out PointLight l, in uint index)
-{
-    uint base = index * 8;
-    l.pos = float3(pointLights[base], pointLights[base + 1], pointLights[base + 2]);
-    l.intensity = pointLights[base + 3];
-    l.color = float3(pointLights[base + 4], pointLights[base + 5], pointLights[base + 6]);
-    l.attenuation = pointLights[base + 7];
-}
+StructuredBuffer<PointLight> pointLights : register(POINT_LIGHT_BIND_INDEX);
