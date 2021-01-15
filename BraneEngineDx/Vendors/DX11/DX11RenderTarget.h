@@ -8,6 +8,7 @@
 
 #include "DX11.h"
 #include "DX11Texture2D.h"
+#include "DX11ShaderStage.h"
 
 class DX11RenderTarget : public IRenderTarget
 {
@@ -23,6 +24,12 @@ public:
 
 	Texture2DDesc multisampleDepthTexDesc;
 	DX11Texture2D* multisampleDepthTex = NULL;
+
+	static string depthBlitName;
+	static ShaderStageDesc depthBlitDesc;
+	static DX11ShaderStage* depthBlitCSStage;
+	static DX11ShaderProgram* depthBlitCSShader;
+	static bool depthBlitInit;
 
 	struct MSTex
 	{
@@ -44,6 +51,8 @@ public:
 	virtual void clearColors(const vector<Color>& colors);
 	virtual void clearDepth(float depth);
 	virtual void clearStencil(unsigned char stencil);
+
+	void initDepthBlit();
 };
 
 #endif // !_DX11RENDERTARGET_H_

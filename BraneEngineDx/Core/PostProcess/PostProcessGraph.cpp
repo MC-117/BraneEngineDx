@@ -25,7 +25,7 @@ void PostProcessGraph::addDefaultPasses()
 {
 	//addPostProcessPass(*new SSAOPass());
 	addPostProcessPass(*new BloomPass());
-	//addPostProcessPass(*new DOFPass());
+	addPostProcessPass(*new DOFPass());
 	addPostProcessPass(*new ToneMapPass());
 	addPostProcessPass(*new BlitPass());
 }

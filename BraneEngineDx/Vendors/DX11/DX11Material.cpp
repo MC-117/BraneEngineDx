@@ -64,6 +64,8 @@ void DX11Material::processImageData()
 	DX11ShaderProgram* program = DX11ShaderProgram::currentDx11Program;
 	if (program == NULL)
 		return;
+	if (!desc.imageField.empty())
+		dxContext.clearRTV();
 	for (auto b = desc.imageField.begin(), e = desc.imageField.end(); b != e; b++) {
 		if (!b->second.val.isValid())
 			continue;

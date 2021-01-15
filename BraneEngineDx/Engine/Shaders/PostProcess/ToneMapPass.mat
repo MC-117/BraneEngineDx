@@ -60,14 +60,13 @@ float4 lookupTable(float4 color, Texture2D LUT, SamplerState LUTSampler)
 [numthreads(LOCAL_SIZE_2D, LOCAL_SIZE_2D, 1)]
 void main(uint3 gid : SV_DispatchThreadID)
 {
-	FragmentOut fout;
 	uint2 pos = uint2(gid.xy);
 	uint2 size;
 	imageMap.GetDimensions(size.x, size.y);
 	if (pos.x < size.x && pos.y < size.y)
 	{
 		float4 c = imageMap[pos] * baseColor;
-		float2 uv = float2(pos.x / float(size.x), pos.y / float(size.y));
+		float2 uv = float2(pos.x / (float)size.x, pos.y / (float)size.y);
 		c = c * SAMPLE_TEX_LOD(ssaoMap, uv, 0);
 		c.rgb = Float3(1.0) - exp(-c.rgb * exposure);
 		c.rgb = pow(c.rgb, Float3(1.0/gamma));

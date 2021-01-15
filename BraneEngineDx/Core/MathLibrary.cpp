@@ -86,6 +86,29 @@ Block& Block::operator=(const Block& b)
 	for (int i = 0; i < rowNum; i++)
 		for (int j = 0; j < colNum; j++)
 			(*this)(i, j) = b(i, j);
+	return *this;
+}
+
+bool Block::operator==(const Block& b) const
+{
+	if (rowNum != b.rowNum || colNum != b.colNum)
+		return false;
+	for (int i = 0; i < rowNum; i++)
+		for (int j = 0; j < colNum; j++)
+			if ((*this)(i, j) != b(i, j))
+				return false;
+	return true;
+}
+
+bool Block::operator!=(const Block& b) const
+{
+	if (rowNum != b.rowNum || colNum != b.colNum)
+		return true;
+	for (int i = 0; i < rowNum; i++)
+		for (int j = 0; j < colNum; j++)
+			if ((*this)(i, j) != b(i, j))
+				return true;
+	return false;
 }
 
 Vector2f::Vector2f(float x, float y) : XMFLOAT2(x, y)

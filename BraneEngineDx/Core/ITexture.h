@@ -16,7 +16,7 @@ enum TexFilter
 
 enum TexInternalType
 {
-	TIT_Default, TIT_R, TIT_RG, TIT_RGBA, TIT_SRGBA, TIT_Depth
+	TIT_Default, TIT_R, TIT_RG, TIT_RGBA, TIT_SRGBA, TIT_Depth, TIT_R32
 };
 
 struct Texture2DInfo

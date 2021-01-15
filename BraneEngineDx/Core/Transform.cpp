@@ -368,12 +368,6 @@ void Transform::setRotation(const Quaternionf & q, TransformSpace space)
 void Transform::translate(const Vector3f& v, ::TransformSpace space)
 {
 	if (space == WORLD) {
-		position += v;
-	}
-	else if (space == LOCAL) {
-		position += forward * v.x() + rightward * v.y() + upward * v.z();
-	}
-	else {
 		Object* obj = this;
 		Transform* t = NULL;
 		while (obj != NULL) {
@@ -387,8 +381,18 @@ void Transform::translate(const Vector3f& v, ::TransformSpace space)
 			position += v;
 		}
 		else {
-			position += t->forward * v.x() + t->rightward * v.y() + t->upward * v.z();
+			Vector4f p = Vector4f::UnitW();
+			p.block(0, 0, 3, 1) = v;
+			p = t->getMatrix(WORLD).inverse() * p;
+			p /= p.w();
+			position += p.block(0, 0, 3, 1);
 		}
+	}
+	else if (space == LOCAL) {
+		position += forward * v.x() + rightward * v.y() + upward * v.z();
+	}
+	else {
+		position += v;
 	}
 	invalidate(Pos);
 }
@@ -531,15 +535,17 @@ bool Transform::deserialize(const SerializationInfo & from)
 	if (from.get("position", pos))
 		setPosition(pos.x, pos.y, pos.z);
 	const SerializationInfo* rotInfo = from.get("rotation");
-	if (rotInfo->type == "SQuaternionf") {
-		SQuaternionf rot;
-		if (from.get("rotation", rot))
-			setRotation(rot);
-	}
-	else if (rotInfo->type == "SVector3f") {
-		SVector3f rot;
-		if (from.get("rotation", rot))
-			setRotation(rot.x, rot.y, rot.z);
+	if (rotInfo != NULL) {
+		if (rotInfo->type == "SQuaternionf") {
+			SQuaternionf rot;
+			if (from.get("rotation", rot))
+				setRotation(rot);
+		}
+		else if (rotInfo->type == "SVector3f") {
+			SVector3f rot;
+			if (from.get("rotation", rot))
+				setRotation(rot.x, rot.y, rot.z);
+		}
 	}
 	if (from.get("scale", sca))
 		setScale(sca.x, sca.y, sca.z);

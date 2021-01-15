@@ -5,6 +5,12 @@
 unsigned int DX11RenderTarget::nextDxFrameID = 1;
 DX11RenderTarget* DX11RenderTarget::currentRenderTarget = NULL;
 
+string DX11RenderTarget::depthBlitName = "DepthBlit";
+ShaderStageDesc DX11RenderTarget::depthBlitDesc = { Compute_Shader_Stage, Shader_Default, depthBlitName };
+DX11ShaderStage* DX11RenderTarget::depthBlitCSStage = NULL;
+DX11ShaderProgram* DX11RenderTarget::depthBlitCSShader = NULL;
+bool DX11RenderTarget::depthBlitInit = false;
+
 DX11RenderTarget::DX11RenderTarget(DX11Context& context, RenderTargetDesc& desc)
     : dxContext(context), IRenderTarget(desc)
 {
@@ -38,9 +44,22 @@ unsigned int DX11RenderTarget::bindFrame()
 		desc.frameID = dxFrameID;
 		currentRenderTarget = NULL;
 	}
+	else {
+		if (desc.depthOnly) {
+			DX11Texture2D* dxdt = (DX11Texture2D*)desc.depthTexure->getVendorTexture();
+			dx11DSV = dxdt->getDSV(0);
+		}
+		else if (desc.withDepthStencil) {
+			if (desc.multisampleLevel > 1)
+				dx11DSV = multisampleDepthTex->getDSV(0);
+			else
+				dx11DSV = dx11DepthTex->getDSV(0);
+		}
+	}
 	if (currentRenderTarget == this)
 		return desc.frameID;
 	dxContext.clearSRV();
+	dxContext.clearUAV();
 	dxContext.deviceContext->OMSetRenderTargets(dx11RTVs.size(), dx11RTVs.data(), dx11DSV);
 	currentRenderTarget = this;
     return desc.frameID;
@@ -132,34 +151,36 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 		}
 	}
 	if (desc.depthTexure == NULL && desc.withDepthStencil) {
-		if (dx11DepthTex == NULL) {
-			dx11DepthTexDesc.autoGenMip = true;
-			dx11DepthTexDesc.channel = 1;
-			dx11DepthTexDesc.width = width;
-			dx11DepthTexDesc.height = height;
-			dx11DepthTexDesc.info.internalType = TIT_Depth;
-			dx11DepthTexDesc.info.wrapSType = TW_Clamp;
-			dx11DepthTexDesc.info.wrapTType = TW_Clamp;
-			dx11DepthTexDesc.info.magFilterType = TF_Point;
-			dx11DepthTexDesc.info.minFilterType = TF_Point;
-			dx11DepthTexDesc.info.sampleCount = 1;
+		dx11DepthTexDesc.autoGenMip = true;
+		dx11DepthTexDesc.channel = 1;
+		dx11DepthTexDesc.width = width;
+		dx11DepthTexDesc.height = height;
+		dx11DepthTexDesc.info.internalType = desc.multisampleLevel > 1 ? TIT_R32 : TIT_Depth;
+		dx11DepthTexDesc.info.wrapSType = TW_Clamp;
+		dx11DepthTexDesc.info.wrapTType = TW_Clamp;
+		dx11DepthTexDesc.info.magFilterType = TF_Point;
+		dx11DepthTexDesc.info.minFilterType = TF_Point;
+		dx11DepthTexDesc.info.sampleCount = 1;
+		if (dx11DepthTex == NULL)
 			dx11DepthTex = new DX11Texture2D(dxContext, dx11DepthTexDesc);
-		}
+		else
+			dx11DepthTex->release();
 		dx11DepthTex->resize(width, height);
 		if (desc.multisampleLevel > 1) {
-			if (multisampleDepthTex == NULL) {
-				multisampleDepthTexDesc.autoGenMip = true;
-				multisampleDepthTexDesc.channel = 1;
-				multisampleDepthTexDesc.width = width;
-				multisampleDepthTexDesc.height = height;
-				multisampleDepthTexDesc.info.internalType = TIT_Depth;
-				multisampleDepthTexDesc.info.wrapSType = TW_Clamp;
-				multisampleDepthTexDesc.info.wrapTType = TW_Clamp;
-				multisampleDepthTexDesc.info.magFilterType = TF_Point;
-				multisampleDepthTexDesc.info.minFilterType = TF_Point;
-				multisampleDepthTexDesc.info.sampleCount = desc.multisampleLevel;
+			multisampleDepthTexDesc.autoGenMip = true;
+			multisampleDepthTexDesc.channel = 1;
+			multisampleDepthTexDesc.width = width;
+			multisampleDepthTexDesc.height = height;
+			multisampleDepthTexDesc.info.internalType = TIT_Depth;
+			multisampleDepthTexDesc.info.wrapSType = TW_Clamp;
+			multisampleDepthTexDesc.info.wrapTType = TW_Clamp;
+			multisampleDepthTexDesc.info.magFilterType = TF_Point;
+			multisampleDepthTexDesc.info.minFilterType = TF_Point;
+			multisampleDepthTexDesc.info.sampleCount = desc.multisampleLevel;
+			if (multisampleDepthTex == NULL)
 				multisampleDepthTex = new DX11Texture2D(dxContext, multisampleDepthTexDesc);
-			}
+			else
+				multisampleDepthTex->release();
 			multisampleDepthTex->resize(width, height);
 			dx11DSV = multisampleDepthTex->getDSV(0);
 			if (dx11DSV == NULL)
@@ -183,8 +204,18 @@ void DX11RenderTarget::SetMultisampleFrame()
 				multisampleTexs[i].tex->dx11Texture2D, 0, tex->info.texture2DDesc.Format);
 		}
 		if (desc.withDepthStencil) {
-			dxContext.deviceContext->ResolveSubresource(dx11DepthTex->dx11Texture2D, 0,
-				multisampleDepthTex->dx11Texture2D, 0, DXGI_FORMAT_R32_FLOAT);
+			/*dxContext.deviceContext->ResolveSubresource(dx11DepthTex->dx11Texture2D, 0,
+				multisampleDepthTex->dx11Texture2D, 0, DXGI_FORMAT_D32_FLOAT);*/
+			initDepthBlit();
+			depthBlitCSShader->bind();
+			auto srv = multisampleDepthTex->getSRV();
+			auto uav = dx11DepthTex->getUAV(0);
+			dxContext.clearSRV();
+			dxContext.clearUAV();
+			dxContext.clearRTV();
+			dxContext.deviceContext->CSSetShaderResources(7, 1, &srv);
+			dxContext.deviceContext->CSSetUnorderedAccessViews(0, 1, &uav, NULL);
+			depthBlitCSShader->dispatchCompute(ceil(desc.width / 16.0f), ceil(desc.height / 16.0f), 1);
 		}
 	}
 }
@@ -223,6 +254,38 @@ void DX11RenderTarget::clearStencil(unsigned char stencil)
 {
 	if (dx11DSV != NULL)
 		dxContext.deviceContext->ClearDepthStencilView(dx11DSV, D3D11_CLEAR_STENCIL, 0, stencil);
+}
+
+void DX11RenderTarget::initDepthBlit()
+{
+	if (depthBlitInit)
+		return;
+	string code = "\
+		Texture2DMS<float> msDepth : register(t7);\n\
+		RWTexture2D<float> depth : register(u0);\n\
+		[numthreads(16, 16, 1)]\n\
+		void main(uint3 gid : SV_DispatchThreadID)\n\
+		{\n\
+			uint2 size;\n\
+			uint samples;\n\
+			msDepth.GetDimensions(size.x, size.y, samples);\n\
+			if (gid.x < size.x && gid.y < size.y)\n\
+			{\n\
+				float d = 1;\n\
+				for (int i = 0; i < samples; i++)\n\
+					d = min(d, msDepth.Load(gid.xy, i).x);\n\
+				depth[gid.xy] = d;\n\
+			}\n\
+		}";
+	string error;
+	depthBlitCSStage = new DX11ShaderStage(dxContext, depthBlitDesc);
+	if (depthBlitCSStage->compile(code, error) == 0) {
+		cout << error;
+		//throw runtime_error(error);
+	}
+	depthBlitCSShader = new DX11ShaderProgram(dxContext);
+	depthBlitCSShader->setMeshStage(*depthBlitCSStage);
+	depthBlitInit = true;
 }
 
 #endif // VENDOR_USE_DX11

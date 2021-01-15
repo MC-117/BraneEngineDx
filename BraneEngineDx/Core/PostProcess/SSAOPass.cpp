@@ -56,7 +56,6 @@ void SSAOPass::render(RenderInfo & info)
 		ssaoRenderTarget.bindFrame();
 
 		material->setPass(0);
-		material->processBaseData();
 		material->processInstanceData();
 
 		vendor.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
@@ -65,10 +64,9 @@ void SSAOPass::render(RenderInfo & info)
 		screenRenderTarget.bindFrame();
 
 		material->setPass(1);
-		material->processBaseData();
 
 		*pSsaoMap = &ssaoMap;
-		material->processTextureData();
+		material->processInstanceData();
 
 		vendor.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
 		vendor.postProcessCall();
@@ -76,10 +74,9 @@ void SSAOPass::render(RenderInfo & info)
 		ssaoRenderTarget.bindFrame();
 
 		material->setPass(2);
-		material->processBaseData();
 
 		*pSsaoMap = &screenMap;
-		material->processTextureData();
+		material->processInstanceData();
 
 		vendor.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
 		vendor.postProcessCall();

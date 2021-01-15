@@ -7,6 +7,8 @@
 #include "TextureViewer.h"
 #include "../Console.h"
 #include "../PostProcess/PostProcessingCamera.h"
+#include "../../Actors/VehicleActor.h"
+#include "../../Core/ParticleSystem.h"
 
 InspectorWindow::InspectorWindow(Object & object, string name, bool defaultShow) : UIWindow(object, name, defaultShow)
 {
@@ -242,13 +244,13 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 				if (ImGuizmo::IsUsing()) {
 					tf->setMatrix(transMat, WORLD);
 				}
-				/*if (ImGui::Button("Add ParticleSystem", { -1, 36 })) {
+				if (ImGui::Button("Add ParticleSystem", { -1, 36 })) {
 					string psName = tf->name + "_PS";
 					int index = 0;
 					while (tf->findChild(psName + to_string(index)) != NULL) index++;
 					ParticleSystem& ps = *new ParticleSystem(psName);
 					tf->addChild(ps);
-				}*/
+				}
 			}
 		}
 		Light* lit = dynamic_cast<Light*>(&obj);
@@ -311,7 +313,7 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 						a->audioSources[i]->play();
 				}
 #endif // AUDIO_USE_OPENAL
-				/*ParticleSystem* ps = dynamic_cast<ParticleSystem*>(&obj);
+				ParticleSystem* ps = dynamic_cast<ParticleSystem*>(&obj);
 				if (ps != NULL) {
 					if (ImGui::CollapsingHeader("ParticleSystem")) {
 						if (ImGui::Button("Add Emitter", { -1, 30 })) {
@@ -531,7 +533,7 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 							}
 						}
 					}
-				}*/
+				}
 				/*Character* chr = dynamic_cast<Character*>(&obj);
 				if (chr != NULL) {
 					if (ImGui::CollapsingHeader("Character")) {
@@ -717,33 +719,50 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 				}
 			}
 		}
-		/*VehicleActor* vehicle = dynamic_cast<VehicleActor*>(&obj);
+		VehicleActor* vehicle = dynamic_cast<VehicleActor*>(&obj);
 		if (vehicle != NULL) {
 			if (ImGui::CollapsingHeader("Vehicle")) {
 				ImGui::BeginChild("VehicleSubWindow");
-				ImGui::Text("CurrentGear: %d", vehicle->vehicleState.gear);
-				ImGui::Text("EngineRotationSpeed: %f", vehicle->vehicleState.engineRotationSpeed);
-				ImGui::Text("ForwardSpeed: %f", vehicle->vehicleState.forwardSpeed);
-				ImGui::Text("SidewaySpeed: %f", vehicle->vehicleState.sidewaySpeed);
+				ImGui::Text("Force: %f", vehicle->force);
+				ImGui::Text("Brake: %f", vehicle->brake);
+				ImGui::Text("F: %f, %f, %f", vehicle->state.F.x(), vehicle->state.F.y(), vehicle->state.F.z());
+				ImGui::Text("M: %f, %f, %f", vehicle->state.M.x(), vehicle->state.M.y(), vehicle->state.M.z());
+				ImGui::Text("v: %f, %f, %f", vehicle->state.v.x(), vehicle->state.v.y(), vehicle->state.v.z());
 				ImGui::Separator();
 				ImGui::Columns(2, "Wheels");
-				ImGui::Text("Steer: %f", vehicle->wheelStates[0].steerAngle / PI * 180.0f);
-				ImGui::Text("Friction: %f", vehicle->wheelStates[0].tireFriction);
+				ImGui::Text("Steer: %f", vehicle->wheels[2]->steer* vehicle->wheels[2]->desc.steerAngle / PI * 180.0f);
+				ImGui::Text("Mass: %f", vehicle->wheels[2]->desc.mass);
+				ImGui::Text("Radius: %f", vehicle->wheels[2]->desc.radius);
+				ImGui::Text("F: %f, %f, %f", vehicle->wheels[2]->state.F.x(), vehicle->wheels[2]->state.F.y(), vehicle->wheels[2]->state.F.z());
+				ImGui::Text("Rot: %f", vehicle->wheels[2]->rotAngle);
+				ImGui::Text("M: %f", vehicle->wheels[2]->state.M.y());
 				ImGui::NextColumn();
-				ImGui::Text("Steer: %f", vehicle->wheelStates[1].steerAngle / PI * 180.0f);
-				ImGui::Text("Friction: %f", vehicle->wheelStates[1].tireFriction);
+				ImGui::Text("Steer: %f", vehicle->wheels[3]->steer* vehicle->wheels[3]->desc.steerAngle / PI * 180.0f);
+				ImGui::Text("Mass: %f", vehicle->wheels[3]->desc.mass);
+				ImGui::Text("Radius: %f", vehicle->wheels[3]->desc.radius);
+				ImGui::Text("F: %f, %f, %f", vehicle->wheels[3]->state.F.x(), vehicle->wheels[3]->state.F.y(), vehicle->wheels[3]->state.F.z());
+				ImGui::Text("Rot: %f", vehicle->wheels[3]->rotAngle);
+				ImGui::Text("M: %f", vehicle->wheels[3]->state.M.y());
 				ImGui::NextColumn();
 				ImGui::Separator();
-				ImGui::Text("Steer: %f", vehicle->wheelStates[2].steerAngle / PI * 180.0f);
-				ImGui::Text("Friction: %f", vehicle->wheelStates[2].tireFriction);
+				ImGui::Text("Steer: %f", vehicle->wheels[0]->steer* vehicle->wheels[0]->desc.steerAngle / PI * 180.0f);
+				ImGui::Text("Mass: %f", vehicle->wheels[0]->desc.mass);
+				ImGui::Text("Radius: %f", vehicle->wheels[0]->desc.radius);
+				ImGui::Text("F: %f, %f, %f", vehicle->wheels[0]->state.F.x(), vehicle->wheels[0]->state.F.y(), vehicle->wheels[0]->state.F.z());
+				ImGui::Text("Rot: %f", vehicle->wheels[0]->rotAngle);
+				ImGui::Text("M: %f", vehicle->wheels[0]->state.M.y());
 				ImGui::NextColumn();
-				ImGui::Text("Steer: %f", vehicle->wheelStates[3].steerAngle / PI * 180.0f);
-				ImGui::Text("Friction: %f", vehicle->wheelStates[3].tireFriction);
+				ImGui::Text("Steer: %f", vehicle->wheels[1]->steer* vehicle->wheels[1]->desc.steerAngle / PI * 180.0f);
+				ImGui::Text("Mass: %f", vehicle->wheels[1]->desc.mass);
+				ImGui::Text("Radius: %f", vehicle->wheels[1]->desc.radius);
+				ImGui::Text("F: %f, %f, %f", vehicle->wheels[1]->state.F.x(), vehicle->wheels[1]->state.F.y(), vehicle->wheels[1]->state.F.z());
+				ImGui::Text("Rot: %f", vehicle->wheels[1]->rotAngle);
+				ImGui::Text("M: %f", vehicle->wheels[1]->state.M.y());
 				ImGui::NextColumn();
 				ImGui::Columns();
 				ImGui::EndChild();
 			}
-		}*/
+		}
 		Camera* cam = dynamic_cast<Camera*>(&obj);
 		if (cam != NULL) {
 			if (ImGui::CollapsingHeader("Camera")) {

@@ -14,4 +14,17 @@ struct Particle
     float4 color;
 };
 
+struct PVOut
+{
+    Particle gParticle : PARTICLE;
+    uint index : PARTICLEID;
+};
+
+struct PGOut
+{
+    Particle particle : PARTICLE;
+    float2 UV : TEXCOORD;
+    float4 svPos : SV_POSITION;
+};
+
 StructuredBuffer<Particle> Particles : register(PARTICLE_BIND_INDEX);

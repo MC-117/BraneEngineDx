@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="AudioRelease|Win32">
+      <Configuration>AudioRelease</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="AudioRelease|x64">
+      <Configuration>AudioRelease</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -39,6 +47,13 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='AudioRelease|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -46,6 +61,13 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='AudioRelease|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
@@ -63,10 +85,16 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='AudioRelease|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='AudioRelease|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -80,12 +108,22 @@
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <SourcePath>$(VC_SourcePath);</SourcePath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='AudioRelease|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <SourcePath>$(VC_SourcePath);</SourcePath>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
     <LibraryPath>ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='AudioRelease|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
     <LibraryPath>ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
@@ -106,6 +144,25 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='AudioRelease|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -162,6 +219,27 @@
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='AudioRelease|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>AUDIO_USE_OPENAL;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>alut64.lib;OpenAL32.lib;IrrXML.lib;zlibstatic.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Actors\SkySphere.h" />
     <ClInclude Include="Core\Actor.h" />
@@ -203,6 +281,8 @@
     <ClInclude Include="Core\MeshActor.h" />
     <ClInclude Include="Core\MeshRender.h" />
     <ClInclude Include="Core\Object.h" />
+    <ClInclude Include="Core\ParticleEmitter.h" />
+    <ClInclude Include="Core\ParticleSystem.h" />
     <ClInclude Include="Core\PointLight.h" />
     <ClInclude Include="Core\PostProcess\BlitPass.h" />
     <ClInclude Include="Core\PostProcess\BloomPass.h" />
@@ -247,6 +327,7 @@
     <ClInclude Include="Core\GUI\WindowsUI\LoadingUI.h" />
     <ClInclude Include="Core\GUI\MatBranchModifier.h" />
     <ClInclude Include="Core\GUI\ESCMenu.h" />
+    <ClInclude Include="Actors\GunTowerActor.h" />
     <ClInclude Include="Vendors\DX11\DX11RenderExecution.h" />
     <ClInclude Include="Vendors\DX11\DX11SkeletonMeshData.h" />
     <ClInclude Include="Vendors\DX11\DX11MeshData.h" />
@@ -270,6 +351,7 @@
     <ClInclude Include="Vendors\DX11\DX11Vendor.h" />
     <ClInclude Include="Vendors\DX11\imgui_impl_dx11.h" />
     <ClInclude Include="Vendors\DX11\imgui_impl_win32.h" />
+    <ClInclude Include="Actors\VehicleActor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Actors\SkySphere.cpp" />
@@ -308,6 +390,8 @@
     <ClCompile Include="Core\MeshActor.cpp" />
     <ClCompile Include="Core\MeshRender.cpp" />
     <ClCompile Include="Core\Object.cpp" />
+    <ClCompile Include="Core\ParticleEmitter.cpp" />
+    <ClCompile Include="Core\ParticleSystem.cpp" />
     <ClCompile Include="Core\PointLight.cpp" />
     <ClCompile Include="Core\PostProcess\BlitPass.cpp" />
     <ClCompile Include="Core\PostProcess\BloomPass.cpp" />
@@ -349,6 +433,7 @@
     <ClCompile Include="Core\IRenderExecution.cpp" />
     <ClCompile Include="Cameras\DebugCamera.cpp" />
     <ClCompile Include="Core\GUI\ESCMenu.cpp" />
+    <ClCompile Include="Actors\GunTowerActor.cpp" />
     <ClCompile Include="initial.cpp" />
     <ClCompile Include="Core\GUI\WindowsUI\LoadingUI.cpp" />
     <ClCompile Include="Core\GUI\MatBranchModifier.cpp" />
@@ -371,6 +456,7 @@
     <ClCompile Include="Vendors\DX11\DX11Vendor.cpp" />
     <ClCompile Include="Vendors\DX11\imgui_impl_dx11.cpp" />
     <ClCompile Include="Vendors\DX11\imgui_impl_win32.cpp" />
+    <ClCompile Include="Actors\VehicleActor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BraneEngineDx.rc" />

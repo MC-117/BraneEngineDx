@@ -30,6 +30,7 @@ class Camera : public Transform
 private:
 	CameraRender* _cameraRender = NULL;
 public:
+	Serialize(Camera);
 	enum CameraMode {
 		Perspective, Orthotropic
 	} mode = Perspective;
@@ -75,6 +76,10 @@ public:
 	static Matrix4f orthotropic(float left, float right, float bottom, float top, float zNear, float zFar);
 	static Matrix4f lookAt(Vector3f const& eye, Vector3f const& center, Vector3f const& up);
 	static Matrix4f viewport(int x, int y, int width, int height, float zNear, float zFar);
+
+	static Serializable* instantiate(const SerializationInfo& from);
+	virtual bool deserialize(const SerializationInfo& from);
+	virtual bool serialize(SerializationInfo& to);
 protected:
 	GPUBuffer cameraDataBuffer = GPUBuffer(GB_Storage, sizeof(CameraData));
 };

@@ -22,7 +22,6 @@ struct Vector4u;
 struct Matrix3f;
 struct Matrix4f;
 struct Quaternionf;
-struct AffineTransform;
 
 struct Block
 {
@@ -52,6 +51,9 @@ struct Block
 	float operator()(unsigned int r, unsigned int c) const;
 
 	Block& operator=(const Block& b);
+
+	bool operator==(const Block& b) const;
+	bool operator!=(const Block& b) const;
 };
 
 struct Vector2f : protected DirectX::XMFLOAT2

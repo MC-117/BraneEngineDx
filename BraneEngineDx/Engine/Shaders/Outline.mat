@@ -7,7 +7,7 @@ Scalar borderWidth: 0.1
 Scalar refenceDistance: 0
 #vertex use outline
 #fragment
-#include "../lib/Basic_FS_Lib.hmat"
+#include "lib/Basic_FS_Lib.hmat"
 
 DEF_MAT_BEGIN
 uniform float borderWidth;

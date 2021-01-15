@@ -31,9 +31,9 @@ public:
 struct DrawInfo
 {
 	unsigned int baseVertex;
+	unsigned int baseInstance;
 	unsigned int passID;
 	unsigned int user1;
-	unsigned int user2;
 };
 
 class DX11ShaderProgram : public ShaderProgram

@@ -142,11 +142,14 @@ void RenderTarget::setDepthTexture(Texture & depthTexture)
 
 Texture2D * RenderTarget::getInternalDepthTexture()
 {
-	if (internalDepthTexure != NULL)
-		return internalDepthTexure;
 	newVendorRenderTarget();
 	ITexture2D* vendorTex = vendorRenderTarget->getInternalDepthTexture();
-	internalDepthTexure = new Texture2D(vendorTex);
+	if (vendorTex == NULL)
+		return NULL;
+	if (internalDepthTexure == NULL)
+		internalDepthTexure = new Texture2D(vendorTex);
+	else
+		internalDepthTexure->assign(vendorTex);
 	return internalDepthTexure;
 }
 
