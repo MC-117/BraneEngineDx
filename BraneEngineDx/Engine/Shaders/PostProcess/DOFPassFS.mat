@@ -60,6 +60,14 @@ static const float2 dofKernel[57] = {
     float2(1.159516, -0.951590), float2(1.322882, -0.707095), float2(1.435411, -0.435427), float2(1.492777, -0.147026)
 };
 
+float getDOFFactor(float2 UV)
+{
+    float realDepth = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear -
+        (2.0 * SAMPLE_TEX_LOD(depthMap, UV, 0).r - 1.0) * (camData.zFar - camData.zNear));
+    float near = smoothstep(blurNear, blurNear + blurSmoothNear, realDepth) - 1;
+    return near < 0 ? near : smoothstep(blurFar - blurSmoothFar, blurFar, realDepth);
+}
+
 FragmentOut DEFAULT_PP_MAIN
 {
 	FragmentOut fout;
@@ -67,29 +75,30 @@ FragmentOut DEFAULT_PP_MAIN
         float weight = 0;
         float3 c = Float3(0);
         int n = blurIter < 1 ? 1 : (blurIter < 2 ? 9 : (blurIter < 3 ? 25 : 57));
+        float centerFactor = getDOFFactor(pin.UV);
         for (int i = 0; i < n; i++) {
             float2 off = dofKernel[i] * blurRadius;
             off /= camData.viewSize;
-            float linearDepth = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear - (2.0 * SAMPLE_TEX(depthMap, pin.UV + off).r - 1.0) * (camData.zFar - camData.zNear));
-            float rate = (1 - smoothstep(blurNear, blurNear + blurSmoothNear, linearDepth)) +
-                smoothstep(blurFar - blurSmoothFar, blurFar, linearDepth);
-            if (rate != 0) {
-                float3 cc = SAMPLE_TEX(screenMap, pin.UV + off * rate).rgb;
+            float factor = getDOFFactor(pin.UV + off);
+            if ((centerFactor > 0 && factor > 0) || centerFactor <= 0) {
+                float3 cc = SAMPLE_TEX_LOD(screenMap, pin.UV + off * abs(factor), 0).rgb;
                 float w = length(cc) + 0.1;
                 weight += w;
                 c += cc * w;
             }
         }
-        fout.FragColor.rgb = c / weight;//((1 + n) * n);
+        if (c.r == 0 && c.g == 0 && c.b == 0)
+            fout.FragColor.rgb = SAMPLE_TEX_LOD(screenMap, pin.UV, 0).rgb;
+        else
+            fout.FragColor.rgb = c / weight;//((1 + n) * n);
         fout.FragColor.a = 1.0;
     }
     else if (passID == 1) {
-        float linearDepth = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear - (2.0 * SAMPLE_TEX(depthMap, pin.UV).r - 1.0) * (camData.zFar - camData.zNear));
-        float4 blurC = SAMPLE_TEX(dofMap, pin.UV);
-        float4 screenC = SAMPLE_TEX(screenMap, pin.UV);
-        float rate = (1 - smoothstep(blurNear, blurNear + blurSmoothNear, linearDepth)) * blurNearIntensity +
-            smoothstep(blurFar - blurSmoothFar, blurFar, linearDepth) * blurFarIntensity;
-        fout.FragColor = lerp(screenC, blurC, rate);
+        // float4 blurC = SAMPLE_TEX_LOD(dofMap, pin.UV, 0);
+        // float4 screenC = SAMPLE_TEX_LOD(screenMap, pin.UV, 0);
+        // float factor = getDOFFactor(pin.UV);
+        // float rate = factor < 0 ? (-factor * blurNearIntensity) : (factor * blurFarIntensity);
+        fout.FragColor = SAMPLE_TEX_LOD(dofMap, pin.UV, 0);//lerp(screenC, blurC, rate);
     }
     return fout;
 }

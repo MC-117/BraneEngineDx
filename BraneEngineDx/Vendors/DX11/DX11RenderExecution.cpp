@@ -19,7 +19,7 @@ DX11RenderExecution::~DX11RenderExecution()
 
 void DX11RenderExecution::executeParticle(const vector<DrawArraysIndirectCommand>& cmds)
 {
-	dxContext.deviceContext->IASetInputLayout(NULL);
+	dxContext.deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 	size_t size = sizeof(DrawArraysIndirectCommand) * cmds.size();
 	if (cmdBufferDesc.ByteWidth != size) {
 		cmdBufferDesc.ByteWidth = size;
@@ -32,9 +32,10 @@ void DX11RenderExecution::executeParticle(const vector<DrawArraysIndirectCommand
 	memcpy_s(cmdmappedData.pData, cmdBufferDesc.ByteWidth, cmds.data(), cmdBufferDesc.ByteWidth);
 	dxContext.deviceContext->Unmap(cmdBuffer, 0);
 	for (int i = 0; i < cmds.size(); i++) {
-		DX11ShaderProgram::currentDx11Program->drawInfo.baseVertex = cmds[i].first;
+		DX11ShaderProgram::currentDx11Program->drawInfo.baseVertex = 0;
+		DX11ShaderProgram::currentDx11Program->drawInfo.baseInstance = cmds[i].baseInstance;
 		DX11ShaderProgram::currentDx11Program->uploadDrawInfo();
-		dxContext.deviceContext->DrawIndexedInstancedIndirect(cmdBuffer, sizeof(DrawArraysIndirectCommand) * i);
+		dxContext.deviceContext->DrawInstancedIndirect(cmdBuffer, sizeof(DrawArraysIndirectCommand) * i);
 	}
 }
 
@@ -53,6 +54,7 @@ void DX11RenderExecution::executeMesh(const vector<DrawElementsIndirectCommand>&
 	dxContext.deviceContext->Unmap(cmdBuffer, 0);
 	for (int i = 0; i < cmds.size(); i++) {
 		DX11ShaderProgram::currentDx11Program->drawInfo.baseVertex = cmds[i].baseVertex;
+		DX11ShaderProgram::currentDx11Program->drawInfo.baseInstance = cmds[i].baseInstance;
 		DX11ShaderProgram::currentDx11Program->uploadDrawInfo();
 		//dxContext.deviceContext->DrawIndexedInstanced(cmds[i].count, cmds[i].instanceCount, cmds[i].firstIndex, cmds[i].baseVertex, cmds[i].baseInstance);
 		dxContext.deviceContext->DrawIndexedInstancedIndirect(cmdBuffer, sizeof(DrawElementsIndirectCommand) * i);

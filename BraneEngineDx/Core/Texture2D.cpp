@@ -83,9 +83,7 @@ Texture2D::Texture2D(bool isStandard) : isStandard(isStandard)
 
 Texture2D::Texture2D(ITexture2D* vendorTexture)
 {
-	readOnly = true;
-	this->vendorTexture = vendorTexture;
-	desc = vendorTexture->desc;
+	assign(vendorTexture);
 }
 
 Texture2D::Texture2D(const Texture2DInfo & info, bool isStandard) : isStandard(isStandard)
@@ -188,10 +186,14 @@ void Texture2D::setAutoGenMip(bool value)
 	desc.autoGenMip = value;
 }
 
-bool Texture2D::assign(unsigned int width, unsigned int height, unsigned channel, const Texture2DInfo& info, unsigned int texID, unsigned int bindType)
+bool Texture2D::assign(ITexture2D* venderTex)
 {
-	newVendorTexture();
-	return vendorTexture->assign(width, height, channel, info, texID, bindType);
+	if (vendorTexture != NULL && &vendorTexture->desc == &desc)
+		return false;
+	vendorTexture = venderTex;
+	desc = venderTex->desc;
+	readOnly = true;
+	return true;
 }
 
 bool Texture2D::load(const string & file)

@@ -134,6 +134,7 @@ unsigned int DX11GPUBuffer::uploadData(unsigned int size, void* data)
 	dxContext.deviceContext->Map(dx11Buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mpd);
 	memcpy_s((char*)mpd.pData, size * desc.cellSize, data, size * desc.cellSize);
 	dxContext.deviceContext->Unmap(dx11Buffer, 0);
+	return desc.id;
 }
 
 unsigned int DX11GPUBuffer::uploadSubData(unsigned int first, unsigned int size, void* data)

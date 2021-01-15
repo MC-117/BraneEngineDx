@@ -171,8 +171,6 @@ AudioSource::AudioState AudioSource::getState()
 	return AudioState(v - AL_PLAYING);
 }
 
-#endif // AUDIO_USE_OPENAL
-
 float AudioListener::getVolume() const
 {
 	return volume;
@@ -197,3 +195,5 @@ void AudioListener::update()
 	float v[6] = { forward[0], forward[1], forward[2], upward[0], upward[1], upward[2] };
 	alListenerfv(AL_ORIENTATION, v);
 }
+
+#endif // AUDIO_USE_OPENAL

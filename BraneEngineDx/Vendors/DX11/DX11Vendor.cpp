@@ -36,6 +36,7 @@ bool DX11Vendor::imGuiInit(const EngineConfig & config, const WindowContext & co
 		return false;
 	if (!ImGui_ImplDX11_Init(dxContext.device, dxContext.deviceContext))
 		return false;
+	return true;
 }
 
 bool DX11Vendor::imGuiNewFrame(const EngineConfig & config, const WindowContext & context)

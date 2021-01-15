@@ -1,0 +1,23 @@
+#material Engine/Shaders/Toon_IBL.mat
+#twoside false
+#castshadow true
+Scalar highlightCut: 0.999000
+Scalar highlightCutSmooth: 0.000000
+Scalar normalScale: 1.000000
+Scalar rimCut: 0.800000
+Scalar rimCutSmooth: 0.000000
+Scalar roughness: 0.300000
+Scalar shadowCut: 0.500000
+Scalar shadowCutSmooth: 0.000000
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color highlightColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color overColor: 0.916923, 0.803349, 0.163636, 1.000000
+Color reflectionColor: 0.658824, 0.658824, 0.658824, 1.000000
+Color rimColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color shadowColor: 0.588235, 0.588235, 0.588235, 1.000000
+Texture aoMap: white
+Texture colorMap: white
+Texture depthMap: white
+Texture normalMap: Engine/Textures/Default_N.png
+Texture reflectionMap: Engine/Textures/env_prefilter.mip
+Texture roughnessMap: white

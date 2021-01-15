@@ -1,6 +1,8 @@
 #include "Camera.h"
 #include "Geometry.h"
 
+SerializeInstance(Camera);
+
 Camera::Camera(string name) : Transform(name), _cameraRender(new CameraRender()),cameraRender(*_cameraRender)
 {
 }
@@ -258,4 +260,28 @@ Matrix4f Camera::viewport(int x, int y, int width, int height, float zNear, floa
 	Result(2, 3) = (zFar + zNear) / 2.0;
 	Result(3, 3) = 1;
 	return Result;
+}
+
+Serializable* Camera::instantiate(const SerializationInfo& from)
+{
+	return new Camera(from.name);
+}
+
+bool Camera::deserialize(const SerializationInfo& from)
+{
+	if (!Transform::deserialize(from))
+		return false;
+	from.get("fov", fov);
+	from.get("distance", distance);
+	return true;
+}
+
+bool Camera::serialize(SerializationInfo& to)
+{
+	if (!Transform::serialize(to))
+		return false;
+	to.type = "Camera";
+	to.set("fov", fov);
+	to.set("distance", distance);
+	return true;
 }

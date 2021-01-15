@@ -1,7 +1,7 @@
 #pragma once
 #define ENGINE_VERSION "0.1.0"
 #define VENDOR_USE_DX11
-#define AUDIO_USE_OPENAL
+//#define AUDIO_USE_OPENAL
 #define ENABLE_PHYSICS 0
 
 #include "StaticVar.h"

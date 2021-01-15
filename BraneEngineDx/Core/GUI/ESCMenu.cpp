@@ -63,11 +63,13 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 			ok = false;
 			Console::error("Not found SkeletonMeshActor(Miku)");
 		}
+#ifdef AUDIO_USE_OPENAL
 		AudioData* audio = getAssetByPath<AudioData>("Content/Scene/MagicMiku/Weekender Girl.wav");
 		if (audio == NULL) {
 			ok = false;
 			Console::error("Not found Content/Scene/MagicMiku/Weekender Girl.wav");
 		}
+#endif // AUDIO_USE_OPENAL
 		AnimationClipData* anim = getAssetByPath<AnimationClipData>("Content/Scene/MagicMiku/Weekender_Girl_MagicMiku.charanim");
 		if (anim == NULL) {
 			ok = false;
@@ -89,6 +91,7 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 			}
 			if (!has)
 				miku->addAnimationClip(*anim);
+#ifdef AUDIO_USE_OPENAL
 			has = false;
 			AudioSource* audioSource = NULL;
 			for (auto b = miku->audioSources.begin(), e = miku->audioSources.end(); b != e; b++) {
@@ -100,6 +103,7 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 			}
 			if (!has)
 				audioSource = miku->addAudioSource(*audio);
+#endif // AUDIO_USE_OPENAL
 			Camera& cam = world->getCurrentCamera();
 			if (cam.animationClip.animationClipData != camAnim)
 				cam.setAnimationClip(*camAnim);
@@ -108,10 +112,14 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 			miku->activeAnimationClip(anim->name);
 			miku->animationClip->play();
 			cam.animationClip.play();
+#ifdef AUDIO_USE_OPENAL
 			audioSource->play();
+#endif // AUDIO_USE_OPENAL
 			info.gui.hideAllUIControl();
 			world->input.setCursorHidden(true);
 		}
+		/*info.gui.hideAllUIControl();
+		world->input.setCursorHidden(true);*/
 	}
 #ifdef AUDIO_USE_OPENAL
 	int mainVolume = world->audioListener.getVolume() * 100;

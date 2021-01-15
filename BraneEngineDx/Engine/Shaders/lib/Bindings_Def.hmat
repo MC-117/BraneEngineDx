@@ -77,7 +77,7 @@ SamplerState tex##Sampler : SAMPLE_BINDING(id);
 cbuffer DrawInfoBuf : register(DRAW_INFO_BIND_INDEX)
 {
     uniform uint baseVertex;
+    uniform uint baseInstance;
     uniform uint passID;
-    uniform uint user1;
     uniform uint user2;
 };

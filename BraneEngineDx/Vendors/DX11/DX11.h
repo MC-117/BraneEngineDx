@@ -50,6 +50,7 @@ struct DX11Context
 
 	void clearSRV();
 	void clearUAV();
+	void clearRTV();
 };
 
 #endif // !_DX12_H_

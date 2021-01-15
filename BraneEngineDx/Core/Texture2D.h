@@ -30,7 +30,7 @@ public:
 
 	void setAutoGenMip(bool value);
 
-	virtual bool assign(unsigned int width, unsigned int height, unsigned channel, const Texture2DInfo& info, unsigned int texID, unsigned int bindType = 0);
+	virtual bool assign(ITexture2D* venderTex);
 	virtual bool load(const string& file);
 	virtual unsigned int bind();
 	virtual unsigned int resize(unsigned int width, unsigned int height);

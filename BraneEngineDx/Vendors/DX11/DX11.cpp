@@ -10,7 +10,7 @@ bool DX11Context::createDevice(unsigned int width, unsigned int height)
 {
 	D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
 	UINT createDeviceFlags = 0;
-	if (enableDebugLayer)
+	//if (enableDebugLayer)
 		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 	D3D_FEATURE_LEVEL FeatureLevelsRequested = D3D_FEATURE_LEVEL_11_0;
 	UINT numLevelsRequested = 1;
@@ -181,4 +181,9 @@ void DX11Context::clearUAV()
 	ID3D11UnorderedAccessView* srvs[D3D11_PS_CS_UAV_REGISTER_COUNT] = { NULL };
 	unsigned int offs[D3D11_PS_CS_UAV_REGISTER_COUNT] = { -1 };
 	deviceContext->CSSetUnorderedAccessViews(0, D3D11_PS_CS_UAV_REGISTER_COUNT, srvs, offs);
+}
+
+void DX11Context::clearRTV()
+{
+	deviceContext->OMSetRenderTargets(0, NULL, NULL);
 }
