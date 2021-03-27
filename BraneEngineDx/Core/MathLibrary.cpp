@@ -337,7 +337,7 @@ Vector2f::operator Block() const
 	return Block((float*)this, 2, 1, 0, 0, 2, 1);
 }
 
-Vector2u::Vector2u(float x, float y)
+Vector2u::Vector2u(unsigned int x, unsigned int y)
 	: _x(x), _y(y)
 {
 }
@@ -753,7 +753,7 @@ Vector3f::operator Block() const
 	return Block((float*)this, 3, 1, 0, 0, 3, 1);
 }
 
-Vector3u::Vector3u(float x, float y, float z)
+Vector3u::Vector3u(unsigned int x, unsigned int y, unsigned int z)
 	: _x(x), _y(y), _z(z)
 {
 }
@@ -1204,7 +1204,7 @@ Vector4f::operator Block() const
 	return Block((float*)this, 4, 1, 0, 0, 4, 1);
 }
 
-Vector4u::Vector4u(float x, float y, float z, float w)
+Vector4u::Vector4u(unsigned int x, unsigned int y, unsigned int z, unsigned int w)
 	: _x(x), _y(y), _z(z), _w(w)
 {
 }

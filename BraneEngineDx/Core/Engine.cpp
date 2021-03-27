@@ -4,7 +4,8 @@
 #include "Engine.h"
 #include "../resource.h"
 #include "Console.h"
-#include "GUI/WindowsUI/LoadingUI.h"
+#include "WUI/LoadingUI.h"
+#include "WUI/WUIViewPort.h"
 #include "../ThirdParty/ImGui/imgui_internal.h"
 
 World world;
@@ -252,7 +253,7 @@ void main(int argc, char** argv) {
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
 	//try {
-		Engine::windowContext._hinstance = hInstance;
+		Engine::windowContext.hinstance = hInstance;
 		Engine::config();
 		Engine::setup();
 		Engine::start();
@@ -279,63 +280,28 @@ WindowContext Engine::windowContext =
 	false
 };
 EngineConfig Engine::engineConfig;
+WUIViewport Engine::viewport;
 
 World * Engine::getCurrentWorld()
 {
 	return currentWorld;
 }
 
-void Engine::setViewportSize(int width, int height)
+void Engine::setViewportSize(const Unit2Di& size)
 {
-	if (!windowContext._fullscreen)
-		windowContext.screenSize = { width, height };
-	world.setViewportSize(width, height);
+	if (!windowContext.fullscreen)
+		windowContext.screenSize = size;
+	world.setViewportSize(size.x, size.y);
 	/*----- Vendor resize window -----*/
 	{
-		if (!VendorManager::getInstance().getVendor().resizeWindow(Engine::engineConfig, Engine::windowContext, width, height))
+		if (!VendorManager::getInstance().getVendor().resizeWindow(Engine::engineConfig, Engine::windowContext, size.x, size.y))
 			throw runtime_error("Vendor resie window failed");
 	}
 }
 
-void Engine::createWindow(unsigned int width, unsigned int height, const string& title)
-{
-	WNDCLASSEX wcex = { 0 };
-	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = wndProc;
-	wcex.cbClsExtra = 0;
-	wcex.cbWndExtra = 0;
-	wcex.hInstance = windowContext._hinstance;
-	wcex.hIcon = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_ICON1));
-	wcex.hCursor = LoadCursor(wcex.hInstance, IDC_ARROW);
-	wcex.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
-	wcex.lpszMenuName = nullptr;
-	wcex.lpszClassName = "BraneEngine";
-	wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
-	if (!RegisterClassEx(&wcex))
-		throw runtime_error("Register Window Class Failed");
-
-	RECT rc = { 0, 0, width, height };
-	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
-	HWND hwnd = CreateWindowEx(WS_EX_ACCEPTFILES, "BraneEngine", title.c_str(), WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, wcex.hInstance,
-		nullptr);
-	if (hwnd == NULL) {
-		char error[100];
-		sprintf_s(error, "Create Window Failed(0x%x)", GetLastError());
-		throw runtime_error(error);
-	}
-	windowContext._hwnd = hwnd;
-}
-
 void Engine::toggleFullscreen()
 {
-	windowContext._fullscreen = !windowContext._fullscreen;
-	/*----- Vendor toggle fullscreen -----*/
-	{
-		if (!VendorManager::getInstance().getVendor().toggleFullscreen(Engine::engineConfig, Engine::windowContext, windowContext._fullscreen))
-			throw runtime_error("Vendor toggle fullscreen failed");
-	}
+	viewport.toggleFullscreen();
 }
 
 void Engine::config()
@@ -477,25 +443,30 @@ void Engine::setup()
 	GetWindowRect(GetDesktopWindow(), &rect);
 	windowContext.fullscreenSize = { rect.right - rect.left, rect.bottom - rect.top };
 
+	WUIControl::registDefaultClass(windowContext.hinstance);
+
 	/*----- Vendor window setup -----*/
 	{
 		if (!vendor.windowSetup(engineConfig, windowContext))
 			throw runtime_error("Vendor window setup failed");
 	}
-	
-	createWindow(engineConfig.screenWidth, engineConfig.screenHeight, "BraneEngine v" + string(ENGINE_VERSION) + " | Vendor Api: " + vendor.getName());
-	world.input.setHWND(windowContext._hwnd); 
-	
-	LoadingUI loadingUI("Engine/Banner/Banner.bmp", windowContext._hinstance);
 
-	//ShowWindow(_hwnd, SW_HIDE);
+	/*----- WinAPI Viewport window setup -----*/
+	viewport.setHInstance(windowContext.hinstance);
+	RECT rc = { 0, 0, (int)engineConfig.screenWidth, (int)engineConfig.screenHeight };
+	AdjustWindowRect(&rc, viewport.getStyle(), FALSE);
+	viewport.setSize({ rc.right - rc.left, rc.bottom - rc.top });
+	viewport.setText("BraneEngine v" + string(ENGINE_VERSION) + " | Vendor Api: " + vendor.getName());
+	windowContext.hwnd = viewport.create();
+	world.input.setHWND(windowContext.hwnd);
+
+	LoadingUI loadingUI("Engine/Banner/Banner.bmp", windowContext.hinstance);
 
 	/*----- Vendor setup -----*/
 	{
 		if (!vendor.setup(engineConfig, windowContext))
 			throw runtime_error("Vendor setup failed");
 	}
-	setViewportSize(engineConfig.screenWidth, engineConfig.screenHeight);
 
 #ifdef AUDIO_USE_OPENAL
 	if (!alutInit(NULL, NULL)) {
@@ -542,34 +513,7 @@ void Engine::setup()
 void Engine::start()
 {
 	world.begin();
-	bool init = false, show = false;
-	Timer timer;
-	MSG msg = {};
-	while (WM_QUIT != msg.message) {
-		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		else {
-			mainLoop();
-			if (!init) {
-				if (!show) {
-					ShowWindow(windowContext._hwnd, SW_SHOW);
-					//SetTopWindow(windowContext._hwnd);
-					SetForegroundWindow(windowContext._hwnd);
-					BringWindowToTop(windowContext._hwnd);
-					SetActiveWindow(windowContext._hwnd);
-					show = true;
-				}
-			}
-			else
-				init = true;
-		}
-
-		timer.record("DeltaTime");
-		Console::getTimer("DeltaTime") = timer;
-		timer.reset();
-	}
+	viewport.doModel(false);
 }
 
 void Engine::clean()
@@ -598,15 +542,13 @@ void Engine::clean()
 	//alutExit();
 }
 
-void Engine::mainLoop()
+void Engine::mainLoop(float deltaTime)
 {
 	Timer timer;
 	if (world.willQuit()) {
 		PostQuitMessage(0);
-		//CloseWindow(Engine::windowContext._hwnd);
 	}
-	timer.record("PollEvent");
-	world.tick(0);
+	world.tick(deltaTime);
 	world.afterTick();
 	timer.record("CPU");
 
@@ -618,67 +560,4 @@ void Engine::mainLoop()
 
 	timer.record("GPU Wait");
 	Console::getTimer("Engine") = timer;
-}
-
-LRESULT wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	/*----- Vendor envoke WndProc -----*/
-	{
-		if (VendorManager::getInstance().getVendor().getWndProcFunc()(hWnd, message, wParam, lParam))
-			return 1;
-	}
-	static bool m_Minimized = false;
-	static bool m_Maximized = false;
-	static bool m_Resizing = false;
-	static unsigned int width;
-	static unsigned int height;
-	switch (message)
-	{
-	case WM_SIZE:
-		width = LOWORD(lParam);
-		height = HIWORD(lParam);
-		if (wParam == SIZE_MINIMIZED)
-		{
-			m_Minimized = true;
-			m_Maximized = false;
-		}
-		else if (wParam == SIZE_MAXIMIZED) {
-			m_Minimized = false;
-			m_Maximized = true;
-			Engine::setViewportSize(width, height);
-		}
-		else if (wParam == SIZE_RESTORED) {
-			if (m_Minimized) {
-				m_Minimized = false;
-				Engine::setViewportSize(width, height);
-			}
-			else if (m_Maximized) {
-				m_Maximized = false;
-				Engine::setViewportSize(width, height);
-			}
-			else if (m_Resizing) {
-			}
-			else {
-				Engine::setViewportSize(width, height);
-			}
-		}
-		return 0;
-	case WM_ENTERSIZEMOVE:
-		m_Resizing = true;
-		return 0;
-	case WM_EXITSIZEMOVE:
-		m_Resizing = false;
-		Engine::setViewportSize(width, height);
-		return 0;
-	case WM_CLOSE:
-		PostQuitMessage(0);
-		return 0;
-	case WM_SYSCOMMAND:
-		if ((wParam & 0xfff0) == SC_KEYMENU)
-			return 0;
-		else if ((wParam & 0xfff0) == SC_MINIMIZE)
-			return 0;
-		break;
-	}
-	return DefWindowProc(hWnd, message, wParam, lParam);
 }

@@ -33,7 +33,7 @@ public:
 	ID3D11SamplerState* dx11Sampler = NULL;
 
 	DX11Texture2D(DX11Context& context, Texture2DDesc& desc);
-	~DX11Texture2D();
+	virtual ~DX11Texture2D();
 
 	virtual bool isValid() const;
 	virtual unsigned long long getTextureID();

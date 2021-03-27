@@ -357,9 +357,6 @@
     <ClInclude Include="Core\PostProcess\ToneMapPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\GUI\WindowsUI\LoadingUI.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Core\AudioSource.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -379,6 +376,33 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\ParticleEmitter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WUI\WUIViewPort.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WUI\HelpUI.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WUI\LoadingUI.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WUI\WUIButton.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WUI\WUIControl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WUI\WUIESCMenu.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WUI\WUIFont.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WUI\WUILabel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Delegate.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -668,9 +692,6 @@
     <ClCompile Include="Core\PostProcess\ToneMapPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\GUI\WindowsUI\LoadingUI.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Core\AudioSource.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -690,6 +711,30 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\ParticleSystem.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WUI\HelpUI.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WUI\LoadingUI.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WUI\WUIButton.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WUI\WUIControl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WUI\WUIESCMenu.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WUI\WUIFont.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WUI\WUILabel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WUI\WUIViewPort.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

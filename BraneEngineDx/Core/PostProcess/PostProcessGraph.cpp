@@ -24,10 +24,19 @@ void PostProcessGraph::addPostProcessPass(PostProcessPass & pass)
 void PostProcessGraph::addDefaultPasses()
 {
 	//addPostProcessPass(*new SSAOPass());
-	addPostProcessPass(*new BloomPass());
 	addPostProcessPass(*new DOFPass());
+	addPostProcessPass(*new BloomPass());
 	addPostProcessPass(*new ToneMapPass());
 	addPostProcessPass(*new BlitPass());
+}
+
+PostProcessPass* PostProcessGraph::getPostProcessPass(const string& name)
+{
+	for (auto b = passes.begin(), e = passes.end(); b != e; b++) {
+		if ((*b)->getName() == name)
+			return *b;
+	}
+	return NULL;
 }
 
 void PostProcessGraph::render(RenderInfo & info)

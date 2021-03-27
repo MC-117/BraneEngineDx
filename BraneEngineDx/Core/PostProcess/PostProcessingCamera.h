@@ -10,6 +10,7 @@ class PostProcessingCamera : public Camera
 public:
 	Serialize(PostProcessingCamera);
 
+	bool autoDof = false;
 	PostProcessCameraRender postProcessCameraRender;
 	Texture2D texture = Texture2D(size.x, size.y, 4);
 	RenderTarget renderTarget = RenderTarget(size.x, size.y, 4, true);
@@ -17,6 +18,8 @@ public:
 	PostProcessingCamera(Material& material, string name = "PostProcessingCamera");
 
 	void setVolumnicLight(DirectLight& light);
+
+	virtual void tick(float deltaTime);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);

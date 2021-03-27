@@ -72,14 +72,16 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 	desc.width = width;
 	desc.height = height;
 	if (isDefault()) {
-		dxContext.createSwapChain(width, height, desc.multisampleLevel);
-		ID3D11Texture2D* screenTex = NULL;
-		dxContext.swapChain->GetBuffer(0, IID_PPV_ARGS(&screenTex));
 		if (dx11RTVs.size() != 1)
 			dx11RTVs.resize(1, NULL);
 		ID3D11RenderTargetView* rtv = dx11RTVs[0];
 		if (rtv != NULL)
 			rtv->Release();
+
+		dxContext.createSwapChain(width, height, desc.multisampleLevel);
+
+		ID3D11Texture2D* screenTex = NULL;
+		dxContext.swapChain->GetBuffer(0, IID_PPV_ARGS(&screenTex));
 		if (FAILED(dxContext.device->CreateRenderTargetView(screenTex, NULL, &rtv)))
 			throw runtime_error("DX11: Create default render target view failed");
 		dx11RTVs[0] = rtv;
@@ -97,6 +99,7 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 		if (desc.multisampleLevel > 1) {
 			multisampleTexs.resize(desc.textureList.size());
 			for (int i = 0; i < desc.textureList.size(); i++) {
+				desc.textureList[i].texture->bind();
 				DX11Texture2D* tex = (DX11Texture2D*)desc.textureList[i].texture->getVendorTexture();
 				MSTex& mstex = multisampleTexs[i];
 				if (mstex.tex == NULL) {

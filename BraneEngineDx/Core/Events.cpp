@@ -82,6 +82,34 @@ bool Events::call(const string& name, string str)
 	return true;
 }
 
+void Events::onBegin()
+{
+	for (auto b = onBeginField.begin(), e = onBeginField.end(); b != e; b++)
+		if (*b != NULL)
+			(*b)((Object*)target);
+}
+
+void Events::onTick(float deltaTime)
+{
+	for (auto b = onTickField.begin(), e = onTickField.end(); b != e; b++)
+		if (*b != NULL)
+			(*b)((Object*)target, deltaTime);
+}
+
+void Events::onAfterTick()
+{
+	for (auto b = onAfterTickField.begin(), e = onAfterTickField.end(); b != e; b++)
+		if (*b != NULL)
+			(*b)((Object*)target);
+}
+
+void Events::onEnd()
+{
+	for (auto b = onEndField.begin(), e = onEndField.end(); b != e; b++)
+		if (*b != NULL)
+			(*b)((Object*)target);
+}
+
 void Events::registerFunc(const string& name, EventVoidFunc func)
 {
 	voidFuncField[name] = func;
@@ -115,6 +143,26 @@ void Events::registerFunc(const string& name, EventIntFunc func)
 void Events::registerFunc(const string& name, EventStringFunc func)
 {
 	stringFuncField[name] = func;
+}
+
+void Events::registerOnBegin(EventOnBegin func)
+{
+	onBeginField.insert(func);
+}
+
+void Events::registerOnTick(EventOnTick func)
+{
+	onTickField.insert(func);
+}
+
+void Events::registerOnAfterTick(EventOnAfterTick func)
+{
+	onAfterTickField.insert(func);
+}
+
+void Events::registerOnEnd(EventOnEnd func)
+{
+	onEndField.insert(func);
 }
 
 bool Events::operator()(const string& name)

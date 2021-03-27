@@ -18,6 +18,8 @@ public:
 	void addPostProcessPass(PostProcessPass& pass);
 	void addDefaultPasses();
 
+	virtual PostProcessPass* getPostProcessPass(const string& name);
+
 	virtual void render(RenderInfo& info);
 	virtual void resize(Unit2Di size);
 

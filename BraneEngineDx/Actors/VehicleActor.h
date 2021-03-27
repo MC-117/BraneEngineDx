@@ -65,7 +65,8 @@ public:
 	vector<WheelActor*> wheels;
 
 	VehicleActor(Mesh& mesh, Material& material, string name = "VehicleActor");
-	virtual ~VehicleActor();
+
+	bool isControled() const;
 
 	WheelActor& addWheel(const WheelDesc& wheelDesc, Mesh& mesh, Material& mat);
 

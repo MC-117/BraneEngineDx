@@ -1,13 +1,7 @@
 #material
 Scalar blurRadius: 4
 Scalar blurIter: 3
-Scalar blurNear: 10
-Scalar blurFar: 300
-Scalar blurSmoothNear: 5
-Scalar blurSmoothFar: 50
-Scalar blurNearIntensity: 0
-Scalar blurFarIntensity: 0
-Texture dofMap
+Scalar focusDistance: 100
 Texture screenMap
 Texture depthMap
 #vertex use postprocess
@@ -25,15 +19,9 @@ FS_DEF_OUT_END
 DEF_MAT_BEGIN
 uniform float blurRadius;
 uniform float blurIter;
-uniform float blurNear;
-uniform float blurFar;
-uniform float blurSmoothNear;
-uniform float blurSmoothFar;
-uniform float blurNearIntensity;
-uniform float blurFarIntensity;
+uniform float focusDistance;
 DEF_MAT_END
 
-DEF_TEX2D(dofMap, 0);
 DEF_TEX2D(screenMap, 1);
 DEF_TEX2D(depthMap, 2);
 
@@ -64,8 +52,7 @@ float getDOFFactor(float2 UV)
 {
     float realDepth = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear -
         (2.0 * SAMPLE_TEX_LOD(depthMap, UV, 0).r - 1.0) * (camData.zFar - camData.zNear));
-    float near = smoothstep(blurNear, blurNear + blurSmoothNear, realDepth) - 1;
-    return near < 0 ? near : smoothstep(blurFar - blurSmoothFar, blurFar, realDepth);
+    return clamp(1 - (focusDistance / realDepth), -2, 1);
 }
 
 FragmentOut DEFAULT_PP_MAIN
@@ -79,26 +66,19 @@ FragmentOut DEFAULT_PP_MAIN
         for (int i = 0; i < n; i++) {
             float2 off = dofKernel[i] * blurRadius;
             off /= camData.viewSize;
-            float factor = getDOFFactor(pin.UV + off);
-            if ((centerFactor > 0 && factor > 0) || centerFactor <= 0) {
-                float3 cc = SAMPLE_TEX_LOD(screenMap, pin.UV + off * abs(factor), 0).rgb;
-                float w = length(cc) + 0.1;
-                weight += w;
-                c += cc * w;
-            }
+            float2 uv = pin.UV + off * centerFactor;
+            uv = clamp(uv, Float2(0), Float2(1));
+            float factor = getDOFFactor(uv);
+            float3 cc = SAMPLE_TEX_LOD(screenMap, uv, 0).rgb;
+            float w = length(cc) + 0.1;
+            weight += w;
+            c += cc * w;
         }
-        if (c.r == 0 && c.g == 0 && c.b == 0)
+        if (weight == 0)
             fout.FragColor.rgb = SAMPLE_TEX_LOD(screenMap, pin.UV, 0).rgb;
         else
             fout.FragColor.rgb = c / weight;//((1 + n) * n);
         fout.FragColor.a = 1.0;
-    }
-    else if (passID == 1) {
-        // float4 blurC = SAMPLE_TEX_LOD(dofMap, pin.UV, 0);
-        // float4 screenC = SAMPLE_TEX_LOD(screenMap, pin.UV, 0);
-        // float factor = getDOFFactor(pin.UV);
-        // float rate = factor < 0 ? (-factor * blurNearIntensity) : (factor * blurFarIntensity);
-        fout.FragColor = SAMPLE_TEX_LOD(dofMap, pin.UV, 0);//lerp(screenC, blurC, rate);
     }
     return fout;
 }

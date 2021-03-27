@@ -9,16 +9,55 @@
 #include "Actors\VehicleActor.h"
 #include "Actors\GunTowerActor.h"
 
-Mesh* boxMesh(const Range<Vector3f>& boundary)
+VehicleActor* loadCubeVehicle(float unit = 2)
 {
-	MeshPart part = VendorManager::getInstance().getVendor().newMeshPart(8, 36);
+	Material* gridM = getAssetByPath<Material>("Content/GridM.imat");
+	SerializationInfo* tpCamAsset = getAssetByPath<SerializationInfo>("Content/CubeVehicle/CubeVehicleTPCameraPack.asset");
+	SerializationInfo* fpCamAsset = getAssetByPath<SerializationInfo>("Content/CubeVehicle/CubeVehicleFPCameraPack.asset");
+	SerializationInfo* bodyAsset = getAssetByPath<SerializationInfo>("Content/CubeVehicle/CubeVehiclePack.asset");
+	if (gridM == NULL)
+		return NULL;
+	if (tpCamAsset == NULL)
+		return NULL;
+	if (fpCamAsset == NULL)
+		return NULL;
+	if (bodyAsset == NULL)
+		return NULL;
+	Vector3f cubeScale = { 6, 3, 1 };
+	Vector3f columnScale = { 2, 2, 1 };
+	cubeScale *= unit;
+	columnScale *= unit;
+	Mesh& cube = *Box(-cubeScale, cubeScale).toMesh();
+	Mesh& column = *Column(-columnScale, columnScale).toMesh(60, Vector3f::UnitY());
+	VehicleActor& vehicle = *new VehicleActor(cube, *gridM, "CubeVehicle");
+	vehicle.deserialize(*bodyAsset);
+	vehicle.TPCamera.deserialize(*tpCamAsset);
+	vehicle.FPCamera.deserialize(*fpCamAsset);
 
-	Mesh* mesh = new Mesh();
-	mesh->setTotalMeshPart(part);
-	mesh->addMeshPart("Materail", part);
+	WheelDesc desc;
+
+	Vector3f offset = cubeScale;
+	offset.x() -= columnScale.x();
+	offset.z() *= -1;
+
+	desc.offset = { -offset.x(), offset.y(), offset.z() };
+	vehicle.addWheel(desc, column, *gridM);
+	desc.offset = { -offset.x(), -offset.y(), offset.z() };
+	vehicle.addWheel(desc, column, *gridM);
+
+	desc.steerAngle = 30 / 180.f * PI;
+	desc.offset = { offset.x(), offset.y(), offset.z() };
+	vehicle.addWheel(desc, column, *gridM);
+	desc.offset = { offset.x(), -offset.y(), offset.z() };
+	vehicle.addWheel(desc, column, *gridM);
+
+	world += vehicle;
+	world.switchCamera(vehicle.TPCamera);
+
+	return &vehicle;
 }
 
-void loadVehicle()
+VehicleActor* loadVehicle()
 {
 	Mesh* bodyMesh = getAssetByPath<Mesh>("Content/Vehicle/VehicleBody.fbx");
 	Mesh* FLWMesh = getAssetByPath<Mesh>("Content/Vehicle/VehicleFLW.fbx");
@@ -34,29 +73,29 @@ void loadVehicle()
 	SerializationInfo* gunAsset = getAssetByPath<SerializationInfo>("Content/GunTower/GunPack.asset");
 	SerializationInfo* gunFirePSAsset = getAssetByPath<SerializationInfo>("Content/GunTower/GunFirePSPack.asset");
 	if (bodyMesh == NULL)
-		return;
+		return NULL;
 	if (FLWMesh == NULL)
-		return;
+		return NULL;
 	if (FRWMesh == NULL)
-		return;
+		return NULL;
 	if (BLWMesh == NULL)
-		return;
+		return NULL;
 	if (BRWMesh == NULL)
-		return;
+		return NULL;
 	if (bodyAsset == NULL)
-		return;
+		return NULL;
 	if (frontWheelAsset == NULL)
-		return;
+		return NULL;
 	if (backWheelAsset == NULL)
-		return;
+		return NULL;
 	if (tpCamAsset == NULL)
-		return;
+		return NULL;
 	if (fpCamAsset == NULL)
-		return;
+		return NULL;
 	if (gunAsset == NULL)
-		return;
+		return NULL;
 	if (gunFirePSAsset == NULL)
-		return;
+		return NULL;
 	VehicleActor& vehicle = *new VehicleActor(*bodyMesh, Material::nullMaterial, "Vehicle");
 	vehicle.deserialize(*bodyAsset);
 	vehicle.TPCamera.deserialize(*tpCamAsset);
@@ -85,6 +124,8 @@ void loadVehicle()
 	world += vehicle;
 
 	world.switchCamera(vehicle.TPCamera);
+
+	return &vehicle;
 }
 
 void InitialWorld()
@@ -104,7 +145,22 @@ void InitialWorld()
 	world += debugCamera;
 	world.switchCamera(debugCamera);
 
-	loadVehicle();
+	static VehicleActor* vehicles = loadVehicle();
+	static VehicleActor* cubeVehicles = loadCubeVehicle();
+
+	world.events.registerOnTick([](Object* self, float dt) {
+		World* world = (World*)self;
+		Input& input = world->input;
+		if (input.getCursorHidden() || input.getMouseButtonDown(MouseButtonEnum::Right)) {
+			if (input.getKeyPress('Q')) {
+				Console::log("Q");
+				if (vehicles->isControled())
+					world->switchCamera(cubeVehicles->TPCamera);
+				else if (cubeVehicles->isControled())
+					world->switchCamera(vehicles->TPCamera);
+			}
+		}
+	});
 
 	ESCMenu& escMenu = *new ESCMenu("ESCMenu", true);
 	world += escMenu;
@@ -129,5 +185,4 @@ void InitialWorld()
 
 	world.loadWorld(*info);
 	world.deserialize(*info);
-	world.getCurrentCamera().cameraRender.renderTarget.setMultisampleLevel(Engine::engineConfig.msaa);
 }

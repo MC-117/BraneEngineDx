@@ -4,6 +4,7 @@
 //#include "stb_image_write.h"
 #include "Console.h"
 #include "IVendor.h"
+#include "Engine.h"
 
 RenderPool::RenderPool(Camera & defaultCamera) : defaultCamera(defaultCamera)
 {
@@ -27,6 +28,7 @@ void RenderPool::switchToDefaultCamera()
 void RenderPool::switchCamera(Camera & camera)
 {
 	this->camera = &camera;
+	camera.cameraRender.renderTarget.setMultisampleLevel(Engine::engineConfig.msaa);
 }
 
 void RenderPool::add(Render & render)

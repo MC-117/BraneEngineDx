@@ -30,10 +30,10 @@ struct WindowContext
 	Unit2Di screenSize;
 	Unit2Di fullscreenSize;
 	string srceenTile;
-	HWND _hwnd;
-	HINSTANCE _hinstance;
+	HWND hwnd;
+	HINSTANCE hinstance;
 	void* window;
-	bool _fullscreen;
+	bool fullscreen;
 #ifdef UNICODE
 	wstring executionPath;
 #else
@@ -84,8 +84,7 @@ public:
 	virtual bool resizeWindow(const EngineConfig& config, const WindowContext& context, unsigned int width, unsigned int height);
 	virtual bool toggleFullscreen(const EngineConfig& config, const WindowContext& context, bool fullscreen);
 
-	typedef LRESULT(*WndProcFunc)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	virtual WndProcFunc getWndProcFunc();
+	virtual LRESULT wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	virtual ITexture2D* newTexture2D(Texture2DDesc& desc) = 0;
 	virtual ShaderStage* newShaderStage(const ShaderStageDesc& desc) = 0;

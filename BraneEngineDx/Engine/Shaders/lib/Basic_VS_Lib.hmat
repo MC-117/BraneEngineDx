@@ -3,7 +3,18 @@ struct DefaultVertexOut
     float4 svPos : SV_POSITION;
     float4 lightSpacePos : LIGHTSAPCEPOS;
     float3 Normal : NORMAL;
+    float3 LocalNormal : LOCALNORMAL;
+    float3 WorldScale : WOLRDSCALE;
     float3 WorldPos : WOLRDPOS;
     float3 LocalPos : LOCALPOS;
     float2 TexCoords : TEXCOORD;
 };
+
+float3 getWorldScale(float4x4 tmat)
+{
+    float3 scale;
+    scale[0] = length(float3(tmat[0][0], tmat[1][0], tmat[2][0]));
+    scale[1] = length(float3(tmat[0][1], tmat[1][1], tmat[2][1]));
+    scale[2] = length(float3(tmat[0][2], tmat[1][2], tmat[2][2]));
+    return scale;
+}
