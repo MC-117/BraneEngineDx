@@ -1,4 +1,6 @@
 #include "Geometry.h"
+#include "IVendor.h"
+#include "Console.h"
 
 Geometry::Geometry()
 {
@@ -16,9 +18,9 @@ void Geometry::reshape(Vector3f controlPointA, Vector3f controlPointB)
 	bound.maxVal = controlPointB;
 }
 
-Mesh& Geometry::toMesh(Mesh & mesh)
+Mesh* Geometry::toMesh()
 {
-	return mesh;
+	return NULL;
 }
 
 SerializeInstance(Box);
@@ -39,6 +41,73 @@ Box::Box(float width, float height, float depth, Vector3f center)
 	Vector3f h = { depth / 2, width / 2, height / 2 };
 	bound.minVal = center - h;
 	bound.maxVal = center + h;
+}
+
+Mesh* Box::toMesh()
+{
+	MeshPart part = VendorManager::getInstance().getVendor().newMeshPart(24, 12);
+
+	for (int i = 0; i < 6; i++) {
+		part.uv(i * 4) = { 1, 0 };
+		part.uv(i * 4 + 1) = { 0, 0 };
+		part.uv(i * 4 + 2) = { 0, 1 };
+		part.uv(i * 4 + 3) = { 1, 1 };
+	}
+
+	part.vertex(0) = bound.minVal;
+	part.vertex(1) = { bound.minVal.x(), bound.maxVal.y(), bound.minVal.z() };
+	part.vertex(2) = { bound.minVal.x(), bound.maxVal.y(), bound.maxVal.z() };
+	part.vertex(3) = { bound.minVal.x(), bound.minVal.y(), bound.maxVal.z() };
+	for (int i = 0; i < 4; i++)
+		part.normal(i) = -Vector3f::UnitX();
+
+	part.vertex(4) = { bound.maxVal.x(), bound.minVal.y(), bound.minVal.z() };
+	part.vertex(5) = part.vertex(0);
+	part.vertex(6) = part.vertex(3);
+	part.vertex(7) = { bound.maxVal.x(), bound.minVal.y(), bound.maxVal.z() };
+	for (int i = 4; i < 8; i++)
+		part.normal(i) = -Vector3f::UnitY();
+
+	part.vertex(8) = { bound.maxVal.x(), bound.maxVal.y(), bound.minVal.z() };
+	part.vertex(9) = part.vertex(4);
+	part.vertex(10) = part.vertex(7);
+	part.vertex(11) = bound.maxVal;
+	for (int i = 8; i < 12; i++)
+		part.normal(i) = Vector3f::UnitX();
+
+	part.vertex(12) = part.vertex(1);
+	part.vertex(13) = part.vertex(8);
+	part.vertex(14) = part.vertex(11);
+	part.vertex(15) = part.vertex(2);
+	for (int i = 12; i < 16; i++)
+		part.normal(i) = Vector3f::UnitY();
+
+	part.vertex(16) = part.vertex(3);
+	part.vertex(17) = part.vertex(15);
+	part.vertex(18) = part.vertex(11);
+	part.vertex(19) = part.vertex(7);
+	for (int i = 16; i < 20; i++)
+		part.normal(i) = Vector3f::UnitZ();
+
+	part.vertex(20) = part.vertex(4);
+	part.vertex(21) = part.vertex(8);
+	part.vertex(22) = part.vertex(12);
+	part.vertex(23) = part.vertex(0);
+	for (int i = 20; i < 24; i++)
+		part.normal(i) = -Vector3f::UnitZ();
+
+	for (unsigned int v = 0, e = 0; v < 24; v += 4, e += 2) {
+		part.element(e) = { v, v + 2, v + 1 };
+		part.element(e + 1) = { v, v + 3, v + 2 };
+	}
+
+	Mesh* mesh = new Mesh();
+	mesh->setTotalMeshPart(part);
+	mesh->addMeshPart("Materail", part);
+
+	mesh->bound = bound;
+
+	return mesh;
 }
 
 Serializable * Box::instantiate(const SerializationInfo & from)
@@ -92,9 +161,86 @@ Column::Column(Vector3f controlPointA, Vector3f controlPointB) : Geometry(contro
 
 Column::Column(float radius, float height, Vector3f center)
 {
-	Vector3f r = { radius, height / 2, radius };
+	Vector3f r = { radius, radius, height / 2 };
 	bound.minVal = center - r;
 	bound.maxVal = center + r;
+}
+
+Mesh* Column::toMesh(unsigned int segment, const Vector3f& axis)
+{
+	Quaternionf rot = Quaternionf::FromTwoVectors(Vector3f::UnitZ(), axis);
+
+	segment = max(segment, 3);
+	Vector3f size = bound.maxVal - bound.minVal;
+	float radius = min(size.x(), size.y()) / 2;
+	float halfLength = size.z() / 2;
+	vector<Vector3f> cirlePos = vector<Vector3f>(segment);
+	vector<Vector3f> cirleNorm = vector<Vector3f>(segment);
+	vector<float> columnU = vector<float>(segment);
+	vector<Vector2f> circleUV = vector<Vector2f>(segment);
+	for (int s = 0; s < segment; s++) {
+		columnU[s] = s / (float)segment * 2;
+		float angle = s / (float)segment * PI * 2;
+		Vector2f coord = { cos(angle), sin(angle) };
+		cirleNorm[s] = Vector3f{ coord.x(), coord.y() }.normalized();
+		cirlePos[s] = cirleNorm[s] * radius;
+		circleUV[s] = (coord + Vector2f::Ones()) * 0.5;
+}
+
+	MeshPart part = VendorManager::getInstance().getVendor().newMeshPart(4 * segment + 2, 4 * segment);
+
+	part.vertex(0) = rot * Vector3f{ 0, 0, halfLength };
+	part.normal(0) = rot * Vector3f::UnitZ();
+	part.uv(0) = { 0.5, 0.5 };
+	part.vertex(1) = rot * Vector3f{ 0, 0, -halfLength };
+	part.normal(1) = rot * -Vector3f::UnitZ();
+	part.uv(1) = { 0.5, 0.5 };
+
+	unsigned int v = 2, e = 0;
+	for (unsigned int i = 0; i < segment; i++, v += 4, e += 4) {
+		Vector3f pos = cirlePos[i];
+		pos.z() = halfLength;
+		Vector3f ipos = cirlePos[i];
+		ipos.z() = -halfLength;
+
+		pos = rot * pos;
+		ipos = rot * ipos;
+
+		part.vertex(v + 2) = part.vertex(v) = pos;
+		part.vertex(v + 3) = part.vertex(v + 1) = ipos;
+
+		part.normal(v + 1) = -(part.normal(v) = rot * Vector3f::UnitZ());
+		part.normal(v + 3) = part.normal(v + 2) = rot * cirleNorm[i];
+
+		Vector2f uv = circleUV[i];
+		part.uv(v) = part.uv(v + 1) = uv;
+		part.uv(v + 2) = { columnU[i], 1 };
+		part.uv(v + 3) = { columnU[i], 0 };
+
+		part.element(e) = { v + 4, 0, v };
+		part.element(e + 1) = { v + 5, v + 1, 1 };
+		part.element(e + 2) = { v + 7, v + 2, v + 3 };
+		part.element(e + 3) = { v + 7, v + 6, v + 2 };
+	}
+	e -= 4;
+	part.element(e).x() = 2;
+	part.element(e + 1).x() = 3;
+	part.element(e + 2).x() = 5;
+	part.element(e + 3).x() = 5;
+	part.element(e + 3).y() = 4;
+
+	Mesh* mesh = new Mesh();
+	mesh->setTotalMeshPart(part);
+	mesh->addMeshPart("Materail", part);
+
+	mesh->bound = { rot * bound.minVal, rot * bound.maxVal };
+
+	return mesh;
+}
+
+Mesh* Column::toMesh()
+{
+	return toMesh(36);
 }
 
 #if ENABLE_PHYSICS

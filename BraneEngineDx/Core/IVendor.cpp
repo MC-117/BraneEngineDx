@@ -68,9 +68,9 @@ bool IVendor::toggleFullscreen(const EngineConfig& config, const WindowContext& 
 	return true;
 }
 
-IVendor::WndProcFunc IVendor::getWndProcFunc()
+LRESULT IVendor::wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	return NULL;
+	return 0;
 }
 
 VendorManager & VendorManager::getInstance()

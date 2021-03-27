@@ -24,15 +24,16 @@ bool DX11Vendor::windowSetup(EngineConfig & config, WindowContext & context)
 
 bool DX11Vendor::setup(const EngineConfig & config, const WindowContext & context)
 {
-	dxContext.setHWnd(context._hwnd);
+	dxContext.setHWnd(context.hwnd);
 	if (!dxContext.createDevice(context.screenSize.x, context.screenSize.y))
 		return false;
 	return true;
 }
 
+
 bool DX11Vendor::imGuiInit(const EngineConfig & config, const WindowContext & context)
 {
-	if (!ImGui_ImplWin32_Init(context._hwnd))
+	if (!ImGui_ImplWin32_Init(context.hwnd))
 		return false;
 	if (!ImGui_ImplDX11_Init(dxContext.device, dxContext.deviceContext))
 		return false;
@@ -53,17 +54,17 @@ bool DX11Vendor::imGuiDrawFrame(const EngineConfig & config, const WindowContext
 	return true;
 }
 
+bool DX11Vendor::imGuiShutdown(const EngineConfig& config, const WindowContext& context)
+{
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	return true;
+}
+
 bool DX11Vendor::swap(const EngineConfig & config, const WindowContext & context)
 {
 	dxContext.deviceContext->Flush();
 	dxContext.swapChain->Present(config.vsnyc ? 1 : 0, 0);
-	return true;
-}
-
-bool DX11Vendor::imGuiShutdown(const EngineConfig & config, const WindowContext & context)
-{
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
 	return true;
 }
 
@@ -85,17 +86,33 @@ bool DX11Vendor::resizeWindow(const EngineConfig & config, const WindowContext &
 
 bool DX11Vendor::toggleFullscreen(const EngineConfig& config, const WindowContext& context, bool fullscreen)
 {
-	if (dxContext.swapChain) {
-		dxContext.swapChain->SetFullscreenState(fullscreen, nullptr);
-		return true;
-	}
-	return false;
+	//if (dxContext.swapChain) {
+	//	IDXGIOutput* pTarget; BOOL bFullscreen;
+	//	if (SUCCEEDED(dxContext.swapChain->GetFullscreenState(&bFullscreen, &pTarget)))
+	//	{
+	//		if (pTarget != NULL)
+	//			pTarget->Release();
+	//	}
+	//	else
+	//		bFullscreen = FALSE;
+	//	// If not full screen, enable full screen again.
+	//	if (!bFullscreen && fullscreen)
+	//	{
+	//		ShowWindow(context.hwnd, SW_MINIMIZE);
+	//		//ShowWindow(context.hwnd, SW_RESTORE);
+	//		dxContext.swapChain->SetFullscreenState(TRUE, NULL);
+	//	}
+	//	if (bFullscreen && !fullscreen) {
+	//		dxContext.swapChain->SetFullscreenState(FALSE, NULL);
+	//	}
+	//}
+	return true;
 }
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-DX11Vendor::WndProcFunc DX11Vendor::getWndProcFunc()
+LRESULT DX11Vendor::wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	return ImGui_ImplWin32_WndProcHandler;
+	return ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
 }
 
 ITexture2D * DX11Vendor::newTexture2D(Texture2DDesc& desc)

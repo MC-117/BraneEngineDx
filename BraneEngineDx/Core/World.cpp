@@ -46,20 +46,7 @@ void World::tick(float deltaTime)
 	currentTime = getCurrentTime();
 	float dt = (currentTime - lastTime) * 0.000000001;
 	lastTime = currentTime;
-	//if (!destroyList.empty()) {
-	//	for (auto b = destroyList.begin(), e = destroyList.end(); b != e; b++) {
-	//		Render* rd = (*b)->getRender();
-	//		PhysicalBody* p = (PhysicalBody*)(*b)->getPhysicalBody();
-	//		if (rd != NULL)
-	//			renderPool.remove(*rd);
-	//		if (p != NULL)
-	//			physicalWorld.removePhysicalBody(*p);
-	//		//Brane::vanish(typeid(Object).hash_code(), &obj);
-	//		delete *b;
-	//	}
-	//	destroyList.clear();
-	//}
-	Transform::tick(dt);
+	Transform::tick(deltaTime);
 	iter.reset();
 	while (iter.next()) {
 		Object& obj = iter.current();
@@ -85,7 +72,7 @@ void World::tick(float deltaTime)
 #endif
 			if (!obj.isinitialized())
 				obj.begin();
-			obj.tick(dt);
+			obj.tick(deltaTime);
 		}
 	}
 #if ENABLE_PHYSICS

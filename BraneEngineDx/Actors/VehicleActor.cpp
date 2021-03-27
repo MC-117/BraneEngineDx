@@ -5,7 +5,7 @@
 WheelActor::WheelActor(Mesh& mesh, Material& material, string name)
 	: MeshActor(mesh, material, name)
 {
-	desc.radius = mesh.getHeight();
+	desc.radius = mesh.getHeight() / 2;
 	desc.width = mesh.getWidth();
 }
 
@@ -53,14 +53,6 @@ VehicleActor::VehicleActor(Mesh& mesh, Material& material, string name)
 {
 	addChild(TPCamera);
 	addChild(FPCamera);
-}
-
-
-VehicleActor::~VehicleActor()
-{
-	for (auto b = wheels.begin(), e = wheels.end(); b != e; b++) {
-		delete *b;
-	}
 }
 
 WheelActor& VehicleActor::addWheel(const WheelDesc& wheelDesc, Mesh& mesh, Material& mat)
@@ -129,6 +121,13 @@ void VehicleActor::update(float deltaTime)
 	}
 }
 
+bool VehicleActor::isControled() const
+{
+	World* world = Engine::getCurrentWorld();
+	return world != NULL && (&world->getCurrentCamera() == &TPCamera ||
+		&world->getCurrentCamera() == &FPCamera);
+}
+
 void VehicleActor::begin()
 {
 	MeshActor::begin();
@@ -160,11 +159,16 @@ void VehicleActor::tick(float deltaTime)
 				if (input.getKeyPress(VK_SPACE))
 					world->switchCamera(TPCamera);
 			}
-			if (ctrl) {
-				setAccelerator(input.getKeyDown('W'));
-				setBrake(input.getKeyDown('S'));
-				setSteer(input.getKeyDown('A') - input.getKeyDown('D'));
-			}
+		}
+		if (ctrl) {
+			setAccelerator(input.getKeyDown('W'));
+			setBrake(input.getKeyDown('S'));
+			setSteer(input.getKeyDown('A') - input.getKeyDown('D'));
+		}
+		else {
+			setAccelerator(0);
+			setBrake(0);
+			setSteer(0);
 		}
 	}
 	TPCamera.distance = _lerp(TPCamera.distance, camDistance, deltaTime * camSpeed);

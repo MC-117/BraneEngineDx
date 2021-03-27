@@ -1,8 +1,6 @@
 #pragma once
 #include "../../Core/IVendor.h"
 
-//#undef VENDOR_USE_DX11
-
 #ifdef VENDOR_USE_DX11
 
 #ifndef _DX11VENDOR_H_
@@ -25,18 +23,20 @@ public:
 
 	virtual bool windowSetup(EngineConfig& config, WindowContext& context);
 	virtual bool setup(const EngineConfig& config, const WindowContext& context);
+
 	virtual bool imGuiInit(const EngineConfig& config, const WindowContext& context);
 	virtual bool imGuiNewFrame(const EngineConfig& config, const WindowContext& context);
 	virtual bool imGuiDrawFrame(const EngineConfig& config, const WindowContext& context);
-	virtual bool swap(const EngineConfig& config, const WindowContext& context);
 	virtual bool imGuiShutdown(const EngineConfig& config, const WindowContext& context);
+
+	virtual bool swap(const EngineConfig& config, const WindowContext& context);
 	virtual bool clean(const EngineConfig& config, const WindowContext& context);
 
 	virtual bool guiOnlyRender(const Color& clearColor);
 	virtual bool resizeWindow(const EngineConfig& config, const WindowContext& context, unsigned int width, unsigned int height);
 	virtual bool toggleFullscreen(const EngineConfig& config, const WindowContext& context, bool fullscreen);
 
-	virtual WndProcFunc getWndProcFunc();
+	virtual LRESULT wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	virtual ITexture2D* newTexture2D(Texture2DDesc& desc);
 	virtual ShaderStage* newShaderStage(const ShaderStageDesc& desc);

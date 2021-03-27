@@ -300,8 +300,9 @@ ID3D11ShaderResourceView* DX11Texture2D::getSRV()
 	if (dx11Texture2DView != NULL)
 		dx11Texture2DView->QueryInterface(IID_PPV_ARGS(&q));
 	if (q == NULL) {
-		if (dx11Texture2DView != NULL)
+		if (dx11Texture2DView != NULL) {
 			dx11Texture2DView->Release();
+		}
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = desc.info.internalType == TIT_Depth ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
 		if (desc.info.sampleCount > 1) {

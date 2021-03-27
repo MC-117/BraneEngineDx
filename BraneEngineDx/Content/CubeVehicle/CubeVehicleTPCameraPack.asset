@@ -1,0 +1,44 @@
+PostProcessingCamera { distance: 33, fov: 90, children: None {  }, position: SVector3f { x: 0, y: 0, z: 10,  }, postProcessingGraph: PostProcessGraph { Bloom: PostProcessPass { enable: "true", material: "#material Engine/Shaders/PostProcess/BloomPassFS.mat
+#twoside false
+#castshadow true
+Scalar bloomDarkIntensity: 2.500000
+Scalar bloomLightIntensity: 5.000000
+Scalar bloomThreshold: 0.700000
+Scalar exposure: 3.000000
+Scalar gamma: 0.250000
+Scalar height: 4.000000
+Scalar width: 7.000000
+Count bloomIter: 6
+Count bloomLevel: 9
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+Texture sampleMap: white
+Texture screenMap: white
+", name: "Bloom",  }, DOF: PostProcessPass { enable: "true", material: "#material Engine/Shaders/PostProcess/DOFPassFS.mat
+#twoside false
+#castshadow true
+Scalar blurFar: 100.000000
+Scalar blurFarIntensity: 1.000000
+Scalar blurIter: 3.000000
+Scalar blurNear: 20.000000
+Scalar blurNearIntensity: 1.000000
+Scalar blurRadius: 4.000000
+Scalar blurSmoothFar: 50.000000
+Scalar blurSmoothNear: 10.000000
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+Texture depthMap: white
+Texture dofMap: white
+Texture screenMap: white
+", name: "DOF",  }, ToneMap: PostProcessPass { enable: "true", material: "#material Engine/Shaders/PostProcess/ToneMapPass.mat
+#twoside false
+#castshadow true
+Scalar exposure: 3.000000
+Scalar gamma: 0.250000
+Scalar lutBlend: 0.500000
+Scalar vignettePower: 2.000000
+Scalar vignetteRate: 0.000000
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color vignetteColor: 0.000000, 0.000000, 0.000000, 1.000000
+Texture lutMap: Engine/Textures/default_lut.png
+Texture ssaoMap: white
+Image imageMap: binding(0)
+", name: "ToneMap",  },  }, rotation: SQuaternionf { w: 0.304422, x: -0.024987, y: 0.00799031, z: 0.952176,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }

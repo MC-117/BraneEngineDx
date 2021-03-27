@@ -886,6 +886,7 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 					ImGui::TextColored(ImVec4(0.4, 0.5, 1, 1), "No PostProcess");
 				else {
 					PostProcessGraph& graph = ppCam->postProcessCameraRender.graph;
+					ImGui::Checkbox("AutoDOF", &ppCam->autoDof);
 					int i = 0;
 					for (auto b = graph.passes.begin(), e = graph.passes.end(); b != e; b++, i++) {
 						ImGui::PushID(i);

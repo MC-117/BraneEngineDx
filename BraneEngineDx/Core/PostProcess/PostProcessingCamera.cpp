@@ -23,6 +23,20 @@ void PostProcessingCamera::setVolumnicLight(DirectLight & light)
 	postProcessCameraRender.setVolumnicLight(light);
 }
 
+void PostProcessingCamera::tick(float deltaTime)
+{
+	Camera::tick(deltaTime);
+	if (autoDof) {
+		PostProcessPass* dofPass = postProcessCameraRender.graph.getPostProcessPass("DOF");
+		if (dofPass != NULL) {
+			Material* dofMat = dofPass->getMaterial();
+			if (dofMat != NULL) {
+				dofMat->setScalar("focusDistance", distance);
+			}
+		}
+	}
+}
+
 Serializable * PostProcessingCamera::instantiate(const SerializationInfo & from)
 {
 	return new PostProcessingCamera(from.name);

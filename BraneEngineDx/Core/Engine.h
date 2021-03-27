@@ -7,6 +7,8 @@
 
 extern World world;
 
+class WUIViewport;
+
 static class Engine
 {
 public:
@@ -14,19 +16,17 @@ public:
 	static World* currentWorld;
 	static WindowContext windowContext;
 	static EngineConfig engineConfig;
+	static WUIViewport viewport;
 
 	static World* getCurrentWorld();
-	static void setViewportSize(int width, int height);
-	static void createWindow(unsigned int width, unsigned int height, const string& title);
+	static void setViewportSize(const Unit2Di& size);
 	static void toggleFullscreen();
 	static void config();
 	static void setup();
 	static void start();
 	static void clean();
-	static void mainLoop();
+	static void mainLoop(float deltaTime);
 };
-
-LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 void InitialWorld();
 

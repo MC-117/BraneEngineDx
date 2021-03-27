@@ -1,0 +1,22 @@
+#material Engine/Shaders/PBR_Grid.mat
+#twoside false
+#castshadow true
+Scalar ao: 1.000000
+Scalar emission: 0.000000
+Scalar gridSpace: 100.000000
+Scalar metallic: 0.500000
+Scalar normalScale: 1.000000
+Scalar patternX: 25.000000
+Scalar patternY: 25.000000
+Scalar roughness: 0.800000
+Color baseColor: 0.621387, 0.323307, 0.095184, 1.000000
+Color chessColor: 0.131979, 0.148134, 0.228324, 1.000000
+Color gridOffset: 0.000000, 0.000000, 0.000000, 1.000000
+Color lineColor: 1.000000, 1.000000, 1.000000, 1.000000
+Texture aoMap: white
+Texture colorMap: Engine/Textures/GridInfo.png
+Texture depthMap: white
+Texture emissionMap: white
+Texture metallicMap: white
+Texture normalMap: Engine/Textures/Default_N.png
+Texture roughnessMap: white

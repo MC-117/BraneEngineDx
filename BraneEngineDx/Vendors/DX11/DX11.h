@@ -3,7 +3,7 @@
 #define _DX11_H_
 
 #ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers.
+#define WIN32_LEAN_AND_MEAN
 #endif
 
 #include <windows.h>
@@ -11,10 +11,6 @@
 #include <dxgi1_6.h>
 #include <d3d11.h>
 #include <D3Dcompiler.h>
-
-#include <wrl.h>
-#include <string>
-#include <shellapi.h>
 
 #include "../../Core/Config.h"
 

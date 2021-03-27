@@ -16,14 +16,17 @@ Object::~Object()
 void Object::begin()
 {
 	initialized = true;
+	events.onBegin();
 }
 
 void Object::tick(float deltaTime)
 {
+	events.onTick(deltaTime);
 }
 
 void Object::afterTick()
 {
+	events.onAfterTick();
 }
 
 void Object::prerender()

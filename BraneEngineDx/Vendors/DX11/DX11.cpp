@@ -10,7 +10,7 @@ bool DX11Context::createDevice(unsigned int width, unsigned int height)
 {
 	D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
 	UINT createDeviceFlags = 0;
-	//if (enableDebugLayer)
+	if (enableDebugLayer)
 		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 	D3D_FEATURE_LEVEL FeatureLevelsRequested = D3D_FEATURE_LEVEL_11_0;
 	UINT numLevelsRequested = 1;
@@ -51,8 +51,9 @@ void DX11Context::cleanupDevice()
 
 void DX11Context::createSwapChain(unsigned int width, unsigned int height, unsigned int multisampleLevels)
 {
-	if (swapChain != NULL)
+	if (swapChain != NULL) {
 		swapChain->Release();
+	}
 	DXGI_SWAP_CHAIN_DESC sd;
 	ZeroMemory(&sd, sizeof(sd));
 	sd.BufferCount = 1;

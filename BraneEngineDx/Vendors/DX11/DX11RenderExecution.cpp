@@ -13,8 +13,9 @@ DX11RenderExecution::DX11RenderExecution(DX11Context& context)
 
 DX11RenderExecution::~DX11RenderExecution()
 {
-	if (cmdBuffer != NULL)
+	if (cmdBuffer != NULL) {
 		cmdBuffer->Release();
+	}
 }
 
 void DX11RenderExecution::executeParticle(const vector<DrawArraysIndirectCommand>& cmds)
@@ -23,8 +24,9 @@ void DX11RenderExecution::executeParticle(const vector<DrawArraysIndirectCommand
 	size_t size = sizeof(DrawArraysIndirectCommand) * cmds.size();
 	if (cmdBufferDesc.ByteWidth != size) {
 		cmdBufferDesc.ByteWidth = size;
-		if (cmdBuffer != NULL)
+		if (cmdBuffer != NULL) {
 			cmdBuffer->Release();
+		}
 		dxContext.device->CreateBuffer(&cmdBufferDesc, NULL, &cmdBuffer);
 	}
 	D3D11_MAPPED_SUBRESOURCE cmdmappedData;
@@ -44,8 +46,9 @@ void DX11RenderExecution::executeMesh(const vector<DrawElementsIndirectCommand>&
 	size_t size = sizeof(DrawElementsIndirectCommand) * cmds.size();
 	if (cmdBufferDesc.ByteWidth != size) {
 		cmdBufferDesc.ByteWidth = size;
-		if (cmdBuffer != NULL)
+		if (cmdBuffer != NULL) {
 			cmdBuffer->Release();
+		}
 		dxContext.device->CreateBuffer(&cmdBufferDesc, NULL, &cmdBuffer);
 	}
 	D3D11_MAPPED_SUBRESOURCE cmdmappedData;

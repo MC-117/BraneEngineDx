@@ -14,9 +14,11 @@ DefaultVertexOut MESH_MAIN
     vout.WorldPos = _WorldPos.xyz;
     vout.LocalPos = pos;
     vout.Normal = normalize(mul(norm, (float3x3)(fm)));
+    vout.LocalNormal = norm;
     vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
+    vout.WorldScale = getWorldScale(fm);
     return vout;
 }
 #vertex skeleton
@@ -34,9 +36,11 @@ DefaultVertexOut SKELETON_MAIN
     vout.LocalPos = pos;
     vout.svPos = mul(_WorldPos, camData.pmat);
     vout.Normal = normalize(mul(norm, (float3x3)(fm)));
+    vout.LocalNormal = norm;
     vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
+    vout.WorldScale = getWorldScale(fm);
     return vout;
 }
 #vertex skeleton morph
@@ -55,8 +59,10 @@ DefaultVertexOut SKELETON_MAIN
     vout.LocalPos = pos;
     vout.svPos = mul(_WorldPos, camData.pmat);
     vout.Normal = normalize(mul(morphNorm(vertexID, norm), (float3x3)(fm)));
+    vout.LocalNormal = norm;
     vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
+    vout.WorldScale = getWorldScale(fm);
     return vout;
 }

@@ -1,0 +1,1 @@
+MeshActor { Audio: [ ], children: None {  }, materials: AssetSearch [ { path: "Content/GridM.imat", pathType: "path",  },  ], position: SVector3f { x: 125.572, y: -30.8498, z: 6,  }, rotation: SQuaternionf { w: 0.997834, x: 0, y: 0, z: -0.0657842,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }

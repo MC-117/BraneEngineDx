@@ -122,7 +122,7 @@ struct Vector2u
 protected:
 	unsigned int _x = 0, _y = 0;
 public:
-	Vector2u(float x = 0, float y = 0);
+	Vector2u(unsigned int x = 0, unsigned int y = 0);
 	Vector2u(const Vector2u& v);
 
 	unsigned int& x();
@@ -240,7 +240,7 @@ struct Vector3u
 protected:
 	unsigned int _x = 0, _y = 0, _z = 0;
 public:
-	Vector3u(float x = 0, float y = 0, float z = 0);
+	Vector3u(unsigned int x = 0, unsigned int y = 0, unsigned int z = 0);
 	Vector3u(const Vector3u& v);
 
 	unsigned int& x();
@@ -365,7 +365,7 @@ struct Vector4u
 protected:
 	unsigned int _x = 0, _y = 0, _z = 0, _w = 0;
 public:
-	Vector4u(float x = 0, float y = 0, float z = 0, float w = 0);
+	Vector4u(unsigned int x = 0, unsigned int y = 0, unsigned int z = 0, unsigned int w = 0);
 	Vector4u(const Vector4u& v);
 
 	unsigned int& x();

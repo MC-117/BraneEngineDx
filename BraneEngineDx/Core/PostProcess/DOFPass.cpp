@@ -5,7 +5,6 @@
 DOFPass::DOFPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
 {
-	screenRenderTarget.addTexture("screenMap", screenMap);
 	dofRenderTarget.addTexture("dofMap", dofMap);
 }
 
@@ -28,9 +27,8 @@ void DOFPass::render(RenderInfo & info)
 		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-	Texture** pDofMap = material->getTexture("dofMap");
 	Texture** pScreenMap = material->getTexture("screenMap");
-	if (pDofMap == NULL || pScreenMap == NULL)
+	if (pScreenMap == NULL)
 		return;
 	ShaderProgram* program = material->getShader()->getProgram(Shader_Postprocess);
 	if (program == NULL) {
@@ -43,7 +41,6 @@ void DOFPass::render(RenderInfo & info)
 		program->bind();
 		info.camera->bindCameraData();
 
-		*pDofMap = NULL;
 		*pScreenMap = resource->screenTexture;
 
 		dofRenderTarget.bindFrame();
@@ -56,20 +53,7 @@ void DOFPass::render(RenderInfo & info)
 
 		vendor.postProcessCall();
 
-		*pDofMap = &dofMap;
-		*pScreenMap = resource->screenTexture;
-
-		screenRenderTarget.bindFrame();
-
-		material->setPass(1);
-		material->processBaseData();
-		material->processTextureData();
-
-		vendor.setViewport(0, 0, size.x, size.y);
-
-		vendor.postProcessCall();
-
-		resource->screenTexture = &screenMap;
+		resource->screenTexture = &dofMap;
 	}
 }
 
@@ -77,5 +61,4 @@ void DOFPass::resize(const Unit2Di & size)
 {
 	PostProcessPass::resize(size);
 	dofRenderTarget.resize(size.x, size.y);
-	screenRenderTarget.resize(size.x, size.y);
 }

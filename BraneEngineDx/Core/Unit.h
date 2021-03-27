@@ -12,6 +12,7 @@ struct Unit2D
 	static Unit2D<T> create(T v);
 	static Unit2D<T> create(T x, T y);
 	double length() const;
+	T dot(const Unit2D<T>& u) const;
 	double angle(const Unit2D<T>& a, const Unit2D<T>& b) const;
 	double slope(const Unit2D<T>& v) const;
 	int posAtLine(const Unit2D<T>& p1, const Unit2D<T>& p2) const;
@@ -21,9 +22,12 @@ struct Unit2D
 	Unit2D<T> operator-(const Unit2D<T>& u) const;
 	Unit2D<T>& operator+=(const Unit2D<T>& u);
 	Unit2D<T>& operator-=(const Unit2D<T>& u);
-	T operator*(const Unit2D<T> u) const;
+	Unit2D<T> operator*(const Unit2D<T> u) const;
 	Unit2D<T> operator*(T u) const;
-	Unit2D<T>& operator*=(T u) const;
+	Unit2D<T>& operator*=(T u);
+	Unit2D<T> operator/(const Unit2D<T> u) const;
+	Unit2D<T> operator/(T u) const;
+	Unit2D<T>& operator/=(T u);
 	bool operator==(const Unit2D<T>& u) const;
 	bool operator!=(const Unit2D<T>& u) const;
 	friend ostream& operator<<(ostream& os, Unit2D<T> u)
@@ -55,6 +59,12 @@ template<class T>
 double Unit2D<T>::length() const
 {
 	return sqrt(x * x + y * y);
+}
+
+template<class T>
+inline T Unit2D<T>::dot(const Unit2D<T>& u) const
+{
+	return x * u.x + y* u.y;
 }
 
 template<class T>
@@ -112,9 +122,9 @@ Unit2D<T>& Unit2D<T>::operator-=(const Unit2D<T>& u)
 }
 
 template<class T>
-T Unit2D<T>::operator*(const Unit2D<T> u) const
+inline Unit2D<T> Unit2D<T>::operator*(const Unit2D<T> u) const
 {
-	return x * u.x + y * u.y;
+	return { x * u.x, y * u.y };
 }
 
 template<class T>
@@ -124,10 +134,30 @@ inline Unit2D<T> Unit2D<T>::operator*(T u) const
 }
 
 template<class T>
-inline Unit2D<T>& Unit2D<T>::operator*=(T u) const
+inline Unit2D<T>& Unit2D<T>::operator*=(T u)
 {
 	x *= u;
 	y *= u;
+	return *this;
+}
+
+template<class T>
+inline Unit2D<T> Unit2D<T>::operator/(const Unit2D<T> u) const
+{
+	return { x / u.x, y / u.y };
+}
+
+template<class T>
+inline Unit2D<T> Unit2D<T>::operator/(T u) const
+{
+	return { x / u, y / u };
+}
+
+template<class T>
+inline Unit2D<T>& Unit2D<T>::operator/=(T u)
+{
+	x /= u;
+	y /= u;
 	return *this;
 }
 
@@ -156,6 +186,7 @@ struct Color
 	Color operator*(float s) const;
 	Color operator/(float s) const;
 	bool operator==(const Color& c) const;
+	bool operator!=(const Color& c) const;
 };
 
 enum TransformSpace {
@@ -430,8 +461,8 @@ template<class T>
 inline Range<T>::Range(const T& minVal, const T& maxVal)
 {
 	seed = time(NULL);
-	this->minVal = maxVal;
-	this->maxVal = minVal;
+	this->minVal = minVal;
+	this->maxVal = maxVal;
 }
 
 template<class T>
