@@ -13,10 +13,10 @@ void DebugCamera::tick(float deltaTime)
 	World* world = Engine::getCurrentWorld();
 	if (world == NULL)
 		return;
-	Input& input = world->input;
+	Input& input = Engine::input;
 	if (&world->getCurrentCamera() != this)
 		return;
-	if ((input.getCursorHidden() || input.getMouseButtonDown(MouseButtonEnum::Right))) {
+	if ((input.getCursorHidden())) {
 		Vector3f v(0, 0, 0);
 		v.x() = (int)input.getKeyDown('W') - (int)input.getKeyDown('S');
 		v.x() += input.getMouseWheelValue();
@@ -27,8 +27,10 @@ void DebugCamera::tick(float deltaTime)
 		translate(0, 0, v.z(), WORLD);
 
 		Unit2Di m = input.getMouseMove();
-		rotate(0, 0, -m.x * deltaTime * 5, WORLD);
-		rotate(0, m.y * deltaTime * 5, 0);
+		rotate(0, 0, -m.x * 0.1f, WORLD);
+		rotate(0, m.y * 0.1f, 0);
 	}
+
+	//rotate(0, 0, deltaTime * 1000, WORLD);
 	PostProcessingCamera::tick(deltaTime);
 }

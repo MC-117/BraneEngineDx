@@ -62,6 +62,11 @@ Material * Render::getMaterial(unsigned int index)
 	return NULL;
 }
 
+bool Render::getMaterialEnable(unsigned int index)
+{
+	return false;
+}
+
 Shader* Render::getShader() const
 {
 	return NULL;
@@ -90,14 +95,6 @@ unsigned int Render::getInstanceCount() const
 void * Render::getRender() const
 {
 	return (void*)this;
-}
-
-void Render::setupRenderResource()
-{
-}
-
-void Render::setSourceRenderTarget(RenderTarget & renderTarget)
-{
 }
 
 RenderInfo::RenderInfo(Matrix4f projectionViewMat,

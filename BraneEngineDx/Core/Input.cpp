@@ -1,6 +1,6 @@
 #include "Input.h"
 
-Input::Input(string name) : Object::Object(name)
+Input::Input(string name) : name(name)
 {
 	memset(keyState, 0, sizeof(keyState));
 }
@@ -180,9 +180,8 @@ bool Input::readDevice(LPDIRECTINPUTDEVICE8 pDIDevice, void * pBuffer, long lSiz
 	return true;
 }
 
-void Input::begin()
+void Input::init()
 {
-	Object::begin();
 	if (FAILED(DirectInput8Create(GetModuleHandle(NULL), 0x800, IID_IDirectInput8, (void**)&_directInput, NULL)))
 		cout << "DirectInput init failed\n";
 	else if (FAILED(_directInput->CreateDevice(GUID_SysMouse, &_mouseDevice, NULL)))
@@ -193,7 +192,7 @@ void Input::begin()
 	}
 }
 
-void Input::tick(float deltaTime)
+void Input::update()
 {
 	if (GetActiveWindow() == _hwnd) {
 		DIMOUSESTATE dimouse;
@@ -238,9 +237,13 @@ void Input::tick(float deltaTime)
 	hideCursor(cursorHidden);
 }
 
-void Input::end()
+void Input::release()
 {
-	_mouseDevice->Unacquire();
-	_mouseDevice->Release();
-	_directInput->Release();
+	if (_mouseDevice != NULL) {
+		_mouseDevice->Unacquire();
+		_mouseDevice->Release();
+	}
+	if (_directInput != NULL) {
+		_directInput->Release();
+	}
 }

@@ -1,8 +1,9 @@
 #include "World.h"
 //#include "MaterialLoader.h"
 #include <fstream>
-#include "Utility.h"
+#include "Utility/Utility.h"
 #include "Console.h"
+#include "Engine.h"
 
 SerializeInstance(World);
 
@@ -21,7 +22,6 @@ World::World() : Transform("RootWorld")
 		*this += defaultCamera;
 	defaultCamera.setActive(true);
 	renderPool.switchToDefaultCamera();
-	*this += input;
 }
 
 World::~World()
@@ -31,9 +31,6 @@ World::~World()
 void World::begin()
 {
 	lastTime = currentTime = startTime = getCurrentTime();
-#if ENABLE_PHYSICS
-	physicalWorld.setGravity({ 0.f, 0.f, -10.f });
-#endif
 	Transform::begin();
 	iter.reset();
 	while (iter.next())
@@ -44,24 +41,26 @@ void World::tick(float deltaTime)
 {
 	timer.reset();
 	currentTime = getCurrentTime();
-	float dt = (currentTime - lastTime) * 0.000000001;
+	float dt = (currentTime - lastTime) * 0.000000001f;
 	lastTime = currentTime;
 	Transform::tick(deltaTime);
 	iter.reset();
+	vector<Object*> destroyList;
 	while (iter.next()) {
 		Object& obj = iter.current();
 		vector<Render*> rds;
 		obj.getRenders(rds);
 		if (obj.isDestroy()) {
-			//destroyList.push_back(&obj);
-			iter.unparentCurrent();
+			obj.end();
+			destroyList.push_back(&obj);
 			for (int i = 0; i < rds.size(); i++)
 				renderPool.remove(*rds[i]);
 #if ENABLE_PHYSICS
 			obj.releasePhysics(physicalWorld);
 #endif
-			//Brane::vanish(typeid(Object).hash_code(), &obj);
-			delete &obj;
+			DestroyFlag flag = obj.getDestroyFlag();
+			if (flag == DestroyFlag::Self)
+				iter.unparentCurrent();
 		}
 		else {
 			for (int i = 0; i < rds.size(); i++)
@@ -72,13 +71,29 @@ void World::tick(float deltaTime)
 #endif
 			if (!obj.isinitialized())
 				obj.begin();
-			obj.tick(deltaTime);
+			if (!pause) {
+				if (doseWarmUp)
+					obj.tick(deltaTime);
+				else
+					doseWarmUp = true;
+			}
 		}
 	}
+
+	if (Engine::input.getCursorHidden()) {
+		renderPool.gui.gizmo.setCameraControl(Gizmo::CameraControlMode::None);
+	}
+	else {
+		renderPool.gui.gizmo.setCameraControl(Gizmo::CameraControlMode::Free);
+	}
+	renderPool.gui.gizmo.onUpdate(getCurrentCamera());
+	for (auto b = destroyList.rbegin(), e = destroyList.rend(); b != e; b++)
+		delete *b;
+	timer.record("Tick");
 #if ENABLE_PHYSICS
 	physicalWorld.updatePhysicalWorld(dt);
 #endif
-	timer.record("Tick");
+	timer.record("Physics");
 }
 
 void World::afterTick()
@@ -92,9 +107,11 @@ void World::afterTick()
 	updateListener();
 #endif // AUDIO_USE_OPENAL
 	iter.reset();
-	while (iter.next())
-		iter.current().prerender();
-	timer.record("PreRender");
+	if (!guiOnly) {
+		while (iter.next())
+			iter.current().prerender(renderPool.cmdList);
+		timer.record("PreRender");
+	}
 
 	renderPool.render(guiOnly);
 	timer.record("Render");
@@ -111,14 +128,30 @@ void World::end()
 	Transform::end();
 }
 
-void World::quit()
+void World::quit(int code)
 {
 	isQuit = true;
+	quitCode = code;
+}
+
+void World::setPause(bool pause)
+{
+	this->pause = pause;
+}
+
+bool World::getPause() const
+{
+	return pause;
 }
 
 bool World::willQuit()
 {
 	return isQuit;
+}
+
+bool World::willRestart()
+{
+	return isQuit && quitCode == 1;
 }
 
 string World::addObject(Object & object)
@@ -145,9 +178,25 @@ string World::addObject(Object * object)
 
 void World::destroyObject(string name)
 {
-	Object* obj = ((Object*)Brane::find(typeid(Object).hash_code(), name));
+	Object* obj = find(name);
 	if (obj != NULL)
 		obj->destroy();
+}
+
+Object* World::find(const string& name) const
+{
+	ObjectConstIterator iter(this);
+	while (iter.next()) {
+		Object* obj = &iter.current();
+		if (obj->name == name)
+			return obj;
+	}
+	return NULL;
+}
+
+Object* World::getObject() const
+{
+	return (Object*)this;
 }
 
 void World::setGUIOnly(bool value)
@@ -250,7 +299,7 @@ bool World::loadTransform(const string & path)
 		vector<string> strs = split(line, ':');
 		if (strs.size() != 2)
 			continue;
-		Transform *t = dynamic_cast<Transform*>((Object*)Brane::find(typeid(Object).hash_code(), trim(strs[0], ' ')));
+		Transform *t = dynamic_cast<Transform*>(find(trim(strs[0], ' ')));
 		if (t == NULL) {
 			cout << "Cannot find (Object) " + strs[0] << endl;
 			continue;
@@ -345,7 +394,6 @@ bool World::serialize(SerializationInfo & to)
 {
 	if (!Transform::serialize(to))
 		return false;
-	to.type = "World";
 	return true;
 }
 

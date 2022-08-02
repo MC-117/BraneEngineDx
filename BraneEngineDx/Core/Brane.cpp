@@ -1,65 +1,196 @@
 #include "Brane.h"
 
-StaticVar<std::map<void*, std::pair<TypeID, std::list<void*>*>>> Brane::entityBook;
-StaticVar<std::map<TypeID, std::map<std::string, std::list<void*>>>> Brane::nameBook;
+InstanceID Brane::highestInstanceID = 0;
 
-bool Brane::born(TypeID type, void* ptr)
+StaticVar<std::unordered_map<InstanceID, void*>> Brane::insIDToPtr;
+StaticVar<std::unordered_map<InstanceID, Guid>> Brane::insIDToGuid;
+StaticVar<std::map<Guid, InstanceID>> Brane::guidToInsID;
+StaticVar<std::unordered_map<InstanceID, FileID>> Brane::insIDToFileID;
+
+StaticVar<std::map<std::string, FileID>> Brane::pathToFileID;
+StaticVar<std::vector<InstanceAssetFile>> Brane::instanceAssetfiles;
+
+InstanceID Brane::registerPtr(void* ptr)
 {
-	return entityBook->insert(std::pair<void*, std::pair<TypeID, std::list<void*>*>>(ptr, std::pair<TypeID, std::list<void*>*>(type, NULL))).second;
+	InstanceID insID = newInsID();
+	if (insID == 0)
+		return 0;
+	(*insIDToPtr)[insID] = ptr;
+	return insID;
 }
 
-bool Brane::born(TypeID type, void* ptr, const std::string& name)
+InstanceID Brane::registerPtr(void* ptr, const InstanceAssetHandle& handle)
 {
-	auto t = entityBook->insert(std::pair<void*, std::pair<TypeID, std::list<void*>*>>(ptr, std::pair<TypeID, std::list<void*>*>(type, NULL)));
-	if (!t.second)
+	InstanceID insID = newInsID(handle);
+	if (insID == 0)
+		return 0;
+	(*insIDToPtr)[insID] = ptr;
+	return insID;
+}
+
+bool Brane::removeInsID(InstanceID insID)
+{
+	auto i2pIter = insIDToPtr->find(insID);
+	if (i2pIter == insIDToPtr->end())
 		return false;
-	std::list<void*>*& v = t.first->second.second;
-	auto iter = nameBook->find(type);
-	if (iter == nameBook->end())
-		(v = &(nameBook->insert(std::pair<int, std::map<std::string, std::list<void*>>>(type, std::map<std::string, std::list<void*>>())).first->second.insert(std::pair<std::string, std::list<void*>>(name, std::list<void*>())).first->second))->push_back(ptr);
+	insIDToPtr->erase(i2pIter);
+	removeAsset(insID);
+	return true;
+}
+
+bool Brane::recycleInsID(InstanceID insID)
+{
+	if (removeInsID(insID)) {
+		if (insID == highestInstanceID) {
+			highestInstanceID--;
+		}
+		return true;
+	}
+	return false;
+}
+
+bool Brane::addAsset(InstanceID insID, InstanceAssetHandle& handle)
+{
+	auto iter = insIDToPtr->find(insID);
+	if (iter == insIDToPtr->end())
+		return false;
+	if (handle.guid.isDefault())
+		handle.guid = Guid::newGuid();
+
+	{
+		auto iter = insIDToGuid->find(insID);
+		if (iter != insIDToGuid->end() &&
+			iter->second != handle.guid)
+			insIDToGuid->erase(iter);
+	}
+
+	{
+		auto iter = guidToInsID->find(handle.guid);
+		if (iter != guidToInsID->end() &&
+			iter->second != insID)
+			guidToInsID->erase(iter);
+	}
+
+	{
+		
+		auto iter = insIDToFileID->find(insID);
+		if (iter != insIDToFileID->end() &&
+			iter->second != handle.fileID)
+			insIDToFileID->erase(iter);
+	}
+
+	(*insIDToGuid)[insID] = handle.guid;
+	(*guidToInsID)[handle.guid] = insID;
+	if (handle.fileID > 0) {
+		(*insIDToFileID)[insID] = handle.fileID;
+	}
+	return true;
+}
+
+bool Brane::removeAsset(InstanceID insID)
+{
+	bool ok = true;
+	auto i2gIter = insIDToGuid->find(insID);
+	if (i2gIter != insIDToGuid->end()) {
+		guidToInsID->erase(i2gIter->second);
+		insIDToGuid->erase(i2gIter);
+	}
 	else {
-		auto _iter = iter->second.find(name);
-		if (_iter == iter->second.end())
-			(v = &(iter->second.insert(std::pair<std::string, std::list<void*>>(name, std::list<void*>())).first->second))->push_back(ptr);
-		else
-			(v = &(_iter->second))->push_back(ptr);
+		ok = false;
 	}
+	ok &= insIDToFileID->erase(insID);
+	return ok;
+}
+
+bool Brane::registerAssetFile(InstanceAssetFile& assetFile)
+{
+	if (assetFile.path.empty())
+		return false;
+
+	auto iter = pathToFileID->find(assetFile.path);
+	if (iter == pathToFileID->end()) {
+		FileID fileID = instanceAssetfiles->size() + 1;
+		assetFile.fileID = fileID;
+		(*pathToFileID)[assetFile.path] = fileID;
+		instanceAssetfiles->push_back(assetFile);
+	}
+	else {
+		assetFile = getAssetFileByFileID(iter->second);
+	}
+
 	return true;
 }
 
-bool Brane::vanish(TypeID type, void* ptr)
+bool Brane::registerGuid(InstanceID insID, const Guid& guid)
 {
-	if (entityBook.get() == NULL)
+	if (insID == 0 || guid.isDefault())
 		return false;
-	auto iter = entityBook->find(ptr);
-	if (iter == entityBook->end())
-		return false;
-	if (iter->second.second) {
-		iter->second.second->remove(ptr);
-	}
-	entityBook->erase(iter);
+	auto iter = guidToInsID->find(guid);
+	if (iter == guidToInsID->end())
+		(*guidToInsID)[guid] = insID;
+	(*insIDToGuid)[insID] = guid;
 	return true;
 }
 
-void* Brane::find(TypeID type, const std::string& name)
+bool Brane::registerAssetHandle(InstanceID insID, const InstanceAssetHandle& handle)
 {
-	auto iter = nameBook->find(type);
-	if (iter != nameBook->end()) {
-		auto _iter = iter->second.find(name);
-		if (_iter != iter->second.end())
-			if (_iter->second.size() != 0)
-				return *(_iter->second.begin());
-	}
-	return NULL;
+	if (handle.fileID == 0 || handle.guid.isDefault())
+		return false;
+	(*insIDToGuid)[insID] = handle.guid;
+	(*guidToInsID)[handle.guid] = insID;
+	(*insIDToFileID)[insID] = handle.fileID;
+	return true;
 }
 
-std::list<void*> Brane::findAll(TypeID type, const std::string& name)
+void* Brane::getPtrByInsID(InstanceID insID)
 {
-	auto iter = nameBook->find(type);
-	if (iter != nameBook->end()) {
-		auto _iter = iter->second.find(name);
-		if (_iter != iter->second.end())
-			return _iter->second;
+	auto iter = insIDToPtr->find(insID);
+	if (iter == insIDToPtr->end())
+		return NULL;
+	return iter->second;
+}
+
+InstanceID Brane::getInsIDByGuid(const Guid& guid)
+{
+	if (guid.isDefault())
+		return 0;
+	auto iter = guidToInsID->find(guid);
+	if (iter == guidToInsID->end())
+		return 0;
+	return iter->second;
+}
+
+FileID Brane::getFileIDByPath(const string& path)
+{
+	auto iter = pathToFileID->find(path);
+	if (iter == pathToFileID->end()) {
+		return 0;
 	}
-	return std::list<void*>();
+	else {
+		return iter->second;
+	}
+}
+
+InstanceAssetFile Brane::getAssetFileByFileID(FileID fileID)
+{
+	if (fileID == 0 || fileID > instanceAssetfiles->size())
+		return InstanceAssetFile();
+	return (*instanceAssetfiles)[fileID - 1];
+}
+
+InstanceID Brane::newInsID()
+{
+	highestInstanceID++;
+	return highestInstanceID;
+}
+
+InstanceID Brane::newInsID(const InstanceAssetHandle& handle)
+{
+	if (handle.fileID == 0 || handle.guid.isDefault())
+		return 0;
+	highestInstanceID++;
+	(*insIDToGuid)[highestInstanceID] = handle.guid;
+	(*guidToInsID)[handle.guid] = highestInstanceID;
+	(*insIDToFileID)[highestInstanceID] = handle.fileID;
+	return highestInstanceID;
 }

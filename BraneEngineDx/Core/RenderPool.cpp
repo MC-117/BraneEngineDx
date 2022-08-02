@@ -34,20 +34,20 @@ void RenderPool::switchCamera(Camera & camera)
 void RenderPool::add(Render & render)
 {
 	if (render.isValid) {
-		if (render.getShader())
-			pool.insert(&render);
-		else
+		if (isClassOf<Light>(&render))
 			prePool.insert(&render);
+		else
+			pool.insert(&render);
 		render.renderPool = this;
 	}
 }
 
 void RenderPool::remove(Render & render)
 {
-	if (render.getShader())
-		pool.erase(&render);
-	else
+	if (isClassOf<Light>(&render))
 		prePool.erase(&render);
+	else
+		pool.erase(&render);
 	render.renderPool = NULL;
 }
 
@@ -60,21 +60,13 @@ void RenderPool::render(bool guiOnly)
 						currentCamera.cameraRender.cameraDir, currentCamera.size, (float)(currentCamera.fov * PI / 180.0) };
 	info.cmdList = &cmdList;
 	info.camera = &currentCamera;
-	Timer timer;
-	if (!guiOnly) {
-		for (auto b = pool.begin(), e = pool.end(); b != e; b++) {
-			for (auto _b = prePool.begin(), _e = prePool.end(); _b != _e; _b++) {
-				if ((*_b)->getRenderType() == IRendering::Light) {
-					info.tempRender = *b;
-					(*_b)->render(info);
-					if (b == pool.begin()) {
-						cmdList.setLight(*_b);
-					}
-				}
-			}
-		}
 
-		timer.record("Shadow");
+	Timer timer;
+
+	gui.onGUI(info);
+	timer.record("GUI");
+
+	if (!guiOnly) {
 
 		int pid = 0;
 		RenderTarget* shadowTarget = NULL;
@@ -82,9 +74,22 @@ void RenderPool::render(bool guiOnly)
 			(*b)->render(info);
 		}
 
-		cmdList.excuteCommand();
-
 		timer.record("Objects");
+
+		for (auto lightB = prePool.begin(), lightE = prePool.end(); lightB != lightE; lightB++) {
+			IRendering::RenderType type = (*lightB)->getRenderType();
+			if (type == IRendering::Light) {
+				for (auto objB = pool.begin(), objE = pool.end(); objB != objE; objB++) {
+					info.tempRender = *objB;
+					(*lightB)->render(info);
+				}
+				cmdList.setLight(*lightB);
+			}
+		}
+
+		timer.record("Shadow");
+
+		cmdList.excuteCommand();
 
 		vendor.setRenderPostState();
 		currentCamera.cameraRender.render(info);
@@ -95,11 +100,14 @@ void RenderPool::render(bool guiOnly)
 		gui.setSceneBlurTex(currentCamera.cameraRender.getSceneBlurTex());
 	}
 	else {
+		currentCamera.cameraRender.renderTarget.resize(currentCamera.size.x, currentCamera.size.y);
+		currentCamera.cameraRender.renderTarget.bindFrame();
+		currentCamera.cameraRender.renderTarget.clearColor(currentCamera.clearColor);
 		vendor.guiOnlyRender(currentCamera.clearColor);
 	}
 	gui.render(info);
 
-	timer.record("UI");
+	timer.record("RenderUI");
 
 	cmdList.resetCommand();
 

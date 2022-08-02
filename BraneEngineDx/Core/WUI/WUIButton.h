@@ -23,8 +23,8 @@ public:
 	virtual Color getHoverColor() const;
 	virtual Color getPressColor() const;
 protected:
-	bool track = false;
-	bool hover = false, down = false;
+	bool track = false, hover = false, down = false;
+	Unit2Di mousePos, mouseDelta;
 
 	Color normalColor = { 0.126f, 0.126f, 0.126f };
 	Color hoverColor = { 0.4221f, 0.4221f, 0.4221f };
@@ -33,8 +33,8 @@ protected:
 	void updateColor(const Color& color, bool force = false);
 
 	virtual void onPaint(HDC hdc);
-	virtual BOOL onMouseHover(WPARAM wParam, LPARAM lParam);
-	virtual BOOL onMouseMove();
+	virtual BOOL onMouseHover(WPARAM wParam, const Unit2Di& pos);
+	virtual BOOL onMouseMove(WPARAM wParam, const Unit2Di& pos);
 	virtual BOOL onMouseLeave();
 	virtual BOOL onLBTNDown();
 	virtual BOOL onLBTNUp();

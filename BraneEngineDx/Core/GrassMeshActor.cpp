@@ -1,5 +1,5 @@
 #include "GrassMeshActor.h"
-#include "Utility.h"
+#include "Utility/Utility.h"
 #include "Asset.h"
 #include "Engine.h"
 #undef min
@@ -12,6 +12,7 @@ GrassMeshActor::GrassMeshActor(Mesh & mesh, Material & material, string name)
 {
 	meshRender.isStatic = true;
 	meshRender.canCastShadow = false;
+	meshRender.frustumCulling = false;
 	events.registerFunc("updateData", [](void* obj) {
 		((GrassMeshActor*)obj)->updateData();
 	});
@@ -34,13 +35,13 @@ void GrassMeshActor::set(float density, Vector2f& bound)
 
 void GrassMeshActor::updateData()
 {
-	RenderCommandList::setUpdateStatic();
+	update = true;
 }
 
 void GrassMeshActor::begin()
 {
 	MeshActor::begin();
-	RenderCommandList::setUpdateStatic();
+	update = true;
 }
 
 void GrassMeshActor::tick(float delteTime)
@@ -55,12 +56,16 @@ void GrassMeshActor::tick(float delteTime)
 void GrassMeshActor::end()
 {
 	MeshActor::end();
-	RenderCommandList::setUpdateStatic();
+	update = true;
 }
 
-void GrassMeshActor::prerender()
+void GrassMeshActor::prerender(RenderCommandList& cmdLst)
 {
-	if (RenderCommandList::willUpdateStatic()) {
+	if (update) {
+		cmdLst.setUpdateStatic();
+	}
+	if (cmdLst.willUpdateStatic()) {
+		meshRender.customTransformSubmit = true;
 		float w = bound.x() / density;
 		int yd = bound.y() / w;
 		float yo = (bound.y() - yd * w) * 0.5;
@@ -73,7 +78,7 @@ void GrassMeshActor::prerender()
 				m(0, 3) = i * w - hx + ((rand() / (double)RAND_MAX) - 0.5) * 2 * w;
 				m(1, 3) = j * w - hy + yo + ((rand() / (double)RAND_MAX) - 0.5) * 2 * w;
 				m.block(0, 0, 3, 3) = Quaternionf::FromAngleAxis((rand() / (double)RAND_MAX) * 2 * PI, Vector3f(0, 0, 1)).toRotationMatrix();
-				unsigned int transID = RenderCommandList::setStaticMeshTransform(transformMat * m);
+				unsigned int transID = cmdLst.setStaticMeshTransform(transformMat * m);
 				if (baseTransID == -1) {
 					baseTransID = transID;
 				}
@@ -81,12 +86,13 @@ void GrassMeshActor::prerender()
 					meshRender.instanceID = transID;
 					meshRender.instanceCount = transCount;
 				}
-				for (int i = 0; i < mesh.meshParts.size(); i++)
-					RenderCommandList::setStaticMeshPartTransform(&mesh.meshParts[i], meshRender.materials[i], transID);
+				for (int i = 0; i < meshRender.mesh->meshParts.size(); i++) {
+					cmdLst.setStaticMeshPartTransform(&meshRender.mesh->meshParts[i], meshRender.materials[i], transID);
+				}
 			}
 		}
-		update = false;
 	}
+	update = false;
 }
 
 Serializable * GrassMeshActor::instantiate(const SerializationInfo & from)
@@ -131,7 +137,6 @@ bool GrassMeshActor::serialize(SerializationInfo & to)
 {
 	if (!MeshActor::serialize(to))
 		return false;
-	to.type = "GrassMeshActor";
 	to.set("density", density);
 	SVector2f boundf;
 	boundf.x = bound.x();

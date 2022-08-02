@@ -1,5 +1,7 @@
 #include "Camera.h"
 #include "Geometry.h"
+#include "GUI/Gizmo.h"
+#include "Utility/MathUtility.h"
 
 SerializeInstance(Camera);
 
@@ -23,9 +25,8 @@ Camera::~Camera()
 
 void Camera::setAnimationClip(AnimationClipData & data)
 {
-	animationClip.setAnimationClipData(data);
-	for (int i = 0; i < animationClip.animationPlayer.size(); i++)
-		animationClip.animationPlayer[i].setTargetTransform(*this);
+	animationClip.setAnimationClipData(&data);
+	animationClip.setupDefault();
 }
 
 Matrix4f Camera::getProjectionMatrix() const
@@ -44,6 +45,92 @@ Matrix4f Camera::getProjectionMatrix() const
 Matrix4f Camera::getViewMatrix() const
 {
 	return Camera::lookAt(cameraRender.cameraLoc, cameraRender.cameraLoc + cameraRender.cameraDir, cameraRender.cameraUp);
+}
+
+Vector3f Camera::getFinalWorldPosition()
+{
+	Vector3f offset = getForward(WORLD) * -distance;
+	return getPosition(WORLD) + offset;
+}
+
+bool Camera::culling(const Range<Vector3f>& bound, const Matrix4f& mat)
+{
+	/*float vLen = zFar * tan(fov * (0.5f * PI / 180.0f));
+	float hLen = vLen * aspect;
+
+	Vector3f pos, sca;
+	Quaternionf rot;
+	mat.decompose(pos, rot, sca);
+
+	Matrix3f rotMat = rot.toRotationMatrix();
+	Matrix4f _mat = Matrix4f::Identity();
+	_mat.block(0, 0, 3, 3) = rotMat;
+	_mat.block(0, 3, 3, 1) = pos;
+
+	Matrix4f trans = getTransformMat();
+	trans = trans * _mat.inverse();
+
+	Vector3f worldPos = trans.block(0, 3, 3, 1);
+	Vector3f upVec = (Matrix3f(trans.block(0, 0, 3, 3)) * Vector3f(0, 0, 1)).normalize();
+	Vector3f rightVec = (Matrix3f(trans.block(0, 0, 3, 3)) * Vector3f(0, 1, 0)).normalize();
+	Vector3f forVec = (Matrix3f(trans.block(0, 0, 3, 3)) * Vector3f(1, 0, 0)).normalize();
+
+	Vector3f vVec = upVec * vLen;
+	Vector3f hVec = rightVec * hLen;
+
+	Vector3f farPoint = worldPos + forVec * zFar;
+	Vector3f nearPoint = worldPos + forVec * zNear;
+
+	Vector3f corner[4] =
+	{
+		farPoint - vVec - hVec,
+		farPoint - vVec + hVec,
+		farPoint + vVec - hVec,
+		farPoint + vVec + hVec,
+	};
+
+	Vector4f planes[8] =
+	{
+		Vector4f::Plane(corner[1], corner[0], worldPos),
+		Vector4f::Plane(corner[2], corner[3], worldPos),
+		Vector4f::Plane(corner[0], corner[2], worldPos),
+		Vector4f::Plane(corner[3], corner[1], worldPos),
+		Vector4f::Plane(-forVec, farPoint),
+		Vector4f::Plane(forVec, nearPoint)
+	};
+
+	planes[6] = planes[0];
+	planes[7] = planes[0];
+
+	Vector3f extend = (bound.maxVal - bound.minVal).cwiseProduct(sca) * 0.5f;
+	Vector3f center = (bound.maxVal + bound.minVal).cwiseProduct(sca) * 0.5f;
+
+	return IntersectAABB8Plane(center, extend, planes);*/
+
+	Matrix4f MVP = getProjectionMatrix() * getViewMatrix() * mat;
+
+	Vector4f corners[8] = {
+		{bound.minVal.x(), bound.minVal.y(), bound.minVal.z(), 1.0}, // x y z
+		{bound.maxVal.x(), bound.minVal.y(), bound.minVal.z(), 1.0}, // X y z
+		{bound.minVal.x(), bound.maxVal.y(), bound.minVal.z(), 1.0}, // x Y z
+		{bound.maxVal.x(), bound.maxVal.y(), bound.minVal.z(), 1.0}, // X Y z
+
+		{bound.minVal.x(), bound.minVal.y(), bound.maxVal.z(), 1.0}, // x y Z
+		{bound.maxVal.x(), bound.minVal.y(), bound.maxVal.z(), 1.0}, // X y Z
+		{bound.minVal.x(), bound.maxVal.y(), bound.maxVal.z(), 1.0}, // x Y Z
+		{bound.maxVal.x(), bound.maxVal.y(), bound.maxVal.z(), 1.0}, // X Y Z
+	};
+
+	for (size_t corner_idx = 0; corner_idx < 8; corner_idx++) {
+		// Transform vertex
+		Vector4f corner = MVP * corners[corner_idx];
+		// Check vertex against clip space bounds
+		if (-corner.w() < corner.x() && corner.x() < corner.w() &&
+			-corner.w() < corner.y() && corner.y() < corner.w() &&
+			0.0f < corner.z() && corner.z() < corner.w())
+			return false;
+	}
+	return true;
 }
 
 Color hsv2rgb(float h, float s, float v, float a = 1)
@@ -108,15 +195,12 @@ void Camera::tick(float deltaTime)
 {
 	Transform::tick(deltaTime);
 	if (animationClip.update(deltaTime)) {
-		map<unsigned int, float>* curveData = animationClip.getCurveCurrentValue();
-		if (curveData != NULL && !curveData->empty()) {
-			auto iter = curveData->find(0);
-			if (iter != curveData->end())
-				fov = iter->second;
-			iter = curveData->find(1);
-			if (iter != curveData->end())
-				distance = iter->second;
-		}
+		AnimationPose pose = animationClip.getPose();
+		TransformData& data = pose.transformData[0];
+		setPosition(data.position);
+		setRotation(data.rotation);
+		fov = pose.morphTargetWeight[0];
+		distance = pose.morphTargetWeight[1];
 	}
 }
 
@@ -142,6 +226,36 @@ void Camera::afterTick()
 	}
 	projectionViewMat = getProjectionMatrix() * getViewMatrix();
 	cameraRender.projectionViewMat = projectionViewMat;
+
+	/*float vLen = zFar * tan(fov * PI / 360.0f * 0.5f);
+	float hLen = vLen * aspect;
+	Vector3f worldPos = getPosition(WORLD);
+	Vector3f upVec = getUpward(WORLD);
+	Vector3f rightVec = getRightward(WORLD);
+	Vector3f forVec = getForward(WORLD);
+
+	Vector3f vVec = upVec * vLen;
+	Vector3f hVec = rightVec * hLen;
+
+	Vector3f farPoint = worldPos + forVec * zFar;
+	Vector3f nearPoint = worldPos + forVec * zNear;
+
+	Vector3f corner[4] =
+	{
+		farPoint - vVec - hVec,
+		farPoint - vVec + hVec,
+		farPoint + vVec - hVec,
+		farPoint + vVec + hVec,
+	};
+
+	Gizmo::instance().drawLine(corner[0], worldPos, Color(0.0f, 1.0f, 0.0f));
+	Gizmo::instance().drawLine(corner[1], worldPos, Color(0.0f, 1.0f, 0.0f));
+	Gizmo::instance().drawLine(corner[2], worldPos, Color(0.0f, 1.0f, 0.0f));
+	Gizmo::instance().drawLine(corner[3], worldPos, Color(0.0f, 1.0f, 0.0f));
+	Gizmo::instance().drawLine(corner[0], corner[1], Color(0.0f, 1.0f, 0.0f));
+	Gizmo::instance().drawLine(corner[0], corner[2], Color(0.0f, 1.0f, 0.0f));
+	Gizmo::instance().drawLine(corner[3], corner[1], Color(0.0f, 1.0f, 0.0f));
+	Gizmo::instance().drawLine(corner[3], corner[2], Color(0.0f, 1.0f, 0.0f));*/
 }
 
 void Camera::setSize(Unit2Di size)
@@ -170,8 +284,14 @@ void Camera::uploadCameraData()
 {
 	CameraData data;
 	data.projectionViewMat = MATRIX_UPLOAD_OP(cameraRender.projectionViewMat);
-	data.projectionMat = MATRIX_UPLOAD_OP(getProjectionMatrix());
-	data.viewMat = MATRIX_UPLOAD_OP(getViewMatrix());
+	Matrix4f promat = getProjectionMatrix();
+	Matrix4f promatInv = promat.inverse();
+	data.projectionMat = MATRIX_UPLOAD_OP(promat);
+	data.projectionMatInv = MATRIX_UPLOAD_OP(promatInv);
+	Matrix4f vmat = getViewMatrix();
+	Matrix4f vmatInv = vmat.inverse();
+	data.viewMat = MATRIX_UPLOAD_OP(vmat);
+	data.viewMatInv = MATRIX_UPLOAD_OP(vmatInv);
 	data.cameraLoc = cameraRender.cameraLoc;
 	data.cameraDir = cameraRender.cameraDir;
 	data.cameraUp = cameraRender.cameraUp;
@@ -180,6 +300,7 @@ void Camera::uploadCameraData()
 	data.zNear = zNear;
 	data.zFar = zFar;
 	data.fovy = fov;
+	data.aspect = aspect;
 	cameraDataBuffer.uploadData(1, &data);
 }
 
@@ -249,7 +370,7 @@ Matrix4f Camera::lookAt(Vector3f const & eye, Vector3f const & center, Vector3f 
 	return Result;
 }
 
-Matrix4f Camera::viewport(int x, int y, int width, int height, float zNear, float zFar)
+Matrix4f Camera::viewport(float x, float y, float width, float height, float zNear, float zFar)
 {
 	Matrix4f Result = Matrix4f::Zero();
 	Result(0, 0) = width / 2.0;
@@ -273,6 +394,9 @@ bool Camera::deserialize(const SerializationInfo& from)
 		return false;
 	from.get("fov", fov);
 	from.get("distance", distance);
+	SColor color;
+	from.get("clearColor", color);
+	clearColor = color;
 	return true;
 }
 
@@ -280,8 +404,8 @@ bool Camera::serialize(SerializationInfo& to)
 {
 	if (!Transform::serialize(to))
 		return false;
-	to.type = "Camera";
 	to.set("fov", fov);
 	to.set("distance", distance);
+	to.set("clearColor", SColor(clearColor));
 	return true;
 }

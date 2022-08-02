@@ -18,6 +18,15 @@ void LoadingUI::setText(const std::string& text)
 	SendMessage(hWnd, WM_PAINT, 0, 0);
 }
 
+LRESULT LoadingUI::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT Out = WUIControl::WndProc(msg, wParam, lParam);
+	if (msg == WM_NCHITTEST) {
+		Out = Out == HTCLIENT ? HTCAPTION : Out;
+	}
+	return Out;
+}
+
 void LoadingUI::loadResource()
 {
 	img = (HBITMAP)LoadImage(hIns, imgPath.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);

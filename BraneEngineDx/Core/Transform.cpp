@@ -1,17 +1,12 @@
 #include "Transform.h"
-#include "Utility.h"
+#include "Utility/Utility.h"
 #if ENABLE_PHYSICS
-#include "RigidBody.h"
-#include "PhysicalWorld.h"
+#include "Physics/RigidBody.h"
+#include "Physics/PhysicalWorld.h"
 #endif
 #include "Asset.h"
 
-Transform::TransformSerialization(Transform::TransformSerialization::serialization);
-
-Serialization& Transform::getSerialization() const
-{
-	return TransformSerialization::serialization;
-}
+SerializeInstance(Transform);
 
 Transform::Transform(string name) : Object::Object(name)
 {
@@ -24,6 +19,12 @@ Transform::~Transform()
 		rigidBody->removeFromWorld();
 		delete rigidBody;
 	}
+	for (int i = 0; i < constraints.size(); i++) {
+		PhysicalConstraint* constraint = constraints[i];
+		constraint->removeFromWorld();
+		delete constraint;
+	}
+	constraints.clear();
 #endif
 }
 
@@ -50,25 +51,36 @@ void Transform::afterTick()
 }
 
 #if ENABLE_PHYSICS
-void Transform::updataRigidBody(Shape* shape, ShapeComplexType complexType, const PhysicalMaterial& physicalMaterial)
+void Transform::updataRigidBody(const PhysicalMaterial& physicalMaterial)
 {
-	Shape* _shape = shape;
-	if (rigidBody != NULL) {
-		rigidBody->removeFromWorld();
-		if (_shape == NULL) {
-			_shape = rigidBody->shape;
-			complexType = rigidBody->shapeComplexType;
-		}
-		delete rigidBody;
+	if (rigidBody == NULL || (physicalMaterial.physicalType != rigidBody->material.physicalType)) {
+		if (rigidBody == NULL)
+			delete rigidBody;
+		rigidBody = new RigidBody(*this, physicalMaterial);
 	}
-	if (_shape == NULL)
-		return;
-	rigidBody = new RigidBody(*this, physicalMaterial, _shape, complexType);
+	else {
+		rigidBody->setMass(physicalMaterial.mass);
+	}
 }
 
-void * Transform::getPhysicalBody()
+void Transform::addConstraint(PhysicalConstraint* constraint)
+{
+	if (constraint == NULL)
+		return;
+	for (int i = 0; i < constraints.size(); i++)
+		if (constraint == constraints[i])
+			return;
+	constraints.push_back(constraint);
+}
+
+PhysicalBody * Transform::getPhysicalBody()
 {
 	return rigidBody;
+}
+
+PhysicalConstraint* Transform::getPhysicalConstraint(int index)
+{
+	return constraints[index];
 }
 
 void Transform::setupPhysics(PhysicalWorld & physicalWorld)
@@ -78,12 +90,20 @@ void Transform::setupPhysics(PhysicalWorld & physicalWorld)
 		//physicalWorld.physicsScene->updateSingleAabb(rigidBody);
 		//rigidBody->activate(true);
 	}
+	for (int i = 0; i < constraints.size(); i++) {
+		PhysicalConstraint* constraint = constraints[i];
+		if (constraint->physicalWorld == NULL)
+			physicalWorld.addPhysicalConstraint(*constraint);
+	}
 }
 
 void Transform::releasePhysics(PhysicalWorld & physicalWorld)
 {
 	if (rigidBody != NULL) {
 		rigidBody->removeFromWorld();
+	}
+	for (int i = 0; i < constraints.size(); i++) {
+		constraints[i]->removeFromWorld();
 	}
 }
 
@@ -127,15 +147,19 @@ Vector3f Transform::getPosition(TransformSpace space)
 Quaternionf Transform::getRotation(TransformSpace space)
 {
 	if (space == WORLD) {
-		Quaternionf rot = rotation;
+		updateTransform();
+		Vector3f pos, sca;
+		Quaternionf rot;
+		transformMat.decompose(pos, rot, sca);
+		/*Quaternionf rot = rotation;
 		Object* obj = this->parent;
 		while (obj != NULL) {
 			Transform* t = dynamic_cast<Transform*>(obj);
 			if (t != NULL) {
-				rot = rot * t->rotation;
+				rot *= t->rotation;
 			}
 			obj = obj->parent;
-		}
+		}*/
 		return rot;
 	}
 	else
@@ -198,14 +222,7 @@ Vector3f Transform::getUpward(TransformSpace space)
 void Transform::setMatrix(const Matrix4f & mat, TransformSpace space)
 {
 	if (space == WORLD) {
-		Object *obj = this;parent;
-		Transform* t = NULL;
-		while (obj->parent != NULL) {
-			obj = obj->parent;
-			t = dynamic_cast<Transform*>(obj);
-			if (t != NULL)
-				break;
-		}
+		Transform* t = getParentTransform();
 		if (t == NULL)
 			return;
 		t->updateTransform();
@@ -259,15 +276,7 @@ void Transform::translate(float x, float y, float z, ::TransformSpace space)
 		position += forward * x + rightward * y + upward * z;
 	}
 	else {
-		Object* obj = this;
-		Transform* t = NULL;
-		while (obj != NULL) {
-			t = dynamic_cast<Transform*>(obj);
-			if (t != NULL) {
-				break;
-			}
-			obj = obj->parent;
-		}
+		Transform* t = getParentTransform();
 		if (t == NULL) {
 			position += Vector3f(x, y, z);
 		}
@@ -292,15 +301,7 @@ void Transform::rotate(float x, float y, float z, ::TransformSpace space)
 			Quaternionf::FromAngleAxis(z / 180.0 * PI, upward);
 	}
 	else {
-		Object* obj = this;
-		Transform* t = NULL;
-		while (obj != NULL) {
-			t = dynamic_cast<Transform*>(obj);
-			if (t != NULL) {
-				break;
-			}
-			obj = obj->parent;
-		}
+		Transform* t = getParentTransform();
 		if (t == NULL) {
 			R = Quaternionf::FromAngleAxis(x / 180.0 * PI, Vector3f::UnitX()) *
 				Quaternionf::FromAngleAxis(y / 180.0 * PI, Vector3f::UnitY()) *
@@ -323,7 +324,15 @@ void Transform::rotate(float x, float y, float z, ::TransformSpace space)
 void Transform::setPosition(const Vector3f& v, TransformSpace space)
 {
 	if (space == WORLD) {
-		position += v - getPosition(WORLD);
+		Transform* t = getParentTransform();
+		if (t == NULL) {
+			position = v;
+		}
+		else {
+			t->updateTransform();
+			Vector4f _position = t->transformMat.inverse() * Vector4f(v.x(), v.y(), v.z(), 1);
+			memcpy(&position, &_position, sizeof(Vector3f));
+		}
 		//transformMat.block(0, 3, 3, 1) = v;
 	}
 	else {
@@ -334,10 +343,13 @@ void Transform::setPosition(const Vector3f& v, TransformSpace space)
 
 void Transform::setRotation(const Vector3f& v, TransformSpace space)
 {
-	Quaternionf R = Quaternionf::FromEularAngles(v / (180.0 * PI));
+	Quaternionf R = Quaternionf::FromEularAngles(v * (PI / 180.0));
 	if (space == WORLD) {
-		rotation.setIdentity();
-		rotation = R * getRotation(WORLD).inverse();
+		Transform* t = getParentTransform();
+		if (t == NULL)
+			rotation = R;
+		else
+			rotation = t->getRotation(WORLD).inverse() * R;
 	}
 	else {
 		rotation = R;
@@ -352,8 +364,11 @@ void Transform::setRotation(const Vector3f& v, TransformSpace space)
 void Transform::setRotation(const Quaternionf & q, TransformSpace space)
 {
 	if (space == WORLD) {
-		rotation.setIdentity();
-		rotation = q * getRotation(WORLD).inverse();
+		Transform* t = getParentTransform();
+		if (t == NULL)
+			rotation = q;
+		else
+			rotation = t->getRotation(WORLD).inverse() * q;
 	}
 	else {
 		rotation = q;
@@ -368,25 +383,7 @@ void Transform::setRotation(const Quaternionf & q, TransformSpace space)
 void Transform::translate(const Vector3f& v, ::TransformSpace space)
 {
 	if (space == WORLD) {
-		Object* obj = this;
-		Transform* t = NULL;
-		while (obj != NULL) {
-			t = dynamic_cast<Transform*>(obj);
-			if (t != NULL) {
-				break;
-			}
-			obj = obj->parent;
-		}
-		if (t == NULL) {
-			position += v;
-		}
-		else {
-			Vector4f p = Vector4f::UnitW();
-			p.block(0, 0, 3, 1) = v;
-			p = t->getMatrix(WORLD).inverse() * p;
-			p /= p.w();
-			position += p.block(0, 0, 3, 1);
-		}
+		setPosition(getPosition(WORLD) + v, WORLD);
 	}
 	else if (space == LOCAL) {
 		position += forward * v.x() + rightward * v.y() + upward * v.z();
@@ -515,6 +512,30 @@ void Transform::setParent(Object & parent)
 		Object::setParent(parent);
 }
 
+void ::Transform::apply(const PTransform& tran)
+{
+#ifdef PHYSICS_USE_PHYSX
+	Vector3f pos = toVector3f(tran.p);
+	Quaternionf rot = toQuaternionf(tran.q);
+#endif // !PHYSICS_USE_PHYSX
+	setPosition(pos, WORLD);
+	setRotation(rot, WORLD);
+}
+
+PTransform(::Transform::getWorldTransform)()
+{
+	updateTransform();
+	Vector3f pos, sca;
+	Quaternionf rot;
+	transformMat.decompose(pos, rot, sca);
+	return toPTransform(pos, rot);
+}
+
+::Transform::operator PTransform() const
+{
+	return toPTransform(position, rotation);
+}
+
 Matrix4f & Transform::getTransformMat()
 {
 	return transformMat;
@@ -531,62 +552,158 @@ bool Transform::deserialize(const SerializationInfo & from)
 {
 	if (!Object::deserialize(from))
 		return false;
-	SVector3f pos, sca;
-	if (from.get("position", pos))
-		setPosition(pos.x, pos.y, pos.z);
-	const SerializationInfo* rotInfo = from.get("rotation");
-	if (rotInfo != NULL) {
-		if (rotInfo->type == "SQuaternionf") {
-			SQuaternionf rot;
-			if (from.get("rotation", rot))
-				setRotation(rot);
+	if (setupFlags.has(SetupFlags::Transform)) {
+		SVector3f pos, sca;
+		if (from.get("position", pos))
+			setPosition(pos.x, pos.y, pos.z);
+		const SerializationInfo* rotInfo = from.get("rotation");
+		if (rotInfo != NULL) {
+			if (rotInfo->type == "SQuaternionf") {
+				SQuaternionf rot;
+				if (from.get("rotation", rot))
+					setRotation(rot);
+			}
+			else if (rotInfo->type == "SVector3f") {
+				SVector3f rot;
+				if (from.get("rotation", rot))
+					setRotation(rot.x, rot.y, rot.z);
+			}
 		}
-		else if (rotInfo->type == "SVector3f") {
-			SVector3f rot;
-			if (from.get("rotation", rot))
-				setRotation(rot.x, rot.y, rot.z);
-		}
+		if (from.get("scale", sca))
+			setScale(sca.x, sca.y, sca.z);
 	}
-	if (from.get("scale", sca))
-		setScale(sca.x, sca.y, sca.z);
+
 #if ENABLE_PHYSICS
-	const SerializationInfo* cinfo = from.get("collision");
-	if (cinfo != NULL) {
-		const SerializationInfo* sinfo = cinfo->get("shape");
-		if (sinfo != NULL) {
-			Shape* shape = NULL;
-			if (sinfo->type == "AssetSearch") {
-				string pathType, path;
-				if (sinfo->get("pathType", pathType))
-					if (sinfo->get("path", path)) {
-						if (pathType == "path") {
-							shape = getAssetByPath<Mesh>(path);
-						}
-						else if (pathType == "name") {
-							shape = getAsset<Mesh>("Mesh", path);
+	if (setupFlags.has(SetupFlags::Physics)) {
+		if (rigidBody != NULL) {
+			delete rigidBody;
+			rigidBody = NULL;
+		}
+		// old version
+		{
+			const SerializationInfo* cinfo = from.get("collision");
+			if (cinfo != NULL) {
+				const SerializationInfo* sinfo = cinfo->get("shape");
+				if (sinfo != NULL) {
+					Shape* shape = NULL;
+					if (sinfo->type == "AssetSearch") {
+						string pathType, path;
+						if (sinfo->get("pathType", pathType))
+							if (sinfo->get("path", path)) {
+								if (pathType == "path") {
+									shape = getAssetByPath<Mesh>(path);
+								}
+								else if (pathType == "name") {
+									shape = getAsset<Mesh>("Mesh", path);
+								}
+							}
+					}
+					else if (sinfo->serialization != NULL) {
+						Serializable* ser = sinfo->serialization->instantiate(*sinfo);
+						shape = dynamic_cast<Shape*>(ser);
+						if (shape == NULL && ser != NULL)
+							delete ser;
+						shape->deserialize(*sinfo);
+					}
+					float complexType = 0;
+					cinfo->get("complexType", complexType);
+					PhysicalMaterial pmat;
+					const SerializationInfo* pminfo = cinfo->get("physicalMaterial");
+					if (pminfo != NULL) {
+						float mass = 0, type = 0;
+						pminfo->get("mass", mass);
+						pminfo->get("type", type);
+						pmat.mass = mass;
+						pmat.physicalType = (PhysicalType)(int)type;
+					}
+					if (shape != NULL)
+					{
+						updataRigidBody(pmat);
+						if (rigidBody != NULL) {
+							PhysicalCollider* collider = rigidBody->addCollider(shape, (ShapeComplexType)(int)complexType);
+
+							SVector3f positionOffset;
+							if (cinfo->get("positionOffset", positionOffset))
+								collider->positionOffset = positionOffset;
+							SQuaternionf rotationOffset;
+							if (cinfo->get("rotationOffset", rotationOffset))
+								collider->rotationOffset = rotationOffset;
+
+							PhysicalLayer layer = collider->getLayer();
+							const SerializationInfo* plinfo = cinfo->get("physicalLayer");
+							if (plinfo != NULL) {
+								layer.deserialize(*plinfo);
+							}
+							collider->setLayer(layer);
+							collider->apply();
 						}
 					}
+				}
 			}
-			else if (sinfo->serialization != NULL) {
-				Serializable* ser = sinfo->serialization->instantiate(*sinfo);
-				shape = dynamic_cast<Shape*>(ser);
-				if (shape == NULL && ser != NULL)
-					delete ser;
-				shape->deserialize(*sinfo);
+		}
+		{
+			const SerializationInfo* pinfo = from.get("physics");
+			if (pinfo != NULL) {
+				PhysicalMaterial pmat;
+				pinfo->get("physicalMaterial", pmat);
+
+				updataRigidBody(pmat);
+
+				const SerializationInfo* cinfos = pinfo->get("colliders");
+
+				if (rigidBody && cinfos) {
+					for (int i = 0; i < cinfos->sublists.size(); i++) {
+						const SerializationInfo* cinfo = &cinfos->sublists[i];
+
+						const SerializationInfo* sinfo = cinfo->get("shape");
+						if (sinfo != NULL) {
+							Shape* shape = NULL;
+							if (sinfo->type == "AssetSearch") {
+								string pathType, path;
+								if (sinfo->get("pathType", pathType))
+									if (sinfo->get("path", path)) {
+										if (pathType == "path") {
+											shape = getAssetByPath<Mesh>(path);
+										}
+										else if (pathType == "name") {
+											shape = getAsset<Mesh>("Mesh", path);
+										}
+									}
+							}
+							else if (sinfo->serialization != NULL) {
+								Serializable* ser = sinfo->serialization->instantiate(*sinfo);
+								shape = dynamic_cast<Shape*>(ser);
+								if (shape == NULL && ser != NULL)
+									delete ser;
+								shape->deserialize(*sinfo);
+							}
+
+							float complexType = 0;
+							cinfo->get("complexType", complexType);
+
+							if (shape != NULL)
+							{
+								PhysicalCollider* collider = rigidBody->addCollider(shape, (ShapeComplexType)(int)complexType);
+
+								SVector3f positionOffset;
+								if (cinfo->get("positionOffset", positionOffset))
+									collider->positionOffset = positionOffset;
+								SQuaternionf rotationOffset;
+								if (cinfo->get("rotationOffset", rotationOffset))
+									collider->rotationOffset = rotationOffset;
+
+								PhysicalLayer layer = collider->getLayer();
+								const SerializationInfo* plinfo = cinfo->get("physicalLayer");
+								if (plinfo != NULL) {
+									layer.deserialize(*plinfo);
+								}
+								collider->setLayer(layer);
+								collider->apply();
+							}
+						}
+					}
+				}
 			}
-			float complexType = 0;
-			cinfo->get("complexType", complexType);
-			PhysicalMaterial pmat;
-			const SerializationInfo* pminfo = cinfo->get("physicalMaterial");
-			if (pminfo != NULL) {
-				float mass = 0, type = 0;
-				pminfo->get("mass", mass);
-				pminfo->get("type", type);
-				pmat.mass = mass;
-				pmat.physicalType = (PhysicalType)(int)type;
-			}
-			if (shape != NULL)
-				updataRigidBody(shape, (ShapeComplexType)(int)complexType, pmat);
 		}
 	}
 #endif
@@ -597,41 +714,71 @@ bool Transform::serialize(SerializationInfo & to)
 {
 	if (!Object::serialize(to))
 		return false;
-	to.type = "Transform";
-	to.set("position", SVector3f(position));
-	to.set("rotation", SQuaternionf(rotation));
-	to.set("scale", SVector3f(scale));
+	if (setupFlags.has(SetupFlags::Transform)) {
+		to.set("position", SVector3f(position));
+		to.set("rotation", SQuaternionf(rotation));
+		to.set("scale", SVector3f(scale));
+	}
 #if ENABLE_PHYSICS
-	if (rigidBody == NULL || rigidBody->shape == NULL)
-		return true;
-	SerializationInfo* cinfo = to.add("collision");
-	if (cinfo != NULL) {
-		cinfo->type = "Collision";
-		Mesh* mesh = dynamic_cast<Mesh*>(rigidBody->shape);
-		if (mesh == NULL) {
-			cinfo->set("shape", *rigidBody->shape);
-		}
-		else {
-			string path = MeshAssetInfo::getPath(mesh);
-			if (!path.empty()) {
-				SerializationInfo* sinfo = cinfo->add("shape");
-				if (sinfo != NULL) {
-					sinfo->type = "AssetSearch";
-					sinfo->set("path", path);
-					sinfo->set("pathType", "path");
+	if (setupFlags.has(SetupFlags::Physics)) {
+		if (rigidBody == NULL)
+			return true;
+
+		SerializationInfo* pinfo = to.add("physics");
+		pinfo->type = "Physics";
+
+		pinfo->set("physicalMaterial", rigidBody->material);
+
+		SerializationInfo* cinfos = pinfo->add("colliders");
+		cinfos->type = "Array";
+		cinfos->arrayType = "Collider";
+
+		for (int i = 0; i < rigidBody->getColliderCount(); i++) {
+			PhysicalCollider* collider = rigidBody->getCollider(i);
+
+			SerializationInfo* cinfo = cinfos->push();
+			if (cinfo != NULL) {
+				cinfo->set("positionOffset", SVector3f(collider->getPositionOffset()));
+				cinfo->set("rotationOffset", SQuaternionf(collider->getRotationOffset()));
+				Mesh* mesh = dynamic_cast<Mesh*>(collider->shape);
+				if (mesh == NULL) {
+					cinfo->set("shape", *collider->shape);
+				}
+				else {
+					string path = MeshAssetInfo::getPath(mesh);
+					if (!path.empty()) {
+						SerializationInfo* sinfo = cinfo->add("shape");
+						if (sinfo != NULL) {
+							sinfo->type = "AssetSearch";
+							sinfo->set("path", path);
+							sinfo->set("pathType", "path");
+						}
+					}
+				}
+				cinfo->set("complexType", (float)(int)collider->shapeComplexType);
+				PhysicalLayer layer = collider->getLayer();
+				SerializationInfo* plinfo = cinfo->add("physicalLayer");
+				if (plinfo != NULL) {
+					layer.serialize(*plinfo);
 				}
 			}
-		}
-		cinfo->set("complexType", (float)(int)rigidBody->shapeComplexType);
-		SerializationInfo* pminfo = cinfo->add("physicalMaterial");
-		if (pminfo != NULL) {
-			pminfo->type = "PhysicalMaterial";
-			pminfo->set("mass", rigidBody->material.mass);
-			pminfo->set("type", (float)(int)rigidBody->material.physicalType);
 		}
 	}
 #endif
 	return true;
+}
+
+Transform* Transform::getParentTransform()
+{
+	Object* obj = parent;
+	while (obj != NULL) {
+		Transform* t = dynamic_cast<Transform*>(obj);
+		if (t != NULL) {
+			return t;
+		}
+		obj = obj->parent;
+	}
+	return NULL;
 }
 
 void Transform::updateTransform()

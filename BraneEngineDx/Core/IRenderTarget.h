@@ -42,6 +42,7 @@ public:
 	virtual void setDepthOnly(Texture* depthTex);
 	virtual ITexture2D* getInternalDepthTexture();
 	virtual unsigned int bindFrame();
+	virtual void clearBind();
 	virtual void resize(unsigned int width, unsigned int height);
 	virtual void SetMultisampleFrame();
 

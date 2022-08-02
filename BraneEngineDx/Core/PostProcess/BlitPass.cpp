@@ -1,6 +1,7 @@
 #include "BlitPass.h"
 #include "../Asset.h"
 #include "../Console.h"
+#include "../GUI/UIControl.h"
 
 BlitPass::BlitPass(const string & name, Material * material)
 	: PostProcessPass(name, material)

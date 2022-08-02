@@ -15,7 +15,8 @@ public:
 
 	virtual void onRenderWindow(GUIRenderInfo& info);
 protected:
-	string objectName;
+	Ref<Object> targetObject;
+	string objectFilterName;
 	string colorName;
 	string scalarName;
 	Color color = { 1.0f, 1.0f, 1.0f, 1.0f };

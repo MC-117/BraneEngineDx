@@ -3,6 +3,7 @@
 ShadowCameraRender::ShadowCameraRender(Material& shadowMaterial) : CameraRender(depthRenderTarget, shadowMaterial)
 {
 	renderOrder = -10;
+	depthTex.setAutoGenMip(false);
 }
 
 void ShadowCameraRender::preRender()

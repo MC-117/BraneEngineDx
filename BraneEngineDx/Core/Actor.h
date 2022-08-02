@@ -11,7 +11,7 @@
 class Actor : public Transform
 {
 public:
-	Serialize(Actor);
+	Serialize(Actor, Transform);
 
 #ifdef AUDIO_USE_OPENAL
 	vector<AudioSource*> audioSources;
@@ -24,7 +24,7 @@ public:
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
 	virtual void end();
-	virtual void prerender();
+	virtual void prerender(RenderCommandList& cmdLst);
 
 	virtual void setHidden(bool value);
 	virtual bool isHidden();

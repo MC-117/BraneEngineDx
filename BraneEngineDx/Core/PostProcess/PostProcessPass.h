@@ -4,6 +4,8 @@
 
 #include "../Render.h"
 
+class GUIRenderInfo;
+
 struct PostProcessResource
 {
 	Texture* screenTexture = NULL;
@@ -11,6 +13,9 @@ struct PostProcessResource
 
 	Texture* depthTexture = NULL;
 	RenderTarget* depthRenderTarget = NULL;
+
+	Texture* lightDepthTexture = NULL;
+	RenderTarget* lightDepthRenderTarget = NULL;
 
 	Texture* bloomTexture = NULL;
 	RenderTarget* bloomRenderTarget = NULL;
@@ -20,6 +25,8 @@ struct PostProcessResource
 
 	Texture* volumetricFogTexture = NULL;
 	RenderTarget* volumetricFogRenderTarget = NULL;
+
+	Texture* blurTexture = NULL;
 
 	RenderTarget* finalRenderTarget = &RenderTarget::defaultRenderTarget;
 
@@ -35,7 +42,7 @@ struct PostProcessResource
 class PostProcessPass : public Serializable
 {
 public:
-	Serialize(PostProcessPass);
+	Serialize(PostProcessPass,);
 
 	PostProcessPass(const string& name = "None", Material* material = NULL);
 	virtual ~PostProcessPass();
@@ -52,6 +59,8 @@ public:
 	virtual bool mapMaterialParameter(RenderInfo& info);
 	virtual void render(RenderInfo& info);
 	virtual void resize(const Unit2Di& size);
+
+	virtual void onGUI(GUIRenderInfo& info);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);

@@ -15,8 +15,10 @@ struct MeshPart
 	unsigned int vertexCount = 0;
 	unsigned int elementFirst = 0;
 	unsigned int elementCount = 0;
+	unsigned int vertexPerFace = 3;
 	Mesh* mesh = NULL;
 	unsigned int partIndex = -1;
+	Range<Vector3f> bound;
 
 	MeshPart();
 	MeshPart(const MeshPart& part);
@@ -24,10 +26,7 @@ struct MeshPart
 	MeshPart(MeshData* meshData, unsigned int vertexFirst, unsigned int vertexCount,
 		unsigned int indexFirst, unsigned int indexCount);
 
-	inline bool isValid() {
-		return meshData != NULL && vertexCount != 0;
-	}
-
+	bool isValid();
 	bool isSkeleton();
 	bool isMorph();
 
@@ -46,7 +45,7 @@ struct MeshPart
 			throw overflow_error("MeshPart normal access overflow");
 		return meshData->normals[vertexFirst + index];
 	}
-	inline Vector3u& element(unsigned int index) {
+	inline unsigned int& element(unsigned int index) {
 		if (index >= elementCount)
 			throw overflow_error("MeshPart index access overflow");
 		return meshData->elements[elementFirst + index];
@@ -67,7 +66,7 @@ struct MeshPart
 			throw overflow_error("MeshPart normal access overflow");
 		return meshData->normals[vertexFirst + index];
 	}
-	inline Vector3u& element(unsigned int index) const  {
+	inline unsigned int& element(unsigned int index) const  {
 		if (index >= elementCount)
 			throw overflow_error("MeshPart index access overflow");
 		return meshData->elements[elementFirst + index];
@@ -79,7 +78,8 @@ struct MeshPart
 class Mesh : public Shape
 {
 public:
-	multimap<string, unsigned int> meshPartNames;
+	multimap<string, unsigned int> meshPartNameMap;
+	vector<string> partNames;
 	vector<MeshPart> meshParts;
 
 	MeshPart totalMeshPart;
@@ -98,21 +98,18 @@ public:
 	void resize(int vertexPerFace, int faceCount, int vertexCount);
 	void clone(const Mesh& mesh);
 
+	virtual bool writeObjStream(ostream& os, const vector<int>& partIndex) const;
+
 #if ENABLE_PHYSICS
 	virtual CollisionShape* generateComplexCollisionShape(const Vector3f& scale = Vector3f(1, 1, 1));
-	virtual PFabric* generateCloth();
 	virtual PFabric* generateCloth(unsigned int partIndex);
-	virtual PFabric* generateCloth(const vector<unsigned int>& partIndexs);
 #endif
 
 	Mesh& operator=(Mesh& mesh);
 #if ENABLE_PHYSICS
 protected:
 	PxBase* collisionMesh = NULL;
-	PFabric* fabricMesh = NULL;
-	map<unsigned long long, PFabric*> fabricMeshParts;
-
-	unsigned long long meshPartIdHash(const vector<unsigned int>& partIndexs);
+	vector<PFabric*> fabricParts;
 #endif
 };
 

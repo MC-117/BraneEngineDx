@@ -11,17 +11,16 @@
 class DX11MeshData : public MeshData
 {
 public:
-	static ID3D11InputLayout* dx11MeshDataInputLayout;
-	
 	DX11Context& dxContext;
-	ID3D11Buffer* dx11VertexBuffer = NULL;
-	ID3D11Buffer* dx11UVBuffer = NULL;
-	ID3D11Buffer* dx11NormalBuffer = NULL;
-	ID3D11Buffer* dx11ElementBuffer = NULL;
+	ComPtr<ID3D11Buffer> dx11VertexBuffer = NULL;
+	ComPtr<ID3D11Buffer> dx11UVBuffer = NULL;
+	ComPtr<ID3D11Buffer> dx11NormalBuffer = NULL;
+	ComPtr<ID3D11Buffer> dx11ElementBuffer = NULL;
 
 	DX11MeshData(DX11Context& context);
 	virtual ~DX11MeshData();
 
+	virtual bool isValid() const;
 	virtual bool isGenerated() const;
 	virtual void bindShape();
 	virtual void release();

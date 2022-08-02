@@ -19,6 +19,10 @@ public:
 	unsigned int resize(unsigned int size);
 	unsigned int uploadSubData(unsigned int first, unsigned int size, void* data);
 	unsigned int uploadData(unsigned int size, void* data);
+	bool readData(void* data);
+	bool readSubData(unsigned int first, unsigned int size, void* data);
+
+	IGPUBuffer* getVendorGPUBuffer();
 protected:
 	GPUBufferDesc desc;
 	IGPUBuffer* vendorGPUBuffer = NULL;

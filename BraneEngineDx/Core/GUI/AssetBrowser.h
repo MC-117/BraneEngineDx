@@ -33,6 +33,8 @@ protected:
 	Texture2D* audioTex;
 	Texture2D* assetFileTex;
 	Texture2D* pythonTex;
+	Texture2D* timelineTex;
+	Texture2D* graphTex;
 
 	struct AssetTypeInfo
 	{

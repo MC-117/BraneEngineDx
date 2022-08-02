@@ -2,23 +2,62 @@
 #ifndef _OBJECT_H_
 #define _OBJECT_H_
 
+#include "Delegate.h"
 #include "Events.h"
 #include "Render.h"
-#include "Serialization.h"
+#include "Base.h"
 
 class Render;
+struct RenderInfo;
+class RenderCommandList;
 #if ENABLE_PHYSICS
 class PhysicalWorld;
+class PhysicalBody;
+class PhysicalConstraint;
 #endif
 
-class Object : public Serializable {
-public:
-	Serialize(Object)
+class Object;
 
-		string name;
+class ObjectBehavior : public Base
+{
+	friend class Object;
+public:
+	Serialize(ObjectBehavior, Base);
+
+	ObjectBehavior() = default;
+	virtual ~ObjectBehavior() = default;
+
+	virtual string getName() const;
+
+	virtual bool init(Object* object);
+
+	virtual void begin();
+	virtual void tick(float deltaTime);
+	virtual void afterTick();
+	virtual void prerender(RenderCommandList& cmdLst);
+	virtual void end();
+
+	virtual void onAttacted(Object& parent);
+	virtual void onDistacted(Object& parent);
+
+	static Serializable* instantiate(const SerializationInfo& from);
+protected:
+	Object* object = NULL;
+};
+
+class Object : public Base
+{
+public:
+	Serialize(Object, Base);
+
+	enum struct DestroyFlag : unsigned char {
+		None, Self, All
+	};
+	string name;
 	Object* parent = NULL;
 	vector<Object*> children;
 	Events events;
+	vector<ObjectBehavior*> behaviors;
 
 	Object(string name = "Object");
 	virtual ~Object();
@@ -26,16 +65,24 @@ public:
 	virtual void begin();
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
-	virtual void prerender();
+	virtual void prerender(RenderCommandList& cmdLst);
 	virtual void end();
 
 	virtual void onAttacted(Object& parent);
 	virtual void onDistacted(Object& parent);
 
+	virtual bool addBehavior(ObjectBehavior* behavior);
+	virtual bool removeBehavior(ObjectBehavior* behavior);
+	int getBehaviorCount() const;
+	ObjectBehavior* getBehavior(int index) const;
+	ObjectBehavior* getBehavior(const string& name) const;
+	ObjectBehavior* getBehavior(Serialization& type) const;
+
 	virtual Render* getRender();
 	virtual unsigned int getRenders(vector<Render*>& renders);
 #if ENABLE_PHYSICS
-	virtual void* getPhysicalBody();
+	virtual PhysicalBody* getPhysicalBody();
+	virtual PhysicalConstraint* getPhysicalConstraint();
 	virtual void setupPhysics(PhysicalWorld& physicalWorld);
 	virtual void releasePhysics(PhysicalWorld& physicalWorld);
 #endif
@@ -43,20 +90,16 @@ public:
 	Object* getRoot() const;
 	Object* getSibling() const;
 	Object* getChild() const;
-	Object* findChild(const string& name);
+	Object* findChild(const string& name) const;
+	Object* findChildRecursively(const string& name) const;
 	virtual void setParent(Object& parent);
 	virtual void unparent();
 	virtual void addChild(Object& child);
 	void clearChild();
 
-	void traverse(void(*preFunc)(Object& object), void(*postFunc)(Object& object));
-	void traverse(bool(*preFunc)(Object& object), void(*postFunc)(Object& object, bool));
-	void preTraverse(void(*func)(Object& object));
-	void preTraverse(bool(*func)(Object& object));
-	void preTraverse(bool(*func)(Object& object, float), float arg);
-	void postTraverse(void(*func)(Object& object));
 	virtual void destroy(bool applyToChild = false);
 	bool isDestroy();
+	DestroyFlag getDestroyFlag() const;
 	bool isinitialized();
 	bool isInternal();
 
@@ -65,7 +108,7 @@ public:
 	virtual bool serialize(SerializationInfo& to);
 protected:
 	bool initialized = false;
-	bool tryDestroy = false;
+	DestroyFlag destroyFlag = DestroyFlag::None;
 	bool internalNode = false; // internal node: can not change its hierarchy
 	int siblingIdx = -1;
 
@@ -84,6 +127,19 @@ public:
 protected:
 	Object* root = NULL, * curObj = NULL;
 	bool delay = false;
+};
+
+class ObjectConstIterator
+{
+public:
+	ObjectConstIterator(const Object* root);
+
+	bool next();
+	Object& current();
+	void reset(const Object* root = NULL);
+protected:
+	const Object* root = NULL;
+	Object* curObj = NULL;
 };
 
 enum InstanceRuleEnum

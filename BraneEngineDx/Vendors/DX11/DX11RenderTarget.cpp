@@ -34,7 +34,7 @@ unsigned int DX11RenderTarget::bindFrame()
 	if (isDefault()) {
 		desc.inited = true;
 		dxContext.clearSRV();
-		dxContext.deviceContext->OMSetRenderTargets(dx11RTVs.size(), dx11RTVs.data(), dx11DSV);
+		dxContext.deviceContext->OMSetRenderTargets(1, dxContext.backBufferRTV[0].GetAddressOf(), NULL);
 		currentRenderTarget = this;
 		return 0;
 	}
@@ -58,11 +58,30 @@ unsigned int DX11RenderTarget::bindFrame()
 	}
 	if (currentRenderTarget == this)
 		return desc.frameID;
+	for (int i = 0; i < desc.textureList.size(); i++) {
+		if (desc.multisampleLevel > 1) {
+			RTInfo& rtInfo = desc.textureList[i];
+			MSTex& mstex = multisampleTexs[i];
+			dx11RTVs[i] = mstex.tex->getRTV(rtInfo.mipLevel, true);
+		}
+		else {
+			RTInfo& rtInfo = desc.textureList[i];
+			DX11Texture2D* tex = (DX11Texture2D*)rtInfo.texture->getVendorTexture();
+			dx11RTVs[i] = tex->getRTV(rtInfo.mipLevel, false);
+		}
+	}
 	dxContext.clearSRV();
 	dxContext.clearUAV();
-	dxContext.deviceContext->OMSetRenderTargets(dx11RTVs.size(), dx11RTVs.data(), dx11DSV);
+	dxContext.deviceContext->OMSetRenderTargets(dx11RTVs.size(),
+		(ID3D11RenderTargetView* const*)dx11RTVs.data(), dx11DSV.Get());
 	currentRenderTarget = this;
     return desc.frameID;
+}
+
+void DX11RenderTarget::clearBind()
+{
+	dxContext.clearRTV();
+	dxContext.clearUAV();
 }
 
 void DX11RenderTarget::resize(unsigned int width, unsigned int height)
@@ -72,19 +91,7 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 	desc.width = width;
 	desc.height = height;
 	if (isDefault()) {
-		if (dx11RTVs.size() != 1)
-			dx11RTVs.resize(1, NULL);
-		ID3D11RenderTargetView* rtv = dx11RTVs[0];
-		if (rtv != NULL)
-			rtv->Release();
-
 		dxContext.createSwapChain(width, height, desc.multisampleLevel);
-
-		ID3D11Texture2D* screenTex = NULL;
-		dxContext.swapChain->GetBuffer(0, IID_PPV_ARGS(&screenTex));
-		if (FAILED(dxContext.device->CreateRenderTargetView(screenTex, NULL, &rtv)))
-			throw runtime_error("DX11: Create default render target view failed");
-		dx11RTVs[0] = rtv;
 	}
 	else if (desc.depthOnly) {
 		if (desc.depthTexure != NULL) {
@@ -99,8 +106,9 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 		if (desc.multisampleLevel > 1) {
 			multisampleTexs.resize(desc.textureList.size());
 			for (int i = 0; i < desc.textureList.size(); i++) {
-				desc.textureList[i].texture->bind();
-				DX11Texture2D* tex = (DX11Texture2D*)desc.textureList[i].texture->getVendorTexture();
+				RTInfo& rtInfo = desc.textureList[i];
+				rtInfo.texture->resize(width, height);
+				DX11Texture2D* tex = (DX11Texture2D*)rtInfo.texture->getVendorTexture();
 				MSTex& mstex = multisampleTexs[i];
 				if (mstex.tex == NULL) {
 					mstex.desc = tex->desc;
@@ -115,41 +123,18 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 				if (mstex.tex->resize(width, height) == 0)
 					throw runtime_error("DX11: Resize ms texture failed");
 
-				ID3D11RenderTargetView* rtv = dx11RTVs[i];
-				if (rtv != NULL) {
-					rtv->Release();
-					rtv = NULL;
-				}
-				D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-				ZeroMemory(&rtvDesc, sizeof(D3D11_RENDER_TARGET_VIEW_DESC));
-				rtvDesc.Format = mstex.tex->info.texture2DDesc.Format;
-				rtvDesc.Texture2D.MipSlice = desc.textureList[i].mipLevel;
-				rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
-				if (FAILED(dxContext.device->CreateRenderTargetView(mstex.tex->dx11Texture2D, &rtvDesc, &rtv)))
-					throw runtime_error("DX11: Create render target view failed");
-				dx11RTVs[i] = rtv;
+				dx11RTVs[i] = mstex.tex->getRTV(rtInfo.mipLevel, true);
 			}
 		}
 		else {
 			for (int i = 0; i < desc.textureList.size(); i++) {
-				ID3D11RenderTargetView* rtv = dx11RTVs[i];
-				if (rtv != NULL) {
-					rtv->Release();
-					rtv = NULL;
-				}
-				desc.textureList[i].texture->bind();
-				DX11Texture2D* tex = (DX11Texture2D*)desc.textureList[i].texture->getVendorTexture();
+				RTInfo& rtInfo = desc.textureList[i];
+				rtInfo.texture->resize(width, height);
+				DX11Texture2D* tex = (DX11Texture2D*)rtInfo.texture->getVendorTexture();
 				tex->desc.info.sampleCount = desc.multisampleLevel == 0 ? 1 : desc.multisampleLevel;
 				if (tex->resize(width, height) == 0)
 					throw runtime_error("DX11: Resize texture failed");
-				D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-				ZeroMemory(&rtvDesc, sizeof(D3D11_RENDER_TARGET_VIEW_DESC));
-				rtvDesc.Format = tex->info.texture2DDesc.Format;
-				rtvDesc.Texture2D.MipSlice = desc.textureList[i].mipLevel;
-				rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-				if (FAILED(dxContext.device->CreateRenderTargetView(tex->dx11Texture2D, &rtvDesc, &rtv)))
-					throw runtime_error("DX11: Create render target view failed");
-				dx11RTVs[i] = rtv;
+				dx11RTVs[i] = tex->getRTV(rtInfo.mipLevel, false);
 			}
 		}
 	}
@@ -203,8 +188,8 @@ void DX11RenderTarget::SetMultisampleFrame()
 		for (int i = 0; i < desc.textureList.size(); i++) {
 			DX11Texture2D* tex = (DX11Texture2D*)desc.textureList[i].texture->getVendorTexture();
 			desc.textureList[i].texture->bind();
-			dxContext.deviceContext->ResolveSubresource(tex->dx11Texture2D, 0,
-				multisampleTexs[i].tex->dx11Texture2D, 0, tex->info.texture2DDesc.Format);
+			dxContext.deviceContext->ResolveSubresource(tex->dx11Texture2D.Get(), 0,
+				multisampleTexs[i].tex->dx11Texture2D.Get(), 0, tex->info.texture2DDesc.Format);
 		}
 		if (desc.withDepthStencil) {
 			/*dxContext.deviceContext->ResolveSubresource(dx11DepthTex->dx11Texture2D, 0,
@@ -216,9 +201,11 @@ void DX11RenderTarget::SetMultisampleFrame()
 			dxContext.clearSRV();
 			dxContext.clearUAV();
 			dxContext.clearRTV();
-			dxContext.deviceContext->CSSetShaderResources(7, 1, &srv);
-			dxContext.deviceContext->CSSetUnorderedAccessViews(0, 1, &uav, NULL);
+			currentRenderTarget = NULL;
+			dxContext.deviceContext->CSSetShaderResources(7, 1, srv.GetAddressOf());
+			dxContext.deviceContext->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL);
 			depthBlitCSShader->dispatchCompute(ceil(desc.width / 16.0f), ceil(desc.height / 16.0f), 1);
+			dxContext.clearUAV();
 		}
 	}
 }
@@ -229,7 +216,7 @@ void DX11RenderTarget::clearColor(const Color& color)
 		return;
 	auto rt = dx11RTVs.front();
 	if (rt != NULL)
-		dxContext.deviceContext->ClearRenderTargetView(rt, (const float*)&color);
+		dxContext.deviceContext->ClearRenderTargetView(rt.Get(), (const float*)&color);
 }
 
 void DX11RenderTarget::clearColors(const vector<Color>& colors)
@@ -243,20 +230,20 @@ void DX11RenderTarget::clearColors(const vector<Color>& colors)
 		else
 			color = &colors.back();
 		if (dx11RTVs[i] != NULL)
-			dxContext.deviceContext->ClearRenderTargetView(dx11RTVs[i], (const float*)color);
+			dxContext.deviceContext->ClearRenderTargetView(dx11RTVs[i].Get(), (const float*)color);
 	}
 }
 
 void DX11RenderTarget::clearDepth(float depth)
 {
 	if (dx11DSV != NULL)
-		dxContext.deviceContext->ClearDepthStencilView(dx11DSV, D3D11_CLEAR_DEPTH, depth, 0);
+		dxContext.deviceContext->ClearDepthStencilView(dx11DSV.Get(), D3D11_CLEAR_DEPTH, depth, 0);
 }
 
 void DX11RenderTarget::clearStencil(unsigned char stencil)
 {
 	if (dx11DSV != NULL)
-		dxContext.deviceContext->ClearDepthStencilView(dx11DSV, D3D11_CLEAR_STENCIL, 0, stencil);
+		dxContext.deviceContext->ClearDepthStencilView(dx11DSV.Get(), D3D11_CLEAR_STENCIL, 0, stencil);
 }
 
 void DX11RenderTarget::initDepthBlit()

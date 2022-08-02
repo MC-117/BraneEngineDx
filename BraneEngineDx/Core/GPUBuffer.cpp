@@ -59,6 +59,23 @@ unsigned int GPUBuffer::uploadData(unsigned int size, void* data)
 	return vendorGPUBuffer->uploadData(size, data);
 }
 
+bool GPUBuffer::readData(void* data)
+{
+	newVendorGPUBuffer();
+	return vendorGPUBuffer->readData(data);
+}
+
+bool GPUBuffer::readSubData(unsigned int first, unsigned int size, void* data)
+{
+	newVendorGPUBuffer();
+	return vendorGPUBuffer->readSubData(first, size, data);
+}
+
+IGPUBuffer* GPUBuffer::getVendorGPUBuffer()
+{
+	return vendorGPUBuffer;
+}
+
 void GPUBuffer::newVendorGPUBuffer()
 {
 	if (vendorGPUBuffer == NULL) {

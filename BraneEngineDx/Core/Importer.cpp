@@ -1,5 +1,6 @@
 #include "Importer.h"
 #include "IVendor.h"
+#include "Console.h"
 
 Importer::Importer()
 {
@@ -40,10 +41,12 @@ bool Importer::load(const string & file, unsigned int flag)
 	aiSetImportPropertyInteger(props, AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
 	aiSetImportPropertyInteger(props, AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, 0);
 	aiSetImportPropertyInteger(props, AI_CONFIG_IMPORT_REMOVE_EMPTY_BONES, 1);
-	scene = aiImportFileExWithProperties(file.c_str(), flag ^ aiProcess_RemoveRedundantMaterials, NULL, props);
+	filesystem::path path = filesystem::u8path(file);
+	scene = aiImportFileExWithProperties(path.generic_u8string().c_str(), flag ^ aiProcess_RemoveRedundantMaterials, NULL, props);
 	aiReleasePropertyStore(props);
 	if (scene == NULL) {
 		errorString = aiGetErrorString();
+		Console::error(errorString);
 		return false;
 	}
 	return preprocess();
@@ -362,13 +365,15 @@ bool Importer::preprocess()
 bool Importer::toMeshParts()
 {
 	bound.minVal = Vector3f(FLT_MAX, FLT_MAX, FLT_MAX);
-	bound.maxVal = Vector3f(FLT_MIN, FLT_MIN, FLT_MIN);
+	bound.maxVal = Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 	meshParts.resize(nMesh);
-	totalMesh = VendorManager::getInstance().getVendor().newMeshPart(nVert, nFace);
+	totalMesh = VendorManager::getInstance().getVendor().newMeshPart(nVert, nFace * 3);
 	unsigned int baseVertex = totalMesh.vertexFirst, baseElement = totalMesh.elementFirst;
 	for (int i = 0; i < meshSortedList.size(); i++) {
 		aiMesh* mesh = meshSortedList[i];
-		MeshPart part = { totalMesh.meshData, baseVertex, mesh->mNumVertices, baseElement, mesh->mNumFaces };
+		MeshPart part = MeshPart { totalMesh.meshData, baseVertex, mesh->mNumVertices, baseElement, mesh->mNumFaces * 3 };
+		part.bound.minVal = Vector3f(FLT_MAX, FLT_MAX, FLT_MAX);
+		part.bound.maxVal = Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 		for (int v = 0; v < mesh->mNumVertices; v++) {
 			part.vertex(v) = Vector3f(
 				mesh->mVertices[v].x,
@@ -379,7 +384,7 @@ bool Importer::toMeshParts()
 				mesh->mNormals[v].x,
 				mesh->mNormals[v].y,
 				mesh->mNormals[v].z
-			);
+			).normalize();
 			if (mesh->mTextureCoords[0] == NULL)
 				part.uv(v) = Vector2f(0, 0);
 			else
@@ -396,13 +401,19 @@ bool Importer::toMeshParts()
 			bound.maxVal[0] = max(bound.maxVal[0], tmp.x());
 			bound.maxVal[1] = max(bound.maxVal[1], tmp.y());
 			bound.maxVal[2] = max(bound.maxVal[2], tmp.z());
+
+			part.bound.minVal[0] = min(part.bound.minVal[0], tmp.x());
+			part.bound.minVal[1] = min(part.bound.minVal[1], tmp.y());
+			part.bound.minVal[2] = min(part.bound.minVal[2], tmp.z());
+
+			part.bound.maxVal[0] = max(part.bound.maxVal[0], tmp.x());
+			part.bound.maxVal[1] = max(part.bound.maxVal[1], tmp.y());
+			part.bound.maxVal[2] = max(part.bound.maxVal[2], tmp.z());
 		}
 		for (int f = 0; f < mesh->mNumFaces; f++) {
-			part.element(f) = Vector3u(
-				mesh->mFaces[f].mIndices[0],
-				mesh->mFaces[f].mIndices[1],
-				mesh->mFaces[f].mIndices[2]
-			);
+			part.element(f * 3) = mesh->mFaces[f].mIndices[0];
+			part.element(f * 3 + 1) = mesh->mFaces[f].mIndices[1];
+			part.element(f * 3 + 2) = mesh->mFaces[f].mIndices[2];
 		}
 		meshParts[i].first = scene->mMaterials[mesh->mMaterialIndex]->GetName().C_Str();
 		meshParts[i].second = part;
@@ -415,14 +426,16 @@ bool Importer::toMeshParts()
 bool Importer::toSkeletonMeshParts()
 {
 	bound.minVal = Vector3f(FLT_MAX, FLT_MAX, FLT_MAX);
-	bound.maxVal = Vector3f(FLT_MIN, FLT_MIN, FLT_MIN);
+	bound.maxVal = Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 	meshParts.resize(nMesh);
-	SkeletonMeshPart _totalMesh = VendorManager::getInstance().getVendor().newSkeletonMeshPart(nVert, nFace, boneList.size(), nMorphVert, nMorph);
+	SkeletonMeshPart _totalMesh = VendorManager::getInstance().getVendor().newSkeletonMeshPart(nVert, nFace * 3, boneList.size(), nMorphVert, nMorph);
 	totalMesh = _totalMesh;
 	unsigned int baseVertex = _totalMesh.vertexFirst, baseElement = _totalMesh.elementFirst;
 	for (int i = 0; i < meshSortedList.size(); i++) {
 		aiMesh* mesh = meshSortedList[i];
-		SkeletonMeshPart part = { (SkeletonMeshData*)_totalMesh.meshData, baseVertex, mesh->mNumVertices, baseElement, mesh->mNumFaces };
+		SkeletonMeshPart part = { (SkeletonMeshData*)_totalMesh.meshData, baseVertex, mesh->mNumVertices, baseElement, mesh->mNumFaces * 3 };
+		part.bound.minVal = Vector3f(FLT_MAX, FLT_MAX, FLT_MAX);
+		part.bound.maxVal = Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 		if (mesh->mNumAnimMeshes > 0)
 			part.morphMeshData = _totalMesh.morphMeshData;
 		for (int v = 0; v < mesh->mNumVertices; v++) {
@@ -435,7 +448,7 @@ bool Importer::toSkeletonMeshParts()
 				mesh->mNormals[v].x,
 				mesh->mNormals[v].y,
 				mesh->mNormals[v].z
-			);
+			).normalize();
 			if (mesh->mTextureCoords[0] != NULL) {
 				part.uv(v) = Vector2f(
 					mesh->mTextureCoords[0][v].x,
@@ -468,13 +481,19 @@ bool Importer::toSkeletonMeshParts()
 			bound.maxVal[0] = max(bound.maxVal[0], tmp.x());
 			bound.maxVal[1] = max(bound.maxVal[1], tmp.y());
 			bound.maxVal[2] = max(bound.maxVal[2], tmp.z());
+
+			part.bound.minVal[0] = min(part.bound.minVal[0], tmp.x());
+			part.bound.minVal[1] = min(part.bound.minVal[1], tmp.y());
+			part.bound.minVal[2] = min(part.bound.minVal[2], tmp.z());
+
+			part.bound.maxVal[0] = max(part.bound.maxVal[0], tmp.x());
+			part.bound.maxVal[1] = max(part.bound.maxVal[1], tmp.y());
+			part.bound.maxVal[2] = max(part.bound.maxVal[2], tmp.z());
 		}
 		for (int f = 0; f < mesh->mNumFaces; f++) {
-			part.element(f) = Vector3u(
-				mesh->mFaces[f].mIndices[0],
-				mesh->mFaces[f].mIndices[1],
-				mesh->mFaces[f].mIndices[2]
-				);
+			part.element(f * 3) = mesh->mFaces[f].mIndices[0];
+			part.element(f * 3 + 1) = mesh->mFaces[f].mIndices[1];
+			part.element(f * 3 + 2) = mesh->mFaces[f].mIndices[2];
 		}
 		meshParts[i].first = scene->mMaterials[mesh->mMaterialIndex]->GetName().C_Str();
 		meshParts[i].second = part;

@@ -9,17 +9,20 @@
 #include "IGPUBuffer.h"
 #include "SkeletonMeshData.h"
 #include "IRenderExecution.h"
+#include "Physics\PhysicalLayer.h"
 
 struct EngineConfig
 {
 	string vendorName = "__Auto__";
 	string startMapPath = "Content/world.asset";
+	string layerNames[PhysicalLayer::layerMaxCount] = { "default" };
 	bool fullscreen = false;
 	bool guiOnly = false;
 	bool loadDefaultAsset = true;
 	bool loadEngineAsset = true;
 	bool loadContentAsset = true;
 	bool vsnyc = false;
+	unsigned int maxFPS = 0;
 	unsigned int msaa = 1;
 	unsigned int screenWidth = 960, screenHeight = 640;
 };
@@ -104,10 +107,20 @@ public:
 	virtual void setRenderTransparentState() = 0;
 	virtual void setRenderOverlayState() = 0;
 	virtual void setRenderPostState() = 0;
+	virtual void setRenderPostAddState() = 0;
+	virtual void setRenderPostPremultiplyAlphaState() = 0;
+	virtual void setRenderPostMultiplyState() = 0;
+	virtual void setRenderPostMaskState() = 0;
 	virtual void setCullState(CullType type) = 0;
 	virtual void setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h) = 0;
 
+	virtual void setMeshDrawContext() = 0;
+	virtual void setSkeletonMeshDrawContext() = 0;
+	virtual void setTerrainDrawContext() = 0;
+	virtual void meshDrawCall(const MeshPartDesc& mesh) = 0;
 	virtual void postProcessCall() = 0;
+
+	virtual void readBackTexture2D(ITexture2D* texture, void* data) = 0;
 protected:
 	string name;
 };

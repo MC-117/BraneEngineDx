@@ -1,13 +1,16 @@
 #include "ConsoleWindow.h"
-#include "../Utility.h"
+#include "../Utility/Utility.h"
 #include <fstream>
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 #include "../Camera.h"
 #include "../Console.h"
 #include "GUI.h"
+#include "GUIUtility.h"
+#include "../Script/PythonManager.h"
 
 ConsoleWindow::ConsoleWindow(Object & object, string name, bool defaultShow) : UIWindow(object, name, defaultShow)
 {
+	textEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::Python());
 }
 
 void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
@@ -47,12 +50,11 @@ void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
 					break;
 				}
 			}
-			if (logSize != Console::logs.size()) {
+			if (Console::getNewLogCount() != 0) {
 				if ((Console::logs.back().state == Console::Log_Normal && showLog) ||
 					(Console::logs.back().state == Console::Log_Warning && showWarning) ||
 					(Console::logs.back().state == Console::Log_Error && showError))
 					ImGui::SetScrollHereY(1.0f);
-				logSize = Console::logs.size();
 			}
 			ImGui::PopStyleVar();
 			ImGui::EndChild();
@@ -149,7 +151,7 @@ void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
 											/*if (b->first == "depthMap")
 												continue;*/
 											unsigned long long id = b->second.val->getTextureID();
-											ImGui::Image((void*)id, { 64, 64 }, { 0, 1 }, { 1, 0 });
+											ImGui::Image((ImTextureID)id, { 64, 64 }, { 0, 1 }, { 1, 0 });
 											ImGui::SameLine();
 											ImGui::Text(b->first.c_str());
 										}
@@ -172,6 +174,50 @@ void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
 			ImGui::EndChild();
 			ImGui::EndTabItem();
 		}
+		if (ImGui::BeginTabItem("Python")) {
+			if (ImGui::ArrowButton("Run", ImGuiDir_Right)) {
+				PythonManager::run(textEditor.GetText());
+			}
+			float h = ImGui::GetWindowHeight();
+			ImGui::BeginChild("TextView", { -1, -h * 0.3f - 3 });
+			auto cpos = textEditor.GetCursorPosition();
+			ImGui::Text("%6d/%-6d %6d lines  | %s | %s | %s", cpos.mLine + 1, cpos.mColumn + 1, textEditor.GetTotalLines(),
+				textEditor.IsOverwrite() ? "Ovr" : "Ins",
+				textEditor.CanUndo() ? "*" : " ",
+				textEditor.GetLanguageDefinition().mName.c_str());
+			textEditor.Render("##ConsoleCode", { -1, -1 });
+			ImGui::EndChild();
+			ImGui::BeginChild("LogView", { -1, -1 });
+			ImGui::Selectable("PyLog", &showPyLog, 0, { 60, 0 });
+			ImGui::SameLine(0, 15);
+			ImGui::Selectable("PyError", &showPyError, 0, { 60, 0 });
+			ImGui::BeginChild("PyOutput_Area", { 0, 0 }, false, ImGuiWindowFlags_HorizontalScrollbar);
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+			for (auto b = Console::pyLogs.begin(), e = Console::pyLogs.end(); b != e; b++) {
+				switch (b->state)
+				{
+				case Console::Log_Normal:
+					if (showPyLog)
+						ImGui::Text(b->text.c_str());
+					break;
+				case Console::Log_Error:
+					if (showPyError)
+						ImGui::TextColored({ 1, 0, 0, 1 }, b->text.c_str());
+					break;
+				default:
+					break;
+				}
+			}
+			if (Console::getNewPyLogCount != 0) {
+				if ((Console::pyLogs.back().state == Console::Log_Normal && showPyLog) ||
+					(Console::pyLogs.back().state == Console::Log_Error && showPyError))
+					ImGui::SetScrollHereY(1.0f);
+			}
+			ImGui::PopStyleVar();
+			ImGui::EndChild();
+			ImGui::EndChild();
+			ImGui::EndTabItem();
+		}
 		if (ImGui::BeginTabItem("Windows")) {
 			ImGui::BeginChild("Windows_Area", { 0, 0 }, false, ImGuiWindowFlags_HorizontalScrollbar);
 			ImVec2 size = { ImGui::GetWindowContentRegionWidth() / 2 - 4, 40 };
@@ -187,6 +233,14 @@ void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
 				if (!enter)
 					ImGui::SameLine();
 				enter = !enter;
+			}
+			ImGui::EndChild();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Command")) {
+			ImGui::BeginChild("Command_Area", { 0, 0 }, false, ImGuiWindowFlags_HorizontalScrollbar);
+			if (ImGui::Button("RefreshShaders", { -1, 36 })) {
+				ShaderManager::getInstance().refreshShader();
 			}
 			ImGui::EndChild();
 			ImGui::EndTabItem();

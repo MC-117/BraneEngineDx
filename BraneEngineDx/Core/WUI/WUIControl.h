@@ -44,7 +44,7 @@ public:
 	virtual void show(bool active = true);
 	virtual void hide();
 	virtual bool doModel(bool showDefault = true);
-	virtual bool doModelAsync();
+	virtual bool doModelAsync(void(*workFunc)(WUIControl& control, void* ptr), void* ptr = NULL);
 	virtual void close();
 	virtual LRESULT WndProc(UINT msg, WPARAM wParam, LPARAM lParam);
 protected:
@@ -61,6 +61,7 @@ protected:
 	Unit2Di pos = { 0, 0 };
 	Color backColor = { 0, 0, 0 };
 	bool firstShow = true, visible = false, closing = false, isAsync = false;
+	thread* asyncThread = NULL;
 	static bool isRegistClass;
 
 	virtual HMENU getHMenuID();
@@ -76,8 +77,8 @@ protected:
 	virtual void onResize(WPARAM wParam, const Unit2Di& size);
 	virtual void onResizeEnter();
 	virtual void onResizeExit();
-	virtual BOOL onMouseHover(WPARAM wParam, LPARAM lParam);
-	virtual BOOL onMouseMove();
+	virtual BOOL onMouseHover(WPARAM wParam, const Unit2Di& pos);
+	virtual BOOL onMouseMove(WPARAM wParam, const Unit2Di& pos);
 	virtual BOOL onMouseLeave();
 	virtual BOOL onLBTNDown();
 	virtual BOOL onLBTNUp();

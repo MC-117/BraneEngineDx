@@ -21,6 +21,6 @@ SkeletonMeshData::SkeletonMeshData()
 	type = MT_SkeletonMesh;
 }
 
-void SkeletonMeshData::updateMorphWeights(vector<float>& weights)
-{
-}
+//void SkeletonMeshData::updateMorphWeights(vector<float>& weights)
+//{
+//}

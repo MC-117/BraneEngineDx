@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Unit.h"
+#include "Base.h"
 
 #ifdef AUDIO_USE_OPENAL
 
@@ -13,7 +13,11 @@ class AudioData
 {
 public:
 	string name;
-	float duration;
+	unsigned int bufferSize = 0;
+	int frequency;
+	int channels = 0;
+	int bitsPerSample = 0;
+	float duration = 0;
 
 	AudioData(const string& name = "");
 	AudioData(const string& name, const string& file);
@@ -29,7 +33,7 @@ protected:
 	unsigned int abo = AL_NONE;
 };
 
-class AudioSource
+class AudioSource : public Base
 {
 public:
 	enum AudioState
@@ -40,12 +44,14 @@ public:
 	float volume = 1;
 	float pitch = 1;
 
+	Serialize(AudioSource, Base);
+
 	AudioSource();
 	AudioSource(AudioData& audioData);
-	~AudioSource();
+	virtual ~AudioSource();
 
 	bool isValid();
-	bool setAudioData(AudioData& audioData);
+	bool setAudioData(AudioData* audioData);
 	void destroy();
 
 	void play();
@@ -64,6 +70,10 @@ public:
 	float getPitch();
 	float getPlayTime();
 	AudioState getState();
+
+	static Serializable* instantiate(const SerializationInfo& from);
+	virtual bool deserialize(const SerializationInfo& from);
+	virtual bool serialize(SerializationInfo& to);
 protected:
 	unsigned int sbo = AL_NONE;
 };

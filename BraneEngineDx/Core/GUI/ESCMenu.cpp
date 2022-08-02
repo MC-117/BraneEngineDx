@@ -2,6 +2,8 @@
 #include "../Engine.h"
 #include "../Console.h"
 #include "EditorWindow.h"
+#include "../WUI/WUIViewPort.h"
+#include "../SkeletonMeshActor.h"
 
 ESCMenu::ESCMenu(string name, bool defaultShow)
 	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
@@ -23,7 +25,7 @@ void ESCMenu::onPreAction(GUIRenderInfo& info)
 	World* world = Engine::getCurrentWorld();
 	if (world == NULL)
 		return;
-	Input& input = world->input;
+	Input& input = Engine::input;
 	if (input.getKeyPress(VK_ESCAPE))
 		show = !show;
 	if (show)
@@ -45,7 +47,7 @@ void TextCenter(std::string text) {
 
 void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 {
-	ImVec2 ws = { 200, 202 };
+	ImVec2 ws = { 200, 252 };
 	ImGui::SetWindowSize(ws, ImGuiCond_Always);
 	ImGui::SetWindowPos({ (info.viewSize.x - ws.x) * 0.5f, (info.viewSize.y - ws.y) * 0.5f }, ImGuiCond_Always);
 	ImVec2 size = { ImGui::GetWindowContentRegionWidth(), 40 };
@@ -57,28 +59,28 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 	TextCenter("Menu");
 	if (ImGui::Button("Play", size)) {
 		bool ok = true;
-		Object* obj = (Object*)Brane::find(typeid(Object).hash_code(), "Miku");
+		Object* obj = world->findChild("TDA");
 		SkeletonMeshActor* miku = dynamic_cast<SkeletonMeshActor*>(obj);
 		if (miku == NULL) {
 			ok = false;
-			Console::error("Not found SkeletonMeshActor(Miku)");
+			Console::error("Not found SkeletonMeshActor(TDA)");
 		}
 #ifdef AUDIO_USE_OPENAL
-		AudioData* audio = getAssetByPath<AudioData>("Content/Scene/MagicMiku/Weekender Girl.wav");
+		AudioData* audio = getAssetByPath<AudioData>("Content/MMD/Merankorikku.wav");
 		if (audio == NULL) {
 			ok = false;
-			Console::error("Not found Content/Scene/MagicMiku/Weekender Girl.wav");
+			Console::error("Not found Content/MMD/Merankorikku.wav");
 		}
 #endif // AUDIO_USE_OPENAL
-		AnimationClipData* anim = getAssetByPath<AnimationClipData>("Content/Scene/MagicMiku/Weekender_Girl_MagicMiku.charanim");
+		AnimationClipData* anim = getAssetByPath<AnimationClipData>("Content/MMD/TDA/Merankorikku_TDA.charanim");
 		if (anim == NULL) {
 			ok = false;
-			Console::error("Not found Content/Scene/MagicMiku/Weekender_Girl_MagicMiku.charanim");
+			Console::error("Not found Content/MMD/TDA/Merankorikku_TDA.charanim");
 		}
-		AnimationClipData* camAnim = getAssetByPath<AnimationClipData>("Content/Scene/MagicMiku/Weekender_Girl_camera.camanim");
+		AnimationClipData* camAnim = getAssetByPath<AnimationClipData>("Content/MMD/Merankorikku_Cam.camanim");
 		if (camAnim == NULL) {
 			ok = false;
-			Console::error("Content/Scene/MagicMiku/Weekender_Girl_camera.camanim");
+			Console::error("Not found Content/MMD/Merankorikku_Cam.camanim");
 		}
 		if (ok) {
 			bool has = false;
@@ -116,7 +118,7 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 			audioSource->play();
 #endif // AUDIO_USE_OPENAL
 			info.gui.hideAllUIControl();
-			world->input.setCursorHidden(true);
+			Engine::input.setCursorHidden(true);
 		}
 		/*info.gui.hideAllUIControl();
 		world->input.setCursorHidden(true);*/
@@ -144,6 +146,9 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 			EditorWindow* win = new EditorWindow(*world, Material::nullMaterial, "Editor", true);
 			(*world) += win;
 		}
+	}
+	if (ImGui::Button("Toggle Fullscreen", size)) {
+		Engine::viewport.toggleFullscreen();
 	}
 	if (ImGui::Button("Quit", size)) {
 		world->quit();

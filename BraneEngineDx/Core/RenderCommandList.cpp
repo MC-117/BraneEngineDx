@@ -25,10 +25,6 @@ bool TransTag::operator<(const TransTag & tag) const
 	return false;
 }
 
-RenderCommandList::MeshTransformDataPack RenderCommandList::meshTransformDataPack;
-RenderCommandList::ParticleDataPack RenderCommandList::particleDataPack;
-RenderCommandList::LightDataPack RenderCommandList::lightDataPack;
-
 unsigned int RenderCommandList::MeshTransformData::setMeshTransform(const Matrix4f & transformMat)
 {
 	if (batchCount >= transforms.size())
@@ -397,9 +393,10 @@ void RenderCommandList::ParticleRenderPack::excute()
 	vendorRenderExecution->executeParticle({ cmd });
 }
 
-void RenderCommandList::MeshDataRenderPack::setRenderData(MeshPart * part, MeshTransformIndex* data)
+void RenderCommandList::MeshDataRenderPack::setRenderData(MeshPart * part, MeshTransformIndex* data, const list<IBufferBinding*>& bindings)
 {
 	meshParts.insert(pair<MeshPart*, MeshTransformIndex*>(part, data));
+	this->bindings = bindings;
 }
 
 void RenderCommandList::MeshDataRenderPack::excute()
@@ -411,10 +408,14 @@ void RenderCommandList::MeshDataRenderPack::excute()
 	for (auto b = meshParts.begin(), e = meshParts.end(); b != e; b++, index++) {
 		DrawElementsIndirectCommand& c = cmds[index];
 		c.baseVertex = b->first->vertexFirst;
-		c.count = b->first->elementCount * 3;
-		c.firstIndex = b->first->elementFirst * 3;
+		c.count = b->first->elementCount;
+		c.firstIndex = b->first->elementFirst;
 		c.instanceCount = b->second->batchCount;
 		c.baseInstance = b->second->indexBase;
+	}
+	for (auto b = bindings.begin(), e = bindings.end(); b != e; b++) {
+		(*b)->updateBuffer();
+		(*b)->bindBuffer();
 	}
 	newVendorRenderExecution();
 	vendorRenderExecution->executeMesh(cmds);
@@ -516,7 +517,7 @@ bool RenderCommandList::willUpdateStatic()
 bool RenderCommandList::setRenderCommand(const RenderCommand & cmd, bool isStatic, bool autoFill)
 {
 	if (cmd.material == NULL || cmd.material->isNull() || cmd.camera == NULL || (cmd.mesh == NULL && cmd.particles == NULL) ||
-		(cmd.mesh == NULL && cmd.particles != NULL && cmd.particles->empty()))
+		(cmd.mesh == NULL && cmd.particles != NULL && cmd.particles->empty()) || (cmd.mesh != NULL && !cmd.mesh->isValid()))
 		return false;
 	Enum<ShaderFeature> shaderFeature;
 	if (cmd.mesh == NULL)
@@ -524,12 +525,18 @@ bool RenderCommandList::setRenderCommand(const RenderCommand & cmd, bool isStati
 	else {
 		if (cmd.material->isDeferred)
 			shaderFeature |= Shader_Deferred;
-		if (cmd.mesh->isSkeleton())
-			shaderFeature |= Shader_Skeleton;
-		if (cmd.mesh->isMorph())
-			shaderFeature |= Shader_Morph;
-		if (cmd.particles != NULL)
-			shaderFeature |= Shader_Modifier;
+		if (cmd.mesh->meshData->type == MT_Terrain) {
+			shaderFeature |= Shader_Terrain;
+		}
+		else {
+			if (cmd.mesh->meshData->type == MT_SkeletonMesh) {
+				shaderFeature |= Shader_Skeleton;
+				if (cmd.mesh->isMorph())
+					shaderFeature |= Shader_Morph;
+			}
+			if (cmd.particles != NULL)
+				shaderFeature |= Shader_Modifier;
+		}
 	}
 	ShaderProgram* shader = cmd.material->getShader()->getProgram(shaderFeature);
 	if (shader == NULL) {
@@ -590,14 +597,14 @@ bool RenderCommandList::setRenderCommand(const RenderCommand & cmd, bool isStati
 		if (isStatic) {
 			auto meshTDIter = meshTransformDataPack.staticMeshTransformIndex.find({ cmd.material, cmd.mesh });
 			if (meshTDIter != meshTransformDataPack.staticMeshTransformIndex.end())
-				meshDataPack->setRenderData(cmd.mesh, &meshTDIter->second);
+				meshDataPack->setRenderData(cmd.mesh, &meshTDIter->second, cmd.bindings);
 			else
 				return false;
 		}
 		else {
 			auto meshTDIter = meshTransformDataPack.meshTransformIndex.find({ cmd.material, cmd.mesh });
 			if (meshTDIter != meshTransformDataPack.meshTransformIndex.end())
-				meshDataPack->setRenderData(cmd.mesh, &meshTDIter->second);
+				meshDataPack->setRenderData(cmd.mesh, &meshTDIter->second, cmd.bindings);
 			else
 				return false;
 		}
@@ -625,12 +632,7 @@ void RenderCommandList::excuteCommand()
 	lightDataPack.uploadLight();
 	timer.record("Upload");
 	Time setupTime, uploadBaseTime, uploadInsTime, execTime;
-	if (commandList.empty()) {
-		World* world = Engine::getCurrentWorld();
-		if (world != NULL)
-			RenderTarget::defaultRenderTarget.clearColor(world->getCurrentCamera().clearColor);
-	}
-	else for (auto camB = commandList.begin(), camE = commandList.end(); camB != camE; camB++) {
+	for (auto camB = commandList.begin(), camE = commandList.end(); camB != camE; camB++) {
 		Time t = Time::now();
 		camB->first->cameraRender.preRender();
 		camB->first->cameraRender.renderTarget.clearColor(camB->first->clearColor);
@@ -662,10 +664,10 @@ void RenderCommandList::excuteCommand()
 
 				camB->first->bindCameraData();
 
-				uploadBaseTime = uploadBaseTime + Time::now() - t;
 				meshTransformDataPack.bindTransforms();
 				particleDataPack.bindParticles();
 				lightDataPack.bindLight();
+				uploadBaseTime = uploadBaseTime + Time::now() - t;
 			}
 
 			for (auto matB = shaderB->second.begin(), matE = shaderB->second.end(); matB != matE; matB++) {
@@ -686,7 +688,11 @@ void RenderCommandList::excuteCommand()
 					if (meshDataB->first != NULL)
 						meshDataB->first->bindShape();
 					Time t = Time::now();
-					meshDataB->second->excute();
+					for (int passIndex = 0; passIndex < matB->first->getPassNum(); passIndex++) {
+						matB->first->setPass(passIndex);
+						matB->first->processBaseData();
+						meshDataB->second->excute();
+					}
 					execTime = execTime + Time::now() - t;
 				}
 				vendor.setCullState(Cull_Back);
@@ -744,7 +750,7 @@ void RenderCommandList::LightDataPack::setLight(Light * light)
 		data.position = pointLight->getPosition(WORLD);
 		data.intensity = pointLight->intensity;
 		data.color = Vector3f(pointLight->color.r, pointLight->color.g, pointLight->color.b);
-		data.attenuation = pointLight->attenuation;
+		data.radius = pointLight->getRadius();
 		pointLightDatas.emplace_back(data);
 	}
 }

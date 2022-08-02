@@ -2,6 +2,7 @@
 #include "../Camera.h"
 #include "../Asset.h"
 #include "../Console.h"
+#include "../GUI/UIControl.h"
 
 SerializeInstance(PostProcessPass);
 
@@ -38,6 +39,7 @@ void PostProcessResource::reset()
 	ssaoRenderTarget = NULL;
 	volumetricFogTexture = NULL;
 	volumetricFogRenderTarget = NULL;
+	blurTexture = NULL;
 }
 
 PostProcessPass::PostProcessPass(const string & name, Material * material)
@@ -128,6 +130,11 @@ void PostProcessPass::resize(const Unit2Di & size)
 	this->size = size;
 }
 
+void PostProcessPass::onGUI(GUIRenderInfo& info)
+{
+	ImGui::Checkbox("Enable", &enable);
+}
+
 Serializable * PostProcessPass::instantiate(const SerializationInfo & from)
 {
 	return nullptr;
@@ -148,7 +155,7 @@ bool PostProcessPass::deserialize(const SerializationInfo & from)
 
 bool PostProcessPass::serialize(SerializationInfo & to)
 {
-	to.type = "PostProcessPass";
+	Serializable::serialize(to);
 	to.set("name", name);
 	to.set("enable", enable ? "true" : "false");
 	if (material == NULL)

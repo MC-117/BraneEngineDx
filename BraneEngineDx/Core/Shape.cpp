@@ -39,7 +39,7 @@ void Shape::drawCall()
 
 Vector3f Shape::getCenter() const
 {
-	return (bound.maxVal + bound.minVal) / 2.0f;
+	return (bound.maxVal + bound.minVal) * 0.5f;
 }
 
 float Shape::getWidth() const
@@ -59,17 +59,17 @@ float Shape::getDepth() const
 
 float Shape::getRadius() const
 {
-	return abs(bound.maxVal.x() - bound.minVal.x()) / 2;
+	return abs(bound.maxVal.x() - bound.minVal.x()) * 0.5;
 }
 
 #if ENABLE_PHYSICS
 CollisionShape * Shape::generateCollisionShape(const Vector3f& scale) const
 {
 #ifdef PHYSICS_USE_BULLET
-	return new btBoxShape(PVec3(getDepth() / 2 * scale.x(), getWidth() / 2 * scale.y(), getHeight() / 2 * scale.z()));
+	return new btBoxShape(PVec3(getDepth() * 0.5 * scale.x(), getWidth() * 0.5 * scale.y(), getHeight() * 0.5 * scale.z()));
 #endif
 #ifdef PHYSICS_USE_PHYSX
-	return new PxBoxGeometry(PVec3(getDepth() / 2 * scale.x(), getWidth() / 2 * scale.y(), getHeight() / 2 * scale.z()));
+	return new PxBoxGeometry(PVec3(getDepth() * 0.5 * scale.x(), getWidth() * 0.5 * scale.y(), getHeight() * 0.5 * scale.z()));
 #endif
 }
 
@@ -99,6 +99,7 @@ bool Shape::deserialize(const SerializationInfo & from)
 
 bool Shape::serialize(SerializationInfo & to)
 {
+	Serializable::serialize(to);
 	to.set("minPoint", SVector3f(bound.minVal));
 	to.set("maxPoint", SVector3f(bound.maxVal));
 	return true;

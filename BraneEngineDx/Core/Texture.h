@@ -19,8 +19,10 @@ public:
 	virtual int getWidth() const;
 	virtual int getHeight() const;
 	virtual int getChannel() const;
+	virtual int getMipLevels() const;
 
 	virtual unsigned int bind();
+	virtual unsigned int bindBase(unsigned int index);
 	virtual unsigned long long getTextureID();
 	virtual void* getVendorTexture() const;
 	virtual unsigned int resize(unsigned int width, unsigned int height);

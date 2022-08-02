@@ -30,6 +30,10 @@ unsigned int IRenderTarget::bindFrame()
     return 0;
 }
 
+void IRenderTarget::clearBind()
+{
+}
+
 void IRenderTarget::resize(unsigned int width, unsigned int height)
 {
 }

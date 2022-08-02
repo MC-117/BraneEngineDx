@@ -13,7 +13,7 @@ class DX11RenderExecution : public IRenderExecution
 public:
 	DX11Context& dxContext;
 	D3D11_BUFFER_DESC cmdBufferDesc;
-	ID3D11Buffer* cmdBuffer;
+	ComPtr<ID3D11Buffer> cmdBuffer;
 
 	DX11RenderExecution(DX11Context& context);
 	virtual ~DX11RenderExecution();

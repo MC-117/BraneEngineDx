@@ -4,22 +4,28 @@
 
 #include "SkeletonMesh.h"
 #include "MeshRender.h"
+#include "MorphTargetWeight.h"
 
 class SkeletonMeshRender : public MeshRender
 {
 public:
-	SkeletonMesh& skeletonMesh;
+	SkeletonMesh* skeletonMesh;
+	vector<int> boneRemapIndex;
 	vector<Matrix4f> transformMats;
-	vector<float> morphWeights;
+	MorphTargetWeight morphWeights;
 
+	SkeletonMeshRender();
 	SkeletonMeshRender(SkeletonMesh& mesh, Material& material);
 	virtual ~SkeletonMeshRender();
+
+	virtual void setMesh(Mesh* mesh);
+
 	virtual void fillMaterialsByDefault();
-	virtual bool setMorphWeight(unsigned int index, float weight);
 	virtual void render(RenderInfo& info);
 	virtual vector<Matrix4f>& getTransformMatrixs();
-protected:
-	bool morphUpdate = true;
+
+	virtual bool deserialize(const SerializationInfo& from);
+	virtual bool serialize(SerializationInfo& to);
 };
 
 #endif // !_SKELETONMESHRENDER_H_

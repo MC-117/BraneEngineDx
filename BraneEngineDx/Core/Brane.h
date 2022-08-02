@@ -4,23 +4,42 @@
 
 #include <iostream>
 #include <map>
+#include <unordered_map>
 #include <list>
 #include <typeinfo>
-#include "StaticVar.h"
-
-typedef unsigned int TypeID;
+#include "Unit.h"
 
 static class Brane
 {
 public:
-	static bool born(TypeID type, void* ptr);
-	static bool born(TypeID type, void* ptr, const std::string& name);
-	static bool vanish(TypeID type, void* ptr);
-	static void* find(TypeID type, const std::string& name);
-	static std::list<void*> findAll(TypeID type, const std::string& name);
+	static InstanceID registerPtr(void* ptr);
+	static InstanceID registerPtr(void* ptr, const InstanceAssetHandle& handle);
+	static bool removeInsID(InstanceID insID);
+	static bool recycleInsID(InstanceID insID);
+	static bool addAsset(InstanceID insID, InstanceAssetHandle& handle);
+	static bool removeAsset(InstanceID insID);
+
+	static bool registerAssetFile(InstanceAssetFile& assetFile);
+	static bool registerGuid(InstanceID insID, const Guid& guid);
+	static bool registerAssetHandle(InstanceID insID, const InstanceAssetHandle& handle);
+
+	static void* getPtrByInsID(InstanceID insID);
+	static InstanceID getInsIDByGuid(const Guid& guid);
+	static FileID getFileIDByPath(const string& path);
+	static InstanceAssetFile getAssetFileByFileID(FileID fileID);
 protected:
-	static StaticVar<std::map<void*, std::pair<TypeID, std::list<void*>*>>> entityBook;
-	static StaticVar<std::map<TypeID, std::map<std::string, std::list<void*>>>> nameBook;
+	static InstanceID newInsID();
+	static InstanceID newInsID(const InstanceAssetHandle& handle);
+
+	static InstanceID highestInstanceID;
+
+	static StaticVar<std::unordered_map<InstanceID, void*>> insIDToPtr;
+	static StaticVar<std::unordered_map<InstanceID, Guid>> insIDToGuid;
+	static StaticVar<std::map<Guid, InstanceID>> guidToInsID;
+	static StaticVar<std::unordered_map<InstanceID, FileID>> insIDToFileID;
+
+	static StaticVar<std::map<std::string, FileID>> pathToFileID;
+	static StaticVar<std::vector<InstanceAssetFile>> instanceAssetfiles;
 };
 
 #endif // !_BRANE_H_

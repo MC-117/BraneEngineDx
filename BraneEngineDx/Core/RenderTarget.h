@@ -9,6 +9,7 @@ class RenderTarget
 public:
 	static RenderTarget defaultRenderTarget;
 
+
 	RenderTarget();
 	RenderTarget(int width, int height, int channel, bool withDepthStencil = false, int multisampleLevel = 0);
 	RenderTarget(int width, int height, Texture& depthTexture);
@@ -18,6 +19,7 @@ public:
 	bool isDefault();
 	bool isDepthOnly();
 	virtual unsigned int bindFrame();
+	virtual void clearBind();
 	virtual void addTexture(const string& name, Texture& texture, unsigned int mipLevel = 0);
 	virtual Texture* getTexture(const string& name);
 	virtual Texture* getTexture(unsigned int index);
@@ -27,6 +29,7 @@ public:
 	virtual void setMultisampleLevel(unsigned int level);
 	virtual unsigned int getMultisampleLevel();
 	virtual void setDepthTexture(Texture& depthTexture);
+	virtual Texture2D* getDepthTexture();
 	virtual Texture2D* getInternalDepthTexture();
 	virtual void setTexture(Material& mat);
 	virtual void SetMultisampleFrame();

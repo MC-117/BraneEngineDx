@@ -8,7 +8,7 @@
 class GrassMeshActor : public MeshActor
 {
 public:
-	Serialize(GrassMeshActor);
+	Serialize(GrassMeshActor, MeshActor);
 
 	float density = 20;
 	Vector2f bound = { 100, 100 };
@@ -19,7 +19,7 @@ public:
 	virtual void begin();
 	virtual void tick(float delteTime);
 	virtual void end();
-	virtual void prerender();
+	virtual void prerender(RenderCommandList& cmdLst);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);

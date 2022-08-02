@@ -11,27 +11,26 @@
 class DX11SkeletonMeshData : public SkeletonMeshData
 {
 public:
-	static ID3D11InputLayout* dx11SkeletonMeshDataInputLayout;
-
 	DX11Context& dxContext;
-	ID3D11Buffer* dx11VertexBuffer = NULL;
-	ID3D11Buffer* dx11UVBuffer = NULL;
-	ID3D11Buffer* dx11NormalBuffer = NULL;
-	ID3D11Buffer* dx11ElementBuffer = NULL;
-	ID3D11Buffer* dx11BoneIndexBuffer = NULL;
-	ID3D11Buffer* dx11BoneWeightBuffer = NULL;
+	ComPtr<ID3D11Buffer> dx11VertexBuffer = NULL;
+	ComPtr<ID3D11Buffer> dx11UVBuffer = NULL;
+	ComPtr<ID3D11Buffer> dx11NormalBuffer = NULL;
+	ComPtr<ID3D11Buffer> dx11ElementBuffer = NULL;
+	ComPtr<ID3D11Buffer> dx11BoneIndexBuffer = NULL;
+	ComPtr<ID3D11Buffer> dx11BoneWeightBuffer = NULL;
 
-	ID3D11Buffer* dx11MorphVNBuffer = NULL;
-	ID3D11ShaderResourceView* dx11MorphVNView = NULL;
-	ID3D11Buffer* dx11MorphWeightBuffer = NULL;
-	ID3D11ShaderResourceView* dx11MorphWeightView = NULL;
+	ComPtr<ID3D11Buffer> dx11MorphVNBuffer = NULL;
+	ComPtr<ID3D11ShaderResourceView> dx11MorphVNView = NULL;
+	/*ComPtr<ID3D11Buffer> dx11MorphWeightBuffer = NULL;
+	ComPtr<ID3D11ShaderResourceView> dx11MorphWeightView = NULL;*/
 
 	DX11SkeletonMeshData(DX11Context& context);
 	virtual ~DX11SkeletonMeshData();
 
+	virtual bool isValid() const;
 	virtual bool isGenerated() const;
 	virtual void bindShape();
-	virtual void updateMorphWeights(vector<float>& weights);
+	//virtual void updateMorphWeights(vector<float>& weights);
 	virtual void release();
 };
 

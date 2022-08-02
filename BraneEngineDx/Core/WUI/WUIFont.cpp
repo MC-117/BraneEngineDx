@@ -1,5 +1,5 @@
 #include "WUIFont.h"
-#include "../Utility.h"
+#include "../Utility/Utility.h"
 
 WUIFont::WUIFont(const string& familyName, unsigned int size, unsigned int weight)
     : familyName(familyName), size(size), weight(weight)

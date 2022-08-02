@@ -56,10 +56,20 @@ public:
 	virtual void setRenderTransparentState();
 	virtual void setRenderOverlayState();
 	virtual void setRenderPostState();
+	virtual void setRenderPostAddState();
+	virtual void setRenderPostPremultiplyAlphaState();
+	virtual void setRenderPostMultiplyState();
+	virtual void setRenderPostMaskState();
 	virtual void setCullState(CullType type);
 	virtual void setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 
+	virtual void setMeshDrawContext();
+	virtual void setSkeletonMeshDrawContext();
+	virtual void setTerrainDrawContext();
+	virtual void meshDrawCall(const MeshPartDesc& mesh);
 	virtual void postProcessCall();
+	
+	virtual void readBackTexture2D(ITexture2D* texture, void* data);
 protected:
 	unsigned int defaultMultisampleLevels = 0;
 	DX11Context dxContext;

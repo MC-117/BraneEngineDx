@@ -31,7 +31,7 @@ void Actor::end()
 	::Transform::end();
 }
 
-void Actor::prerender()
+void Actor::prerender(RenderCommandList& cmdLst)
 {
 }
 
@@ -63,13 +63,15 @@ Serializable * Actor::instantiate(const SerializationInfo & from)
 bool Actor::deserialize(const SerializationInfo & from)
 {
 	if (!::Transform::deserialize(from))
-		return false; const SerializationInfo* ainfo = from.get("Audio");
+		return false;
 #ifdef AUDIO_USE_OPENAL
+	const SerializationInfo* ainfo = from.get("Audio");
 	if (ainfo != NULL) {
-		for (int i = 0; i < ainfo->stringList.size(); i++) {
-			AudioData* audioData = getAssetByPath<AudioData>(ainfo->stringList[i]);
-			if (audioData != NULL)
-				addAudioSource(*audioData);
+		for (int i = 0; i < ainfo->sublists.size(); i++) {
+			const SerializationInfo& asInfo = ainfo->sublists[i];
+			AudioSource* source = new AudioSource();
+			source->deserialize(asInfo);
+			audioSources.push_back(source);
 		}
 	}
 #endif // AUDIO_USE_OPENAL
@@ -80,17 +82,15 @@ bool Actor::serialize(SerializationInfo & to)
 {
 	if (!::Transform::serialize(to))
 		return false;
-	to.type = "Actor";
 #ifdef AUDIO_USE_OPENAL
 	SerializationInfo* ainfo = to.add("Audio");
-	if (ainfo == NULL)
-		return false;
-	ainfo->type = "Array";
-	ainfo->arrayType = "String";
-	for (int i = 0; i < audioSources.size(); i++) {
-		string path = AudioDataAssetInfo::getPath(audioSources[i]->audioData);
-		if (!path.empty())
-			ainfo->push(path);
+	if (ainfo != NULL)
+	{
+		ainfo->type = "AudioSources";
+		for (int i = 0; i < audioSources.size(); i++) {
+			SerializationInfo* asInfo = ainfo->add(to_string(i));
+			audioSources[i]->serialize(*asInfo);
+		}
 	}
 #endif // AUDIO_USE_OPENAL
 	return true;

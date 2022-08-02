@@ -2,7 +2,8 @@
 #include <fstream>
 #include <filesystem>
 #include <unordered_set>
-#include "Utility.h"
+#include "Utility/Utility.h"
+#include "ShaderCode/ShaderCompiler.h"
 #include "Console.h"
 #include "Asset.h"
 
@@ -33,6 +34,7 @@ Material::Material(const Material & material)
 	desc.scalarField = material.desc.scalarField;
 	desc.countField = material.desc.countField;
 	desc.colorField = material.desc.colorField;
+	desc.matrixField = material.desc.matrixField;
 	desc.textureField = material.desc.textureField;
 	desc.imageField = material.desc.imageField;
 }
@@ -86,6 +88,11 @@ void Material::setTwoSide(bool b)
 	isTwoSide = b;
 }
 
+void Material::setPassNum(unsigned int num)
+{
+	desc.passNum = max(num, 1);
+}
+
 void Material::setPass(unsigned int pass)
 {
 	desc.currentPass = pass;
@@ -113,6 +120,15 @@ bool Material::setColor(const string & name, const Color & value)
 {
 	auto iter = desc.colorField.find(name);
 	if (iter == desc.colorField.end())
+		return false;
+	iter->second.val = value;
+	return true;
+}
+
+bool Material::setMatrix(const string& name, const Matrix4f& value)
+{
+	auto iter = desc.matrixField.find(name);
+	if (iter == desc.matrixField.end())
 		return false;
 	iter->second.val = value;
 	return true;
@@ -170,6 +186,14 @@ Color * Material::getColor(const string & name)
 	return &iter->second.val;
 }
 
+Matrix4f * Material::getMatrix(const string& name)
+{
+	auto iter = desc.matrixField.find(name);
+	if (iter == desc.matrixField.end())
+		return NULL;
+	return &iter->second.val;
+}
+
 Texture ** Material::getTexture(const string & name)
 {
 	auto iter = desc.textureField.find(name);
@@ -201,6 +225,11 @@ map<string, MatAttribute<Color>>& Material::getColorField()
 	return desc.colorField;
 }
 
+map<string, MatAttribute<Matrix4f>>& Material::getMatrixField()
+{
+	return desc.matrixField;
+}
+
 map<string, MatAttribute<Texture*>>& Material::getTextureField()
 {
 	return desc.textureField;
@@ -216,9 +245,19 @@ const map<string, MatAttribute<float>>& Material::getScalarField() const
 	return desc.scalarField;
 }
 
+const map<string, MatAttribute<int>>& Material::getCountField() const
+{
+	return desc.countField;
+}
+
 const map<string, MatAttribute<Color>>& Material::getColorField() const
 {
 	return desc.colorField;
+}
+
+const map<string, MatAttribute<Matrix4f>>& Material::getMatrixField() const
+{
+	return desc.matrixField;
 }
 
 const map<string, MatAttribute<Texture*>>& Material::getTextureField() const
@@ -245,6 +284,11 @@ void Material::addCount(const pair<string, MatAttribute<int>>& attr)
 void Material::addColor(const pair<string, MatAttribute<Color>>& attr)
 {
 	desc.colorField[attr.first] = attr.second;
+}
+
+void Material::addMatrix(const pair<string, MatAttribute<Matrix4f>>& attr)
+{
+	desc.matrixField[attr.first] = attr.second;
 }
 
 void Material::addDefaultTexture(const pair<string, MatAttribute<string>>& attr)
@@ -298,6 +342,12 @@ void Material::processColorData()
 	vendorMaterial->processColorData();
 }
 
+void Material::processMatrixData()
+{
+	newVendorMaterial();
+	vendorMaterial->processMatrixData();
+}
+
 void Material::processTextureData()
 {
 	newVendorMaterial();
@@ -323,6 +373,7 @@ void Material::processInstanceData()
 	processScalarData();
 	processCountData();
 	processColorData();
+	processMatrixData();
 	processTextureData();
 	processImageData();
 	postprocess();
@@ -364,217 +415,79 @@ void Material::newVendorMaterial()
 	}
 }
 
-bool Material::MaterialLoader::loadMaterial(Material& material, const string & file)
+bool Material::MaterialLoader::loadMaterial(Material& material, const string& file)
 {
 	Shader* shader = material.getShader();
 	if (shader == NULL)
 		return false;
-	ifstream f(file, ios::in);
-	if (!f)
-		return false;
-	string clip, line, matName, envPath, adapterName;
-	filesystem::path _path = file;
-	matName = _path.filename().generic_u8string();
-	envPath = _path.parent_path().generic_u8string();
-	ShaderStageType stageType = None_Shader_Stage;
-	Enum<ShaderFeature> feature;
-	bool mat = false;
+	ShaderCompiler compiler;
+	compiler.init(file);
 	bool noearlyz = false;
-	unordered_set<string> headFiles;
 	bool successed = true;
-	while (1)
-	{
-		if (!getline(f, line)) {
-			if (mat) {
+	while (compiler.compile()) {
+		successed &= compiler.isSuccessed();
+		if (!successed)
+			break;
+		ShaderCompiler::ShaderToken scopeToken = compiler.getScopeToken();
+		ShaderCompiler::ShaderToken lineToken = compiler.getToken();
+		const vector<string>& command = compiler.getCommand();
+		switch (scopeToken)
+		{
+		case ShaderCompiler::ST_Material:
+			if (lineToken == ShaderCompiler::ST_None)
+				successed &= parseMaterialAttribute(material, compiler.getLine());
+			break;
+		case ShaderCompiler::ST_Order:
+			if (command.size() == 2)
+				shader->renderOrder = atoi(command[1].c_str());
+			else {
 				successed = false;
-				break;
-			}
-			if (stageType != None_Shader_Stage) {
-				if (!clip.empty()) {
-					ShaderAdapter* adapter = NULL;
-					adapter = shader->getShaderAdapter(stageType);
-					if (adapter == NULL) {
-						adapter = ShaderManager::getInstance().addShaderAdapter(matName, file, stageType, adapterName);
-						if (adapter == NULL || !shader->addShaderAdapter(*adapter)) {
-							successed = false;
-							break;
-						}
-					}
-					adapter->compileShaderStage(feature, clip);
-				}
 			}
 			break;
+		case ShaderCompiler::ST_TwoSide:
+			if (command.size() == 2)
+				material.isTwoSide = command[1] == "true";
+			break;
+		case ShaderCompiler::ST_CullFront:
+			if (command.size() == 2)
+				material.cullFront = command[1] == "true";
+			break;
+		case ShaderCompiler::ST_CastShadow:
+			if (command.size() == 2)
+				material.canCastShadow = command[1] != "false";
+			break;
+		case ShaderCompiler::ST_NoEarlyZ:
+			noearlyz = true;
+			break;
+		case ShaderCompiler::ST_LocalSize:
+			if (command.size() == 2) {
+				int passNum = atoi(command[1].c_str());
+				material.desc.passNum = passNum < 1 ? 1 : passNum;
+			}
+			break;
+		case ShaderCompiler::ST_Pass:
+			if (command.size() > 1) {
+				int x = atoi(command[1].c_str());
+				material.desc.localSize.x = x < 1 ? 1 : x;
+			}
+			if (command.size() > 2) {
+				int y = atoi(command[2].c_str());
+				material.desc.localSize.y = y < 1 ? 1 : y;
+			}
+			break;
+		default:
+			break;
 		}
-		if (line.empty())
-			continue;
-		size_t loc = line.find_first_of('#');
-		if (loc != string::npos) {
-			string ss = line.substr(loc + 1);
-			vector<string> s = split(line.substr(loc + 1), ' ');
-			if (s.size() == 0)
-				continue;
-			else if (s[0] == "material") {
-				mat = true;
-			}
-			else if (s[0] == "order") {
-				if (s.size() == 2)
-					shader->renderOrder = atoi(s[1].c_str());
-				else {
-					successed = false;
-					break;
-				}
-			}
-			else if (s[0] == "adapter") {
-				if (s.size() > 2 && s[1] == "name") {
-					adapterName = s[2];
-				}
-			}
-			else if (s[0] == "twoside") {
-				if (s.size() == 2)
-					material.isTwoSide = s[1] == "true";
-			}
-			else if (s[0] == "cullfront") {
-				if (s.size() == 2)
-					material.cullFront = s[1] == "true";
-			}
-			else if (s[0] == "castshadow") {
-				if (s.size() == 2)
-					material.canCastShadow = s[1] != "false";
-			}
-			else if (s[0] == "noearlyz") {
-				noearlyz = true;
-			}
-			else if (s[0] == "pass") {
-				if (s.size() == 2) {
-					int passNum = atoi(s[1].c_str());
-					material.desc.passNum = passNum < 1 ? 1 : passNum;
-				}
-			}
-			else if (s[0] == "localsize") {
-				if (s.size() > 1) {
-					int x = atoi(s[1].c_str());
-					material.desc.localSize.x = x < 1 ? 1 : x;
-				}
-				if (s.size() > 2) {
-					int y = atoi(s[2].c_str());
-					material.desc.localSize.y = y < 1 ? 1 : y;
-				}
-			}
-			else {
-				ShaderStageType _stageType = ShaderStage::enumShaderStageType(s[0]);
-				if (_stageType == None_Shader_Stage) {
-					if (!readHeadFile(line, clip, envPath, headFiles)) {
-						successed = false;
-						break;
-					}
-					if (!noearlyz && stageType == Fragment_Shader_Stage && s[0] == "version") {
-						clip += "layout(early_fragment_tests) in;\n";
-					}
-				}
-				else {
-					if (s.size() == 3 && s[1] == "use") {
-						if (stageType != None_Shader_Stage) {
-							ShaderAdapter* adapter = NULL;
-							adapter = shader->getShaderAdapter(stageType);
-							if (adapter == NULL) {
-								adapter = ShaderManager::getInstance().addShaderAdapter(matName, file, stageType, adapterName);
-								if (adapter == NULL || !shader->addShaderAdapter(*adapter)) {
-									successed = false;
-									break;
-								}
-							}
-							adapter->compileShaderStage(feature, clip);
-							clip.clear();
-							headFiles.clear();
-						}
-						ShaderAdapter* adapter = NULL;
-						if (s[2].find('.') == string::npos)
-							adapter = ShaderManager::getInstance().getShaderAdapterByName(s[2], _stageType);
-						else
-							adapter = ShaderManager::getInstance().getShaderAdapterByPath(s[2], _stageType);
-						if (adapter == NULL || !shader->addShaderAdapter(*adapter)) {
-							Console::error("MaterialLoader: Not found adapter %s, when load \"%s\" at %s", s[2].c_str(), file.c_str(), ShaderStage::enumShaderStageType(_stageType));
-							successed = false;
-							break;
-						}
-						stageType = None_Shader_Stage;
-						feature = Shader_Default;
-						mat = false;
-					}
-					else {
-						Enum<ShaderFeature> _feature = Shader_Default;
-						for (int i = 1; i < s.size(); i++)
-							if (s[i] == "custom")
-								_feature |= Shader_Custom;
-							else if (s[i] == "deferred")
-								_feature |= Shader_Deferred;
-							else if (s[i] == "postprocess")
-								_feature |= Shader_Postprocess;
-							else if (s[i] == "skeleton")
-								_feature |= Shader_Skeleton;
-							else if (s[i] == "morph")
-								_feature |= Shader_Morph;
-							else if (s[i] == "particle")
-								_feature |= Shader_Particle;
-							else if (s[i] == "modifier")
-								_feature |= Shader_Modifier;
-						if (stageType != None_Shader_Stage) {
-							ShaderAdapter* adapter = NULL;
-							adapter = shader->getShaderAdapter(stageType);
-							if (adapter == NULL) {
-								adapter = ShaderManager::getInstance().addShaderAdapter(matName, file, stageType, adapterName);
-								if (adapter == NULL || !shader->addShaderAdapter(*adapter)) {
-									successed = false;
-									break;
-								}
-							}
-							adapter->compileShaderStage(feature, clip);
-							clip.clear();
-							headFiles.clear();
-						}
-						stageType = _stageType;
-						feature = _feature;
-						mat = false;
-					}
-				}
-			}
-		}
-		else if (mat) {
-			vector<string> v = split(line, ' ', 2);
-			if (v.size() == 2) {
-				try {
-					if (v[0] == "Scalar")
-						material.addScalar(parseScalar(v[1]));
-					else if (v[0] == "Count")
-						material.addCount(parseCount(v[1]));
-					else if (v[0] == "Color")
-						material.addColor(parseColor(v[1]));
-					else if (v[0] == "Texture")
-						material.addDefaultTexture(parseTexture(v[1]));
-					else if (v[0] == "Image")
-						material.addDefaultImage(parseImage(v[1]));
-				}
-				catch (exception e) {
-					printf("Matertial attribute parsing error: %s\n", e.what());
-					successed = false;
-					break;
-				}
-			}
-			else {
-				successed = false;
-				break;
-			}
-		}
-		else {
-			if (!readHeadFile(line, clip, envPath, headFiles)) {
-				successed = false;
-				break;
-			}
+		if (!successed)
+			break;
+	}
+	if (successed) {
+		shader->name = compiler.getName();
+		auto adapters = compiler.getAdapters();
+		for (auto b = adapters.begin(), e = adapters.end(); b != e; b++) {
+			successed &= shader->addShaderAdapter(*b->second);
 		}
 	}
-	if (successed)
-		shader->name = matName;
-	f.close();
 	return successed;
 }
 
@@ -589,6 +502,9 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 	bool twoSide = false;
 	bool cullFront = false;
 	bool castShadow = true;
+	bool noearlyz = false;
+	int passNum = 1;
+	Unit2Du localSize = { 1, 1 };
 	while (1)
 	{
 		if (!getline(is, line)) {
@@ -630,6 +546,25 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 				else
 					return false;
 			}
+			else if (s[0] == "noearlyz") {
+				noearlyz = true;
+			}
+			else if (s[0] == "pass") {
+				if (s.size() == 2) {
+					int _passNum = atoi(s[1].c_str());
+					passNum = _passNum < 1 ? 1 : _passNum;
+				}
+			}
+			else if (s[0] == "localsize") {
+				if (s.size() > 1) {
+					int x = atoi(s[1].c_str());
+					localSize.x = x < 1 ? 1 : x;
+				}
+				if (s.size() > 2) {
+					int y = atoi(s[2].c_str());
+					localSize.y = y < 1 ? 1 : y;
+				}
+			}
 		}
 		else if (mat) {
 			vector<string> v = split(line, ' ', 2);
@@ -646,6 +581,10 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 					else if (v[0] == "Color") {
 						auto p = parseColor(v[1]);
 						material->setColor(p.first, p.second.val);
+					}
+					else if (v[0] == "Matrix") {
+						auto p = parseMatrix(v[1]);
+						material->setMatrix(p.first, p.second.val);
 					}
 					else if (v[0] == "Texture") {
 						auto p = parseTexture(v[1]);
@@ -677,6 +616,8 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 	material->isTwoSide = twoSide;
 	material->cullFront = cullFront;
 	material->canCastShadow = castShadow;
+	material->desc.passNum = passNum;
+	material->desc.localSize = localSize;
 	if (!success && material != NULL) {
 		delete material;
 		return NULL;
@@ -686,7 +627,7 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 
 Material* Material::MaterialLoader::loadMaterialInstance(const string& file)
 {
-	ifstream f(file);
+	ifstream f(filesystem::u8path(file));
 	return loadMaterialInstance(f, file);
 }
 
@@ -707,6 +648,9 @@ bool Material::MaterialLoader::saveMaterialInstanceToString(string & text, Mater
 		text += "#cullfront true\n";
 	text += "#castshadow ";
 	text += (material.canCastShadow ? "true\n" : "false\n");
+	if (material.desc.passNum > 1) {
+		text += "#pass " + to_string(material.desc.passNum);
+	}
 	for (auto b = material.getScalarField().begin(), e = material.getScalarField().end(); b != e; b++) {
 		text += "Scalar " + b->first + ": " + to_string(b->second.val) + '\n';
 	}
@@ -717,6 +661,19 @@ bool Material::MaterialLoader::saveMaterialInstanceToString(string & text, Mater
 		text += "Color " + b->first + ": " + to_string(b->second.val.r) + ", " +
 			to_string(b->second.val.g) + ", " + to_string(b->second.val.b) + ", " +
 			to_string(b->second.val.a) + '\n';
+	}
+	for (auto b = material.getMatrixField().begin(), e = material.getMatrixField().end(); b != e; b++) {
+		text += "Matrix " + b->first + ": ";
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				text += to_string(b->second.val(i, j));
+				if (j != 3)
+					text += ", ";
+			}
+			if (i != 3)
+				text += "; ";
+		}
+		text += '\n';
 	}
 	for (auto b = material.getTextureField().begin(), e = material.getTextureField().end(); b != e; b++) {
 		string texP = Texture2DAssetInfo::getPath(b->second.val);
@@ -733,7 +690,8 @@ bool Material::MaterialLoader::saveMaterialInstance(const string & file, Materia
 	string text;
 	if (!saveMaterialInstanceToString(text, material))
 		return false;
-	ofstream f = ofstream(file);
+	filesystem::path u8path = filesystem::u8path(file);
+	ofstream f = ofstream(u8path);
 	f << text;
 	f.close();
 	return true;
@@ -837,6 +795,35 @@ pair<string, MatAttribute<Color>> Material::MaterialLoader::parseColor(const str
 	return pair<string, MatAttribute<Color>>();
 }
 
+pair<string, MatAttribute<Matrix4f>> Material::MaterialLoader::parseMatrix(const string& src)
+{
+	vector<string> v = split(src, ':');
+	string name = trim(v[0], ' ');
+	if (v.size() == 1)
+		return pair<string, MatAttribute<Matrix4f>>(name, { Matrix4f::Identity() });
+	else if (v.size() == 2) {
+		string param = trim(v[1], ' ');
+		if (param == "identity")
+			return pair<string, MatAttribute<Matrix4f>>(name, { Matrix4f::Identity() });
+		vector<string> row = split(param, ';');
+		if (row.size() != 4)
+			throw runtime_error("Error parameter");
+		Matrix4f matrix;
+		for (int i = 0; i < 4; i++) {
+			vector<string> nums = split(row[i], ',');
+			if (nums.size() != 4) {
+				throw runtime_error("Error parameter");
+			}
+			for (int j = 0; j < 4; j++) {
+				matrix(i, j) = (float)atof(nums[j].c_str());
+			}
+		}
+		return pair<string, MatAttribute<Matrix4f>>(name, { matrix });
+	}
+	throw runtime_error("Error args");
+	return pair<string, MatAttribute<Matrix4f>>();
+}
+
 pair<string, MatAttribute<string>> Material::MaterialLoader::parseTexture(const string & src)
 {
 	vector<string> v = split(src, ':');
@@ -862,4 +849,33 @@ pair<string, unsigned int> Material::MaterialLoader::parseImage(const string & s
 	else
 		throw runtime_error("Error parameter");
 	return pair<string, unsigned int>("", -1);
+}
+
+bool Material::MaterialLoader::parseMaterialAttribute(Material& material, const string& line)
+{
+	vector<string> v = split(line, ' ', 2);
+	if (v.size() == 2) {
+		try {
+			if (v[0] == "Scalar")
+				material.addScalar(parseScalar(v[1]));
+			else if (v[0] == "Count")
+				material.addCount(parseCount(v[1]));
+			else if (v[0] == "Color")
+				material.addColor(parseColor(v[1]));
+			else if (v[0] == "Matrix")
+				material.addMatrix(parseMatrix(v[1]));
+			else if (v[0] == "Texture")
+				material.addDefaultTexture(parseTexture(v[1]));
+			else if (v[0] == "Image")
+				material.addDefaultImage(parseImage(v[1]));
+		}
+		catch (exception e) {
+			Console::error("Matertial attribute parsing error: %s\n", e.what());
+			return false;
+		}
+	}
+	else {
+		return false;
+	}
+	return true;
 }

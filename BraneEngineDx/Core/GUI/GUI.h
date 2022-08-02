@@ -2,8 +2,10 @@
 #ifndef _GUI_H_
 #define _GUI_H_
 
-#include "../Unit.h"
 #include "UIControl.h"
+#include "Gizmo.h"
+
+class Gizmo;
 
 class GUI
 {
@@ -12,12 +14,15 @@ public:
 	map<string, void*> parameters;
 	Texture2D* sceneBlurTex = NULL;
 	Unit2Di viewSize = { 1280, 720 };
+	Gizmo gizmo;
 
 	GUI();
 	virtual ~GUI();
 
 	static bool isMouseOnUI();
 	static bool isAnyItemFocus();
+
+	virtual void onGUI(RenderInfo& info);
 	virtual void render(RenderInfo& info);
 	virtual void onSceneResize(Unit2Di size);
 

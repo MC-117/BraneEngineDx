@@ -1,6 +1,9 @@
 #include "AssetLoadWindow.h"
 #include <thread>
 #include "../Engine.h"
+#include "../Importer.h"
+#include "../MeshActor.h"
+#include "../SkeletonMeshActor.h"
 
 AssetLoadWindow::AssetLoadWindow(Object & object, string name, bool defaultShow) : UIWindow(object, name, defaultShow)
 {
@@ -19,7 +22,7 @@ void AssetLoadWindow::onRenderWindow(GUIRenderInfo & info)
 			thread td = thread([](char* str) {
 				FileDlgDesc desc;
 				desc.title = "Browse";
-				desc.filter = "fbx(*.fbx)\0*.fbx\0obj(*.obj)\0*.obj\0pmx(*.pmx)\0*.pmx\0";
+				desc.filter = "fbx(*.fbx)|*.fbx|obj(*.obj)|*.obj|pmx(*.pmx)|*.pmx";
 				desc.initDir = "Content";
 				desc.defFileExt = "fbx";
 				if (openFileDlg(desc)) {
@@ -78,7 +81,7 @@ void AssetLoadWindow::onRenderWindow(GUIRenderInfo & info)
 		else if (strlen(name) == 0) {
 			MessageBox(NULL, "Name is empty", "Error", MB_OK);
 		}
-		else if (Brane::find(typeid(Object).hash_code(), name) != NULL) {
+		else if (Engine::getCurrentWorld()->findChild(name) != NULL) {
 			MessageBox(NULL, "Name has used", "Error", MB_OK);
 		}
 		else {
@@ -104,7 +107,7 @@ void AssetLoadWindow::onRenderWindow(GUIRenderInfo & info)
 				}
 				else {
 					SkeletonMeshActor* a = new SkeletonMeshActor(*selectedSkeletonMesh, *selectedMat, name);
-					a->skeletonMeshRender.canCastShadow = castShadow;
+					a->setCastShadow(castShadow);
 					world += a;
 				}
 			}

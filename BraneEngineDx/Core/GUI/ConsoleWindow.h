@@ -3,19 +3,21 @@
 #define _CONSOLEWINDOW_H_
 
 #include "UIWindow.h"
+#include "../../ThirdParty/ImGui/imgui_TextEditor.h"
 
 class ConsoleWindow : public UIWindow
 {
 public:
 	bool showLog = true, showWarning = true, showError = true;
+	bool showPyLog = true, showPyError = true;
+	string code;
+	TextEditor textEditor;
 
 	ConsoleWindow(Object& object, string name = "Console", bool defaultShow = false);
 
 	virtual void onRenderWindow(GUIRenderInfo& info);
 
 protected:
-	int logSize = 0;
-
 	struct Tag
 	{
 		string timerName;

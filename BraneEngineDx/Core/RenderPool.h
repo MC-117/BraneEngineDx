@@ -13,6 +13,7 @@ public:
 	Camera& defaultCamera;
 	Camera* camera = NULL;
 	GUI gui;
+	RenderCommandList cmdList;
 
 	RenderPool(Camera& defaultCamera);
 
@@ -27,7 +28,6 @@ public:
 	RenderPool& operator-=(Render& render);
 
 protected:
-	RenderCommandList cmdList;
 	set<Render*> prePool;
 	set<Render*> pool;
 };

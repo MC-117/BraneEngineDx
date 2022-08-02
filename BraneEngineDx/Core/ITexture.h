@@ -3,21 +3,7 @@
 #define _ITEXTURE_H_
 
 #include "Unit.h"
-
-enum TexWrapType
-{
-	TW_Repeat, TW_Mirror, TW_Clamp, TW_Clamp_Edge, TW_Border, TW_Mirror_Once
-};
-
-enum TexFilter
-{
-	TF_Point, TF_Linear, TF_Point_Mip_Point, TF_Linear_Mip_Point, TF_Point_Mip_Linear, TF_Linear_Mip_Linear
-};
-
-enum TexInternalType
-{
-	TIT_Default, TIT_R, TIT_RG, TIT_RGBA, TIT_SRGBA, TIT_Depth, TIT_R32
-};
+#include "GraphicType.h"
 
 struct Texture2DInfo
 {
@@ -28,6 +14,7 @@ struct Texture2DInfo
 	TexInternalType internalType = TIT_Default;
 	Color borderColor = { 0, 0, 0, 0 };
 	unsigned int sampleCount = 1;
+	CPUAccessFlag cpuAccessFlag = CAF_None;
 
 	Texture2DInfo(
 		TexWrapType wrapSType = TW_Repeat,
@@ -36,14 +23,16 @@ struct Texture2DInfo
 		TexFilter magFilterType = TF_Linear,
 		TexInternalType internalType = TIT_Default,
 		Color borderColor = { 0, 0, 0, 0 },
-		unsigned int sampleCount = 1) :
+		unsigned int sampleCount = 1,
+		CPUAccessFlag cpuAccessFlag = CAF_None) :
 		wrapSType(wrapSType),
 		wrapTType(wrapTType),
 		minFilterType(minFilterType),
 		magFilterType(magFilterType),
 		internalType(internalType),
 		borderColor(borderColor),
-		sampleCount(sampleCount) { }
+		sampleCount(sampleCount),
+		cpuAccessFlag(cpuAccessFlag) { }
 
 	Texture2DInfo(const Texture2DInfo& info)
 	{
@@ -53,13 +42,15 @@ struct Texture2DInfo
 		magFilterType = info.magFilterType;
 		internalType = info.internalType;
 		borderColor = info.borderColor;
+		cpuAccessFlag = info.cpuAccessFlag;
 	}
 };
 
 struct TextureDesc
 {
-	unsigned int textureHandle = 0;
+	unsigned long long textureHandle = 0;
 	int width = 0, height = 0, channel = 0;
+	bool needUpdate = false;
 };
 
 class ITexture
@@ -77,6 +68,7 @@ public:
 	virtual unsigned long long getTextureID() = 0;
 
 	virtual unsigned int bind() { return 0; }
+	virtual unsigned int bindBase(unsigned int index) { return 0; }
 	virtual unsigned int resize(unsigned int width, unsigned int height)
 	{ desc.width = width; desc.height = height; return 0; }
 };
@@ -96,8 +88,6 @@ public:
 	Texture2DDesc& desc;
 	ITexture2D(Texture2DDesc& desc) : ITexture(desc), desc(desc){ }
 	virtual ~ITexture2D() { }
-
-	virtual bool assign(unsigned int width, unsigned int height, unsigned channel, const Texture2DInfo& info, unsigned int texHandle, unsigned int bindType) { return true; }
 };
 
 #endif // !_ITEXTURE_H_

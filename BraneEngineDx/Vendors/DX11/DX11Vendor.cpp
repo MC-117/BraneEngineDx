@@ -1,6 +1,6 @@
 #include "DX11Vendor.h"
 #include "DX11Texture2D.h"
-#include "imgui_impl_win32.h"
+#include "../imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 
 #ifdef VENDOR_USE_DX11
@@ -35,7 +35,7 @@ bool DX11Vendor::imGuiInit(const EngineConfig & config, const WindowContext & co
 {
 	if (!ImGui_ImplWin32_Init(context.hwnd))
 		return false;
-	if (!ImGui_ImplDX11_Init(dxContext.device, dxContext.deviceContext))
+	if (!ImGui_ImplDX11_Init(dxContext.device.Get(), dxContext.deviceContext.Get()))
 		return false;
 	return true;
 }
@@ -63,8 +63,7 @@ bool DX11Vendor::imGuiShutdown(const EngineConfig& config, const WindowContext& 
 
 bool DX11Vendor::swap(const EngineConfig & config, const WindowContext & context)
 {
-	dxContext.deviceContext->Flush();
-	dxContext.swapChain->Present(config.vsnyc ? 1 : 0, 0);
+	dxContext.swap(config.vsnyc, config.maxFPS);
 	return true;
 }
 
@@ -196,54 +195,78 @@ IRenderExecution* DX11Vendor::newRenderExecution()
 
 void DX11Vendor::setRenderPreState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOff, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOff.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual.Get(), 0);
 }
 
 void DX11Vendor::setRenderGeomtryState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOn, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual.Get(), 0);
 }
 
 void DX11Vendor::setRenderOpaqueState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOn, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual.Get(), 0);
 }
 
 void DX11Vendor::setRenderAlphaState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOnAlphaTest, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOnAlphaTest.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual.Get(), 0);
 }
 
 void DX11Vendor::setRenderTransparentState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOnLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOnLEqual.Get(), 0);
 }
 
 void DX11Vendor::setRenderOverlayState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
 }
 
 void DX11Vendor::setRenderPostState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn, NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual, 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+}
+
+void DX11Vendor::setRenderPostAddState()
+{
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendAddWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+}
+
+void DX11Vendor::setRenderPostPremultiplyAlphaState()
+{
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendPremultiplyAlphaWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+}
+
+void DX11Vendor::setRenderPostMultiplyState()
+{
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendMultiplyWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+}
+
+void DX11Vendor::setRenderPostMaskState()
+{
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendMaskWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
 }
 
 void DX11Vendor::setCullState(CullType type)
 {
 	if (type == Cull_Back)
-		dxContext.deviceContext->RSSetState(dxContext.rasterizerCullBack);
+		dxContext.deviceContext->RSSetState(dxContext.rasterizerCullBack.Get());
 	else if (type == Cull_Front)
-		dxContext.deviceContext->RSSetState(dxContext.rasterizerCullFront);
+		dxContext.deviceContext->RSSetState(dxContext.rasterizerCullFront.Get());
 	else
-		dxContext.deviceContext->RSSetState(dxContext.rasterizerCullOff);
+		dxContext.deviceContext->RSSetState(dxContext.rasterizerCullOff.Get());
 }
 
 void DX11Vendor::setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h)
@@ -258,12 +281,83 @@ void DX11Vendor::setViewport(unsigned int x, unsigned int y, unsigned int w, uns
 	dxContext.deviceContext->RSSetViewports(1, &vp);
 }
 
+void DX11Vendor::setMeshDrawContext()
+{
+	dxContext.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	dxContext.deviceContext->IASetInputLayout(dxContext.meshInputLayout.Get());
+}
+
+void DX11Vendor::setSkeletonMeshDrawContext()
+{
+	dxContext.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	dxContext.deviceContext->IASetInputLayout(dxContext.skeletonMeshInputLayout.Get());
+}
+
+void DX11Vendor::setTerrainDrawContext()
+{
+	dxContext.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
+	dxContext.deviceContext->IASetInputLayout(dxContext.terrainInputLayout.Get());
+}
+
+void DX11Vendor::meshDrawCall(const MeshPartDesc& mesh)
+{
+	if (mesh.meshData == NULL) {
+		MeshData::currentMeshData = NULL;
+	}
+	else {
+		mesh.meshData->bindShape();
+	}
+	dxContext.deviceContext->DrawIndexed(mesh.elementCount, mesh.elementFirst, mesh.vertexFirst);
+}
+
 void DX11Vendor::postProcessCall()
 {
+	//dxContext.deviceContext->Flush();
+	MeshData::currentMeshData = NULL;
 	DX11ShaderProgram::currentDx11Program->uploadDrawInfo();
+	dxContext.deviceContext->IASetInputLayout(dxContext.screenInputLayout.Get());
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	dxContext.deviceContext->Draw(4, 0);
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+void DX11Vendor::readBackTexture2D(ITexture2D* texture, void* data)
+{
+	DX11Texture2D* dxTexture = dynamic_cast<DX11Texture2D*>(texture);
+	if (dxTexture == NULL || data == NULL)
+		return;
+	Texture2DDesc desc = dxTexture->desc;
+	desc.info.cpuAccessFlag = CAF_Read;
+	desc.mipLevel = 1;
+	desc.autoGenMip = false;
+	desc.textureHandle = 0;
+	desc.data = NULL;
+	DX11Texture2D* buffer = (DX11Texture2D*)newTexture2D(desc);
+
+	dxTexture->bind();
+	buffer->bind();
+
+	D3D11_BOX hSrcBox;
+	hSrcBox.left = 0;
+	hSrcBox.right = desc.width;
+	hSrcBox.top = 0;
+	hSrcBox.bottom = desc.height;
+	hSrcBox.front = 0;
+	hSrcBox.back = 1;
+	dxContext.deviceContext->CopySubresourceRegion(buffer->dx11Texture2D.Get(), 0, 0, 0, 0,
+		dxTexture->dx11Texture2D.Get(), 0, &hSrcBox);
+
+	int bytesPerPixel = desc.channel * sizeof(char);
+	int bytesPerRow = desc.width * bytesPerPixel;
+
+	D3D11_MAPPED_SUBRESOURCE mpd;
+	dxContext.deviceContext->Map(buffer->dx11Texture2D.Get(), 0, D3D11_MAP_READ, 0, &mpd);
+	for (int i = 0; i < desc.height; ++i) {
+		memcpy_s((char*)data + bytesPerRow * i, bytesPerRow,
+			(char*)mpd.pData + mpd.RowPitch * i, bytesPerRow);
+	}
+	dxContext.deviceContext->Unmap(buffer->dx11Texture2D.Get(), 0);
+	delete buffer;
 }
 
 #endif // VENDOR_USE_DX11

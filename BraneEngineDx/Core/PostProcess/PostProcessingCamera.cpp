@@ -54,7 +54,6 @@ bool PostProcessingCamera::serialize(SerializationInfo & to)
 {
 	if (!Camera::serialize(to))
 		return false;
-	to.type = "PostProcessingCamera";
 	to.set("postProcessingGraph", postProcessCameraRender.graph);
 	return true;
 }

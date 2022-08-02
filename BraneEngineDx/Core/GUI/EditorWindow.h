@@ -8,10 +8,8 @@ class EditorWindow : public UIWindow
 {
 public:
 	Material& baseMat;
-	Object* selectedObj = NULL;
 	bool alwaysShow = false;
 	Object* parentObj = NULL;
-	SerializationInfo copyInfo;
 
 	EditorWindow(Object& object, Material& baseMat, string name = "Editor", bool defaultShow = false);
 	virtual void onRenderWindow(GUIRenderInfo& info);
@@ -23,6 +21,9 @@ protected:
 	void objectContextMenu(Object* obj);
 	void meshCombo();
 	void materialCombo();
+
+	Object* lastSelectedObject = NULL;
+	bool nodeAutoExpand = false;
 
 	string newObjectName;
 	Mesh* selectedMesh = NULL;
@@ -38,9 +39,14 @@ protected:
 	float capsuleRadius = 5;
 	float capsuleHalfLength = 20;
 
-	// GrasActor
+	// GrassActor
 	float grassDensity = 20;
 	Vector2f grassBound = { 100, 100 };
+
+	// TerrainActor
+	float terrainUnit = 500;
+	float terrainHeight = 500;
+	Vector2u terrainGrid = { 100, 100 };
 };
 
 #endif // !_EDITORWINDOW_H_

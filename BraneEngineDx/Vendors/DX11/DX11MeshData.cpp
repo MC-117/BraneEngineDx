@@ -2,8 +2,6 @@
 
 #ifdef VENDOR_USE_DX11
 
-ID3D11InputLayout* DX11MeshData::dx11MeshDataInputLayout = NULL;
-
 DX11MeshData::DX11MeshData(DX11Context& context) : dxContext(context)
 {
 }
@@ -11,6 +9,11 @@ DX11MeshData::DX11MeshData(DX11Context& context) : dxContext(context)
 DX11MeshData::~DX11MeshData()
 {
 	release();
+}
+
+bool DX11MeshData::isValid() const
+{
+	return true;
 }
 
 bool DX11MeshData::isGenerated() const
@@ -22,30 +25,6 @@ void DX11MeshData::bindShape()
 {
 	if (dx11ElementBuffer != NULL && currentMeshData == this)
 		return;
-
-	if (dx11MeshDataInputLayout == NULL) {
-		const char* signatureShader = "void main(uint objID : OBJID, float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL) { }";
-		const size_t len = strlen(signatureShader);
-		ID3DBlob* sigBlob;
-		ID3DBlob* errorBlob;
-		if (FAILED(D3DCompile(signatureShader, len, "SignatureShader", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-				"main", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &sigBlob, &errorBlob))) {
-			throw runtime_error((const char*)errorBlob->GetBufferPointer());
-		}
-		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[4] = {
-			{ "OBJID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-		};
-		if (FAILED(dxContext.device->CreateInputLayout(inputLayoutDesc, 4, sigBlob->GetBufferPointer(),
-				sigBlob->GetBufferSize(), &dx11MeshDataInputLayout))) {
-			throw runtime_error("DX11: Create mesh input layout failed");
-		}
-		sigBlob->Release();
-		if (errorBlob != NULL)
-			errorBlob->Release();
-	}
 
 	D3D11_BUFFER_DESC bDesc = {};
 	ZeroMemory(&bDesc, sizeof(D3D11_BUFFER_DESC));
@@ -91,11 +70,11 @@ void DX11MeshData::bindShape()
 	}
 
 	if (dx11ElementBuffer == NULL) {
-		bDesc.ByteWidth = elements.size() * sizeof(Vector3u);
+		bDesc.ByteWidth = elements.size() * sizeof(unsigned int);
 		bDesc.Usage = D3D11_USAGE_IMMUTABLE;
 		bDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 
-		initData.pSysMem = elements.data()->data();
+		initData.pSysMem = elements.data();
 		initData.SysMemPitch = 0;
 		initData.SysMemSlicePitch = 0;
 
@@ -104,9 +83,9 @@ void DX11MeshData::bindShape()
 	}
 
 	ID3D11Buffer* buffers[] = {
-		dx11VertexBuffer,
-		dx11UVBuffer,
-		dx11NormalBuffer
+		dx11VertexBuffer.Get(),
+		dx11UVBuffer.Get(),
+		dx11NormalBuffer.Get()
 	};
 	UINT strides[] = {
 		sizeof(Vector3f),
@@ -117,28 +96,24 @@ void DX11MeshData::bindShape()
 
 	dxContext.deviceContext->IASetVertexBuffers(1, 3, buffers, strides, offsets);
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	dxContext.deviceContext->IASetIndexBuffer(dx11ElementBuffer, DXGI_FORMAT_R32_UINT, 0);
-	dxContext.deviceContext->IASetInputLayout(dx11MeshDataInputLayout);
+	dxContext.deviceContext->IASetIndexBuffer(dx11ElementBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+	dxContext.deviceContext->IASetInputLayout(dxContext.meshInputLayout.Get());
 	currentMeshData = this;
 }
 
 void DX11MeshData::release()
 {
 	if (dx11VertexBuffer) {
-		dx11VertexBuffer->Release();
-		dx11VertexBuffer = NULL;
+		dx11VertexBuffer.Reset();
 	}
 	if (dx11UVBuffer) {
-		dx11UVBuffer->Release();
-		dx11UVBuffer = NULL;
+		dx11UVBuffer.Reset();
 	}
 	if (dx11NormalBuffer) {
-		dx11NormalBuffer->Release();
-		dx11NormalBuffer = NULL;
+		dx11NormalBuffer.Reset();
 	}
 	if (dx11ElementBuffer) {
-		dx11ElementBuffer->Release();
-		dx11ElementBuffer = NULL;
+		dx11ElementBuffer.Reset();
 	}
 }
 

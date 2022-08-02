@@ -24,16 +24,23 @@ public:
 	virtual int getWidth() const;
 	virtual int getHeight() const;
 	virtual int getChannel() const;
+	virtual int getMipLevels() const;
 
 	virtual unsigned long long getTextureID();
 	virtual void* getVendorTexture() const;
 
 	void setAutoGenMip(bool value);
 
+	void setTextureInfo(const Texture2DInfo& info);
+
 	virtual bool assign(ITexture2D* venderTex);
 	virtual bool load(const string& file);
 	virtual unsigned int bind();
+	virtual unsigned int bindBase(unsigned int index);
 	virtual unsigned int resize(unsigned int width, unsigned int height);
+	bool copyFrom(const Texture2D& src, unsigned int width = 0, unsigned int height = 0);
+
+	bool save(const string& file);
 
 	unsigned char * getData();
 	bool getPixel(Color& color, unsigned int row, unsigned int col);
@@ -53,7 +60,7 @@ protected:
 	bool readOnly = false;
 	Texture2DDesc desc;
 	ITexture2D* vendorTexture = NULL;
-	static bool isLoad;
+	static bool isLoadDefaultTexture;
 
 	void newVendorTexture();
 };

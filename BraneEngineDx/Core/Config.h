@@ -1,8 +1,9 @@
 #pragma once
 #define ENGINE_VERSION "0.1.0"
 #define VENDOR_USE_DX11
+#define VENDOR_USE_DX12
 //#define AUDIO_USE_OPENAL
-#define ENABLE_PHYSICS 0
+#define ENABLE_PHYSICS 1
 
 #include "StaticVar.h"
 #include <iostream>
@@ -25,15 +26,40 @@
 #include "../ThirdParty/ImGui/imgui.h"
 #include "../ThirdParty/ImGui/ImGuizmo.h"
 
-#include "Brane.h"
+#define PHYSICS_USE_PHYSX
+
+#if ENABLE_PHYSICS
+#include <PxPhysicsApi.h>
+using namespace physx;
+typedef PxActor CollisionObject;
+typedef PxGeometry CollisionShape;
+typedef PxRigidBody CollisionRigidBody;
+typedef PxJoint PConstraint;
+typedef PxVec3 PVec3;
+typedef PxQuat PQuat;
+typedef PxTransform PTransform;
+
+#include <NvCloth\Factory.h>
+#include <NvCloth\Cloth.h>
+#include <NvCloth\Fabric.h>
+#include <NvCloth\Solver.h>
+#include <JobManager.h>
+
+typedef nv::cloth::Fabric PFabric;
+typedef nv::cloth::Cloth PCloth;
+#endif // ENABLE_PHYSICS
+
 #include "MathLibrary.h"
 
 #define VERTEX_MAX_BONE 4
 
 // constant buffer register
 #define DRAW_INFO_BIND_INDEX 0
-#define MAT_INS_BIND_INDEX 1
-#define CB_START_BIND_INDEX 2
+#define MAT_BASE_BIND_INDEX 1
+#define MAT_INS_BIND_INDEX 2
+#define CAM_BIND_INDEX 3
+#define DIRECT_LIGHT_BIND_INDEX 4
+#define CB_START_BIND_INDEX 5
 
 // input slot
 #define TRANS_INDEX_BIND_INDEX 0
@@ -43,10 +69,10 @@
 #define MORPHDATA_BIND_INDEX 1
 #define MORPHWEIGHT_BIND_INDEX 2
 #define PARTICLE_BIND_INDEX 3
-#define CAM_BIND_INDEX 4
-#define DIRECT_LIGHT_BIND_INDEX 5
-#define POINT_LIGHT_BIND_INDEX 6
-#define TEX_START_BIND_INDEX 7
+#define POINT_LIGHT_BIND_INDEX 4
+#define TERRAIN_MAP_BIND_INDEX 5
+#define TERRAIN_MAP_SAMPLER_INDEX 5
+#define TEX_START_BIND_INDEX 6
 
 // DxMath default matrix is row-major, while HLSL only accept
 // matrix with column-major. Thus, engine will apply extra

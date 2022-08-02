@@ -30,6 +30,7 @@ struct MaterialDesc
 	map<string, MatAttribute<float>> scalarField;
 	map<string, MatAttribute<int>> countField;
 	map<string, MatAttribute<Color>> colorField;
+	map<string, MatAttribute<Matrix4f>> matrixField;
 	map<string, MatAttribute<Texture*>> textureField;
 	map<string, MatAttribute<Image>> imageField;
 };
@@ -46,6 +47,7 @@ public:
 	virtual void processScalarData();
 	virtual void processCountData();
 	virtual void processColorData();
+	virtual void processMatrixData();
 	virtual void processTextureData();
 	virtual void processImageData();
 	virtual void postprocess();

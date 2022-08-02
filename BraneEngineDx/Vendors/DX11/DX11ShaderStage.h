@@ -13,9 +13,9 @@ class DX11ShaderStage : public ShaderStage
 public:
 	const string MatInsBufName = "MatInsBuf";
 	DX11Context& dxContext;
-	ID3DBlob* dx11ShaderBlob = NULL;
-	ID3D11DeviceChild* dx11Shader = NULL;
-	ID3D11ShaderReflection* dx11ShaderReflector = NULL;
+	ComPtr<ID3DBlob> dx11ShaderBlob = NULL;
+	ComPtr<ID3D11DeviceChild> dx11Shader = NULL;
+	ComPtr<ID3D11ShaderReflection> dx11ShaderReflector = NULL;
 	ID3D11ShaderReflectionConstantBuffer* dx11MatInsBufReflector = NULL;
 
 	DX11ShaderStage(DX11Context& context, const ShaderStageDesc& desc);
@@ -33,7 +33,7 @@ struct DrawInfo
 	unsigned int baseVertex;
 	unsigned int baseInstance;
 	unsigned int passID;
-	unsigned int user1;
+	unsigned int passNum;
 };
 
 class DX11ShaderProgram : public ShaderProgram
@@ -43,11 +43,11 @@ public:
 	static DX11ShaderProgram* currentDx11Program;
 	DX11Context& dxContext;
 	ID3D11ShaderReflectionConstantBuffer* dx11MatInsBufReflector = NULL;
-	ID3D11Buffer* matInsBuf = NULL;
+	ComPtr<ID3D11Buffer> matInsBuf = NULL;
 	unsigned char* matInsBufHost = NULL;
 	unsigned int matInsBufSize = 0;
 	DrawInfo drawInfo;
-	ID3D11Buffer* drawInfoBuf = NULL;
+	ComPtr<ID3D11Buffer> drawInfoBuf = NULL;
 	unordered_map<string, AttributeDesc> attributes;
 
 	DX11ShaderProgram(DX11Context& context);
@@ -62,10 +62,10 @@ public:
 	virtual void uploadData();
 
 	virtual void uploadAttribute(const string& name, unsigned int size, void* data);
-	virtual void uploadTexture(const string& name, ID3D11ShaderResourceView* tex, ID3D11SamplerState* sample);
-	virtual void uploadImage(const string& name, ID3D11UnorderedAccessView* tex);
+	virtual void uploadTexture(const string& name, ComPtr<ID3D11ShaderResourceView> tex, ComPtr<ID3D11SamplerState> sample);
+	virtual void uploadImage(const string& name, ComPtr<ID3D11UnorderedAccessView> tex);
 
-	void bindCBToStage(unsigned int index, ID3D11Buffer* buffer);
+	void bindCBToStage(unsigned int index, ComPtr<ID3D11Buffer> buffer);
 };
 
 #endif // !_DX11SHADERSTAGE_H_

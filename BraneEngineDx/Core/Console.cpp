@@ -3,11 +3,16 @@
 #include <fstream>
 
 list<Console::_LOG> Console::logs;
+list<Console::_LOG> Console::pyLogs;
 unsigned int Console::maxLog = 1000;
 stringstream Console::STDOUT;
 stringstream Console::STDERR;
+string Console::PYLOGBUF;
+string Console::PYERRBUF;
 map<string, Timer> Console::timers;
 Console Console::console;
+unsigned int Console::newLogNum = 0;
+unsigned int Console::newPyLogNum = 0;
 
 Console::Console()
 {
@@ -42,12 +47,19 @@ void Console::pushLog(list<_LOG>& buf, LogState state, const std::string fmt_str
 	writeToFile(sstr + l.timeStamp.toString() + ']' + l.text);
 }
 
+void Console::pushLog(LogState state, const std::string fmt_str, va_list ap)
+{
+	pushLog(logs, state, fmt_str, ap, maxLog);
+	newLogNum++;
+}
+
 void Console::log(const std::string fmt_str, ...)
 {
 	va_list ap;
 	va_start(ap, fmt_str);
 	pushLog(logs, Log_Normal, fmt_str, ap, maxLog);
 	va_end(ap);
+	newLogNum++;
 }
 
 void Console::warn(const std::string fmt_str, ...)
@@ -56,6 +68,7 @@ void Console::warn(const std::string fmt_str, ...)
 	va_start(ap, fmt_str);
 	pushLog(logs, Log_Warning, fmt_str, ap, maxLog);
 	va_end(ap);
+	newLogNum++;
 }
 
 void Console::error(const std::string fmt_str, ...)
@@ -64,6 +77,57 @@ void Console::error(const std::string fmt_str, ...)
 	va_start(ap, fmt_str);
 	pushLog(logs, Log_Error, fmt_str, ap, maxLog);
 	va_end(ap);
+	newLogNum++;
+}
+
+void Console::pyLog(const std::string fmt_str, ...)
+{
+	va_list ap;
+	va_start(ap, fmt_str);
+	pushLog(pyLogs, Log_Normal, fmt_str, ap, maxLog);
+	va_end(ap);
+	newPyLogNum++;
+}
+
+void Console::pyError(const std::string fmt_str, ...)
+{
+	va_list ap;
+	va_start(ap, fmt_str);
+	pushLog(pyLogs, Log_Error, fmt_str, ap, maxLog);
+	va_end(ap);
+	newPyLogNum++;
+}
+
+void Console::pyLogWrite(const std::string str)
+{
+	for (auto b = str.begin(), e = str.end(); b != e; b++) {
+		if (*b == '\n')
+			pyLogFlush();
+		else
+			PYLOGBUF += *b;
+	}
+}
+
+void Console::pyLogFlush()
+{
+	pyLog(PYLOGBUF.c_str());
+	PYLOGBUF.clear();
+}
+
+void Console::pyErrWrite(const std::string str)
+{
+	for (auto b = str.begin(), e = str.end(); b != e; b++) {
+		if (*b == '\n')
+			pyErrFlush();
+		else
+			PYERRBUF += *b;
+	}
+}
+
+void Console::pyErrFlush()
+{
+	pyError(PYERRBUF.c_str());
+	PYERRBUF.clear();
 }
 
 Timer & Console::getTimer(const string & name)
@@ -89,4 +153,24 @@ void Console::setMaxLog(unsigned int maxLog)
 	Console::maxLog = maxLog;
 	while (logs.size() >= maxLog)
 		logs.pop_front();
+}
+
+void Console::resetNewLogCount()
+{
+	newLogNum = 0;
+}
+
+unsigned int Console::getNewLogCount()
+{
+	return newLogNum;
+}
+
+void Console::resetNewPyLogCount()
+{
+	newPyLogNum = 0;
+}
+
+unsigned int Console::getNewPyLogCount()
+{
+	return newPyLogNum;
 }

@@ -2,12 +2,14 @@
 #ifndef _SHADERSTAGE_H_
 #define _SHADERSTAGE_H_
 
-#include "Utility.h"
+#include "Utility/Utility.h"
 
 enum ShaderFeature
 {
-	Shader_Default = 0, Shader_Custom = 1, Shader_Deferred = 2, Shader_Postprocess = 4,
-	Shader_Skeleton = 8, Shader_Morph = 16, Shader_Particle = 32, Shader_Modifier = 64
+	Shader_Default = 0, Shader_Custom = 1, Shader_Deferred = 2, Shader_Custom_1 = 2 + 1,
+	Shader_Postprocess = 4, Shader_Custom_2 = 4 + 1, Shader_Skeleton = 8, Shader_Custom_3 = 8 + 1,
+	Shader_Morph = 16, Shader_Custom_4 = 16 + 1, Shader_Particle = 32, Shader_Custom_5 = 32 + 1,
+	Shader_Modifier = 64, Shader_Custom_6 = 64 + 1, Shader_Terrain = 128, Shader_Custom_7 = 128 + 1
 };
 
 enum ShaderStageType
@@ -22,6 +24,8 @@ struct ShaderStageDesc
 	Enum<ShaderFeature> feature;
 	const string& name;
 };
+
+class ShaderManager;
 
 class ShaderStage
 {
@@ -50,6 +54,7 @@ protected:
 // Abstract class of shader program(render pipeline) for vendor to implement
 class ShaderProgram
 {
+	friend class ShaderManager;
 public:
 	struct AttributeDesc
 	{
@@ -61,12 +66,15 @@ public:
 	};
 	string name;
 	unsigned int renderOrder = 0;
+
 	Enum<ShaderFeature> shaderType;
 	map<ShaderStageType, ShaderStage*> shaderStages;
 
 	ShaderProgram();
 	ShaderProgram(ShaderStage& meshStage);
 	virtual ~ShaderProgram();
+
+	bool isValid() const;
 
 	// Test if the program is for computer use, or it is for
 	// rasterization use
@@ -95,6 +103,7 @@ public:
 protected:
 	ShaderStageType meshStageType = None_Shader_Stage;
 	unsigned int programId = 0;
+	bool dirty = false;
 	static unsigned int currentProgram;
 };
 
@@ -113,8 +122,25 @@ public:
 	ShaderStage* compileShaderStage(const Enum<ShaderFeature>& feature, const string& code);
 };
 
+class ShaderFile
+{
+public:
+	string path;
+	Time lastWriteTime;
+
+	list<ShaderAdapter*> adapters;
+	unordered_set<ShaderFile*> includeFiles;
+
+	ShaderFile(const string& path);
+
+	bool checkDirty() const;
+
+	void reset();
+};
+
 class ShaderManager
 {
+	friend struct ShaderCompiler;
 public:
 	struct Tag
 	{
@@ -123,19 +149,45 @@ public:
 
 		bool operator<(const Tag& t) const;
 	};
+
+	struct ProgramStageLink
+	{
+		ShaderStage* stage;
+		ShaderProgram* program;
+
+		bool operator<(const ProgramStageLink& link) const;
+	};
+
+	map<string, ShaderFile*> shaderFiles;
+
 	vector<ShaderAdapter*> shaderAdapters;
 	map<Tag, unsigned int> shaderAdapterTags;
 	multimap<Tag, unsigned int> shaderAdapterNames;
+
+	unordered_set<ShaderProgram*> shaderPrograms;
+	set<ProgramStageLink> programStageLinks;
+
+	ShaderFile* getShaderFile(const string& path);
 
 	ShaderAdapter* addShaderAdapter(const string& name, const string& path, ShaderStageType stageType, const string& tagName = "");
 	ShaderAdapter* getShaderAdapterByPath(const string& path, ShaderStageType stageType);
 	ShaderAdapter* getShaderAdapterByName(const string& name, ShaderStageType stageType);
 
 	ShaderStage* compileShaderStage(ShaderStageType stageType, const Enum<ShaderFeature>& feature, const string& name, const string& path, const string& code);
-	bool loadShaderAdapter(const string& path);
+
+	bool registProgram(ShaderProgram* program);
+	bool removeProgram(ShaderProgram* program);
+	void linkProgram(ShaderStage* stage, ShaderProgram* program);
+
+	void dirtyShaderFile(const string& path);
+	void dirtyShaderFile(ShaderFile* file);
+	void refreshShader();
 
 	static void loadDefaultAdapter(const string& folder);
 	static ShaderManager& getInstance();
+protected:
+	unordered_set<ShaderFile*> processedDirtyShaderFiles;
+	unordered_set<ShaderAdapter*> dirtyAdapters;
 };
 
 #endif // !_SHADERSTAGE_H_

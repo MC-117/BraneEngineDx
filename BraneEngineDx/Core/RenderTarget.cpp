@@ -58,6 +58,12 @@ unsigned int RenderTarget::bindFrame()
 	return isDefault() ? 0 : desc.frameID;
 }
 
+void RenderTarget::clearBind()
+{
+	newVendorRenderTarget();
+	vendorRenderTarget->clearBind();
+}
+
 void RenderTarget::addTexture(const string & name, Texture & texture, unsigned int mipLevel)
 {
 	auto iter = desc.textures.find(name);
@@ -138,6 +144,14 @@ void RenderTarget::setDepthTexture(Texture & depthTexture)
 {
 	desc.depthTexure = &depthTexture;
 	desc.inited = false;
+}
+
+Texture2D* RenderTarget::getDepthTexture()
+{
+	if (desc.depthOnly)
+		return (Texture2D*)desc.depthTexure;
+	else
+		return getInternalDepthTexture();
 }
 
 Texture2D * RenderTarget::getInternalDepthTexture()

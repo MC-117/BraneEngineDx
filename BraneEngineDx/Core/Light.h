@@ -8,6 +8,8 @@
 class Light : public Transform, public Render
 {
 public:
+	Serialize(Light, Transform);
+
 	float intensity = 1;
 	float attenuation = 1;
 	Color color = { 255, 255, 255, 255 };
@@ -26,6 +28,10 @@ public:
 	virtual void render(RenderInfo & info);
 	virtual IRendering::RenderType getRenderType() const;
 	virtual Shape* getShape();
+
+	static Serializable* instantiate(const SerializationInfo& from);
+	virtual bool deserialize(const SerializationInfo& from);
+	virtual bool serialize(SerializationInfo& to);
 protected:
 	int positionIdx = -1;
 	int intensityIdx = -1;

@@ -4,33 +4,17 @@
 
 #include "Transform.h"
 #include "CameraRender.h"
-#include "AnimationClip.h"
+#include "Animation/AnimationClip.h"
 #include "GPUBuffer.h"
 #include "RenderTarget.h"
-
-struct CameraData
-{
-	Matrix4f projectionViewMat;
-	Matrix4f projectionMat;
-	Matrix4f viewMat;
-	Vector3f cameraLoc;
-	float zNear;
-	Vector3f cameraDir;
-	float zFar;
-	Vector3f cameraUp;
-	float fovy;
-	Vector3f cameraLeft;
-	float user1;
-	Vector2f viewSize;
-	Vector2f user2;
-};
+#include "RenderCore/CameraData.h"
 
 class Camera : public Transform
 {
 private:
 	CameraRender* _cameraRender = NULL;
 public:
-	Serialize(Camera);
+	Serialize(Camera, Transform);
 	enum CameraMode {
 		Perspective, Orthotropic
 	} mode = Perspective;
@@ -60,6 +44,10 @@ public:
 	Matrix4f getProjectionMatrix() const;
 	Matrix4f getViewMatrix() const;
 
+	Vector3f getFinalWorldPosition();
+
+	bool culling(const Range<Vector3f>& bound, const Matrix4f& mat);
+
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
 
@@ -75,13 +63,13 @@ public:
 	static Matrix4f perspective(float fovy, float aspect, float zNear, float zFar);
 	static Matrix4f orthotropic(float left, float right, float bottom, float top, float zNear, float zFar);
 	static Matrix4f lookAt(Vector3f const& eye, Vector3f const& center, Vector3f const& up);
-	static Matrix4f viewport(int x, int y, int width, int height, float zNear, float zFar);
+	static Matrix4f viewport(float x, float y, float width, float height, float zNear, float zFar);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
 protected:
-	GPUBuffer cameraDataBuffer = GPUBuffer(GB_Storage, sizeof(CameraData));
+	GPUBuffer cameraDataBuffer = GPUBuffer(GB_Constant, sizeof(CameraData));
 };
 
 #endif // !_CAMERA_H_

@@ -1,6 +1,7 @@
 #include "MatBranchModifier.h"
 #include "../Asset.h"
 #include "../Engine.h"
+#include "GUIUtility.h"
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 
 MatBranchModifier::MatBranchModifier(string name, bool defaultShow)
@@ -10,8 +11,10 @@ MatBranchModifier::MatBranchModifier(string name, bool defaultShow)
 
 void MatBranchModifier::onRenderWindow(GUIRenderInfo& info)
 {
-	ImGui::InputText("Name", &objectName);
-	Object* obj = (Object*)Brane::find(typeid(Object).hash_code(), objectName);
+	Object* obj = targetObject;
+	ImGui::ObjectCombo("Object", obj, Engine::getCurrentWorld(), objectFilterName);
+	targetObject = obj;
+
 	meshRender = NULL;
 	if (obj != NULL) {
 		meshRender = dynamic_cast<MeshRender*>(obj->getRender());

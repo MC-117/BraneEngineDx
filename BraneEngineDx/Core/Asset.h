@@ -2,23 +2,9 @@
 #ifndef _ASSER_H_
 #define _ASSER_H_
 
-//#include "PostProcessingCamera.h"
-#include "MeshRender.h"
-#include "MeshActor.h"
-//#include "SkySphere.h"
-#include "DirectLight.h"
-#include "PointLight.h"
-//#include "CollisionActor.h"
-//#include "VehicleActor.h"
-#include "World.h"
-#include "Importer.h"
-#include "Mesh.h"
-#include "SkeletonMesh.h"
-#include "SkeletonMeshActor.h"
-//#include "Character.h"
-//#include "SpringArm.h"
-//#include "CapsuleActor.h"
-//#include "ParticleSystem.h"
+#include "Base.h"
+
+class Object;
 
 class Asset;
 class Agent;
@@ -47,6 +33,7 @@ public:
 	void* load();
 	void* intance(vector<string> settings, const string& displayName = "");
 	vector<void*> intance(vector<string> settings, unsigned int num = 1, const string& displayName = "");
+	Object* createObject();
 };
 
 class Agent : public Asset {
@@ -77,6 +64,7 @@ public:
 	bool loadAsset(Asset& asset);
 	AssetInfo& depend(AssetInfo& dependence);
 	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const = 0;
+	virtual Object* createObject(Asset& asset) const;
 };
 
 class AgentInfo : public AssetInfo {
@@ -101,12 +89,6 @@ public:
 	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();
 };
-
-bool setTransform(const string& str, Transform *trans);
-bool setMaterial(const string& str, Material* src);
-Material* toMaterial(const string& str, Material* src);
-bool toPhysicalMaterial(const string& str, PhysicalMaterial& pm);
-Shape* toGeometry(const string& str);
 
 class MaterialAssetInfo : public AssetInfo {
 	MaterialAssetInfo();
@@ -164,9 +146,27 @@ public:
 	static AssetInfo& getInstance();
 };
 
+class PythonScriptAssetInfo : public AssetInfo {
+	PythonScriptAssetInfo();
+public:
+	static PythonScriptAssetInfo assetInfo;
+
+	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
+	static AssetInfo& getInstance();
+};
+
+class TimelineAssetInfo : public AssetInfo {
+	TimelineAssetInfo();
+public:
+	static TimelineAssetInfo assetInfo;
+
+	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
+	static AssetInfo& getInstance();
+};
+
 static class AssetManager {
 public:
-	static map<string, AssetInfo*> assetInfoList;
+	static StaticVar<map<string, AssetInfo*>> assetInfoList;
 
 	static void addAssetInfo(AssetInfo& info);
 	static bool registAsset(Asset& assets);
@@ -176,6 +176,8 @@ public:
 	static AssetInfo* getAssetInfo(const string& type);
 	static Asset* getAssetByPath(const string& path);
 	static Asset* loadAsset(const string& type, const string& name, const string& path, const vector<string>& settings, const vector<string>& dependenceNames);
+
+	static Asset* saveAsset(Serializable& serializable, const string& path);
 
 	static bool loadAssetFile(const string& path);
 };

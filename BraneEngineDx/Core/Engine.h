@@ -4,6 +4,8 @@
 
 #include "IVendor.h"
 #include "Asset.h"
+#include "World.h"
+#include "Input.h"
 
 extern World world;
 
@@ -13,6 +15,7 @@ static class Engine
 {
 public:
 	static string version;
+	static Input input;
 	static World* currentWorld;
 	static WindowContext windowContext;
 	static EngineConfig engineConfig;

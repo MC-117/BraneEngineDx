@@ -6,6 +6,7 @@
 #include "../../ThirdParty/ImGui/imgui_internal.h"
 #include "../Engine.h"
 #include "../Console.h"
+#include "../Editor/Editor.h"
 
 ImVec2 to(const Vector2f & v)
 {
@@ -34,7 +35,7 @@ void BlendSpaceWindow::onRenderWindow(GUIRenderInfo & info)
 		thread td = thread([](BlendSpaceAnimation* tar) {
 			FileDlgDesc desc;
 			desc.title = "asset";
-			desc.filter = "asset(*.asset)\0*.asset\0";
+			desc.filter = "asset(*.asset)|*.asset";
 			desc.initDir = "Content";
 			desc.defFileExt = "asset";
 			if (openFileDlg(desc)) {
@@ -60,20 +61,17 @@ void BlendSpaceWindow::onRenderWindow(GUIRenderInfo & info)
 		thread td = thread([](BlendSpaceAnimation* tar) {
 			FileDlgDesc desc;
 			desc.title = "asset";
-			desc.filter = "asset(*.asset)\0*.asset\0";
+			desc.filter = "asset(*.asset)|*.asset";
 			desc.initDir = "Content";
 			desc.save = true;
 			desc.defFileExt = "asset";
 			if (openFileDlg(desc)) {
-				SerializationInfo info;
-				if (tar->serialize(info)) {
-					ofstream f = ofstream(desc.filePath);
-					SerializationInfoWriter writer = SerializationInfoWriter(f);
-					writer.write(info);
-					f.close();
+				if (AssetManager::saveAsset(*tar, desc.filePath) == NULL) {
+					MessageBox(NULL, "Serialize failed", "Error", MB_OK);
+					return;
 				}
 				else {
-					MessageBox(NULL, "Serialize failed", "Error", MB_OK);
+					MessageBox(NULL, "Complete", "Info", MB_OK);
 				}
 			}
 		}, blendSpace);
@@ -182,7 +180,7 @@ void BlendSpaceWindow::drawBlendSpace(GUIRenderInfo & info)
 				if (context.points[i].x == addPoint.x && context.points[i].y == addPoint.y)
 					found = true;
 			if (!found) {
-				Asset* asset = (Asset*)info.gui.getParameter("SelectedAsset");
+				Asset* asset = EditorManager::getSelectedAsset();
 				if (blendSpace != NULL && asset != NULL && asset->assetInfo.type == "AnimationClipData") {
 					AnimationClipData* data = (AnimationClipData*)asset->load();
 					if (blendSpace->addAnimationClipData({ addPoint.x, addPoint.y }, *data))

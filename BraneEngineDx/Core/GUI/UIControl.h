@@ -4,7 +4,7 @@
 
 #include "../Object.h"
 
-extern class GUI;
+class GUI;
 class UIControl;
 
 struct GUIRenderInfo
@@ -13,6 +13,7 @@ struct GUIRenderInfo
 	Texture* sceneBlurTex;
 	RenderCommandList* renderCommandList;
 	GUI& gui;
+	Camera* camera;
 };
 
 struct GUIPostInfo

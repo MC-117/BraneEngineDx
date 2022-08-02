@@ -1,4 +1,5 @@
 #include "AudioSource.h"
+#include "Asset.h"
 
 #ifdef AUDIO_USE_OPENAL
 
@@ -25,6 +26,13 @@ bool AudioData::load(const string & file)
 {
 	unload();
 	abo = alutCreateBufferFromFile(file.c_str());
+	alGetBufferi(abo, AL_SIZE, (ALint*)&bufferSize);
+	alGetBufferi(abo, AL_FREQUENCY, &frequency);
+	alGetBufferi(abo, AL_CHANNELS, &channels);
+	alGetBufferi(abo, AL_BITS, &bitsPerSample);
+
+	duration = ((float)bufferSize) / (frequency * channels * (bitsPerSample / 8));
+
 	return abo != AL_NONE;
 }
 
@@ -39,13 +47,15 @@ unsigned int AudioData::getBuffer()
 	return abo;
 }
 
-AudioSource::AudioSource()
+SerializeInstance(AudioSource);
+
+AudioSource::AudioSource() : Base()
 {
 }
 
-AudioSource::AudioSource(AudioData & audioData)
+AudioSource::AudioSource(AudioData & audioData) : Base()
 {
-	setAudioData(audioData);
+	setAudioData(&audioData);
 }
 
 AudioSource::~AudioSource()
@@ -58,14 +68,19 @@ bool AudioSource::isValid()
 	return audioData != NULL && audioData->isLoad();
 }
 
-bool AudioSource::setAudioData(AudioData & audioData)
+bool AudioSource::setAudioData(AudioData* audioData)
 {
-	if (!audioData.isLoad())
+	if (audioData == NULL) {
+		destroy();
+		this->audioData = NULL;
+		return true;
+	}
+	if (!audioData->isLoad())
 		return false;
-	this->audioData = &audioData;
+	this->audioData = audioData;
 	if (sbo == AL_NONE)
 		alGenSources(1, &sbo);
-	alSourcei(sbo, AL_BUFFER, audioData.getBuffer());
+	alSourcei(sbo, AL_BUFFER, audioData->getBuffer());
 	alSourcef(sbo, AL_ROLLOFF_FACTOR, 0.1);
 	return true;
 }
@@ -115,14 +130,14 @@ void AudioSource::setLoop(bool loop)
 
 void AudioSource::setPitch(float v)
 {
-	pitch = min(v, 0);
+	pitch = max(v, 0);
 	if (isValid())
 		alSourcef(sbo, AL_PITCH, v);
 }
 
 void AudioSource::setPlayTime(float t)
 {
-	pitch = min(t, 0);
+	t = max(t, 0);
 	if (isValid())
 		alSourcef(sbo, AL_SEC_OFFSET, t);
 }
@@ -169,6 +184,32 @@ AudioSource::AudioState AudioSource::getState()
 	int v;
 	alGetSourcei(sbo, AL_SOURCE_STATE, &v);
 	return AudioState(v - AL_PLAYING);
+}
+
+Serializable* AudioSource::instantiate(const SerializationInfo& from)
+{
+	return new AudioSource();
+}
+
+bool AudioSource::deserialize(const SerializationInfo& from)
+{
+	Base::deserialize(from);
+	string path;
+	if (from.get("audioData", path)) {
+		AudioData* data = getAssetByPath<AudioData>(path);
+		if (data) {
+			setAudioData(data);
+		}
+	}
+	return true;
+}
+
+bool AudioSource::serialize(SerializationInfo& to)
+{
+	Base::serialize(to);
+	string path = AssetInfo::getPath(audioData);
+	to.set("audioData", path);
+	return true;
 }
 
 float AudioListener::getVolume() const

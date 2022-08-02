@@ -2,7 +2,8 @@
 #ifndef _SERIALIZATION_H_
 #define _SERIALIZATION_H_
 
-#include "Utility.h"
+#include "Utility/Utility.h"
+#include "Utility/Decimal.h"
 #include <filesystem>
 
 class Serializable;
@@ -29,7 +30,7 @@ public:
 	map<string, size_t> stringFeild;
 	vector<string> stringList;
 	map<string, size_t> numFeild;
-	vector<float> numList;
+	vector<Decimal> numList;
 	map<string, size_t> subfeilds;
 	vector<SerializationInfo> sublists;
 
@@ -38,16 +39,16 @@ public:
 	bool isArrayOf(const string& type);
 	bool consistKey(const string& name);
 
-	bool add(const string& name, float value);
+	bool add(const string& name, Decimal value);
 	bool add(const string& name, const string& value);
 	SerializationInfo* add(const string& name);
 
-	void push(float value);
+	void push(Decimal value);
 	void push(const string& value);
 	SerializationInfo* push();
 
 	void set(const string& name, const string& value);
-	void set(const string& name, float value);
+	void set(const string& name, Decimal value);
 	void set(const SerializationInfo& value);
 	void set(const string& name, Serializable& value);
 
@@ -64,7 +65,7 @@ public:
 	const SerializationInfo* get(const Path& name) const;
 	SerializationInfo* get(const Path& name);
 	const SerializationInfo* get(const size_t i) const;
-	SerializationInfo* get(const size_t i) ;
+	SerializationInfo* get(const size_t i);
 };
 
 template<>
@@ -128,6 +129,126 @@ inline bool SerializationInfo::get<float>(const size_t i, float & object)
 }
 
 template<>
+inline bool SerializationInfo::get<int>(const Path& path, int& object) const
+{
+	if (path.empty())
+		return false;
+	if (path.size() == 1) {
+		auto iter = numFeild.find(path[0]);
+		if (iter == numFeild.end())
+			return false;
+		object = numList[iter->second];
+		return true;
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		return sublists[_iter->second].get<int>(path.popTop(), object);
+	}
+}
+
+template<>
+inline bool SerializationInfo::get<int>(const Path& path, int& object)
+{
+	if (path.empty())
+		return false;
+	if (path.size() == 1) {
+		auto iter = numFeild.find(path[0]);
+		if (iter == numFeild.end())
+			return false;
+		object = numList[iter->second];
+		return true;
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		return sublists[_iter->second].get<int>(path.popTop(), object);
+	}
+}
+
+template<>
+inline bool SerializationInfo::get<int>(const size_t i, int& object) const
+{
+	if (i < numList.size()) {
+		object = numList[i];
+		return true;
+	}
+	return false;
+}
+
+template<>
+inline bool SerializationInfo::get<int>(const size_t i, int& object)
+{
+	if (i < numList.size()) {
+		object = numList[i];
+		return true;
+	}
+	return false;
+}
+
+template<>
+inline bool SerializationInfo::get<long long>(const Path& path, long long& object) const
+{
+	if (path.empty())
+		return false;
+	if (path.size() == 1) {
+		auto iter = numFeild.find(path[0]);
+		if (iter == numFeild.end())
+			return false;
+		object = numList[iter->second];
+		return true;
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		return sublists[_iter->second].get<long long>(path.popTop(), object);
+	}
+}
+
+template<>
+inline bool SerializationInfo::get<long long>(const Path& path, long long& object)
+{
+	if (path.empty())
+		return false;
+	if (path.size() == 1) {
+		auto iter = numFeild.find(path[0]);
+		if (iter == numFeild.end())
+			return false;
+		object = numList[iter->second];
+		return true;
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		return sublists[_iter->second].get<long long>(path.popTop(), object);
+	}
+}
+
+template<>
+inline bool SerializationInfo::get<long long>(const size_t i, long long& object) const
+{
+	if (i < numList.size()) {
+		object = numList[i];
+		return true;
+	}
+	return false;
+}
+
+template<>
+inline bool SerializationInfo::get<long long>(const size_t i, long long& object)
+{
+	if (i < numList.size()) {
+		object = numList[i];
+		return true;
+	}
+	return false;
+}
+
+template<>
 inline bool SerializationInfo::get<string>(const Path & path, string & object) const
 {
 	if (path.empty())
@@ -165,6 +286,52 @@ inline bool SerializationInfo::get<string>(const Path & path, string & object)
 			return false;
 		return sublists[_iter->second].get<string>(path.popTop(), object);
 	}
+}
+
+template<>
+inline bool SerializationInfo::get<bool>(const Path& path, bool& object) const
+{
+	if (path.empty())
+		return false;
+	string str;
+	if (path.size() == 1) {
+		auto iter = stringFeild.find(path[0]);
+		if (iter == stringFeild.end())
+			return false;
+		str = stringList[iter->second];
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		if (!sublists[_iter->second].get<string>(path.popTop(), str))
+			return false;
+	}
+	object = str == "true";
+	return true;
+}
+
+template<>
+inline bool SerializationInfo::get<bool>(const Path& path, bool& object)
+{
+	if (path.empty())
+		return false;
+	string str;
+	if (path.size() == 1) {
+		auto iter = stringFeild.find(path[0]);
+		if (iter == stringFeild.end())
+			return false;
+		str = stringList[iter->second];
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		if (!sublists[_iter->second].get<string>(path.popTop(), str))
+			return false;
+	}
+	object = str == "true";
+	return true;
 }
 
 template<>
@@ -266,8 +433,38 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from) { return NULL; }
 	virtual ~Serializable() {}
 	virtual bool deserialize(const SerializationInfo& from) { return false; }
-	virtual bool serialize(SerializationInfo& to) { return false; }
+	virtual bool serialize(SerializationInfo& to);
 	virtual Serialization& getSerialization() const = 0;
+};
+
+class Attribute
+{
+public:
+	const string name;
+	const bool canInherit;
+
+	Attribute(const string& name, bool canInherit) : name(name), canInherit(canInherit) {}
+	virtual ~Attribute() = default;
+
+	virtual void resolve(Attribute* conflict) { }
+};
+
+class SerializationScope
+{
+public:
+	SerializationScope() { lastScope = currentScope; currentScope = this; }
+	virtual ~SerializationScope() { currentScope = lastScope; }
+
+	static SerializationScope* getScope() { return currentScope; }
+
+	virtual void serializationConstuction(Serialization* serialization) {}
+
+	virtual void instantiate(Serializable* serializable, const SerializationInfo& from) {}
+	virtual void deserialize(Serializable* serializable, const SerializationInfo& from) {}
+	virtual void serialize(const Serializable* serializable, const SerializationInfo& from) {}
+protected:
+	SerializationScope* lastScope = NULL;
+	static SerializationScope* currentScope;
 };
 
 class Serialization
@@ -275,16 +472,30 @@ class Serialization
 public:
 	static map<filesystem::path, SerializationInfo*> serializationInfoByPath;
 
+	static Serialization serialization;
 	const string type;
+	const string baseType;
 	map<string, SerializationInfo*> serializationInfoByName;
 
-	Serialization(const string& type);
-	Serialization(const char* type);
-	virtual ~Serialization() {}
-	virtual Serializable* instantiate(const SerializationInfo& from) const = 0;
-	virtual Serializable* deserialize(const SerializationInfo& from) const = 0;
-	virtual bool deserialize(Serializable& object, const SerializationInfo& from) const = 0;
-	virtual bool serialize(Serializable& object, SerializationInfo& to) const = 0;
+	virtual ~Serialization();
+	virtual Serializable* instantiate(const SerializationInfo& from) const { return NULL; }
+	virtual Serializable* deserialize(const SerializationInfo& from) const { return NULL; }
+	virtual bool deserialize(Serializable& object, const SerializationInfo& from) const { return true; }
+	virtual bool serialize(Serializable& object, SerializationInfo& to) const { return true; }
+
+	Serialization* getBaseSerialization();
+	Serialization* getBaseSerialization() const;
+
+	bool isChildOf(const Serialization& serialization);
+	bool isChildOf(const Serialization& serialization) const;
+
+	int getChildren(vector<Serialization*>& children) const;
+
+	int getAttributeCount() const;
+	Attribute* getAttribute(int index) const;
+	Attribute* getAttribute(const string& name) const;
+	template<class T>
+	Attribute* getAttribute() const;
 
 	bool addInfo(SerializationInfo& info, bool overwrite = false);
 	SerializationInfo* getInfoByName(const string& name);
@@ -293,13 +504,35 @@ public:
 	Serializable* deserializeByName(const string& name);
 	static Serializable* deserializeByPath(const string& name);
 	bool serialize(Serializable& object, const string& path, const string& name = "");
-	Serializable* clone(Serializable& object);
+	static Serializable* clone(Serializable& object);
+protected:
+	Serialization* baseSerialization = NULL;
+	map<string, Attribute*> attributeNameMap;
+	vector<Attribute*> attributes;
+
+	Serialization(const string& type, const string& baseType);
+	Serialization(const char* type, const char* baseType);
+
+	virtual void init();
+	void addAttribute(const vector<Attribute*>& list);
 };
 
-#define Serialize(Type) \
-class Type##Serialization : public Serialization \
+template<class T>
+inline Attribute* Serialization::getAttribute() const
+{
+	for each (auto attr in attributes)
+	{
+		T* re = dynamic_cast<T*>(attr);
+		if (re)
+			return res;
+	}
+	return NULL;
+}
+
+#define Serialize(Type, BaseType) class Type##Serialization : public BaseType##::BaseType##Serialization \
 { \
 public: \
+	typedef BaseType##::BaseType##Serialization BaseSerializationClass; \
 	static Type##Serialization serialization; \
 	virtual Serializable* instantiate(const SerializationInfo& from) const \
 	{ \
@@ -333,11 +566,21 @@ public: \
 		return object.serialize(to); \
 	} \
 protected: \
-	Type##Serialization() : Serialization(#Type) {} \
+	Type##Serialization() : BaseSerializationClass(#Type, #BaseType) {} \
+	Type##Serialization(const string& type, const string& baseType) : BaseSerializationClass(type, baseType) {} \
+	Type##Serialization(const char* type, const char* baseType) : BaseSerializationClass(type, baseType) {} \
+	virtual void init(); \
 }; \
 virtual Serialization& getSerialization() const; \
 
-#define SerializeInstance(Type) Type::Type##Serialization Type::Type##Serialization::serialization; \
+#define SerializeInstance(Type, Attributes) \
+Type::Type##Serialization Type::Type##Serialization::serialization; \
+void Type::Type##Serialization::init() \
+{ \
+	BaseSerializationClass::init(); \
+	baseSerialization = &BaseSerializationClass::serialization; \
+	addAttribute({ Attributes }); \
+} \
 Serialization& Type::getSerialization() const \
 { \
 	return Type##Serialization::serialization; \
@@ -349,7 +592,7 @@ public:
 	enum TokenType
 	{
 		ENDFILE, ERR,
-		NAME, NUM, STRING,
+		NAME, INT, FLOAT, STRING,
 		COLON, LBR, RBR, LSBR, RSBR, COMMA,
 	};
 
@@ -367,7 +610,9 @@ public:
 	vector<SerializationInfo> infos;
 	TokenType token, backupToken;
 
-	SerializationInfoParser(istream& is);
+	string path;
+
+	SerializationInfoParser(istream& is, const string& path = "");
 	bool parse();
 protected:
 	char getNextChar();
@@ -390,12 +635,15 @@ public:
 	SerializationInfoWriter(ostream& os);
 	static string checkName(const string& name);
 	void write(const SerializationInfo& info, bool showType = true);
+
+protected:
+	void internalWrite(const SerializationInfo& info, bool showType = true);
 };
 
 class SVector2f : public Serializable
 {
 public:
-	Serialize(SVector2f);
+	Serialize(SVector2f,);
 	float x = 0, y = 0;
 
 	SVector2f(float x = 0, float y = 0);
@@ -412,7 +660,7 @@ public:
 class SVector3f : public Serializable
 {
 public:
-	Serialize(SVector3f);
+	Serialize(SVector3f,);
 	float x = 0, y = 0, z = 0;
 
 	SVector3f(float x = 0, float y = 0, float z = 0);
@@ -429,7 +677,7 @@ public:
 class SQuaternionf : public Serializable
 {
 public:
-	Serialize(SQuaternionf);
+	Serialize(SQuaternionf,);
 	float x = 0, y = 0, z = 0, w = 0;
 
 	SQuaternionf(float x = 0, float y = 0, float z = 0, float w = 0);
@@ -443,5 +691,95 @@ public:
 	operator Quaternionf() const;
 };
 
+class SColor : public Serializable
+{
+public:
+	Serialize(SColor,);
+	float r = 0, g = 0, b = 0, a = 0;
+
+	SColor(float r = 0, float g = 0, float b = 0, float a = 0);
+	SColor(const Color& color);
+
+	virtual bool deserialize(const SerializationInfo& from);
+	virtual bool serialize(SerializationInfo& to);
+
+	SColor& operator=(const Color& c);
+	operator Color();
+	operator Color() const;
+};
+
+class SEnum
+{
+public:
+	SEnum(const void* enumPtr) : ptr((int*)enumPtr) { }
+	SEnum(const SEnum& e) { ptr = e.ptr; }
+	SEnum(SEnum&& e) { ptr = e.ptr; }
+
+	operator int() { return *ptr; }
+	SEnum& operator =(const SEnum& e) { *ptr = *e.ptr; return *this; }
+	SEnum& operator =(int value) { *ptr = value; return *this; }
+protected:
+	int* ptr;
+};
+
+template<>
+inline bool SerializationInfo::get<SEnum>(const Path& path, SEnum& object) const
+{
+	if (path.empty())
+		return false;
+	if (path.size() == 1) {
+		auto iter = numFeild.find(path[0]);
+		if (iter == numFeild.end())
+			return false;
+		object = numList[iter->second];
+		return true;
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		return sublists[_iter->second].get<SEnum>(path.popTop(), object);
+	}
+}
+
+template<>
+inline bool SerializationInfo::get<SEnum>(const Path& path, SEnum& object)
+{
+	if (path.empty())
+		return false;
+	if (path.size() == 1) {
+		auto iter = numFeild.find(path[0]);
+		if (iter == numFeild.end())
+			return false;
+		object = numList[iter->second];
+		return true;
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		return sublists[_iter->second].get<SEnum>(path.popTop(), object);
+	}
+}
+
+template<>
+inline bool SerializationInfo::get<SEnum>(const size_t i, SEnum& object) const
+{
+	if (i < numList.size()) {
+		object = numList[i];
+		return true;
+	}
+	return false;
+}
+
+template<>
+inline bool SerializationInfo::get<SEnum>(const size_t i, SEnum& object)
+{
+	if (i < numList.size()) {
+		object = numList[i];
+		return true;
+	}
+	return false;
+}
 
 #endif // !_SERIALIZATION_H_

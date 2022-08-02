@@ -130,21 +130,20 @@ ShaderProgram * Shader::getProgram(const Enum<ShaderFeature>& feature)
 		if (program == NULL)
 			throw runtime_error("Invalid Vendor Implementation of ShaderProgram");
 		program->setMeshStage(*meshStage);
-		bool ok = true;
 		for (auto b = shaderAdapters.begin(), e = shaderAdapters.end(); b != e; b++) {
 			if (b->first != meshStageType) {
 				ShaderStage* stage = b->second->getShaderStage(feature, true);
-				if (stage == NULL || !stage->isValid()) {
-					ok = false;
+				if (stage == NULL)
+					continue;
+				if (!stage->isValid()) {
 					break;
 				}
 				if (!program->addShaderStage(*stage)) {
-					ok = false;
 					break;
 				}
 			}
 		}
-		if (ok) {
+		if (program->isValid()) {
 			program->name = name;
 			program->renderOrder = renderOrder;
 			shaderPrograms.insert(make_pair(feature, program));

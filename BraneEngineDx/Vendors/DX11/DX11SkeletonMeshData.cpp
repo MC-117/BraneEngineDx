@@ -2,8 +2,6 @@
 
 #ifdef VENDOR_USE_DX11
 
-ID3D11InputLayout* DX11SkeletonMeshData::dx11SkeletonMeshDataInputLayout = NULL;
-
 DX11SkeletonMeshData::DX11SkeletonMeshData(DX11Context& context)
     : dxContext(context)
 {
@@ -12,6 +10,11 @@ DX11SkeletonMeshData::DX11SkeletonMeshData(DX11Context& context)
 DX11SkeletonMeshData::~DX11SkeletonMeshData()
 {
     release();
+}
+
+bool DX11SkeletonMeshData::isValid() const
+{
+	return true;
 }
 
 bool DX11SkeletonMeshData::isGenerated() const
@@ -23,33 +26,6 @@ void DX11SkeletonMeshData::bindShape()
 {
 	if (dx11ElementBuffer != NULL && currentMeshData == this)
 		return;
-
-	if (dx11SkeletonMeshDataInputLayout == NULL) {
-		const char* signatureShader = "void main(uint objID : OBJID, float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL, uint4 bondId : BONEINDEX, float4 weights : BONEWEIGHT) { }";
-		const size_t len = strlen(signatureShader);
-		ID3DBlob* sigBlob;
-		ID3DBlob* errorBlob;
-		if (FAILED(D3DCompile(signatureShader, len, "SignatureShader", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-			"main", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &sigBlob, &errorBlob))) {
-			throw runtime_error((const char*)errorBlob->GetBufferPointer());
-		}
-		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[6] = {
-			{ "OBJID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "BONEINDEX", 0, DXGI_FORMAT_R32G32B32A32_UINT, 4, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "BONEWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 5, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-		};
-		if (FAILED(dxContext.device->CreateInputLayout(inputLayoutDesc, 6, sigBlob->GetBufferPointer(),
-			sigBlob->GetBufferSize(), &dx11SkeletonMeshDataInputLayout))) {
-			throw runtime_error("DX11: Create skeleton mesh input layout failed");
-		}
-		if (sigBlob != NULL)
-			sigBlob->Release();
-		if (errorBlob != NULL)
-			errorBlob->Release();
-	}
 
 	D3D11_BUFFER_DESC bDesc = {};
 	ZeroMemory(&bDesc, sizeof(D3D11_BUFFER_DESC));
@@ -95,11 +71,11 @@ void DX11SkeletonMeshData::bindShape()
 	}
 
 	if (dx11ElementBuffer == NULL) {
-		bDesc.ByteWidth = elements.size() * sizeof(Vector3u);
+		bDesc.ByteWidth = elements.size() * sizeof(unsigned int);
 		bDesc.Usage = D3D11_USAGE_IMMUTABLE;
 		bDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 
-		initData.pSysMem = elements.data()->data();
+		initData.pSysMem = elements.data();
 		initData.SysMemPitch = 0;
 		initData.SysMemSlicePitch = 0;
 
@@ -151,11 +127,11 @@ void DX11SkeletonMeshData::bindShape()
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 			srvDesc.Buffer.FirstElement = 0;
 			srvDesc.Buffer.NumElements = morphMeshData.verticesAndNormals.size();
-			if (FAILED(dxContext.device->CreateShaderResourceView(dx11MorphVNBuffer, &srvDesc, &dx11MorphVNView)))
+			if (FAILED(dxContext.device->CreateShaderResourceView(dx11MorphVNBuffer.Get(), &srvDesc, &dx11MorphVNView)))
 				throw runtime_error("Create Morph vertices and normals SRV failed");
 		}
 
-		if (dx11MorphWeightBuffer == NULL) {
+		/*if (dx11MorphWeightBuffer == NULL) {
 			unsigned int len = morphMeshData.morphCount + 1;
 			float* morphWeights = new float[len]();
 			morphWeights[0] = morphMeshData.morphCount;
@@ -179,17 +155,17 @@ void DX11SkeletonMeshData::bindShape()
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 			srvDesc.Buffer.FirstElement = 0;
 			srvDesc.Buffer.NumElements = len;
-			if (FAILED(dxContext.device->CreateShaderResourceView(dx11MorphWeightBuffer, &srvDesc, &dx11MorphWeightView)))
+			if (FAILED(dxContext.device->CreateShaderResourceView(dx11MorphWeightBuffer.Get(), &srvDesc, &dx11MorphWeightView)))
 				throw runtime_error("Create Morph Weight SRV failed");
-		}
+		}*/
 	}
 
 	ID3D11Buffer* buffers[] = {
-		dx11VertexBuffer,
-		dx11UVBuffer,
-		dx11NormalBuffer,
-		dx11BoneIndexBuffer,
-		dx11BoneWeightBuffer
+		dx11VertexBuffer.Get(),
+		dx11UVBuffer.Get(),
+		dx11NormalBuffer.Get(),
+		dx11BoneIndexBuffer.Get(),
+		dx11BoneWeightBuffer.Get()
 	};
 	UINT strides[] = {
 		sizeof(Vector3f),
@@ -202,54 +178,48 @@ void DX11SkeletonMeshData::bindShape()
 
 	dxContext.deviceContext->IASetVertexBuffers(1, 5, buffers, strides, offsets);
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	dxContext.deviceContext->IASetIndexBuffer(dx11ElementBuffer, DXGI_FORMAT_R32_UINT, 0);
-	dxContext.deviceContext->IASetInputLayout(dx11SkeletonMeshDataInputLayout);
+	dxContext.deviceContext->IASetIndexBuffer(dx11ElementBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+	dxContext.deviceContext->IASetInputLayout(dxContext.skeletonMeshInputLayout.Get());
 
 	if (dx11MorphVNView != NULL)
-		dxContext.deviceContext->VSSetShaderResources(MORPHDATA_BIND_INDEX, 1, &dx11MorphVNView);
-	if (dx11MorphWeightView != NULL)
-		dxContext.deviceContext->VSSetShaderResources(MORPHWEIGHT_BIND_INDEX, 1, &dx11MorphWeightView);
+		dxContext.deviceContext->VSSetShaderResources(MORPHDATA_BIND_INDEX, 1, dx11MorphVNView.GetAddressOf());
+	/*if (dx11MorphWeightView != NULL)
+		dxContext.deviceContext->VSSetShaderResources(MORPHWEIGHT_BIND_INDEX, 1, dx11MorphWeightView.GetAddressOf());*/
 	currentMeshData = this;
 }
 
-void DX11SkeletonMeshData::updateMorphWeights(vector<float>& weights)
-{
-	if (dx11MorphWeightBuffer != NULL) {
-		D3D11_MAPPED_SUBRESOURCE mpd;
-		size_t size = weights.size() * sizeof(float);
-		float morphCount = morphMeshData.morphCount;
-		dxContext.deviceContext->Map(dx11MorphWeightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mpd);
-		memcpy_s((char*)mpd.pData, sizeof(float), &morphCount, sizeof(float));
-		memcpy_s((char*)mpd.pData + sizeof(float), size, weights.data(), size);
-		dxContext.deviceContext->Unmap(dx11MorphWeightBuffer, 0);
-	}
-}
+//void DX11SkeletonMeshData::updateMorphWeights(vector<float>& weights)
+//{
+//	if (dx11MorphWeightBuffer != NULL) {
+//		D3D11_MAPPED_SUBRESOURCE mpd;
+//		size_t size = weights.size() * sizeof(float);
+//		float morphCount = morphMeshData.morphCount;
+//		dxContext.deviceContext->Map(dx11MorphWeightBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mpd);
+//		memcpy_s((char*)mpd.pData, sizeof(float), &morphCount, sizeof(float));
+//		memcpy_s((char*)mpd.pData + sizeof(float), size, weights.data(), size);
+//		dxContext.deviceContext->Unmap(dx11MorphWeightBuffer.Get(), 0);
+//	}
+//}
 
 void DX11SkeletonMeshData::release()
 {
 	if (dx11VertexBuffer) {
-		dx11VertexBuffer->Release();
-		dx11VertexBuffer = NULL;
+		dx11VertexBuffer.Reset();
 	}
 	if (dx11UVBuffer) {
-		dx11UVBuffer->Release();
-		dx11UVBuffer = NULL;
+		dx11UVBuffer.Reset();
 	}
 	if (dx11NormalBuffer) {
-		dx11NormalBuffer->Release();
-		dx11NormalBuffer = NULL;
+		dx11NormalBuffer.Reset();
 	}
 	if (dx11ElementBuffer) {
-		dx11ElementBuffer->Release();
-		dx11ElementBuffer = NULL;
+		dx11ElementBuffer.Reset();
 	}
 	if (dx11BoneIndexBuffer) {
-		dx11BoneIndexBuffer->Release();
-		dx11BoneIndexBuffer = NULL;
+		dx11BoneIndexBuffer.Reset();
 	}
 	if (dx11BoneWeightBuffer) {
-		dx11BoneWeightBuffer->Release();
-		dx11BoneWeightBuffer = NULL;
+		dx11BoneWeightBuffer.Reset();
 	}
 }
 

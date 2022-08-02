@@ -1,5 +1,7 @@
 #include "Light.h"
 
+SerializeInstance(Light);
+
 Color Light::ambient = { 255, 255, 255, 255 };
 
 Light::Light(const string& name, Color color, float intensity, float attenuation, Shape boundShape) : Transform(name), boundShape(boundShape)
@@ -48,4 +50,31 @@ IRendering::RenderType Light::getRenderType() const
 Shape * Light::getShape()
 {
 	return &boundShape;
+}
+
+Serializable* Light::instantiate(const SerializationInfo& from)
+{
+	return nullptr;
+}
+
+bool Light::deserialize(const SerializationInfo& from)
+{
+	if (!Transform::deserialize(from))
+		return false;
+	from.get("intensity", intensity);
+	from.get("attenuation", attenuation);
+	SColor scolor = color;
+	if (from.get("color", scolor))
+		color = scolor;
+	return true;
+}
+
+bool Light::serialize(SerializationInfo& to)
+{
+	if (!Transform::serialize(to))
+		return false;
+	to.set("intensity", intensity);
+	to.set("attenuation", attenuation);
+	to.set("color", (SColor)color);
+	return true;
 }
