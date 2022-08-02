@@ -3,15 +3,19 @@
 #define _IGPUBUFFER_H_
 
 #include "Unit.h"
+#include "GraphicType.h"
 
-enum GPUBufferType
+class IBufferBinding
 {
-	GB_Constant, GB_Storage, GB_Command, GB_Index, GB_Struct
+public:
+	virtual void updateBuffer() = 0;
+	virtual void bindBuffer() = 0;
 };
 
 struct GPUBufferDesc
 {
 	GPUBufferType type = GB_Constant;
+	TexInternalType internalType = TIT_Default;
 	unsigned int cellSize = 0;
 	unsigned int size = 0;
 	unsigned int capacity = 0;
@@ -31,6 +35,8 @@ public:
 	virtual unsigned int bindBase(unsigned int index) = 0;
 	virtual unsigned int uploadData(unsigned int size, void* data) = 0;
 	virtual unsigned int uploadSubData(unsigned int first, unsigned int size, void* data) = 0;
+	virtual bool readData(void* data) = 0;
+	virtual bool readSubData(unsigned int first, unsigned int size, void* data) = 0;
 };
 
 #endif // !_IGPUBUFFER_H_

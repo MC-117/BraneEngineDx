@@ -1,10 +1,19 @@
 #include "AssetBrowser.h"
 #include "../Asset.h"
 #include "../Engine.h"
+#include "../Editor/Editor.h"
+#include "../Script/ScriptEditor.h"
 #include "../../ThirdParty/ImGui/imgui_internal.h"
 #include "MaterialWindow.h"
 #include "TextureViewer.h"
 #include "SerializationEditor.h"
+#include "ObjectPreviewWindow.h"
+#include "../Timeline/TimelineWindow.h"
+#include "../Graph/GraphWindow.h"
+#include "GUIUtility.h"
+#include "../Utility/EngineUtility.h"
+#include "../MeshActor.h"
+#include "../SkeletonMeshActor.h"
 
 AssetBrowser::AssetBrowser(Object & object, string name, bool defaultShow)
 	: UIWindow(object, name, defaultShow)
@@ -25,6 +34,10 @@ AssetBrowser::AssetBrowser(Object & object, string name, bool defaultShow)
 	assetFileTex = assetFileTex == NULL ? &Texture2D::blackRGBDefaultTex : assetFileTex;
 	pythonTex = getAssetByPath<Texture2D>("Engine/Icons/Python_Icon.png");
 	pythonTex = pythonTex == NULL ? &Texture2D::blackRGBDefaultTex : pythonTex;
+	timelineTex = getAssetByPath<Texture2D>("Engine/Icons/Timeline_Icon.png");
+	timelineTex = timelineTex == NULL ? &Texture2D::blackRGBDefaultTex : timelineTex;
+	graphTex = getAssetByPath<Texture2D>("Engine/Icons/Graph_Icon.png");
+	graphTex = graphTex == NULL ? &Texture2D::blackRGBDefaultTex : graphTex;
 	events.registerFunc("getSelectAsset", [](void* browser, void** handle) {
 		if (handle != NULL)
 			*handle = ((AssetBrowser*)browser)->getSelectedAsset();
@@ -33,7 +46,8 @@ AssetBrowser::AssetBrowser(Object & object, string name, bool defaultShow)
 		{ "Mesh", modelTex }, { "SkeletonMesh", skeletonMeshTex },
 		{ "AnimationClipData", animationTex }, { "Material", materialTex },
 		{ "AudioData", audioTex }, { "AssetFile", assetFileTex },
-		{ "PythonScript", pythonTex }, { "Texture2D", NULL }
+		{ "PythonScript", pythonTex }, { "Live2DModel", modelTex }, { "Spine2DModel", modelTex },
+		{ "Texture2D", NULL }, { "Timeline", timelineTex }, { "Graph", graphTex }
 	};
 	for (int i = 0; i < assetTypeList.size(); i++) {
 		AssetTypeInfo& info = assetTypeList[i];
@@ -146,10 +160,8 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 			else {
 				seletedIndex = index;
 				Asset* asset = getSelectedAsset();
-				info.gui.setParameter("SelectedAsset", asset);
-				Events* e = info.gui.getUIControlEvent("Inspector");
-				if (e != NULL)
-					e->call("assignAsset", asset);
+				if (asset != NULL)
+					EditorManager::selectAsset(asset);
 			}
 		}
 		ImGui::PopID();
@@ -171,30 +183,19 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 		if (Item(assets[i]->name, *tex, 18, seletedIndex == index)) {
 			seletedIndex = index;
 			Asset* asset = getSelectedAsset();
-			info.gui.setParameter("SelectedAsset", asset);
-			Events* e = info.gui.getUIControlEvent("Inspector");
-			if (e != NULL)
-				e->call("assignAsset", asset);
+			if (asset != NULL)
+				EditorManager::selectAsset(asset);
 		}
 		bool canPreview = isFocus() && ImGui::IsMouseDoubleClicked(0) && seletedIndex == index;
 		if (assets[i]->assetInfo.type == "Mesh" || assets[i]->assetInfo.type == "SkeletonMesh") {
 			if (ImGui::BeginPopupContextItem("MeshContext")) {
-				static int selectedId = 0;
 				static char name[100];
 				static Material* selectedMat = NULL;
-				vector<string> items;
-				string str;
 
 				ImGui::Text("Mesh: %s", assets[i]->name.c_str());
-
-				for (auto b = MaterialAssetInfo::assetInfo.assets.begin(), e = MaterialAssetInfo::assetInfo.assets.end(); b != e; b++) {
-					if (selectedMat == NULL)
-						selectedMat = (Material*)b->second->load();
-					items.push_back(b->first);
-					str += b->first + '\0';
-				}
-				if (ImGui::Combo("Base Material", &selectedId, str.c_str())) {
-					selectedMat = (Material*)(MaterialAssetInfo::assetInfo.assets[items[selectedId]]->asset[0]);
+				Asset* selectedAsset = MaterialAssetInfo::assetInfo.getAsset(selectedMat);
+				if (ImGui::AssetCombo("Base Material", selectedAsset, "Material")) {
+					selectedMat = (Material*)(selectedAsset->load());
 				}
 				static bool twoSides = false;
 				static bool castShadow = false;
@@ -217,13 +218,19 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 				ImGui::DragFloat3("Scale", sca, 0.1);
 				ImGui::EndGroup();
 				ImVec2 size = { -1, 40 };
-				if (strlen(name) != 0 && Brane::find(typeid(Object).hash_code(), name) == NULL)
+				if (strlen(name) != 0 && Engine::getCurrentWorld()->findChild(name) == NULL)
 					if (ImGui::Button("Load", size)) {
-						Material &mat = *selectedMat;
-						mat.setTwoSide(twoSides);
+						if (selectedMat)
+							selectedMat->setTwoSide(twoSides);
 						if (assets[i]->assetInfo.type == "Mesh") {
 							Mesh* mesh = (Mesh*)assets[i]->load();
-							MeshActor* a = new MeshActor(*mesh, mat, { mass, (PhysicalType)phyMatCT }, *mesh, name, simple ? SIMPLE : COMPLEX, { sca[0], sca[1], sca[2] });
+							MeshActor* a = new MeshActor(name);
+							a->meshRender.setMesh(mesh);
+							if (selectedMat)
+								a->meshRender.setMaterial(0, *selectedMat);
+							a->setScale({ sca[0], sca[1], sca[2] });
+							a->rigidBody = new RigidBody(*a, { mass, (PhysicalType)phyMatCT });
+							a->rigidBody->addCollider(mesh, simple ? SIMPLE : COMPLEX);
 							a->meshRender.canCastShadow = castShadow;
 							a->setPosition(pos[0], pos[1], pos[2]);
 							a->setRotation(rot[0], rot[1], rot[2]);
@@ -231,8 +238,11 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 						}
 						else if (assets[i]->assetInfo.type == "SkeletonMesh") {
 							SkeletonMesh* mesh = (SkeletonMesh*)assets[i]->load();
-							SkeletonMeshActor* a = new SkeletonMeshActor(*mesh, mat, name);
-							a->skeletonMeshRender.canCastShadow = castShadow;
+							SkeletonMeshActor* a = new SkeletonMeshActor(name);
+							a->addSkeletonMesh(*mesh);
+							if (selectedMat)
+								a->skeletonMeshRenders[0]->setMaterial(0, *selectedMat);
+							a->setCastShadow(castShadow);
 							a->setPosition(pos[0], pos[1], pos[2]);
 							a->setRotation(rot[0], rot[1], rot[2]);
 							a->setScale(sca[0], sca[1], sca[2]);
@@ -253,27 +263,39 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 				win->setMaterial(*(Material*)assets[i]->load());
 			}
 		}
+		else if (assets[i]->assetInfo.type == "PythonScript") {
+			if (canPreview) {
+				PythonScript* script = (PythonScript*)assets[i]->load();
+				if (script != NULL)
+					ScriptEditor::OpenScript(info.gui, *script);
+			}
+		}
 		else if (assets[i]->assetInfo.type == "AssetFile") {
 			if (canPreview) {
-				SerializationEditor::showSerializationInfo(info.gui, *(SerializationInfo*)assets[i]->load());
+				SerializationInfo* sinfo = (SerializationInfo*)assets[i]->load();
+				if (sinfo != NULL && sinfo->serialization != NULL && sinfo->serialization->type != "World")
+					ObjectPreviewWindow::showObject(info.gui, *sinfo);
 			}
 			if (ImGui::BeginPopupContextItem("AssetContext")) {
+				if (ImGui::Button("View Raw", { -1, 36 })) {
+					SerializationEditor::showSerializationInfo(info.gui, *(SerializationInfo*)assets[i]->load());
+				}
 				static char name[100];
 				ImGui::InputText("Name", name, 100);
-				if (strlen(name) != 0 && Brane::find(typeid(Object).hash_code(), name) == NULL)
+				if (strlen(name) != 0 && Engine::getCurrentWorld()->findChild(name) == NULL)
 					if (ImGui::Button("Import to world", { -1, 36 })) {
 						SerializationInfo* info = (SerializationInfo*)assets[i]->load();
-						string name_bk = info->name;
-						info->name = name;
-						Serializable* ser = info->serialization->instantiate(*info);
-						info->name = name_bk;
+						SerializationInfo cloneInfo = *info;
+						cloneInfo.name = name;
+						newSerializationInfoGuid(cloneInfo);
+						Serializable* ser = cloneInfo.serialization->instantiate(cloneInfo);
 						if (ser != NULL) {
 							Object* obj = dynamic_cast<Object*>(ser);
 							if (obj == NULL) {
 								delete ser;
 							}
 							else {
-								if (obj->deserialize(*info))
+								if (obj->deserialize(cloneInfo))
 									object.addChild(*obj);
 								else
 									delete ser;
@@ -283,9 +305,48 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 				ImGui::EndPopup();
 			}
 		}
+		else if (assets[i]->assetInfo.type == "Live2DModel") {
+			if (canPreview) {
+				ObjectPreviewWindow::showObject(info.gui, *assets[i]);
+			}
+		}
+		else if (assets[i]->assetInfo.type == "Spine2DModel") {
+		if (canPreview) {
+			ObjectPreviewWindow::showObject(info.gui, *assets[i]);
+		}
+		}
 		else if (assets[i]->assetInfo.type == "Texture2D") {
 			if (canPreview) {
 				TextureViewer::showTexture(info.gui, *(Texture2D*)assets[i]->load());
+			}
+		}
+		else if (assets[i]->assetInfo.type == "Timeline") {
+			if (canPreview) {
+				TimelineWindow::showTimeline(info.gui, (Timeline*)assets[i]->load());
+			}
+		}
+		else if (assets[i]->assetInfo.type == "Graph") {
+			Graph* graph = (Graph*)assets[i]->load();
+			if (canPreview) {
+				GraphWindow::showGraph(info.gui, graph);
+			}
+			if (ImGui::BeginPopupContextItem("GraphContext")) {
+				if (ImGui::Button("Open", { -1, 36 })) {
+					GraphWindow::showGraph(info.gui, graph);
+				}
+				ImGui::Separator();
+				EditorInfo editorInfo = { &info.gui, &info.gui.gizmo, info.camera, Engine::getCurrentWorld() };
+				for (int i = 0; i < graph->getInputCount(); i++) {
+					GraphPin* pin = graph->getInput(i);
+					GraphPinEditor* editor = dynamic_cast<GraphPinEditor*>(EditorManager::getEditor(*pin));
+					if (editor)
+						editor->onInspectGUI(editorInfo);
+				}
+				if (ImGui::Button("Run", { -1, 36 })) {
+					GraphContext context;
+					graph->solveState(context);
+				}
+				ImGui::EndPopup();
 			}
 		}
 		ImGui::PopID();
@@ -310,10 +371,10 @@ bool AssetBrowser::updatePath(const string & path, bool force)
 	assets.clear();
 	for (auto& p : filesystem::directory_iterator(path)) {
 		filesystem::file_type type = p.status().type();
-		string _path = p.path().generic_string();
-		string _ext = p.path().extension().generic_string();
+		string _path = p.path().generic_u8string();
+		string _ext = p.path().extension().generic_u8string();
 		if (type == filesystem::file_type::directory) {
-			subFolders.push_back(p.path().filename().generic_string());
+			subFolders.push_back(p.path().filename().generic_u8string());
 		}
 		else if (type == filesystem::file_type::regular) {
 			Asset* a = AssetInfo::getAssetByPath(_path);

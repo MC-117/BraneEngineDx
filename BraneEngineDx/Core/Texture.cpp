@@ -41,7 +41,17 @@ int Texture::getChannel() const
 	return 0;
 }
 
+int Texture::getMipLevels() const
+{
+	return 1;
+}
+
 unsigned int Texture::bind()
+{
+	return 0;
+}
+
+unsigned int Texture::bindBase(unsigned int index)
 {
 	return 0;
 }

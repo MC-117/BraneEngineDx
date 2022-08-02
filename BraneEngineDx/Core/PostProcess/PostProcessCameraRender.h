@@ -47,6 +47,7 @@ public:
 	//RenderTarget volumnicLightXTarget = RenderTarget(size.x, size.y, 4);
 
 	PostProcessGraph graph;
+	RenderTarget postRenderTarget = RenderTarget(size.x, size.y, 4);
 
 	PostProcessCameraRender(RenderTarget& renderTarget = RenderTarget::defaultRenderTarget, Material& material = Material::nullMaterial);
 	~PostProcessCameraRender();

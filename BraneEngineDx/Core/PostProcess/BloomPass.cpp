@@ -2,6 +2,7 @@
 #include "../Camera.h"
 #include "../Asset.h"
 #include "../Console.h"
+#include "../GUI/UIControl.h"
 
 BloomPass::BloomPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -165,6 +166,9 @@ void BloomPass::render(RenderInfo & info)
 		vendor.setViewport(0, 0, size.x, size.y);
 		vendor.postProcessCall();
 
+		screenRenderTarget.clearBind();
+
+		resource->screenRenderTarget = &screenRenderTarget;
 		resource->screenTexture = &screenMap;
 	}
 }

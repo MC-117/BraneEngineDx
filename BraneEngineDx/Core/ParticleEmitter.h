@@ -7,7 +7,7 @@
 class ParticleEmitter : public Serializable
 {
 public:
-	Serialize(ParticleEmitter);
+	Serialize(ParticleEmitter,);
 
 	enum ScreenAlignmentType
 	{

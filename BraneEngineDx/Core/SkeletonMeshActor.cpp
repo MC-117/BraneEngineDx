@@ -4,74 +4,102 @@
 
 SerializeInstance(SkeletonMeshActor);
 
-SkeletonMeshActor::SkeletonMeshActor(SkeletonMesh & mesh, Material & material, string name)
-	: mesh(mesh), skeletonMeshRender(mesh, material), Actor(name)
+SkeletonMeshActor::SkeletonMeshActor(const string& name)
+	: Actor(name), skeletonPhysics(this)
 {
-	bones.resize(mesh.skeletonData.boneList.size());
-	for (int i = 0; i < bones.size(); i++) {
-		bones[i] = new Bone(mesh.skeletonData.boneList[i].name);
-		bones[i]->setHidden(true);
-		Matrix4f& tm = mesh.skeletonData.boneList[i].transformMatrix;
-		Vector3f pos, sca;
-		Quaternionf rot;
-		tm.decompose(pos, rot, sca);
-		bones[i]->setPosition(pos);
-		bones[i]->setRotation(rot);
-		bones[i]->setScale(sca);
-		BoneData* p = mesh.skeletonData.boneList[i].parent;
-		if (p != NULL)
-			bones[i]->setParent(*bones[p->index]);
-	}
-	addChild(*bones[0]);
+}
+
+SkeletonMeshActor::SkeletonMeshActor(SkeletonMesh & mesh, Material & material, const string& name)
+	: Actor(name), skeletonPhysics(this)
+{
+	addSkeletonMesh(mesh);
+	skeletonMeshRenders[0]->setMaterial(0, material);
 }
 
 SkeletonMeshActor::~SkeletonMeshActor()
 {
 	for (int i = 0; i < animationClips.size(); i++)
 		delete animationClips[i];
+	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
+		delete skeletonMeshRenders[i];
+	}
+}
+
+void SkeletonMeshActor::setCastShadow(bool value)
+{
+	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
+		skeletonMeshRenders[i]->canCastShadow = value;
+	}
+}
+
+bool SkeletonMeshActor::addSkeletonMesh(SkeletonMesh& mesh)
+{
+	if (!skeleton.addSkeletonData(mesh.skeletonData))
+		return false;
+	if (rootBone == NULL) {
+		rootBone = skeleton.getBone(0)->bone;
+		addChild(*rootBone);
+	}
+	SkeletonMeshRender* render = new SkeletonMeshRender;
+	render->setMesh(&mesh);
+	skeletonMeshRenders.emplace_back(render);
+	morphTargetRemapper.addMorphTargetWeight(render->morphWeights);
+	return true;
+}
+
+bool SkeletonMeshActor::removeSkeletonMesh(int index)
+{
+	if (index == 0 || index >= skeletonMeshRenders.size())
+		return false;
+	SkeletonMeshRender* render = skeletonMeshRenders[index];
+	delete render;
+	skeletonMeshRenders.erase(skeletonMeshRenders.begin() + index);
+
+	skeleton.removeSkeletonData(index);
+
+	morphTargetRemapper.clear();
+	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
+		morphTargetRemapper.addMorphTargetWeight(skeletonMeshRenders[i]->morphWeights);
+	}
+
+	for (int i = 0; i < animationClips.size(); i++) {
+		AnimationBase* anim = animationClips[i];
+		anim->reset();
+		anim->setupContext({ &skeleton, &morphTargetRemapper });
+	}
+
+	return true;
 }
 
 bool SkeletonMeshActor::getBoneHidden()
 {
-	for (auto b = bones.begin(), e = bones.end(); b != e; b++)
-		if (!(*b)->isHidden())
+	for (auto b = skeleton.bones.begin(), e = skeleton.bones.end(); b != e; b++)
+		if (!(*b)->bone->isHidden())
 			return false;
 	return true;
 }
 
 void SkeletonMeshActor::setBoneHidden(bool hidden)
 {
-	for (auto b = bones.begin(), e = bones.end(); b != e; b++)
-		(*b)->setHidden(hidden);
+	for (auto b = skeleton.bones.begin(), e = skeleton.bones.end(); b != e; b++)
+		(*b)->bone->setHidden(hidden);
 }
 
 Bone * SkeletonMeshActor::getBone(const string & name)
 {
-	auto iter = skeletonMeshRender.skeletonMesh.skeletonData.boneName.find(name);
-	if (iter == skeletonMeshRender.skeletonMesh.skeletonData.boneName.end())
-		return NULL;
-	return bones[iter->second];
+	Skeleton::BoneInfo* info = skeleton.getBone(name);
+	return info == NULL ? NULL : info->bone;
 }
 
 Bone * SkeletonMeshActor::getBone(size_t index)
 {
-	if (index < bones.size())
-		return bones[index];
-	return NULL;
+	Skeleton::BoneInfo* info = skeleton.getBone(index);
+	return info == NULL ? NULL : info->bone;
 }
 
 void SkeletonMeshActor::setReferencePose()
 {
-	for (int i = 0; i < bones.size(); i++) {
-		//Matrix4f bm = mesh.skeletonData.boneList[i].offsetMatrix.inverse();
-		Matrix4f tm = mesh.skeletonData.boneList[i].transformMatrix;
-		Vector3f pos, sca;
-		Quaternionf rot;
-		tm.decompose(pos, rot, sca);
-		bones[i]->setPosition(pos);
-		bones[i]->setRotation(rot);
-		bones[i]->setScale(sca);
-	}
+	skeleton.setReferencePose();
 }
 
 AnimationClip * SkeletonMeshActor::addAnimationClip(AnimationClipData& data)
@@ -79,13 +107,11 @@ AnimationClip * SkeletonMeshActor::addAnimationClip(AnimationClipData& data)
 	if (animationClipList.find(data.name) != animationClipList.end())
 		return NULL;
 	animationClipList.insert(pair<string, int>(data.name, animationClips.size()));
-	animationClips.emplace_back(new AnimationClip());
-	AnimationClip& anim = *(AnimationClip*)animationClips.back();
-	anim.setAnimationClipData(data);
-	for (auto b = bones.begin(), e = bones.end(); b != e; b++)
-		anim.setTargetTransform(**b);
-	anim.mapCurveChannel(mesh.morphName);
-	return &anim;
+	AnimationClip* anim = new AnimationClip();
+	animationClips.push_back(anim);
+	anim->setupContext({ &skeleton, &morphTargetRemapper });
+	anim->setAnimationClipData(&data);
+	return anim;
 }
 
 BlendSpaceAnimation * SkeletonMeshActor::addBlendSpaceAnimation(const string & name)
@@ -93,18 +119,17 @@ BlendSpaceAnimation * SkeletonMeshActor::addBlendSpaceAnimation(const string & n
 	if (animationClipList.find(name) != animationClipList.end())
 		return NULL;
 	animationClipList.insert(pair<string, int>(name, animationClips.size()));
-	animationClips.emplace_back(new BlendSpaceAnimation(mesh.skeletonData));
-	BlendSpaceAnimation& anim = *(BlendSpaceAnimation*)animationClips.back();
-	for (auto b = bones.begin(), e = bones.end(); b != e; b++)
-		anim.setTargetTransform(**b);
-	anim.mapCurveChannel(mesh.morphName);
-	return &anim;
+	BlendSpaceAnimation* anim = new BlendSpaceAnimation();
+	animationClips.push_back(anim);
+	anim->setupContext({ &skeleton, &morphTargetRemapper });
+	return anim;
 }
 
 bool SkeletonMeshActor::activeAnimationClip(int index)
 {
 	if (index < animationClips.size()) {
 		animationClip = animationClips[index];
+		animationClip->setupContext({ &skeleton, &morphTargetRemapper });
 		return true;
 	}
 	return false;
@@ -116,89 +141,139 @@ bool SkeletonMeshActor::activeAnimationClip(const string & name)
 	if (iter == animationClipList.end())
 		return false;
 	animationClip = animationClips[iter->second];
+	animationClip->setupContext({ &skeleton, &morphTargetRemapper });
 	return true;
+}
+
+void SkeletonMeshActor::inactiveAnimationClip()
+{
+	if (animationClip == NULL)
+		return;
+	animationClip->stop();
+	animationClip = NULL;
 }
 
 void SkeletonMeshActor::tick(float deltaTime)
 {
 	Actor::tick(deltaTime);
 	if (animationClip != NULL) {
-		if (animationClip->update(deltaTime)) {
-			map<unsigned int, float>* curveValue = animationClip->getCurveCurrentValue();
-			if (curveValue != NULL && !curveValue->empty()) {
-				for (auto b = curveValue->begin(),
-					e = curveValue->end(); b != e; b++)
-					skeletonMeshRender.setMorphWeight(b->first, b->second);
+		Enum<AnimationUpdateFlags> updateFlags = animationClip->update(deltaTime);
+		animationClip->getPose().applyPose(updateFlags);
+	}
+}
+
+void SkeletonMeshActor::afterTick()
+{
+	skeleton.solveConstraint(Time::delta());
+	Actor::afterTick();
+}
+
+void SkeletonMeshActor::setupPhysics(PhysicalWorld& physicalWorld)
+{
+	Actor::setupPhysics(physicalWorld);
+	/*for (auto b = skeletonPhysics.constraints.begin(), e = skeletonPhysics.constraints.end(); b != e; b++) {
+		if ((*b)->physicalWorld == NULL) {
+			(*b)->addToWorld(physicalWorld);
+		}
+	}*/
+}
+
+void SkeletonMeshActor::releasePhysics(PhysicalWorld& physicalWorld)
+{
+	Actor::releasePhysics(physicalWorld);
+	/*for (auto b = skeletonPhysics.constraints.begin(), e = skeletonPhysics.constraints.end(); b != e; b++) {
+		if ((*b)->physicalWorld != NULL) {
+			(*b)->removeFromWorld();
+		}
+	}*/
+}
+
+void SkeletonMeshActor::destroy(bool applyToChild)
+{
+	Actor::destroy(applyToChild);
+	skeleton.destroy(applyToChild);
+}
+
+void SkeletonMeshActor::prerender(RenderCommandList& cmdLst)
+{
+	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
+		Skeleton::SkeletonInfo& skeletonInfo = *skeleton.getSkeleton(i);
+		SkeletonMeshRender& render = *skeletonMeshRenders[i];
+		render.transformMat = transformMat;
+		for (int j = 0; j < render.transformMats.size(); j++) {
+			int index = skeletonInfo.boneRemapIndex[j];
+			if (index < 0) {
+				render.transformMats[j] = skeletonInfo.data->getBoneData(j)->transformMatrix;
+			}
+			else {
+				Skeleton::BoneInfo& boneInfo = *skeleton.getBone(index);
+				Matrix4f t = boneInfo.bone->getTransformMat();
+				render.transformMats[j] = t * boneInfo.data->offsetMatrix;
 			}
 		}
 	}
 }
 
-void SkeletonMeshActor::destroy(bool applyToChild)
-{
-	if (applyToChild)
-		Actor::destroy(applyToChild);
-	else {
-		tryDestroy = true;
-		for (auto b = bones.begin(), e = bones.end(); b != e; b++)
-			(*b)->destroy(applyToChild);
-	}
-}
-
-void SkeletonMeshActor::prerender()
-{
-	skeletonMeshRender.transformMat = transformMat;
-	for (int i = 0; i < mesh.skeletonData.boneList.size(); i++) {
-		Matrix4f t = bones[i]->getTransformMat();
-		skeletonMeshRender.transformMats[i] = t * mesh.skeletonData.boneList[i].offsetMatrix;
-	}
-	unsigned int transID = RenderCommandList::setMeshTransform(skeletonMeshRender.transformMats);
-	skeletonMeshRender.instanceID = transID;
-	for (int i = 0; i < mesh.meshParts.size(); i++) {
-		if (skeletonMeshRender.materials[i] == NULL)
-			continue;
-		RenderCommandList::setMeshPartTransform(&mesh.meshParts[i], skeletonMeshRender.materials[i], transID);
-		if (skeletonMeshRender.enableOutline && skeletonMeshRender.outlineMaterial != NULL)
-			RenderCommandList::setMeshPartTransform(&mesh.meshParts[i], skeletonMeshRender.outlineMaterial, transID);
-	}
-}
-
 Render * SkeletonMeshActor::getRender()
 {
-	return &skeletonMeshRender;
+	return skeletonMeshRenders.empty() ? NULL : skeletonMeshRenders.front();
 }
 
 unsigned int SkeletonMeshActor::getRenders(vector<Render*>& renders)
 {
-	renders.push_back(&skeletonMeshRender);
-	return 1;
+	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
+		renders.push_back(skeletonMeshRenders[i]);
+	}
+	return skeletonMeshRenders.size();
 }
 
 void SkeletonMeshActor::setHidden(bool value)
 {
-	skeletonMeshRender.hidden = value;
+	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
+		skeletonMeshRenders[i]->hidden = value;
+	}
 }
 
 bool SkeletonMeshActor::isHidden()
 {
-	return skeletonMeshRender.hidden;
+	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
+		if (!skeletonMeshRenders[i]->hidden)
+			return false;
+	}
+	return true;
 }
 
 Serializable * SkeletonMeshActor::instantiate(const SerializationInfo & from)
 {
-	SkeletonMesh* skm = NULL;
-	string meshPath;
-	if (from.get("skeletonMesh", meshPath)) {
-		skm = getAssetByPath<SkeletonMesh>(meshPath);
+	SkeletonMeshActor* sma = new SkeletonMeshActor(from.name);
+	const SerializationInfo* renderInfos = from.get("renders");
+	if (renderInfos == NULL) {
+		SkeletonMesh* skm = NULL;
+		string meshPath;
+		if (from.get("skeletonMesh", meshPath)) {
+			skm = getAssetByPath<SkeletonMesh>(meshPath);
+			if (skm != NULL) {
+				sma->addSkeletonMesh(*skm);
+			}
+		}
 	}
-	if (skm == NULL)
-		return NULL;
-	SkeletonMeshActor* sma = new SkeletonMeshActor(*skm, Material::defaultMaterial, from.name);
+	else {
+		for (int i = 0; i < renderInfos->sublists.size(); i++) {
+			string meshPath;
+			SkeletonMesh* skm = NULL;
+			if (renderInfos->sublists[i].get("skeletonMesh", meshPath)) {
+				skm = getAssetByPath<SkeletonMesh>(meshPath);
+				if (skm != NULL) {
+					sma->addSkeletonMesh(*skm);
+				}
+			}
+		}
+	}
 	const SerializationInfo* binfo = from.get("bones");
 	if (binfo != NULL) {
 		for (auto b = binfo->sublists.begin(), e = binfo->sublists.end(); b != e; b++) {
 			Bone* bone = sma->getBone(b->name);
-			ChildrenInstantiate(Object, from, bone);
+			ChildrenInstantiate(Object, *b, bone);
 		}
 	}
 	return sma;
@@ -208,69 +283,33 @@ bool SkeletonMeshActor::deserialize(const SerializationInfo & from)
 {
 	if (!::Actor::deserialize(from))
 		return false;
-	const SerializationInfo* minfo = from.get("materials");
-	if (minfo != NULL) {
-		if (minfo->type == "Array")
-			for (int i = 0; i < skeletonMeshRender.materials.size(); i++) {
-				const SerializationInfo* mi = minfo->get(i);
-				if (mi != NULL) {
-					string path;
-					if (!mi->get("path", path))
-						continue;
-					string pathType;
-					Material* mat = NULL;
-					if (path == "default")
-						mat = &Material::defaultMaterial;
-					else {
-						if (!mi->get("pathType", pathType))
-							continue;
-						if (pathType == "name") {
-							mat = getAsset<Material>("Material", path);
-						}
-						else if (pathType == "path") {
-							mat = getAssetByPath<Material>(path);
-						}
-					}
-					if (mat != NULL) {
-						skeletonMeshRender.setMaterial(i, *mat);
-					}
-					else {
-						Console::warn("SkeletonMeshActor: cannot find material '%s' when deserialization",
-							path.c_str());
-					}
-				}
-			}
-		else
-			for (int i = 0; i < minfo->sublists.size(); i++) {
-				const SerializationInfo& mi = minfo->sublists[i];
-				string path;
-				if (!mi.get("path", path))
-					continue;
-				string pathType;
-				Material* mat = NULL;
-				if (path == "default")
-					mat = &Material::defaultMaterial;
-				else {
-					if (!mi.get("pathType", pathType))
-						continue;
-					if (pathType == "name") {
-						mat = getAsset<Material>("Material", path);
-					}
-					else if (pathType == "path") {
-						mat = getAssetByPath<Material>(path);
-					}
-				}
-				if (mat != NULL) {
-					if (!skeletonMeshRender.setMaterial(mi.name, *mat, true))
-						Console::warn("SkeletonMeshActor: cannot find material slot '%s' when deserialization",
-							mi.name.c_str());
-				}
-				else {
-					Console::warn("SkeletonMeshActor: cannot find material '%s' when deserialization",
-						path.c_str());
-				}
-			}
+	
+	const SerializationInfo* renderInfos = from.get("renders");
+	if (renderInfos == NULL) {
+		if (!skeletonMeshRenders.empty()) {
+			skeletonMeshRenders[0]->deserialize(from);
+		}
 	}
+	else {
+		for (int i = 0; i < renderInfos->sublists.size(); i++) {
+			string meshPath;
+			SkeletonMesh* skm = NULL;
+			const SerializationInfo& renderInfo = renderInfos->sublists[i];
+			if (renderInfo.get("skeletonMesh", meshPath)) {
+				skm = getAssetByPath<SkeletonMesh>(meshPath);
+				if (skm != NULL) {
+					for (int j = 0; j < skeletonMeshRenders.size(); j++) {
+						SkeletonMeshRender* render = skeletonMeshRenders[j];
+						if (render->skeletonMesh == skm) {
+							render->deserialize(renderInfo);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	const SerializationInfo* binfo = from.get("bones");
 	if (binfo != NULL) {
 		for (auto b = binfo->sublists.begin(), e = binfo->sublists.end(); b != e; b++) {
@@ -279,6 +318,33 @@ bool SkeletonMeshActor::deserialize(const SerializationInfo & from)
 				bone->deserialize(*b);
 		}
 	}
+
+	const SerializationInfo* spinfo = from.get("skeletonPhysics");
+	if (spinfo != NULL) {
+		skeletonPhysics.info.deserialize(*spinfo);
+		skeletonPhysics.applySkeletonPhysicsInfo();
+	}
+
+	const SerializationInfo* boneConstraintsInfo = from.get("boneConstraints");
+	if (boneConstraintsInfo != NULL) {
+		for (auto b = boneConstraintsInfo->sublists.begin(), e = boneConstraintsInfo->sublists.end(); b != e; b++) {
+			const SerializationInfo& boneConstraintInfo = *b;
+			if (boneConstraintInfo.serialization == NULL)
+				continue;
+			Serializable* serializable = boneConstraintInfo.serialization->instantiate(boneConstraintInfo);
+			if (serializable == NULL)
+				continue;
+			BoneConstraint* constraint = dynamic_cast<BoneConstraint*>(serializable);
+			if (constraint == NULL) {
+				delete serializable;
+				continue;
+			}
+			skeleton.addBoneConstraint(constraint);
+			constraint->deserialize(boneConstraintInfo);
+			constraint->setup();
+		}
+	}
+
 	const SerializationInfo* animInfo = from.get("animationClips");
 	if (animInfo != NULL) {
 		for (int i = 0; i < animInfo->stringList.size(); i++) {
@@ -301,38 +367,35 @@ bool SkeletonMeshActor::serialize(SerializationInfo & to) {
 	to.add("children");
 	if (!Actor::serialize(to))
 		return false;
-	to.type = "SkeletonMeshActor";
-	string meshPath = AssetInfo::getPath(&skeletonMeshRender.skeletonMesh);
-	if (!meshPath.empty())
-		to.add("skeletonMesh", meshPath);
-	SerializationInfo& minfo = *to.add("materials");
-	minfo.type = "Array";
-	minfo.arrayType = "AssetSearch";
-	for (int i = 0; i < skeletonMeshRender.materials.size(); i++) {
-		SerializationInfo &info = *minfo.push();
-		string path;
-		string pathType;
-		if (skeletonMeshRender.materials[i] == &Material::defaultMaterial) {
-			path = "default";
-			pathType = "name";
-		}
-		else {
-			path = AssetInfo::getPath(skeletonMeshRender.materials[i]);
-			pathType = "path";
-		}
-		if (path.empty()) {
-			path = skeletonMeshRender.materials[i]->getShaderName();
-			pathType = "name";
-		}
-		info.add("path", path);
-		info.add("pathType", pathType);
+	
+	SerializationInfo& renderInfos = *to.add("renders");
+	renderInfos.type = "Array";
+	renderInfos.arrayType = "SkeletonMeshRender";
+	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
+		SerializationInfo& renderInfo = *renderInfos.push();
+		skeletonMeshRenders[i]->serialize(renderInfo);
 	}
+
+	SerializationInfo& spinfo = *to.add("skeletonPhysics");
+	SkeletonPhysics::SkeletonPhysicsInfo& _spinfo = skeletonPhysics.getSkeletonPhysicsInfo();
+	_spinfo.serialize(spinfo);
+
 	SerializationInfo& binfo = *to.add("bones");
 	binfo.type = "Skeleton";
-	for (auto b = bones.begin(), e = bones.end(); b != e; b++) {
-		SerializationInfo& info = *binfo.add((*b)->name);
-		(*b)->serialize(info);
+	for (auto b = skeleton.bones.begin(), e = skeleton.bones.end(); b != e; b++) {
+		SerializationInfo& info = *binfo.add((*b)->bone->name);
+		(*b)->bone->serialize(info);
 	}
+
+	SerializationInfo* boneConstraintsInfo = to.add("boneConstraints");
+	if (boneConstraintsInfo != NULL) {
+		boneConstraintsInfo->type = "BoneConstraints";
+		for (int i = 0; i < skeleton.constraints.size(); i++) {
+			SerializationInfo* boneConstraintInfo = boneConstraintsInfo->add(to_string(i));
+			skeleton.constraints[i]->serialize(*boneConstraintInfo);
+		}
+	}
+
 	SerializationInfo& animInfo = *to.add("animationClips");
 	animInfo.type = "Array";
 	animInfo.arrayType = "String";

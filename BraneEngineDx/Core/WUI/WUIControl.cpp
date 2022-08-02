@@ -202,15 +202,26 @@ bool WUIControl::doModel(bool showDefault)
 	return true;
 }
 
-bool WUIControl::doModelAsync()
+bool WUIControl::doModelAsync(void(*workFunc)(WUIControl& control, void* ptr), void* ptr)
 {
 	create();
 	isAsync = true;
 	show();
-	for (int i = 0; i < controls.size(); i++) {
-		WUIControl* con = controls[i];
-		con->doModelAsync();
+	if (asyncThread)
+		delete asyncThread;
+	asyncThread = new thread([&]() { workFunc(*this, ptr); closing = true; });
+	asyncThread->detach();
+	MSG msg = {};
+	while (!closing && WM_QUIT != msg.message) {
+		if (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else
+			onLoop();
 	}
+	close();
+	isAsync = false;
 	return true;
 }
 
@@ -270,39 +281,41 @@ LRESULT WUIControl::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	case WM_MOUSEHOVER:
-		if (onMouseHover(wParam, lParam))
-			return 0;
+	{
+		Unit2Di mpos;
+		mpos.x = LOWORD(lParam);
+		mpos.y = HIWORD(lParam);
+		onMouseHover(wParam, mpos);
 		break;
+	}
 	case WM_MOUSEMOVE:
-		if (onMouseMove())
-			return 0;
+	{
+		Unit2Di mpos;
+		mpos.x = LOWORD(lParam);
+		mpos.y = HIWORD(lParam);
+		onMouseMove(wParam, mpos);
 		break;
+	}
 	case WM_MOUSELEAVE:
-		if (onMouseLeave())
-			return 0;
+		onMouseLeave();
 		break;
 	case WM_LBUTTONDOWN:
-		if (onLBTNDown())
-			return 0;
+		onLBTNDown();
 		break;
 	case WM_LBUTTONUP:
-		if (onLBTNUp())
-			return 0;
+		onLBTNUp();
 		break;
 	case WM_LBUTTONDBLCLK:
-		if (onLBTNDBLClick())
-			return 0;
+		onLBTNDBLClick();
 		break;
 	case WM_CLOSE:
 		PostQuitMessage(0);
 		break;
 	case WM_COMMAND:
-		if (onCommand(wParam, lParam))
-			return 0;
+		onCommand(wParam, lParam);
 		break;
 	case WM_SYSCOMMAND:
-		if (onSysCommand(wParam, lParam))
-			return 0;
+		onSysCommand(wParam, lParam);
 		break;
 	}
 	return oldWndProc(hWnd, msg, wParam, lParam);
@@ -396,7 +409,7 @@ void WUIControl::onResizeExit()
 {
 }
 
-BOOL WUIControl::onMouseHover(WPARAM wParam, LPARAM lParam)
+BOOL WUIControl::onMouseHover(WPARAM wParam, const Unit2Di& pos)
 {
 	return 0;
 }
@@ -411,7 +424,7 @@ BOOL WUIControl::onLBTNUp()
 	return 0;
 }
 
-BOOL WUIControl::onMouseMove()
+BOOL WUIControl::onMouseMove(WPARAM wParam, const Unit2Di& pos)
 {
 	return 0;
 }

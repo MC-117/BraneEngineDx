@@ -17,7 +17,7 @@ public:
 class Box : public Geometry
 {
 public:
-	Serialize(Box);
+	Serialize(Box, Shape);
 
 	Box(Vector3f controlPointA, Vector3f controlPointB);
 	Box(float edgeLength = 1, Vector3f center = Vector3f(0, 0, 0));
@@ -31,7 +31,7 @@ public:
 class Sphere : public Geometry
 {
 public:
-	Serialize(Sphere);
+	Serialize(Sphere, Shape);
 
 	Sphere(Vector3f controlPointA, Vector3f controlPointB);
 	Sphere(float radius = 1, Vector3f center = Vector3f(0, 0, 0));
@@ -47,7 +47,7 @@ public:
 class Column : public Geometry
 {
 public:
-	Serialize(Column);
+	Serialize(Column, Shape);
 
 	Column(Vector3f controlPointA, Vector3f controlPointB);
 	Column(float radius = 1, float height = 1, Vector3f center = Vector3f(0, 0, 0));
@@ -64,7 +64,7 @@ public:
 class Cone : public Geometry
 {
 public:
-	Serialize(Cone);
+	Serialize(Cone, Shape);
 
 	Cone(Vector3f controlPointA, Vector3f controlPointB);
 	Cone(float radius = 1, float height = 1, Vector3f center = Vector3f(0, 0, 0));
@@ -78,7 +78,7 @@ public:
 class Capsule : public Geometry
 {
 public:
-	Serialize(Capsule);
+	Serialize(Capsule, Shape);
 
 	Capsule(Vector3f controlPointA, Vector3f controlPointB);
 	Capsule(float radius = 1, float halfLength = 2, Vector3f center = Vector3f(0, 0, 0));

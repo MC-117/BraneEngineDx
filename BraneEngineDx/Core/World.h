@@ -1,18 +1,20 @@
 #pragma once
 #ifndef _WORLD_H_
 #define _WORLD_H_
-#if ENABLE_PHYSICS
-#include "PhysicalWorld.h"
-#endif
 #include "Input.h"
+#include "IWorld.h"
 #include "Transform.h"
 #include "AudioSource.h"
 #include "Camera.h"
 #include "RenderPool.h"
 
-class World : public Transform {
+#if ENABLE_PHYSICS
+#include "Physics/PhysicalWorld.h"
+#endif
+
+class World : public Transform, public IWorld {
 public:
-	Serialize(World);
+	Serialize(World, Transform);
 #if ENABLE_PHYSICS
 	PhysicalWorld physicalWorld;
 	thread* renderThread = NULL;
@@ -26,7 +28,6 @@ public:
 
 	Camera defaultCamera;
 	RenderPool renderPool = RenderPool(defaultCamera);
-	Input input;
 
 	World();
 	virtual ~World();
@@ -35,11 +36,17 @@ public:
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
 	virtual void end();
-	void quit();
+	void quit(int code = 0);
+	void setPause(bool pause);
+	bool getPause() const;
 	bool willQuit();
+	bool willRestart();
 	string addObject(Object& object);
 	string addObject(Object* object);
 	void destroyObject(string name);
+
+	virtual Object* find(const string& name) const;
+	virtual Object* getObject() const;
 
 	void setGUIOnly(bool value);
 	bool getGUIOnly();
@@ -78,7 +85,9 @@ public:
 	virtual bool serialize(SerializationInfo& to);
 protected:
 	int64_t currentTime = 0, startTime = 0, lastTime = 0;
-	bool isQuit = false, guiOnly = false;
+	bool isQuit = false, guiOnly = false, pause = false;
+	bool doseWarmUp = false;
+	int quitCode = 0;
 	ObjectIterator iter = ObjectIterator(this);
 	Camera* camera = &defaultCamera;
 	vector<Object*> destroyList;

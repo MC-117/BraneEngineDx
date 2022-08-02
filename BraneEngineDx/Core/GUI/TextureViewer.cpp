@@ -14,10 +14,31 @@ void TextureViewer::setTexture(Texture & tex)
 void TextureViewer::onRenderWindow(GUIRenderInfo & info)
 {
 	if (texture != NULL) {
+		ImGui::Checkbox("Invert", &invert);
+		ImGui::SameLine();
+		if (ImGui::Button("CaptureToDisk")) {
+			Texture2D* texture2D = dynamic_cast<Texture2D*>(texture);
+			if (texture2D) {
+				FileDlgDesc desc;
+				desc.title = "Capture";
+				desc.filter = "png(*.png)|*.png|jpg(*.jpg)|*.jpg|tga(*.tga)|*.tga|bmp(*.bmp)|*.bmp";
+				desc.initDir = "";
+				desc.defFileExt = "png";
+				desc.save = true;
+
+				if (openFileDlg(desc)) {
+					texture2D->save(desc.filePath);
+				}
+			}
+		}
+		ImGui::SliderFloat("MipLevel", &mipLevel, 0, texture->getMipLevels());
+
 		float padding = 10;
 		ImVec2 pos = ImGui::GetWindowPos();
+		float cursorPosY = ImGui::GetCursorPosY();
+		pos.y += cursorPosY;
 		float width = ImGui::GetWindowWidth() - padding * 2;
-		float height = ImGui::GetWindowHeight() - padding * 2;
+		float height = ImGui::GetWindowHeight() - cursorPosY - padding * 2;
 		float tw = texture->getWidth();
 		float th = texture->getHeight();
 		float aspect = tw / th;
@@ -31,10 +52,21 @@ void TextureViewer::onRenderWindow(GUIRenderInfo & info)
 		}
 		float hpw = (width - tw) / 2.0f;
 		float hph = (height - th) / 2.0f;
+
 		auto list = ImGui::GetWindowDrawList();
 		unsigned long long id = texture->getTextureID();
+		ImVec2 uv_min, uv_max;
+		if (invert) {
+			uv_min = { 0, 1 };
+			uv_max = { 1, 0 };
+		}
+		else {
+			uv_min = { 0, 0 };
+			uv_max = { 1, 1 };
+		}
 		if (id != 0)
-			list->AddImage((ImTextureID)id, { pos.x + padding + hpw, pos.y + padding + hph }, { pos.x + padding + hpw + tw, pos.y + padding + hph + th }, { 0, 1 }, { 1, 0 });
+			list->AddImage({ id, mipLevel }, { pos.x + padding + hpw, pos.y + padding + hph },
+				{ pos.x + padding + hpw + tw, pos.y + padding + hph + th }, uv_min, uv_max);
 	}
 }
 

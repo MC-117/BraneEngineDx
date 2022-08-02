@@ -176,6 +176,11 @@ Vector2f Vector2f::UnitY()
 	return Vector2f(0, 1);
 }
 
+void Vector2f::setZero()
+{
+	XMFLOAT2::x = XMFLOAT2::y = 0;
+}
+
 float* Vector2f::data() const
 {
 	return (float*)this;
@@ -205,13 +210,19 @@ float Vector2f::norm() const
 
 Vector2f Vector2f::normalized() const
 {
-	float s = 1 / sqrt(x() * x() + y() * y());
+	float len = norm();
+	if (len == 0)
+		return *this;
+	float s = 1 / len;
 	return Vector2f(x() * s, y() * s);
 }
 
 Vector2f& Vector2f::normalize()
 {
-	float s = 1 / sqrt(x() * x() + y() * y());
+	float len = norm();
+	if (len == 0)
+		return *this;
+	float s = 1 / len;
 	x() *= s;
 	y() *= s;
 	return *this;
@@ -393,6 +404,11 @@ Vector2u Vector2u::UnitY()
 	return Vector2u(0, 1);
 }
 
+void Vector2u::setZero()
+{
+	_x = _y = 0;
+}
+
 unsigned int* Vector2u::data() const
 {
 	return (unsigned int*)this;
@@ -522,7 +538,7 @@ Vector3f::Vector3f(const Vector3f& v) : XMFLOAT3(v)
 
 Vector3f::Vector3f(const Block& b)
 {
-	if (b.rowNum != 3 || b.colNum != 1)
+	if (b.rowNum < 3 || b.colNum < 1)
 		throw runtime_error("incompatible Size");
 	x() = b(0, 0);
 	y() = b(1, 0);
@@ -593,6 +609,11 @@ Vector3f Vector3f::UnitZ()
 	return Vector3f(0, 0, 1);
 }
 
+void Vector3f::setZero()
+{
+	XMFLOAT3::x = XMFLOAT3::y = XMFLOAT3::z = 0;
+}
+
 float* Vector3f::data() const
 {
 	return (float*)this;
@@ -622,13 +643,19 @@ float Vector3f::norm() const
 
 Vector3f Vector3f::normalized() const
 {
-	float s = 1 / sqrt(x() * x() + y() * y() + z() * z());
+	float len = norm();
+	if (len == 0)
+		return *this;
+	float s = 1 / len;
 	return Vector3f(x() * s, y() * s, z() * s);
 }
 
 Vector3f& Vector3f::normalize()
 {
-	float s = 1 / sqrt(x() * x() + y() * y() + z() * z());
+	float len = norm();
+	if (len == 0)
+		return *this;
+	float s = 1 / len;
 	x() *= s;
 	y() *= s;
 	z() *= s;
@@ -825,6 +852,11 @@ Vector3u Vector3u::UnitZ()
 	return Vector3u(0, 0, 1);
 }
 
+void Vector3u::setZero()
+{
+	_x = _y = _z = 0;
+}
+
 unsigned int* Vector3u::data() const
 {
 	return (unsigned int*)this;
@@ -959,7 +991,7 @@ Vector4f::Vector4f(const Vector4f& v) : XMFLOAT4(v)
 
 Vector4f::Vector4f(const Block& b)
 {
-	if (b.rowNum != 4 || b.colNum != 1)
+	if (b.rowNum < 4 || b.colNum < 1)
 		throw runtime_error("incompatible Size");
 	x() = b(0, 0);
 	y() = b(1, 0);
@@ -1046,6 +1078,21 @@ Vector4f Vector4f::UnitW()
 	return Vector4f(0, 0, 0, 1);
 }
 
+Vector4f Vector4f::Plane(const Vector3f& n, const Vector3f& p)
+{
+	return Vector4f().setPlane(n, p);
+}
+
+Vector4f Vector4f::Plane(const Vector3f& p0, const Vector3f& p1, const Vector3f& p2)
+{
+	return Vector4f().setPlane(p0, p1, p2);
+}
+
+void Vector4f::setZero()
+{
+	XMFLOAT4::x = XMFLOAT4::y = XMFLOAT4::z = XMFLOAT4::w = 0;
+}
+
 float* Vector4f::data() const
 {
 	return (float*)this;
@@ -1068,13 +1115,19 @@ float Vector4f::norm() const
 
 Vector4f Vector4f::normalized() const
 {
-	float s = 1 / sqrt(x() * x() + y() * y() + z() * z() + w() * w());
+	float len = norm();
+	if (len == 0)
+		return *this;
+	float s = 1 / len;
 	return Vector4f(x() * s, y() * s, z() * s, w() * s);
 }
 
 Vector4f& Vector4f::normalize()
 {
-	float s = 1 / sqrt(x() * x() + y() * y() + z() * z() + w() * w());
+	float len = norm();
+	if (len == 0)
+		return *this;
+	float s = 1 / len;
 	x() *= s;
 	y() *= s;
 	z() *= s;
@@ -1085,6 +1138,26 @@ Vector4f& Vector4f::normalize()
 Vector4f Vector4f::cwiseProduct(const Vector4f& v) const
 {
 	return Vector4f(x() * v.x(), y() * v.y(), z() * v.z(), w() * v.w());
+}
+
+Vector4f& Vector4f::setPlane(const Vector3f& n, const Vector3f& p)
+{
+	Vector3f nn = n.normalized();
+	x() = nn.x();
+	y() = nn.y();
+	z() = nn.z();
+	w() = nn.dot(p);
+	return *this;
+}
+
+Vector4f& Vector4f::setPlane(const Vector3f& p0, const Vector3f& p1, const Vector3f& p2)
+{
+	Vector3f n = (p1 - p0).cross(p2 - p0).normalize();
+	x() = n.x();
+	y() = n.y();
+	z() = n.z();
+	w() = n.dot(p0);
+	return *this;
 }
 
 Block Vector4f::block(unsigned int rowStart, unsigned int colStart,
@@ -1290,6 +1363,11 @@ Vector4u Vector4u::UnitZ()
 Vector4u Vector4u::UnitW()
 {
 	return Vector4u(0, 0, 0, 1);
+}
+
+void Vector4u::setZero()
+{
+	_x = _y = _z = _w = 0;
 }
 
 unsigned int* Vector4u::data() const
@@ -1766,6 +1844,22 @@ Matrix4f& Matrix4f::operator*=(const Matrix4f& m)
 	return *this;
 }
 
+bool Matrix4f::operator==(const Matrix4f& m) const
+{
+	for (int i = 0; i < 16; i++)
+		if (data()[i] != m.data()[i])
+			return false;
+	return true;
+}
+
+bool Matrix4f::operator!=(const Matrix4f& m) const
+{
+	for (int i = 0; i < 16; i++)
+		if (data()[i] != m.data()[i])
+			return true;
+	return false;
+}
+
 Matrix4f::operator Block()
 {
 	return Block((float*)this, 4, 4, 0, 0, 4, 4);
@@ -1845,8 +1939,16 @@ Quaternionf& Quaternionf::setFromTwoVectors(const Vector3f& a, const Vector3f& b
 {
 	Vector3f va = a.normalized();
 	Vector3f vb = b.normalized();
+	float dot = va.dot(vb);
+	if (dot < -0.999999f) {
+		x() = 0;
+		y() = 0;
+		z() = 1;
+		w() = 0;
+		return *this;
+	}
 	Vector3f c = va.cross(vb);
-	float s = sqrt((1 + va.dot(vb)) * 2);
+	float s = sqrt((1 + dot) * 2);
 	c *= 1 / s;
 	memcpy(this, &c, sizeof(float) * 3);
 	w() = 0.5 * s;
@@ -1872,6 +1974,48 @@ Quaternionf Quaternionf::slerp(float t, const Quaternionf& q) const
 	dx::XMStoreFloat4(&out, dx::XMQuaternionSlerp(dx::XMLoadFloat4(this), dx::XMLoadFloat4(&q), t));
 	return out;
 }
+
+//Quaternionf Quaternionf::sslerp(float t, const Quaternionf& q) const
+//{
+//	Quaternionf start = normalized();
+//	Quaternionf end = q.normalized();
+//
+//	float dot = start.dot(end); //Finds the dot product
+//
+//	//We need the absolute value of dot
+//	if (dot < 0) {
+//		dot = dot * -1; //don't know if your start.dot does this.
+//	}
+//
+//	if (dot > 0.999995)
+//	{
+//		//Interpolate, this is where everything gets done
+//		(Vector4f&)start += (Vector4f&)((Vector4f&)end - (Vector4f&)start) * t;//This is just liniar interpolation
+//
+//		dot = Result.normalize();
+//	}
+//
+//	//Now if dot is negative it means it's taking the long path, we want it to take the shorter path
+//	//To do this we reverse one of the Quaternion so that the rotation goes to the other side
+//	else if (dot < 0)
+//	{
+//		end = end * -1;//Now it thinks the end is on the other side
+//		dot = dot * -1;
+//	}
+//
+//	//We want some kind of safty here because of floating point errors.
+//	dot = std::min(dot, 1.0f);
+//	dot = std::max(dot, -1.0f);
+//
+//	float StartToEndAngle = acos(dot);
+//	float StartToResultAngle = StartToEndAngle * t;
+//
+//	Quaternionf basis = end - start * dot;
+//	basis.normalize();
+//
+//	//Now we should get a smooth animation with it always taking the shortest path
+//	return start * cos(StartToResultAngle) + basis * sin(StartToResultAngle);
+//}
 
 Matrix3f Quaternionf::toRotationMatrix() const
 {

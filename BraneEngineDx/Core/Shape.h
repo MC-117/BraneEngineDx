@@ -16,7 +16,7 @@ enum ShapeComplexType
 
 class Shape : public Serializable {
 public:
-	Serialize(Shape);
+	Serialize(Shape,);
 
 	ShapeTopologyType renderMode = STT_Triangle;
 	Range<Vector3f> bound;

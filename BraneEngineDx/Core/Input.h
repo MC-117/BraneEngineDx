@@ -2,7 +2,7 @@
 #ifndef _INPUT_H_
 #define _INPUT_H_
 
-#include "Object.h"
+#include "Unit.h"
 #include <dinput.h>
 #define KEY_DOWN(VK_NONAME) ((GetAsyncKeyState(VK_NONAME) & 0x8000) ? 1:0)
 
@@ -16,15 +16,15 @@ enum InputStateEnum
 	Up, Down, OnPress, OnRelease
 };
 
-class Input : public Object
+class Input
 {
 public:
 	Input(string name = "Input");
 	virtual ~Input();
 
-	virtual void begin();
-	virtual void tick(float deltaTime);
-	virtual void end();
+	virtual void init();
+	virtual void update();
+	virtual void release();
 
 	void setHWND(HWND hwnd);
 	string getKeyName(char keyValue);
@@ -49,6 +49,7 @@ public:
 	void setCursorHidden(bool hidden);
 	void setPause(bool v = true);
 protected:
+	string name;
 	HWND _hwnd = 0;
 	bool pause = false;
 	LPDIRECTINPUT8 _directInput;
@@ -59,7 +60,7 @@ protected:
 	int mouseWheelVal = 0, cursorVisibilityCount = 0;
 	bool cursorHidden = false;
 	InputStateEnum keyState[255];
-	const const char* VKSet[255] = {
+	const char* VKSet[255] = {
 		"None",
 		"Left_Mouse",
 		"Right_Mouse",

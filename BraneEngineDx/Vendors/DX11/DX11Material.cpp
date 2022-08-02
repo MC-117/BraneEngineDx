@@ -17,6 +17,7 @@ void DX11Material::processBaseData()
 {
 	DX11ShaderProgram* program = DX11ShaderProgram::currentDx11Program;
 	program->drawInfo.passID = desc.currentPass;
+	program->drawInfo.passNum = desc.passNum;
 }
 
 void DX11Material::processScalarData()
@@ -44,6 +45,15 @@ void DX11Material::processColorData()
 		return;
 	for (auto b = desc.colorField.begin(), e = desc.colorField.end(); b != e; b++)
 		program->uploadAttribute(b->first, sizeof(Color), &b->second.val);
+}
+
+void DX11Material::processMatrixData()
+{
+	DX11ShaderProgram* program = DX11ShaderProgram::currentDx11Program;
+	if (program == NULL)
+		return;
+	for (auto b = desc.matrixField.begin(), e = desc.matrixField.end(); b != e; b++)
+		program->uploadAttribute(b->first, sizeof(Matrix4f), b->second.val.data());
 }
 
 void DX11Material::processTextureData()

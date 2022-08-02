@@ -1,7 +1,14 @@
 #include "Texture2D.h"
+#define STBI_WINDOWS_UTF8
+#define __STDC_LIB_EXT1__
 #define STB_IMAGE_IMPLEMENTATION
 #include "../ThirdParty/STB/stb_image.h"
-#include "Utility.h"
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include "../ThirdParty/STB/stb_image_resize.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../ThirdParty/STB/stb_image_write.h"
+#include "Utility/Utility.h"
+#include "Utility/EngineUtility.h"
 #include <fstream>
 #include "Asset.h"
 
@@ -75,7 +82,7 @@ Texture2D Texture2D::whiteRGBADefaultTex({ 255, 255, 255, 255 }, 2, 2, 4);
 Texture2D Texture2D::brdfLUTTex;
 Texture2D Texture2D::defaultLUTTex(Texture2DInfo(TW_Repeat, TW_Repeat, TF_Linear, TF_Linear), false);
 
-bool Texture2D::isLoad = false;
+bool Texture2D::isLoadDefaultTexture = false;
 
 Texture2D::Texture2D(bool isStandard) : isStandard(isStandard)
 {
@@ -135,6 +142,15 @@ Texture2D::Texture2D(unsigned int width, unsigned int height, unsigned int chann
 	desc.channel = channel;
 	desc.info = info;
 	this->isStandard = isStandard;
+	if (isStandard) {
+		switch (desc.info.internalType)
+		{
+		case TIT_RGBA:
+			desc.info.internalType = TIT_SRGBA;
+		default:
+			break;
+		}
+	}
 }
 
 Texture2D::~Texture2D()
@@ -170,6 +186,11 @@ int Texture2D::getChannel() const
 	return desc.channel;
 }
 
+int Texture2D::getMipLevels() const
+{
+	return max(1, desc.mipLevel);
+}
+
 unsigned long long Texture2D::getTextureID()
 {
 	newVendorTexture();
@@ -184,6 +205,12 @@ void* Texture2D::getVendorTexture() const
 void Texture2D::setAutoGenMip(bool value)
 {
 	desc.autoGenMip = value;
+}
+
+void Texture2D::setTextureInfo(const Texture2DInfo& info)
+{
+	desc.info = info;
+	desc.needUpdate = true;
 }
 
 bool Texture2D::assign(ITexture2D* venderTex)
@@ -234,12 +261,106 @@ unsigned int Texture2D::bind()
 	return vendorTexture->bind();
 }
 
+unsigned int Texture2D::bindBase(unsigned int index)
+{
+	newVendorTexture();
+	return vendorTexture->bindBase(index);
+}
+
 unsigned int Texture2D::resize(unsigned int width, unsigned int height)
 {
 	if (readOnly)
 		return 0;
-	newVendorTexture();
-	return vendorTexture->resize(width, height);
+	if (desc.data) {
+		if (desc.width != width || desc.height != height) {
+			unsigned char* outData = new unsigned char[width * height * desc.channel];
+			stbir_resize(desc.data, desc.width, desc.height, 0, outData, width, height, 0,
+				STBIR_TYPE_UINT8, desc.channel, STBIR_ALPHA_CHANNEL_NONE, 0,
+				STBIR_EDGE_CLAMP, STBIR_EDGE_CLAMP,
+				STBIR_FILTER_DEFAULT, STBIR_FILTER_DEFAULT,
+				isStandard ? STBIR_COLORSPACE_SRGB : STBIR_COLORSPACE_LINEAR, nullptr
+			);
+			delete[] desc.data;
+			desc.data = outData;
+			if (vendorTexture == NULL) {
+				desc.width = width;
+				desc.height = height;
+			}
+		}
+	}
+	else {
+		newVendorTexture();
+	}
+	return vendorTexture ? vendorTexture->resize(width, height) : 0;
+}
+
+bool Texture2D::copyFrom(const Texture2D& src, unsigned int width, unsigned int height)
+{
+	if (readOnly || src.desc.data == NULL)
+		return false;
+	if (width == 0)
+		width = src.desc.width;
+	if (height == 0)
+		height = src.desc.height;
+	int srcPixels = width * height * src.desc.channel;
+	if (desc.data) {
+		int pixels = desc.width * desc.height * desc.channel;
+		if (pixels != srcPixels) {
+			delete[] desc.data;
+			desc.data = new unsigned char[srcPixels];
+		}
+	}
+	else {
+		desc.data = new unsigned char[srcPixels];
+	}
+
+	if (src.desc.width != width || src.desc.height != height)
+		stbir_resize(src.desc.data, src.desc.width, src.desc.height, 0, desc.data, width, height, 0,
+			STBIR_TYPE_UINT8, src.desc.channel, STBIR_ALPHA_CHANNEL_NONE, 0,
+			STBIR_EDGE_CLAMP, STBIR_EDGE_CLAMP,
+			STBIR_FILTER_DEFAULT, STBIR_FILTER_DEFAULT,
+			isStandard ? STBIR_COLORSPACE_SRGB : STBIR_COLORSPACE_LINEAR, nullptr
+		);
+	else
+		memcpy(desc.data, src.desc.data, sizeof(unsigned char) * srcPixels);
+	desc.autoGenMip = src.desc.autoGenMip;
+	desc.width = width;
+	desc.height = height;
+	desc.channel = src.desc.channel;
+	desc.info = src.desc.info;
+	desc.bindType = src.desc.bindType;
+	desc.mipLevel = src.desc.mipLevel;
+	desc.needUpdate = true;
+}
+
+bool Texture2D::save(const string& file)
+{
+	unsigned char* outData = NULL;
+	if (desc.data) {
+		outData = desc.data;
+	}
+	else {
+		IVendor& vendor = VendorManager::getInstance().getVendor();
+		outData = new unsigned char[desc.width * desc.height * desc.channel];
+		vendor.readBackTexture2D(vendorTexture, outData);
+	}
+
+	string ext = getExtension(file);
+
+	bool ret = false;
+
+	if (!_stricmp(ext.c_str(), ".png"))
+		ret = stbi_write_png(file.c_str(), desc.width, desc.height, desc.channel, outData, 0);
+	else if (!_stricmp(ext.c_str(), ".jpg"))
+		ret = stbi_write_jpg(file.c_str(), desc.width, desc.height, desc.channel, outData, 0);
+	else if (!_stricmp(ext.c_str(), ".tga"))
+		ret = stbi_write_tga(file.c_str(), desc.width, desc.height, desc.channel, outData);
+	else if (!_stricmp(ext.c_str(), ".bmp"))
+		ret = stbi_write_bmp(file.c_str(), desc.width, desc.height, desc.channel, outData);
+
+	if (desc.data == NULL)
+		delete[] outData;
+	return ret;
 }
 
 unsigned char * Texture2D::getData()
@@ -287,7 +408,7 @@ bool Texture2D::getPixel(Color & color, unsigned int row, unsigned int col)
 
 bool Texture2D::loadDefaultTexture()
 {
-	if (isLoad)
+	if (isLoadDefaultTexture)
 		return true;
 	if (!brdfLUTTex.load("Engine/Textures/ibl_brdf_lut.png"))
 		return false;
@@ -299,7 +420,7 @@ bool Texture2D::loadDefaultTexture()
 	ass = new Asset(&Texture2DAssetInfo::assetInfo, "default_lut", "Engine/Textures/default_lut.png");
 	ass->asset[0] = &defaultLUTTex;
 	AssetManager::registAsset(*ass);
-	isLoad = true;
+	isLoadDefaultTexture = true;
 	return true;
 }
 

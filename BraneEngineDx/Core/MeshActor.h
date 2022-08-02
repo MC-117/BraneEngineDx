@@ -4,17 +4,21 @@
 
 #include "Actor.h"
 #include "MeshRender.h"
+#include "Physics/PhysicalWorld.h"
 
 class MeshActor : public Actor {
 public:
-	Serialize(MeshActor);
+	Serialize(MeshActor, Actor);
 
 	MeshRender meshRender;
 
-	MeshActor(Mesh& mesh, Material& material, string name = "MeshActor", const Vector3f& localScale = { 1, 1, 1 });
-	MeshActor(Mesh& mesh, Material& material, const PhysicalMaterial& physicalMaterial, Shape& collisionShape, string name = "MeshActor", ShapeComplexType complexType = SIMPLE, const Vector3f& localScale = { 1, 1, 1 });
+	MeshActor(const string& name = "MeshActor");
+	MeshActor(Mesh& mesh, Material& material, const string& name = "MeshActor", const Vector3f& localScale = { 1, 1, 1 });
+	MeshActor(Mesh& mesh, Material& material, const PhysicalMaterial& physicalMaterial, Shape& collisionShape, const string& name = "MeshActor", ShapeComplexType complexType = SIMPLE, const Vector3f& localScale = { 1, 1, 1 });
 
-	virtual void prerender();
+	virtual void setMesh(Mesh* mesh);
+
+	virtual void prerender(RenderCommandList& cmdLst);
 	virtual Render* getRender();
 	virtual unsigned int getRenders(vector<Render*>& renders);
 
@@ -24,8 +28,6 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
-protected:
-	Mesh &mesh;
 };
 
 #endif // !_MESHACTOR_H_

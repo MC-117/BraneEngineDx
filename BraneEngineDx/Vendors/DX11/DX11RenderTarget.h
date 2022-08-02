@@ -17,8 +17,8 @@ public:
 	static DX11RenderTarget* currentRenderTarget;
 	unsigned int dxFrameID = 0;
 	DX11Context& dxContext;
-	vector<ID3D11RenderTargetView*> dx11RTVs;
-	ID3D11DepthStencilView* dx11DSV = NULL;
+	vector<ComPtr<ID3D11RenderTargetView>> dx11RTVs;
+	ComPtr<ID3D11DepthStencilView> dx11DSV = NULL;
 	Texture2DDesc dx11DepthTexDesc;
 	DX11Texture2D* dx11DepthTex = NULL;
 
@@ -44,6 +44,7 @@ public:
 
 	virtual ITexture2D* getInternalDepthTexture();
 	virtual unsigned int bindFrame();
+	virtual void clearBind();
 	virtual void resize(unsigned int width, unsigned int height);
 	virtual void SetMultisampleFrame();
 

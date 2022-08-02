@@ -11,6 +11,7 @@ public:
 	virtual ~LoadingUI();
 
 	virtual void setText(const string& text);
+	virtual LRESULT WndProc(UINT msg, WPARAM wParam, LPARAM lParam);
 protected:
 	string imgPath;
 	HBITMAP img = NULL;

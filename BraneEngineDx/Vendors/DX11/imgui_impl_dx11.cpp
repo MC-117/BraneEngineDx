@@ -22,6 +22,7 @@
 
 #include "../../ThirdParty/ImGui/imgui.h"
 #include "imgui_impl_dx11.h"
+#include "../DXGI_Helper.h"
 
 // DirectX
 #include <stdio.h>
@@ -41,6 +42,7 @@ static ID3D10Blob*              g_pVertexShaderBlob = NULL;
 static ID3D11VertexShader*      g_pVertexShader = NULL;
 static ID3D11InputLayout*       g_pInputLayout = NULL;
 static ID3D11Buffer*            g_pVertexConstantBuffer = NULL;
+static ID3D11Buffer*            g_pPixelConstantBuffer = NULL;
 static ID3D10Blob*              g_pPixelShaderBlob = NULL;
 static ID3D11PixelShader*       g_pPixelShader = NULL;
 static ID3D11SamplerState*      g_pFontSampler = NULL;
@@ -53,6 +55,14 @@ static int                      g_VertexBufferSize = 5000, g_IndexBufferSize = 1
 struct VERTEX_CONSTANT_BUFFER
 {
     float   mvp[4][4];
+};
+
+struct PIXEL_CONSTANT_BUFFER
+{
+    float   mipLevel;
+    int     channels;
+    float   pad1;
+    float   pad2;
 };
 
 // Render function
@@ -154,7 +164,7 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
         UINT                        PSInstancesCount, VSInstancesCount;
         ID3D11ClassInstance*        PSInstances[256], *VSInstances[256];   // 256 is max according to PSSetShader documentation
         D3D11_PRIMITIVE_TOPOLOGY    PrimitiveTopology;
-        ID3D11Buffer*               IndexBuffer, *VertexBuffer, *VSConstantBuffer;
+        ID3D11Buffer*               IndexBuffer, *VertexBuffer, *VSConstantBuffer, *PSConstantBuffer;
         UINT                        IndexBufferOffset, VertexBufferStride, VertexBufferOffset;
         DXGI_FORMAT                 IndexBufferFormat;
         ID3D11InputLayout*          InputLayout;
@@ -172,6 +182,7 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
     ctx->PSGetShader(&old.PS, old.PSInstances, &old.PSInstancesCount);
     ctx->VSGetShader(&old.VS, old.VSInstances, &old.VSInstancesCount);
     ctx->VSGetConstantBuffers(0, 1, &old.VSConstantBuffer);
+    ctx->PSGetConstantBuffers(1, 1, &old.PSConstantBuffer);
     ctx->IAGetPrimitiveTopology(&old.PrimitiveTopology);
     ctx->IAGetIndexBuffer(&old.IndexBuffer, &old.IndexBufferFormat, &old.IndexBufferOffset);
     ctx->IAGetVertexBuffers(0, 1, &old.VertexBuffer, &old.VertexBufferStride, &old.VertexBufferOffset);
@@ -226,9 +237,23 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
                 const D3D11_RECT r = { (LONG)(pcmd->ClipRect.x - clip_off.x), (LONG)(pcmd->ClipRect.y - clip_off.y), (LONG)(pcmd->ClipRect.z - clip_off.x), (LONG)(pcmd->ClipRect.w - clip_off.y) };
                 ctx->RSSetScissorRects(1, &r);
 
+                ID3D11ShaderResourceView* texture_srv = (ID3D11ShaderResourceView*)(void*)pcmd->TextureId;
+                D3D11_SHADER_RESOURCE_VIEW_DESC desc;
+                texture_srv->GetDesc(&desc);
+
+                // Setup mipLevel into our constant buffer
+                {
+                    PIXEL_CONSTANT_BUFFER mipInfo = { pcmd->TextureId.mipLevel, GetNumChannelsOfDXGIFormat(desc.Format), 0, 0 };
+                    D3D11_MAPPED_SUBRESOURCE mapped_resource;
+                    if (ctx->Map(g_pPixelConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource) != S_OK)
+                        return;
+                    memcpy(mapped_resource.pData, &mipInfo, sizeof(mipInfo));
+                    ctx->Unmap(g_pPixelConstantBuffer, 0);
+                }
+
                 // Bind texture, Draw
-                ID3D11ShaderResourceView* texture_srv = (ID3D11ShaderResourceView*)pcmd->TextureId;
                 ctx->PSSetShaderResources(0, 1, &texture_srv);
+                ctx->PSSetConstantBuffers(1, 1, &g_pPixelConstantBuffer);
                 ctx->DrawIndexed(pcmd->ElemCount, idx_offset, vtx_offset);
             }
             idx_offset += pcmd->ElemCount;
@@ -248,6 +273,7 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
     for (UINT i = 0; i < old.PSInstancesCount; i++) if (old.PSInstances[i]) old.PSInstances[i]->Release();
     ctx->VSSetShader(old.VS, old.VSInstances, old.VSInstancesCount); if (old.VS) old.VS->Release();
     ctx->VSSetConstantBuffers(0, 1, &old.VSConstantBuffer); if (old.VSConstantBuffer) old.VSConstantBuffer->Release();
+    ctx->PSSetConstantBuffers(1, 1, &old.PSConstantBuffer); if (old.PSConstantBuffer) old.PSConstantBuffer->Release();
     for (UINT i = 0; i < old.VSInstancesCount; i++) if (old.VSInstances[i]) old.VSInstances[i]->Release();
     ctx->IASetPrimitiveTopology(old.PrimitiveTopology);
     ctx->IASetIndexBuffer(old.IndexBuffer, old.IndexBufferFormat, old.IndexBufferOffset); if (old.IndexBuffer) old.IndexBuffer->Release();
@@ -309,7 +335,7 @@ static void ImGui_ImplDX11_CreateFontsTexture()
         desc.MipLODBias = 0.f;
         desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
         desc.MinLOD = 0.f;
-        desc.MaxLOD = 0.f;
+        desc.MaxLOD = FLT_MAX;
         g_pd3dDevice->CreateSamplerState(&desc, &g_pFontSampler);
     }
 }
@@ -373,7 +399,7 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
         if (g_pd3dDevice->CreateInputLayout(local_layout, 3, g_pVertexShaderBlob->GetBufferPointer(), g_pVertexShaderBlob->GetBufferSize(), &g_pInputLayout) != S_OK)
             return false;
 
-        // Create the constant buffer
+        // Create the vs constant buffer
         {
             D3D11_BUFFER_DESC desc;
             desc.ByteWidth = sizeof(VERTEX_CONSTANT_BUFFER);
@@ -383,12 +409,30 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
             desc.MiscFlags = 0;
             g_pd3dDevice->CreateBuffer(&desc, NULL, &g_pVertexConstantBuffer);
         }
+
+        // Create the ps constant buffer
+        {
+            D3D11_BUFFER_DESC desc;
+            desc.ByteWidth = sizeof(PIXEL_CONSTANT_BUFFER);
+            desc.Usage = D3D11_USAGE_DYNAMIC;
+            desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+            desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+            desc.MiscFlags = 0;
+            g_pd3dDevice->CreateBuffer(&desc, NULL, &g_pPixelConstantBuffer);
+        }
     }
 
     // Create the pixel shader
     {
         static const char* pixelShader =
-            "struct PS_INPUT\
+            "cbuffer mipBuffer : register(b1) \
+            {\
+              float mipLevel; \
+              int   channels; \
+              float pad1; \
+              float pad2; \
+            };\
+            struct PS_INPUT\
             {\
             float4 pos : SV_POSITION;\
             float4 col : COLOR0;\
@@ -399,8 +443,14 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
             \
             float4 main(PS_INPUT input) : SV_Target\
             {\
-            float4 out_col = input.col * texture0.Sample(sampler0, input.uv); \
-            return out_col; \
+            float4 out_col = texture0.SampleLevel(sampler0, input.uv, mipLevel); \
+            if (channels == 1)\
+            {\
+                out_col.g = out_col.r;\
+                out_col.b = out_col.r;\
+                out_col.a = 1;\
+            }\
+            return out_col * input.col; \
             }";
 
         D3DCompile(pixelShader, strlen(pixelShader), NULL, NULL, NULL, "main", "ps_4_0", 0, 0, &g_pPixelShaderBlob, NULL);

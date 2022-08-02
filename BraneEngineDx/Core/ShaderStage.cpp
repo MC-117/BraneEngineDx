@@ -2,6 +2,8 @@
 #include "IVendor.h"
 #include "Console.h"
 #include <fstream>
+#include "Utility/EngineUtility.h"
+#include "ShaderCode/ShaderAdapterCompiler.h"
 
 ShaderStage::ShaderStage(ShaderStageType stageType, const Enum<ShaderFeature>& feature, const string & name)
 	: stageType(stageType), shaderFeature(feature), name(name)
@@ -86,10 +88,12 @@ unsigned int ShaderProgram::currentProgram = 0;
 
 ShaderProgram::ShaderProgram()
 {
+	ShaderManager::getInstance().registProgram(this);
 }
 
 ShaderProgram::ShaderProgram(ShaderStage & meshStage)
 {
+	ShaderManager::getInstance().registProgram(this);
 	setMeshStage(meshStage);
 }
 
@@ -97,6 +101,14 @@ ShaderProgram::~ShaderProgram()
 {
 	if (currentProgram == programId)
 		currentProgram = 0;
+	ShaderManager::getInstance().removeProgram(this);
+}
+
+bool ShaderProgram::isValid() const
+{
+	return isComputable() ||
+		(meshStageType == Vertex_Shader_Stage &&
+			shaderStages.find(Fragment_Shader_Stage) != shaderStages.end());
 }
 
 bool ShaderProgram::isComputable() const
@@ -118,6 +130,7 @@ bool ShaderProgram::addShaderStage(ShaderStage & stage)
 	auto iter = shaderStages.find(stage.getShaderStageType());
 	if (iter == shaderStages.end()) {
 		shaderStages.insert(make_pair(stage.getShaderStageType(), &stage));
+		ShaderManager::getInstance().linkProgram(&stage, this);
 		return true;
 	}
 	return false;
@@ -158,6 +171,133 @@ void ShaderProgram::memoryBarrier(unsigned int bitEnum)
 
 void ShaderProgram::uploadData()
 {
+}
+
+ShaderAdapter::ShaderAdapter(const string& name, const string& path, ShaderStageType stageType)
+	: name(name), path(path), stageType(stageType)
+{
+}
+
+ShaderStage* ShaderAdapter::getShaderStage(const Enum<ShaderFeature>& feature, bool autoFill)
+{
+	if (autoFill && stageType == Fragment_Shader_Stage && shaderStageVersions.size() == 1)
+		return shaderStageVersions.begin()->second;
+	auto iter = shaderStageVersions.find(feature);
+	if (iter != shaderStageVersions.end())
+		return iter->second;
+	else if (autoFill) {
+		iter = shaderStageVersions.find(Shader_Default);
+		if (iter != shaderStageVersions.end())
+			return iter->second;
+	}
+	return NULL;
+}
+
+ShaderStage* ShaderAdapter::addShaderStage(const Enum<ShaderFeature>& feature)
+{
+	auto iter = shaderStageVersions.find(feature);
+	if (iter == shaderStageVersions.end()) {
+		ShaderStage* stage = VendorManager::getInstance().getVendor().newShaderStage({ stageType, feature, name });
+		if (stage == NULL)
+			throw runtime_error("Invalid Vendor Implementation of ShaderStage");
+		shaderStageVersions.insert(make_pair(feature, stage));
+		return stage;
+	}
+	else
+		return iter->second;
+}
+
+void addSpace(string& str, unsigned int num)
+{
+	for (int s = 0; s < num; s++)
+		str += ' ';
+}
+
+string addLineNum(const string& code)
+{
+	string out;
+	unsigned int spaces = 0;
+	for (auto c : code) {
+		if (c == '\n')
+			spaces++;
+	}
+	spaces = log10(spaces) + 1;
+	unsigned int lines = 1;
+	addSpace(out, spaces - 1);
+	out += "1 ";
+	for (auto c : code) {
+		out += c;
+		if (c == '\n') {
+			lines++;
+			addSpace(out, spaces - log10(lines + 1));
+			out += to_string(lines) + ' ';
+		}
+	}
+	return out;
+}
+
+ShaderStage* ShaderAdapter::compileShaderStage(const Enum<ShaderFeature>& feature, const string& code)
+{
+	ShaderStage* stage = addShaderStage(feature);
+	//if (!stage->isValid()) {
+		string errorStr;
+		if (stage->compile(code, errorStr) == 0) {
+			const char* shaderTypeName = ShaderStage::enumShaderStageType(stageType);
+			Console::log("%s Shader\n%s", shaderTypeName, addLineNum(code).c_str());
+			Console::error("%s (%s Shader) compile failed:\n%s", name.c_str(), shaderTypeName, errorStr.c_str());
+		}
+	//}
+	return stage;
+}
+
+bool ShaderManager::Tag::operator<(const Tag& t) const
+{
+	if (path < t.path)
+		return true;
+	else if (path == t.path)
+		return stageType < t.stageType;
+	return false;
+}
+
+bool ShaderManager::ProgramStageLink::operator<(const ProgramStageLink& link) const
+{
+	if (stage < link.stage)
+		return true;
+	else if (stage == link.stage)
+		return program < link.program;
+	return false;
+}
+
+ShaderFile::ShaderFile(const string& path) : path(path)
+{
+	lastWriteTime = Time(chrono::duration_cast<chrono::steady_clock::duration>
+		(filesystem::last_write_time(path).time_since_epoch()));
+}
+
+bool ShaderFile::checkDirty() const
+{
+	if (!filesystem::exists(filesystem::u8path(path)))
+		return false;
+	Time newTime = Time(chrono::duration_cast<chrono::steady_clock::duration>
+		(filesystem::last_write_time(path).time_since_epoch()));
+	return newTime > lastWriteTime;
+}
+
+void ShaderFile::reset()
+{
+	adapters.clear();
+	includeFiles.clear();
+	lastWriteTime = Time(chrono::duration_cast<chrono::steady_clock::duration>
+		(filesystem::last_write_time(path).time_since_epoch()));
+}
+
+ShaderFile* ShaderManager::getShaderFile(const string& path)
+{
+	auto iter = shaderFiles.find(path);
+	if (iter == shaderFiles.end())
+		return NULL;
+	else
+		return iter->second;
 }
 
 ShaderAdapter * ShaderManager::addShaderAdapter(const string& name, const string & path, ShaderStageType stageType, const string& tagName)
@@ -204,114 +344,101 @@ ShaderStage * ShaderManager::compileShaderStage(ShaderStageType stageType, const
 	return adapter->compileShaderStage(feature, code);
 }
 
-bool ShaderManager::loadShaderAdapter(const string & path)
+bool ShaderManager::registProgram(ShaderProgram* program)
 {
-	ifstream f(path, ios::in);
-	if (!f)
+	if (program == NULL)
 		return false;
-	string clip, line, name, envPath, adapterName;
-	filesystem::path _path = path;
-	name = _path.filename().generic_u8string();
-	envPath = _path.parent_path().generic_u8string();
-	ShaderStageType stageType = None_Shader_Stage;
-	Enum<ShaderFeature> feature;
-	unordered_set<string> headFiles;
-	map<ShaderStageType, ShaderAdapter*> adapters;
-	auto getAdapter = [&adapters](ShaderStageType type)->ShaderAdapter* {
-		auto iter = adapters.find(type);
-		if (iter == adapters.end())
-			return NULL;
-		return iter->second;
-	};
-	bool successed = true;
-	while (1)
+	shaderPrograms.insert(program);
+	for each (auto b in program->shaderStages)
 	{
-		if (!getline(f, line)) {
-			if (stageType != None_Shader_Stage) {
-				ShaderAdapter* adapter = NULL;
-				adapter = getAdapter(stageType);
-				if (adapter == NULL) {
-					adapter = ShaderManager::getInstance().addShaderAdapter(name, path, stageType, adapterName);
-					if (adapter == NULL) {
-						successed = false;
-						break;
-					}
-					adapters.insert(make_pair(stageType, adapter));
-				}
-				adapter->compileShaderStage(feature, clip);
-			}
-			break;
-		}
-		if (line.empty())
+		linkProgram(b.second, program);
+	}
+	return true;
+}
+
+bool ShaderManager::removeProgram(ShaderProgram* program)
+{
+	if (program == NULL)
+		return false;
+	for each (auto b in program->shaderStages)
+	{
+		programStageLinks.erase({ b.second, program });
+	}
+	shaderPrograms.erase(program);
+	return true;
+}
+
+void ShaderManager::linkProgram(ShaderStage* stage, ShaderProgram* program)
+{
+	if (program == NULL && stage != NULL)
+		return;
+	programStageLinks.insert({ stage, program });
+}
+
+void ShaderManager::dirtyShaderFile(const string& path)
+{
+	auto iter = shaderFiles.find(path);
+	if (iter == shaderFiles.end())
+		return;
+
+	dirtyShaderFile(iter->second);
+}
+
+void ShaderManager::dirtyShaderFile(ShaderFile* file)
+{
+	if (file == NULL)
+		return;
+
+	processedDirtyShaderFiles.insert(file);
+	dirtyAdapters.insert(file->adapters.begin(), file->adapters.end());
+
+	for each (auto b in shaderFiles) {
+		if (processedDirtyShaderFiles.find(b.second) != processedDirtyShaderFiles.end())
 			continue;
-		size_t loc = line.find_first_of('#');
-		if (loc != string::npos) {
-			string ss = line.substr(loc + 1);
-			vector<string> s = split(line.substr(loc + 1), ' ');
-			if (s.size() == 0)
-				continue;
-			else if (s[0] == "adapter") {
-				if (s.size() > 2 && s[1] == "name") {
-					adapterName = s[2];
-				}
-			}
-			else {
-				ShaderStageType _stageType = ShaderStage::enumShaderStageType(s[0]);
-				if (_stageType == None_Shader_Stage) {
-					if (!readHeadFile(line, clip, envPath, headFiles)) {
-						successed = false;
-						break;
-					}
-					if (stageType == Fragment_Shader_Stage && s[0] == "version") {
-						clip += "layout(early_fragment_tests) in;\n";
-					}
-				}
-				else {
-					Enum<ShaderFeature> _feature = Shader_Default;
-					for (int i = 1; i < s.size(); i++)
-						if (s[i] == "custom")
-							_feature |= Shader_Custom;
-						else if (s[i] == "deferred")
-							_feature |= Shader_Deferred;
-						else if (s[i] == "postprocess")
-							_feature |= Shader_Postprocess;
-						else if (s[i] == "skeleton")
-							_feature |= Shader_Skeleton;
-						else if (s[i] == "morph")
-							_feature |= Shader_Morph;
-						else if (s[i] == "particle")
-							_feature |= Shader_Particle;
-						else if (s[i] == "modifier")
-							_feature |= Shader_Modifier;
-					if (stageType != None_Shader_Stage) {
-						ShaderAdapter* adapter = NULL;
-						adapter = getAdapter(stageType);
-						if (adapter == NULL) {
-							adapter = ShaderManager::getInstance().addShaderAdapter(name, path, stageType, adapterName);
-							if (adapter == NULL) {
-								successed = false;
-								break;
-							}
-							adapters.insert(make_pair(stageType, adapter));
-						}
-						adapter->compileShaderStage(feature, clip);
-						clip.clear();
-						headFiles.clear();
-					}
-					stageType = _stageType;
-					feature = _feature;
-				}
-			}
-		}
-		else {
-			if (!readHeadFile(line, clip, envPath, headFiles)) {
-				successed = false;
-				break;
-			}
+
+		if (b.second->includeFiles.find(file) != b.second->includeFiles.end()) {
+			processedDirtyShaderFiles.insert(b.second);
+			dirtyAdapters.insert(b.second->adapters.begin(), b.second->adapters.end());
 		}
 	}
-	f.close();
-	return successed;
+
+}
+
+void ShaderManager::refreshShader()
+{
+	for each (auto file in shaderFiles) {
+		if (file.second->checkDirty()) {
+			dirtyShaderFile(file.second);
+		}
+	}
+
+	unordered_set<string> dirtyShaderPath;
+
+	for each (auto adapter in dirtyAdapters) {
+		for each (auto iter in adapter->shaderStageVersions) {
+			auto range = programStageLinks.equal_range({ iter.second, 0 });
+			if (range.first == programStageLinks.end())
+				continue;
+			if (range.first == range.second) {
+				range.first->program->dirty = true;
+			}
+			else for (auto b = range.first; b != range.second; b++) {
+				b->program->dirty = true;
+			}
+		}
+		dirtyShaderPath.insert(adapter->path);
+	}
+
+	Console::log("Dirty %d shader adapters", dirtyAdapters.size());
+	Console::log("Dirty %d shader files", dirtyShaderPath.size());
+
+	for each (auto path in dirtyShaderPath) {
+		Console::log("Reload shader file '%s'", path.c_str());
+		ShaderAdapterCompiler::compile(path);
+	}
+
+	processedDirtyShaderFiles.clear();
+	dirtyAdapters.clear();
 }
 
 void ShaderManager::loadDefaultAdapter(const string& folder)
@@ -324,7 +451,7 @@ void ShaderManager::loadDefaultAdapter(const string& folder)
 			string name = p.path().filename().generic_string();
 			name = name.substr(0, name.size() - ext.size());
 			if (!_stricmp(ext.c_str(), ".shadapter")) {
-				if (ShaderManager::getInstance().loadShaderAdapter(path))
+				if (ShaderAdapterCompiler::compile(path))
 					Console::log("%s load", path.c_str());
 				else
 					Console::error("%s load failed", path.c_str());
@@ -337,90 +464,4 @@ ShaderManager & ShaderManager::getInstance()
 {
 	static ShaderManager manager;
 	return manager;
-}
-
-ShaderAdapter::ShaderAdapter(const string & name, const string & path, ShaderStageType stageType)
-	: name(name), path(path), stageType(stageType)
-{
-}
-
-ShaderStage * ShaderAdapter::getShaderStage(const Enum<ShaderFeature>& feature, bool autoFill)
-{
-	if (autoFill && shaderStageVersions.size() == 1)
-		return shaderStageVersions.begin()->second;
-	auto iter = shaderStageVersions.find(feature);
-	if (iter != shaderStageVersions.end())
-		return iter->second;
-	else if (autoFill) {
-		iter = shaderStageVersions.find(Shader_Default);
-		if (iter != shaderStageVersions.end())
-			return iter->second;
-	}
-	return NULL;
-}
-
-ShaderStage * ShaderAdapter::addShaderStage(const Enum<ShaderFeature> & feature)
-{
-	auto iter = shaderStageVersions.find(feature);
-	if (iter == shaderStageVersions.end()) {
-		ShaderStage* stage = VendorManager::getInstance().getVendor().newShaderStage({ stageType, feature, name });
-		if (stage == NULL)
-			throw runtime_error("Invalid Vendor Implementation of ShaderStage");
-		shaderStageVersions.insert(make_pair(feature, stage));
-		return stage;
-	}
-	else
-		return iter->second;
-}
-
-void addSpace(string& str, unsigned int num)
-{
-	for (int s = 0; s < num; s++)
-		str += ' ';
-}
-
-string addLineNum(const string& code)
-{
-	string out;
-	unsigned int spaces = 0;
-	for (auto c : code) {
-		if (c == '\n')
-			spaces++;
-	}
-	spaces = log10(spaces) + 1;
-	unsigned int lines = 1;
-	addSpace(out, spaces - 1);
-	out += "1 ";
-	for (auto c : code) {
-		out += c;
-		if (c == '\n') {
-			lines++;
-			addSpace(out, spaces - log10(lines + 1));
-			out += to_string(lines) + ' ';
-		}
-	}
-	return out;
-}
-
-ShaderStage * ShaderAdapter::compileShaderStage(const Enum<ShaderFeature>& feature, const string & code)
-{
-	ShaderStage* stage = addShaderStage(feature);
-	if (!stage->isValid()) {
-		string errorStr;
-		if (stage->compile(code, errorStr) == 0) {
-			const char* shaderTypeName = ShaderStage::enumShaderStageType(stageType);
-			Console::log("%s Shader\n%s", shaderTypeName, addLineNum(code).c_str());
-			Console::error("%s (%s Shader) compile failed:\n%s", name.c_str(), shaderTypeName, errorStr.c_str());
-		}
-	}
-	return stage;
-}
-
-bool ShaderManager::Tag::operator<(const Tag & t) const
-{
-	if (path < t.path)
-		return true;
-	else if (path == t.path)
-		return stageType < t.stageType;
-	return false;
 }

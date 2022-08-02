@@ -1,13 +1,17 @@
 #include "SSAOPass.h"
 #include "../Asset.h"
 #include "../Console.h"
+#include "../Camera.h"
+#include "../GUI/UIControl.h"
 
 SSAOPass::SSAOPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
 {
-	ssaoMap.setAutoGenMip(false);
+	passAMap.setAutoGenMip(false);
+	passBMap.setAutoGenMip(false);
 	screenMap.setAutoGenMip(false);
-	ssaoRenderTarget.addTexture("ssaoMap", ssaoMap);
+	passARenderTarget.addTexture("ssaoMap", passAMap);
+	passBRenderTarget.addTexture("ssaoMap", passBMap);
 	screenRenderTarget.addTexture("screenMap", screenMap);
 }
 
@@ -18,11 +22,13 @@ bool SSAOPass::mapMaterialParameter(RenderInfo & info)
 	if (material == NULL || resource == NULL ||
 		resource->screenTexture == NULL || resource->depthTexture == NULL)
 		return false;
-	Texture2D* ssaoKernal = getAssetByPath<Texture2D>("Engine/Textures/ssaoRand.png");
-	pScreenScale = material->getScaler("screenScale");
+	ssaoMapSlot = material->getTexture("ssaoMap");
+	if (ssaoMapSlot == NULL)
+		return false;
+	screenMapSlot = material->getTexture("screenMap");
+	if (screenMapSlot == NULL)
+		return false;
 	material->setTexture("depthMap", *resource->depthTexture);
-	if (ssaoKernal != NULL)
-		material->setTexture("ssaoKernalMap", *ssaoKernal);
 	return true;
 }
 
@@ -35,52 +41,111 @@ void SSAOPass::render(RenderInfo & info)
 		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-	Texture** pSsaoMap = material->getTexture("ssaoMap");
-	if (pSsaoMap == NULL)
-		return;
 	ShaderProgram* program = material->getShader()->getProgram(Shader_Postprocess);
 	if (program == NULL) {
 		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName());
 		return;
 	}
-	if (*pScreenScale > 0 && !program->isComputable()) {
-		Unit2Di ssaoSize = { size.x * *pScreenScale, size.y * *pScreenScale };
+	if (!program->isComputable()) {
+		Unit2Di ssaoSize = { size.x * screenScale, size.y * screenScale };
 		IVendor& vendor = VendorManager::getInstance().getVendor();
 
 		program->bind();
 		info.camera->bindCameraData();
 
-		ssaoRenderTarget.resize(ssaoSize.x, ssaoSize.y);
-		screenRenderTarget.resize(ssaoSize.x, ssaoSize.y);
-
-		ssaoRenderTarget.bindFrame();
+		// Pass 0 SSAO
+		*ssaoMapSlot = NULL;
+		*screenMapSlot = NULL;
+		passARenderTarget.bindFrame();
 
 		material->setPass(0);
 		material->processInstanceData();
 
 		vendor.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
+		vendor.setRenderPostState();
 		vendor.postProcessCall();
+
+		passARenderTarget.clearBind();
+
+		// Pass 1 BlurX
+		*ssaoMapSlot = &passAMap;
+		*screenMapSlot = NULL;
+		passBRenderTarget.bindFrame();
+
+		material->setPass(1);
+		material->processBaseData();
+		material->processTextureData();
+
+		vendor.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
+		vendor.setRenderPostState();
+		vendor.postProcessCall();
+
+		passBRenderTarget.clearBind();
+
+		// Pass 2 BlurY
+		*ssaoMapSlot = &passBMap;
+		*screenMapSlot = NULL;
+
+		passARenderTarget.bindFrame();
+
+		material->setPass(2);
+		material->processBaseData();
+		material->processTextureData();
+
+		vendor.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
+		vendor.setRenderPostState();
+		vendor.postProcessCall();
+
+		passARenderTarget.clearBind();
+
+		// Pass 3 Add
+		*ssaoMapSlot = &passAMap;
+		*screenMapSlot = resource->screenTexture;
 
 		screenRenderTarget.bindFrame();
 
-		material->setPass(1);
+		material->setPass(3);
+		material->processBaseData();
+		material->processTextureData();
 
-		*pSsaoMap = &ssaoMap;
-		material->processInstanceData();
-
-		vendor.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
+		vendor.setViewport(0, 0, size.x, size.y);
+		vendor.setRenderPostState();
 		vendor.postProcessCall();
 
-		ssaoRenderTarget.bindFrame();
+		screenRenderTarget.clearBind();
 
-		material->setPass(2);
-
-		*pSsaoMap = &screenMap;
-		material->processInstanceData();
-
-		vendor.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
-		vendor.postProcessCall();
-
-		resource->ssaoTexture = &ssaoMap;
+		resource->screenRenderTarget = &screenRenderTarget;
+		resource->screenTexture = &screenMap;
 	}
+}
+
+void SSAOPass::resize(const Unit2Di& size)
+{
+	PostProcessPass::resize(size);
+	passARenderTarget.resize(size.x * screenScale, size.y * screenScale);
+	passBRenderTarget.resize(size.x * screenScale, size.y * screenScale);
+	screenRenderTarget.resize(size.x, size.y);
+}
+
+void SSAOPass::onGUI(GUIRenderInfo& info)
+{
+	PostProcessPass::onGUI(info);
+	float scale = screenScale;
+	if (ImGui::InputFloat("ScreenScale", &scale)) {
+		setScreenScale(scale);
+	}
+}
+
+void SSAOPass::setScreenScale(float scale)
+{
+	if (screenScale != scale && scale > 0) {
+		screenScale = scale;
+		passARenderTarget.resize(size.x * screenScale, size.y * screenScale);
+		passBRenderTarget.resize(size.x * screenScale, size.y * screenScale);
+	}
+}
+
+float SSAOPass::getScreenScale()
+{
+	return screenScale;
 }

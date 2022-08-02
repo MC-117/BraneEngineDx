@@ -38,17 +38,17 @@ void WUIButton::setPressColor(const Color& color)
 
 Color WUIButton::getNormalColor() const
 {
-	return Color();
+	return normalColor;
 }
 
 Color WUIButton::getHoverColor() const
 {
-	return Color();
+	return hoverColor;
 }
 
 Color WUIButton::getPressColor() const
 {
-	return Color();
+	return pressColor;
 }
 
 void WUIButton::updateColor(const Color& color, bool force)
@@ -71,16 +71,19 @@ void WUIButton::onPaint(HDC hdc)
 	font.draw(hdc, text, crect, { 250, 250, 250 }, { 0, 0, 0, 0 }, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
 }
 
-BOOL WUIButton::onMouseHover(WPARAM wParam, LPARAM lParam)
+BOOL WUIButton::onMouseHover(WPARAM wParam, const Unit2Di& pos)
 {
+	WUIControl::onMouseHover(wParam, pos);
 	hover = true;
 	updateColor(hoverColor);
+	mousePos = pos;
 	onHoverEvent(*this);
 	return 0;
 }
 
-BOOL WUIButton::onMouseMove()
+BOOL WUIButton::onMouseMove(WPARAM wParam, const Unit2Di& pos)
 {
+	WUIControl::onMouseMove(wParam, pos);
 	if (!track) {
 		TRACKMOUSEEVENT t;
 		t.cbSize = sizeof(TRACKMOUSEEVENT);
@@ -90,11 +93,18 @@ BOOL WUIButton::onMouseMove()
 		TrackMouseEvent(&t);
 		track = true;
 	}
+
+	if (hover)
+		mouseDelta = pos - mousePos;
+	else
+		mouseDelta = { 0, 0 };
+	mousePos = pos;
 	return 0;
 }
 
 BOOL WUIButton::onMouseLeave()
 {
+	WUIControl::onMouseLeave();
 	track = false;
 	hover = false;
 	down = false;

@@ -1,8 +1,8 @@
 #include "Mesh.h"
-#include "Utility.h"
+#include "Utility/Utility.h"
 #include <fstream>
 #ifdef PHYSICS_USE_PHYSX
-#include "PhysicalWorld.h"
+#include "Physics/PhysicalWorld.h"
 #include <NvClothExt/ClothFabricCooker.h>
 #endif
 #include "Importer.h"
@@ -20,11 +20,13 @@ MeshPart::MeshPart(const MeshPart & part)
 	elementCount = part.elementCount;
 	mesh = part.mesh;
 	partIndex = part.partIndex;
+	bound = part.bound;
 }
 
 MeshPart::MeshPart(const MeshPartDesc& desc)
 {
 	meshData = desc.meshData;
+	vertexPerFace = desc.vertexPerFace;
 	vertexFirst = desc.vertexFirst;
 	vertexCount = desc.vertexCount;
 	elementFirst = desc.elementFirst;
@@ -38,9 +40,14 @@ MeshPart::MeshPart(MeshData * meshData, unsigned int vertexFirst, unsigned int v
 {
 }
 
+bool MeshPart::isValid()
+{
+	return meshData != NULL && meshData->isValid() && vertexCount != 0;
+}
+
 bool MeshPart::isSkeleton()
 {
-	return dynamic_cast<SkeletonMesh*>(mesh) != NULL;
+	return meshData->type == MeshType::MT_SkeletonMesh;
 }
 
 bool MeshPart::isMorph()
@@ -57,7 +64,7 @@ MeshPart MeshPart::clone() const
 	memcpy(part.vertex(0).data(), vertex(0).data(), sizeof(Vector3f) * vertexCount);
 	memcpy(part.normal(0).data(), normal(0).data(), sizeof(Vector3f) * vertexCount);
 	memcpy(part.uv(0).data(), uv(0).data(), sizeof(Vector2f) * vertexCount);
-	memcpy(part.element(0).data(), element(0).data(), sizeof(Vector3u) * elementCount);
+	memcpy(&part.element(0), &element(0), sizeof(unsigned int) * elementCount);
 	return part;
 }
 
@@ -69,7 +76,8 @@ Mesh::Mesh() : Shape::Shape()
 Mesh::Mesh(const Mesh & mesh)
 {
 	totalMeshPart = mesh.totalMeshPart;
-	meshPartNames = mesh.meshPartNames;
+	meshPartNameMap = mesh.meshPartNameMap;
+	partNames = mesh.partNames;
 	meshParts = mesh.meshParts;
 	vertCount = mesh.vertCount;
 	vertexPerFace = mesh.vertexPerFace;
@@ -107,8 +115,11 @@ Mesh::~Mesh()
 #if ENABLE_PHYSICS
 	if (collisionMesh)
 		collisionMesh->release();
-	if (fabricMesh)
-		fabricMesh->decRefCount();
+	for (int i = 0; i < fabricParts.size(); i++) {
+		PFabric* fabric = fabricParts[i];
+		if (fabric != NULL)
+			fabricParts[i]->decRefCount();
+	}
 #endif
 }
 
@@ -122,7 +133,8 @@ void Mesh::addMeshPart(const string& name, MeshPart & part)
 {
 	part.partIndex = meshParts.size();
 	part.mesh = this;
-	meshPartNames.insert(pair<string, int>(name, part.partIndex));
+	meshPartNameMap.insert(pair<string, int>(name, part.partIndex));
+	partNames.push_back(name);
 	meshParts.push_back(part);
 }
 
@@ -152,7 +164,8 @@ void Mesh::resize(int vertexPerFace, int faceCount, int vertexCount)
 
 void Mesh::clone(const Mesh & mesh)
 {
-	meshPartNames = mesh.meshPartNames;
+	meshPartNameMap = mesh.meshPartNameMap;
+	partNames = mesh.partNames;
 	meshParts = mesh.meshParts;
 	vertCount = mesh.vertCount;
 	vertexPerFace = mesh.vertexPerFace;
@@ -166,6 +179,66 @@ void Mesh::clone(const Mesh & mesh)
 		meshParts[i].vertexFirst += totalMeshPart.vertexFirst - mesh.totalMeshPart.vertexFirst;
 		meshParts[i].elementFirst += totalMeshPart.elementFirst - mesh.totalMeshPart.elementFirst;
 	}
+}
+
+bool Mesh::writeObjStream(ostream& os, const vector<int>& partIndex) const
+{
+	vector<int> offsets;
+	offsets.resize(partIndex.size());
+	int count = 0;
+	for (int index = 0; index < partIndex.size(); index++) {
+		int i = partIndex[index];
+		const SkeletonMeshPart& part = (const SkeletonMeshPart&)meshParts[i];
+		for (int v = 0; v < part.vertexCount; v++) {
+			string line = "v ";
+			Vector3f vec = part.vertex(v);
+			line += to_string(vec.x()) + " " + to_string(vec.y()) + " " + to_string(vec.z()) + "\n";
+			os.write(line.c_str(), line.length());
+		}
+		offsets[i] = count;
+		count += part.vertexCount;
+	}
+	for (int index = 0; index < partIndex.size(); index++) {
+		int i = partIndex[index];
+		const SkeletonMeshPart& part = (const SkeletonMeshPart&)meshParts[i];
+		for (int v = 0; v < part.vertexCount; v++) {
+			string line = "vt ";
+			Vector2f vec = part.uv(v);
+			line += to_string(vec.x()) + " " + to_string(vec.y()) + "\n";
+			os.write(line.c_str(), line.length());
+		}
+	}
+	for (int index = 0; index < partIndex.size(); index++) {
+		int i = partIndex[index];
+		const SkeletonMeshPart& part = (const SkeletonMeshPart&)meshParts[i];
+		for (int v = 0; v < part.vertexCount; v++) {
+			string line = "n ";
+			Vector3f vec = part.normal(v);
+			line += to_string(vec.x()) + " " + to_string(vec.y()) + " " + to_string(vec.z()) + "\n";
+			os.write(line.c_str(), line.length());
+		}
+	}
+	for (int index = 0; index < partIndex.size(); index++) {
+		int i = partIndex[index];
+		const SkeletonMeshPart& part = (const SkeletonMeshPart&)meshParts[i];
+		string line = "g part" + to_string(i) + "\n";
+		os.write(line.c_str(), line.length());
+		for (int e = 0; e < part.elementCount; e += part.vertexPerFace) {
+			string line = "f ";
+			unsigned int vec0 = part.element(e);
+			unsigned int vec1 = part.element(e + 1);
+			unsigned int vec2 = part.element(e + 2);
+			int offset = offsets[i];
+			vec0 += offset;
+			vec1 += offset;
+			vec2 += offset;
+			line += to_string(vec0) + "/" + to_string(vec0) + "/" + to_string(vec0) + " " +
+				to_string(vec1) + "/" + to_string(vec1) + "/" + to_string(vec1) + " " +
+				to_string(vec2) + "/" + to_string(vec2) + "/" + to_string(vec2) + "\n";
+			os.write(line.c_str(), line.length());
+		}
+	}
+	return true;
 }
 
 #if ENABLE_PHYSICS
@@ -203,7 +276,7 @@ CollisionShape * Mesh::generateComplexCollisionShape(const Vector3f& scale)
 	//	desc.points.data = totalMeshPart.vertex(0).data();
 
 	//	desc.triangles.count = totalMeshPart.elementCount;
-	//	desc.triangles.stride = sizeof(Matrix<unsigned int, 3, 1>);
+	//	desc.triangles.stride = sizeof(unsigned int);
 	//	desc.triangles.data = totalMeshPart.element(0).data();/*
 	//	bool res = PhysicalWorld::gCooking->validateTriangleMesh(desc);
 	//	if (!res)
@@ -237,36 +310,14 @@ CollisionShape * Mesh::generateComplexCollisionShape(const Vector3f& scale)
 #endif
 }
 
-PFabric * Mesh::generateCloth()
-{
-	if (fabricMesh == NULL) {
-		nv::cloth::ClothMeshDesc meshDesc;
-		meshDesc.setToDefault();
-		meshDesc.points.count = totalMeshPart.vertexCount;
-		meshDesc.points.stride = sizeof(Vector3f);
-		meshDesc.points.data = totalMeshPart.vertex(0).data();
-
-		meshDesc.triangles.count = totalMeshPart.elementCount;
-		meshDesc.triangles.stride = sizeof(Matrix<unsigned int, 3, 1>);
-		meshDesc.triangles.data = totalMeshPart.element(0).data();
-
-		nv::cloth::Vector<int32_t>::Type phaseTypeInfo;
-		fabricMesh = NvClothCookFabricFromMesh(PhysicalWorld::gNvClothFactory, meshDesc, { 0.0f, 0.0f, 1.0f }, &phaseTypeInfo);
-	}
-	return fabricMesh;
-}
-
 PFabric * Mesh::generateCloth(unsigned int partIndex)
 {
 	if (partIndex >= meshParts.size())
 		return NULL;
-	PFabric** fabricMeshPart;
-	auto iter = fabricMeshParts.find(partIndex);
-	if (iter == fabricMeshParts.end())
-		fabricMeshPart = &fabricMeshParts.insert(make_pair((unsigned long long)partIndex, (PFabric*)NULL)).first->second;
-	else
-		fabricMeshPart = &iter->second;
-	if (*fabricMeshPart == NULL) {
+	if (fabricParts.size() != meshParts.size())
+		fabricParts.resize(meshParts.size(), NULL);
+	PFabric*& fabricMeshPart = fabricParts[partIndex];
+	if (fabricMeshPart == NULL) {
 		MeshPart& meshPart = meshParts[partIndex];
 		nv::cloth::ClothMeshDesc meshDesc;
 		meshDesc.setToDefault();
@@ -275,88 +326,29 @@ PFabric * Mesh::generateCloth(unsigned int partIndex)
 		meshDesc.points.data = meshPart.vertex(0).data();
 
 		meshDesc.triangles.count = meshPart.elementCount;
-		meshDesc.triangles.stride = sizeof(Matrix<unsigned int, 3, 1>);
-		meshDesc.triangles.data = meshPart.element(0).data();
+		meshDesc.triangles.stride = sizeof(unsigned int);
+		meshDesc.triangles.data = &meshPart.element(0);
 
 		nv::cloth::Vector<int32_t>::Type phaseTypeInfo;
-		*fabricMeshPart = NvClothCookFabricFromMesh(PhysicalWorld::gNvClothFactory, meshDesc, { 0.0f, 0.0f, 1.0f }, &phaseTypeInfo);
+		fabricMeshPart = NvClothCookFabricFromMesh(PhysicalWorld::gNvClothFactory, meshDesc, { 0.0f, 0.0f, 1.0f }, &phaseTypeInfo);
 	}
-	return *fabricMeshPart;
-}
-
-PFabric * Mesh::generateCloth(const vector<unsigned int>& partIndexs)
-{
-	PFabric** fabricMeshPart;
-	unsigned long long partIndex = meshPartIdHash(partIndexs);
-	auto iter = fabricMeshParts.find(partIndex);
-	if (iter == fabricMeshParts.end())
-		fabricMeshPart = &fabricMeshParts.insert(make_pair(partIndex, (PFabric*)NULL)).first->second;
-	else
-		fabricMeshPart = &iter->second;
-
-	if (*fabricMeshPart == NULL) {
-		vector<Vector3f> verts;
-		vector<Matrix<unsigned int, 3, 1>> elements;
-
-		unsigned int vertCount = 0, elementCount = 0;
-		for (int i = 0; i < partIndexs.size(); i++) {
-			if (partIndexs[i] < meshParts.size()) {
-				vertCount += meshParts[partIndexs[i]].vertexCount;
-				elementCount += meshParts[partIndexs[i]].elementCount;
-			}
-		}
-		verts.resize(vertCount); elements.resize(elementCount);
-		vertCount = 0; elementCount = 0;
-		for (int i = 0; i < partIndexs.size(); i++) {
-			if (partIndexs[i] < meshParts.size()) {
-				MeshPart& meshPart = meshParts[partIndexs[i]];
-				memcpy(verts[vertCount].data(), meshPart.vertex(0).data(), sizeof(Vector3f) * meshPart.vertexCount);
-				memcpy(elements[elementCount].data(), meshPart.element(0).data(), sizeof(Matrix<unsigned int, 3, 1>) * meshPart.elementCount);
-				vertCount += meshPart.vertexCount;
-				elementCount += meshPart.elementCount;
-			}
-		}
-
-		nv::cloth::ClothMeshDesc meshDesc;
-		meshDesc.setToDefault();
-		meshDesc.points.count = vertCount;
-		meshDesc.points.stride = sizeof(Vector3f);
-		meshDesc.points.data = verts.data()->data();
-
-		meshDesc.triangles.count = elementCount;
-		meshDesc.triangles.stride = sizeof(Matrix<unsigned int, 3, 1>);
-		meshDesc.triangles.data = elements.data()->data();
-
-		nv::cloth::Vector<int32_t>::Type phaseTypeInfo;
-		*fabricMeshPart = NvClothCookFabricFromMesh(PhysicalWorld::gNvClothFactory, meshDesc, { 0.0f, 0.0f, 1.0f }, &phaseTypeInfo);
-	}
-	return *fabricMeshPart;
+	return fabricMeshPart;
 }
 #endif
 
 Mesh & Mesh::operator=(Mesh & mesh)
 {
 	totalMeshPart = mesh.totalMeshPart;
-	meshPartNames = mesh.meshPartNames;
+	meshPartNameMap = mesh.meshPartNameMap;
 	meshParts = mesh.meshParts;
 	vertCount = mesh.vertCount;
 	vertexPerFace = mesh.vertexPerFace;
 	faceCount = mesh.faceCount;
 	bound = mesh.bound;
 	renderMode = mesh.renderMode;
+#if ENABLE_PHYSICS
+	collisionMesh = mesh.collisionMesh;
+	fabricParts = mesh.fabricParts;
+#endif
 	return *this;
 }
-
-#if ENABLE_PHYSICS
-unsigned long long Mesh::meshPartIdHash(const vector<unsigned int>& partIndexs)
-{
-	vector<unsigned int> indexs = partIndexs;
-	sort(indexs.begin(), indexs.end());
-	unsigned long long hash = 0, factor = 1;
-	for (int i = 0; i < indexs.size(); i++) {
-		hash += indexs[i] * factor;
-		factor *= 10;
-	}
-	return hash;
-}
-#endif

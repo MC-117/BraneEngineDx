@@ -8,11 +8,11 @@
 class PostProcessingCamera : public Camera
 {
 public:
-	Serialize(PostProcessingCamera);
+	Serialize(PostProcessingCamera, Camera);
 
 	bool autoDof = false;
 	PostProcessCameraRender postProcessCameraRender;
-	Texture2D texture = Texture2D(size.x, size.y, 4);
+	Texture2D texture = Texture2D(size.x, size.y, 4, true, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
 	RenderTarget renderTarget = RenderTarget(size.x, size.y, 4, true);
 	PostProcessingCamera(string name = "PostProcessingCamera");
 	PostProcessingCamera(Material& material, string name = "PostProcessingCamera");

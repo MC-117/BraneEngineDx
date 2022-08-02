@@ -75,6 +75,8 @@ struct Vector2f : protected DirectX::XMFLOAT2
 	static Vector2f UnitX();
 	static Vector2f UnitY();
 
+	void setZero();
+
 	float* data() const;
 
 	float dot(const Vector2f& v) const;
@@ -137,6 +139,8 @@ public:
 	static Vector2u UnitX();
 	static Vector2u UnitY();
 
+	void setZero();
+
 	unsigned int* data() const;
 
 	float dot(const Vector2u& v) const;
@@ -192,6 +196,8 @@ struct Vector3f : protected DirectX::XMFLOAT3
 	static Vector3f UnitX();
 	static Vector3f UnitY();
 	static Vector3f UnitZ();
+
+	void setZero();
 
 	float* data() const;
 
@@ -259,6 +265,8 @@ public:
 	static Vector3u UnitY();
 	static Vector3u UnitZ();
 
+	void setZero();
+
 	unsigned int* data() const;
 
 	float dot(const Vector3u& v) const;
@@ -318,6 +326,10 @@ struct Vector4f : protected DirectX::XMFLOAT4
 	static Vector4f UnitY();
 	static Vector4f UnitZ();
 	static Vector4f UnitW();
+	static Vector4f Plane(const Vector3f& n, const Vector3f& p);
+	static Vector4f Plane(const Vector3f& p0, const Vector3f& p1, const Vector3f& p2);
+
+	void setZero();
 
 	float* data() const;
 
@@ -328,6 +340,8 @@ struct Vector4f : protected DirectX::XMFLOAT4
 	Vector4f& normalize();
 	
 	Vector4f cwiseProduct(const Vector4f& v) const;
+	Vector4f& setPlane(const Vector3f& n, const Vector3f& p);
+	Vector4f& setPlane(const Vector3f& p0, const Vector3f& p1, const Vector3f& p2);
 
 	Block block(unsigned int rowStart, unsigned int colStart,
 		unsigned int rowNum, unsigned int colNum);
@@ -387,6 +401,8 @@ public:
 	static Vector4u UnitY();
 	static Vector4u UnitZ();
 	static Vector4u UnitW();
+
+	void setZero();
 
 	unsigned int* data() const;
 
@@ -498,6 +514,9 @@ struct Matrix4f : protected DirectX::XMFLOAT4X4
 	Vector4f operator*(const Vector4f& v) const;
 	Matrix4f operator*(const Matrix4f& m) const;
 	Matrix4f& operator*=(const Matrix4f& m);
+
+	bool operator==(const Matrix4f& m) const;
+	bool operator!=(const Matrix4f& m) const;
 
 	operator Block();
 	operator Block() const;

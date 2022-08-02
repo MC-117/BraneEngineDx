@@ -4,30 +4,17 @@
 
 #include "Object.h"
 #include "Shape.h"
-
-enum PhysicalType
-{
-	STATIC, DYNAMIC, NOCOLLISIOIN
-};
-
-struct PhysicalMaterial
-{
-	float mass;
-	PhysicalType physicalType;
-
-	PhysicalMaterial(float mass = 0, PhysicalType physicalType = STATIC)
-		: mass(mass), physicalType(physicalType) { }
-};
+#include "Physics/PhysicalMaterial.h"
+#include "Physics/ContactInfo.h"
 
 #if ENABLE_PHYSICS
-struct ContactInfo;
 class RigidBody;
 #endif
 
 class Transform : public Object
 {
 public:
-	Serialize(Transform);
+	Serialize(Transform, Object);
 
 	enum AttachRuleEnum
 	{
@@ -57,8 +44,11 @@ public:
 
 #if ENABLE_PHYSICS
 	RigidBody* rigidBody = NULL;
-	virtual void updataRigidBody(Shape* shape = NULL, ShapeComplexType complexType = SIMPLE, const PhysicalMaterial& physicalMaterial = PhysicalMaterial());
-	virtual void* getPhysicalBody();
+	vector<PhysicalConstraint*> constraints;
+	virtual void updataRigidBody(const PhysicalMaterial& physicalMaterial = PhysicalMaterial());
+	virtual void addConstraint(PhysicalConstraint* constraint);
+	virtual PhysicalBody* getPhysicalBody();
+	virtual PhysicalConstraint* getPhysicalConstraint(int index);
 	virtual void setupPhysics(PhysicalWorld& physicalWorld);
 	virtual void releasePhysics(PhysicalWorld& physicalWorld);
 	virtual void collisionHappened(const ContactInfo& info);
@@ -93,6 +83,11 @@ public:
 
 	virtual void setParent(Object& parent);
 
+	void apply(const PTransform& tran);
+	PTransform getWorldTransform();
+
+	operator PTransform() const;
+
 	Matrix4f& getTransformMat();
 
 	static Serializable* instantiate(const SerializationInfo& from);
@@ -102,19 +97,16 @@ protected:
 	enum UpdateState {
 		None = 0, Pos = 1, Sca = 2, Rot = 4
 	} updateState = None;
+
+	enum struct SetupFlags {
+		None = 0, Transform = 1, Physics = 2, All = 3
+	};
+	Enum<SetupFlags> setupFlags = SetupFlags::All;
 	Matrix4f transformMat = Matrix4f::Identity();
 
+	Transform* getParentTransform();
 	void updateTransform();
 	void invalidate(UpdateState state);
 };
 
 #endif // !_TRANSFORM_H_
-
-struct ContactInfo {
-	string objectName;
-	Vector3f location;
-	Vector3f normal;
-	Vector3f impact;
-	Transform* otherObject = NULL;
-	void* physicalObject = NULL;
-};

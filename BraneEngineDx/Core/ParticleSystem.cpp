@@ -32,7 +32,7 @@ void ParticleSystem::tick(float deltaTime)
 	this->deltaTime = deltaTime;
 }
 
-void ParticleSystem::prerender()
+void ParticleSystem::prerender(RenderCommandList& cmdLst)
 {
 	particleRender.update(deltaTime, getPosition(WORLD), transformMat);
 	if (autoDestroy && particleRender.isOver())
@@ -78,7 +78,6 @@ bool ParticleSystem::serialize(SerializationInfo & to)
 {
 	if (!Actor::serialize(to))
 		return false;
-	to.type = "ParticleSystem";
 	SerializationInfo* pesI = to.add("emitters");
 	if (pesI != NULL) {
 		pesI->type = "Array";

@@ -8,20 +8,29 @@
 class MeshRender : public Render
 {
 public:
-	Mesh& mesh;
-	bool enableOutline = false;
-	Material* outlineMaterial = NULL;
+	Mesh* mesh;
+	bool frustumCulling = true;
 	vector<Material*> materials;
+	vector<Material*> outlineMaterials;
+	vector<bool> meshPartsEnable;
+	vector<bool> outlineEnable;
 
+	MeshRender();
 	MeshRender(Mesh& mesh, Material& material);
 	virtual ~MeshRender();
 
+	virtual void setMesh(Mesh* mesh);
 	virtual void setBaseColor(Color color);
 	virtual Color getBaseColor();
 	virtual Material* getMaterial(const string& name);
 	virtual pair<string, Material*> getMaterial(int index);
+	virtual bool getPartEnable(const string& name);
+	virtual bool getPartEnable(int index);
 	virtual bool setMaterial(const string& name, Material& material, bool all = false);
 	virtual bool setMaterial(int index, Material& material);
+	virtual bool setPartEnable(const string& name, bool enable, bool all = false);
+	virtual bool setPartEnable(int index, bool enable);
+
 	virtual void fillMaterialsByDefault();
 
 	virtual void preRender();
@@ -30,8 +39,9 @@ public:
 	virtual IRendering::RenderType getRenderType() const;
 	virtual Shape* getShape() const;
 	virtual Material* getMaterial(unsigned int index = 0);
+	virtual bool getMaterialEnable(unsigned int index = 0);
 	virtual Shader* getShader() const;
-	virtual void setupRenderResource();
+	virtual int getRenderResource(vector<RenderResource>& resources);
 protected:
 	virtual void remapMaterial();
 };

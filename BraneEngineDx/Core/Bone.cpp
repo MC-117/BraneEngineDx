@@ -1,6 +1,7 @@
 #include "Bone.h"
 #include "Importer.h"
 #include "Camera.h"
+#include "Console.h"
 
 SerializeInstance(Bone);
 
@@ -15,25 +16,28 @@ Bone::Bone(const string & name) : Actor(name),
 	coneMeshRender(coneMesh, outLineMaterial)
 {
 	loadDefaultResource();
+	setupFlags = SetupFlags::Transform;
 	sphereMeshRender.canCastShadow = false;
 	coneMeshRender.canCastShadow = false;
 	sphereMeshRender.hidden = true;
 	coneMeshRender.hidden = true;
 }
 
-void Bone::prerender()
+void Bone::prerender(RenderCommandList& cmdLst)
 {
-	Actor::prerender();
+	Actor::prerender(cmdLst);
 	if (sphereMeshRender.hidden && coneMeshRender.hidden)
 		return;
+	sphereMeshRender.customTransformSubmit = true;
+	coneMeshRender.customTransformSubmit = true;
 	Matrix4f _transformMat = transformMat;
 	_transformMat(0, 0) /= scale.x();
 	_transformMat(1, 1) /= scale.y();
 	_transformMat(2, 2) /= scale.z();
-	unsigned int transID = RenderCommandList::setMeshTransform(_transformMat);
+	unsigned int transID = cmdLst.setMeshTransform(_transformMat);
 	sphereMeshRender.instanceID = transID;
 	for (int i = 0; i < sphereMesh.meshParts.size(); i++)
-		RenderCommandList::setMeshPartTransform(&sphereMesh.meshParts[i], sphereMeshRender.materials[i], transID);
+		cmdLst.setMeshPartTransform(&sphereMesh.meshParts[i], sphereMeshRender.materials[i], transID);
 	for (int i = 0; i < children.size(); i++) {
 		Bone* cb = dynamic_cast<Bone*>(children[i]);
 		if (cb != NULL) {
@@ -43,10 +47,10 @@ void Bone::prerender()
 			S(0, 0) = cb->position.norm() - 0.5;
 			Matrix4f R = Matrix4f::Identity();
 			R.block(0, 0, 3, 3) = Quaternionf::FromTwoVectors(Vector3f(1, 0, 0), cb->position.normalized()).toRotationMatrix();
-			unsigned int transID = RenderCommandList::setMeshTransform(transformMat * T * R * S);
+			unsigned int transID = cmdLst.setMeshTransform(transformMat * T * R * S);
 			coneMeshRender.instanceID = transID;
 			for (int i = 0; i < sphereMesh.meshParts.size(); i++)
-				RenderCommandList::setMeshPartTransform(&coneMesh.meshParts[i], coneMeshRender.materials[i], transID);
+				cmdLst.setMeshPartTransform(&coneMesh.meshParts[i], coneMeshRender.materials[i], transID);
 		}
 	}
 }
@@ -77,6 +81,7 @@ bool Bone::isHidden()
 Serializable * Bone::instantiate(const SerializationInfo & from)
 {
 	Bone* bone = new Bone(from.name);
+	ChildrenInstantiateObject(from, bone, IR_Default);
 	return bone;
 }
 
@@ -88,10 +93,15 @@ bool Bone::deserialize(const SerializationInfo & from)
 bool Bone::serialize(SerializationInfo & to)
 {
 	SerializationInfo* child = to.add("children");
-	if (!Actor::serialize(to))
+	if (!Transform::serialize(to))
 		return false;
-	to.type = "Bone";
-	if (child != NULL)
+
+	for (int i = 0; i < children.size(); i++) {
+		if (children[i]->getSerialization().type != "Bone") {
+			Console::log(children[i]->name);
+		}
+	}
+	/*if (child != NULL)
 		for (int i = 0; i < children.size(); i++) {
 			if (children[i]->getSerialization().type != "Bone") {
 				SerializationInfo* info = child->add(children[i]->name);
@@ -99,7 +109,7 @@ bool Bone::serialize(SerializationInfo & to)
 					children[i]->serialize(*info);
 				}
 			}
-		}
+		}*/
 	return true;
 }
 

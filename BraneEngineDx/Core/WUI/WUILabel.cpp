@@ -1,5 +1,5 @@
 #include "WUILabel.h"
-#include "../Utility.h"
+#include "../Utility/Utility.h"
 
 WUILabel::WUILabel(const string& text) : WUIControl(NULL)
 {

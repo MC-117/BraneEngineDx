@@ -1,6 +1,7 @@
 #include "ToneMapPass.h"
 #include "../Asset.h"
 #include "../Console.h"
+#include "../GUI/UIControl.h"
 
 ToneMapPass::ToneMapPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -16,10 +17,6 @@ bool ToneMapPass::mapMaterialParameter(RenderInfo & info)
 	Image img;
 	img.texture = resource->screenTexture;
 	material->setImage("imageMap", img);
-	if (resource->ssaoTexture == NULL)
-		material->setTexture("ssaoMap", Texture2D::whiteRGBADefaultTex);
-	else
-		material->setTexture("ssaoMap", *resource->ssaoTexture);
 	return true;
 }
 

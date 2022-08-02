@@ -3,6 +3,24 @@
 #define _UNIT_H_
 
 #include "Config.h"
+#include "Utility/Guid.h"
+
+typedef unsigned TypeID;
+typedef unsigned FileID;
+typedef long long InstanceID;
+
+struct InstanceAssetHandle
+{
+	Guid guid;
+	FileID fileID;
+};
+
+struct InstanceAssetFile
+{
+	FileID fileID;
+	InstanceID highestLocalID;
+	std::string path;
+};
 
 template<class T>
 struct Unit2D
@@ -178,13 +196,28 @@ struct Color
 	float r = 0, g = 0, b = 0, a = 0;
 
 	Color() {}
+	Color(const Vector4f& v) : r(v.x()), g(v.y()), b(v.z()), a(v.w()) {}
+	Color(const Vector3f& v) : r(v.x()), g(v.y()), b(v.z()), a(1.0f) {}
 	Color(int r, int g, int b, int a = 255) : r(r / 255.0f), g(g / 255.0f), b(b / 255.0f), a(a / 255.0f) {}
 	Color(float r, float g, float b, float a = 1) : r(r), g(g), b(b), a(a) {}
 
+	Color& fromHSV(const Vector3f& hsv);
+	Vector3f toHSV() const;
+
+	static Color HSV(const Vector3f& hsv);
+
 	Color operator+(const Color& c) const;
+	Color& operator+=(const Color& c);
 	Color operator-(const Color& c) const;
+	Color& operator-=(const Color& c);
+	Color operator*(const Color& c) const;
+	Color& operator*=(const Color& c);
 	Color operator*(float s) const;
+	Color& operator*=(float s);
+	Color operator/(const Color& c) const;
+	Color& operator/=(const Color& c);
 	Color operator/(float s) const;
+	Color& operator/=(float s);
 	bool operator==(const Color& c) const;
 	bool operator!=(const Color& c) const;
 };
@@ -378,7 +411,11 @@ public:
 	}
 
 	inline double toMillisecond() {
-		return time_since_epoch().count() / 1000000.0;
+		return time_since_epoch().count() * 0.000001;
+	}
+
+	inline double toSecond() {
+		return time_since_epoch().count() * 0.000000001;
 	}
 
 	unsigned int getDay();
@@ -395,9 +432,16 @@ public:
 
 	static Time now();
 	static Time duration();
+	static Time delta();
+	static unsigned long long frames();
+
+	static void update();
 
 protected:
 	static Time startTime;
+	static Time lastTime;
+	static Time deltaTime;
+	static unsigned long long frameCount;
 };
 
 class Timer

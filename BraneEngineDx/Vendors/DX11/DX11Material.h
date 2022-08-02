@@ -14,7 +14,7 @@ class DX11Material : public IMaterial
 {
 public:
 	DX11Context& dxContext;
-	vector<ID3D11UnorderedAccessView*> dx11UAVs;
+	vector<ComPtr<ID3D11UnorderedAccessView>> dx11UAVs;
 
 	DX11Material(DX11Context& context, MaterialDesc& desc);
 
@@ -23,6 +23,7 @@ public:
 	virtual void processScalarData();
 	virtual void processCountData();
 	virtual void processColorData();
+	virtual void processMatrixData();
 	virtual void processTextureData();
 	virtual void processImageData();
 	virtual void postprocess();

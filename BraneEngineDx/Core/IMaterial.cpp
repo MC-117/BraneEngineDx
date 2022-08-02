@@ -24,6 +24,10 @@ void IMaterial::processColorData()
 {
 }
 
+void IMaterial::processMatrixData()
+{
+}
+
 void IMaterial::processTextureData()
 {
 }

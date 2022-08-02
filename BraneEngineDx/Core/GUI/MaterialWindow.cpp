@@ -55,7 +55,7 @@ void MaterialWindow::onRenderWindow(GUIRenderInfo & info)
 			continue;
 		ImGui::PushID(b._Ptr);
 		unsigned long long id = b->second.val->getTextureID();
-		if (ImGui::ImageButton((void*)id, { 64, 64 }, { 0, 1 }, { 1, 0 })) {
+		if (ImGui::ImageButton((ImTextureID)id, { 64, 64 }, { 0, 1 }, { 1, 0 })) {
 			ImGui::OpenPopup("TexSelectPopup");
 			choice = b->first;
 		}
@@ -79,14 +79,14 @@ void MaterialWindow::onRenderWindow(GUIRenderInfo & info)
 			_b != _e; _b++) {
 			if (_b->second->asset[0] == NULL)
 				continue;
-			unsigned int id = ((Texture2D*)_b->second->asset[0])->bind();
+			unsigned long long id = ((Texture2D*)_b->second->asset[0])->bind();
 			if (id == 0)
 				id = Texture2D::blackRGBDefaultTex.bind();
 			if (ImGui::Selectable(_b->first.c_str(), false, 0, { 0, 60 })) {
 				material->setTexture(choice, *((Texture2D*)_b->second->asset[0]));
 			}
 			ImGui::SameLine(100);
-			ImGui::Image((void*)id, { 56, 56 });
+			ImGui::Image((ImTextureID)id, { 56, 56 });
 		}
 		ImGui::EndPopup();
 	}

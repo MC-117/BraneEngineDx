@@ -16,6 +16,9 @@ public:
 	virtual void onRenderWindow(GUIRenderInfo& info);
 
 	static void showTexture(GUI& gui, Texture& tex);
+protected:
+	float mipLevel = 0;
+	bool invert = false;
 };
 
 #endif // !_TEXTUREVIEWER_H_

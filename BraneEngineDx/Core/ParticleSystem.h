@@ -8,7 +8,7 @@
 class ParticleSystem : public Actor
 {
 public:
-	Serialize(ParticleSystem);
+	Serialize(ParticleSystem, Actor);
 
 	ParticleRender particleRender;
 
@@ -20,7 +20,7 @@ public:
 	virtual bool getAutoDestroy();
 
 	virtual void tick(float deltaTime);
-	virtual void prerender();
+	virtual void prerender(RenderCommandList& cmdLst);
 	virtual Render* getRender();
 	virtual unsigned int getRenders(vector<Render*>& renders);
 

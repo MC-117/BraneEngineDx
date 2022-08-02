@@ -1,7 +1,10 @@
 #include "Directlight.h"
 #include "Engine.h"
+#include "GUI/Gizmo.h"
 
 #define DEPTHSIZE 8192
+
+SerializeInstance(DirectLight);
 
 DirectLight::DirectLight(const string& name, Color color, float intensity) : Light::Light(name, color, intensity, 0, Box()), shadowCamera({ 8132, 8132 }, name + "_ShadowCamera")
 {
@@ -20,6 +23,7 @@ DirectLight::DirectLight(const string& name, Color color, float intensity) : Lig
 		shadowCamera.bottom = -DEPTHSIZE / v;
 		shadowCamera.top = DEPTHSIZE / v;
 	});
+	//addInternalNode(shadowCamera);
 }
 
 Matrix4f DirectLight::getLightSpaceMatrix() const
@@ -41,6 +45,7 @@ void DirectLight::afterTick()
 	Vector3f dirFW = getForward(WORLD);
 	Vector3f dirRW = getRightward(WORLD);
 	Vector3f dirUW = getUpward(WORLD);
+
 	if (world != NULL) {
 		::Camera& cam = world->getCurrentCamera();
 		Vector3f camRW = cam.getRightward(WORLD);
@@ -81,30 +86,41 @@ void DirectLight::preRender()
 {
 }
 
-void DirectLight::render(RenderInfo & info)
+void DirectLight::render(RenderInfo& info)
 {
 	if (info.cmdList == NULL) {
 		shadowCamera.shadowCameraRender.preRender();
 		shadowCamera.shadowCameraRender.render(info);
 	}
 	else if (!((Render*)info.tempRender->getRender())->hidden && info.tempRender->getCanCastShadow()) {
-		Mesh* mesh = dynamic_cast<Mesh*>(info.tempRender->getShape());
-		if (mesh != NULL) {
-			Material* mat = &shadowCamera.shadowCameraRender.material;
-			unsigned instanceID = info.tempRender->getInstanceID();
-			if (instanceID != -1)
-				for (int i = 0; i < mesh->meshParts.size(); i++) {
-					Material* pm = info.tempRender->getMaterial(i);
-					if (pm == NULL || !pm->canCastShadow)
-						continue;
-					for (int j = 0; j < info.tempRender->getInstanceCount(); j++)
-						RenderCommandList::setMeshPartTransform(&mesh->meshParts[i], mat, instanceID + j);
-					info.cmdList->setRenderCommand({
-					mat,
-					&shadowCamera,
-					&mesh->meshParts[i]
-					});
-				}
+		vector<RenderResource> resources;
+		if (info.tempRender->getRenderResource(resources) > 0) {
+			Material* depthMat = &shadowCamera.shadowCameraRender.material;
+			for each (auto & resource in resources)
+			{
+				if (!resource.enable || !resource.isValid())
+					continue;
+				if (!resource.material->canCastShadow)
+					continue;
+				for (int j = 0; j < resource.instanceIDCount; j++)
+					info.cmdList->setMeshPartTransform(resource.meshPart, depthMat, resource.instanceID + j);
+				info.cmdList->setRenderCommand({ depthMat, &shadowCamera, resource.meshPart });
+			}
 		}
 	}
+}
+
+Serializable* DirectLight::instantiate(const SerializationInfo& from)
+{
+	return new DirectLight(from.name);
+}
+
+bool DirectLight::deserialize(const SerializationInfo& from)
+{
+	return Light::deserialize(from);
+}
+
+bool DirectLight::serialize(SerializationInfo& to)
+{
+	return Light::serialize(to);
 }

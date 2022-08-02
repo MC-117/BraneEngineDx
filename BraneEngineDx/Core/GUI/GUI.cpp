@@ -1,12 +1,13 @@
 #include "GUI.h"
 #include "UIWindow.h"
+#include "Gizmo.h"
 #include "../Camera.h"
 #include "../Engine.h"
 
 bool GUI::mouseOnUI = false;
 bool GUI::anyItemFocus = false;
 
-GUI::GUI()
+GUI::GUI() : gizmo("_default_gizmo_")
 {
 	//ImGuiStyle& style = ImGui::GetStyle();
 	//style.WindowPadding = { 0, 0 };
@@ -14,8 +15,6 @@ GUI::GUI()
 
 GUI::~GUI()
 {
-	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++)
-		delete b->second;
 }
 
 bool GUI::isMouseOnUI()
@@ -28,7 +27,7 @@ bool GUI::isAnyItemFocus()
 	return anyItemFocus;
 }
 
-void GUI::render(RenderInfo& info)
+void GUI::onGUI(RenderInfo& info)
 {
 	if (uiControls.empty())
 		return;
@@ -41,9 +40,7 @@ void GUI::render(RenderInfo& info)
 			throw runtime_error("Vendor ImGui new frame failed");
 	}
 
-	ImGuizmo::BeginFrame();
-	ImGuizmo::SetOrthographic(info.camera->mode == info.camera->Orthotropic);
-	ImGuizmo::SetRect(0, 0, info.camera->size.x, info.camera->size.y);
+	GUIRenderInfo _info = { viewSize, sceneBlurTex, info.cmdList, *this, info.camera };
 
 	// ImGui Dock Begin
 	ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
@@ -52,8 +49,8 @@ void GUI::render(RenderInfo& info)
 	// because it would be confusing to have two docking targets within each others.
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->GetWorkPos());
-	ImGui::SetNextWindowSize(viewport->GetWorkSize());
+	ImGui::SetNextWindowPos(viewport->WorkPos);
+	ImGui::SetNextWindowSize(viewport->WorkSize);
 	ImGui::SetNextWindowViewport(viewport->ID);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
@@ -85,8 +82,11 @@ void GUI::render(RenderInfo& info)
 
 	ImGui::End();
 	// ImGui Dock End
+
+	gizmo.begineWindow();
+	gizmo.onGUI(Engine::getCurrentWorld());
+	gizmo.endWindow();
 	
-	GUIRenderInfo _info = { viewSize, sceneBlurTex, info.cmdList, *this };
 	focusControl = NULL;
 
 	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++)
@@ -100,6 +100,8 @@ void GUI::render(RenderInfo& info)
 			focusControl = win;
 	}
 
+	gizmo.onRender();
+
 	GUIPostInfo postInfo = { focusControl, *this };
 
 	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++)
@@ -110,10 +112,18 @@ void GUI::render(RenderInfo& info)
 
 	//ImGui::ShowDemoWindow();
 
-	ImGui::Render();
+	gizmo.reset();
+
 	//ImGuiIO& io = ImGui::GetIO();
+}
+
+void GUI::render(RenderInfo& info)
+{
+	ImGui::Render();
 
 	RenderTarget::defaultRenderTarget.bindFrame();
+
+	IVendor& vendor = VendorManager::getInstance().getVendor();
 
 	/*----- Vendor ImGui draw frame -----*/
 	{

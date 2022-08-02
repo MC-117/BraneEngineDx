@@ -3,8 +3,15 @@
 #include <string>
 #include "Importer.h"
 #include <filesystem>
+#include "Timeline/Timeline.h"
+#include "Utility/EngineUtility.h"
+#include "Script/PythonScript.h"
+#include "Transform.h"
+#include "Texture2D.h"
+#include "AudioSource.h"
+#include "Geometry.h"
 
-map<string, AssetInfo*> AssetManager::assetInfoList;
+StaticVar<map<string, AssetInfo*>> AssetManager::assetInfoList;
 
 Asset::Asset(const AssetInfo * assetInfo, const string & name, const string & path)
 	: assetInfo(*assetInfo), name(name), path(path)
@@ -146,6 +153,11 @@ vector<void*> Asset::intance(vector<string> settings, unsigned int num, const st
 	return res;
 }
 
+Object* Asset::createObject()
+{
+	return assetInfo.createObject(*this);
+}
+
 Agent::Agent(const AgentInfo * agentInfo, const string & name) : Asset(agentInfo, name, path), agentInfo(*agentInfo)
 {
 }
@@ -202,12 +214,19 @@ AssetInfo & AssetInfo::depend(AssetInfo & dependence)
 	return *this;
 }
 
+Object* AssetInfo::createObject(Asset& asset) const
+{
+	return NULL;
+}
+
 bool AssetInfo::regist(Asset & asset)
 {
 	if (assets.find(asset.name) != assets.end()) {
-		return false;
+		//return false;
 	}
-	assets.insert(pair<string, Asset*>(asset.name, &asset));
+	else {
+		assets.insert(pair<string, Asset*>(asset.name, &asset));
+	}
 	if (!asset.path.empty() && assetsByPath.find(asset.path) == assetsByPath.end()) {
 		assetsByPath.insert(pair<string, Asset*>(asset.path, &asset));
 	}
@@ -234,6 +253,8 @@ Asset * AssetInfo::getAssetByPath(const string & name)
 
 string AssetInfo::getPath(void * asset)
 {
+	if (asset == NULL)
+		return string();
 	for (auto b = assetsByPath.begin(), e = assetsByPath.end(); b != e; b++) {
 		for (int i = 0; i < b->second->asset.size(); i++) {
 			if (b->second->asset[i] == asset)
@@ -245,6 +266,8 @@ string AssetInfo::getPath(void * asset)
 
 Asset * AssetInfo::getAsset(void * asset)
 {
+	if (asset == NULL)
+		return NULL;
 	for (auto b = assets.begin(), e = assets.end(); b != e; b++) {
 		for (int i = 0; i < b->second->asset.size(); i++) {
 			if (b->second->asset[i] == asset)
@@ -256,8 +279,9 @@ Asset * AssetInfo::getAsset(void * asset)
 
 Asset * AssetInfo::loadAsset(const string& name, const string& path, const vector<string>& settings, const vector<string>& dependenceNames)
 {
-	if (assets.find(name) != assets.end())
-		return NULL;
+	if (assets.find(name) != assets.end()) {
+		//return NULL;
+	}
 	if (dependences.size() != dependenceNames.size() || properties.size() != settings.size())
 		return NULL;
 	Asset *asset = new Asset(this, name, path);
@@ -267,7 +291,9 @@ Asset * AssetInfo::loadAsset(const string& name, const string& path, const vecto
 		delete asset;
 		return NULL;
 	}
-	assets.insert(pair<string, Asset*>(name, asset));
+	if (assets.find(name) == assets.end()) {
+		assets.insert(pair<string, Asset*>(name, asset));
+	}
 	if (!path.empty() && assetsByPath.find(path) == assetsByPath.end()) {
 		assetsByPath.insert(pair<string, Asset*>(path, asset));
 	}
@@ -276,12 +302,15 @@ Asset * AssetInfo::loadAsset(const string& name, const string& path, const vecto
 
 bool AssetInfo::loadAsset(Asset & asset)
 {
-	if (assets.find(asset.name) != assets.end())
-		return false;
+	if (assets.find(asset.name) != assets.end()) {
+		//return false;
+	}
 	if (asset.load() == NULL) {
 		return false;
 	}
-	assets.insert(pair<string, Asset*>(asset.name, &asset));
+	if (assets.find(asset.name) == assets.end()) {
+		assets.insert(pair<string, Asset*>(asset.name, &asset));
+	}
 	if (!asset.path.empty() && assetsByPath.find(asset.path) == assetsByPath.end()) {
 		assetsByPath.insert(pair<string, Asset*>(asset.path, &asset));
 	}
@@ -305,10 +334,10 @@ Texture2DAssetInfo Texture2DAssetInfo::assetInfo;
 Texture2DAssetInfo::Texture2DAssetInfo() : AssetInfo("Texture2D")
 {
 	properties = { "isStandard", "wrapSType", "wrapTType", "minFilterType", "magFilterType" };
-	Asset* w = new Asset(this, "White", "");
+	Asset* w = new Asset(this, "white", "");
 	w->settings[0] = "true";
 	w->asset[0] = &Texture2D::whiteRGBADefaultTex;
-	Asset* b = new Asset(this, "Black", "");
+	Asset* b = new Asset(this, "black", "");
 	b->settings[0] = "true";
 	w->asset[0] = &Texture2D::blackRGBADefaultTex;
 
@@ -511,13 +540,13 @@ MaterialAssetInfo::MaterialAssetInfo() : AssetInfo("Material")
 void * MaterialAssetInfo::load(const string& name, const string & path, const vector<string>& settings, const vector<void*>& dependences) const
 {
 	namespace FS = filesystem;
-	string ext = FS::path(path).extension().generic_string();
+	string ext = FS::u8path(path).extension().generic_u8string();
 	Material* mat = NULL;
 	if (!_stricmp(ext.c_str(), ".mat")) {
 		Shader* shd = new Shader();
 		mat = new Material(*shd);
 		if (!Material::MaterialLoader::loadMaterial(*mat, path)) {
-			cout << "Material: Load " << path.c_str() << "failed\n";
+			cout << "Material: Load " << path.c_str() << " failed\n";
 			delete mat;
 			delete shd;
 			return NULL;
@@ -625,7 +654,7 @@ AssetFileAssetInfo::AssetFileAssetInfo() : AssetInfo("AssetFile")
 void * AssetFileAssetInfo::load(const string & name, const string & path, const vector<string>& settings, const vector<void*>& dependences) const
 {
 	ifstream wf = ifstream(path);
-	SerializationInfoParser sip = SerializationInfoParser(wf);
+	SerializationInfoParser sip = SerializationInfoParser(wf, path);
 	if (!sip.parse()) {
 		cout << path << ": load failed '" << sip.errorString << "'\n";
 		wf.close();
@@ -641,24 +670,81 @@ AssetInfo & AssetFileAssetInfo::getInstance()
 	return assetInfo;
 }
 
+PythonScriptAssetInfo PythonScriptAssetInfo::assetInfo;
+
+PythonScriptAssetInfo::PythonScriptAssetInfo() : AssetInfo("PythonScript")
+{
+}
+
+void* PythonScriptAssetInfo::load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const
+{
+	PythonScript* script = new PythonScript();
+	if (!script->load(path)) {
+		delete script;
+		return NULL;
+	}
+	return script;
+}
+
+AssetInfo& PythonScriptAssetInfo::getInstance()
+{
+	return assetInfo;
+}
+
+TimelineAssetInfo TimelineAssetInfo::assetInfo;
+
+TimelineAssetInfo::TimelineAssetInfo() : AssetInfo("Timeline")
+{
+}
+
+void* TimelineAssetInfo::load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const
+{
+	ifstream wf = ifstream(path);
+	SerializationInfoParser sip = SerializationInfoParser(wf, path);
+	if (!sip.parse()) {
+		cout << path << ": load failed '" << sip.errorString << "'\n";
+		wf.close();
+		return NULL;
+	}
+	wf.close();
+	SerializationInfo& info = SerializationInfo(sip.infos[0]);
+	Timeline* timeline = NULL;
+	if (info.serialization) {
+		Serializable* seriaizable = info.serialization->instantiate(info);
+		if (seriaizable) {
+			timeline = dynamic_cast<Timeline*>(seriaizable);
+			if (timeline)
+				timeline->deserialize(info);
+			else
+				delete seriaizable;
+		}
+	}
+	return timeline;
+}
+
+AssetInfo& TimelineAssetInfo::getInstance()
+{
+	return assetInfo;
+}
+
 void AssetManager::addAssetInfo(AssetInfo & info)
 {
-	assetInfoList.insert(pair<string, AssetInfo*>(info.type, &info));
+	assetInfoList->insert(pair<string, AssetInfo*>(info.type, &info));
 	//assetInfoList[info.type] = &info;
 }
 
 bool AssetManager::registAsset(Asset & assets)
 {
-	auto re = assetInfoList.find(assets.assetInfo.type);
-	if (re == assetInfoList.end())
-		assetInfoList.insert(pair<string, AssetInfo*>(string(assets.assetInfo.type), (AssetInfo*)&assets.assetInfo));
-	return assetInfoList[assets.assetInfo.type]->regist(assets);
+	auto re = assetInfoList->find(assets.assetInfo.type);
+	if (re == assetInfoList->end())
+		assetInfoList->insert(pair<string, AssetInfo*>(string(assets.assetInfo.type), (AssetInfo*)&assets.assetInfo));
+	return (*assetInfoList)[assets.assetInfo.type]->regist(assets);
 }
 
 Asset * AssetManager::registAsset(const string & type, const string & name, const string & path, const vector<string>& settings, const vector<string>& dependenceNames)
 {
-	auto re = assetInfoList.find(type);
-	if (re == assetInfoList.end() ||
+	auto re = assetInfoList->find(type);
+	if (re == assetInfoList->end() ||
 		settings.size() != re->second->properties.size() ||
 		dependenceNames.size() != re->second->dependences.size()) {
 		return NULL;
@@ -672,8 +758,8 @@ Asset * AssetManager::registAsset(const string & type, const string & name, cons
 
 Asset * AssetManager::registAsset(const string & type, const string & name, const string & path, const map<string, string>& settings, const map<string, string>& dependenceNames)
 {
-	auto re = assetInfoList.find(type);
-	if (re == assetInfoList.end()) {
+	auto re = assetInfoList->find(type);
+	if (re == assetInfoList->end()) {
 		return NULL;
 	}
 	Asset* asset = new Asset(re->second, name, path);
@@ -685,16 +771,16 @@ Asset * AssetManager::registAsset(const string & type, const string & name, cons
 
 Asset * AssetManager::getAsset(const string& type, const string & name)
 {
-	auto info = assetInfoList.find(type);
-	if (info == assetInfoList.end())
+	auto info = assetInfoList->find(type);
+	if (info == assetInfoList->end())
 		return NULL;
 	return info->second->getAsset(name);
 }
 
 AssetInfo * AssetManager::getAssetInfo(const string & type)
 {
-	auto info = assetInfoList.find(type);
-	if (info == assetInfoList.end())
+	auto info = assetInfoList->find(type);
+	if (info == assetInfoList->end())
 		return NULL;
 	return info->second;
 }
@@ -709,10 +795,49 @@ Asset * AssetManager::getAssetByPath(const string & path)
 
 Asset * AssetManager::loadAsset(const string & type, const string & name, const string & path, const vector<string>& settings, const vector<string>& dependenceNames)
 {
-	auto info = assetInfoList.find(type);
-	if (info == assetInfoList.end())
+	auto info = assetInfoList->find(type);
+	if (info == assetInfoList->end())
 		return NULL;
 	return info->second->loadAsset(name, path, settings, dependenceNames);
+}
+
+Asset* AssetManager::saveAsset(Serializable& serializable, const string& path)
+{
+	string goodPath = getGoodRelativePath(path);
+	if (goodPath.empty())
+		return NULL;
+	string name = getFileName(goodPath);
+	SerializationInfo& info = *new SerializationInfo();
+	info.path = goodPath;
+	if (!serializable.serialize(info)) {
+		delete& info;
+		return NULL;
+	}
+	ofstream f = ofstream(goodPath);
+	if (f.fail()) {
+		delete& info;
+		return NULL;
+	}
+	SerializationInfoWriter writer = SerializationInfoWriter(f);
+	writer.write(info);
+	f.close();
+	const Serialization* serialization = &serializable.getSerialization();
+	AssetInfo* assetInfo = NULL;
+	while (serialization != NULL && assetInfo == NULL) {
+		assetInfo = AssetManager::getAssetInfo(serialization->type);
+		serialization = serialization->getBaseSerialization();
+	}
+	if (assetInfo == NULL)
+		assetInfo = &AssetFileAssetInfo::assetInfo;
+	Asset* asset = new Asset(assetInfo, name, goodPath);
+	asset->asset[0] = &info;
+	if (AssetFileAssetInfo::assetInfo.regist(*asset))
+		return asset;
+	else {
+		delete& info;
+		delete asset;
+		return NULL;
+	}
 }
 
 bool AssetManager::loadAssetFile(const string & path)

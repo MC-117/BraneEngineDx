@@ -1,12 +1,21 @@
 #include <fstream>
 #include "EditorWindow.h"
+#include "../Editor/Editor.h"
 #include "../Engine.h"
 #include "AssetLoadWindow.h"
 #include "ConsoleWindow.h"
 #include "AssetBrowser.h"
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
+#include "GUIUtility.h"
+#include "../Utility/EngineUtility.h"
 #include "../GrassMeshActor.h"
 #include "../PostProcess/PostProcessingCamera.h"
+#include "../DirectLight.h"
+#include "../PointLight.h"
+#include "../ObjectUltility.h"
+#include "../ParticleSystem.h"
+#include "../Character.h"
+#include "../Terrain/TerrainActor.h"
 
 EditorWindow::EditorWindow(Object & object, Material& baseMat, string name, bool defaultShow) : UIWindow(object, name, defaultShow), baseMat(baseMat)
 {
@@ -27,16 +36,17 @@ string nextName(const string& name)
 	return name.substr(0, name.size() - i) + to_string(num + 1);
 }
 
-string getNextName(const string& name)
+string getNextName(Object& root, const string& name)
 {
 	string newName = nextName(name);
-	while(Brane::find(typeid(Object).hash_code(), newName) != NULL)
+	while(root.findChild(newName) != NULL)
 		newName = nextName(newName);
 	return newName;
 }
 
 void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 {
+	Object* selectedObj = EditorManager::getSelectedObject();
 	World* w = dynamic_cast<World*>(&object);
 	if (w == NULL)
 		return;
@@ -45,29 +55,34 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 	ImGui::Text("FPS: %f", ImGui::GetIO().Framerate);
 	ImGui::Separator();
 	ImVec2 size = { ImGui::GetWindowContentRegionWidth() / 2 - 4, 40 };
-	if (ImGui::Button("Load", size)) {
-		UIControl* uc = gui.getUIControl("LoadAsset");
-		bool b = false;
-		if (uc != NULL) {
-			AssetLoadWindow* alw = dynamic_cast<AssetLoadWindow*>(uc);
-			if (alw != NULL) {
-				alw->show = true;
-			}
-			else
-				b = true;
-		}
-		else
-			b = true;
-		if (b) {
-			AssetLoadWindow* win = new AssetLoadWindow(world, "LoadAsset", true);
-			world += win;
-		}
-		//world.loadTransform("Save.world");
-		/*CFileDialog dialog(true, _T("*.world"), NULL, 6UL, _T("World(*.world)|*.world|All Files(*.*)|*.*"));
-		if (dialog.DoModal() == IDOK) {
-		if (!world.loadTransform(string(CT2A(dialog.GetPathName().GetString()))))
-		MessageBox(NULL, _T("Load failed"), _T("Alert"), MB_OK);
-		}*/
+	//if (ImGui::Button("Load", size)) {
+	//	UIControl* uc = gui.getUIControl("LoadAsset");
+	//	bool b = false;
+	//	if (uc != NULL) {
+	//		AssetLoadWindow* alw = dynamic_cast<AssetLoadWindow*>(uc);
+	//		if (alw != NULL) {
+	//			alw->show = true;
+	//		}
+	//		else
+	//			b = true;
+	//	}
+	//	else
+	//		b = true;
+	//	if (b) {
+	//		AssetLoadWindow* win = new AssetLoadWindow(world, "LoadAsset", true);
+	//		world += win;
+	//	}
+	//	//world.loadTransform("Save.world");
+	//	/*CFileDialog dialog(true, _T("*.world"), NULL, 6UL, _T("World(*.world)|*.world|All Files(*.*)|*.*"));
+	//	if (dialog.DoModal() == IDOK) {
+	//	if (!world.loadTransform(string(CT2A(dialog.GetPathName().GetString()))))
+	//	MessageBox(NULL, _T("Load failed"), _T("Alert"), MB_OK);
+	//	}*/
+	//}
+	bool isPause = world.getPause();
+	const char* icon = isPause ? ICON_FA_PLAY : ICON_FA_PAUSE;
+	if (ImGui::Button(icon, size)) {
+		world.setPause(!isPause);
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Console", size)) {
@@ -135,7 +150,7 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 	}
 	if (!alwaysShow) {
 		if (ImGui::Button("Hide UI", size)) {
-			world.input.setCursorHidden(true);
+			Engine::input.setCursorHidden(true);
 			gui.hideAllUIControl();
 		}
 		ImGui::SameLine();
@@ -164,6 +179,13 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 	if (selectedObj == &world)
 		node_flags |= ImGuiTreeNodeFlags_Selected;
 
+	if (lastSelectedObject != EditorManager::getSelectedObject()) {
+		lastSelectedObject = EditorManager::getSelectedObject();
+		if (lastSelectedObject != NULL) {
+			nodeAutoExpand = true;
+		}
+	}
+
 	// ObjectTree
 	if (ImGui::TreeNodeEx("world", node_flags)) {
 		Object *dragObj = NULL, *targetObj = NULL;
@@ -181,25 +203,10 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 		}
 
 		if (ImGui::IsItemClicked()) {
-			selectedObj = &world;
-			UIControl* uc = gui.getUIControl("Inspector");
-			bool b = false;
-			if (uc != NULL) {
-				InspectorWindow* ipw = dynamic_cast<InspectorWindow*>(uc);
-				if (ipw != NULL) {
-					ipw->setTargetObject(world);
-					ipw->show = true;
-				}
-				else
-					b = true;
-			}
-			else
-				b = true;
-			if (b) {
-				InspectorWindow* win = new InspectorWindow(world, "Inspector", true);
-				world += win;
-			}
+			select(&world, info.gui);
 		}
+
+
 		traverse(world, gui, dragObj, targetObj);
 
 		if (dragObj != NULL && targetObj != NULL &&
@@ -208,6 +215,8 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 		}
 		ImGui::TreePop();
 	}
+
+	nodeAutoExpand = false;
 
 	ImGui::EndChild();
 }
@@ -219,37 +228,43 @@ void EditorWindow::onPostAction(GUIPostInfo & info)
 		return;
 	World& world = *w;
 	if (isFocus() || info.focusControl == NULL) {
-		if (world.input.getKeyDown(VK_CONTROL)) {
+		if (Engine::input.getKeyDown(VK_CONTROL)) {
+			Object* selectedObj = EditorManager::getSelectedObject();
 			if (selectedObj != NULL &&
-				world.input.getKeyPress('C')) {
-				copyInfo.clear();
+				Engine::input.getKeyPress('C')) {
+				SerializationInfo copyInfo;
 				if (selectedObj->serialize(copyInfo)) {
 					parentObj = selectedObj->parent;
 					copyInfo.serialization = SerializationManager::getSerialization(copyInfo.type);
+					ostringstream stream;
+					SerializationInfoWriter writer(stream);
+					writer.write(copyInfo);
+					ImGui::SetClipboardText(stream.str().c_str());
 				}
 				else {
 					parentObj = NULL;
-					copyInfo.clear();
 				}
 			}
-			else if (copyInfo.serialization != NULL &&
-				world.input.getKeyPress('V')) {
-				string oldName = copyInfo.name;
-				string newName = getNextName(copyInfo.name);
-				copyInfo.name = newName;
-				Serializable* ser = copyInfo.serialization->instantiate(copyInfo);
-				if (ser != NULL) {
-					Object* obj = dynamic_cast<Object*>(ser);
-					if (obj == NULL)
-						delete ser;
-					else {
-						Object* pobj = parentObj == NULL ? &world : parentObj;
-						obj->deserialize(copyInfo);
-						pobj->addChild(*obj);
-						select(obj, info.gui);
+			else if (Engine::input.getKeyPress('V')) {
+				istringstream stream(ImGui::GetClipboardText());
+				SerializationInfoParser parser(stream);
+				if (parser.parse()) {
+					SerializationInfo& copyInfo = parser.infos.front();
+					newSerializationInfoGuid(copyInfo);
+					copyInfo.name = getNextName(world, copyInfo.name);
+					Serializable* ser = copyInfo.serialization->instantiate(copyInfo);
+					if (ser != NULL) {
+						Object* obj = dynamic_cast<Object*>(ser);
+						if (obj == NULL)
+							delete ser;
+						else {
+							Object* pobj = parentObj == NULL ? &world : parentObj;
+							obj->deserialize(copyInfo);
+							pobj->addChild(*obj);
+							select(obj, info.gui);
+						}
 					}
 				}
-				copyInfo.name = oldName;
 			}
 		}
 	}
@@ -263,9 +278,16 @@ void EditorWindow::traverse(Object & obj, GUI& gui, Object*& dragObj, Object*& t
 		ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow;
 		if (obj.children.empty())
 			node_flags |= ImGuiTreeNodeFlags_Leaf;
+		Object* selectedObj = EditorManager::getSelectedObject();
 		if (selectedObj == &obj)
 			node_flags |= ImGuiTreeNodeFlags_Selected;
 		ImGui::PushID(i);
+		if (nodeAutoExpand && selectedObj != NULL) {
+			if (isSameBranch(*selectedObj, obj))
+				ImGui::SetNextItemOpen(true);
+			if (selectedObj == &obj)
+				ImGui::SetScrollHereY();
+		}
 		bool isOpen = ImGui::TreeNodeEx(obj.name.c_str(), node_flags);
 		if (ImGui::BeginPopupContextItem("ObjectContextMenu")) {
 			objectContextMenu(&obj);
@@ -302,15 +324,14 @@ void EditorWindow::traverse(Object & obj, GUI& gui, Object*& dragObj, Object*& t
 
 void EditorWindow::select(Object * obj, GUI& gui)
 {
-	selectedObj = obj;
 	InspectorWindow* ipw = dynamic_cast<InspectorWindow*>(gui.getUIControl("Inspector"));
 	if (ipw == NULL) {
 		ipw = new InspectorWindow(world, "Inspector", true);
 		world += ipw;
-
 	}
-	ipw->setTargetObject(*obj);
 	ipw->show = true;
+	EditorManager::selectObject(obj);
+	lastSelectedObject = obj;
 }
 
 void EditorWindow::meshCombo()
@@ -350,7 +371,7 @@ void EditorWindow::objectContextMenu(Object * obj)
 		// Transform
 		if (ImGui::BeginMenu("Transform")) {
 			ImGui::InputText("Name", &newObjectName);
-			if (Brane::find(typeid(Object).hash_code(), newObjectName) == NULL) {
+			if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
 				if (ImGui::Button("Create", { -1, 36 })) {
 					::Transform* t = new ::Transform(newObjectName);
 					target.addChild(*t);
@@ -362,11 +383,36 @@ void EditorWindow::objectContextMenu(Object * obj)
 			ImGui::EndMenu();
 		}
 
+		// Light
+		if (ImGui::BeginMenu("Light")) {
+			if (ImGui::BeginMenu("DirectLight")) {
+				ImGui::InputText("Name", &newObjectName);
+				if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
+					if (ImGui::Button("Create", { -1, 36 })) {
+						DirectLight* t = new DirectLight(newObjectName);
+						target.addChild(*t);
+					}
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("PointLight")) {
+				ImGui::InputText("Name", &newObjectName);
+				if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
+					if (ImGui::Button("Create", { -1, 36 })) {
+						PointLight* t = new PointLight(newObjectName);
+						target.addChild(*t);
+					}
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenu();
+		}
+
 		// Camera
 		if (ImGui::BeginMenu("Camera")) {
 			if (ImGui::BeginMenu("Camera")) {
 				ImGui::InputText("Name", &newObjectName);
-				if (Brane::find(typeid(Object).hash_code(), newObjectName) == NULL) {
+				if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
 					if (ImGui::Button("Create", { -1, 36 })) {
 						::Transform* t = new ::Transform(newObjectName);
 						target.addChild(*t);
@@ -379,7 +425,7 @@ void EditorWindow::objectContextMenu(Object * obj)
 			}
 			if (ImGui::BeginMenu("PostProcessingCamera##PostProcessingCameraMenu")) {
 				ImGui::InputText("Name", &newObjectName);
-				if (Brane::find(typeid(Object).hash_code(), newObjectName) == NULL) {
+				if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
 					if (ImGui::Button("Create", { -1, 36 })) {
 						PostProcessingCamera* t = new PostProcessingCamera(newObjectName);
 						target.addChild(*t);
@@ -389,6 +435,20 @@ void EditorWindow::objectContextMenu(Object * obj)
 					ImGui::Text("Name exists");
 				}
 				ImGui::EndMenu();
+			}
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("ParticleSystem##ParticleSystemMenu")) {
+			ImGui::InputText("Name", &newObjectName);
+			if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
+				if (ImGui::Button("Create", { -1, 36 })) {
+					ParticleSystem* t = new ParticleSystem(newObjectName);
+					target.addChild(*t);
+				}
+			}
+			else {
+				ImGui::Text("Name exists");
 			}
 			ImGui::EndMenu();
 		}
@@ -413,11 +473,11 @@ void EditorWindow::objectContextMenu(Object * obj)
 		}*/
 
 		// Character
-		/*if (ImGui::BeginMenu("Character")) {
+		if (ImGui::BeginMenu("Character")) {
 			ImGui::InputText("Name", &newObjectName);
 			ImGui::DragFloat("Radius", &capsuleRadius);
 			ImGui::DragFloat("HalfLength", &capsuleHalfLength);
-			if (Brane::find(typeid(Object).hash_code(), newObjectName) == NULL) {
+			if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
 				if (ImGui::Button("Create", { -1, 36 })) {
 					Character* t = new Character(Capsule(capsuleRadius, capsuleHalfLength), newObjectName);
 					target.addChild(*t);
@@ -427,12 +487,12 @@ void EditorWindow::objectContextMenu(Object * obj)
 				ImGui::Text("Name exists");
 			}
 			ImGui::EndMenu();
-		}*/
+		}
 
 		// GrassActor
 		if (ImGui::BeginMenu("GrassActor")) {
 			ImGui::InputText("Name", &newObjectName);
-			if (Brane::find(typeid(Object).hash_code(), newObjectName) == NULL) {
+			if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
 				meshCombo();
 				materialCombo();
 				if (ImGui::DragFloat("Density", &grassDensity)) {
@@ -445,6 +505,31 @@ void EditorWindow::objectContextMenu(Object * obj)
 				if (selectedMesh != NULL && selectedMaterial != NULL && ImGui::Button("Create", { -1, 36 })) {
 					GrassMeshActor* t = new GrassMeshActor(*selectedMesh, *selectedMaterial, newObjectName);
 					t->set(grassDensity, grassBound);
+					target.addChild(*t);
+				}
+			}
+			else {
+				ImGui::Text("Name exists");
+			}
+			ImGui::EndMenu();
+		}
+
+		// GrassActor
+		if (ImGui::BeginMenu("TerrainActor")) {
+			ImGui::InputText("Name", &newObjectName);
+			if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
+				if (ImGui::DragFloat("GridUnit", &terrainUnit)) {
+					terrainUnit = max(0, terrainUnit);
+				}
+				if (ImGui::DragFloat("Height", &terrainHeight)) {
+					terrainHeight = max(0, terrainHeight);
+				}
+				if (ImGui::DragInt2("Grid", (int*)terrainGrid.data(), 1.0f, 1, 128)) {
+					terrainGrid.x() = max(1, terrainGrid.x());
+					terrainGrid.y() = max(1, terrainGrid.y());
+				}
+				if (ImGui::Button("Create", { -1, 36 })) {
+					TerrainActor* t = new TerrainActor(newObjectName);
 					target.addChild(*t);
 				}
 			}
@@ -470,22 +555,18 @@ void EditorWindow::objectContextMenu(Object * obj)
 		thread td = thread([](Object* tar) {
 			FileDlgDesc desc;
 			desc.title = "asset";
-			desc.filter = "asset(*.asset)\0*.asset\0";
+			desc.filter = "asset(*.asset)|*.asset";
 			desc.initDir = "Content";
 			desc.save = true;
 			desc.defFileExt = "asset";
 			if (openFileDlg(desc)) {
-				SerializationInfo info;
-				info.add("children");
-				if (!tar->serialize(info)) {
+				if (AssetManager::saveAsset(*tar, desc.filePath) == NULL) {
 					MessageBox(NULL, "Serialize failed", "Error", MB_OK);
 					return;
 				}
-				ofstream f = ofstream(desc.filePath);
-				SerializationInfoWriter writer = SerializationInfoWriter(f);
-				writer.write(info);
-				f.close();
-				MessageBox(NULL, "Complete", "Info", MB_OK);
+				else {
+					MessageBox(NULL, "Complete", "Info", MB_OK);
+				}
 			}
 		}, &target);
 		td.detach();
@@ -494,23 +575,26 @@ void EditorWindow::objectContextMenu(Object * obj)
 		thread td = thread([](Object* tar) {
 			FileDlgDesc desc;
 			desc.title = "asset";
-			desc.filter = "asset(*.asset)\0*.asset\0";
+			desc.filter = "asset(*.asset)|*.asset";
 			desc.initDir = "Content";
 			desc.save = true;
 			desc.defFileExt = "asset";
 			if (openFileDlg(desc)) {
-				SerializationInfo info;
-				if (!tar->serialize(info)) {
+				if (AssetManager::saveAsset(*tar, desc.filePath) == NULL) {
 					MessageBox(NULL, "Serialize failed", "Error", MB_OK);
 					return;
 				}
-				ofstream f = ofstream(desc.filePath);
-				SerializationInfoWriter writer = SerializationInfoWriter(f);
-				writer.write(info);
-				f.close();
-				MessageBox(NULL, "Complete", "Info", MB_OK);
+				else {
+					MessageBox(NULL, "Complete", "Info", MB_OK);
+				}
 			}
 		}, &target);
 		td.detach();
+	}
+
+	if (target.isDestroy()) {
+		if (EditorManager::getSelectedObject() == &target) {
+			EditorManager::selectObject(NULL);
+		}
 	}
 }

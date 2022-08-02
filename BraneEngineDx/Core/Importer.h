@@ -7,7 +7,7 @@
 #include <assimp\postprocess.h>
 #include "SkeletonMesh.h"
 #include "Texture2D.h"
-#include "AnimationClip.h"
+#include "Animation/AnimationClip.h"
 
 class Importer
 {

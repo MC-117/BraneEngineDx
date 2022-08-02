@@ -96,9 +96,9 @@ Mesh* Box::toMesh()
 	for (int i = 20; i < 24; i++)
 		part.normal(i) = -Vector3f::UnitZ();
 
-	for (unsigned int v = 0, e = 0; v < 24; v += 4, e += 2) {
-		part.element(e) = { v, v + 2, v + 1 };
-		part.element(e + 1) = { v, v + 3, v + 2 };
+	for (unsigned int v = 0, e = 0; v < 24; v += 4, e += 6) {
+		part.element(e) = v, part.element(e + 1) = v + 2, part.element(e + 2) = v + 1;
+		part.element(e + 3) = v, part.element(e + 4) = v + 3, part.element(e + 5) = v + 2;
 	}
 
 	Mesh* mesh = new Mesh();
@@ -197,7 +197,7 @@ Mesh* Column::toMesh(unsigned int segment, const Vector3f& axis)
 	part.uv(1) = { 0.5, 0.5 };
 
 	unsigned int v = 2, e = 0;
-	for (unsigned int i = 0; i < segment; i++, v += 4, e += 4) {
+	for (unsigned int i = 0; i < segment; i++, v += 4, e += 12) {
 		Vector3f pos = cirlePos[i];
 		pos.z() = halfLength;
 		Vector3f ipos = cirlePos[i];
@@ -217,17 +217,23 @@ Mesh* Column::toMesh(unsigned int segment, const Vector3f& axis)
 		part.uv(v + 2) = { columnU[i], 1 };
 		part.uv(v + 3) = { columnU[i], 0 };
 
-		part.element(e) = { v + 4, 0, v };
-		part.element(e + 1) = { v + 5, v + 1, 1 };
-		part.element(e + 2) = { v + 7, v + 2, v + 3 };
-		part.element(e + 3) = { v + 7, v + 6, v + 2 };
+		unsigned int indices[12] = {
+			v + 4, 0, v,
+			v + 5, v + 1, 1,
+			v + 7, v + 2, v + 3,
+			v + 7, v + 6, v + 2
+		};
+
+		unsigned int* dst = &part.element(e);
+
+		memcpy(dst, indices, sizeof(indices));
 	}
-	e -= 4;
-	part.element(e).x() = 2;
-	part.element(e + 1).x() = 3;
-	part.element(e + 2).x() = 5;
-	part.element(e + 3).x() = 5;
-	part.element(e + 3).y() = 4;
+	e -= 12;
+	part.element(e) = 2;
+	part.element(e + 3) = 3;
+	part.element(e + 6) = 5;
+	part.element(e + 9) = 5;
+	part.element(e + 10) = 4;
 
 	Mesh* mesh = new Mesh();
 	mesh->setTotalMeshPart(part);
@@ -298,17 +304,16 @@ Capsule::Capsule(Vector3f controlPointA, Vector3f controlPointB) : Geometry(cont
 
 Capsule::Capsule(float radius, float halfLength, Vector3f center)
 {
-	Vector3f r = { radius, radius, halfLength < radius ? radius : halfLength };
+	Vector3f r = { radius, radius, halfLength + radius };
 	bound.minVal = center - r;
 	bound.maxVal = center + r;
 }
 
 void Capsule::setRadius(float radius)
 {
-	float halfLength = getHeight() / 2.0f;
-	radius = radius > halfLength ? halfLength : radius;
+	float halfLength = getHeight() * 0.5 - getRadius();
 	Vector3f center = getCenter();
-	Vector3f r = { radius, radius, halfLength };
+	Vector3f r = { radius, radius, halfLength + radius };
 	bound.minVal = center - r;
 	bound.maxVal = center + r;
 }
@@ -317,7 +322,7 @@ void Capsule::setHalfLength(float halfLength)
 {
 	float radius = getRadius();
 	Vector3f center = getCenter();
-	Vector3f r = { radius, radius, halfLength < radius ? radius : halfLength };
+	Vector3f r = { radius, radius, halfLength + radius };
 	bound.minVal = center - r;
 	bound.maxVal = center + r;
 }
@@ -326,10 +331,10 @@ void Capsule::setHalfLength(float halfLength)
 CollisionShape * Capsule::generateCollisionShape(const Vector3f& scale) const
 {
 #ifdef PHYSICS_USE_BULLET
-	return new btCapsuleShapeZ(getRadius() * scale.x(), getWidth() * scale.y());
+	return new btCapsuleShapeZ(getRadius() * scale.x(), (getHeight() - getRadius()) * scale.y());
 #endif
 #ifdef PHYSICS_USE_PHYSX
-	return new PxCapsuleGeometry(getRadius() * scale.x(), getWidth() * scale.y());
+	return new PxCapsuleGeometry(getRadius() * scale.x(), (getHeight() * 0.5 - getRadius()) * scale.y());
 #endif
 }
 #endif

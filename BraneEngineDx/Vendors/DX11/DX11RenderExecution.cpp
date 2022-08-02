@@ -1,6 +1,8 @@
 #include "DX11RenderExecution.h"
 #include "DX11ShaderStage.h"
 
+#define INDIRECT_DRAW 0
+
 DX11RenderExecution::DX11RenderExecution(DX11Context& context)
 	: dxContext(context)
 {
@@ -14,52 +16,63 @@ DX11RenderExecution::DX11RenderExecution(DX11Context& context)
 DX11RenderExecution::~DX11RenderExecution()
 {
 	if (cmdBuffer != NULL) {
-		cmdBuffer->Release();
+		cmdBuffer.Reset();
 	}
 }
 
 void DX11RenderExecution::executeParticle(const vector<DrawArraysIndirectCommand>& cmds)
 {
+#if INDIRECT_DRAW
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 	size_t size = sizeof(DrawArraysIndirectCommand) * cmds.size();
 	if (cmdBufferDesc.ByteWidth != size) {
 		cmdBufferDesc.ByteWidth = size;
-		if (cmdBuffer != NULL) {
+		/*if (cmdBuffer != NULL) {
 			cmdBuffer->Release();
-		}
+		}*/
 		dxContext.device->CreateBuffer(&cmdBufferDesc, NULL, &cmdBuffer);
 	}
 	D3D11_MAPPED_SUBRESOURCE cmdmappedData;
-	dxContext.deviceContext->Map(cmdBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cmdmappedData);
+	dxContext.deviceContext->Map(cmdBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &cmdmappedData);
 	memcpy_s(cmdmappedData.pData, cmdBufferDesc.ByteWidth, cmds.data(), cmdBufferDesc.ByteWidth);
-	dxContext.deviceContext->Unmap(cmdBuffer, 0);
+	dxContext.deviceContext->Unmap(cmdBuffer.Get(), 0);
+#endif
 	for (int i = 0; i < cmds.size(); i++) {
 		DX11ShaderProgram::currentDx11Program->drawInfo.baseVertex = 0;
 		DX11ShaderProgram::currentDx11Program->drawInfo.baseInstance = cmds[i].baseInstance;
 		DX11ShaderProgram::currentDx11Program->uploadDrawInfo();
-		dxContext.deviceContext->DrawInstancedIndirect(cmdBuffer, sizeof(DrawArraysIndirectCommand) * i);
+#if INDIRECT_DRAW
+		dxContext.deviceContext->DrawInstancedIndirect(cmdBuffer.Get(), sizeof(DrawArraysIndirectCommand) * i);
+#else
+		dxContext.deviceContext->DrawInstanced(cmds[i].count, cmds[i].instanceCount, cmds[i].first, cmds[i].baseInstance);
+#endif
 	}
 }
 
 void DX11RenderExecution::executeMesh(const vector<DrawElementsIndirectCommand>& cmds)
 {
+#if INDIRECT_DRAW
 	size_t size = sizeof(DrawElementsIndirectCommand) * cmds.size();
 	if (cmdBufferDesc.ByteWidth != size) {
 		cmdBufferDesc.ByteWidth = size;
-		if (cmdBuffer != NULL) {
+		/*if (cmdBuffer != NULL) {
 			cmdBuffer->Release();
-		}
+		}*/
 		dxContext.device->CreateBuffer(&cmdBufferDesc, NULL, &cmdBuffer);
 	}
 	D3D11_MAPPED_SUBRESOURCE cmdmappedData;
-	dxContext.deviceContext->Map(cmdBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &cmdmappedData);
+	dxContext.deviceContext->Map(cmdBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &cmdmappedData);
 	memcpy_s(cmdmappedData.pData, cmdBufferDesc.ByteWidth, cmds.data(), cmdBufferDesc.ByteWidth);
-	dxContext.deviceContext->Unmap(cmdBuffer, 0);
+	dxContext.deviceContext->Unmap(cmdBuffer.Get(), 0);
+#endif
 	for (int i = 0; i < cmds.size(); i++) {
 		DX11ShaderProgram::currentDx11Program->drawInfo.baseVertex = cmds[i].baseVertex;
 		DX11ShaderProgram::currentDx11Program->drawInfo.baseInstance = cmds[i].baseInstance;
 		DX11ShaderProgram::currentDx11Program->uploadDrawInfo();
-		//dxContext.deviceContext->DrawIndexedInstanced(cmds[i].count, cmds[i].instanceCount, cmds[i].firstIndex, cmds[i].baseVertex, cmds[i].baseInstance);
-		dxContext.deviceContext->DrawIndexedInstancedIndirect(cmdBuffer, sizeof(DrawElementsIndirectCommand) * i);
+#if INDIRECT_DRAW
+		dxContext.deviceContext->DrawIndexedInstancedIndirect(cmdBuffer.Get(), sizeof(DrawElementsIndirectCommand) * i);
+#else
+		dxContext.deviceContext->DrawIndexedInstanced(cmds[i].count, cmds[i].instanceCount, cmds[i].firstIndex, cmds[i].baseVertex, cmds[i].baseInstance);
+#endif
 	}
 }

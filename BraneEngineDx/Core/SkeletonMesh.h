@@ -51,8 +51,8 @@ struct BoneData
 	unsigned int siblingIndex;
 	Matrix4f offsetMatrix;
 	Matrix4f transformMatrix;
-	SkeletonData* skeletonData;
-	BoneData* parent;
+	SkeletonData* skeletonData = NULL;
+	BoneData* parent = NULL;
 	vector<BoneData*> children;
 
 	unsigned int addChild(const string& name, const Matrix4f& offsetMatrix, const Matrix4f & transformMatrix);
@@ -83,7 +83,8 @@ public:
 	vector<string> morphName;
 	vector<bool> partHasMorph;
 
-	virtual void updateMorphWeights(vector<float>& weights);
+	//virtual void updateMorphWeights(vector<float>& weights);
+	virtual bool writeObjStream(ostream& os, const vector<int>& partIndex) const;
 };
 
 #endif // !_SKELETONMESH_H_

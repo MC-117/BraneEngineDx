@@ -3,11 +3,19 @@
 #include "Core\GUI\EditorWindow.h"
 #include "Core\GUI\ESCMenu.h"
 #include "Core\GUI\DebugLogWindow.h"
+#include "Core\GUI\CMDWindow.h"
 #include "Core\GUI\MatBranchModifier.h"
+#include "Core\GUI\PhysicsDebug.h"
+#include "Core\GUI\ShaderManagerWindow.h"
+#include "Core\Timeline\TimelineWindow.h"
+#include "Core\Timeline\AnimationTrack.h"
+#include "Core\Graph\GraphWindow.h"
 #include "Cameras\DebugCamera.h"
 #include "Actors\SkySphere.h"
 #include "Actors\VehicleActor.h"
 #include "Actors\GunTowerActor.h"
+#include "Live2D\Live2DActor.h"
+#include "Actors\ClothActor.h"
 
 VehicleActor* loadCubeVehicle(float unit = 2)
 {
@@ -132,14 +140,31 @@ void InitialWorld()
 {
 	//world.input.setCursorHidden(true);
 
+	//world.physicalWorld.setPause(true);
+	world.physicalWorld.setGravity(Vector3f(0, 0, -10));
+
 	DirectLight& dirLight = *new DirectLight("DirLight");
 	dirLight.setRotation(0, -45, -45);
 	world += dirLight;
 
-	SkySphere& sky = *new SkySphere();
-	sky.loadDefaultTexture();
-	sky.scaling(50, 50, 50);
-	world += sky;
+	//Mesh* clothMesh = getAssetByPath<Mesh>("Content/Cloth/ClothPlane.fbx");
+	//Material* clothMaterial = getAssetByPath<Material>("Content/Cloth/ClothM.imat");
+	//ClothActor& cloth = *new ClothActor("Cloth");
+	//cloth.setMesh(clothMesh);
+	//cloth.meshRender.setMaterial(0, *clothMaterial);
+	////cloth.addSphereCollider({ 0, 0, -100 }, 10);
+	//cloth.addSphereCollider({ 20, 20, -100 }, 10);
+	//cloth.addSphereCollider({ -20, 20, -100 }, 10);
+	//cloth.addSphereCollider({ 20, -20, -100 }, 10);
+	//cloth.addSphereCollider({ -20, -20, -100 }, 10);
+	////cloth.addBoxCollider({ 0, 0, -305 }, { 100, 100, 5 });
+
+	//ClothVertexCluster* cluster = cloth.clothBody.addVertexCluster({ 50, 50, 0 }, Quaternionf::Identity());
+	//cluster->addSphere({ 0, 0, 0, 5 });
+	//cluster = cloth.clothBody.addVertexCluster({ 50, -50, 0 }, Quaternionf::Identity());
+	//cluster->addSphere({ 0, 0, 0, 5 });
+	//world += cloth;
+	//cloth.setPosition(0, 0, 300);
 
 	DebugCamera& debugCamera = *new DebugCamera();
 	world += debugCamera;
@@ -148,19 +173,28 @@ void InitialWorld()
 	static VehicleActor* vehicles = loadVehicle();
 	static VehicleActor* cubeVehicles = loadCubeVehicle();
 
-	world.events.registerOnTick([](Object* self, float dt) {
+	/*Live2DModel* live2DModel = getAssetByPath<Live2DModel>("Content/Live2D/Hiyori/Hiyori.model3.live2d");
+	if (live2DModel != NULL) {
+		Live2DActor& live2DActor = *new Live2DActor("Hiyori");
+		live2DActor.setModel(live2DModel);
+		world += live2DActor;
+	}*/
+
+	/*world.events.registerOnTick([](Object* self, float dt) {
 		World* world = (World*)self;
-		Input& input = world->input;
+		Input& input = Engine::input;
 		if (input.getCursorHidden() || input.getMouseButtonDown(MouseButtonEnum::Right)) {
 			if (input.getKeyPress('Q')) {
-				Console::log("Q");
 				if (vehicles->isControled())
 					world->switchCamera(cubeVehicles->TPCamera);
 				else if (cubeVehicles->isControled())
 					world->switchCamera(vehicles->TPCamera);
 			}
 		}
-	});
+		if (input.getKeyPress('P')) {
+			world->physicalWorld.setPause(!world->physicalWorld.getPause());
+		}
+	});*/
 
 	ESCMenu& escMenu = *new ESCMenu("ESCMenu", true);
 	world += escMenu;
@@ -174,8 +208,23 @@ void InitialWorld()
 	world += debugLogWindow;
 	debugLogWindow.show = true;
 
+	CMDWindow& cmdWindow = *new CMDWindow("CMDWindow");
+	world += cmdWindow;
+
 	MatBranchModifier& matBranchModifier = *new MatBranchModifier("MatBranchModifier", false);
 	world += matBranchModifier;
+
+	PhysicsDebug& physicsDebug = *new PhysicsDebug("PhysicsDebug");
+	world += physicsDebug;
+
+	TimelineWindow& timelineWindow = *new TimelineWindow("Timeline");
+	world += timelineWindow;
+
+	GraphWindow& graphWindow = *new GraphWindow("Graph");
+	world += graphWindow;
+
+	ShaderManagerWindow& shaderManagerWindow = *new ShaderManagerWindow("ShaderManagerWindow");
+	world += shaderManagerWindow;
 
 	SerializationInfo* info = getAssetByPath<SerializationInfo>(Engine::engineConfig.startMapPath);
 	if (info == NULL) {

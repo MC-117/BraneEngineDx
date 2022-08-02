@@ -2,11 +2,12 @@
 #ifndef _RENDERCOMMANDLIST_H_
 #define _RENDERCOMMANDLIST_H_
 
-#include "Utility.h"
+#include "Utility/Utility.h"
 #include "SkeletonMesh.h"
 #include "RenderTarget.h"
 #include "GPUBuffer.h"
 #include "IRenderExecution.h"
+#include "MorphTargetWeight.h"
 
 class Camera;
 class Render;
@@ -18,6 +19,7 @@ struct RenderCommand
 	Camera* camera;
 	MeshPart* mesh;
 	list<Particle>* particles;
+	list<IBufferBinding*> bindings;
 };
 
 struct TransDataTag
@@ -40,23 +42,23 @@ class RenderCommandList
 {
 public:
 	void setLight(Render* lightRender);
-	static unsigned int setMeshTransform(const Matrix4f& transformMat);
-	static unsigned int setMeshTransform(const vector<Matrix4f>& transformMats);
-	static void* getMeshPartTransform(MeshPart* meshPart, Material* material);
-	static void* setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex);
-	static void* setMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex);
+	unsigned int setMeshTransform(const Matrix4f& transformMat);
+	unsigned int setMeshTransform(const vector<Matrix4f>& transformMats);
+	void* getMeshPartTransform(MeshPart* meshPart, Material* material);
+	void* setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex);
+	void* setMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex);
 
-	static unsigned int setStaticMeshTransform(const Matrix4f& transformMat);
-	static unsigned int setStaticMeshTransform(const vector<Matrix4f>& transformMats);
-	static void* getStaticMeshPartTransform(MeshPart* meshPart, Material* material);
-	static void* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex);
-	static void* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex);
-	static void cleanStaticMeshTransform(unsigned int base, unsigned int count);
-	static void cleanStaticMeshPartTransform(MeshPart* meshPart, Material* material);
+	unsigned int setStaticMeshTransform(const Matrix4f& transformMat);
+	unsigned int setStaticMeshTransform(const vector<Matrix4f>& transformMats);
+	void* getStaticMeshPartTransform(MeshPart* meshPart, Material* material);
+	void* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex);
+	void* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex);
+	void cleanStaticMeshTransform(unsigned int base, unsigned int count);
+	void cleanStaticMeshPartTransform(MeshPart* meshPart, Material* material);
 	bool setRenderCommand(const RenderCommand& cmd, bool isStatic = false);
 
-	static void setUpdateStatic();
-	static bool willUpdateStatic();
+	void setUpdateStatic();
+	bool willUpdateStatic();
 
 	void excuteCommand();
 	void resetCommand();
@@ -118,7 +120,7 @@ protected:
 		map<TransTag, MeshTransformIndex> staticMeshTransformIndex;
 
 		GPUBuffer transformBuffer = GPUBuffer(GB_Struct, 16 * sizeof(float));
-		GPUBuffer transformIndexBuffer = GPUBuffer(GB_Index, sizeof(unsigned int));
+		GPUBuffer transformIndexBuffer = GPUBuffer(GB_Vertex, sizeof(unsigned int));
 
 		void setUpdateStatic();
 
@@ -144,10 +146,11 @@ protected:
 	{
 		map<MeshPart*, MeshTransformIndex*> meshParts;
 		vector<DrawElementsIndirectCommand> cmds;
+		list<IBufferBinding*> bindings;
 		unsigned int totaltransformCount = 0;
 		GPUBuffer transformBuffer = GPUBuffer(GB_Storage, 16 * sizeof(float));
 
-		void setRenderData(MeshPart* part, MeshTransformIndex* data);
+		void setRenderData(MeshPart* part, MeshTransformIndex* data, const list<IBufferBinding*>& bindings);
 		virtual void excute();
 	};
 	struct ParticleData
@@ -190,13 +193,13 @@ protected:
 		Vector3f position;
 		float intensity = 0;
 		Vector3f color;
-		float attenuation;
+		float radius;
 	};
 	struct LightDataPack
 	{
 		DirectLightData directLightData;
 		vector<PointLightData> pointLightDatas;
-		GPUBuffer directLightBuffer = GPUBuffer(GB_Storage, sizeof(DirectLightData));
+		GPUBuffer directLightBuffer = GPUBuffer(GB_Constant, sizeof(DirectLightData));
 		GPUBuffer pointLightBuffer = GPUBuffer(GB_Struct, sizeof(PointLightData));
 
 		RenderTarget* shadowTarget = NULL;
@@ -211,9 +214,9 @@ public:
 	list<IRenderPack*> renderPacks;
 	map<Camera*, map<ShaderProgram*, map<Material*, map<MeshData*, IRenderPack*>>, shader_order>, camera_order> commandList;
 	//map<Camera*, map<Shader*, map<Material*, ParticleRenderPack>, shader_order>, camera_order> particleCommandList;
-	static MeshTransformDataPack meshTransformDataPack;
-	static ParticleDataPack particleDataPack;
-	static LightDataPack lightDataPack;
+	MeshTransformDataPack meshTransformDataPack;
+	ParticleDataPack particleDataPack;
+	LightDataPack lightDataPack;
 };
 
 #endif // !_RENDERCOMMANDLIST_H_

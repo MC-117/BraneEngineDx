@@ -3,7 +3,7 @@
 #define _BLENDSPACEWINDOW_H_
 
 #include "UIWindow.h"
-#include "../AnimationClip.h"
+#include "../Animation/AnimationClip.h"
 
 struct BlendSpaceGridContext
 {

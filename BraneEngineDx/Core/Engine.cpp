@@ -1,12 +1,17 @@
 #define _AFXDLL
 #include <filesystem>
+#include <tchar.h>
 #include <fstream>
 #include "Engine.h"
+#include "InitializationManager.h"
 #include "../resource.h"
 #include "Console.h"
+#include "Importer.h"
 #include "WUI/LoadingUI.h"
 #include "WUI/WUIViewPort.h"
+#include "Script/PythonManager.h"
 #include "../ThirdParty/ImGui/imgui_internal.h"
+#include "../ThirdParty/ImGui/ImGuiIconHelp.h"
 
 World world;
 
@@ -23,7 +28,7 @@ void SetTopWindow(HWND hWnd)
 	AttachThreadInput(dwCurID, dwForeID, FALSE);
  }
 
-void loadAssets(LoadingUI& log, const char* path, vector<string>& delayLoadAsset)
+void loadAssets(LoadingUI& log, const char* path, vector<filesystem::path>& delayLoadAsset)
 {
 	namespace FS = filesystem;
 	for (auto& p : FS::recursive_directory_iterator(path)) {
@@ -35,22 +40,29 @@ void loadAssets(LoadingUI& log, const char* path, vector<string>& delayLoadAsset
 		const char* pathStr = path.c_str();
 #endif // UNICODE
 		if (p.status().type() == filesystem::file_type::regular) {
-			string ext = p.path().extension().generic_string();
-			string name = p.path().filename().generic_string();
+			string ext = p.path().extension().generic_u8string();
+			string name = p.path().filename().generic_u8string();
 			name = name.substr(0, name.size() - ext.size());
 			Asset* asset = NULL;
 			bool ignore = false;
 			bool delay = false;
-			SerializationInfo *ini = NULL;
+			SerializationInfo* ini = NULL;
 			string iniPath = path + ".ini";
-			if (FS::exists(iniPath.c_str())) {
-				ifstream f(iniPath);
-				if (!f.fail()) {
-					SerializationInfoParser iniParse(f);
-					if (iniParse.parse())
-						ini = new SerializationInfo(iniParse.infos[0]);
-					f.close();
+			try
+			{
+				if (FS::exists(iniPath.c_str())) {
+					ifstream f(iniPath);
+					if (!f.fail()) {
+						SerializationInfoParser iniParse(f);
+						if (iniParse.parse())
+							ini = new SerializationInfo(iniParse.infos[0]);
+						f.close();
+					}
 				}
+			}
+			catch (const std::exception&)
+			{
+
 			}
 			if (!_stricmp(ext.c_str(), ".obj") || !_stricmp(ext.c_str(), ".fbx") ||
 				!_stricmp(ext.c_str(), ".pmx")) {
@@ -111,6 +123,15 @@ void loadAssets(LoadingUI& log, const char* path, vector<string>& delayLoadAsset
 					}
 				}
 			}
+			else if (!_stricmp(ext.c_str(), ".anim")) {
+				AnimationClipData* data = AnimationLoader::readAnimation(path);
+				if (data != NULL) {
+					Asset* ass = new Asset(&AnimationClipDataAssetInfo::assetInfo, data->name, path);
+					ass->asset[0] = data;
+					if (AssetManager::registAsset(*ass))
+						asset = ass;
+				}
+			}
 			else if (!_stricmp(ext.c_str(), ".camanim")) {
 				AnimationClipData* data = AnimationLoader::loadCameraAnimation(path);
 				if (data != NULL) {
@@ -134,7 +155,7 @@ void loadAssets(LoadingUI& log, const char* path, vector<string>& delayLoadAsset
 			else if (!_stricmp(ext.c_str(), ".png") || !_stricmp(ext.c_str(), ".tga") ||
 				!_stricmp(ext.c_str(), ".jpg") || !_stricmp(ext.c_str(), ".bmp") ||
 				!_stricmp(ext.c_str(), ".mip")) {
-				const char* stdStr = "false";
+				const char* stdStr = "true";
 				const char* filterStr = "TF_Linear_Mip_Linear";
 				if (name.find("_N") != string::npos)
 					stdStr = "false";
@@ -150,14 +171,35 @@ void loadAssets(LoadingUI& log, const char* path, vector<string>& delayLoadAsset
 				asset = AssetManager::loadAsset("AudioData", name, path, {}, {});
 			}
 #endif // AUDIO_USE_OPENAL
+			else if (!_stricmp(ext.c_str(), ".py")) {
+				asset = AssetManager::loadAsset("PythonScript", name, path, {}, {});
+			}
 			else if (!_stricmp(ext.c_str(), ".asset")) {
 				asset = AssetManager::loadAsset("AssetFile", name, path, {}, {});
 			}
-			else if (!_stricmp(ext.c_str(), ".imat")) {
-				delayLoadAsset.push_back(path);
+			else if (!_stricmp(ext.c_str(), ".graph")) {
+				asset = AssetManager::loadAsset("Graph", name, path, {}, {});
+			}
+			else if (!_stricmp(ext.c_str(), ".timeline")) {
+				delayLoadAsset.push_back(p.path());
 				delay = true;
 			}
-			else if (!_stricmp(ext.c_str(), ".ttf") || !_stricmp(ext.c_str(), ".ini")) {
+			else if (!_stricmp(ext.c_str(), ".live2d")) {
+				delayLoadAsset.push_back(p.path());
+				delay = true;
+			}
+			else if (!_stricmp(ext.c_str(), ".spine2djson") ||
+				!_stricmp(ext.c_str(), ".spine2dbin")) {
+				delayLoadAsset.push_back(p.path());
+				delay = true;
+			}
+			else if (!_stricmp(ext.c_str(), ".imat")) {
+				delayLoadAsset.push_back(p.path());
+				delay = true;
+			}
+			else if (!_stricmp(ext.c_str(), ".ttf") || !_stricmp(ext.c_str(), ".ini") ||
+					 !_stricmp(ext.c_str(), ".hmat") || !_stricmp(ext.c_str(), ".shadapter") ||
+					 !_stricmp(ext.c_str(), ".json")) {
 				ignore = true;
 			}
 			else {
@@ -186,8 +228,8 @@ void loadAssets(LoadingUI& log, const char* path, vector<string>& delayLoadAsset
 
 void loadAssets(LoadingUI& log, bool loadDefaultAsset, bool loadEngineAsset, bool loadContentAsset)
 {
-	vector<string> delayLoadAsset;
 	namespace FS = filesystem;
+	vector<FS::path> delayLoadAsset;
 	if (!loadDefaultAsset)
 		return;
 
@@ -219,14 +261,24 @@ void loadAssets(LoadingUI& log, bool loadDefaultAsset, bool loadEngineAsset, boo
 		}
 	}
 	for (int i = 0; i < delayLoadAsset.size(); i++) {
-		FS::path p = FS::path(delayLoadAsset[i]);
-		string path = p.generic_string();
-		string ext = p.extension().generic_string();
-		string name = p.filename().generic_string();
+		FS::path p = delayLoadAsset[i];
+		string path = p.generic_u8string();
+		string ext = p.extension().generic_u8string();
+		string name = p.filename().generic_u8string();
 		name = name.substr(0, name.size() - ext.size());
 		Asset* asset = NULL;
 		if (!_stricmp(ext.c_str(), ".imat")) {
 			asset = AssetManager::loadAsset("Material", name, path, { "" }, {});
+		}
+		else if (!_stricmp(ext.c_str(), ".live2d")) {
+			asset = AssetManager::loadAsset("Live2DModel", name, path, {}, {});
+		}
+		else if (!_stricmp(ext.c_str(), ".spine2djson") ||
+				!_stricmp(ext.c_str(), ".spine2dbin")) {
+			asset = AssetManager::loadAsset("Spine2DModel", name, path, {}, {});
+		}
+		else if (!_stricmp(ext.c_str(), ".timeline")) {
+			asset = AssetManager::loadAsset("Timeline", name, path, {}, {});
 		}
 		else {
 			log.setText(path + " unknown file type");
@@ -244,7 +296,17 @@ void loadAssets(LoadingUI& log, bool loadDefaultAsset, bool loadEngineAsset, boo
 	}
 }
 
+string configPath;
+
 void main(int argc, char** argv) {
+	if (argc > 1) {
+		configPath = argv[1];
+	}
+	else {
+		if (MessageBoxA(NULL, "Load Tool?", "Config", MB_YESNO) == IDYES) {
+			configPath = "ConfigTool.ini";
+		}
+	}
 	Engine::config();
 	Engine::setup();
 	Engine::start();
@@ -252,6 +314,14 @@ void main(int argc, char** argv) {
 }
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
+	if (__argc > 1) {
+		configPath = __targv[1];
+	}
+	else {
+		if (MessageBoxA(NULL, "Load Tool?", "Config", MB_YESNO) == IDYES) {
+			configPath = "ConfigTool.ini";
+		}
+	}
 	//try {
 		Engine::windowContext.hinstance = hInstance;
 		Engine::config();
@@ -265,8 +335,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	}*/
 	return 0;
 }
-
 string Engine::version = ENGINE_VERSION;
+Input Engine::input;
 World* Engine::currentWorld = &world;
 WindowContext Engine::windowContext =
 {
@@ -306,9 +376,19 @@ void Engine::toggleFullscreen()
 
 void Engine::config()
 {
-	ifstream f = ifstream("Config.ini");
-	if (f.fail())
-		return;
+	if (configPath.empty())
+		configPath = "Config.ini";
+	ifstream f = ifstream(configPath);
+	if (f.fail()) {
+		Console::error("%s read failed", configPath.c_str());
+		if (configPath != "Config.ini") {
+			f.open("Config.ini");
+			if (f.fail())
+				return;
+		}
+		else
+			return;
+	}
 	SerializationInfoParser sip(f);
 	if (!sip.parse()) {
 		Console::error("Config.ini read failed");
@@ -347,6 +427,9 @@ void Engine::config()
 	conf.get(".vsnyc", boolStr);
 	if (boolStr == "true")
 		engineConfig.vsnyc = true;
+	float maxFPS = engineConfig.maxFPS;
+	conf.get(".maxFPS", maxFPS);
+	engineConfig.maxFPS = maxFPS;
 	float msaa = engineConfig.msaa;
 	conf.get(".msaa", msaa);
 	engineConfig.msaa = msaa;
@@ -355,6 +438,18 @@ void Engine::config()
 	engineConfig.screenWidth = screenWidth;
 	conf.get(".screenHeight", screenHeight);
 	engineConfig.screenHeight = screenHeight;
+
+	SerializationInfo* layers = conf.get("layers");
+	if (layers != NULL) {
+		for (auto b = layers->sublists.begin(), e = layers->sublists.end(); b != e; b++) {
+			int layer; string name;
+			if (b->get("layer", layer) && b->get("name", name)) {
+				if (layer > 0 && layer < 32) {
+					engineConfig.layerNames[layer] = name;
+				}
+			}
+		}
+	}
 }
 
 void SetStyleColors(ImGuiStyle* dst = 0)
@@ -420,8 +515,11 @@ void SetStyleColors(ImGuiStyle* dst = 0)
 	//		colors[i].w *= 0.96;
 }
 
+static bool alutInited = true;
+
 void Engine::setup()
 {
+	CoInitialize(0);
 	{
 
 #ifdef UNICODE
@@ -435,6 +533,7 @@ void Engine::setup()
 	VendorManager::getInstance().instantiateVendor(engineConfig.vendorName);
 
 	IVendor& vendor = VendorManager::getInstance().getVendor();
+	PythonManager::start();
 #if ENABLE_PHYSICS
 	if (!PhysicalWorld::init())
 		throw runtime_error("Physics Engine init failed");
@@ -458,7 +557,7 @@ void Engine::setup()
 	viewport.setSize({ rc.right - rc.left, rc.bottom - rc.top });
 	viewport.setText("BraneEngine v" + string(ENGINE_VERSION) + " | Vendor Api: " + vendor.getName());
 	windowContext.hwnd = viewport.create();
-	world.input.setHWND(windowContext.hwnd);
+	input.setHWND(windowContext.hwnd);
 
 	LoadingUI loadingUI("Engine/Banner/Banner.bmp", windowContext.hinstance);
 
@@ -471,17 +570,26 @@ void Engine::setup()
 #ifdef AUDIO_USE_OPENAL
 	if (!alutInit(NULL, NULL)) {
 		Console::error("ALUT init failed");
+		alutInited = false;
 		//throw runtime_error("ALUT init failed");
 	}
 #endif // AUDIO_USE_OPENAL
 
 	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigWindowsMoveFromTitleBarOnly = true;
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 
-	io.Fonts->AddFontFromFileTTF("Engine/Fonts/arialuni.ttf", 20, NULL, io.Fonts->GetGlyphRangesChineseFull());
+	io.Fonts->AddFontFromFileTTF("Engine/Fonts/arialuni.ttf",
+		20, NULL, io.Fonts->GetGlyphRangesChineseFull());
+
+	static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+	ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
+	io.Fonts->AddFontFromFileTTF(("Engine/Fonts/fa-solid-900.ttf"), 15, &icons_config, icons_ranges);
+
 	io.Fonts->AddFontFromFileTTF("Engine/Fonts/ChakraPetch-Light.ttf", 72, NULL, io.Fonts->GetGlyphRangesChineseFull());
 
 	// Setup Dear ImGui style
@@ -492,22 +600,28 @@ void Engine::setup()
 		if (!vendor.imGuiInit(engineConfig, windowContext))
 			throw runtime_error("Vendor ImGui init failed");
 	}
+
+	InitializationManager::instance().initialze();
+
 	loadingUI.setText("Start BraneEngine");
-	loadingUI.doModelAsync();
-	loadAssets(loadingUI, engineConfig.loadDefaultAsset, engineConfig.loadEngineAsset, engineConfig.loadContentAsset);
+	loadingUI.doModelAsync([](WUIControl& control, void* ptr)
+		{
+			LoadingUI& ui = dynamic_cast<LoadingUI&>(control);
+			loadAssets(ui, engineConfig.loadDefaultAsset, engineConfig.loadEngineAsset, engineConfig.loadContentAsset);
 
-	loadingUI.setText("Initial...");
-	if (engineConfig.guiOnly) {
-		world.setGUIOnly(true);
-		InitialTool();
-	}
-	else
-		InitialWorld();
-
-	loadingUI.close();
+			ui.setText("Initial...");
+			if (engineConfig.guiOnly) {
+				world.setGUIOnly(true);
+				InitialTool();
+			}
+			else
+				InitialWorld();
+		});
 
 	if (engineConfig.fullscreen)
 		toggleFullscreen();
+
+	input.init();
 }
 
 void Engine::start()
@@ -518,6 +632,8 @@ void Engine::start()
 
 void Engine::clean()
 {
+	input.release();
+	PythonManager::end();
 #if ENABLE_PHYSICS
 	world.physicalWorld.physicsScene->release();
 	PhysicalWorld::release();
@@ -538,16 +654,19 @@ void Engine::clean()
 		if (!vendor.clean(engineConfig, windowContext))
 			throw runtime_error("Vendor clean failed");
 	}
-
-	//alutExit();
+	if (alutInited)
+		alutExit();
+	CoUninitialize();
 }
 
 void Engine::mainLoop(float deltaTime)
 {
 	Timer timer;
 	if (world.willQuit()) {
-		PostQuitMessage(0);
+		PostQuitMessage(world.willRestart() ? 42 : 0);
 	}
+	Time::update();
+	input.update();
 	world.tick(deltaTime);
 	world.afterTick();
 	timer.record("CPU");
@@ -560,4 +679,6 @@ void Engine::mainLoop(float deltaTime)
 
 	timer.record("GPU Wait");
 	Console::getTimer("Engine") = timer;
+	Console::resetNewLogCount();
+	Console::resetNewPyLogCount();
 }

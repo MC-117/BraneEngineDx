@@ -31,7 +31,7 @@ public:
 
 	SkeletonMeshData();
 
-	virtual void updateMorphWeights(vector<float>& weights);
+	//virtual void updateMorphWeights(vector<float>& weights);
 };
 
 struct SkeletonMeshPartDesc

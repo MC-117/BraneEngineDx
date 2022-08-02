@@ -1,6 +1,8 @@
 #include "DOFPass.h"
 #include "../Asset.h"
 #include "../Console.h"
+#include "../Camera.h"
+#include "../GUI/UIControl.h"
 
 DOFPass::DOFPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -46,14 +48,16 @@ void DOFPass::render(RenderInfo & info)
 		dofRenderTarget.bindFrame();
 
 		material->setPass(0);
-		material->processBaseData();
 		material->processInstanceData();
 
 		vendor.setViewport(0, 0, size.x, size.y);
 
 		vendor.postProcessCall();
 
+		dofRenderTarget.clearBind();
+
 		resource->screenTexture = &dofMap;
+		resource->screenRenderTarget = &dofRenderTarget;
 	}
 }
 

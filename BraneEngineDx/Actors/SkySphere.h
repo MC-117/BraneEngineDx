@@ -4,24 +4,15 @@
 
 #include "../Core/Actor.h"
 #include "../Core/MeshRender.h"
-#include "../Core/DirectLight.h"
 
-class SkySphere :public Actor
+class SkySphere : public Actor
 {
 public:
-	Mesh sphere;
-	Shader shader = Shader();
-	Material material = Material(shader);
-	MeshRender meshRender = MeshRender(sphere, material);
+	Serialize(SkySphere, Actor);
 
-	Texture2D skyTex;
-	Texture2D cloudNoiseTex;
-	Texture2D starTex;
-
-	DirectLight* directLight = NULL;
+	MeshRender meshRender;
 
 	SkySphere(string name = "SkySphere");
-	SkySphere(DirectLight& dirLight, string name = "SkySphere");
 
 	bool loadDefaultTexture();
 
@@ -37,14 +28,23 @@ public:
 
 	virtual void tick(float deltaTime);
 
-	virtual void prerender();
+	virtual void prerender(RenderCommandList& cmdLst);
 	virtual Render* getRender();
 	virtual unsigned int getRenders(vector<Render*>& renders);
 
 	virtual void setHidden(bool value);
 	virtual bool isHidden();
+
+	static Serializable* instantiate(const SerializationInfo& from);
 protected:
 	float time = 0;
+
+	Mesh* sphere = NULL;
+	Material* material = NULL;
+
+	Texture2D* skyTex = NULL;
+	Texture2D* cloudNoiseTex = NULL;
+	Texture2D* starTex = NULL;
 };
 
 #endif // !_SKYSPHEREACTOR_H_

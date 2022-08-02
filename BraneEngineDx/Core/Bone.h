@@ -8,14 +8,14 @@
 class Bone : public Actor
 {
 public:
-	Serialize(Bone);
+	Serialize(Bone, Actor);
 
 	MeshRender sphereMeshRender;
 	MeshRender coneMeshRender;
 
 	Bone(const string& name = "Bone");
 
-	virtual void prerender();
+	virtual void prerender(RenderCommandList& cmdLst);
 	virtual Render* getRender();
 	virtual unsigned int getRenders(vector<Render*>& renders);
 

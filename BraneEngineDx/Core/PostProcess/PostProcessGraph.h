@@ -7,7 +7,7 @@
 class PostProcessGraph : public Serializable
 {
 public:
-	Serialize(PostProcessGraph);
+	Serialize(PostProcessGraph,);
 
 	PostProcessResource resource;
 
@@ -16,6 +16,7 @@ public:
 	~PostProcessGraph();
 
 	void addPostProcessPass(PostProcessPass& pass);
+	void removePostProcessPass(const string& name);
 	void addDefaultPasses();
 
 	virtual PostProcessPass* getPostProcessPass(const string& name);

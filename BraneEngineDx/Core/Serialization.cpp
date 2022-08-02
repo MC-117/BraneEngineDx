@@ -43,7 +43,7 @@ bool SerializationInfo::consistKey(const string & name)
 	return false;
 }
 
-bool SerializationInfo::add(const string & name, float value)
+bool SerializationInfo::add(const string & name, Decimal value)
 {
 	if (consistKey(name))
 		return false;
@@ -66,13 +66,13 @@ SerializationInfo * SerializationInfo::add(const string & name)
 	if (consistKey(name))
 		return NULL;
 	subfeilds.insert(pair<string, size_t>(name, sublists.size()));
-	sublists.push_back(SerializationInfo());
-	SerializationInfo* info = &sublists.back();
-	info->name = name;
-	return info;
+	SerializationInfo& info = sublists.emplace_back();
+	info.name = name;
+	info.path = path;
+	return &info;
 }
 
-void SerializationInfo::push(float value)
+void SerializationInfo::push(Decimal value)
 {
 	numFeild.insert(pair<string, size_t>(to_string(numFeild.size()), numFeild.size()));
 	numList.push_back(value);
@@ -87,10 +87,11 @@ void SerializationInfo::push(const string & value)
 SerializationInfo * SerializationInfo::push()
 {
 	subfeilds.insert(pair<string, size_t>(to_string(subfeilds.size()), subfeilds.size()));
-	sublists.push_back(SerializationInfo());
-	sublists.back().type = arrayType;
-	sublists.back().name = to_string(subfeilds.size() - 1);
-	return &sublists.back();
+	SerializationInfo& info = sublists.emplace_back();
+	info.path = path;
+	info.type = arrayType;
+	info.name = to_string(subfeilds.size() - 1);
+	return &info;
 }
 
 void SerializationInfo::set(const string & name, const string & value)
@@ -104,7 +105,7 @@ void SerializationInfo::set(const string & name, const string & value)
 		stringList[iter->second] = value;
 }
 
-void SerializationInfo::set(const string & name, float value)
+void SerializationInfo::set(const string & name, Decimal value)
 {
 	auto iter = numFeild.find(name);
 	if (iter == numFeild.end()) {
@@ -118,12 +119,14 @@ void SerializationInfo::set(const string & name, float value)
 void SerializationInfo::set(const SerializationInfo& value)
 {
 	auto iter = subfeilds.find(value.name);
+	SerializationInfo* info = NULL;
 	if (iter == subfeilds.end()) {
 		subfeilds.insert(pair<string, size_t>(value.name, stringList.size()));
-		sublists.push_back(value);
+		info = &sublists.emplace_back(value);
 	}
 	else
-		sublists[iter->second] = value;
+		info = &(sublists[iter->second] = value);
+	info->path = path;
 }
 
 void SerializationInfo::set(const string & name, Serializable & value)
@@ -132,13 +135,14 @@ void SerializationInfo::set(const string & name, Serializable & value)
 	SerializationInfo* info;
 	if (iter == subfeilds.end()) {
 		subfeilds.insert(pair<string, size_t>(name, sublists.size()));
-		sublists.push_back(SerializationInfo());
-		info = &sublists.back();
+		info = &sublists.emplace_back();
 	}
 	else {
 		info = &sublists[iter->second];
 		info->clear();
 	}
+	info->path = path;
+	info->type = value.getSerialization().type;
 	info->name = name;
 	if (!value.serialize(*info))
 		throw runtime_error("Serializable serialize failed");
@@ -197,6 +201,85 @@ SerializationInfo * SerializationInfo::get(const size_t i)
 }
 
 map<filesystem::path, SerializationInfo*> Serialization::serializationInfoByPath;
+
+Serialization* Serialization::getBaseSerialization()
+{
+	if (baseType.empty())
+		return NULL;
+	if (baseSerialization == NULL) {
+		baseSerialization = SerializationManager::getSerialization(baseType);
+	}
+	return baseSerialization;
+}
+
+Serialization* Serialization::getBaseSerialization() const
+{
+	if (baseType.empty())
+		return NULL;
+	if (baseSerialization == NULL) {
+		return SerializationManager::getSerialization(baseType);
+	}
+	return baseSerialization;
+	//return baseSerialization == &serialization ? NULL : baseSerialization;
+}
+
+bool Serialization::isChildOf(const Serialization& serialization)
+{
+	if (&serialization == NULL)
+		return false;
+	Serialization* base = this;
+	while (base != NULL) {
+		base = base->getBaseSerialization();
+		if (base == &serialization)
+			return true;
+	}
+	return false;
+}
+
+bool Serialization::isChildOf(const Serialization& serialization) const
+{
+	if (&serialization == NULL)
+		return false;
+	const Serialization* base = this;
+	while (base != NULL) {
+		base = base->getBaseSerialization();
+		if (base == &serialization)
+			return true;
+	}
+	return false;
+}
+
+int Serialization::getChildren(vector<Serialization*>& children) const
+{
+	int count = 0;
+	for (auto b = SerializationManager::serializationList->begin(),
+		e = SerializationManager::serializationList->end(); b != e; b++) {
+		if (b->second->isChildOf(*this)) {
+			children.push_back(b->second);
+			count++;
+		}
+	}
+	return count;
+}
+
+int Serialization::getAttributeCount() const
+{
+	return attributes.size();
+}
+Attribute* Serialization::getAttribute(int index) const
+{
+	if (index >= attributes.size())
+		return NULL;
+	return attributes[index];
+}
+
+Attribute* Serialization::getAttribute(const string& name) const
+{
+	auto iter = attributeNameMap.find(name);
+	if (iter == attributeNameMap.end())
+		return NULL;
+	return iter->second;
+}
 
 bool Serialization::addInfo(SerializationInfo & info, bool overwrite)
 {
@@ -281,21 +364,60 @@ Serializable * Serialization::clone(Serializable & object)
 	return re;
 }
 
-Serialization::Serialization(const string & type) : type(type)
+SerializationScope* SerializationScope::currentScope = NULL;
+
+Serialization Serialization::serialization("Serialization", "");
+
+Serialization::~Serialization()
+{
+	for each (auto attr in attributes)
+	{
+		delete attr;
+	}
+	attributes.clear();
+}
+
+void Serialization::init()
+{
+	SerializationScope* scope = SerializationScope::getScope();
+	if (scope)
+		scope->serializationConstuction(this);
+}
+
+void Serialization::addAttribute(const vector<Attribute*>& list)
+{
+	for each (auto attr in list)
+	{
+		Attribute* raw = getAttribute(attr->name);
+		if (raw) {
+			raw->resolve(attr);
+			delete attr;
+		}
+		else {
+			attributeNameMap[attr->name] = attr;
+			attributes.push_back(attr);
+		}
+	}
+}
+
+Serialization::Serialization(const string& type, const string& baseType) : type(type), baseType(baseType)
 {
 	auto iter = SerializationManager::serializationList->find(type);
 	if (iter == SerializationManager::serializationList->end())
 		SerializationManager::serializationList->insert(pair<string, Serialization*>(type, this));
+	init();
 }
 
-Serialization::Serialization(const char * type) : type(type)
+Serialization::Serialization(const char* type, const char* baseType) : type(type), baseType(baseType)
 {
 	auto iter = SerializationManager::serializationList->find(type);
 	if (iter == SerializationManager::serializationList->end())
 		SerializationManager::serializationList->insert(pair<string, Serialization*>(type, this));
+	init();
 }
 
-SerializationInfoParser::SerializationInfoParser(istream & is) : stream(is)
+SerializationInfoParser::SerializationInfoParser(istream & is, const string& path)
+	: stream(is), path(path)
 {
 }
 
@@ -368,6 +490,10 @@ SerializationInfoParser::TokenType SerializationInfoParser::getToken()
 					state = INNUM;
 					isfloat = false;
 					break;
+				case '+':
+					state = INNUM;
+					isfloat = false;
+					break;
 				case '.':
 					state = INNUM;
 					isfloat = true;
@@ -385,13 +511,15 @@ SerializationInfoParser::TokenType SerializationInfoParser::getToken()
 					isfloat = 1;
 				else if (c == 'e' && isfloat == 1)
 					isfloat = 2;
+				else if (c == '+' && isfloat == 2)
+					isfloat = 3;
 				else if (c == '-' && isfloat == 2)
 					isfloat = 3;
 				else {
 					ungetNextChar();
 					save = false;
 					state = DONE;
-					currentToken = NUM;
+					currentToken = isfloat ? FLOAT : INT;
 				}
 			}
 			break;
@@ -464,25 +592,47 @@ void SerializationInfoParser::match(TokenType expected)
 bool SerializationInfoParser::object_sequence()
 {
 	while (true) {
-		string name = tokenString;
+		string name, type;
 		if (token == NAME) {
 			match(NAME);
-			infos.push_back(SerializationInfo());
-			SerializationInfo* pinfo = &infos.back();
-			pinfo->type = name;
-			if (!object(*pinfo)) {
+			if (token == COLON) {
+				name = backupTokenString;
+				match(COLON);
+				if (token == NAME) {
+					type = tokenString;
+					match(NAME);
+				}
+				else {
+					findError("Unexpected token: " + tokenString);
+					return false;
+				}
+			}
+			else
+				type = backupTokenString;
+		}
+
+		if (token == LBR) {
+			SerializationInfo& info = infos.emplace_back();
+			info.name = name;
+			info.path = path;
+			info.type = type;
+			if (!object(info)) {
 				findError("Unexpected token: " + tokenString);
 				return false;
 			}
 		}
 		else if (token == LSBR) {
 			match(LSBR);
-			infos.push_back(SerializationInfo());
-			SerializationInfo* pinfo = &infos.back();
-			if (!array(*pinfo)) {
+			SerializationInfo& info = infos.emplace_back();
+			info.name = name;
+			info.path = path;
+			if (!array(info)) {
 				findError("Unexpected token: " + tokenString);
 				return false;
 			}
+		}
+		else if (token == COMMA) {
+			continue;
 		}
 		else if (token == ENDFILE)
 			break;
@@ -563,7 +713,7 @@ bool SerializationInfoParser::array(SerializationInfo & info)
 		}
 		size++;
 	}
-	info.arrayType = _token == NUM ? "Number" : "String";
+	info.arrayType = (_token == INT | _token == FLOAT) ? "Number" : "String";
 	return true;
 }
 
@@ -575,7 +725,7 @@ bool SerializationInfoParser::object_array(SerializationInfo & info)
 			match(RSBR);
 			break;
 		}
-		SerializationInfo* pinfo = info.add(to_string(size));
+		SerializationInfo* pinfo = info.push();
 		pinfo->type = info.arrayType;
 		if (!object(*pinfo))
 			return false;
@@ -600,12 +750,19 @@ bool SerializationInfoParser::factor(SerializationInfo & info, const string& nam
 	SerializationInfo* pinfo = NULL;
 	switch (token)
 	{
-	case NUM:
+	case INT:
+		if (!info.add(name, atoll(tokenString.c_str()))) {
+			findError("Same key name: " + name);
+			return false;
+		}
+		match(INT);
+		break;
+	case FLOAT:
 		if (!info.add(name, atof(tokenString.c_str()))) {
 			findError("Same key name: " + name);
 			return false;
 		}
-		match(NUM);
+		match(FLOAT);
 		break;
 	case STRING:
 		if (!info.add(name, tokenString)) {
@@ -648,7 +805,7 @@ bool SerializationInfoParser::parse()
 		return false;
 	if (token != ENDFILE)
 		findError(tokenString);
-	return true;
+	return !infos.empty();
 }
 
 SerializationInfoWriter::SerializationInfoWriter(ostream & os) : stream(os)
@@ -670,11 +827,18 @@ string SerializationInfoWriter::checkName(const string & name)
 
 void SerializationInfoWriter::write(const SerializationInfo & info, bool showType)
 {
+	if (!info.name.empty())
+		stream << checkName(info.name) << ": ";
+	internalWrite(info, showType);
+}
+
+void SerializationInfoWriter::internalWrite(const SerializationInfo& info, bool showType)
+{
 	if (info.type == "Array") {
 		if (info.arrayType == "Number") {
 			stream << "[ ";
 			for (auto b = info.numList.begin(), e = info.numList.end(); b != e; b++) {
-				stream << *b << ", ";
+				stream << b->toString() << ", ";
 			}
 			stream << " ]";
 		}
@@ -688,7 +852,7 @@ void SerializationInfoWriter::write(const SerializationInfo & info, bool showTyp
 		else {
 			stream << info.arrayType << " [ ";
 			for (auto b = info.sublists.begin(), e = info.sublists.end(); b != e; b++) {
-				write(*b, false);
+				internalWrite(*b, false);
 				stream << ", ";
 			}
 			stream << " ]";
@@ -698,15 +862,27 @@ void SerializationInfoWriter::write(const SerializationInfo & info, bool showTyp
 		if (showType)
 			stream << (info.type.empty() ? "None" : info.type) << ' ';
 		stream << "{ ";
+		map<int, string> sortedMap;
 		for (auto b = info.numFeild.begin(), e = info.numFeild.end(); b != e; b++) {
-			stream << checkName(b->first) << ": " << info.numList[b->second] << ", ";
+			sortedMap.insert({ b->second, b->first });
 		}
+		for (auto b = sortedMap.begin(), e = sortedMap.end(); b != e; b++) {
+			stream << checkName(b->second) << ": " << info.numList[b->first].toString() << ", ";
+		}
+		sortedMap.clear();
 		for (auto b = info.stringFeild.begin(), e = info.stringFeild.end(); b != e; b++) {
-			stream << checkName(b->first) << ": \"" << info.stringList[b->second] << "\", ";
+			sortedMap.insert({ b->second, b->first });
 		}
+		for (auto b = sortedMap.begin(), e = sortedMap.end(); b != e; b++) {
+			stream << checkName(b->second) << ": \"" << info.stringList[b->first] << "\", ";
+		}
+		sortedMap.clear();
 		for (auto b = info.subfeilds.begin(), e = info.subfeilds.end(); b != e; b++) {
-			stream << checkName(b->first) << ": ";
-			write(info.sublists[b->second]);
+			sortedMap.insert({ b->second, b->first });
+		}
+		for (auto b = sortedMap.begin(), e = sortedMap.end(); b != e; b++) {
+			stream << checkName(b->second) << ": ";
+			internalWrite(info.sublists[b->first]);
 			stream << ", ";
 		}
 		stream << " }";
@@ -859,4 +1035,63 @@ SQuaternionf::operator Quaternionf()
 SQuaternionf::operator Quaternionf() const
 {
 	return Quaternionf(w, x, y, z);
+}
+
+bool Serializable::serialize(SerializationInfo & to)
+{
+	to.type = getSerialization().type; return true;
+}
+
+SerializeInstance(SColor);
+
+SColor::SColor(float r, float g, float b, float a)
+	: r(r), g(g), b(b), a(a)
+{
+}
+
+SColor::SColor(const Color& color)
+	: r(color.r), g(color.g), b(color.b), a(color.a)
+{
+}
+
+bool SColor::deserialize(const SerializationInfo& from)
+{
+	if (!from.get<float>(Path("r"), r))
+		return false;
+	if (!from.get<float>(Path("g"), g))
+		return false;
+	if (!from.get<float>(Path("b"), b))
+		return false;
+	if (!from.get<float>(Path("a"), a))
+		return false;
+	return true;
+}
+
+bool SColor::serialize(SerializationInfo& to)
+{
+	to.type = "SColor";
+	to.set("r", r);
+	to.set("g", g);
+	to.set("b", b);
+	to.set("a", a);
+	return true;
+}
+
+SColor& SColor::operator=(const Color& c)
+{
+	r = c.r;
+	g = c.g;
+	b = c.b;
+	a = c.a;
+	return *this;
+}
+
+SColor::operator Color()
+{
+	return Color(r, g, b, a);
+}
+
+SColor::operator Color() const
+{
+	return Color(r, g, b, a);
 }

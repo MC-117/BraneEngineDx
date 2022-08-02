@@ -29,7 +29,6 @@ PostProcessCameraRender::PostProcessCameraRender(RenderTarget & renderTarget, Ma
 		bloomList.push_back({ t, rt, tx, xrt, ty, yrt });
 	}
 	screenTarget.addTexture("bloomMap_0", *bloomList[0].bloomBlurTex);*/
-
 	graph.addDefaultPasses();
 }
 
@@ -48,7 +47,7 @@ PostProcessCameraRender::~PostProcessCameraRender()
 Texture2D * PostProcessCameraRender::getSceneBlurTex()
 {
 	//return &screenBlurYTex;
-	return NULL;
+	return dynamic_cast<Texture2D*>(graph.resource.blurTexture);
 }
 
 void PostProcessCameraRender::setSize(Unit2Di size)
@@ -74,7 +73,7 @@ void PostProcessCameraRender::setSize(Unit2Di size)
 			//	bloomList[i].tempYTarget->resize(size.x / pow(2, i), size.y / pow(2, i));
 			//}
 		}
-
+		postRenderTarget.resize(size.x, size.y);
 		graph.resize(size);
 		this->size = size;
 	}
@@ -90,9 +89,16 @@ void PostProcessCameraRender::render(RenderInfo & info)
 	DrawElementsIndirectCommand cmd = { 4, 1, 0, 0 };
 	if (isValid() /*&& !material.isNull()*/) {
 		renderTarget.SetMultisampleFrame();
+		graph.resource.reset();
 		graph.resource.depthTexture = renderTarget.getInternalDepthTexture();
+		RenderTarget* shadowTarget = info.cmdList->lightDataPack.shadowTarget;
+		if (shadowTarget == NULL)
+			graph.resource.lightDepthTexture = NULL;
+		else
+			graph.resource.lightDepthTexture = shadowTarget->getDepthTexture();
 		graph.resource.screenTexture = renderTarget.getTexture(0);
-		graph.resource.screenRenderTarget = &renderTarget;
+		postRenderTarget.addTexture("screenMap", *graph.resource.screenTexture);
+		graph.resource.screenRenderTarget = &postRenderTarget;
 		graph.render(info);
 
 		//ShaderProgram* shaderProgram = material.getShader()->getProgram(Shader_Postprocess);

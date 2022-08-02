@@ -51,6 +51,8 @@ public:
 	bool isValid = true;
 	bool isStatic = false;
 	bool canCastShadow = false;
+	bool customTransformSubmit = false;
+	bool customRenaderSubmit = false;
 	unsigned int instanceID = -1;
 	unsigned int instanceCount = 1;
 	Matrix4f transformMat;
@@ -70,14 +72,13 @@ public:
 	virtual IRendering::RenderType getRenderType() const;
 	virtual Shape* getShape() const;
 	virtual Material* getMaterial(unsigned int index = 0);
+	virtual bool getMaterialEnable(unsigned int index = 0);
 	virtual Shader* getShader() const;
 	virtual RenderTarget* getShadowRenderTarget() const;
 	virtual bool getCanCastShadow() const;
 	virtual unsigned int getInstanceID() const;
 	virtual unsigned int getInstanceCount() const;
 	virtual void* getRender() const;
-	virtual void setupRenderResource();
-	virtual void setSourceRenderTarget(RenderTarget& renderTarget);
 };
 
 #endif // !_RENDER_H_

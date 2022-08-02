@@ -28,9 +28,13 @@ class DX11Texture2D : public ITexture2D
 public:
 	DX11Context& dxContext;
 	DX11Texture2DInfo info;
-	ID3D11Texture2D* dx11Texture2D = NULL;
-	ID3D11View* dx11Texture2DView = NULL;
-	ID3D11SamplerState* dx11Sampler = NULL;
+	ComPtr<ID3D11Texture2D> dx11Texture2D = NULL;
+
+	ComPtr<ID3D11ShaderResourceView> dx11SRV = NULL;
+	ComPtr<ID3D11RenderTargetView> dx11RTV = NULL;
+	ComPtr<ID3D11UnorderedAccessView> dx11UAV = NULL;
+	ComPtr<ID3D11DepthStencilView> dx11DSV = NULL;
+	ComPtr<ID3D11SamplerState> dx11Sampler = NULL;
 
 	DX11Texture2D(DX11Context& context, Texture2DDesc& desc);
 	virtual ~DX11Texture2D();
@@ -41,13 +45,13 @@ public:
 	virtual void release();
 
 	virtual unsigned int bind();
+	virtual unsigned int bindBase(unsigned int index);
 	virtual unsigned int resize(unsigned int width, unsigned int height);
-	virtual ID3D11ShaderResourceView* getSRV();
-	virtual ID3D11SamplerState* getSampler();
-	virtual ID3D11UnorderedAccessView* getUAV(unsigned int mipLevel);
-	virtual ID3D11DepthStencilView* getDSV(unsigned int mipLevel);
-
-	virtual bool assign(unsigned int width, unsigned int height, unsigned channel, const Texture2DInfo& info, unsigned int texHandle, unsigned int bindType);
+	virtual ComPtr<ID3D11ShaderResourceView> getSRV();
+	virtual ComPtr<ID3D11RenderTargetView> getRTV(unsigned int mipLevel, bool isMS);
+	virtual ComPtr<ID3D11SamplerState> getSampler();
+	virtual ComPtr<ID3D11UnorderedAccessView> getUAV(unsigned int mipLevel);
+	virtual ComPtr<ID3D11DepthStencilView> getDSV(unsigned int mipLevel);
 protected:
 	static DXGI_FORMAT getColorType(unsigned int channel, DXGI_FORMAT internalType);
 };

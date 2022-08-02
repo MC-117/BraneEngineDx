@@ -139,7 +139,7 @@ void VehicleActor::tick(float deltaTime)
 	World* world = Engine::getCurrentWorld();
 	if (world != NULL) {
 		bool ctrl = false;
-		Input& input = world->input;
+		Input& input = Engine::input;
 		if ((input.getCursorHidden() || input.getMouseButtonDown(MouseButtonEnum::Right))) {
 			if (&world->getCurrentCamera() == &TPCamera) {
 				ctrl = true;
