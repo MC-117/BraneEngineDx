@@ -9,6 +9,8 @@ enum MeshType
 	MT_Mesh, MT_SkeletonMesh, MT_Terrain
 };
 
+class IRenderContext;
+
 class MeshData
 {
 public:
@@ -24,7 +26,9 @@ public:
 
 	virtual bool isValid() const = 0;
 	virtual bool isGenerated() const = 0;
+	virtual void init() = 0;
 	virtual void bindShape() = 0;
+	virtual void bindShapeWithContext(IRenderContext& constext);
 };
 
 struct MeshPartDesc

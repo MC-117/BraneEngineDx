@@ -51,6 +51,7 @@ public:
 	static unsigned int getNewPyLogCount();
 protected:
 	static Console console;
+	static mutex lock;
 	static unsigned int newLogNum;
 	static unsigned int newPyLogNum;
 };

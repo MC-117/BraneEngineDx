@@ -14,6 +14,8 @@ public:
 	DX11Context& dxContext;
 	D3D11_BUFFER_DESC cmdBufferDesc;
 	ComPtr<ID3D11Buffer> cmdBuffer;
+	D3D11_BUFFER_DESC drawInfoBufferDesc;
+	ComPtr<ID3D11Buffer> drawInfoBuffer;
 
 	DX11RenderExecution(DX11Context& context);
 	virtual ~DX11RenderExecution();

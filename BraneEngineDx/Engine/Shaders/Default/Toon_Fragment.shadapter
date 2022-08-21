@@ -40,14 +40,44 @@ FragmentOut DEFAULT_FS_MAIN
     float4 albedo = SAMPLE_TEX(colorMap, fin.TexCoords);
     float4 ao = SAMPLE_TEX(aoMap, fin.TexCoords);
     float a = albedo.a * baseColor.a;
-    float3 L = normalize(directLight.direction);
-    float3 H = normalize(V + L);
-    float4 ambience = lerp(baseColor, highlightColor, smoothToon(Float4(1.0f),
-        Float4(0.0f), dot(N, H), highlightCut, highlightCutSmooth));
-    ambience = lerp(shadowColor, ambience, ShadowCalculation(depthMap, depthMapSampler, fin.lightSpacePos, N, L));
-    ambience = smoothToon(ambience, shadowColor, dot(N, L), shadowCut, shadowCutSmooth);
-    ambience = smoothToon(rimColor, ambience, fresnelSchlick(dot(N, normalize(camData.camPos - fin.WorldPos)), 0.33f), rimCut, rimCutSmooth);
-    fout.FragColor = albedo * ambience * ao.r;
+
+    float4 Lo = Float4(0.0f);
+    float L_Dot = 0;
+    float lightInstansity = 0;
+
+    lightInstansity = getLightFinalIntensity(directLight);
+    if (lightInstansity != 0) {
+        float3 L = directLight.direction;
+        float4 Lo_dir = Toon_Lo_DirectLight(directLight, N, V, baseColor, highlightColor,
+            highlightCut, highlightCutSmooth);
+        Lo = lerp(shadowColor * lightInstansity, Lo_dir, ShadowCalculation(depthMap, depthMapSampler,
+            fin.lightSpacePos, N, L));
+        L_Dot = dot(N, L);
+    }
+
+    for(int i = 0; i < pointLightCount; ++i) {
+        float intensity = getLightFinalIntensity(pointLights[i]);
+        if (intensity != 0) {
+            float3 L = normalize(pointLights[i].pos - fin.WorldPos);
+            float distance = length(pointLights[i].pos - fin.WorldPos);
+            float attenuation = distance / pointLights[i].radius;
+            attenuation = max(1 - attenuation * attenuation, 0);
+            float3 radiance = pointLights[i].color * pointLights[i].intensity * attenuation;
+            float4 Lo_point = Toon_Lo(N, V, L, radiance, baseColor,
+                highlightColor, highlightCut, highlightCutSmooth);
+            Lo += Lo_point;
+            L_Dot = max(dot(N, L) * attenuation, L_Dot);
+            lightInstansity += intensity * attenuation;
+        }
+    }
+    
+    Lo = smoothToon(Lo, shadowColor * lightInstansity, L_Dot, shadowCut, shadowCutSmooth);
+    Lo = smoothToon(rimColor * lightInstansity, Lo, fresnelSchlick(dot(N, normalize(camData.camPos - fin.WorldPos)), 0.33f),
+        rimCut, rimCutSmooth);
+
+    float4 ambient = Toon_Ambient(albedo, ao.r);
+
+    fout.FragColor = albedo * Lo + ambient;
     fout.FragColor.a = a;
     fout.FragColor *= overColor;
     //fout.ssnMask = float4(1);

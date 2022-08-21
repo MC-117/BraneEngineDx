@@ -35,6 +35,11 @@ public:
 
 	virtual LRESULT wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+	virtual IRenderContext* getDefaultRenderContext();
+	virtual IRenderContext* newRenderContext();
+
+	virtual void frameFence();
+
 	virtual ITexture2D* newTexture2D(Texture2DDesc& desc);
 	virtual ShaderStage* newShaderStage(const ShaderStageDesc& desc);
 	virtual ShaderProgram* newShaderProgram();

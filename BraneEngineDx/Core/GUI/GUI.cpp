@@ -120,16 +120,7 @@ void GUI::onGUI(RenderInfo& info)
 void GUI::render(RenderInfo& info)
 {
 	ImGui::Render();
-
-	RenderTarget::defaultRenderTarget.bindFrame();
-
-	IVendor& vendor = VendorManager::getInstance().getVendor();
-
-	/*----- Vendor ImGui draw frame -----*/
-	{
-		if (!vendor.imGuiDrawFrame(Engine::engineConfig, Engine::windowContext))
-			throw runtime_error("Vendor ImGui draw frame failed");
-	}
+	info.renderGraph->setImGuiDrawData(ImGui::GetDrawData());
 }
 
 void GUI::onSceneResize(Unit2Di size)

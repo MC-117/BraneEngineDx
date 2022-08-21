@@ -34,6 +34,9 @@ struct DrawInfo
 	unsigned int baseInstance;
 	unsigned int passID;
 	unsigned int passNum;
+
+	bool operator==(const DrawInfo& i) const;
+	bool operator!=(const DrawInfo& i) const;
 };
 
 class DX11ShaderProgram : public ShaderProgram
@@ -53,17 +56,19 @@ public:
 	DX11ShaderProgram(DX11Context& context);
 	virtual ~DX11ShaderProgram();
 
+	virtual bool init();
+
 	virtual unsigned int bind();
 	// AttributeDesc::meta represent shader stage type
 	virtual AttributeDesc getAttributeOffset(const string& name);
+	virtual int getMaterialBufferSize();
 	virtual bool dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ);
 	virtual void memoryBarrier(unsigned int bitEnum);
 	virtual void uploadDrawInfo();
 	virtual void uploadData();
 
 	virtual void uploadAttribute(const string& name, unsigned int size, void* data);
-	virtual void uploadTexture(const string& name, ComPtr<ID3D11ShaderResourceView> tex, ComPtr<ID3D11SamplerState> sample);
-	virtual void uploadImage(const string& name, ComPtr<ID3D11UnorderedAccessView> tex);
+	
 
 	void bindCBToStage(unsigned int index, ComPtr<ID3D11Buffer> buffer);
 };

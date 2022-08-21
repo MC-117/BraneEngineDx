@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BraneEngineDx", "BraneEngin
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		AudioDebug|x64 = AudioDebug|x64
+		AudioDebug|x86 = AudioDebug|x86
 		AudioRelease|x64 = AudioRelease|x64
 		AudioRelease|x86 = AudioRelease|x86
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.AudioDebug|x64.ActiveCfg = AudioDebug|x64
+		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.AudioDebug|x64.Build.0 = AudioDebug|x64
+		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.AudioDebug|x86.ActiveCfg = AudioDebug|Win32
+		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.AudioDebug|x86.Build.0 = AudioDebug|Win32
 		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.AudioRelease|x64.ActiveCfg = AudioRelease|x64
 		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.AudioRelease|x64.Build.0 = AudioRelease|x64
 		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.AudioRelease|x86.ActiveCfg = AudioRelease|Win32

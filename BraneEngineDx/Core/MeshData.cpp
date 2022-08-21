@@ -9,3 +9,7 @@ MeshData::MeshData()
 MeshData::~MeshData()
 {
 }
+
+void MeshData::bindShapeWithContext(IRenderContext& constext)
+{
+}

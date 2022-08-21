@@ -5,14 +5,33 @@
 #include "Console.h"
 #include "IVendor.h"
 #include "Engine.h"
+#include "RenderGraph/ForwardRenderGraph.h"
 
-RenderPool::RenderPool(Camera & defaultCamera) : defaultCamera(defaultCamera)
+RenderPool::RenderPool(Camera & defaultCamera)
+	: defaultCamera(defaultCamera), renderThread(renderThreadLoop, this)
 {
 	camera = &defaultCamera;
+	renderFrame = Time::frames();
+	renderGraph = new ForwardRenderGraph();
+}
+
+RenderPool::~RenderPool()
+{
+	destory = true;
+	gameFence();
+	if (renderGraph)
+		delete renderGraph;
+}
+
+void RenderPool::start()
+{
+	renderFrame = Time::frames();
+	renderThread.detach();
 }
 
 void RenderPool::setViewportSize(Unit2Di size)
 {
+	gameFence();
 	if (camera == NULL)
 		defaultCamera.setSize(size);
 	else
@@ -53,15 +72,23 @@ void RenderPool::remove(Render & render)
 
 void RenderPool::render(bool guiOnly)
 {
+	Timer timer;
+	gameFence();
+	timer.record("Fence");
+
+	cmdList.resetCommand();
+	renderGraph->reset();
+	renderGraph->setRenderCommandList(cmdList);
+	timer.record("Reset");
+
 	IVendor& vendor = VendorManager::getInstance().getVendor();
 
 	Camera& currentCamera = (camera == NULL ? defaultCamera : *camera);
 	RenderInfo info = { currentCamera.projectionViewMat, Matrix4f::Identity(), currentCamera.cameraRender.cameraLoc,
 						currentCamera.cameraRender.cameraDir, currentCamera.size, (float)(currentCamera.fov * PI / 180.0) };
 	info.cmdList = &cmdList;
+	info.renderGraph = renderGraph;
 	info.camera = &currentCamera;
-
-	Timer timer;
 
 	gui.onGUI(info);
 	timer.record("GUI");
@@ -89,9 +116,6 @@ void RenderPool::render(bool guiOnly)
 
 		timer.record("Shadow");
 
-		cmdList.excuteCommand();
-
-		vendor.setRenderPostState();
 		currentCamera.cameraRender.render(info);
 		currentCamera.cameraRender.postRender();
 
@@ -105,22 +129,13 @@ void RenderPool::render(bool guiOnly)
 		currentCamera.cameraRender.renderTarget.clearColor(currentCamera.clearColor);
 		vendor.guiOnlyRender(currentCamera.clearColor);
 	}
-	gui.render(info);
 
+	gui.render(info);
 	timer.record("RenderUI");
 
-	cmdList.resetCommand();
+	renderGraph->prepare();
+	timer.record("PrepareRenderGraph");
 
-	timer.record("Reset");
-
-#ifdef __FREEGLUT_H__
-	glutSwapBuffers();
-#endif
-#ifdef _glfw3_h_
-	
-#endif
-
-	//timer.record("Swap");
 	Console::getTimer("Rendering") = timer;
 }
 
@@ -134,4 +149,30 @@ RenderPool & RenderPool::operator-=(Render & render)
 {
 	remove(render);
 	return *this;
+}
+
+void RenderPool::gameFence()
+{
+	while (Time::frames() > 0 && Time::frames() > renderFrame) { Sleep(0); }
+	if (!destory)
+		VendorManager::getInstance().getVendor().frameFence();
+}
+
+void RenderPool::renderFence()
+{
+	while (Time::frames() <= renderFrame) { Sleep(0); }
+}
+
+void RenderPool::renderThreadMain()
+{
+	renderFence();
+	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
+	renderGraph->execute(context);
+	renderFrame++;
+}
+
+void RenderPool::renderThreadLoop(RenderPool* pool)
+{
+	while (!pool->destory)
+		pool->renderThreadMain();
 }

@@ -671,12 +671,6 @@ void Engine::mainLoop(float deltaTime)
 	world.afterTick();
 	timer.record("CPU");
 
-	/*----- Vendor swap -----*/
-	{
-		if (!VendorManager::getInstance().getVendor().swap(Engine::engineConfig, Engine::windowContext))
-			throw runtime_error("Vendor swap failed");
-	}
-
 	timer.record("GPU Wait");
 	Console::getTimer("Engine") = timer;
 	Console::resetNewLogCount();

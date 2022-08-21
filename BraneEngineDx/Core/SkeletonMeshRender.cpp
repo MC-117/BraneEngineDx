@@ -71,7 +71,7 @@ void SkeletonMeshRender::render(RenderInfo & info)
 		cmd.mesh = part;
 		cmd.particles = NULL;
 		if (morphWeights.getMorphCount() > 0)
-			cmd.bindings.push_back(&morphWeights);
+			cmd.bindings.push_back(morphWeights.getRenderData());
 
 		info.cmdList->setRenderCommand(cmd, isStatic);
 

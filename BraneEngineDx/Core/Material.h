@@ -4,9 +4,11 @@
 
 #include "IVendor.h"
 #include "Texture2D.h"
+#include "RenderCore/RenderInterface.h"
 
 class Material
 {
+	friend class MaterialRenderData;
 public:
 	bool isTwoSide = false;
 	bool cullFront = false;
@@ -88,6 +90,8 @@ public:
 
 	static bool loadDefaultMaterial();
 
+	IRenderData* getRenderData();
+
 	static class MaterialLoader
 	{
 	public:
@@ -108,6 +112,7 @@ public:
 protected:
 	MaterialDesc desc;
 	IMaterial* vendorMaterial = NULL;
+	IRenderData* renderData = NULL;
 
 	static bool isLoadDefaultMaterial;
 	void newVendorMaterial();

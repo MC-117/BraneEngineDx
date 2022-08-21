@@ -39,7 +39,7 @@ struct PostProcessResource
 	void reset();
 };
 
-class PostProcessPass : public Serializable
+class PostProcessPass : public Serializable, public RenderPass
 {
 public:
 	Serialize(PostProcessPass,);
@@ -70,6 +70,9 @@ protected:
 	PostProcessResource* resource = NULL;
 	string name;
 	Material* material = NULL;
+	ShaderProgram* program = NULL;
+	IRenderData* materialRenderData = NULL;
+	IRenderData* cameraRenderData = NULL;
 	bool enable = false;
 };
 

@@ -100,6 +100,22 @@ LRESULT DX12Vendor::wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	return ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
 }
 
+IRenderContext* DX12Vendor::getDefaultRenderContext()
+{
+	throw runtime_error("Not Implemented");
+	return nullptr;
+}
+
+IRenderContext* DX12Vendor::newRenderContext()
+{
+	throw runtime_error("Not Implemented");
+	return nullptr;
+}
+
+void DX12Vendor::frameFence()
+{
+}
+
 ITexture2D* DX12Vendor::newTexture2D(Texture2DDesc& desc)
 {
 	return new DX12Texture2D(dxContext, desc);

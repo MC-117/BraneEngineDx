@@ -1,0 +1,111 @@
+#order 2450
+#material
+Color baseColor: 255, 255, 255, 255
+Texture colorMap: white
+Color shadowColor: 150, 150, 150, 255
+Color highlightColor: 50, 50, 50, 255
+Texture specularMap: white
+Color rimColor: 50, 50, 50, 255
+Color overColor: 255, 255, 255, 255
+Scalar shadowCut: 0.5
+Scalar shadowCutSmooth: 0.0
+Scalar highlightCut: 0.999
+Scalar highlightCutSmooth: 0.0
+Scalar rimCut: 0.8
+Scalar rimCutSmooth: 0.0
+Scalar normalScale: 1.0
+Texture normalMap: black
+Texture aoMap: white
+Texture depthMap: white
+#vertex use default
+#fragment
+
+#include "lib/Light_Def.hmat"
+#include "lib/CameraData_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 baseColor;
+uniform float4 reflectionColor;
+uniform float4 shadowColor;
+uniform float4 highlightColor;
+uniform float4 rimColor;
+uniform float4 overColor;
+uniform float shadowCut;
+uniform float shadowCutSmooth;
+uniform float highlightCut;
+uniform float highlightCutSmooth;
+uniform float rimCut;
+uniform float rimCutSmooth;
+uniform float normalScale;
+uniform float roughness;
+DEF_MAT_END
+
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(specularMap, 1);
+DEF_TEX2D(aoMap, 2);
+DEF_TEX2D(roughnessMap, 3);
+DEF_TEX2D(reflectionMap, 4);
+DEF_TEX2D(normalMap, 5);
+DEF_TEX2D(depthMap, 6);
+
+#include "lib/Toon_Lib.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+//FS_DEF_OUT_COLOR(ssnMask, 0);
+FS_DEF_OUT_END
+
+FragmentOut DEFAULT_FS_MAIN
+{
+    FragmentOut fout;
+    float3 N = mul(((normalize(SAMPLE_TEX(normalMap, fin.TexCoords) * 2 - 1)).xyz),
+        cotangent(fin.Normal, fin.WorldPos, fin.TexCoords)) * normalScale;
+    float3 V = normalize(camData.camPos - fin.WorldPos);
+    float4 albedo = SAMPLE_TEX(colorMap, fin.TexCoords);
+    float4 specular = SAMPLE_TEX(specularMap, fin.TexCoords);
+    float4 ao = SAMPLE_TEX(aoMap, fin.TexCoords);
+    float a = albedo.a * baseColor.a;
+    int2 pos = int2(int(fin.svPos.x), int(fin.svPos.y));
+    
+    float4 Lo = Float4(0.0f);
+    float L_Dot = 0;
+    float lightInstansity = 0;
+
+    lightInstansity = getLightFinalIntensity(directLight);
+    if (lightInstansity != 0) {
+        float3 L = directLight.direction;
+        float4 Lo_dir = Toon_Lo_DirectLight(directLight, N, V, baseColor, baseColor + highlightColor * specular,
+            highlightCut, highlightCutSmooth);
+        Lo = lerp(shadowColor * lightInstansity, Lo_dir, ShadowCalculation(depthMap, depthMapSampler,
+            fin.lightSpacePos, N, L));
+        L_Dot = dot(N, L);
+    }
+
+    for(int i = 0; i < pointLightCount; ++i) {
+        float intensity = getLightFinalIntensity(pointLights[i]);
+        if (intensity != 0) {
+            float3 L = normalize(pointLights[i].pos - fin.WorldPos);
+            float distance = length(pointLights[i].pos - fin.WorldPos);
+            float attenuation = distance / pointLights[i].radius;
+            attenuation = max(1 - attenuation * attenuation, 0);
+            float3 radiance = pointLights[i].color * pointLights[i].intensity * attenuation;
+            float4 Lo_point = Toon_Lo(N, V, L, radiance, baseColor,
+                baseColor + highlightColor * specular, highlightCut, highlightCutSmooth);
+            Lo += Lo_point;
+            L_Dot = max(dot(N, L) * attenuation, L_Dot);
+            lightInstansity += intensity * attenuation;
+        }
+    }
+    
+    Lo = smoothToon(Lo, shadowColor * lightInstansity, L_Dot, shadowCut, shadowCutSmooth);
+    Lo = smoothToon(rimColor * lightInstansity, Lo, fresnelSchlick(dot(N, normalize(camData.camPos - fin.WorldPos)), 0.33f),
+        rimCut, rimCutSmooth);
+
+    float4 ambient = Toon_Ambient(albedo, ao.r);
+
+    fout.FragColor = albedo * Lo + ambient;
+    fout.FragColor.a = a;
+    fout.FragColor *= overColor;
+    //fout.ssnMask = float4(1);
+    return fout;
+}

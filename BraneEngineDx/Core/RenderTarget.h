@@ -18,6 +18,7 @@ public:
 	virtual bool isValid();
 	bool isDefault();
 	bool isDepthOnly();
+	void init();
 	virtual unsigned int bindFrame();
 	virtual void clearBind();
 	virtual void addTexture(const string& name, Texture& texture, unsigned int mipLevel = 0);
@@ -39,6 +40,8 @@ public:
 	virtual void clearColors(const vector<Color>& colors);
 	virtual void clearDepth(float depth);
 	virtual void clearStencil(unsigned char stencil);
+
+	IRenderTarget* getVendorRenderTarget();
 protected:
 	RenderTargetDesc desc;
 	IRenderTarget* vendorRenderTarget = NULL;

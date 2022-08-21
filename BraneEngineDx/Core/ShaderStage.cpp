@@ -111,6 +111,11 @@ bool ShaderProgram::isValid() const
 			shaderStages.find(Fragment_Shader_Stage) != shaderStages.end());
 }
 
+bool ShaderProgram::isDirty() const
+{
+	return dirty;
+}
+
 bool ShaderProgram::isComputable() const
 {
 	return meshStageType == Compute_Shader_Stage && shaderStages.size() == 1;
@@ -136,6 +141,11 @@ bool ShaderProgram::addShaderStage(ShaderStage & stage)
 	return false;
 }
 
+bool ShaderProgram::init()
+{
+	return false;
+}
+
 unsigned int ShaderProgram::bind()
 {
 	return programId;
@@ -157,7 +167,12 @@ unsigned int ShaderProgram::getProgramID()
 
 ShaderProgram::AttributeDesc ShaderProgram::getAttributeOffset(const string& name)
 {
-	return { "", false, (unsigned int)-1, 0, (unsigned int)-1 };
+	return { "", false, -1, 0, -1 };
+}
+
+int ShaderProgram::getMaterialBufferSize()
+{
+	return 0;
 }
 
 unsigned int ShaderProgram::getCurrentProgramID()

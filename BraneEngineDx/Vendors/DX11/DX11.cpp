@@ -1,5 +1,6 @@
 #include "DX11.h"
 #include <iostream>
+#include "../../Core/Console.h"
 
 #define DEPTH_BIAS_D32_FLOAT(d) (d/(1/pow(2,23)))
 
@@ -27,6 +28,9 @@ bool DX11Context::createDevice(unsigned int width, unsigned int height)
 		return false;
 	createRenderState();
 	createInputLayout();
+
+	D3D11_QUERY_DESC queryDesc = { D3D11_QUERY_EVENT, 0 };
+	device->CreateQuery(&queryDesc, endQuery.ReleaseAndGetAddressOf());
 	return true;
 }
 
@@ -92,16 +96,14 @@ void DX11Context::createSwapChain(unsigned int width, unsigned int height, unsig
 	}
 	else {
 		swapChain->Present(0, 0);
-		/*deviceContext->ClearState();
-		clearSRV();
-		clearRTV();*/
+
 		for (int i = 0; i < 3; i++) {
 			if (i < 1) {
 				backBuffer[i].Reset();
 				backBufferRTV[i].Reset();
 			}
 		}
-		//deviceContext->Flush();
+
 		if (FAILED(swapChain->ResizeBuffers(backBufferCount, width, height,
 			DXGI_FORMAT_B8G8R8A8_UNORM, 0)))
 			throw std::runtime_error("DX11: Resize swap chain failed");
@@ -115,9 +117,7 @@ void DX11Context::createSwapChain(unsigned int width, unsigned int height, unsig
 			if (FAILED(device->CreateRenderTargetView(backBuffer[i].Get(), NULL, &rtv)))
 				throw runtime_error("DX11: Create default render target view failed");
 		}
-		else {
-			backBuffer[i].Reset();
-		}
+		backBuffer[i].Reset();
 	}
 }
 
@@ -231,7 +231,8 @@ void DX11Context::createInputLayout()
 	}
 
 	if (meshInputLayout == NULL) {
-		const char* signatureShader = "void main(uint objID : OBJID, float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL) { }";
+		const char* signatureShader =
+			"void main(uint2 ins : INS, float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL) { }";
 		const size_t len = strlen(signatureShader);
 		ComPtr<ID3DBlob> sigBlob;
 		ComPtr<ID3DBlob> errorBlob;
@@ -240,7 +241,7 @@ void DX11Context::createInputLayout()
 			throw runtime_error((const char*)errorBlob->GetBufferPointer());
 		}
 		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[4] = {
-			{ "OBJID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+			{ "INS", 0, DXGI_FORMAT_R32G32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
@@ -255,7 +256,8 @@ void DX11Context::createInputLayout()
 	}
 
 	if (skeletonMeshInputLayout == NULL) {
-		const char* signatureShader = "void main(uint objID : OBJID, float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL, uint4 bondId : BONEINDEX, float4 weights : BONEWEIGHT) { }";
+		const char* signatureShader =
+			"void main(uint2 ins : INS, float3 pos : POSITION, float2 uv : TEXCOORD, float3 normal : NORMAL, uint4 bondId : BONEINDEX, float4 weights : BONEWEIGHT) { }";
 		const size_t len = strlen(signatureShader);
 		ComPtr<ID3DBlob> sigBlob;
 		ComPtr<ID3DBlob> errorBlob;
@@ -264,7 +266,7 @@ void DX11Context::createInputLayout()
 			throw runtime_error((const char*)errorBlob->GetBufferPointer());
 		}
 		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[6] = {
-			{ "OBJID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+			{ "INS", 0, DXGI_FORMAT_R32G32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -282,7 +284,8 @@ void DX11Context::createInputLayout()
 	}
 
 	if (terrainInputLayout == NULL) {
-		const char* signatureShader = "void main(uint objID : OBJID, float3 pos : POSITION, float2 uv : TEXCOORD) { }";
+		const char* signatureShader =
+			"void main(uint2 ins : INS, float3 pos : POSITION, float2 uv : TEXCOORD) { }";
 		const size_t len = strlen(signatureShader);
 		ComPtr<ID3DBlob> sigBlob;
 		ComPtr<ID3DBlob> errorBlob;
@@ -291,7 +294,7 @@ void DX11Context::createInputLayout()
 			throw runtime_error((const char*)errorBlob->GetBufferPointer());
 		}
 		const D3D11_INPUT_ELEMENT_DESC inputLayoutDesc[3] = {
-			{ "OBJID", 0, DXGI_FORMAT_R32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+			{ "INS", 0, DXGI_FORMAT_R32G32_UINT, 0, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
@@ -363,37 +366,16 @@ void DX11Context::swap(bool vsync, unsigned int maxFPS)
 {
 	this->maxFPS = maxFPS;
 
-	D3D11_QUERY_DESC queryDesc = { D3D11_QUERY_EVENT, 0 };
-	device->CreateQuery(&queryDesc, endQuery.ReleaseAndGetAddressOf());
+	deviceContext->End(endQuery.Get());
 
 	swapChain->Present(vsync ? 1 : 0, 0);
+
 	//DWORD result = WaitForSingleObjectEx(
 	//	frameLatencyWaitableObject,
 	//	1000, // 1 second timeout (shouldn't ever occur)
 	//	true
 	//);
 	//activeBackBufferIndex = swapChain->GetCurrentBackBufferIndex();
-
-	deviceContext->End(endQuery.Get());
-
-	BOOL completed = false;
-
-	do
-	{
-		HRESULT hr = deviceContext->GetData(endQuery.Get(), &completed, sizeof(BOOL), 0);
-		if (hr == S_FALSE)
-		{
-		}
-		else if (SUCCEEDED(hr) && completed)
-		{
-			break;
-		}
-		else
-		{
-			// error
-			break;
-		}
-	} while (!completed);
 
 	if (maxFPS == 0 || lastTime == 0) {
 		duration = Time::now() - lastTime;
@@ -415,6 +397,30 @@ void DX11Context::swap(bool vsync, unsigned int maxFPS)
 		}
 		lastTime = Time::now();
 	}
+}
+
+void DX11Context::fence()
+{
+	if (endQuery == NULL)
+		return;
+	BOOL completed = false;
+
+	do
+	{
+		HRESULT hr = deviceContext->GetData(endQuery.Get(), &completed, sizeof(BOOL), 0);
+		if (hr == S_FALSE)
+		{
+		}
+		else if (SUCCEEDED(hr) && completed)
+		{
+			break;
+		}
+		else
+		{
+			// error
+			break;
+		}
+	} while (!completed);
 }
 
 void DX11Context::clearSRV()

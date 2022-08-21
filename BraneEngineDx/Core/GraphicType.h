@@ -24,3 +24,8 @@ enum CPUAccessFlag
 {
 	CAF_None = 0, CAF_Read = 1, CAF_Write = 2, CAF_ReadWrite = 3
 };
+
+enum CullType
+{
+	Cull_Off, Cull_Back, Cull_Front
+};

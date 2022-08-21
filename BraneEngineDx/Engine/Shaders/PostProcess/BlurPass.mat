@@ -1,0 +1,40 @@
+#material
+Count kernelRadius: 5
+Texture screenMap
+Image blurMap: binding(0)
+#localsize 16 16
+#compute postprocess
+#include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/PostProcess_Def.hmat"
+
+Texture2D<unorm float4> screenMap : register(t6);
+RWTexture2D<unorm float4> blurMap : register(u0);
+
+DEF_MAT_BEGIN
+uniform int kernelRadius;
+DEF_MAT_END
+
+[numthreads(LOCAL_SIZE_2D, LOCAL_SIZE_2D, 1)]
+void main(uint3 gid : SV_DispatchThreadID)
+{
+    int2 pos = int2(gid.xy);
+    int2 size;
+    blurMap.GetDimensions(size.x, size.y);
+    if (pos.x < size.x && pos.y < size.y) {
+        float4 pixel = float4(0.0f, 0.0f, 0.0f, 0.0f);
+        if (passID == 0) {
+            for (int d = -kernelRadius; d <= kernelRadius; d++) {
+                int dpos = clamp(pos.x + d, 0, size.x - 1);
+                pixel += screenMap[int2(dpos, pos.y)];
+            }
+            blurMap[pos] = pixel / (kernelRadius * 2 + 1);
+        }
+        else if (passID == 1) {
+            for (int d = -kernelRadius; d <= kernelRadius; d++) {
+                int dpos = clamp(pos.y + d, 0, size.y - 1);
+                pixel += screenMap[int2(pos.x, dpos)];
+            }
+            blurMap[pos] = pixel / (kernelRadius * 2 + 1);
+        }
+    }
+}

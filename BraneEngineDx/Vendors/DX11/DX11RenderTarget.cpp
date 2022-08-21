@@ -40,8 +40,6 @@ unsigned int DX11RenderTarget::bindFrame()
 	}
 	if (!desc.inited) {
 		resize(desc.width, desc.height);
-		desc.inited = true;
-		desc.frameID = dxFrameID;
 		currentRenderTarget = NULL;
 	}
 	else {
@@ -180,6 +178,8 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 				throw runtime_error("DX11: Create DSV failed");
 		}
 	}
+	desc.inited = true;
+	desc.frameID = dxFrameID;
 }
 
 void DX11RenderTarget::SetMultisampleFrame()
@@ -194,7 +194,7 @@ void DX11RenderTarget::SetMultisampleFrame()
 		if (desc.withDepthStencil) {
 			/*dxContext.deviceContext->ResolveSubresource(dx11DepthTex->dx11Texture2D, 0,
 				multisampleDepthTex->dx11Texture2D, 0, DXGI_FORMAT_D32_FLOAT);*/
-			initDepthBlit();
+			//initDepthBlit();
 			depthBlitCSShader->bind();
 			auto srv = multisampleDepthTex->getSRV();
 			auto uav = dx11DepthTex->getUAV(0);
@@ -246,7 +246,7 @@ void DX11RenderTarget::clearStencil(unsigned char stencil)
 		dxContext.deviceContext->ClearDepthStencilView(dx11DSV.Get(), D3D11_CLEAR_STENCIL, 0, stencil);
 }
 
-void DX11RenderTarget::initDepthBlit()
+void DX11RenderTarget::initDepthBlit(DX11Context& dxContext)
 {
 	if (depthBlitInit)
 		return;

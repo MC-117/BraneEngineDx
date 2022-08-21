@@ -1,0 +1,23 @@
+#order 5000
+#material
+Color baseColor: 34, 166, 242, 255
+#vertex use position
+#geometry
+#include "lib/Basic_VS_Lib.hmat"
+
+[maxvertexcount(6)]
+void main(triangle DefaultVertexOut vin[3], inout LineStream<DefaultVertexOut> gostream)
+{
+    gostream.Append(vin[0]);
+    gostream.Append(vin[1]);
+    gostream.RestartStrip();
+
+    gostream.Append(vin[1]);
+    gostream.Append(vin[2]);
+    gostream.RestartStrip();
+
+    gostream.Append(vin[2]);
+    gostream.Append(vin[0]);
+    gostream.RestartStrip();
+}
+#fragment use pure_color_fragment

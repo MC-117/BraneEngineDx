@@ -62,7 +62,7 @@ void CameraRender::preRender()
 void CameraRender::render(RenderInfo& info)
 {
 	if (isValid() && !material.isNull()) {
-		renderTarget.SetMultisampleFrame();
+		info.renderGraph->setMainRenderTarget(renderTarget);
 		renderTarget.setTexture(material);
 	}
 }

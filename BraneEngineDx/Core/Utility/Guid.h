@@ -3,10 +3,18 @@
 
 struct Guid
 {
-    unsigned long  Data1;
-    unsigned short Data2;
-    unsigned short Data3;
-    unsigned char  Data4[8];
+    union {
+        struct {
+            unsigned long  Data1;
+            unsigned short Data2;
+            unsigned short Data3;
+            unsigned char  Data4[8];
+        };
+        struct {
+            unsigned long long Word0;
+            unsigned long long Word1;
+        };
+    };
 
     static Guid newGuid();
     static Guid fromString(const std::string& str);

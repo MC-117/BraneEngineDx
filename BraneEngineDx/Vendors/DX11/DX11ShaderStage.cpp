@@ -114,6 +114,22 @@ HRESULT DX11ShaderStage::createShader(ID3D11Device* device, ShaderStageType type
 	return E_INVALIDARG;
 }
 
+bool DrawInfo::operator==(const DrawInfo& i) const
+{
+	return baseVertex == i.baseVertex &&
+		baseInstance == i.baseInstance &&
+		passID == i.passID &&
+		passNum == i.passNum;
+}
+
+bool DrawInfo::operator!=(const DrawInfo& i) const
+{
+	return baseVertex != i.baseVertex ||
+		baseInstance != i.baseInstance ||
+		passID != i.passID ||
+		passNum != i.passNum;
+}
+
 unsigned int DX11ShaderProgram::nextProgramID = 1;
 DX11ShaderProgram* DX11ShaderProgram::currentDx11Program = NULL;
 
@@ -130,6 +146,32 @@ DX11ShaderProgram::~DX11ShaderProgram()
 	}
 	if (currentDx11Program == this)
 		currentDx11Program = NULL;
+}
+
+bool DX11ShaderProgram::init()
+{
+	if (!isValid())
+		return false;
+	if (!dirty && dx11MatInsBufReflector != NULL)
+		return true;
+	int cbSize = 0;
+	for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e; b++) {
+		if (matInsBuf == NULL) {
+			DX11ShaderStage* dss = (DX11ShaderStage*)b->second;
+			if (dss->dx11MatInsBufReflector != NULL) {
+				D3D11_SHADER_BUFFER_DESC bufDesc;
+				ZeroMemory(&bufDesc, sizeof(D3D11_SHADER_BUFFER_DESC));
+				if (SUCCEEDED(dss->dx11MatInsBufReflector->GetDesc(&bufDesc))) {
+					if (bufDesc.Size > cbSize) {
+						dx11MatInsBufReflector = dss->dx11MatInsBufReflector;
+						cbSize = bufDesc.Size;
+					}
+				}
+			}
+		}
+	}
+	matInsBufSize = cbSize;
+	return true;
 }
 
 unsigned int DX11ShaderProgram::bind()
@@ -149,7 +191,7 @@ unsigned int DX11ShaderProgram::bind()
 	dxContext.deviceContext->CSSetShader(NULL, NULL, 0);
 	dxContext.deviceContext->HSSetShader(NULL, NULL, 0);
 	dxContext.deviceContext->DSSetShader(NULL, NULL, 0);
-	int cbSize = 0;
+
 	for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e; b++) {
 		switch (b->first)
 		{
@@ -172,51 +214,8 @@ unsigned int DX11ShaderProgram::bind()
 			dxContext.deviceContext->DSSetShader((ID3D11DomainShader*)b->second->getShaderID(), NULL, 0);
 			break;
 		}
-		if (matInsBuf == NULL) {
-			DX11ShaderStage* dss = (DX11ShaderStage*)b->second;
-			if (dss->dx11MatInsBufReflector != NULL) {
-				D3D11_SHADER_BUFFER_DESC bufDesc;
-				ZeroMemory(&bufDesc, sizeof(D3D11_SHADER_BUFFER_DESC));
-				if (SUCCEEDED(dss->dx11MatInsBufReflector->GetDesc(&bufDesc))) {
-					if (bufDesc.Size > cbSize) {
-						dx11MatInsBufReflector = dss->dx11MatInsBufReflector;
-					}
-				}
-			}
-		}
 	}
-	if (drawInfoBuf == NULL) {
-		D3D11_BUFFER_DESC cbDesc;
-		ZeroMemory(&cbDesc, sizeof(D3D11_BUFFER_DESC));
-		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-		cbDesc.ByteWidth = sizeof(DrawInfo);
-		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		dxContext.device->CreateBuffer(&cbDesc, NULL, &drawInfoBuf);
-	}
-	
-	if (matInsBuf == NULL) {
-		if (dx11MatInsBufReflector != NULL) {
-			D3D11_SHADER_BUFFER_DESC bufDesc;
-			ZeroMemory(&bufDesc, sizeof(D3D11_SHADER_BUFFER_DESC));
-			if (SUCCEEDED(dx11MatInsBufReflector->GetDesc(&bufDesc))) {
-				D3D11_BUFFER_DESC cbDesc;
-				ZeroMemory(&cbDesc, sizeof(D3D11_BUFFER_DESC));
-				cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-				cbDesc.ByteWidth = bufDesc.Size;
-				cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-				cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-				dxContext.device->CreateBuffer(&cbDesc, NULL, &matInsBuf);
-				matInsBufSize = bufDesc.Size;
-				if (matInsBufHost != NULL) {
-					free(matInsBufHost);
-				}
-				matInsBufHost = (unsigned char*)malloc(matInsBufSize);
-			}
-		}
-	}
-	bindCBToStage(DRAW_INFO_BIND_INDEX, drawInfoBuf);
-	bindCBToStage(MAT_INS_BIND_INDEX, matInsBuf);
+
 	currentDx11Program = this;
 	currentProgram = programId;
 	dirty = false;
@@ -278,6 +277,11 @@ DX11ShaderProgram::AttributeDesc DX11ShaderProgram::getAttributeOffset(const str
 	return desc;
 }
 
+int DX11ShaderProgram::getMaterialBufferSize()
+{
+	return matInsBufSize;
+}
+
 void DX11ShaderProgram::memoryBarrier(unsigned int bitEnum)
 {
 }
@@ -310,63 +314,6 @@ void DX11ShaderProgram::uploadAttribute(const string& name, unsigned int size, v
 	if (desc.isTex || desc.offset == -1 || desc.size < size)
 		return;
 	memcpy_s(matInsBufHost + desc.offset, desc.size, data, size);
-}
-
-void DX11ShaderProgram::uploadTexture(const string& name, ComPtr<ID3D11ShaderResourceView> tex, ComPtr<ID3D11SamplerState> sample)
-{
-	if (tex == NULL)
-		return;
-	AttributeDesc desc = getAttributeOffset(name);
-	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
-		return;
-	switch (desc.meta)
-	{
-	case Vertex_Shader_Stage:
-		dxContext.deviceContext->VSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->VSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	case Fragment_Shader_Stage:
-		dxContext.deviceContext->PSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->PSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	case Geometry_Shader_Stage:
-		dxContext.deviceContext->GSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->GSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	case Compute_Shader_Stage:
-		dxContext.deviceContext->CSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->CSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	case Tessellation_Control_Shader_Stage:
-		dxContext.deviceContext->HSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->HSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	case Tessellation_Evalution_Shader_Stage:
-		dxContext.deviceContext->DSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->DSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	default:
-		return;
-	}
-}
-
-void DX11ShaderProgram::uploadImage(const string& name, ComPtr<ID3D11UnorderedAccessView> tex)
-{
-	if (tex == NULL)
-		return;
-	AttributeDesc desc = getAttributeOffset(name);
-	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
-		return;
-	if (desc.meta == Compute_Shader_Stage) {
-		unsigned int c = 0;
-		dxContext.deviceContext->CSSetUnorderedAccessViews(desc.offset, 1, tex.GetAddressOf(), NULL);
-	}
 }
 
 void DX11ShaderProgram::bindCBToStage(unsigned int index, ComPtr<ID3D11Buffer> buffer)

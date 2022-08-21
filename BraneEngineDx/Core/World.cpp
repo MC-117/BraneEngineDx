@@ -35,6 +35,7 @@ void World::begin()
 	iter.reset();
 	while (iter.next())
 		iter.current().begin();
+	renderPool.start();
 }
 
 void World::tick(float deltaTime)

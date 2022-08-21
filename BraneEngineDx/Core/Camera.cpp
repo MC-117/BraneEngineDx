@@ -2,6 +2,7 @@
 #include "Geometry.h"
 #include "GUI/Gizmo.h"
 #include "Utility/MathUtility.h"
+#include "RenderCore/RenderTask.h"
 
 SerializeInstance(Camera);
 
@@ -21,6 +22,10 @@ Camera::~Camera()
 {
 	if (_cameraRender != NULL)
 		delete _cameraRender;
+	if (renderData) {
+		renderData->release();
+		delete renderData;
+	}
 }
 
 void Camera::setAnimationClip(AnimationClipData & data)
@@ -307,6 +312,16 @@ void Camera::uploadCameraData()
 void Camera::bindCameraData()
 {
 	cameraDataBuffer.bindBase(CAM_BIND_INDEX);
+}
+
+IRenderData* Camera::getRenderData()
+{
+	if (renderData)
+		return renderData;
+	CameraRenderData* cameraRenderData = new CameraRenderData();
+	cameraRenderData->camera = this;
+	renderData = cameraRenderData;
+	return renderData;
 }
 
 Matrix4f Camera::perspective(float fovy, float aspect, float zNear, float zFar)

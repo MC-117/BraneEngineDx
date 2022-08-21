@@ -23,6 +23,7 @@ struct RenderInfo
 	bool depthWrite = true;
 	bool alphaTest = false;
 	RenderCommandList* cmdList = NULL;
+	RenderGraph* renderGraph = NULL;
 	Camera* camera = NULL;
 	IRendering* tempRender = NULL;
 	list<IRendering*> taskList;

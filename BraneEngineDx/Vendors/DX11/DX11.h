@@ -73,6 +73,7 @@ struct DX11Context
 	void cleanupInputLayout();
 
 	void swap(bool vsync, unsigned int maxFPS);
+	void fence();
 
 	void clearSRV();
 	void clearUAV();

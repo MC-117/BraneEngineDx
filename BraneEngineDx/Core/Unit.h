@@ -244,6 +244,12 @@ struct DrawElementsIndirectCommand {
 	unsigned int pad2;
 };
 
+struct InstanceDrawData
+{
+	unsigned int instanceID;
+	unsigned int baseVertex;
+};
+
 template<class T>
 struct MatAttribute
 {

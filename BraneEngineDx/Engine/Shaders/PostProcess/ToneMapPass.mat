@@ -6,7 +6,6 @@ Scalar vignetteRate: 0
 Scalar vignettePower: 2
 Color vignetteColor: 0, 0, 0, 255
 Scalar lutBlend: 0.5
-Texture ssaoMap: white
 Texture lutMap: defaultLut
 Image imageMap: binding(0)
 #localsize 16 16
@@ -24,8 +23,7 @@ uniform float4 vignetteColor;
 uniform float lutBlend;
 DEF_MAT_END
 
-DEF_TEX2D(ssaoMap, 0);
-DEF_TEX2D(lutMap, 1);
+DEF_TEX2D(lutMap, 0);
 RWTexture2D<unorm float4> imageMap : register(u0);
 
 FS_DEF_OUT_BEGIN
@@ -67,7 +65,6 @@ void main(uint3 gid : SV_DispatchThreadID)
 	{
 		float4 c = imageMap[pos] * baseColor;
 		float2 uv = float2(pos.x / (float)size.x, pos.y / (float)size.y);
-		c = c * SAMPLE_TEX_LOD(ssaoMap, uv, 0);
 		c.rgb = Float3(1.0) - exp(-c.rgb * exposure);
 		c.rgb = pow(c.rgb, Float3(1.0/gamma));
 		if (vignetteRate != 0) {
@@ -81,7 +78,6 @@ void main(uint3 gid : SV_DispatchThreadID)
 			c = lerp(c, vignetteColor, v);
 		}
 		c = lerp(c, tan(lookupTable(atan(c) * (2.0 / PI), lutMap, lutMapSampler) * (PI / 2.0)), lutBlend);
-        GroupMemoryBarrierWithGroupSync();
 		imageMap[pos] = c;
 	}
 }

@@ -51,6 +51,11 @@ bool RenderTarget::isDepthOnly()
 	return desc.depthOnly;
 }
 
+void RenderTarget::init()
+{
+	resize(desc.width, desc.height);
+}
+
 unsigned int RenderTarget::bindFrame()
 {
 	newVendorRenderTarget();
@@ -215,6 +220,11 @@ void RenderTarget::clearStencil(unsigned char stencil)
 {
 	newVendorRenderTarget();
 	vendorRenderTarget->clearStencil(stencil);
+}
+
+IRenderTarget* RenderTarget::getVendorRenderTarget()
+{
+	return vendorRenderTarget;
 }
 
 void RenderTarget::newVendorRenderTarget()

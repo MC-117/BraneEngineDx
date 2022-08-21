@@ -14,8 +14,12 @@ public:
 	Camera* camera = NULL;
 	GUI gui;
 	RenderCommandList cmdList;
+	RenderGraph* renderGraph = NULL;
 
 	RenderPool(Camera& defaultCamera);
+	virtual ~RenderPool();
+
+	void start();
 
 	void setViewportSize(Unit2Di size);
 	void switchToDefaultCamera();
@@ -30,6 +34,17 @@ public:
 protected:
 	set<Render*> prePool;
 	set<Render*> pool;
+	thread renderThread;
+
+	unsigned int renderFrame = 0;
+	bool destory = false;
+
+	void gameFence();
+	void renderFence();
+
+	void renderThreadMain();
+
+	static void renderThreadLoop(RenderPool* pool);
 };
 
 #endif // !_RENDER_POOL_H_

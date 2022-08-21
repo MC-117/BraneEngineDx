@@ -420,6 +420,10 @@ bool Texture2D::loadDefaultTexture()
 	ass = new Asset(&Texture2DAssetInfo::assetInfo, "default_lut", "Engine/Textures/default_lut.png");
 	ass->asset[0] = &defaultLUTTex;
 	AssetManager::registAsset(*ass);
+	blackRGBADefaultTex.bind();
+	whiteRGBADefaultTex.bind();
+	brdfLUTTex.bind();
+	defaultLUTTex.bind();
 	isLoadDefaultTexture = true;
 	return true;
 }

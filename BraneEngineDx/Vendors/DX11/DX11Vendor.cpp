@@ -8,7 +8,9 @@
 REG_VENDOR_DEC(DX11Vendor);
 REG_VENDOR_IMP(DX11Vendor, "DX11");
 
-DX11Vendor::DX11Vendor() : StaticMeshData(dxContext)
+DX11Vendor::DX11Vendor()
+	: StaticMeshData(dxContext),
+	defaultRenderContext(dxContext, defaultRenderContextDesc)
 {
 	name = "DX11";
 }
@@ -27,6 +29,8 @@ bool DX11Vendor::setup(const EngineConfig & config, const WindowContext & contex
 	dxContext.setHWnd(context.hwnd);
 	if (!dxContext.createDevice(context.screenSize.x, context.screenSize.y))
 		return false;
+	defaultRenderContext.deviceContext = dxContext.deviceContext;
+	DX11RenderTarget::initDepthBlit(dxContext);
 	return true;
 }
 
@@ -112,6 +116,22 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam
 LRESULT DX11Vendor::wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	return ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+}
+
+IRenderContext* DX11Vendor::getDefaultRenderContext()
+{
+	return &defaultRenderContext;
+}
+
+IRenderContext* DX11Vendor::newRenderContext()
+{
+	throw runtime_error("Not Implemented");
+	return nullptr;
+}
+
+void DX11Vendor::frameFence()
+{
+	dxContext.fence();
 }
 
 ITexture2D * DX11Vendor::newTexture2D(Texture2DDesc& desc)

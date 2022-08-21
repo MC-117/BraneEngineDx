@@ -12,7 +12,7 @@ DEF_MAT_END
 
 DefaultVertexOut MESH_MAIN
 {
-    float4x4 fm = getFinalMat(objID);
+    float4x4 fm = getFinalMat(ins[0]);
     float sca = 1;
     if (refenceDistance != 0) {
         float3 vec = mul(float4(pos, 1.0), fm).xyz - camData.camPos;
@@ -38,7 +38,7 @@ DEF_MAT_END
 
 DefaultVertexOut SKELETON_MAIN
 {
-    float4x4 fm = getFinalMat(objID, weights, boneId);
+    float4x4 fm = getFinalMat(ins[0], weights, boneId);
     float sca = 1;
     if (refenceDistance != 0) {
         float3 vec = mul(float4(pos, 1.0), fm).xyz - camData.camPos;
@@ -65,9 +65,10 @@ DEF_MAT_END
 
 DefaultVertexOut SKELETON_MAIN
 {
-    float4x4 fm = getFinalMat(objID, weights, boneId);
-    float3 mpos = morphPos(vertexID, pos);
-    float3 mnorm = morphNorm(vertexID, norm);
+    uint vid = ins[1] + vertexID;
+    float4x4 fm = getFinalMat(ins[0], weights, boneId);
+    float3 mpos = morphPos(vid, pos);
+    float3 mnorm = morphNorm(vid, norm);
     float sca = 1;
     if (refenceDistance != 0) {
         float3 vec = mul(float4(mpos, 1.0), fm).xyz - camData.camPos;
@@ -75,7 +76,7 @@ DefaultVertexOut SKELETON_MAIN
         sca = dist / refenceDistance;
     }
     DefaultVertexOut vout;
-    vout.svPos = mul(mul(float4(pos + borderWidth * sca * normalize(norm), 1.0), fm), camData.pmat);
-    vout.LocalPos = pos;
+    vout.svPos = mul(mul(float4(mpos + borderWidth * sca * normalize(mnorm), 1.0), fm), camData.pmat);
+    vout.LocalPos = mpos;
     return vout;
 }
