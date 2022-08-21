@@ -1,6 +1,7 @@
 #include "Const_Def.hmat"
 #include "Bindings_Def.hmat"
 #include "Basic_VS_Lib.hmat"
+#include "CameraData_Def.hmat"
 #define FS_DEF_OUT_BEGIN struct FragmentOut {
 #define FS_DEF_OUT_END };
 #define FS_DEF_OUT_COLOR(col, id) float4 col : SV_TARGET##id
@@ -38,6 +39,12 @@ float3 fresnelSchlick(float cosTheta, float3 F0, float roughness)
     return F0 + (max(float3(r, r, r), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+float2 getTexureSize(in Texture2D tex) {
+    float2 size;
+    tex.GetDimensions(size.x, size.y);
+    return size;
+}
+
 float ShadowCalculation(in Texture2D depthMap, in SamplerState depthMapSampler, float4 fragPosLightSpace, float3 N, float3 L)
 {
     float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -52,17 +59,18 @@ float ShadowCalculation(in Texture2D depthMap, in SamplerState depthMapSampler, 
     float currentDepth = projCoords.z;
     
     float shadow = 0.0;
-    float bias = 0;//max(0.0000005 * (1.0 - dot(N, L)), 0.00000005);
 
-    float2 texelSize;
-    depthMap.GetDimensions(texelSize.x, texelSize.y);
+    float2 texelSize = getTexureSize(depthMap);
     texelSize = 1.0 / texelSize;
+    
     for(int x = -3; x <= 3; ++x)
     {
         for(int y = -3; y <= 3; ++y)
         {
             float2 uv = projCoords.xy + float2(x, y) * texelSize;
             uv.y = 1 - uv.y;
+            float radius = sqrt(x * x + y * y);
+            float bias = (camData.viewSize.x * texelSize.x * 0.00005 * abs(y)) * (1.0 - dot(N, -L));
             float pcfDepth = SAMPLE_TEX_LOD(depthMap, uv, 0).r; 
             shadow += currentDepth - bias > pcfDepth ? 0.0 : 1.0;        
         }

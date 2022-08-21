@@ -2,23 +2,38 @@
 
 #include "GPUBuffer.h"
 #include "SkeletonMesh.h"
+#include "RenderCore/RenderInterface.h"
 
-class MorphTargetWeight : public IBufferBinding
+class MorphTargetWeight
 {
 public:
 	Mesh* mesh = NULL;
 	vector<float> morphWeights;
-	GPUBuffer weightGPUBuffer = GPUBuffer(GPUBufferType::GB_Storage, sizeof(float));
 	bool morphUpdate = true;
 
+	virtual ~MorphTargetWeight();
 	void setMesh(Mesh& mesh);
 
 	int getMorphCount() const;
 	bool getMorphWeight(unsigned int index, float& weight);
 	bool setMorphWeight(unsigned int index, float weight);
 
-	void updateBuffer();
-	virtual void bindBuffer();
+	IRenderData* getRenderData();
+protected:
+	IRenderData* renderData = NULL;
+};
+
+struct MorphTargetWeightRenderData : public IRenderData
+{
+	MorphTargetWeight* source = NULL;
+	vector<float> morphWeights;
+	bool needUpdate = false;
+	GPUBuffer weightGPUBuffer = GPUBuffer(GPUBufferType::GB_Storage, sizeof(float));
+
+	virtual void create();
+	virtual void release();
+	virtual void upload();
+	virtual void bind(IRenderContext& context);
 };
 
 class MorphTargetRemapper

@@ -5,8 +5,8 @@ class VolumetricLightPass : public PostProcessPass
 {
 protected:
 	float screenScale = 0.5f;
-	Texture** temp1Map = NULL;
-	Texture** temp2Map = NULL;
+	int temp1MapSlot = -1;
+	int temp2MapSlot = -1;
 public:
 	Texture2D passAMap = Texture2D(size.x * screenScale, size.y * screenScale, 4, true, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear });
 	Texture2D passBMap = Texture2D(size.x * screenScale, size.y * screenScale, 4, true, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear });
@@ -15,6 +15,9 @@ public:
 	RenderTarget passBRenderTarget = RenderTarget(size.x * screenScale, size.y * screenScale, 4);
 
 	VolumetricLightPass(const string& name = "VolumetricLight", Material* material = NULL);
+
+	virtual void prepare();
+	virtual void execute(IRenderContext& context);
 
 	virtual bool mapMaterialParameter(RenderInfo& info);
 	virtual void render(RenderInfo& info);

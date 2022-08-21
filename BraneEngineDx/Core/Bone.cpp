@@ -2,6 +2,7 @@
 #include "Importer.h"
 #include "Camera.h"
 #include "Console.h"
+#include "RenderCore/RenderCommandList.h"
 
 SerializeInstance(Bone);
 

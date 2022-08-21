@@ -53,7 +53,7 @@ public:
 	virtual void clearDepth(float depth);
 	virtual void clearStencil(unsigned char stencil);
 
-	void initDepthBlit();
+	static void initDepthBlit(DX11Context& dxContext);
 };
 
 #endif // !_DX11RENDERTARGET_H_

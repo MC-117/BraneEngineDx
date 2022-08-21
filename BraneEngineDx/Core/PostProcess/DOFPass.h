@@ -12,9 +12,15 @@ public:
 
 	DOFPass(const string& name = "DOF", Material* material = NULL);
 
+	virtual void prepare();
+	virtual void execute(IRenderContext& context);
+
 	virtual bool mapMaterialParameter(RenderInfo& info);
 	virtual void render(RenderInfo& info);
 	virtual void resize(const Unit2Di& size);
+protected:
+	int screenMapSlot = -1;
+	int depthMapSlot = -1;
 };
 
 #endif // !_DOFPASS_H_

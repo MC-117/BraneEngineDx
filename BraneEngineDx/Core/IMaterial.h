@@ -39,6 +39,7 @@ class IMaterial
 {
 public:
 	MaterialDesc& desc;
+	ShaderProgram* program;
 
 	IMaterial(MaterialDesc& desc);
 

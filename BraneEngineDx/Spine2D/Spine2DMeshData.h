@@ -33,5 +33,7 @@ public:
 
 	virtual bool isValid() const;
 	virtual bool isGenerated() const;
+	virtual void init();
 	virtual void bindShape();
+	virtual void bindShapeWithContext(IRenderContext& context);
 };

@@ -42,7 +42,7 @@ FragmentOut DEFAULT_FS_MAIN
     float3 N = normalize(mul(tN, TBN));
     float3 V = normalize(camData.camPos - fin.WorldPos);
     float4 albedo = SAMPLE_TEX(colorMap, fin.TexCoords);
-    float4 ao = SAMPLE_TEX(aoMap, fin.TexCoords);
+    float ao = SAMPLE_TEX(aoMap, fin.TexCoords).r;
     float a = albedo.a * baseColor.a;
     float3 L = normalize(directLight.direction);
     float3 H = normalize(V + L);

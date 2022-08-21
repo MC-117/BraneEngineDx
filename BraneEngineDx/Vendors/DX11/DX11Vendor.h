@@ -6,14 +6,7 @@
 #ifndef _DX11VENDOR_H_
 #define _DX11VENDOR_H_
 
-#include "DX11Texture2D.h"
-#include "DX11Material.h"
-#include "DX11ShaderStage.h"
-#include "DX11RenderTarget.h"
-#include "DX11GPUBuffer.h"
-#include "DX11MeshData.h"
-#include "DX11SkeletonMeshData.h"
-#include "DX11RenderExecution.h"
+#include "DX11RenderContext.h"
 
 class DX11Vendor : public IVendor
 {
@@ -37,6 +30,11 @@ public:
 	virtual bool toggleFullscreen(const EngineConfig& config, const WindowContext& context, bool fullscreen);
 
 	virtual LRESULT wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+	virtual IRenderContext* getDefaultRenderContext();
+	virtual IRenderContext* newRenderContext();
+
+	virtual void frameFence();
 
 	virtual ITexture2D* newTexture2D(Texture2DDesc& desc);
 	virtual ShaderStage* newShaderStage(const ShaderStageDesc& desc);
@@ -75,6 +73,8 @@ protected:
 	DX11Context dxContext;
 	set<MeshData*> MeshDataCollection;
 	DX11MeshData StaticMeshData;
+	RenderContextDesc defaultRenderContextDesc;
+	DX11RenderContext defaultRenderContext;
 };
 
 #endif // !_DX11VENDOR_H_

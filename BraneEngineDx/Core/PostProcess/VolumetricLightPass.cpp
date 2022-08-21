@@ -13,6 +13,81 @@ VolumetricLightPass::VolumetricLightPass(const string& name, Material* material)
 	passBRenderTarget.addTexture("temp1Map", passBMap);
 }
 
+void VolumetricLightPass::prepare()
+{
+	passARenderTarget.init();
+	passBRenderTarget.init();
+
+	MaterialRenderData* materialRenderData = (MaterialRenderData*)this->materialRenderData;
+	materialRenderData->program = program;
+	materialRenderData->create();
+}
+
+void VolumetricLightPass::execute(IRenderContext& context)
+{
+	Unit2Di screenSize = { size.x * screenScale, size.y * screenScale };
+
+	materialRenderData->upload();
+
+	context.bindShaderProgram(program);
+
+	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
+	cameraRenderData->bind(context);
+
+	// Pass 0 VolumetricLight
+	context.bindFrame(passARenderTarget.getVendorRenderTarget());
+
+	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
+	context.bindTexture((ITexture*)resource->lightDepthTexture->getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
+
+	context.setDrawInfo(0, 4);
+
+	context.setViewport(0, 0, screenSize.x, screenSize.y);
+	context.setRenderPostState();
+	context.postProcessCall();
+
+	// Pass 1 BlurX
+	context.bindFrame(passBRenderTarget.getVendorRenderTarget());
+
+	context.bindTexture((ITexture*)passAMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
+	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
+
+	context.setDrawInfo(1, 4);
+
+	context.setViewport(0, 0, screenSize.x, screenSize.y);
+	context.setRenderPostState();
+	context.postProcessCall();
+
+	// Pass 2 BlurY
+	context.bindTexture(NULL, Fragment_Shader_Stage, temp1MapSlot);
+	context.bindFrame(passARenderTarget.getVendorRenderTarget());
+
+	context.bindTexture((ITexture*)passBMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
+	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
+
+	context.setDrawInfo(2, 4);
+
+	context.setViewport(0, 0, screenSize.x, screenSize.y);
+	context.setRenderPostState();
+	context.postProcessCall();
+
+	// Pass 3 Add
+	context.bindFrame(resource->screenRenderTarget->getVendorRenderTarget());
+
+	context.bindTexture((ITexture*)passAMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
+	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
+
+	context.setDrawInfo(3, 4);
+
+	context.setViewport(0, 0, size.x, size.y);
+	context.setRenderPostAddState();
+	context.postProcessCall();
+
+	context.setRenderPostState();
+
+	context.clearFrameBindings();
+}
+
 bool VolumetricLightPass::mapMaterialParameter(RenderInfo& info)
 {
 	if (material == NULL)
@@ -20,11 +95,8 @@ bool VolumetricLightPass::mapMaterialParameter(RenderInfo& info)
 	if (material == NULL || resource == NULL || resource->screenRenderTarget == NULL ||
 		resource->depthTexture == NULL || resource->lightDepthTexture == NULL)
 		return false;
-	temp1Map = material->getTexture("temp1Map");
-	temp2Map = material->getTexture("temp2Map");
-	if (temp1Map == NULL || temp2Map == NULL)
-		return false;
-	return true;
+	materialRenderData = material->getRenderData();
+	return materialRenderData;
 }
 
 void VolumetricLightPass::render(RenderInfo& info)
@@ -35,78 +107,20 @@ void VolumetricLightPass::render(RenderInfo& info)
 		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-	ShaderProgram* program = material->getShader()->getProgram(Shader_Postprocess);
+	program = material->getShader()->getProgram(Shader_Postprocess);
 	if (program == NULL) {
 		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName());
 		return;
 	}
 	if (!program->isComputable()) {
-		IVendor& vendor = VendorManager::getInstance().getVendor();
-		Unit2Di screenSize = { size.x * screenScale, size.y * screenScale };
+		program->init();
 
-		program->bind();
-		info.camera->bindCameraData();
+		temp1MapSlot = program->getAttributeOffset("temp1Map").offset;
+		temp2MapSlot = program->getAttributeOffset("temp2Map").offset;
+		cameraRenderData = info.camera->getRenderData();
 
-		// Pass 0 VolumetricLight
-		*temp1Map = resource->depthTexture;
-		*temp2Map = resource->lightDepthTexture;
-
-		passARenderTarget.bindFrame();
-
-		material->setPass(0);
-		material->processBaseData();
-		material->processInstanceData();
-
-		vendor.setViewport(0, 0, screenSize.x, screenSize.y);
-		vendor.setRenderPostState();
-		vendor.postProcessCall();
-
-		// Pass 1 BlurX
-		*temp1Map = &passAMap;
-		*temp2Map = NULL;
-
-		passBRenderTarget.bindFrame();
-
-		material->setPass(1);
-		material->processBaseData();
-		material->processTextureData();
-
-		vendor.setViewport(0, 0, screenSize.x, screenSize.y);
-		vendor.setRenderPostState();
-		vendor.postProcessCall();
-
-		// Pass 2 BlurY
-		*temp1Map = &passBMap;
-		*temp2Map = NULL;
-
-		passARenderTarget.bindFrame();
-
-		material->setPass(2);
-		material->processBaseData();
-		material->processTextureData();
-
-		vendor.setViewport(0, 0, screenSize.x, screenSize.y);
-		vendor.setRenderPostState();
-		vendor.postProcessCall();
-
-		// Pass 3 Add
-		*temp1Map = &passAMap;
-		*temp2Map = NULL;
-
-		resource->screenRenderTarget->bindFrame();
-
-		material->setPass(3);
-		material->processBaseData();
-		material->processTextureData();
-
-		vendor.setViewport(0, 0, size.x, size.y);
-		vendor.setRenderPostAddState();
-		vendor.postProcessCall();
-
-		vendor.setRenderPostState();
-
-		resource->screenRenderTarget->clearBind();
-
+		if (temp1MapSlot >= 0 && temp2MapSlot >= 0 && cameraRenderData)
+			info.renderGraph->addPass(*this);
 	}
 }
 

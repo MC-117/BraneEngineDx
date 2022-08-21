@@ -46,19 +46,20 @@ FragmentOut DEFAULT_PP_MAIN
 		col = Float3(1.0) - exp(-col * exposure);
         col = pow(col, Float3(1.0/gamma));
 		pixel.rgb = col;
+		//pixel.a = 1.0f;
         fout.FragColor = pixel;
     }
 	else if (passID == 1) {
-		float bloomOffset = (-0.02 * bloomIter + 0.6) / width;
+		float bloomOffset = (-0.02 * bloomIter + 0.6) / width * pow(2, passNum);
 		for (int dx = -bloomIter; dx <= bloomIter; dx++) {
-			pixel += SAMPLE_TEX(sampleMap, pin.UV + float2(bloomOffset * dx, 0));
+			pixel += SAMPLE_TEX_LOD(sampleMap, pin.UV + float2(bloomOffset * dx, 0), passNum);
 		}
         fout.FragColor = pixel / (bloomIter * 2 - 1);
 	}
 	else if (passID == 2) {
-		float bloomOffset = (-0.02 * bloomIter + 0.6) / height;
+		float bloomOffset = (-0.02 * bloomIter + 0.6) / height * pow(2, passNum);
 		for (int dy = -bloomIter; dy <= bloomIter; dy++) {
-			pixel += SAMPLE_TEX(sampleMap, pin.UV + float2(0, bloomOffset * dy));
+			pixel += SAMPLE_TEX_LOD(sampleMap, pin.UV + float2(0, bloomOffset * dy), passNum);
 		}
         fout.FragColor = pixel / (bloomIter * 2 - 1);
 	}

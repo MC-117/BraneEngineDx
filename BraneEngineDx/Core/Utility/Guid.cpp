@@ -31,50 +31,31 @@ std::string Guid::toString() const
 
 bool Guid::isDefault() const
 {
-    unsigned long long* num0 = (unsigned long long*) & Data1;
-    unsigned long long* num1 = (unsigned long long*)Data4;
-
-    return *num0 == 0 && *num1 == 0;
+    return Word0 == 0 && Word1 == 0;
 }
 
 Guid& Guid::operator=(const Guid& guid)
 {
-    unsigned long long* num0 = (unsigned long long*) & Data1;
-    unsigned long long* num1 = (unsigned long long*)Data4;
-    unsigned long long* _num0 = (unsigned long long*) & guid.Data1;
-    unsigned long long* _num1 = (unsigned long long*)guid.Data4;
-    *num0 = *_num0;
-    *num1 = *_num1;
+    Word0 = guid.Word0;
+    Word1 = guid.Word1;
     return *this;
 }
 
 bool Guid::operator==(const Guid& guid) const
 {
-    unsigned long long* num0 = (unsigned long long*) & Data1;
-    unsigned long long* num1 = (unsigned long long*)Data4;
-    unsigned long long* _num0 = (unsigned long long*) & guid.Data1;
-    unsigned long long* _num1 = (unsigned long long*)guid.Data4;
-    return *num0 == *_num0 && *num1 == *_num1;
+    return Word0 == guid.Word0 && Word1 == guid.Word1;
 }
 
 bool Guid::operator!=(const Guid& guid) const
 {
-    unsigned long long* num0 = (unsigned long long*) & Data1;
-    unsigned long long* num1 = (unsigned long long*)Data4;
-    unsigned long long* _num0 = (unsigned long long*) & guid.Data1;
-    unsigned long long* _num1 = (unsigned long long*)guid.Data4;
-    return *num0 != *_num0 || *num1 != *_num1;
+    return Word0 != guid.Word0 && Word1 != guid.Word1;
 }
 
 bool Guid::operator<(const Guid& guid) const
 {
-    unsigned long long* num0 = (unsigned long long*)&Data1;
-    unsigned long long* num1 = (unsigned long long*)Data4;
-    unsigned long long* _num0 = (unsigned long long*)&guid.Data1;
-    unsigned long long* _num1 = (unsigned long long*)guid.Data4;
-    if (*num0 < *_num0)
+    if (Word0 < guid.Word0)
         return true;
-    else if (*num0 == *_num0)
-        return *num1 < *_num1;
+    else if (Word0 == guid.Word0)
+        return Word1 < guid.Word1;
     return false;
 }

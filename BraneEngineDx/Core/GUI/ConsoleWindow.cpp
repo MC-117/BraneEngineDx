@@ -116,64 +116,64 @@ void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
 			ImGui::EndChild();
 			ImGui::EndTabItem();
 		}
-		if (info.renderCommandList != NULL && ImGui::BeginTabItem("RenderCommandList")) {
-			ImGui::BeginChild("RenderCommandList_Area", { 0, 0 }, false, ImGuiWindowFlags_HorizontalScrollbar);
-			for (auto camB = info.renderCommandList->commandList.begin(), camE = info.renderCommandList->commandList.end(); camB != camE; camB++) {
-				if (ImGui::TreeNode(camB->first, "Camera (%s)", camB->first->name.c_str())) {
-					ImGui::Text("ViewWidth: %d\tViewHeighr: %d", camB->first->size.x, camB->first->size.y);
-					ImGui::Text("ZNear: %f\tZFar: %f", camB->first->zNear, camB->first->zFar);
-					ImGui::Text("FOV: %f", camB->first->fov);
-					ImGui::Text("Position: (%f, %f, %f)", camB->first->position.x(), camB->first->position.y(), camB->first->position.z());
-					Vector3f r = camB->first->getEulerAngle(WORLD);
-					ImGui::Text("Rotation: (%f, %f, %f)", r.x(), r.y(), r.z());
-					for (auto shaderB = camB->second.begin(), shaderE = camB->second.end(); shaderB != shaderE; shaderB++) {
-						if (ImGui::TreeNode(shaderB->first, "Shader (%s)", shaderB->first->name.c_str())) {
-							ImGui::Text("RenderOrder: %d", shaderB->first->renderOrder);
-							ImGui::Text("Shader Program ID: %d", shaderB->first->getProgramID());
-							for (auto b = shaderB->first->shaderStages.begin(), e = shaderB->first->shaderStages.end(); b != e; b++) {
-								ImGui::Text("%s Shader ID: %d", ShaderStage::enumShaderStageType(b->first), b->second->getShaderID());
-							}
-							for (auto matB = shaderB->second.begin(), matE = shaderB->second.end(); matB != matE; matB++) {
-								if (ImGui::TreeNode(matB->first, "Material Instance (addr: %o)", matB->first)) {
-									Material* mat = matB->first;
-									if (mat != NULL) {
-										ImGui::Text("Shader: %s", mat->getShaderName().c_str());
-										for (auto b = mat->getColorField().begin(), e = mat->getColorField().end(); b != e; b++) {
-											Color color = b->second.val;
-											ImGui::ColorEdit4(b->first.c_str(), (float*)&color);
-										}
-										for (auto b = mat->getScalarField().begin(), e = mat->getScalarField().end(); b != e; b++) {
-											float val = b->second.val;
-											ImGui::DragFloat(b->first.c_str(), &val, 0.01);
-										}
-										static string choice;
-										for (auto b = mat->getTextureField().begin(), e = mat->getTextureField().end(); b != e; b++) {
-											/*if (b->first == "depthMap")
-												continue;*/
-											unsigned long long id = b->second.val->getTextureID();
-											ImGui::Image((ImTextureID)id, { 64, 64 }, { 0, 1 }, { 1, 0 });
-											ImGui::SameLine();
-											ImGui::Text(b->first.c_str());
-										}
-									}
-									for (auto meshDataB = matB->second.begin(), meshDataE = matB->second.end(); meshDataB != meshDataE; meshDataB++) {
-										if (meshDataB->first != NULL && ImGui::TreeNode(meshDataB->first, "MeshData (addr: %d)", meshDataB->first)) {
-											ImGui::Text("Vertex Count: %d", meshDataB->first->vertices.size());
-											ImGui::TreePop();
-										}
-									}
-									ImGui::TreePop();
-								}
-							}
-							ImGui::TreePop();
-						}
-					}
-					ImGui::TreePop();
-				}
-			}
-			ImGui::EndChild();
-			ImGui::EndTabItem();
-		}
+		//if (info.renderCommandList != NULL && ImGui::BeginTabItem("RenderCommandList")) {
+		//	ImGui::BeginChild("RenderCommandList_Area", { 0, 0 }, false, ImGuiWindowFlags_HorizontalScrollbar);
+		//	for (auto camB = info.renderCommandList->commandList.begin(), camE = info.renderCommandList->commandList.end(); camB != camE; camB++) {
+		//		if (ImGui::TreeNode(camB->first, "Camera (%s)", camB->first->name.c_str())) {
+		//			ImGui::Text("ViewWidth: %d\tViewHeighr: %d", camB->first->size.x, camB->first->size.y);
+		//			ImGui::Text("ZNear: %f\tZFar: %f", camB->first->zNear, camB->first->zFar);
+		//			ImGui::Text("FOV: %f", camB->first->fov);
+		//			ImGui::Text("Position: (%f, %f, %f)", camB->first->position.x(), camB->first->position.y(), camB->first->position.z());
+		//			Vector3f r = camB->first->getEulerAngle(WORLD);
+		//			ImGui::Text("Rotation: (%f, %f, %f)", r.x(), r.y(), r.z());
+		//			for (auto shaderB = camB->second.begin(), shaderE = camB->second.end(); shaderB != shaderE; shaderB++) {
+		//				if (ImGui::TreeNode(shaderB->first, "Shader (%s)", shaderB->first->name.c_str())) {
+		//					ImGui::Text("RenderOrder: %d", shaderB->first->renderOrder);
+		//					ImGui::Text("Shader Program ID: %d", shaderB->first->getProgramID());
+		//					for (auto b = shaderB->first->shaderStages.begin(), e = shaderB->first->shaderStages.end(); b != e; b++) {
+		//						ImGui::Text("%s Shader ID: %d", ShaderStage::enumShaderStageType(b->first), b->second->getShaderID());
+		//					}
+		//					for (auto matB = shaderB->second.begin(), matE = shaderB->second.end(); matB != matE; matB++) {
+		//						if (ImGui::TreeNode(matB->first, "Material Instance (addr: %o)", matB->first)) {
+		//							Material* mat = matB->first;
+		//							if (mat != NULL) {
+		//								ImGui::Text("Shader: %s", mat->getShaderName().c_str());
+		//								for (auto b = mat->getColorField().begin(), e = mat->getColorField().end(); b != e; b++) {
+		//									Color color = b->second.val;
+		//									ImGui::ColorEdit4(b->first.c_str(), (float*)&color);
+		//								}
+		//								for (auto b = mat->getScalarField().begin(), e = mat->getScalarField().end(); b != e; b++) {
+		//									float val = b->second.val;
+		//									ImGui::DragFloat(b->first.c_str(), &val, 0.01);
+		//								}
+		//								static string choice;
+		//								for (auto b = mat->getTextureField().begin(), e = mat->getTextureField().end(); b != e; b++) {
+		//									/*if (b->first == "depthMap")
+		//										continue;*/
+		//									unsigned long long id = b->second.val->getTextureID();
+		//									ImGui::Image((ImTextureID)id, { 64, 64 }, { 0, 1 }, { 1, 0 });
+		//									ImGui::SameLine();
+		//									ImGui::Text(b->first.c_str());
+		//								}
+		//							}
+		//							for (auto meshDataB = matB->second.begin(), meshDataE = matB->second.end(); meshDataB != meshDataE; meshDataB++) {
+		//								if (meshDataB->first != NULL && ImGui::TreeNode(meshDataB->first, "MeshData (addr: %d)", meshDataB->first)) {
+		//									ImGui::Text("Vertex Count: %d", meshDataB->first->vertices.size());
+		//									ImGui::TreePop();
+		//								}
+		//							}
+		//							ImGui::TreePop();
+		//						}
+		//					}
+		//					ImGui::TreePop();
+		//				}
+		//			}
+		//			ImGui::TreePop();
+		//		}
+		//	}
+		//	ImGui::EndChild();
+		//	ImGui::EndTabItem();
+		//}
 		if (ImGui::BeginTabItem("Python")) {
 			if (ImGui::ArrowButton("Run", ImGuiDir_Right)) {
 				PythonManager::run(textEditor.GetText());

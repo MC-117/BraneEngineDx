@@ -60,6 +60,8 @@ public:
 	void uploadCameraData();
 	void bindCameraData();
 
+	IRenderData* getRenderData();
+
 	static Matrix4f perspective(float fovy, float aspect, float zNear, float zFar);
 	static Matrix4f orthotropic(float left, float right, float bottom, float top, float zNear, float zFar);
 	static Matrix4f lookAt(Vector3f const& eye, Vector3f const& center, Vector3f const& up);
@@ -70,6 +72,7 @@ public:
 	virtual bool serialize(SerializationInfo& to);
 protected:
 	GPUBuffer cameraDataBuffer = GPUBuffer(GB_Constant, sizeof(CameraData));
+	IRenderData* renderData = NULL;
 };
 
 #endif // !_CAMERA_H_

@@ -11,6 +11,7 @@ string Console::PYLOGBUF;
 string Console::PYERRBUF;
 map<string, Timer> Console::timers;
 Console Console::console;
+mutex Console::lock;
 unsigned int Console::newLogNum = 0;
 unsigned int Console::newPyLogNum = 0;
 
@@ -132,6 +133,7 @@ void Console::pyErrFlush()
 
 Timer & Console::getTimer(const string & name)
 {
+	lock_guard guard(lock);
 	auto iter = timers.find(name);
 	if (iter == timers.end())
 		return timers.insert(pair<string, Timer>(name, Timer())).first->second;

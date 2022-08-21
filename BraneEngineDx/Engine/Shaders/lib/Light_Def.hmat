@@ -5,7 +5,7 @@ struct PointLight
     float3 pos;
     float intensity;
     float3 color;
-    float attenuation;
+    float radius;
 };
 
 struct DirectLight
@@ -16,10 +16,38 @@ struct DirectLight
     float3 color;
 };
 
-tbuffer DirectLightBuffer : register(DIRECT_LIGHT_BIND_INDEX)
+cbuffer DirectLightBuffer : register(DIRECT_LIGHT_BIND_INDEX)
 {
     DirectLight directLight;
     uint pointLightCount;
 };
 
 StructuredBuffer<PointLight> pointLights : register(POINT_LIGHT_BIND_INDEX);
+
+float3 getLightRadiance(in DirectLight light)
+{
+    return light.color * light.intensity;
+}
+
+float3 getLightRadiance(in PointLight light, in float3 worldPos)
+{
+    float distance = length(light.pos - worldPos);
+    float attenuation = distance / light.radius;
+    attenuation = max(1 - attenuation * attenuation, 0);
+    return light.color * light.intensity * attenuation;
+}
+
+float rgbToIntensity(float3 rgb)
+{
+    return 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b;
+}
+
+float getLightFinalIntensity(in DirectLight light)
+{
+    return rgbToIntensity(light.color) * light.intensity;
+}
+
+float getLightFinalIntensity(in PointLight light)
+{
+    return rgbToIntensity(light.color) * light.intensity;
+}

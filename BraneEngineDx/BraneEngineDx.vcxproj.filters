@@ -222,9 +222,6 @@
     <ClInclude Include="Core\RenderPool.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\RenderCommandList.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Core\GUI\GUI.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -1143,6 +1140,36 @@
     <ClInclude Include="Core\RenderCore\CameraData.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\RenderCore\RenderInterface.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\LightRenderData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\RenderCommandList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\ParticleRenderData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\IRenderContext.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendors\DX11\DX11RenderContext.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderGraph\MeshPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderGraph\MultiSampleResolvePass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderGraph\ForwardRenderGraph.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderGraph\ImGUIPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -1287,9 +1314,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Vendors\DX11\DX11SkeletonMeshData.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\RenderCommandList.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderPool.cpp">
@@ -2127,6 +2151,36 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderCore\RenderTask.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\LightRenderData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\ParticleRenderData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\RenderCommandList.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\RenderInterface.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\IRenderContext.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendors\DX11\DX11RenderContext.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderGraph\MeshPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderGraph\MultiSampleResolvePass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderGraph\ForwardRenderGraph.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderGraph\ImGUIPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

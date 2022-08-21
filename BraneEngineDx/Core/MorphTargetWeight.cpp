@@ -1,5 +1,13 @@
 #include "MorphTargetWeight.h"
 
+MorphTargetWeight::~MorphTargetWeight()
+{
+	if (renderData) {
+		renderData->release();
+		delete renderData;
+	}
+}
+
 void MorphTargetWeight::setMesh(Mesh& mesh)
 {
 	SkeletonMesh* skeletonMesh = dynamic_cast<SkeletonMesh*>(&mesh);
@@ -41,19 +49,44 @@ bool MorphTargetWeight::setMorphWeight(unsigned int index, float weight)
 	return false;
 }
 
-void MorphTargetWeight::updateBuffer()
+IRenderData* MorphTargetWeight::getRenderData()
 {
-	if (morphUpdate && !morphWeights.empty()) {
-		weightGPUBuffer.resize(morphWeights.size());
-		weightGPUBuffer.uploadData(morphWeights.size(), morphWeights.data());
-		morphUpdate = false;
+	if (renderData)
+		return renderData;
+	MorphTargetWeightRenderData* weightRenderData = new MorphTargetWeightRenderData();
+	weightRenderData->source = this;
+	renderData = weightRenderData;
+	return renderData;
+}
+
+void MorphTargetWeightRenderData::create()
+{
+	if (source == NULL)
+		return;
+	needUpdate = source->morphUpdate;
+	if (needUpdate) {
+		morphWeights = source->morphWeights;
+		source->morphUpdate = false;
 	}
 }
 
-void MorphTargetWeight::bindBuffer()
+void MorphTargetWeightRenderData::release()
 {
-	if (!morphWeights.empty())
-		weightGPUBuffer.bindBase(MORPHWEIGHT_BIND_INDEX);
+	weightGPUBuffer.resize(0);
+}
+
+void MorphTargetWeightRenderData::upload()
+{
+	if (needUpdate && !morphWeights.empty()) {
+		weightGPUBuffer.resize(morphWeights.size());
+		weightGPUBuffer.uploadData(morphWeights.size(), morphWeights.data());
+		needUpdate = false;
+	}
+}
+
+void MorphTargetWeightRenderData::bind(IRenderContext& context)
+{
+	context.bindBufferBase(weightGPUBuffer.getVendorGPUBuffer(), MORPHWEIGHT_BIND_INDEX);
 }
 
 void MorphTargetRemapper::addMorphTargetWeight(MorphTargetWeight& weights)

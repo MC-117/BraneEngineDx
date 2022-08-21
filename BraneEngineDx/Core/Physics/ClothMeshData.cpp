@@ -179,6 +179,10 @@ bool ClothMeshData::isGenerated() const
     return inited;
 }
 
+void ClothMeshData::init()
+{
+}
+
 void ClothMeshData::bindShape()
 {
     if (!inited)
@@ -191,4 +195,14 @@ void ClothMeshData::bindShape()
     normalBuffer.bindBase(3);
     elementBuffer.bindBase(0);
     currentMeshData = this;
+}
+
+void ClothMeshData::bindShapeWithContext(IRenderContext& context)
+{
+    context.setMeshDrawContext();
+    context.bindBufferBase(vertexBuffer.getVendorGPUBuffer(), 1);
+    context.bindBufferBase(uvBuffer.getVendorGPUBuffer(), 2);
+    context.bindBufferBase(normalBuffer.getVendorGPUBuffer(), 3);
+    context.bindBufferBase(elementBuffer.getVendorGPUBuffer(), 0);
+    context.currentMeshData = this;
 }

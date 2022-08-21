@@ -1,65 +1,68 @@
 #define VERTEX_MAX_BONE 4
 
 #define DRAW_INFO_BIND_INDEX b0
-#define MAT_INS_BIND_INDEX b1
+#define MAT_BASE_BIND_INDEX b1
+#define MAT_INS_BIND_INDEX b2
+#define CAM_BIND_INDEX b3
+#define DIRECT_LIGHT_BIND_INDEX b4
 #define TRANS_BIND_INDEX t0
 #define MORPHDATA_BIND_INDEX t1
 #define MORPHWEIGHT_BIND_INDEX t2
 #define PARTICLE_BIND_INDEX t3
-#define CAM_BIND_INDEX t4
-#define DIRECT_LIGHT_BIND_INDEX t5
-#define POINT_LIGHT_BIND_INDEX t6
+#define POINT_LIGHT_BIND_INDEX t4
+#define TERRAIN_MAP_BIND_INDEX t5
+#define TERRAIN_MAP_SAMPLER_INDEX s5
 
-#define __B0 b2
-#define __B1 b3
-#define __B2 b4
-#define __B3 b5
-#define __B4 b6
-#define __B5 b7
-#define __B6 b8
-#define __B7 b9
-#define __B8 b10
-#define __B9 b11
-#define __B10 b12
-#define __B11 b13
-#define __B12 b14
-#define __B13 b15
-#define __B14 b16
-#define __B15 b17
+#define __B0 b4
+#define __B1 b5
+#define __B2 b6
+#define __B3 b7
+#define __B4 b8
+#define __B5 b9
+#define __B6 b10
+#define __B7 b11
+#define __B8 b12
+#define __B9 b13
+#define __B10 b14
+#define __B11 b15
+#define __B12 b16
+#define __B13 b17
+#define __B14 b18
+#define __B15 b19
 
-#define __T0 t7
-#define __T1 t8
-#define __T2 t9
-#define __T3 t10
-#define __T4 t11
-#define __T5 t12
-#define __T6 t13
-#define __T7 t14
-#define __T8 t15
-#define __T9 t16
-#define __T10 t17
-#define __T11 t18
-#define __T12 t19
-#define __T13 t20
-#define __T14 t21
-#define __T15 t22
+#define __T0 t6
+#define __T1 t7
+#define __T2 t8
+#define __T3 t9
+#define __T4 t10
+#define __T5 t11
+#define __T6 t12
+#define __T7 t13
+#define __T8 t14
+#define __T9 t15
+#define __T10 t16
+#define __T11 t17
+#define __T12 t18
+#define __T13 t19
+#define __T14 t20
+#define __T15 t21
 
-#define __S0 s7
-#define __S1 s8
-#define __S2 s9
-#define __S3 s10
-#define __S4 s11
-#define __S5 s12
-#define __S6 s13
-#define __S7 s14
-#define __S8 s15
-#define __S9 s16
-#define __S10 s17
-#define __S11 s18
-#define __S12 s19
-#define __S13 s20
-#define __S14 s21
-#define __S15 s22
+#define __S0 s6
+#define __S1 s7
+#define __S2 s8
+#define __S3 s9
+#define __S4 s10
+#define __S5 s11
+#define __S6 s12
+#define __S7 s13
+#define __S8 s14
+#define __S9 s15
+#define __S10 s16
+#define __S11 s17
+#define __S12 s18
+#define __S13 s19
+#define __S14 s20
+#define __S15 s21
 
 #define TEX_BINDING(i) register(__T##i)
 #define SAMPLE_BINDING(i) register(__S##i)
@@ -74,10 +77,16 @@ SamplerState tex##Sampler : SAMPLE_BINDING(id);
 #define DEF_MAT_BEGIN cbuffer MatInsBuf : register(MAT_INS_BIND_INDEX) {
 #define DEF_MAT_END };
 
+struct InstanceDrawData
+{
+    uint instanceID;
+    uint baseVertex;
+};
+
 cbuffer DrawInfoBuf : register(DRAW_INFO_BIND_INDEX)
 {
     uniform uint baseVertex;
     uniform uint baseInstance;
     uniform uint passID;
-    uniform uint user2;
+    uniform uint passNum;
 };

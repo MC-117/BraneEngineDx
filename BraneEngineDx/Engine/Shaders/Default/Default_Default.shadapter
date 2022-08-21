@@ -8,12 +8,12 @@
 DefaultVertexOut MESH_MAIN
 {
     DefaultVertexOut vout;
-    float4x4 fm = getFinalMat(objID);
+    float4x4 fm = getFinalMat(ins[0]);
     float4 _WorldPos = mul(float4(pos, 1.0), fm);
     vout.svPos = mul(_WorldPos, camData.pmat);
     vout.WorldPos = _WorldPos.xyz;
     vout.LocalPos = pos;
-    vout.Normal = normalize(mul(norm, (float3x3)(fm)));
+    vout.Normal = normalize(mul(float4(norm, 0.0), fm).xyz);
     vout.LocalNormal = norm;
     vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
     vout.TexCoords = uv;
@@ -30,12 +30,12 @@ DefaultVertexOut MESH_MAIN
 DefaultVertexOut SKELETON_MAIN
 {
     DefaultVertexOut vout;
-    float4x4 fm = getFinalMat(objID, weights, boneId);
+    float4x4 fm = getFinalMat(ins[0], weights, boneId);
     float4 _WorldPos = mul(float4(pos, 1.0), fm);
     vout.WorldPos = _WorldPos.xyz;
     vout.LocalPos = pos;
     vout.svPos = mul(_WorldPos, camData.pmat);
-    vout.Normal = normalize(mul(norm, (float3x3)(fm)));
+    vout.Normal = normalize(mul(float4(norm, 0.0), fm).xyz);
     vout.LocalNormal = norm;
     vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
     vout.TexCoords = uv;
@@ -53,16 +53,88 @@ DefaultVertexOut SKELETON_MAIN
 DefaultVertexOut SKELETON_MAIN
 {
     DefaultVertexOut vout;
-    float4x4 fm = getFinalMat(objID, weights, boneId);
-    float4 _WorldPos = mul(float4(morphPos(vertexID, pos), 1.0), fm);
+    uint vid = ins[1] + vertexID;
+    float4x4 fm = getFinalMat(ins[0], weights, boneId);
+    float4 _WorldPos = mul(float4(morphPos(vid, pos), 1.0), fm);
     vout.WorldPos = _WorldPos.xyz;
     vout.LocalPos = pos;
     vout.svPos = mul(_WorldPos, camData.pmat);
-    vout.Normal = normalize(mul(morphNorm(vertexID, norm), (float3x3)(fm)));
+    vout.Normal = normalize(mul(float4(morphNorm(vid, norm), 0.0), fm).xyz);
     vout.LocalNormal = norm;
     vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
+    return vout;
+}
+#vertex terrain
+#include "../lib/TransformData_def.hmat"
+#include "../lib/TerrainMeshData_Def.hmat"
+
+DefaultTerrainVertexOut TERRAIN_MAIN
+{
+    DefaultTerrainVertexOut vout;
+    float4x4 fm = getFinalMat(ins[0]);
+    vout.LocalPos = pos * terrainUnitSize;
+    float4 _WorldPos = mul(float4(vout.LocalPos, 1.0), fm);
+    vout.TransMat = fm;
+    vout.WorldPos = _WorldPos.xyz;
+    vout.Normal = normalize(mul(float4(0.0, 0.0, 1.0, 0.0), fm).xyz);
+    vout.TexCoords = uv;
+    vout.WorldScale = getWorldScale(fm);
+    return vout;
+}
+#tess_ctrl terrain
+#include "../lib/Terrain_TessCtrl_Lib.hmat"
+
+[domain("quad")]
+[partitioning("fractional_even")]
+[outputtopology("triangle_cw")]
+[outputcontrolpoints(4)]
+[patchconstantfunc("terrainTessConstFunc")]
+[maxtessfactor(MAX_TERRAIN_TESS_FACTOR)]
+DefaultTerrainVertexOut main(InputPatch<DefaultTerrainVertexOut, 4> patch, uint i : SV_OutputControlPointID, uint patchId : SV_PrimitiveID)
+{
+    return patch[i];
+}
+#tess_eval terrain
+#include "../lib/TransformData_def.hmat"
+#include "../lib/TerrainMeshData_Def.hmat"
+#include "../lib/Light_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+
+Texture2D terrainMap : register(TERRAIN_MAP_BIND_INDEX);
+SamplerState terrainMapSampler : register(TERRAIN_MAP_SAMPLER_INDEX);
+
+[domain("quad")]
+DefaultVertexOut main(DefaultTerrainPatchTess patchTess, float2 uv : SV_DomainLocation, const OutputPatch<DefaultTerrainVertexOut, 4> quad)
+{
+    DefaultVertexOut vout;
+
+    float2 TexCoordsV1 = lerp(quad[1].TexCoords, quad[2].TexCoords, uv.x);
+    float2 TexCoordsV2 = lerp(quad[0].TexCoords, quad[3].TexCoords, uv.x);
+    vout.TexCoords = lerp(TexCoordsV1, TexCoordsV2, uv.y);
+
+    float3 WorldPosV1 = lerp(quad[1].WorldPos, quad[2].WorldPos, uv.x);
+    float3 WorldPosV2 = lerp(quad[0].WorldPos, quad[3].WorldPos, uv.x);
+    vout.WorldPos = lerp(WorldPosV1, WorldPosV2, uv.y);
+
+    float3 LocalPosV1 = lerp(quad[1].LocalPos, quad[2].LocalPos, uv.x);
+    float3 LocalPosV2 = lerp(quad[0].LocalPos, quad[3].LocalPos, uv.x);
+    vout.LocalPos = lerp(LocalPosV1, LocalPosV2, uv.y);
+
+    float4 terrainData = SAMPLE_TEX_LOD(terrainMap, vout.TexCoords, 0);
+    vout.LocalNormal = terrainData.xyz;
+    vout.Normal = normalize(mul(float4(vout.LocalNormal, 0.0), quad[0].TransMat).xyz);
+
+    float height = terrainData.w * terrainHeight;
+    vout.LocalPos.z += height;
+    vout.WorldPos += quad[0].Normal * height;
+
+    vout.WorldScale = quad[0].WorldScale;
+    vout.lightSpacePos = mul(float4(vout.WorldPos, 1.0), directLight.lmat);
+    
+    vout.svPos = mul(float4(vout.WorldPos, 1.0), camData.pmat);
+
     return vout;
 }

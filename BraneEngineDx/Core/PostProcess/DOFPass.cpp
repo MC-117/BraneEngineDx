@@ -10,6 +10,40 @@ DOFPass::DOFPass(const string & name, Material * material)
 	dofRenderTarget.addTexture("dofMap", dofMap);
 }
 
+void DOFPass::prepare()
+{
+	dofRenderTarget.init();
+	MaterialRenderData* materialRenderData = (MaterialRenderData*)this->materialRenderData;
+	materialRenderData->program = program;
+	materialRenderData->create();
+}
+
+void DOFPass::execute(IRenderContext& context)
+{
+	materialRenderData->upload();
+
+	context.bindShaderProgram(program);
+
+	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
+	cameraRenderData->bind(context);
+
+	context.bindFrame(dofRenderTarget.getVendorRenderTarget());
+
+	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, screenMapSlot);
+	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, depthMapSlot);
+
+	context.setDrawInfo(0, 1);
+
+	context.setViewport(0, 0, size.x, size.y);
+
+	context.postProcessCall();
+
+	context.clearFrameBindings();
+
+	resource->screenTexture = &dofMap;
+	resource->screenRenderTarget = &dofRenderTarget;
+}
+
 bool DOFPass::mapMaterialParameter(RenderInfo & info)
 {
 	if (material == NULL)
@@ -17,8 +51,8 @@ bool DOFPass::mapMaterialParameter(RenderInfo & info)
 	if (material == NULL || resource == NULL ||
 		resource->screenTexture == NULL || resource->depthTexture == NULL)
 		return false;
-	material->setTexture("depthMap", *resource->depthTexture);
-	return true;
+	materialRenderData = material->getRenderData();
+	return materialRenderData;
 }
 
 void DOFPass::render(RenderInfo & info)
@@ -29,35 +63,23 @@ void DOFPass::render(RenderInfo & info)
 		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-	Texture** pScreenMap = material->getTexture("screenMap");
-	if (pScreenMap == NULL)
-		return;
-	ShaderProgram* program = material->getShader()->getProgram(Shader_Postprocess);
+	program = material->getShader()->getProgram(Shader_Postprocess);
 	if (program == NULL) {
 		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName());
 		return;
 	}
+
 	if (!program->isComputable()) {
-		IVendor& vendor = VendorManager::getInstance().getVendor();
+		program->init();
 
-		program->bind();
-		info.camera->bindCameraData();
+		screenMapSlot = program->getAttributeOffset("screenMap").offset;
+		depthMapSlot = program->getAttributeOffset("depthMap").offset;
+		if (screenMapSlot == -1 || depthMapSlot == -1)
+			return;
 
-		*pScreenMap = resource->screenTexture;
+		cameraRenderData = info.camera->getRenderData();
 
-		dofRenderTarget.bindFrame();
-
-		material->setPass(0);
-		material->processInstanceData();
-
-		vendor.setViewport(0, 0, size.x, size.y);
-
-		vendor.postProcessCall();
-
-		dofRenderTarget.clearBind();
-
-		resource->screenTexture = &dofMap;
-		resource->screenRenderTarget = &dofRenderTarget;
+		info.renderGraph->addPass(*this);
 	}
 }
 

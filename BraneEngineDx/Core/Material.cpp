@@ -6,6 +6,7 @@
 #include "ShaderCode/ShaderCompiler.h"
 #include "Console.h"
 #include "Asset.h"
+#include "RenderCore/RenderTask.h"
 
 Material Material::nullMaterial(Shader::nullShader);
 Shader Material::defaultShader;
@@ -41,6 +42,10 @@ Material::Material(const Material & material)
 
 Material::~Material()
 {
+	if (renderData) {
+		renderData->release();
+		delete renderData;
+	}
 }
 
 Material & Material::instantiate()
@@ -403,6 +408,16 @@ bool Material::loadDefaultMaterial()
 	AssetManager::registAsset(*ass);*/
 	isLoadDefaultMaterial = true;
 	return true;
+}
+
+IRenderData* Material::getRenderData()
+{
+	if (renderData)
+		return renderData;
+	MaterialRenderData* materialRenderData = new MaterialRenderData();
+	materialRenderData->material = this;
+	renderData = materialRenderData;
+	return renderData;
 }
 
 void Material::newVendorMaterial()

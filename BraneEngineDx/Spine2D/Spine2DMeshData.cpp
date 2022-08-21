@@ -170,6 +170,10 @@ bool Spine2DMeshData::isGenerated() const
     return inited;
 }
 
+void Spine2DMeshData::init()
+{
+}
+
 void Spine2DMeshData::bindShape()
 {
     if (!inited)
@@ -181,4 +185,17 @@ void Spine2DMeshData::bindShape()
     uvBuffer.bindBase(2);
     elementBuffer.bindBase(0);
     currentMeshData = this;
+}
+
+void Spine2DMeshData::bindShapeWithContext(IRenderContext& context)
+{
+    if (!inited)
+        return;
+    if (context.currentMeshData == this)
+        return;
+    context.setMeshDrawContext();
+    context.bindBufferBase(vertexBuffer.getVendorGPUBuffer(), 1);
+    context.bindBufferBase(uvBuffer.getVendorGPUBuffer(), 2);
+    context.bindBufferBase(elementBuffer.getVendorGPUBuffer(), 0);
+    context.currentMeshData = this;
 }

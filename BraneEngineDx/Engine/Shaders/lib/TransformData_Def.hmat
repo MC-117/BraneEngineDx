@@ -1,20 +1,20 @@
 #include "Bindings_Def.hmat"
 StructuredBuffer<float4x4> Transforms : register(TRANS_BIND_INDEX);
 
-float4x4 getFinalMat(in uint objID)
+float4x4 getFinalMat(in uint insID)
 {
-    return Transforms[objID];
+    return Transforms[insID];
 }
 
-float4x4 getFinalMat(in uint objID, in float4 weights, in uint4 boneId)
+float4x4 getFinalMat(in uint insID, in float4 weights, in uint4 boneId)
 {
-    float tw = weights[0] + weights[1] + weights[2] + weights[3];
-    float4x4 fm = Transforms[objID + boneId[0]] * weights[0] / tw;
+    float invSum = 1 / (weights[0] + weights[1] + weights[2] + weights[3]);
+    float4x4 fm = Transforms[insID + boneId[0]] * weights[0] * invSum;
     if (weights[1] != 0)
-        fm += Transforms[objID + boneId[1]] * weights[1] / tw;
+        fm += Transforms[insID + boneId[1]] * weights[1] * invSum;
     if (weights[2] != 0)
-        fm += Transforms[objID + boneId[2]] * weights[2] / tw;
+        fm += Transforms[insID + boneId[2]] * weights[2] * invSum;
     if (weights[3] != 0)
-        fm += Transforms[objID + boneId[3]] * weights[3] / tw;
+        fm += Transforms[insID + boneId[3]] * weights[3] * invSum;
     return fm;
 }

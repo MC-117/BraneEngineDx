@@ -2,13 +2,7 @@
 #ifndef _IVENDOR_H_
 #define _IVENDOR_H_
 
-#include "ITexture.h"
-#include "IMaterial.h"
-#include "ShaderStage.h"
-#include "IRenderTarget.h"
-#include "IGPUBuffer.h"
-#include "SkeletonMeshData.h"
-#include "IRenderExecution.h"
+#include "IRenderContext.h"
 #include "Physics\PhysicalLayer.h"
 
 struct EngineConfig
@@ -62,11 +56,6 @@ type##Register::type##Register()\
 	VendorManager::getInstance().regist(name, []()->IVendor* { return new type(); });\
 }\
 
-enum CullType
-{
-	Cull_Off, Cull_Back, Cull_Front
-};
-
 class IVendor
 {
 public:
@@ -88,6 +77,11 @@ public:
 	virtual bool toggleFullscreen(const EngineConfig& config, const WindowContext& context, bool fullscreen);
 
 	virtual LRESULT wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+	virtual IRenderContext* getDefaultRenderContext() = 0;
+	virtual IRenderContext* newRenderContext() = 0;
+
+	virtual void frameFence() = 0;
 
 	virtual ITexture2D* newTexture2D(Texture2DDesc& desc) = 0;
 	virtual ShaderStage* newShaderStage(const ShaderStageDesc& desc) = 0;

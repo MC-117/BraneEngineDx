@@ -1,2 +1,2 @@
 #include "Basic_VS_Lib.hmat"
-#define MESH_MAIN main(uint objID : OBJID, float3 pos : POSITION, float2 uv : TEXCOORD, float3 norm : NORMAL, uint vertexID : SV_VertexID)
+#define MESH_MAIN main(uint2 ins : INS, float3 pos : POSITION, float2 uv : TEXCOORD, float3 norm : NORMAL, uint vertexID : SV_VertexID)

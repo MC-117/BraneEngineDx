@@ -1,4 +1,5 @@
 #include "Live2DMeshData.h"
+#include "../Core/IRenderContext.h"
 
 Live2DMeshData::Live2DMeshData()
 {
@@ -107,6 +108,10 @@ bool Live2DMeshData::isGenerated() const
     return inited;
 }
 
+void Live2DMeshData::init()
+{
+}
+
 void Live2DMeshData::bindShape()
 {
     if (!inited)
@@ -118,4 +123,17 @@ void Live2DMeshData::bindShape()
     uvBuffer.bindBase(2);
     elementBuffer.bindBase(0);
     currentMeshData = this;
+}
+
+void Live2DMeshData::bindShapeWithContext(IRenderContext& context)
+{
+    if (!inited)
+        return;
+    if (context.currentMeshData == this)
+        return;
+    context.setMeshDrawContext();
+    context.bindBufferBase(vertexBuffer.getVendorGPUBuffer(), 1);
+    context.bindBufferBase(uvBuffer.getVendorGPUBuffer(), 2);
+    context.bindBufferBase(elementBuffer.getVendorGPUBuffer(), 0);
+    context.currentMeshData = this;
 }

@@ -61,7 +61,7 @@ float snoise(float2 st) {
 DefaultVertexOut MESH_MAIN
 {
     DefaultVertexOut vout;
-    float4x4 fm = getFinalMat(objID);
+    float4x4 fm = getFinalMat(ins[0]);
     float4 _WorldPos = mul(float4(pos, 1.0), fm);
 
     float2 offset = (snoise((_WorldPos.xz + time * normalize(windForce.xy)) *

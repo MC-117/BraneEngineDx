@@ -5,7 +5,7 @@ Buffer<float> morphWeight : register(MORPHWEIGHT_BIND_INDEX);
 float3 morphPos(in uint vertexID, in float3 pos)
 {
     uint nMorph = morphWeight[0];
-    uint base = (baseVertex + vertexID) * nMorph;
+    uint base = vertexID * nMorph;
     float3 w = float3(0, 0, 0);
     for (uint i = 0; i < nMorph; i++) {
         w += morphData[(base + i) * 2].xyz * morphWeight[i + 1]; 
@@ -16,7 +16,7 @@ float3 morphPos(in uint vertexID, in float3 pos)
 float3 morphNorm(in uint vertexID, in float3 norm)
 {
     uint nMorph = morphWeight[0];
-    uint base = (baseVertex + vertexID) * nMorph;
+    uint base = vertexID * nMorph;
     float3 w = float3(0, 0, 0);
     for (uint i = 0; i < nMorph; i++) {
         w += morphData[(base + i) * 2 + 1].xyz * morphWeight[i + 1];

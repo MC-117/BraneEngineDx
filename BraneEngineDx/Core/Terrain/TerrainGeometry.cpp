@@ -130,6 +130,14 @@ bool TerrainPatchMeshData::isGenerated() const
 	return true;
 }
 
+void TerrainPatchMeshData::init()
+{
+	if (!isValid())
+		return;
+	update();
+	heightMap.bind();
+}
+
 void TerrainPatchMeshData::bindShape()
 {
 	if (!isValid())
@@ -144,6 +152,21 @@ void TerrainPatchMeshData::bindShape()
 	terrainBuffer.bindBase(MAT_BASE_BIND_INDEX);
 	heightMap.bindBase(TERRAIN_MAP_BIND_INDEX);
 	currentMeshData = this;
+}
+
+void TerrainPatchMeshData::bindShapeWithContext(IRenderContext& context)
+{
+	if (!isValid())
+		return;
+	if (currentMeshData == this)
+		return;
+	context.setTerrainDrawContext();
+	context.bindBufferBase(vertexBuffer.getVendorGPUBuffer(), 1);
+	context.bindBufferBase(uvBuffer.getVendorGPUBuffer(), 2);
+	context.bindBufferBase(elementBuffer.getVendorGPUBuffer(), 0);
+	context.bindBufferBase(terrainBuffer.getVendorGPUBuffer(), MAT_BASE_BIND_INDEX);
+	context.bindTexture((ITexture*)heightMap.getVendorTexture(), Tessellation_Evalution_Shader_Stage, TERRAIN_MAP_BIND_INDEX);
+	context.currentMeshData = this;
 }
 
 SerializeInstance(TerrainGeometry);

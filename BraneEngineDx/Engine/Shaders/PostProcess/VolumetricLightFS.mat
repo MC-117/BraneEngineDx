@@ -1,0 +1,154 @@
+#material
+Scalar G_SCATTERING: 0.5
+Scalar fogDistance: 1000
+Count volumnicFogStep: 50
+Count volumnicFogStepDebug: 0
+Count volumnicFogBlurIter: 3
+Color volumnicLightColor: 209, 167, 102, 255
+Texture temp1Map
+Texture temp2Map
+#vertex use postprocess
+#fragment postprocess
+
+#pragma debug
+#include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/PostProcess_Def.hmat"
+#include "../lib/Light_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+FS_DEF_OUT_END
+
+DEF_MAT_BEGIN
+uniform float G_SCATTERING;
+uniform float fogDistance;
+uniform int volumnicFogStep;
+uniform int volumnicFogStepDebug;
+uniform int volumnicFogBlurIter;
+uniform float4 volumnicLightColor;
+DEF_MAT_END
+
+#define DEPTHMAP temp1Map
+#define SHADOWMAP temp2Map
+#define FOGMAP temp1Map
+
+DEF_TEX2D(temp1Map, 0);
+DEF_TEX2D(temp2Map, 1);
+
+static const float4x4 ditherPattern = {
+    0.0f, 0.5f, 0.125f, 0.625f,
+    0.75f, 0.22f, 0.875f, 0.375f,
+    0.1875f, 0.6875f, 0.0625f, 0.5625f,
+    0.9375f, 0.4375f, 0.8125f, 0.3125f
+};
+
+float3 getRayDir(float2 uv) {
+    // float tanFov = tan(camData.fovy * 0.5f);
+    // float dx =  tanFov * (2.0f * uv.x - 1.0f);
+    // float dy =  tanFov * (1.0f - 2.0f * uv.y) / camData.aspect;
+
+    // float3 dir = camData.camUp * dy - camData.camLeft * dx + camData.camDir;
+    // return normalize(dir);
+    float4 ndcPos;
+    ndcPos.x = uv.x * 2.0f - 1.0f;
+    ndcPos.y = 1.0f - uv.y * 2.0f;
+    ndcPos.z = 1.0f;
+    ndcPos.w = 1.0f;
+    ndcPos = mul(ndcPos, camData.promatInv);
+    ndcPos /= ndcPos.w;
+    ndcPos.w = 0;
+    ndcPos = mul(ndcPos, camData.vmatInv);
+    return normalize(ndcPos.xyz);
+}
+
+float depthFromNDCToView(float depth)
+{
+    float ndcZ = 2.0 * depth - 1.0;
+    float z = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear - ndcZ * (camData.zFar - camData.zNear));
+    return z;
+}
+
+float computeScattering(float lightDotView)
+{
+    float result = 1.0 - G_SCATTERING * G_SCATTERING;
+    result /= (4.0 * PI * pow(1.0 + G_SCATTERING * G_SCATTERING - (2.0 * G_SCATTERING) * lightDotView, 1.5));
+    return result;
+}
+
+FragmentOut DEFAULT_PP_MAIN
+{
+	FragmentOut fout;
+
+    if (passID == 0) {
+        float raylength = fogDistance;
+        float depthVal = SAMPLE_TEX_LOD(DEPTHMAP, pin.UV, 0).r;
+        raylength = depthFromNDCToView(depthVal);
+
+        raylength = min(fogDistance, raylength);
+
+        float3 rayDirWS = getRayDir(pin.UV);
+
+        float3 sunDirWS = directLight.direction;
+
+        float scatter = computeScattering(dot(rayDirWS, sunDirWS));
+
+        float3 rayStartWS = camData.camPos;
+        float3 rayEndWS = camData.camPos + rayDirWS * raylength;
+
+        float4 rayStartCS = mul(float4(rayStartWS, 1.0f), directLight.lmat);
+        float4 rayEndCS = mul(float4(rayEndWS, 1.0f), directLight.lmat);
+
+        float3 rayStartSS = rayStartCS.xyz / rayStartCS.w;
+        float3 rayEndSS = rayEndCS.xyz / rayEndCS.w;
+
+        rayStartSS.xy = rayStartSS.xy * 0.5 + 0.5;
+        rayEndSS.xy = rayEndSS.xy * 0.5 + 0.5;
+
+        float3 rayDirSS = rayEndSS - rayStartSS;
+        
+        float3 rayStepSS = rayDirSS / (float)volumnicFogStep;
+        float3 raySS = rayStartSS + rayStepSS;
+
+        float fog = 0;
+        for (int i = 0; i < volumnicFogStep; i++) {
+            float2 uv = raySS.xy;
+            uv.y = 1 - uv.y;
+            float shadowVal = SAMPLE_TEX_LOD(SHADOWMAP, uv, 0).r;
+            if (shadowVal > raySS.z)
+                fog += scatter;
+            raySS += rayStepSS;
+        }
+
+        fog /= volumnicFogStep;
+        fout.FragColor = volumnicLightColor * fog;
+        fout.FragColor.a = 1;
+    }
+	else if (passID == 1) {
+        float2 texelSize = getTexureSize(FOGMAP);
+		float offset = (-0.02 * volumnicFogBlurIter + 0.6) / texelSize.x;
+        float4 pixel = Float4(0.0);
+		for (int dx = -volumnicFogBlurIter; dx <= volumnicFogBlurIter; dx++) {
+			pixel += SAMPLE_TEX(FOGMAP, pin.UV + float2(offset * dx, 0));
+		}
+        pixel /= volumnicFogBlurIter * 2 - 1;
+        pixel.a = 1.0;
+        fout.FragColor = pixel;
+	}
+	else if (passID == 2) {
+        float2 texelSize = getTexureSize(FOGMAP);
+		float offset = (-0.02 * volumnicFogBlurIter + 0.6) / texelSize.y;
+        float4 pixel = Float4(0.0);
+		for (int dy = -volumnicFogBlurIter; dy <= volumnicFogBlurIter; dy++) {
+			pixel += SAMPLE_TEX(FOGMAP, pin.UV + float2(0, offset * dy));
+		}
+        pixel /= volumnicFogBlurIter * 2 - 1;
+        pixel.a = 1.0;
+        fout.FragColor = pixel;
+	}
+    else if (passID == 3) {
+        fout.FragColor = SAMPLE_TEX(FOGMAP, pin.UV);
+    }
+
+	return fout;
+}
