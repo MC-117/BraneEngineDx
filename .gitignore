@@ -338,3 +338,6 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# Not ignore thirdparty library
+!/BraneEngineDx/ThirdParty
