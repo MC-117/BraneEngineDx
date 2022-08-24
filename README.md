@@ -38,4 +38,4 @@ DirectX version of BraneEngine.
 * *.dll: all the dll file can be found in 'BraneEngineDx/ThirdParty' folder.
 
 ## Multithread Rendering
-![](https://raw.githubusercontent.com/MC-117/BraneEngineDx/master/Document/MultithreadRendering.png)
+![MultithreadRendering](https://user-images.githubusercontent.com/28572690/186325609-956793c5-996f-49b0-8de7-928651dfcd4a.svg)
