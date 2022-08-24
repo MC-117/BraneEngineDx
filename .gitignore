@@ -341,3 +341,9 @@ healthchecksdb
 
 # Not ignore thirdparty library
 !/BraneEngineDx/ThirdParty
+!/BraneEngineDx/ThirdParty/*
+!/BraneEngineDx/ThirdParty/*/*
+!/BraneEngineDx/ThirdParty/*/*/*
+!/BraneEngineDx/ThirdParty/*/*/*/*
+!/BraneEngineDx/ThirdParty/*/*/*/*/*
+!/BraneEngineDx/ThirdParty/*/*/*/*/*/*
