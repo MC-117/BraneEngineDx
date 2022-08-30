@@ -22,8 +22,8 @@ DX11RenderExecution::~DX11RenderExecution()
 
 void DX11RenderExecution::executeParticle(const vector<DrawArraysIndirectCommand>& cmds)
 {
-#if INDIRECT_DRAW
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+#if INDIRECT_DRAW
 	size_t size = sizeof(DrawArraysIndirectCommand) * cmds.size();
 	if (cmdBufferDesc.ByteWidth != size) {
 		cmdBufferDesc.ByteWidth = size;

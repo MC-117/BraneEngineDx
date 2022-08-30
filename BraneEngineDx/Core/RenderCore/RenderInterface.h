@@ -1,9 +1,16 @@
 #pragma once
 #include "../IRenderExecution.h"
+#include "../GraphicType.h"
 #include "../Serialization.h"
 
 class IRenderContext;
 class RenderTarget;
+class Camera;
+class Material;
+struct MeshPart;
+struct MeshData;
+struct ShaderProgram;
+class RenderTask;
 class RenderCommandList;
 
 struct IRenderData
@@ -15,11 +22,35 @@ struct IRenderData
 	virtual void bind(IRenderContext& context) = 0;
 };
 
+struct IRenderPack;
+
+struct IRenderCommand
+{
+	Camera* camera;
+	Material* material;
+	MeshPart* mesh;
+	list<IRenderData*> bindings;
+	virtual bool isValid() const = 0;
+	virtual Enum<ShaderFeature> getShaderFeature() const = 0;
+	virtual RenderMode getRenderMode() const = 0;
+	virtual IRenderPack* createRenderPack(RenderCommandList& commandList) const = 0;
+};
+
+struct RenderTaskContext
+{
+	IRenderData* cameraData;
+	ShaderProgram* shaderProgram;
+	RenderMode renderMode;
+	IRenderData* materialData;
+	MeshData* meshData;
+};
+
 struct IRenderPack
 {
 	IRenderExecution* vendorRenderExecution = NULL;
 	virtual ~IRenderPack();
-	virtual void excute(IRenderContext& context) = 0;
+	virtual bool setRenderCommand(const IRenderCommand& command) = 0;
+	virtual void excute(IRenderContext& context, RenderTaskContext& taskContext) = 0;
 	virtual void newVendorRenderExecution();
 };
 

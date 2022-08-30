@@ -104,7 +104,11 @@ void DirectLight::render(RenderInfo& info)
 					continue;
 				for (int j = 0; j < resource.instanceIDCount; j++)
 					info.cmdList->setMeshPartTransform(resource.meshPart, depthMat, resource.instanceID + j);
-				info.cmdList->setRenderCommand({ depthMat, &shadowCamera, resource.meshPart });
+				MeshRenderCommand command;
+				command.camera = &shadowCamera;
+				command.material = depthMat;
+				command.mesh = resource.meshPart;
+				info.cmdList->setRenderCommand(command);
 			}
 		}
 	}

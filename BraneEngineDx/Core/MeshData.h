@@ -3,11 +3,7 @@
 #define _MESHDATA_H_
 
 #include "Unit.h"
-
-enum MeshType
-{
-	MT_Mesh, MT_SkeletonMesh, MT_Terrain
-};
+#include "GraphicType.h"
 
 class IRenderContext;
 

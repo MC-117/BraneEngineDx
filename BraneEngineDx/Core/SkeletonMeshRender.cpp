@@ -65,22 +65,22 @@ void SkeletonMeshRender::render(RenderInfo & info)
 		if (!customTransformSubmit)
 			info.cmdList->setMeshPartTransform(part, material, instanceID);
 
-		RenderCommand cmd;
-		cmd.material = material;
-		cmd.camera = info.camera;
-		cmd.mesh = part;
-		cmd.particles = NULL;
+		MeshRenderCommand command;
+		command.camera = info.camera;
+		command.material = material;
+		command.mesh = part;
+		command.isStatic = isStatic;
 		if (morphWeights.getMorphCount() > 0)
-			cmd.bindings.push_back(morphWeights.getRenderData());
+			command.bindings.push_back(morphWeights.getRenderData());
 
-		info.cmdList->setRenderCommand(cmd, isStatic);
+		info.cmdList->setRenderCommand(command);
 
 		Material* outlineMaterial = outlineMaterials[i];
 		if (outlineEnable[i] && outlineMaterial != NULL) {
 			if (!customTransformSubmit)
 				info.cmdList->setMeshPartTransform(part, outlineMaterial, instanceID);
-			cmd.material = outlineMaterial;
-			info.cmdList->setRenderCommand(cmd, isStatic);
+			command.material = outlineMaterial;
+			info.cmdList->setRenderCommand(command);
 		}
 	}
 }

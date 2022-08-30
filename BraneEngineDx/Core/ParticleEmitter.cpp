@@ -450,9 +450,14 @@ void ParticleRender::render(RenderInfo & info)
 	if (info.cmdList == NULL)
 		return;
 	for (auto b = particleEmtters.begin(), e = particleEmtters.end(); b != e; b++)
-		if (b->material != NULL)
-			info.cmdList->setRenderCommand({
-			b->material, info.camera, NULL, &b->particles });
+		if (b->material != NULL) {
+			ParticleRenderCommand command;
+			command.camera = info.camera;
+			command.material = b->material;
+			command.mesh = NULL;
+			command.particles = &b->particles;
+			info.cmdList->setRenderCommand(command);
+		}
 }
 
 IRendering::RenderType ParticleRender::getRenderType() const
