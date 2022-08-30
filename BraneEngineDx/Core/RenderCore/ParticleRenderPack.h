@@ -26,11 +26,26 @@ struct ParticleRenderData : public IRenderData
 	void clean();
 };
 
+struct ParticleRenderCommand : public IRenderCommand
+{
+	list<Particle>* particles;
+	virtual bool isValid() const;
+	virtual Enum<ShaderFeature> getShaderFeature() const;
+	virtual RenderMode getRenderMode() const;
+	virtual IRenderPack* createRenderPack(RenderCommandList& commandList) const;
+};
+
 struct ParticleRenderPack : public IRenderPack
 {
-	ParticleData* particleData;
+	ParticleRenderData& particleRenderData;
+
+	MaterialRenderData* materialData = NULL;
+	ParticleData* particleData = NULL;
 	DrawArraysIndirectCommand cmd;
 	GPUBuffer cmdBuffer = GPUBuffer(GB_Command, sizeof(DrawElementsIndirectCommand));
 
-	virtual void excute(IRenderContext& context);
+	ParticleRenderPack(ParticleRenderData& particleRenderData);
+
+	virtual bool setRenderCommand(const IRenderCommand& command);
+	virtual void excute(IRenderContext& context, RenderTaskContext& taskContext);
 };

@@ -2,19 +2,11 @@
 
 #include "RenderTask.h"
 #include "LightRenderData.h"
-#include "ParticleRenderData.h"
+#include "ParticleRenderPack.h"
+#include "MeshRenderPack.h"
 
 class Camera;
 class Render;
-
-struct RenderCommand
-{
-	Material* material;
-	Camera* camera;
-	MeshPart* mesh;
-	list<Particle>* particles;
-	list<IRenderData*> bindings;
-};
 
 class RenderCommandList
 {
@@ -40,7 +32,7 @@ public:
 	void* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex);
 	void cleanStaticMeshTransform(unsigned int base, unsigned int count);
 	void cleanStaticMeshPartTransform(MeshPart* meshPart, Material* material);
-	bool setRenderCommand(const RenderCommand& cmd, bool isStatic = false);
+	bool setRenderCommand(const IRenderCommand& cmd, bool isStatic = false);
 
 	void setUpdateStatic();
 	bool willUpdateStatic();
@@ -49,5 +41,5 @@ public:
 	void excuteCommand();
 	void resetCommand();
 protected:
-	bool setRenderCommand(const RenderCommand& cmd, bool isStatic, bool autoFill);
+	bool setRenderCommand(const IRenderCommand& cmd, bool isStatic, bool autoFill);
 };

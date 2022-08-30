@@ -1,4 +1,6 @@
-#include "ParticleRenderData.h"
+#include "ParticleRenderPack.h"
+#include "RenderCommandList.h"
+#include "../SkeletonMesh.h"
 
 ParticleData* ParticleRenderData::setParticles(Material* material, const list<Particle>& particles)
 {
@@ -79,10 +81,52 @@ void ParticleRenderData::clean()
 	totalParticleCount = 0;
 }
 
-void ParticleRenderPack::excute(IRenderContext& context)
+bool ParticleRenderCommand::isValid() const
 {
-	if (particleData == NULL)
+	return material && !material->isNull() && camera && particles && (mesh == NULL || (mesh && mesh->isValid()));
+}
+
+Enum<ShaderFeature> ParticleRenderCommand::getShaderFeature() const
+{
+	Enum<ShaderFeature> shaderFeature;
+	shaderFeature |= Shader_Particle;
+	return shaderFeature;
+}
+
+RenderMode ParticleRenderCommand::getRenderMode() const
+{
+	return RenderMode(material->getRenderOrder(), 0, 0);
+}
+
+IRenderPack* ParticleRenderCommand::createRenderPack(RenderCommandList& commandList) const
+{
+	return new ParticleRenderPack(commandList.particleDataPack);
+}
+
+ParticleRenderPack::ParticleRenderPack(ParticleRenderData& particleRenderData)
+	: particleRenderData(particleRenderData)
+{
+}
+
+bool ParticleRenderPack::setRenderCommand(const IRenderCommand& command)
+{
+	const ParticleRenderCommand* particleRenderCommand = dynamic_cast<const ParticleRenderCommand*>(&command);
+	materialData = dynamic_cast<MaterialRenderData*>(command.material->getRenderData());
+	particleData = particleRenderData.setParticles(particleRenderCommand->material, *particleRenderCommand->particles);
+	return particleData;
+}
+
+void ParticleRenderPack::excute(IRenderContext& context, RenderTaskContext& taskContext)
+{
+	if (particleData == NULL || particleData->batchCount == 0)
 		return;
+
+	if (taskContext.materialData != materialData) {
+		taskContext.materialData = materialData;
+		materialData->upload();
+		materialData->bind(context);
+	}
+
 	cmd.first = 0;
 	cmd.count = 1;
 	cmd.baseInstance = particleData->particleBase;

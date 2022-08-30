@@ -30,7 +30,12 @@ void TerrainRender::render(RenderInfo& info)
 
     if (!customTransformSubmit)
         info.cmdList->setMeshPartTransform(&geometry->meshPart, material, instanceID);
-    info.cmdList->setRenderCommand({ material, info.camera, &geometry->meshPart }, isStatic);
+    MeshRenderCommand command;
+    command.camera = info.camera;
+    command.material = material;
+    command.mesh = &geometry->meshPart;
+    command.isStatic = isStatic;
+    info.cmdList->setRenderCommand(command);
 }
 
 Matrix4f TerrainRender::getTransformMatrix() const

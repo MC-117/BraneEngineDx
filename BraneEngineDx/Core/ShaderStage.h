@@ -3,20 +3,7 @@
 #define _SHADERSTAGE_H_
 
 #include "Utility/Utility.h"
-
-enum ShaderFeature
-{
-	Shader_Default = 0, Shader_Custom = 1, Shader_Deferred = 2, Shader_Custom_1 = 2 + 1,
-	Shader_Postprocess = 4, Shader_Custom_2 = 4 + 1, Shader_Skeleton = 8, Shader_Custom_3 = 8 + 1,
-	Shader_Morph = 16, Shader_Custom_4 = 16 + 1, Shader_Particle = 32, Shader_Custom_5 = 32 + 1,
-	Shader_Modifier = 64, Shader_Custom_6 = 64 + 1, Shader_Terrain = 128, Shader_Custom_7 = 128 + 1
-};
-
-enum ShaderStageType
-{
-	None_Shader_Stage, Vertex_Shader_Stage, Tessellation_Control_Shader_Stage, Tessellation_Evalution_Shader_Stage,
-	Geometry_Shader_Stage, Fragment_Shader_Stage, Compute_Shader_Stage
-};
+#include "GraphicType.h"
 
 struct ShaderStageDesc
 {

@@ -93,7 +93,7 @@ void RenderCommandList::cleanStaticMeshPartTransform(MeshPart* meshPart, Materia
 	meshTransformDataPack.cleanPartStatic(meshPart, material);
 }
 
-bool RenderCommandList::setRenderCommand(const RenderCommand& cmd, bool isStatic)
+bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, bool isStatic)
 {
 	return setRenderCommand(cmd, isStatic, true);
 }
@@ -108,30 +108,11 @@ bool RenderCommandList::willUpdateStatic()
 	return meshTransformDataPack.staticUpdate;
 }
 
-bool RenderCommandList::setRenderCommand(const RenderCommand& cmd, bool isStatic, bool autoFill)
+bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, bool isStatic, bool autoFill)
 {
-	if (cmd.material == NULL || cmd.material->isNull() || cmd.camera == NULL || (cmd.mesh == NULL && cmd.particles == NULL) ||
-		(cmd.mesh == NULL && cmd.particles != NULL && cmd.particles->empty()) || (cmd.mesh != NULL && !cmd.mesh->isValid()))
+	if (!cmd.isValid())
 		return false;
-	Enum<ShaderFeature> shaderFeature;
-	if (cmd.mesh == NULL)
-		shaderFeature |= Shader_Particle;
-	else {
-		if (cmd.material->isDeferred)
-			shaderFeature |= Shader_Deferred;
-		if (cmd.mesh->meshData->type == MT_Terrain) {
-			shaderFeature |= Shader_Terrain;
-		}
-		else {
-			if (cmd.mesh->meshData->type == MT_SkeletonMesh) {
-				shaderFeature |= Shader_Skeleton;
-				if (cmd.mesh->isMorph())
-					shaderFeature |= Shader_Morph;
-			}
-			if (cmd.particles != NULL)
-				shaderFeature |= Shader_Modifier;
-		}
-	}
+	Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
 	ShaderProgram* shader = cmd.material->getShader()->getProgram(shaderFeature);
 	if (shader == NULL) {
 		Console::warn("Shader %s don't have mode %d", cmd.material->getShaderName().c_str(), shaderFeature.enumValue);
@@ -168,6 +149,7 @@ bool RenderCommandList::setRenderCommand(const RenderCommand& cmd, bool isStatic
 	RenderTask task;
 	task.age = 0;
 	task.shaderProgram = shader;
+	task.renderMode = cmd.getRenderMode();
 	task.cameraData = cameraRenderData;
 	task.materialData = materialRenderData;
 	task.extraData = cmd.bindings;
@@ -193,37 +175,11 @@ bool RenderCommandList::setRenderCommand(const RenderCommand& cmd, bool isStatic
 	}
 
 	if (pTask->renderPack == NULL) {
-		if (cmd.mesh == NULL)
-			pTask->renderPack = new ParticleRenderPack();
-		else
-			pTask->renderPack = new MeshDataRenderPack();
+		pTask->renderPack = cmd.createRenderPack(*this);
 	}
 
-	if (cmd.mesh == NULL) {
-		if (cmd.particles != NULL) {
-			ParticleRenderPack* prp = dynamic_cast<ParticleRenderPack*>(pTask->renderPack);
-			prp->particleData = particleDataPack.setParticles(cmd.material, *cmd.particles);
-		}
-		else
-			return false;
-	}
-	else {
-		MeshDataRenderPack* meshRenderPack = dynamic_cast<MeshDataRenderPack*>(pTask->renderPack);
-		if (isStatic) {
-			auto meshTDIter = meshTransformDataPack.staticMeshTransformIndex.find(makeGuid(cmd.mesh, cmd.material));
-			if (meshTDIter != meshTransformDataPack.staticMeshTransformIndex.end())
-				meshRenderPack->setRenderData(cmd.mesh, &meshTDIter->second);
-			else
-				return false;
-		}
-		else {
-			auto meshTDIter = meshTransformDataPack.meshTransformIndex.find(makeGuid(cmd.mesh, cmd.material));
-			if (meshTDIter != meshTransformDataPack.meshTransformIndex.end())
-				meshRenderPack->setRenderData(cmd.mesh, &meshTDIter->second);
-			else
-				return false;
-		}
-	}
+	if (!pTask->renderPack->setRenderCommand(cmd))
+		return false;
 
 	pTask->age = 0;
 	/*if (autoFill && shader->renderOrder >= 1000 && shader->renderOrder < 2450) {
@@ -250,14 +206,19 @@ void RenderCommandList::prepareCommand()
 void RenderCommandList::excuteCommand()
 {
 	IVendor& vendor = VendorManager::getInstance().getVendor();
+	IRenderContext& context = *vendor.getDefaultRenderContext();
+
 	Timer timer;
 	meshTransformDataPack.upload();
 	particleDataPack.upload();
 	lightDataPack.upload();
 
+	meshTransformDataPack.bind(context);
+	particleDataPack.bind(context);
+	lightDataPack.bind(context);
+
 	timer.record("Upload");
-	RenderTask taskContext;
-	IRenderContext& context = *vendor.getDefaultRenderContext();
+	RenderTaskContext taskContext;
 	Time setupTime, uploadBaseTime, uploadInsTime, execTime;
 	for (auto item : taskSet) {
 		RenderTask& task = *item;
@@ -274,45 +235,59 @@ void RenderCommandList::excuteCommand()
 			context.clearFrameDepth(1);
 			context.setViewport(0, 0, task.cameraData->data.viewSize.x(), task.cameraData->data.viewSize.y());
 
+			task.cameraData->upload();
+			task.cameraData->bind(context);
+
 			setupTime = setupTime + Time::now() - t;
 		}
 
 		if (taskContext.shaderProgram != task.shaderProgram) {
 			t = Time::now();
 			taskContext.shaderProgram = task.shaderProgram;
-			if (task.shaderProgram->renderOrder < 500)
-				context.setRenderPreState();
-			else if (task.shaderProgram->renderOrder < 1000)
-				context.setRenderGeomtryState();
-			else if (task.shaderProgram->renderOrder < 2450)
-				context.setRenderOpaqueState();
-			else if (task.shaderProgram->renderOrder < 2500)
-				context.setRenderAlphaState();
-			else if (task.shaderProgram->renderOrder < 5000)
-				context.setRenderTransparentState();
-			else
-				context.setRenderOverlayState();
 			context.bindShaderProgram(task.shaderProgram);
-
-			task.cameraData->upload();
-			task.cameraData->bind(context);
-			meshTransformDataPack.bind(context);
-			particleDataPack.bind(context);
-			lightDataPack.bind(context);
 
 			uploadBaseTime = uploadBaseTime + Time::now() - t;
 		}
 
-		if (taskContext.materialData != task.materialData) {
-			t = Time::now();
-			taskContext.materialData = task.materialData;
-			task.materialData->upload();
-			task.materialData->bind(context);
-			if (lightDataPack.shadowTarget == NULL)
-				context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), "depthMap");
-			else
-				context.bindTexture((ITexture*)lightDataPack.shadowTarget->getDepthTexture()->getVendorTexture(), "depthMap");
-			uploadInsTime = uploadInsTime + Time::now() - t;
+		if (taskContext.renderMode != task.renderMode) {
+			uint16_t stage = task.renderMode.getRenderStage();
+			if (stage < RenderStage::RS_Opaque)
+				context.setRenderPreState();
+			else if (stage < RenderStage::RS_Aplha)
+				context.setRenderOpaqueState();
+			else if (stage < RenderStage::RS_Transparent)
+				context.setRenderAlphaState();
+			else if (stage < RenderStage::RS_Post)
+				context.setRenderTransparentState();
+			else {
+				BlendMode blendMode = task.renderMode.getBlendMode();
+				switch (blendMode)
+				{
+				case BM_Default:
+					context.setRenderPostState();
+					break;
+				case BM_Additive:
+					context.setRenderPostAddState();
+					break;
+				case BM_Multipy:
+					context.setRenderPostMultiplyState();
+					break;
+				case BM_PremultiplyAlpha:
+					context.setRenderPostPremultiplyAlphaState();
+					break;
+				case BM_Mask:
+					context.setRenderPostMaskState();
+					break;
+				default:
+					throw runtime_error("Invalid blend mode");
+					break;
+				}
+			}
+		}
+
+		for (auto data : task.extraData) {
+			data->upload();
+			data->bind(context);
 		}
 
 		t = Time::now();
@@ -322,16 +297,7 @@ void RenderCommandList::excuteCommand()
 				context.bindMeshData(task.meshData);
 		}
 
-		for (auto data : task.extraData) {
-			data->upload();
-			data->bind(context);
-		}
-
-		for (int passIndex = 0; passIndex < task.materialData->desc.passNum; passIndex++) {
-			task.materialData->desc.currentPass = passIndex;
-			context.setDrawInfo(passIndex, task.materialData->desc.passNum);
-			task.renderPack->excute(context);
-		}
+		task.renderPack->excute(context, taskContext);
 
 		execTime = execTime + Time::now() - t;
 	}

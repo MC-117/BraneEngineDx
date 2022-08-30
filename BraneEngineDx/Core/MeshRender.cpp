@@ -170,13 +170,19 @@ void MeshRender::render(RenderInfo& info)
 
 		if (!customTransformSubmit)
 			info.cmdList->setMeshPartTransform(part, material, instanceID);
-		info.cmdList->setRenderCommand({ material, info.camera, part }, isStatic);
+		MeshRenderCommand command;
+		command.camera = info.camera;
+		command.material = material;
+		command.mesh = part;
+		command.isStatic = isStatic;
+		info.cmdList->setRenderCommand(command);
 
 		Material* outlineMaterial = outlineMaterials[i];
 		if (outlineEnable[i] && outlineMaterial != NULL) {
 			if (!customTransformSubmit)
 				info.cmdList->setMeshPartTransform(part, outlineMaterial, instanceID);
-			info.cmdList->setRenderCommand({ outlineMaterial, info.camera, part }, isStatic);
+			command.material = outlineMaterial;
+			info.cmdList->setRenderCommand(command);
 		}
 	}
 }

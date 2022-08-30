@@ -753,8 +753,8 @@ void DX11RenderContext::execteParticleDraw(IRenderExecution* execution, const ve
 	DX11RenderExecution* dxExec = dynamic_cast<DX11RenderExecution*>(execution);
 	if (dxExec == NULL)
 		return;
-#if INDIRECT_DRAW
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+#if INDIRECT_DRAW
 	size_t size = sizeof(DrawArraysIndirectCommand) * cmds.size();
 	if (dxExec->cmdBufferDesc.ByteWidth != size) {
 		dxExec->cmdBufferDesc.ByteWidth = size;
