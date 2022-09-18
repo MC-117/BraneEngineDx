@@ -160,6 +160,11 @@ const MeshPart* Spine2DMeshData::getMeshPart(int index) const
     return &meshParts[index];
 }
 
+MeshPart* Spine2DMeshData::getMeshPart(int index)
+{
+    return &meshParts[index];
+}
+
 bool Spine2DMeshData::isValid() const
 {
     return inited;

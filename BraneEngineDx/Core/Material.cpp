@@ -25,19 +25,12 @@ Material::Material(Shader & shader)
 
 Material::Material(const Material & material)
 {
-	desc.shader = material.desc.shader;
+	desc = material.desc;
 	desc.currentPass = 0;
-	desc.passNum = material.desc.passNum;
 	isTwoSide = material.isTwoSide;
 	cullFront = material.cullFront;
 	canCastShadow = material.canCastShadow;
 	isDeferred = material.isDeferred;
-	desc.scalarField = material.desc.scalarField;
-	desc.countField = material.desc.countField;
-	desc.colorField = material.desc.colorField;
-	desc.matrixField = material.desc.matrixField;
-	desc.textureField = material.desc.textureField;
-	desc.imageField = material.desc.imageField;
 }
 
 Material::~Material()
@@ -45,6 +38,25 @@ Material::~Material()
 	if (renderData) {
 		renderData->release();
 		delete renderData;
+	}
+}
+
+void Material::instantiateFrom(const Material& material)
+{
+	desc = material.desc;
+	desc.currentPass = 0;
+	isTwoSide = material.isTwoSide;
+	cullFront = material.cullFront;
+	canCastShadow = material.canCastShadow;
+	isDeferred = material.isDeferred;
+	if (renderData) {
+		renderData->release();
+		delete renderData;
+		renderData = NULL;
+	}
+	if (vendorMaterial) {
+		delete vendorMaterial;
+		vendorMaterial = NULL;
 	}
 }
 

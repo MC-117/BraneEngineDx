@@ -521,21 +521,24 @@ namespace ImGui {
 			displayName = "(null)";
 		else
 			displayName = selectAsset->name;
-		AssetInfo* assetInfo = AssetManager::getAssetInfo(AssetType);
+		vector<string> types = split(AssetType, ';');
 		if (ImGui::BeginCombo(label, displayName.c_str())) {
 			ImGui::InputText("Name", &filterName);
 			ImGui::BeginChild("ScollView", { -1, 100 });
-			if (assetInfo != NULL) {
-				for (auto b = assetInfo->assets.begin(), e = assetInfo->assets.end(); b != e; b++) {
-					if (!filterName.empty() && b->second->name.find(filterName) == string::npos)
-						continue;
-					if (ImGui::Selectable(b->first.c_str())) {
-						selectAsset = b->second;
-					}
-					if (ImGui::IsItemHovered()) {
-						ImGui::BeginTooltip();
-						ImGui::Text(b->second->path.c_str());
-						ImGui::EndTooltip();
+			for (const string& type : types) {
+				AssetInfo* assetInfo = AssetManager::getAssetInfo(type);
+				if (assetInfo != NULL) {
+					for (auto b = assetInfo->assets.begin(), e = assetInfo->assets.end(); b != e; b++) {
+						if (!filterName.empty() && b->second->name.find(filterName) == string::npos)
+							continue;
+						if (ImGui::Selectable(b->first.c_str())) {
+							selectAsset = b->second;
+						}
+						if (ImGui::IsItemHovered()) {
+							ImGui::BeginTooltip();
+							ImGui::Text(b->second->path.c_str());
+							ImGui::EndTooltip();
+						}
 					}
 				}
 			}

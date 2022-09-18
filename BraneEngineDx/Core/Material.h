@@ -27,6 +27,7 @@ public:
 	Material(const Material& material);
 	virtual ~Material();
 
+	void instantiateFrom(const Material& material);
 	Material& instantiate();
 
 	bool isNull() const;

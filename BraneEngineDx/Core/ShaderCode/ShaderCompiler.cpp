@@ -186,7 +186,7 @@ bool ShaderCompiler::compile()
 		{
 			ExtraUsedAdapter& item = extraUsedAdapters[i];
 			if (adapters.find(item.stageType) == adapters.end())
-				useAdapter(item.stageType, item.commands);
+				useAdapter(item.stageType, item.commands, false);
 		}
 		finalize();
 	}
@@ -358,7 +358,7 @@ ShaderAdapter* ShaderCompiler::compileAdapter()
 	return adapter;
 }
 
-ShaderAdapter* ShaderCompiler::useAdapter(ShaderStageType stageType, const vector<string>& command)
+ShaderAdapter* ShaderCompiler::useAdapter(ShaderStageType stageType, const vector<string>& command, bool forceExist)
 {
 	ShaderAdapter* adapter = NULL;
 	const string& adapterTag = command[2];
@@ -367,8 +367,10 @@ ShaderAdapter* ShaderCompiler::useAdapter(ShaderStageType stageType, const vecto
 	else
 		adapter = ShaderManager::getInstance().getShaderAdapterByPath(adapterTag, stageType);
 	if (adapter == NULL) {
-		Console::error("Not found adapter %s, when load \"%s\" at %s", adapterTag.c_str(), path.c_str(), ShaderStage::enumShaderStageType(stageType));
-		successed = false;
+		if (forceExist) {
+			Console::error("Not found adapter %s, when load \"%s\" at %s", adapterTag.c_str(), path.c_str(), ShaderStage::enumShaderStageType(stageType));
+			successed = false;
+		}
 	}
 	else {
 		adapters.insert(make_pair(stageType, adapter));

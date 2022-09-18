@@ -12,6 +12,7 @@ void LightRenderData::setLight(Light* light)
 		directLightData.direction = directLight->getForward(WORLD);
 		directLightData.intensity = directLight->intensity;
 		directLightData.lightSpaceMat = MATRIX_UPLOAD_OP(directLight->getLightSpaceMatrix());
+		directLightData.shadowBias = directLight->getShadowBias();
 		directLightData.color = Vector3f(directLight->color.r, directLight->color.g, directLight->color.b);
 	}
 	PointLight* pointLight = dynamic_cast<PointLight*>(light);

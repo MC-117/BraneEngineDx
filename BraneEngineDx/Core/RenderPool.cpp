@@ -124,10 +124,10 @@ void RenderPool::render(bool guiOnly)
 		gui.setSceneBlurTex(currentCamera.cameraRender.getSceneBlurTex());
 	}
 	else {
+		IRenderContext& context = *vendor.getDefaultRenderContext();
 		currentCamera.cameraRender.renderTarget.resize(currentCamera.size.x, currentCamera.size.y);
-		currentCamera.cameraRender.renderTarget.bindFrame();
-		currentCamera.cameraRender.renderTarget.clearColor(currentCamera.clearColor);
-		vendor.guiOnlyRender(currentCamera.clearColor);
+		context.bindFrame(currentCamera.cameraRender.renderTarget.getVendorRenderTarget());
+		context.clearFrameColor(currentCamera.clearColor);
 	}
 
 	gui.render(info);

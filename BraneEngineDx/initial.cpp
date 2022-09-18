@@ -7,6 +7,7 @@
 #include "Core\GUI\MatBranchModifier.h"
 #include "Core\GUI\PhysicsDebug.h"
 #include "Core\GUI\ShaderManagerWindow.h"
+#include "Core\GUI\UVViewer.h"
 #include "Core\Timeline\TimelineWindow.h"
 #include "Core\Timeline\AnimationTrack.h"
 #include "Core\Graph\GraphWindow.h"
@@ -225,6 +226,9 @@ void InitialWorld()
 
 	ShaderManagerWindow& shaderManagerWindow = *new ShaderManagerWindow("ShaderManagerWindow");
 	world += shaderManagerWindow;
+
+	UVViewer& uvViewer = *new UVViewer("UVViewer");
+	world += uvViewer;
 
 	SerializationInfo* info = getAssetByPath<SerializationInfo>(Engine::engineConfig.startMapPath);
 	if (info == NULL) {

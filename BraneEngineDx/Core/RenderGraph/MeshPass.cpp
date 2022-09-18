@@ -107,5 +107,7 @@ void MeshPass::execute(IRenderContext& context)
 		execTime = execTime + Time::now() - t;
 	}
 
+	context.setCullState(CullType::Cull_Back);
+
 	timer.record("Execute");
 }

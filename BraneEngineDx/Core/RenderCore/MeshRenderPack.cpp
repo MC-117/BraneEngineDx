@@ -367,7 +367,10 @@ bool MeshDataRenderPack::setRenderCommand(const IRenderCommand& command)
 	if (materialData == NULL)
 		return false;
 
-	if (meshRenderCommand->isStatic) {
+	if (meshRenderCommand->isNonTransformIndex) {
+		setRenderData(meshRenderCommand->mesh, NULL);
+	}
+	else if (meshRenderCommand->isStatic) {
 		auto meshTDIter = meshTransformDataPack.staticMeshTransformIndex.find(
 			makeGuid(meshRenderCommand->mesh, meshRenderCommand->material));
 		if (meshTDIter != meshTransformDataPack.staticMeshTransformIndex.end())
@@ -414,8 +417,14 @@ void MeshDataRenderPack::excute(IRenderContext& context, RenderTaskContext& task
 		c.baseVertex = b->first->vertexFirst;
 		c.count = b->first->elementCount;
 		c.firstIndex = b->first->elementFirst;
-		c.instanceCount = b->second->batchCount;
-		c.baseInstance = b->second->indexBase;
+		if (b->second) {
+			c.instanceCount = b->second->batchCount;
+			c.baseInstance = b->second->indexBase;
+		}
+		else {
+			c.instanceCount = 1;
+			c.baseInstance = 0;
+		}
 	}
 
 	for (int passIndex = 0; passIndex < materialData->desc.passNum; passIndex++) {

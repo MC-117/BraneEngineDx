@@ -1,5 +1,6 @@
 #include "Spine2DRender.h"
 #include "../Core/Camera.h"
+#include "Spine2DRenderPack.h"
 
 Spine2DRender::Spine2DRender()
 {
@@ -74,6 +75,16 @@ void Spine2DRender::set3DMode(bool is3DMode)
     this->is3DMode = is3DMode;
 }
 
+Color Spine2DRender::getOverColor() const
+{
+    return overColor;
+}
+
+void Spine2DRender::setOverColor(Color color)
+{
+    overColor = color;
+}
+
 bool Spine2DRender::loadDefaultMaterial()
 {
     if (material != NULL)
@@ -110,9 +121,7 @@ void Spine2DRender::render(RenderInfo& info)
 
     const int partCount = skeleton->getDrawOrder().size();
 
-    IVendor& vender = VendorManager::getInstance().getVendor();
-
-    if (is3DMode)
+    /*if (is3DMode)
     {
         info.camera->cameraRender.renderTarget.bindFrame();
     }
@@ -122,13 +131,13 @@ void Spine2DRender::render(RenderInfo& info)
         drawRenderTarget.bindFrame();
     }
 
-    vender.setViewport(0, 0, viewSize.x(), viewSize.y());
+    vender.setViewport(0, 0, viewSize.x(), viewSize.y());*/
 
     Matrix4f mvpMat;
 
-    if (is3DMode) {
-        mvpMat = info.camera->projectionViewMat * transformMat;
-    }
+    //if (is3DMode) {
+        mvpMat = transformMat;
+    /*}
     else {
         float aspect = viewSize.y() / viewSize.x();
         Matrix4f projMat = Matrix4f::Identity();
@@ -136,16 +145,20 @@ void Spine2DRender::render(RenderInfo& info)
         float size = viewSize.x();
         Matrix4f viewMat = Camera::viewport(-1 / size, -2 / size, 2 / size, 2 / size, 0, 0);
         mvpMat = projMat * viewMat * transformMat;
-    }
+    }*/
 
     material->setMatrix("projectMatrix", MATRIX_UPLOAD_OP(mvpMat));
+
+    Spine2DRenderCommand command;
+    command.camera = info.camera;
+    command.material = material;
 
     for (int i = 0; i < partCount; i++) {
         spine::Slot* slot = skeleton->getDrawOrder()[i];
 
         int index = slot->getData().getIndex();
 
-        const MeshPart* meshPart = meshData.getMeshPart(index);
+        MeshPart* meshPart = meshData.getMeshPart(index);
         spine::Attachment* attachment = slot->getAttachment();
         if (meshPart == NULL || meshPart->vertexCount == 0)
             continue;
@@ -168,18 +181,12 @@ void Spine2DRender::render(RenderInfo& info)
             continue;
         }
 
-        color *= tintColor;
+        color *= tintColor * overColor;
 
-
-
-        if (isCulling)
-        {
-            vender.setCullState(CullType::Cull_Back);
-        }
-        else
-        {
-            vender.setCullState(CullType::Cull_Off);
-        }
+        command.mesh = meshPart;
+        command.resource.texture = texture;
+        command.resource.color = color;
+        command.resource.cullType = isCulling ? CullType::Cull_Back : CullType::Cull_Off;
 
         spine::BlendMode blendMode = slot->getData().getBlendMode();
 
@@ -187,31 +194,19 @@ void Spine2DRender::render(RenderInfo& info)
         {
         case spine::BlendMode_Normal:
         default:
-            vender.setRenderPostPremultiplyAlphaState();
+            command.blendMode = BlendMode::BM_PremultiplyAlpha;
             break;
 
         case spine::BlendMode_Additive:
-            vender.setRenderPostAddState();
+            command.blendMode = BlendMode::BM_Additive;
             break;
 
         case spine::BlendMode_Multiply:
-            vender.setRenderPostMultiplyState();
+            command.blendMode = BlendMode::BM_Multipy;
             break;
         }
 
-        Enum<ShaderFeature> shaderFeature = Normal;
-
-        ShaderProgram* program = material->getShader()->getProgram(shaderFeature);
-        program->bind();
-
-        material->setTexture("mainTexture", *texture);
-        material->setColor("baseColor", color);
-
-        material->processInstanceData();
-
-        MeshPartDesc desc = { meshPart->meshData, meshPart->vertexFirst, meshPart->vertexCount, 
-            meshPart->elementFirst, meshPart->elementCount };
-        vender.meshDrawCall(desc);
+        info.cmdList->setRenderCommand(command);
     }
 }
 

@@ -30,6 +30,7 @@ public:
 	void updateBounds();
 
 	const MeshPart* getMeshPart(int index) const;
+	MeshPart* getMeshPart(int index);
 
 	virtual bool isValid() const;
 	virtual bool isGenerated() const;

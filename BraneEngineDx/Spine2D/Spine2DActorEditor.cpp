@@ -21,6 +21,9 @@ Texture* Spine2DActorEditor::getPreviewTexture(const Vector2f& desiredSize)
 
 void Spine2DActorEditor::onActorGUI(EditorInfo& info)
 {
+	Color color = spine2DActor->spine2DRender.getOverColor();
+	if (ImGui::ColorEdit4("Color", (float*)&color))
+		spine2DActor->spine2DRender.setOverColor(color);
 	if (ImGui::CollapsingHeader("Skins")) {
 		ImGui::Indent(10);
 		const auto model = spine2DActor->getModel();

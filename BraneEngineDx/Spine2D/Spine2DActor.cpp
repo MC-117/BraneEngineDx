@@ -2,7 +2,7 @@
 
 SerializeInstance(Spine2DActor);
 
-Spine2DActor::Spine2DActor(const string& name)
+Spine2DActor::Spine2DActor(const string& name) : Actor(name)
 {
 }
 

@@ -68,6 +68,7 @@ struct MeshTransformRenderData : public IRenderData
 struct MeshRenderCommand : public IRenderCommand
 {
 	bool isStatic = false;
+	bool isNonTransformIndex = false;
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
 	virtual RenderMode getRenderMode() const;
@@ -86,6 +87,6 @@ struct MeshDataRenderPack : public IRenderPack
 	MeshDataRenderPack(MeshTransformRenderData& meshTransformDataPack, LightRenderData& lightDataPack);
 
 	virtual bool setRenderCommand(const IRenderCommand& command);
-	void setRenderData(MeshPart* part, MeshTransformIndex* data);
+	virtual void setRenderData(MeshPart* part, MeshTransformIndex* data);
 	virtual void excute(IRenderContext& context, RenderTaskContext& taskContext);
 };

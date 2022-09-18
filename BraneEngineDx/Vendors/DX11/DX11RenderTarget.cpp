@@ -84,12 +84,14 @@ void DX11RenderTarget::clearBind()
 
 void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 {
-	if (desc.inited && desc.width == width && desc.height == height)
+	bool sizeChanged = desc.width != width || desc.height != height;
+	if (desc.inited && !sizeChanged)
 		return;
 	desc.width = width;
 	desc.height = height;
 	if (isDefault()) {
-		dxContext.createSwapChain(width, height, desc.multisampleLevel);
+		if (sizeChanged)
+			dxContext.createSwapChain(width, height, desc.multisampleLevel);
 	}
 	else if (desc.depthOnly) {
 		if (desc.depthTexure != NULL) {

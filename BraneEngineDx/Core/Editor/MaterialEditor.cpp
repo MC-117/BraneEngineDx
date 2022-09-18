@@ -2,6 +2,7 @@
 #include "../Engine.h"
 #include "../Utility/EngineUtility.h"
 #include "../GUI/TextureViewer.h"
+#include "../GUI/GUIUtility.h"
 #include <thread>
 
 RegistEditor(Material);
@@ -53,7 +54,17 @@ void MaterialEditor::onMaterialGUI(EditorInfo& info)
 			}
 		}
 	}
-	ImGui::Text("Shader: %s", material->getShaderName().c_str());
+	Asset* shaderAsset = NULL;
+	vector<string> shaderName = split(material->getShaderName(), '.');
+	if (!shaderName.empty()) {
+		shaderAsset = AssetManager::getAsset("Material", shaderName[0]);
+	}
+	if (ImGui::AssetCombo("BaseMaterial", shaderAsset, "Material")) {
+		Material* baseMaterial = (Material*)shaderAsset->load();
+		if (baseMaterial) {
+			material->instantiateFrom(*baseMaterial);
+		}
+	}
 	ImGui::Checkbox("TwoSide", &material->isTwoSide);
 	ImGui::Checkbox("CastShadow", &material->canCastShadow);
 	int passNum = material->getPassNum();
