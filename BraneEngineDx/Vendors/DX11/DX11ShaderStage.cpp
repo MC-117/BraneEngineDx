@@ -171,6 +171,7 @@ bool DX11ShaderProgram::init()
 		}
 	}
 	matInsBufSize = cbSize;
+	dirty = false;
 	return true;
 }
 

@@ -18,6 +18,9 @@ public:
     bool get3DMode() const;
     void set3DMode(bool is3DMode);
 
+    Color getOverColor() const;
+    void setOverColor(Color color);
+
     bool loadDefaultMaterial();
 
     Texture2D* getOutputTexture();
@@ -39,6 +42,7 @@ protected:
     bool is3DMode = false;
     bool isCulling = false;
     Vector2f viewSize = { 512, 512 };
+    Color overColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
     Range<Vector3f> initBounds;
 

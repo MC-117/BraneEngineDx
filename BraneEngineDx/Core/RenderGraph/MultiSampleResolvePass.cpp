@@ -9,5 +9,7 @@ void MultiSampleResolvePass::prepare()
 
 void MultiSampleResolvePass::execute(IRenderContext& context)
 {
+	if (renderTarget == NULL)
+		return;
 	context.resolveMultisampleFrame(renderTarget->getVendorRenderTarget());
 }

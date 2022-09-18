@@ -26,9 +26,35 @@ DirectLight::DirectLight(const string& name, Color color, float intensity) : Lig
 	//addInternalNode(shadowCamera);
 }
 
+void DirectLight::setShadowBiasDepthScale(float scale)
+{
+	shadowBiasDepthScale = scale;
+}
+
+void DirectLight::setShadowBiasNormalScale(float scale)
+{
+	shadowBiasNormalScale = scale;
+}
+
+float DirectLight::getShadowBiasDepthScale() const
+{
+	return shadowBiasDepthScale;
+}
+
+float DirectLight::getShadowBiasNormalScale() const
+{
+	return shadowBiasNormalScale;
+}
+
 Matrix4f DirectLight::getLightSpaceMatrix() const
 {
 	return shadowCamera.shadowCameraRender.projectionViewMat;
+}
+
+Vector4f DirectLight::getShadowBias() const
+{
+	float bias = 3 * shadowCamera.right / DEPTHSIZE;
+	return Vector4f(shadowBiasDepthScale * bias, shadowBiasNormalScale * bias);
 }
 
 RenderTarget * DirectLight::getShadowRenderTarget() const

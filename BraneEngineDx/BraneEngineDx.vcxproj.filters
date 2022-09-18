@@ -1149,7 +1149,7 @@
     <ClInclude Include="Core\RenderCore\RenderCommandList.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\RenderCore\ParticleRenderData.h">
+    <ClInclude Include="Core\RenderCore\ParticleRenderPack.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\IRenderContext.h">
@@ -1168,6 +1168,24 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\RenderGraph\ImGUIPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\RenderDefines.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\MeshRenderPack.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\MaterialRenderData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\CameraRenderData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Spine2D\Spine2DRenderPack.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\GUI\UVViewer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -2156,7 +2174,7 @@
     <ClCompile Include="Core\RenderCore\LightRenderData.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\RenderCore\ParticleRenderData.cpp">
+    <ClCompile Include="Core\RenderCore\ParticleRenderPack.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderCore\RenderCommandList.cpp">
@@ -2181,6 +2199,21 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderGraph\ImGUIPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\MeshRenderPack.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\CameraRenderData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\MaterialRenderData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Spine2D\Spine2DRenderPack.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\GUI\UVViewer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

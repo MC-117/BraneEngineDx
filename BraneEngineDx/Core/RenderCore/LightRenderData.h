@@ -10,6 +10,7 @@ struct DirectLightData
 	Vector3f direction;
 	float intensity = 0;
 	Matrix4f lightSpaceMat;
+	Vector4f shadowBias;
 	Vector3f color;
 	unsigned int pointLightCount = 0;
 };

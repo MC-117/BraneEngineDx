@@ -403,6 +403,7 @@
     <ClInclude Include="Core\GUI\GizmoUltility.h" />
     <ClInclude Include="Core\GUI\GUIUtility.h" />
     <ClInclude Include="Core\GUI\ShaderManagerWindow.h" />
+    <ClInclude Include="Core\GUI\UVViewer.h" />
     <ClInclude Include="Core\IRenderContext.h" />
     <ClInclude Include="Core\IWorld.h" />
     <ClInclude Include="Core\ObjectUltility.h" />
@@ -411,9 +412,13 @@
     <ClInclude Include="Core\Physics\ContactInfo.h" />
     <ClInclude Include="Core\PostProcess\BlurPass.h" />
     <ClInclude Include="Core\RenderCore\CameraData.h" />
+    <ClInclude Include="Core\RenderCore\CameraRenderData.h" />
     <ClInclude Include="Core\RenderCore\LightRenderData.h" />
-    <ClInclude Include="Core\RenderCore\ParticleRenderData.h" />
+    <ClInclude Include="Core\RenderCore\MaterialRenderData.h" />
+    <ClInclude Include="Core\RenderCore\MeshRenderPack.h" />
+    <ClInclude Include="Core\RenderCore\ParticleRenderPack.h" />
     <ClInclude Include="Core\RenderCore\RenderCommandList.h" />
+    <ClInclude Include="Core\RenderCore\RenderDefines.h" />
     <ClInclude Include="Core\RenderCore\RenderInterface.h" />
     <ClInclude Include="Core\RenderCore\RenderTask.h" />
     <ClInclude Include="Core\RenderGraph\ForwardRenderGraph.h" />
@@ -586,6 +591,7 @@
     <ClInclude Include="Spine2D\Spine2DMeshData.h" />
     <ClInclude Include="Spine2D\Spine2DModel.h" />
     <ClInclude Include="Spine2D\Spine2DRender.h" />
+    <ClInclude Include="Spine2D\Spine2DRenderPack.h" />
     <ClInclude Include="ThirdParty\ImGui\ImGuiNodeEditor\Builders.h" />
     <ClInclude Include="ThirdParty\ImGui\ImGuiNodeEditor\crude_json.h" />
     <ClInclude Include="ThirdParty\ImGui\ImGuiIconHelp.h" />
@@ -781,6 +787,7 @@
     <ClCompile Include="Core\GUI\GUIUtility.cpp" />
     <ClCompile Include="Core\GUI\ObjectPreviewWindow.cpp" />
     <ClCompile Include="Core\GUI\ShaderManagerWindow.cpp" />
+    <ClCompile Include="Core\GUI\UVViewer.cpp" />
     <ClCompile Include="Core\InitializationManager.cpp" />
     <ClCompile Include="Core\IRenderContext.cpp" />
     <ClCompile Include="Core\IRendering.cpp" />
@@ -832,8 +839,11 @@
     <ClCompile Include="Core\PostProcess\SSAOPass.cpp" />
     <ClCompile Include="Core\PostProcess\ToneMapPass.cpp" />
     <ClCompile Include="Core\Render.cpp" />
+    <ClCompile Include="Core\RenderCore\CameraRenderData.cpp" />
     <ClCompile Include="Core\RenderCore\LightRenderData.cpp" />
-    <ClCompile Include="Core\RenderCore\ParticleRenderData.cpp" />
+    <ClCompile Include="Core\RenderCore\MaterialRenderData.cpp" />
+    <ClCompile Include="Core\RenderCore\MeshRenderPack.cpp" />
+    <ClCompile Include="Core\RenderCore\ParticleRenderPack.cpp" />
     <ClCompile Include="Core\RenderCore\RenderCommandList.cpp" />
     <ClCompile Include="Core\RenderCore\RenderInterface.cpp" />
     <ClCompile Include="Core\RenderCore\RenderTask.cpp" />
@@ -946,6 +956,7 @@
     <ClCompile Include="Spine2D\Spine2DMeshData.cpp" />
     <ClCompile Include="Spine2D\Spine2DModel.cpp" />
     <ClCompile Include="Spine2D\Spine2DRender.cpp" />
+    <ClCompile Include="Spine2D\Spine2DRenderPack.cpp" />
     <ClCompile Include="ThirdParty\ImGui\ImGuiNodeEditor\Builders.cpp" />
     <ClCompile Include="ThirdParty\ImGui\ImGuiNodeEditor\crude_json.cpp" />
     <ClCompile Include="ThirdParty\ImGui\ImGuiNodeEditor\Drawing.cpp" />

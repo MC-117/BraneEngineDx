@@ -14,6 +14,7 @@
 #include "../Utility/EngineUtility.h"
 #include "../MeshActor.h"
 #include "../SkeletonMeshActor.h"
+#include "../../Spine2D/Spine2DActor.h"
 
 AssetBrowser::AssetBrowser(Object & object, string name, bool defaultShow)
 	: UIWindow(object, name, defaultShow)
@@ -311,9 +312,37 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 			}
 		}
 		else if (assets[i]->assetInfo.type == "Spine2DModel") {
-		if (canPreview) {
-			ObjectPreviewWindow::showObject(info.gui, *assets[i]);
-		}
+			if (canPreview) {
+				ObjectPreviewWindow::showObject(info.gui, *assets[i]);
+			}
+			if (ImGui::BeginPopupContextItem("Spine2DModelContext")) {
+				static char name[100];
+				static Material* selectedMat = NULL;
+
+				ImGui::Text("Mesh: %s", assets[i]->name.c_str());
+				ImGui::InputText("Display Name", name, 100);
+				ImGui::BeginGroup();
+				static float pos[3] = { 0, 0, 0 };
+				ImGui::DragFloat3("Postion", pos, 0.1);
+				static float rot[3] = { 0, 0, 0 };
+				ImGui::DragFloat3("Rotation", rot, 0.1);
+				static float sca[3] = { 1, 1, 1 };
+				ImGui::DragFloat3("Scale", sca, 0.1);
+				ImGui::EndGroup();
+				ImVec2 size = { -1, 40 };
+				if (strlen(name) != 0 && Engine::getCurrentWorld()->findChild(name) == NULL) {
+					if (ImGui::Button("Load", size)) {
+						Spine2DModel* model = (Spine2DModel*)assets[i]->load();
+						Spine2DActor* a = new Spine2DActor(name);
+						a->setModel(model);
+						a->setScale({ sca[0], sca[1], sca[2] });
+						a->setPosition(pos[0], pos[1], pos[2]);
+						a->setRotation(rot[0], rot[1], rot[2]);
+						object.addChild(*a);
+					}
+				}
+				ImGui::EndPopup();
+			}
 		}
 		else if (assets[i]->assetInfo.type == "Texture2D") {
 			if (canPreview) {

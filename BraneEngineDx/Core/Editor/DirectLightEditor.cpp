@@ -30,6 +30,14 @@ void DirectLightEditor::onPersistentGizmo(GizmoInfo& info)
 void DirectLightEditor::onLightGUI(EditorInfo& info)
 {
 	LightEditor::onLightGUI(info);
+	float bias = directLight->getShadowBiasDepthScale();
+	if (ImGui::DragFloat("ShadowBiasDepthScale", &bias, 0.01)) {
+		directLight->setShadowBiasDepthScale(bias);
+	}
+	bias = directLight->getShadowBiasNormalScale();
+	if (ImGui::DragFloat("ShadowBiasNormalScale", &bias, 0.01)) {
+		directLight->setShadowBiasNormalScale(bias);
+	}
 }
 
 Texture2D* DirectLightEditor::getIcon()

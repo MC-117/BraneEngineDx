@@ -103,7 +103,7 @@ void ObjectPreviewWindow::onSceneGUI(GUIRenderInfo& info, float width, float hei
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 0 });
 
 		auto list = ImGui::GetWindowDrawList();
-		float padding = 00;
+		float padding = 0;
 		ImVec2 pos = ImGui::GetWindowPos();
 		float tw = texture->getWidth();
 		float th = texture->getHeight();

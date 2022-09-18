@@ -24,8 +24,10 @@ void MaterialRenderData::create()
 
 void MaterialRenderData::release()
 {
-	if (vendorMaterial)
+	if (vendorMaterial) {
 		delete vendorMaterial;
+		vendorMaterial = NULL;
+	}
 }
 
 void MaterialRenderData::upload()

@@ -61,8 +61,8 @@ void CameraRender::preRender()
 
 void CameraRender::render(RenderInfo& info)
 {
+	info.renderGraph->setMainRenderTarget(renderTarget);
 	if (isValid() && !material.isNull()) {
-		info.renderGraph->setMainRenderTarget(renderTarget);
 		renderTarget.setTexture(material);
 	}
 }

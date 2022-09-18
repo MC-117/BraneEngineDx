@@ -65,6 +65,6 @@ protected:
 	virtual bool readHeadFile(const string& envPath);
 	virtual ShaderAdapter* processAdapter();
 	virtual ShaderAdapter* compileAdapter();
-	virtual ShaderAdapter* useAdapter(ShaderStageType stageType, const vector<string>& command);
+	virtual ShaderAdapter* useAdapter(ShaderStageType stageType, const vector<string>& command, bool forceExist = true);
 	virtual void finalize();
 };
