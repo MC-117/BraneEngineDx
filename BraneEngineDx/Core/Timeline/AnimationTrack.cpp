@@ -2,7 +2,7 @@
 
 SerializeInstance(AnimationTrack);
 
-AnimationTrack::AnimationTrack(const string& name) : TimelineTrack(name)
+AnimationTrack::AnimationTrack(const string& name) : TimelineClipTrack(name)
 {
 }
 
@@ -23,7 +23,7 @@ void AnimationTrack::onBeginPlay(const PlayInfo& info)
 {
     if (!initActor)
         bindActor();
-    TimelineTrack::onBeginPlay(info);
+    TimelineClipTrack::onBeginPlay(info);
 }
 
 void AnimationTrack::onPlayBlend(const PlayInfo& info)
@@ -151,7 +151,7 @@ Serializable* AnimationTrack::instantiate(const SerializationInfo& from)
 
 bool AnimationTrack::deserialize(const SerializationInfo& from)
 {
-    if (!TimelineTrack::deserialize(from))
+    if (!TimelineClipTrack::deserialize(from))
         return false;
     const SerializationInfo* actorInfo = from.get("actor");
     actor.deserialize(*actorInfo);
@@ -160,7 +160,7 @@ bool AnimationTrack::deserialize(const SerializationInfo& from)
 
 bool AnimationTrack::serialize(SerializationInfo& to)
 {
-    if (!TimelineTrack::serialize(to))
+    if (!TimelineClipTrack::serialize(to))
         return false;
     SerializationInfo* info = to.add("actor");
     actor.serialize(*info);

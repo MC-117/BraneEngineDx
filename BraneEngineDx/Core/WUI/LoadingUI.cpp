@@ -55,7 +55,7 @@ void LoadingUI::onPaint(HDC hdc)
 	font.draw(hdc, text, rectText);
 }
 
-BOOL LoadingUI::onEraseBkgnd(HDC hdc, const PAINTSTRUCT& ps)
+BOOL LoadingUI::onEraseBkgnd(HDC hdc)
 {
 	if (img != NULL) {
 		HDC hdcMem = CreateCompatibleDC(hdc);

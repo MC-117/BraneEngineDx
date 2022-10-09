@@ -102,40 +102,38 @@ RenderInfo::RenderInfo(Matrix4f projectionViewMat,
 	Vector3f cameraLoc,
 	Vector3f cameraDir,
 	Unit2Di viewSize,
-	float fovy,
-	RenderMode mode,
-	bool depthWrite,
-	bool alphaTest) : projectionViewMat(projectionViewMat),
+	float fovy) : projectionViewMat(projectionViewMat),
 	lightSpaceMat(lightSpaceMat),
 	cameraLoc(cameraLoc),
 	cameraDir(cameraDir),
 	viewSize(viewSize),
-	fovy(fovy),
-	mode(mode),
-	depthWrite(depthWrite),
-	alphaTest(alphaTest)
+	fovy(fovy)
 {
 }
 
 RenderInfo::RenderInfo(const RenderInfo & info)
 {
+	projectionViewMat = info.projectionViewMat;
+	lightSpaceMat = info.lightSpaceMat;
 	cameraLoc = info.cameraLoc;
 	cameraDir = info.cameraDir;
 	viewSize = info.viewSize;
-	mode = info.mode;
 	fovy = info.fovy;
-	depthWrite = info.depthWrite;
-	alphaTest = info.alphaTest;
+	sceneData = info.sceneData;
+	renderGraph = info.renderGraph;
+	camera = info.camera;
 }
 
 RenderInfo & RenderInfo::operator=(const RenderInfo & info)
 {
+	projectionViewMat = info.projectionViewMat;
+	lightSpaceMat = info.lightSpaceMat;
 	cameraLoc = info.cameraLoc;
 	cameraDir = info.cameraDir;
 	viewSize = info.viewSize;
-	mode = info.mode;
 	fovy = info.fovy;
-	depthWrite = info.depthWrite;
-	alphaTest = info.alphaTest;
+	sceneData = info.sceneData;
+	renderGraph = info.renderGraph;
+	camera = info.camera;
 	return *this;
 }

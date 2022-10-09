@@ -24,7 +24,7 @@ public:
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
 	virtual void end();
-	virtual void prerender(RenderCommandList& cmdLst);
+	virtual void prerender(SceneRenderData& sceneData);
 
 	virtual void setHidden(bool value);
 	virtual bool isHidden();

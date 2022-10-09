@@ -9,9 +9,19 @@ void TimelineTrackEditor::setInspectedObject(void* object)
 	BaseEditor::setInspectedObject(track);
 }
 
+void TimelineTrackEditor::setTrackHeight(float height)
+{
+	trackHeight = max(height, trackMinHeight);
+}
+
 Color TimelineTrackEditor::getTrackColor() const
 {
 	return trackColor;
+}
+
+float TimelineTrackEditor::getTrackHeight() const
+{
+	return trackHeight;
 }
 
 bool TimelineTrackEditor::onTrackGUI(EditorInfo& info, TimelineEditorInfo& timelineInfo)
@@ -19,7 +29,7 @@ bool TimelineTrackEditor::onTrackGUI(EditorInfo& info, TimelineEditorInfo& timel
 	ImDrawList* drawList = ImGui::GetWindowDrawList();
 
 	ImVec2 pos = ImGui::GetCursorScreenPos();
-	ImVec2 size = { timelineInfo.trackViewWidth, timelineInfo.trackHeight };
+	ImVec2 size = { timelineInfo.trackViewWidth, trackHeight };
 	ImVec2 endPos = { pos.x + size.x, pos.y + size.y };
 	ImVec2 contentPos = { pos.x + 5, pos.y };
 
@@ -38,18 +48,6 @@ bool TimelineTrackEditor::onTrackGUI(EditorInfo& info, TimelineEditorInfo& timel
 
 	ImGui::SetCursorScreenPos(pos);
 	bool re = ImGui::InvisibleButton(track->name.c_str(), { -1, -1 });
-	if (ImGui::IsItemHovered()) {
-		ImGui::BeginTooltip();
-
-		if (track->activedClips.empty())
-			ImGui::Text("No acitve clip");
-		else for (auto b = track->activedClips.begin(), e = track->activedClips.end();
-			b != e; b++) {
-			ImGui::Text("%s: %f", b->clip->name.c_str(), b->weight);
-		}
-
-		ImGui::EndTooltip();
-	}
 	return re;
 }
 
@@ -71,6 +69,10 @@ void TimelineTrackEditor::onTrackInspectGUI(EditorInfo& info)
 	ImGui::InputFloat("StartFrame", &startFrame, 0, 0, "%.3f", ImGuiInputTextFlags_ReadOnly);
 	ImGui::InputFloat("Duration", &duration, 0, 0, "%.3f", ImGuiInputTextFlags_ReadOnly);
 	ImGui::InputFloat("DurationFrame", &durationFrame, 0, 0, "%.3f", ImGuiInputTextFlags_ReadOnly);
+}
+
+void TimelineTrackEditor::onClipGUI(EditorInfo& info, TimelineEditorInfo& timelineInfo)
+{
 }
 
 void TimelineTrackEditor::onGUI(EditorInfo& info)

@@ -15,6 +15,7 @@ public:
 
 	list<RenderPass*> passes;
 
+	virtual bool setRenderCommand(const IRenderCommand& cmd);
 	virtual void setRenderCommandList(RenderCommandList& commandList);
 	virtual void setMainRenderTarget(RenderTarget& renderTarget);
 	virtual void setImGuiDrawData(ImDrawData* drawData);

@@ -7,7 +7,7 @@
 class ToneMapPass : public PostProcessPass
 {
 public:
-	Texture2D screenMap = Texture2D(size.x, size.y, 4, true, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear });
+	Texture2D screenMap = Texture2D(size.x, size.y, 4, true, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear, TIT_HRGBA });
 	RenderTarget screenRenderTarget = RenderTarget(size.x, size.y, 4);
 
 	ToneMapPass(const string& name = "ToneMap", Material* material = NULL);

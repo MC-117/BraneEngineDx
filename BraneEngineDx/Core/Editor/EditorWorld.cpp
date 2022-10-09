@@ -79,30 +79,32 @@ void EditorWorld::afterTick()
 
 }
 
-void EditorWorld::prerender(RenderCommandList& cmdLst)
+void EditorWorld::prerender(SceneRenderData& sceneData)
 {
-	Transform::prerender(cmdLst);
+	Transform::prerender(sceneData);
 	iter.reset();
 	while (iter.next())
-		iter.current().prerender(cmdLst);
+		iter.current().prerender(sceneData);
 }
 
-void EditorWorld::render(RenderCommandList& cmdLst)
+void EditorWorld::render(RenderGraph& renderGraph)
 {
 	if (camera.size.x == 0 || camera.size.y == 0)
 		return;
-	vector<Render*> renders;
 
-	IVendor& vendor = VendorManager::getInstance().getVendor();
+	prerender(sceneRenderData);
+
+	vector<Render*> renders;
 
 	RenderInfo info = {
 		camera.projectionViewMat, Matrix4f::Identity(),
 		camera.cameraRender.cameraLoc, camera.cameraRender.cameraDir,
 		camera.size, (float)(camera.fov * PI / 180.0) };
-	info.cmdList = &cmdLst;
+	info.sceneData = &sceneRenderData;
+	info.renderGraph = &renderGraph;
 	info.camera = &camera;
 
-	cmdLst.setLight(&directLight);
+	sceneRenderData.setLight(&directLight);
 
 	iter.reset();
 	while (iter.next()) {
@@ -119,13 +121,8 @@ void EditorWorld::render(RenderCommandList& cmdLst)
 		}
 	}
 
-	cmdLst.excuteCommand();
-
-	vendor.setRenderPostState();
 	camera.cameraRender.render(info);
 	camera.cameraRender.postRender();
-
-	cmdLst.resetCommand();
 }
 
 void EditorWorld::end()
@@ -158,12 +155,6 @@ void EditorWorld::update()
 {
 	tick(0);
 	afterTick();
-}
-
-void EditorWorld::render()
-{
-	prerender(cmdLst);
-	render(cmdLst);
 }
 
 Texture* EditorWorld::getSceneTexture()

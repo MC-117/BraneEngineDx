@@ -196,19 +196,21 @@ void SkeletonPhysics::SkeletonPhysicsInfo::serialize(SerializationInfo& info)
 
 void SkeletonPhysics::SkeletonPhysicsInfo::deserialize(const SerializationInfo& info)
 {
-	const SerializationInfo& rigidbodiesInfo = *info.get("rigidbodies");
-	for (auto b = rigidbodiesInfo.sublists.begin(), e = rigidbodiesInfo.sublists.end(); b != e; b++) {
-		rigidbodies.emplace_back();
-		RigidBodyInfo& rbinfo = rigidbodies.back();
-		rbinfo.deserialize(*b);
-	}
+	const SerializationInfo* rigidbodiesInfo = info.get("rigidbodies");
+	if (rigidbodiesInfo)
+		for (auto b = rigidbodiesInfo->sublists.begin(), e = rigidbodiesInfo->sublists.end(); b != e; b++) {
+			rigidbodies.emplace_back();
+			RigidBodyInfo& rbinfo = rigidbodies.back();
+			rbinfo.deserialize(*b);
+		}
 
-	const SerializationInfo& constraintsInfo = *info.get("constraints");
-	for (auto b = constraintsInfo.sublists.begin(), e = constraintsInfo.sublists.end(); b != e; b++) {
-		constraints.emplace_back();
-		D6ConstraintInfo& d6info = constraints.back();
-		d6info.deserialize(*b);
-	}
+	const SerializationInfo* constraintsInfo = info.get("constraints");
+	if (constraintsInfo)
+		for (auto b = constraintsInfo->sublists.begin(), e = constraintsInfo->sublists.end(); b != e; b++) {
+			constraints.emplace_back();
+			D6ConstraintInfo& d6info = constraints.back();
+			d6info.deserialize(*b);
+		}
 }
 
 SkeletonPhysics::SkeletonPhysics(SkeletonMeshActor* actor) : actor(actor)
@@ -239,8 +241,8 @@ SkeletonPhysics::SkeletonPhysicsInfo& SkeletonPhysics::getSkeletonPhysicsInfo()
 	for (auto b = constraints.begin(), e = constraints.end(); b != e; b++) {
 		info.constraints.emplace_back();
 		D6ConstraintInfo& cinfo = info.constraints.back();
-		cinfo.boneName = (*b)->rigidBody2->targetTransform.name;
-		cinfo.targetBoneName = (*b)->rigidBody1->targetTransform.name;
+		cinfo.boneName = (*b)->rigidBody1->targetTransform.name;
+		cinfo.targetBoneName = (*b)->rigidBody2->targetTransform.name;
 		cinfo.positionOffset = toVector3f((*b)->frameTransform1.p);
 		cinfo.rotationOffset = toQuaternionf((*b)->frameTransform1.q);
 		cinfo.targetPositionOffset = toVector3f((*b)->frameTransform2.p);

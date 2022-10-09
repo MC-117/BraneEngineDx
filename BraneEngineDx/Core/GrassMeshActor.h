@@ -19,7 +19,7 @@ public:
 	virtual void begin();
 	virtual void tick(float delteTime);
 	virtual void end();
-	virtual void prerender(RenderCommandList& cmdLst);
+	virtual void prerender(SceneRenderData& sceneData);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);

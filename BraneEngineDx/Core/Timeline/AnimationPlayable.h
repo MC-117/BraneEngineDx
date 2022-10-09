@@ -11,6 +11,8 @@ class AnimationPlayable : public TimelinePlayable
 public:
 	Serialize(AnimationPlayable, TimelinePlayable);
 
+	AnimationClip clip;
+
 	AnimationPlayable() = default;
 	virtual ~AnimationPlayable() = default;
 
@@ -20,6 +22,8 @@ public:
 	void setAnimationBlendMode(AnimationBlendMode mode);
 	AnimationBlendMode getAnimationBlendMode() const;
 
+	void bindActor(SkeletonMeshActor* actor);
+
 	virtual void onBeginPlay(const PlayInfo& info);
 	virtual void onPlay(const PlayInfo& info);
 	virtual void onEndPlay(const PlayInfo& info);
@@ -28,10 +32,8 @@ public:
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
 protected:
-	AnimationClip clip;
 	AnimationBlendMode blendMode = AnimationBlendMode::Replace;
+	bool isPlaying = false;
 
 	SkeletonMeshActor* targetActor = NULL;
-	AnimationPose bindPose;
-	void bindActor(SkeletonMeshActor* actor);
 };

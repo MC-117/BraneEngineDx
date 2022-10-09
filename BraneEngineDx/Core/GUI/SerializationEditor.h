@@ -17,7 +17,7 @@ public:
 
 	static void showSerializationInfo(GUI& gui, SerializationInfo& info);
 protected:
-	void drawInfo(SerializationInfo* info);
+	bool drawInfo(SerializationInfo* info);
 };
 
 #endif // !_SERIALIZATIONEDITOR_H_

@@ -71,7 +71,7 @@ struct AnimationClipData
 	void pack();
 
 	bool read(istream& in);
-	void write(ostream& out) const;
+	void write(ostream& out, LongProgressWork* work) const;
 };
 
 class AnimationBase : public Serializable
@@ -184,5 +184,5 @@ public:
 	static AnimationClipData * loadCameraAnimation(const string & file);
 	static AnimationClipData * loadMotionAnimation(const string & file);
 	static AnimationClipData * readAnimation(const string & file);
-	static bool writeAnimation(const AnimationClipData data, const string & file);
+	static bool writeAnimation(const AnimationClipData& data, const string & file, LongProgressWork* work = NULL);
 };

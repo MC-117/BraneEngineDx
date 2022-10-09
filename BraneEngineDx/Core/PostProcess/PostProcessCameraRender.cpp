@@ -42,7 +42,7 @@ void PostProcessCameraRender::render(RenderInfo & info)
 		info.renderGraph->setMainRenderTarget(renderTarget);
 		graph.resource.reset();
 		graph.resource.depthTexture = renderTarget.getInternalDepthTexture();
-		RenderTarget* shadowTarget = info.cmdList->lightDataPack.shadowTarget;
+		RenderTarget* shadowTarget = info.sceneData->lightDataPack.shadowTarget;
 		if (shadowTarget == NULL)
 			graph.resource.lightDepthTexture = NULL;
 		else

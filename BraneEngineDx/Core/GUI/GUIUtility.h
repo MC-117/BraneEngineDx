@@ -6,6 +6,7 @@
 #include "../../ThirdParty/ImGui/imgui_internal.h"
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 #include "../../ThirdParty/ImGui/ImGuiIconHelp.h"
+#include "../../ThirdParty/ImGui/ImPlot/implot.h"
 
 class Asset;
 class Object;
@@ -45,7 +46,18 @@ namespace ImGui {
 
 	};
 
-	bool CurveView();
+	template<class K>
+	struct CurveContext
+	{
+		ImVec4 curveNormalColor;
+		ImVec4 curveSelectedColor;
+		ImVec4 keyNormalColor;
+		ImVec4 keySelectedColor;
+		bool isKeySelected;
+		K selectedKey;
+	};
+
+	void CurveView(const char* name, Curve<float, float>* curve);
 
 	bool ObjectCombo(const char* label, Object*& selectObject, Object* root, string& filterName, const string& filterType = "");
 	bool ObjectCombo(const char* label, Object*& selectObject, Object* root, const string& filterType = "");

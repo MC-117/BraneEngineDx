@@ -25,9 +25,9 @@ HelpUI::HelpUI() : WUIControl(NULL), titleLabel("Help"), closeButton("¨w")
 	addControl(textLabel);
 }
 
-BOOL HelpUI::onEraseBkgnd(HDC hdc, const PAINTSTRUCT& ps)
+BOOL HelpUI::onEraseBkgnd(HDC hdc)
 {
-	WUIControl::onEraseBkgnd(hdc, ps);
+	WUIControl::onEraseBkgnd(hdc);
 	HBRUSH hbr = CreateSolidBrush(RGB(51, 51, 51));
 	RECT rect = { 10, 35, 240, 235 };
 	FillRect(hdc, &rect, hbr);

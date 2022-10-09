@@ -321,14 +321,12 @@ void MeshTransformRenderData::cleanPartStatic(MeshPart* meshPart, Material* mate
 
 bool MeshRenderCommand::isValid() const
 {
-	return material && !material->isNull() && camera && mesh != NULL && mesh->isValid();
+	return sceneData && material && !material->isNull() && camera && mesh != NULL && mesh->isValid();
 }
 
 Enum<ShaderFeature> MeshRenderCommand::getShaderFeature() const
 {
 	Enum<ShaderFeature> shaderFeature;
-	if (material->isDeferred)
-		shaderFeature |= Shader_Deferred;
 	if (mesh->meshData->type == MT_Terrain) {
 		shaderFeature |= Shader_Terrain;
 	}
@@ -347,9 +345,9 @@ RenderMode MeshRenderCommand::getRenderMode() const
 	return RenderMode(material->getRenderOrder(), 0, 0);
 }
 
-IRenderPack* MeshRenderCommand::createRenderPack(RenderCommandList& commandList) const
+IRenderPack* MeshRenderCommand::createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const
 {
-	return new MeshDataRenderPack(commandList.meshTransformDataPack, commandList.lightDataPack);
+	return new MeshDataRenderPack(sceneData.meshTransformDataPack, sceneData.lightDataPack);
 }
 
 MeshDataRenderPack::MeshDataRenderPack(MeshTransformRenderData& meshTransformDataPack, LightRenderData& lightDataPack)

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "TimelineTrackEditor.h"
+#include "TimelineClipTrackEditor.h"
 #include "AnimationTrack.h"
 
-class AnimationTrackEditor : public TimelineTrackEditor
+class AnimationTrackEditor : public TimelineClipTrackEditor
 {
 public:
 	AnimationTrackEditor();

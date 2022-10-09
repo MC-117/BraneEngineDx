@@ -2,6 +2,7 @@
 #ifndef _UTILITY_H_
 #define _UTILITY_H_
 #include "Curve.h"
+#include "../Delegate.h"
 
 vector<string> split(const string& str, char ch, unsigned int num = -1, void(*post)(string&) = NULL);
 vector<string> split(const string& str, const string& chs, unsigned int num = -1, void(*post)(string&) = NULL);
@@ -324,5 +325,17 @@ inline Enum<E>::operator E() const
 {
 	return (E)enumValue;
 }
+
+struct LongProgressWork
+{
+	string name;
+	string text;
+	float progress = 0;
+	void* data = NULL;
+	Delegate<const LongProgressWork&> callback;
+
+	void setProgress(float progress);
+	void setProgress(float progress, const string& text);
+};
 
 #endif // !_UTILITY_H_

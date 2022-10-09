@@ -195,6 +195,8 @@ void PhysicalWorld::updatePhysicalWorld(float deltaTime)
 	if (pause) {
 		return;
 	}
+	if (isInit)
+		physicsScene->fetchResults(true);
 	isInit = true;
 	dirty = false;
 #ifdef PHYSICS_USE_BULLET
@@ -219,38 +221,6 @@ void PhysicalWorld::updatePhysicalWorld(float deltaTime)
 	if (accumulator > 0 && accumulator < stepSize) {
 		onStepSimulation(this, accumulator);
 		physicsScene->simulate(accumulator);
-		physicsScene->fetchResults(true);
-
-		/*list<NvClothChunkTask> clothTasks;
-		list<nv::cloth::Solver*> validSolver;
-
-		for (auto b = clothSolvers.begin(), e = clothSolvers.end(); b != e; b++) {
-			if ((*b)->beginSimulation(accumulator)) {
-				validSolver.push_back(*b);
-				int count = (*b)->getSimulationChunkCount();
-				if (count > 0)
-					for (int i = 0; i < count; i++) {
-						clothTasks.emplace_back(NvClothChunkTask{ *b, i }).start();
-					}
-			}
-		}
-
-		while (true) {
-			bool done = true;
-			for (auto b = clothTasks.begin(), e = clothTasks.end(); b != e; b++) {
-				if (!b->done) {
-					done = false;
-					break;
-				}
-			}
-			if (done)
-				break;
-		}
-
-		for (auto b = validSolver.begin(), e = validSolver.end(); b != e; b++) {
-			(*b)->endSimulation();
-		}*/
-
 		accumulator = 0;
 	}
 	else {
@@ -261,41 +231,12 @@ void PhysicalWorld::updatePhysicalWorld(float deltaTime)
 				accumulator = 0;
 				break;
 			}
+			if (step > 0)
+				physicsScene->fetchResults(true);
 			step++;
 			accumulator -= stepSize;
 			onStepSimulation(this, stepSize);
 			physicsScene->simulate(stepSize);
-			physicsScene->fetchResults(true);
-
-			/*list<NvClothChunkTask> clothTasks;
-			list<nv::cloth::Solver*> validSolver;
-
-			for (auto b = clothSolvers.begin(), e = clothSolvers.end(); b != e; b++) {
-				if ((*b)->beginSimulation(stepSize)) {
-					validSolver.push_back(*b);
-					int count = (*b)->getSimulationChunkCount();
-					if (count > 0)
-						for (int i = 0; i < count; i++) {
-							clothTasks.emplace_back(NvClothChunkTask{ *b, i }).start();
-						}
-				}
-			}
-
-			while (true) {
-				bool done = true;
-				for (auto b = clothTasks.begin(), e = clothTasks.end(); b != e; b++) {
-					if (!b->done) {
-						done = false;
-						break;
-					}
-				}
-				if (done)
-					break;
-			}
-
-			for (auto b = validSolver.begin(), e = validSolver.end(); b != e; b++) {
-				(*b)->endSimulation();
-			}*/
 		}
 	}
 	for (auto b = clothSolvers.begin(), e = clothSolvers.end(); b != e; b++) {

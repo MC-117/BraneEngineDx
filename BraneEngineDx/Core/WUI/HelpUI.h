@@ -14,7 +14,7 @@ public:
 
 	HelpUI();
 protected:
-	virtual BOOL onEraseBkgnd(HDC hdc, const PAINTSTRUCT& ps);
+	virtual BOOL onEraseBkgnd(HDC hdc);
 };
 
 #endif // !_HELPUI_H_

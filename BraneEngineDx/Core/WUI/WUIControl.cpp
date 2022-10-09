@@ -98,7 +98,7 @@ void WUIControl::addControl(WUIControl& ctrl)
 	ctrl.winStyle |= WS_CHILD;
 	controls.push_back(&ctrl);
 	if (hWnd != NULL) {
-		ctrl.create(), hWnd;
+		ctrl.create();
 	}
 }
 
@@ -272,10 +272,7 @@ LRESULT WUIControl::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_ERASEBKGND:
 	{
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hWnd, &ps);
-		BOOL re = onEraseBkgnd(hdc, ps);
-		EndPaint(hWnd, &ps);
+		BOOL re = onEraseBkgnd((HDC)wParam);
 		if (re)
 			return 0;
 		break;
@@ -363,10 +360,13 @@ HMENU WUIControl::getHMenuID()
 	return hMenu;
 }
 
-BOOL WUIControl::onEraseBkgnd(HDC hdc, const PAINTSTRUCT& ps)
+BOOL WUIControl::onEraseBkgnd(HDC hdc)
 {
+	RECT rect;
+	GetClientRect(hWnd, &rect);
 	HBRUSH hbr = CreateSolidBrush(RGB(backColor.r * 255, backColor.g * 255, backColor.b * 255));
-	FillRect(hdc, &ps.rcPaint, hbr);
+	FillRect(hdc, &rect, hbr);
+	DeleteObject(hbr);
 	return 1;
 }
 

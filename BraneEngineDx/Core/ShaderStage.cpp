@@ -364,7 +364,7 @@ bool ShaderManager::registProgram(ShaderProgram* program)
 	if (program == NULL)
 		return false;
 	shaderPrograms.insert(program);
-	for each (auto b in program->shaderStages)
+	for each (const auto & b in program->shaderStages)
 	{
 		linkProgram(b.second, program);
 	}
@@ -375,7 +375,7 @@ bool ShaderManager::removeProgram(ShaderProgram* program)
 {
 	if (program == NULL)
 		return false;
-	for each (auto b in program->shaderStages)
+	for each (const auto & b in program->shaderStages)
 	{
 		programStageLinks.erase({ b.second, program });
 	}
@@ -407,7 +407,7 @@ void ShaderManager::dirtyShaderFile(ShaderFile* file)
 	processedDirtyShaderFiles.insert(file);
 	dirtyAdapters.insert(file->adapters.begin(), file->adapters.end());
 
-	for each (auto b in shaderFiles) {
+	for each (const auto & b in shaderFiles) {
 		if (processedDirtyShaderFiles.find(b.second) != processedDirtyShaderFiles.end())
 			continue;
 
@@ -421,7 +421,7 @@ void ShaderManager::dirtyShaderFile(ShaderFile* file)
 
 void ShaderManager::refreshShader()
 {
-	for each (auto file in shaderFiles) {
+	for each (const auto & file in shaderFiles) {
 		if (file.second->checkDirty()) {
 			dirtyShaderFile(file.second);
 		}
@@ -430,7 +430,7 @@ void ShaderManager::refreshShader()
 	unordered_set<string> dirtyShaderPath;
 
 	for each (auto adapter in dirtyAdapters) {
-		for each (auto iter in adapter->shaderStageVersions) {
+		for each (const auto & iter in adapter->shaderStageVersions) {
 			auto range = programStageLinks.equal_range({ iter.second, 0 });
 			if (range.first == programStageLinks.end())
 				continue;
@@ -447,7 +447,7 @@ void ShaderManager::refreshShader()
 	Console::log("Dirty %d shader adapters", dirtyAdapters.size());
 	Console::log("Dirty %d shader files", dirtyShaderPath.size());
 
-	for each (auto path in dirtyShaderPath) {
+	for each (const auto & path in dirtyShaderPath) {
 		Console::log("Reload shader file '%s'", path.c_str());
 		ShaderAdapterCompiler::compile(path);
 	}

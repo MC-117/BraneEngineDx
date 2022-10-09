@@ -19,6 +19,7 @@ unordered_map<string, ShaderCompiler::ShaderToken> ShaderCompiler::keywords =
 	{ "pass", ST_Pass },
 	{ "localsize", ST_LocalSize },
 	{ "include", ST_Include },
+	{ "condition", ST_Condition },
 };
 
 ShaderCompiler::ShaderCompiler() : manager(ShaderManager::getInstance())
@@ -60,7 +61,6 @@ void ShaderCompiler::reset()
 	token = ST_None;
 	scopeToken = ST_None;
 	shaderFile = NULL;
-	adapter = NULL;
 	successed = true;
 	isCommand = false;
 	localHeadFiles.clear();
@@ -94,7 +94,6 @@ bool ShaderCompiler::compile()
 {
 	isCommand = false;
 	command.clear();
-	adapter = NULL;
 	bool continueRead = true;
 	while (continueRead) {
 		continueRead = (bool)getline(file, line);
@@ -111,7 +110,7 @@ bool ShaderCompiler::compile()
 				getTokenInternal(command[0]);
 			if (token != ST_None && token != ST_Include &&
 				stageType != None_Shader_Stage)
-				adapter = compileAdapter();
+				compileAdapter();
 			switch (token)
 			{
 			case ShaderCompiler::ST_None:
@@ -125,7 +124,7 @@ bool ShaderCompiler::compile()
 			case ShaderCompiler::ST_Compute:
 				if (command.size() > 1 && command[1] == "use") {
 					stageType = (ShaderStageType)token;
-					adapter = useAdapter(stageType, command);
+					useAdapter(stageType, command);
 					if (stageType == Vertex_Shader_Stage) {
 						extraUsedAdapters.push_back({ Tessellation_Control_Shader_Stage, command });
 						extraUsedAdapters.push_back({ Tessellation_Evalution_Shader_Stage, command });
@@ -150,6 +149,11 @@ bool ShaderCompiler::compile()
 			case ShaderCompiler::ST_Include:
 				if (!readHeadFile(envPath)) {
 					successed = false;
+				}
+				break;
+			case ShaderCompiler::ST_Condition:
+				if (command.size() > 2) {
+					addCondition(command);
 				}
 				break;
 			default:
@@ -181,7 +185,7 @@ bool ShaderCompiler::compile()
 	}
 	if (!continueRead) {
 		if (stageType != None_Shader_Stage)
-			adapter = compileAdapter();
+			compileAdapter();
 		for (int i = 0; i < extraUsedAdapters.size(); i++)
 		{
 			ExtraUsedAdapter& item = extraUsedAdapters[i];
@@ -214,39 +218,48 @@ ShaderAdapter* ShaderCompiler::getAdapterInternal(ShaderStageType type)
 	return iter->second;
 }
 
+ShaderFeature ShaderCompiler::getFeatureInternal(const string& feature) const
+{
+	if (feature == "custom1")
+		return Shader_Custom_1;
+	else if (feature == "custom2")
+		return Shader_Custom_2;
+	else if (feature == "custom3")
+		return Shader_Custom_3;
+	else if (feature == "custom4")
+		return Shader_Custom_4;
+	else if (feature == "custom5")
+		return Shader_Custom_5;
+	else if (feature == "custom6")
+		return Shader_Custom_6;
+	else if (feature == "custom7")
+		return Shader_Custom_7;
+	else if (feature == "custom8")
+		return Shader_Custom_8;
+	else if (feature == "deferred")
+		return Shader_Deferred;
+	else if (feature == "lighting")
+		return Shader_Lighting;
+	else if (feature == "postprocess")
+		return Shader_Postprocess;
+	else if (feature == "skeleton")
+		return Shader_Skeleton;
+	else if (feature == "morph")
+		return Shader_Morph;
+	else if (feature == "particle")
+		return Shader_Particle;
+	else if (feature == "modifier")
+		return Shader_Modifier;
+	else if (feature == "terrain")
+		return Shader_Terrain;
+	throw runtime_error("Unknown shader feature");
+}
+
 Enum<ShaderFeature> ShaderCompiler::getFeatureInternal(const vector<string>& command) const
 {
 	Enum<ShaderFeature> _feature = Shader_Default;
 	for (int i = 1; i < command.size(); i++) {
-		const string& str = command[i];
-		if (str == "custom1")
-			_feature |= Shader_Custom_1;
-		else if (str == "custom2")
-			_feature |= Shader_Custom_2;
-		else if (str == "custom3")
-			_feature |= Shader_Custom_3;
-		else if (str == "custom4")
-			_feature |= Shader_Custom_4;
-		else if (str == "custom5")
-			_feature |= Shader_Custom_5;
-		else if (str == "custom6")
-			_feature |= Shader_Custom_6;
-		else if (str == "custom7")
-			_feature |= Shader_Custom_7;
-		else if (str == "deferred")
-			_feature |= Shader_Deferred;
-		else if (str == "postprocess")
-			_feature |= Shader_Postprocess;
-		else if (str == "skeleton")
-			_feature |= Shader_Skeleton;
-		else if (str == "morph")
-			_feature |= Shader_Morph;
-		else if (str == "particle")
-			_feature |= Shader_Particle;
-		else if (str == "modifier")
-			_feature |= Shader_Modifier;
-		else if (str == "terrain")
-			_feature |= Shader_Terrain;
+		_feature |= getFeatureInternal(command[i]);
 	}
 	return _feature;
 }
@@ -337,7 +350,7 @@ ShaderAdapter* ShaderCompiler::processAdapter()
 	return nullptr;
 }
 
-ShaderAdapter* ShaderCompiler::compileAdapter()
+void ShaderCompiler::compileAdapter()
 {
 	ShaderAdapter* adapter = NULL;
 	if (stageType != None_Shader_Stage && !clip.empty()) {
@@ -345,17 +358,22 @@ ShaderAdapter* ShaderCompiler::compileAdapter()
 		if (adapter == NULL) {
 			adapter = ShaderManager::getInstance().addShaderAdapter(name, path, stageType, adapterName);
 			if (adapter == NULL) {
-				return adapter;
+				return;
 			}
 			adapters.insert(make_pair(stageType, adapter));
 		}
-		adapter->compileShaderStage(feature, clip);
+		addCondition(Shader_Default, "");
+		for (const auto& condition : conditions) {
+			Enum<ShaderFeature> _feature = feature;
+			_feature |= condition.first;
+			adapter->compileShaderStage(feature, condition.second + clip);
+		}
 		clip.clear();
 		localHeadFiles.clear();
+		conditions.clear();
 	}
 	feature = Shader_Default;
 	stageType = None_Shader_Stage;
-	return adapter;
 }
 
 ShaderAdapter* ShaderCompiler::useAdapter(ShaderStageType stageType, const vector<string>& command, bool forceExist)
@@ -376,6 +394,32 @@ ShaderAdapter* ShaderCompiler::useAdapter(ShaderStageType stageType, const vecto
 		adapters.insert(make_pair(stageType, adapter));
 	}
 	return adapter;
+}
+
+void ShaderCompiler::addCondition(ShaderFeature feature, const string& macro)
+{
+	string macroLine = macro.empty() ? "" : ("#define " + macro + '\n');
+	string* macros = NULL;
+	auto iter = conditions.find(feature);
+	if (iter == conditions.end()) {
+		macros = &conditions.insert(make_pair(feature, macro)).first->second;
+	}
+	*macros += macroLine;
+}
+
+void ShaderCompiler::addCondition(const vector<string>& command)
+{
+	const string& featureName = command[1];
+	ShaderFeature feature = getFeatureInternal(featureName);
+	vector<string>& macroList = vector<string>(command.begin() += 2, command.end());
+	if (macroList.empty()) {
+		string macro = featureName;
+		std::transform(macro.begin(), macro.end(), macro.begin(), ::toupper);
+		macroList.push_back(macro + "_SHADER_FEATURE");
+	}
+	for (int i = 2; i < command.size(); i++) {
+		addCondition(feature, command[i]);
+	}
 }
 
 void ShaderCompiler::finalize()

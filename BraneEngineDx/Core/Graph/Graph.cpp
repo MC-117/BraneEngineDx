@@ -123,7 +123,7 @@ Serializable* GraphProxy::instantiate(const SerializationInfo& from)
 	GraphProxy* node = new GraphProxy();
 	const SerializationInfo* inputInfos = from.get("inputs");
 	if (inputInfos) {
-		for each (auto info in inputInfos->sublists)
+		for each (const auto & info in inputInfos->sublists)
 		{
 			Serializable* serializable = info.serialization->instantiate(info);
 			if (serializable == NULL)
@@ -138,7 +138,7 @@ Serializable* GraphProxy::instantiate(const SerializationInfo& from)
 	}
 	const SerializationInfo* outputInfos = from.get("outputs");
 	if (outputInfos) {
-		for each (auto info in outputInfos->sublists)
+		for each (const auto & info in outputInfos->sublists)
 		{
 			Serializable* serializable = info.serialization->instantiate(info);
 			if (serializable == NULL)
@@ -527,7 +527,7 @@ Serializable* Graph::instantiate(const SerializationInfo& from)
 	Graph* graph = new Graph();
 	const SerializationInfo* inputInfos = from.get("inputs");
 	if (inputInfos) {
-		for each (auto info in inputInfos->sublists)
+		for each (const auto & info in inputInfos->sublists)
 		{
 			Serializable* serializable = info.serialization->instantiate(info);
 			if (serializable == NULL)
@@ -542,7 +542,7 @@ Serializable* Graph::instantiate(const SerializationInfo& from)
 	}
 	const SerializationInfo* outputInfos = from.get("outputs");
 	if (outputInfos) {
-		for each (auto info in outputInfos->sublists)
+		for each (const auto & info in outputInfos->sublists)
 		{
 			Serializable* serializable = info.serialization->instantiate(info);
 			if (serializable == NULL)
@@ -569,7 +569,7 @@ bool Graph::deserialize(const SerializationInfo& from)
 	if (nodeInfos) {
 		int processedReturnNodeIndex = 0;
 		bool processedEntryNode = false;
-		for each (auto info in nodeInfos->sublists)
+		for each (const auto & info in nodeInfos->sublists)
 		{
 			if (info.serialization) {
 				if (!processedEntryNode && entryNode &&
@@ -617,7 +617,7 @@ bool Graph::deserialize(const SerializationInfo& from)
 	}
 	const SerializationInfo* variableInfos = from.get("variables");
 	if (variableInfos) {
-		for each (auto info in variableInfos->sublists)
+		for each (const auto & info in variableInfos->sublists)
 		{
 			GraphVariable* variable = getVariable(info.name);
 			if (variable) {
@@ -647,7 +647,7 @@ bool Graph::deserialize(const SerializationInfo& from)
 	}
 	const SerializationInfo* subgraphInfos = from.get("subgraphes");
 	if (subgraphInfos) {
-		for each (auto info in subgraphInfos->sublists)
+		for each (const auto & info in subgraphInfos->sublists)
 		{
 			Graph* subgraph = getSubGraph(info.name);
 			if (subgraph) {

@@ -31,7 +31,7 @@ void Actor::end()
 	::Transform::end();
 }
 
-void Actor::prerender(RenderCommandList& cmdLst)
+void Actor::prerender(SceneRenderData& sceneData)
 {
 }
 

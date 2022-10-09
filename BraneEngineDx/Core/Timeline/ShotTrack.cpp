@@ -2,7 +2,7 @@
 
 SerializeInstance(ShotTrack);
 
-ShotTrack::ShotTrack(const string& name) : TimelineTrack(name)
+ShotTrack::ShotTrack(const string& name) : TimelineClipTrack(name)
 {
 }
 
@@ -13,10 +13,10 @@ Serializable* ShotTrack::instantiate(const SerializationInfo& from)
 
 bool ShotTrack::deserialize(const SerializationInfo& from)
 {
-	return TimelineTrack::deserialize(from);
+	return TimelineClipTrack::deserialize(from);
 }
 
 bool ShotTrack::serialize(SerializationInfo& to)
 {
-	return TimelineTrack::serialize(to);
+	return TimelineClipTrack::serialize(to);
 }

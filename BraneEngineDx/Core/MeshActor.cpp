@@ -44,7 +44,7 @@ bool MeshActor::isHidden()
 	return meshRender.hidden;
 }
 
-void MeshActor::prerender(RenderCommandList& cmdLst)
+void MeshActor::prerender(SceneRenderData& sceneData)
 {
 	meshRender.transformMat = transformMat;
 }

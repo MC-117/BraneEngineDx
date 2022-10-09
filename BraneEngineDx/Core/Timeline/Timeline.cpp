@@ -45,7 +45,7 @@ bool Timeline::removeTrack(TimelineTrack* track)
 bool Timeline::removeClip(TimelineClip* clip)
 {
     for (int i = 0; i < tracks.size(); i++) {
-        TimelineTrack* track = tracks[i];
+        TimelineClipTrack* track = dynamic_cast<TimelineClipTrack*>(tracks[i]);
         for (int j = 0; j < track->clips.size(); j++) {
             if (track->clips[j] == clip) {
                 track->clips.erase(track->clips.begin() += j);

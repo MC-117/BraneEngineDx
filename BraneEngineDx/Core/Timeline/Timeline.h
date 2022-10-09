@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TimelineTrack.h"
+#include "TimelineClipTrack.h"
 #include "../Base.h"
 
 class Timeline : public Base

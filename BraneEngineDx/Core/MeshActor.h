@@ -18,7 +18,7 @@ public:
 
 	virtual void setMesh(Mesh* mesh);
 
-	virtual void prerender(RenderCommandList& cmdLst);
+	virtual void prerender(SceneRenderData& sceneData);
 	virtual Render* getRender();
 	virtual unsigned int getRenders(vector<Render*>& renders);
 

@@ -177,7 +177,7 @@ void GraphEditor::onGraphCanvasGUI(EditorInfo& info, GraphInfo& graphInfo)
 				nodeEditor->onGraphGUI(info, graphInfo);
 		}
 
-		for each (auto link in graphInfo.links)
+		for each (const auto & link in graphInfo.links)
 		{
 			ne::LinkId linkID = getLinkID(link.first, link.second);
 			ne::Link(linkID, link.first, link.second);
@@ -626,7 +626,7 @@ void GraphEditor::pasteNodes(SerializationInfo& info)
 	newSerializationInfoGuid(info, guidMap);
 	replaceSerializationInfoGuid(info, guidMap);
 	set<Guid> guidSet;
-	for each (auto item in guidMap)
+	for each (const auto & item in guidMap)
 	{
 		guidSet.insert(item.second);
 	}

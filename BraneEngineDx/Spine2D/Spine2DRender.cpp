@@ -150,6 +150,7 @@ void Spine2DRender::render(RenderInfo& info)
     material->setMatrix("projectMatrix", MATRIX_UPLOAD_OP(mvpMat));
 
     Spine2DRenderCommand command;
+    command.sceneData = info.sceneData;
     command.camera = info.camera;
     command.material = material;
 
@@ -206,7 +207,7 @@ void Spine2DRender::render(RenderInfo& info)
             break;
         }
 
-        info.cmdList->setRenderCommand(command);
+        info.renderGraph->setRenderCommand(command);
     }
 }
 

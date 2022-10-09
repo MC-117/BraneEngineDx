@@ -164,6 +164,8 @@ DXGI_FORMAT DX11Texture2DInfo::toDX11InternalType(const TexInternalType & type)
 		return DXGI_FORMAT_R8G8B8A8_UNORM;
 	case TIT_SRGBA:
 		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	case TIT_HRGBA:
+		return DXGI_FORMAT_R10G10B10A2_UNORM;
 	case TIT_Depth:
 		return DXGI_FORMAT_R32_TYPELESS;
 	case TIT_R32:
@@ -186,6 +188,8 @@ DXGI_FORMAT DX11Texture2DInfo::toDX11ColorType(const TexInternalType& type)
 		return DXGI_FORMAT_R8G8B8A8_UNORM;
 	case TIT_SRGBA:
 		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	case TIT_HRGBA:
+		return DXGI_FORMAT_R10G10B10A2_UNORM;
 	case TIT_Depth:
 		return DXGI_FORMAT_R32_FLOAT;
 	case TIT_R32:

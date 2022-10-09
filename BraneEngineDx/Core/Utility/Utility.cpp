@@ -588,3 +588,16 @@ bool AssetPath::operator<(const AssetPath& a) const
 		return name < a.name;
 	return false;
 }
+
+void LongProgressWork::setProgress(float progress)
+{
+	this->progress = progress;
+	callback(*this);
+}
+
+void LongProgressWork::setProgress(float progress, const string& text)
+{
+	this->progress = progress;
+	this->text = text;
+	callback(*this);
+}

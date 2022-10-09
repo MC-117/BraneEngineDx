@@ -13,11 +13,15 @@ public:
 	EditorInfoMethod();
 	virtual void setInspectedObject(void* object);
 
+	void setTrackHeight(float height);
+
 	Color getTrackColor() const;
+	float getTrackHeight() const;
 	
 	virtual bool onTrackGUI(EditorInfo& info, TimelineEditorInfo& timelineInfo);
 	virtual void onTrackContentGUI(EditorInfo& info, TimelineEditorInfo& timelineInfo, const ImVec2& min_p, const ImVec2& max_p);
 	virtual void onTrackInspectGUI(EditorInfo& info);
+	virtual void onClipGUI(EditorInfo& info, TimelineEditorInfo& timelineInfo);
 
 	virtual void onGUI(EditorInfo& info);
 protected:
@@ -25,4 +29,6 @@ protected:
 	Color selectedTintColor = Color{ 2.0f, 2.0f, 2.0f };
 	Color viewColor = Color{ 0x25, 0x25, 0x26 };
 	Color trackColor = Color{ 0x03, 0x7a, 0xa7 };
+	float trackHeight = 50;
+	float trackMinHeight = 50;
 };

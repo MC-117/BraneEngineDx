@@ -2,51 +2,91 @@
 
 enum TexWrapType
 {
-	TW_Repeat, TW_Mirror, TW_Clamp, TW_Clamp_Edge, TW_Border, TW_Mirror_Once
+	TW_Repeat,
+	TW_Mirror,
+	TW_Clamp,
+	TW_Clamp_Edge,
+	TW_Border,
+	TW_Mirror_Once
 };
 
 enum TexFilter
 {
-	TF_Point, TF_Linear, TF_Point_Mip_Point, TF_Linear_Mip_Point, TF_Point_Mip_Linear, TF_Linear_Mip_Linear
+	TF_Point,
+	TF_Linear,
+	TF_Point_Mip_Point,
+	TF_Linear_Mip_Point,
+	TF_Point_Mip_Linear,
+	TF_Linear_Mip_Linear
 };
 
 enum TexInternalType
 {
-	TIT_Default, TIT_R, TIT_RG, TIT_RGBA, TIT_SRGBA, TIT_Depth, TIT_R32
+	TIT_Default,
+	TIT_R,
+	TIT_RG,
+	TIT_RGBA,
+	TIT_SRGBA,
+	TIT_HRGBA,
+	TIT_Depth,
+	TIT_R32
 };
 
 enum GPUBufferType
 {
-	GB_Constant, GB_Storage, GB_Struct, GB_Command, GB_Vertex, GB_Index, GB_ReadBack
+	GB_Constant,
+	GB_Storage,
+	GB_Struct,
+	GB_Command,
+	GB_Vertex,
+	GB_Index,
+	GB_ReadBack
 };
 
 enum CPUAccessFlag
 {
-	CAF_None = 0, CAF_Read = 1, CAF_Write = 2, CAF_ReadWrite = 3
+	CAF_None = 0,
+	CAF_Read = 1,
+	CAF_Write = 2,
+	CAF_ReadWrite = 3
 };
 
 enum CullType
 {
-	Cull_Off, Cull_Back, Cull_Front
+	Cull_Off,
+	Cull_Back,
+	Cull_Front
 };
 
 enum ShaderFeature
 {
-	Shader_Default = 0, Shader_Custom = 1, Shader_Deferred = 2, Shader_Custom_1 = 2 + 1,
-	Shader_Postprocess = 4, Shader_Custom_2 = 4 + 1, Shader_Skeleton = 8, Shader_Custom_3 = 8 + 1,
-	Shader_Morph = 16, Shader_Custom_4 = 16 + 1, Shader_Particle = 32, Shader_Custom_5 = 32 + 1,
-	Shader_Modifier = 64, Shader_Custom_6 = 64 + 1, Shader_Terrain = 128, Shader_Custom_7 = 128 + 1
+	Shader_Default		= 0,	Shader_Custom		= 1,
+	Shader_Deferred		= 2,	Shader_Custom_1		= 2 + 1,
+	Shader_Lighting		= 4,	Shader_Custom_2		= 4 + 1,
+	Shader_Postprocess	= 8,	Shader_Custom_3		= 8 + 1,
+	Shader_Skeleton		= 16,	Shader_Custom_4		= 16 + 1,
+	Shader_Morph		= 32,	Shader_Custom_5		= 32 + 1,
+	Shader_Particle		= 64,	Shader_Custom_6		= 64 + 1,
+	Shader_Modifier		= 128,	Shader_Custom_7		= 128 + 1,
+	Shader_Terrain		= 256,	Shader_Custom_8		= 256 + 1
 };
 
 enum ShaderStageType
 {
-	None_Shader_Stage, Vertex_Shader_Stage, Tessellation_Control_Shader_Stage, Tessellation_Evalution_Shader_Stage,
-	Geometry_Shader_Stage, Fragment_Shader_Stage, Compute_Shader_Stage
+	None_Shader_Stage,
+	Vertex_Shader_Stage,
+	Tessellation_Control_Shader_Stage,
+	Tessellation_Evalution_Shader_Stage,
+	Geometry_Shader_Stage,
+	Fragment_Shader_Stage,
+	Compute_Shader_Stage
 };
 
 enum MeshType
 {
-	MT_Mesh, MT_SkeletonMesh, MT_Terrain
+	MT_Mesh,
+	MT_SkeletonMesh,
+	MT_Terrain
 };
 
 enum RenderStage : uint16_t

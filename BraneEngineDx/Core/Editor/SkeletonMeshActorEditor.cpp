@@ -162,6 +162,31 @@ void SkeletonMeshActorEditor::onAnimationGUI(EditorInfo& info)
 			if (ImGui::SliderFloat("Time", &time, 0, clip->animationClipData->duration)) {
 				clip->setTime(time);
 			}
+			if (ImGui::TreeNode("Detail")) {
+				for (const auto& item : clip->animationClipData->curveNames) {
+					float value = clip->curveCurrentValue[item.second];
+					ImGui::PushID(item.second);
+					bool open = ImGui::TreeNode("");
+					ImGui::SameLine();
+					const CurvePlayer<float, float>& player = clip->curvePlayer[item.second];
+					Color color = { 1.0f, 1.0f, 1.0f, 1.0f };
+					if (player.curve->keys.size() < 2)
+						color = { 0.7f, 0.7f, 0.7f, 1.0f };
+					ImGui::TextColored((ImVec4&)color, "%s: %f", item.first.c_str(), value);
+					if (open) {
+						for (const auto& frame : player.curve->keys) {
+							Color color = { 0.8f, 0.8f, 0.8f, 1.0f };
+							if (player.curveIterator != player.curve->keys.end() &&
+								player.curveIterator->first == frame.first)
+								color = { 0.8f, 1.0f, 0.0f, 1.0f };
+							ImGui::TextColored((ImVec4&)color, "%f: %f", frame.first, frame.second.value);
+						}
+						ImGui::TreePop();
+					}
+					ImGui::PopID();
+				}
+				ImGui::TreePop();
+			}
 		}
 	}
 }

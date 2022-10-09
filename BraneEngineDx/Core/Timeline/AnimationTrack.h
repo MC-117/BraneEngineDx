@@ -1,12 +1,12 @@
 #pragma once
 
-#include "TimelineTrack.h"
+#include "TimelineClipTrack.h"
 #include "AnimationPlayable.h"
 
-class AnimationTrack : public TimelineTrack
+class AnimationTrack : public TimelineClipTrack
 {
 public:
-	Serialize(AnimationTrack, TimelineTrack);
+	Serialize(AnimationTrack, TimelineClipTrack);
 
 	AnimationTrack(const string& name = "AnimationTrack");
 	virtual ~AnimationTrack() = default;

@@ -83,7 +83,7 @@ void ParticleRenderData::clean()
 
 bool ParticleRenderCommand::isValid() const
 {
-	return material && !material->isNull() && camera && particles && (mesh == NULL || (mesh && mesh->isValid()));
+	return sceneData && material && !material->isNull() && camera && particles && (mesh == NULL || (mesh && mesh->isValid()));
 }
 
 Enum<ShaderFeature> ParticleRenderCommand::getShaderFeature() const
@@ -98,9 +98,9 @@ RenderMode ParticleRenderCommand::getRenderMode() const
 	return RenderMode(material->getRenderOrder(), 0, 0);
 }
 
-IRenderPack* ParticleRenderCommand::createRenderPack(RenderCommandList& commandList) const
+IRenderPack* ParticleRenderCommand::createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const
 {
-	return new ParticleRenderPack(commandList.particleDataPack);
+	return new ParticleRenderPack(sceneData.particleDataPack);
 }
 
 ParticleRenderPack::ParticleRenderPack(ParticleRenderData& particleRenderData)

@@ -12,6 +12,7 @@
 #include "Script/PythonManager.h"
 #include "../ThirdParty/ImGui/imgui_internal.h"
 #include "../ThirdParty/ImGui/ImGuiIconHelp.h"
+#include "../ThirdParty/ImGui/ImPlot/implot.h"
 
 World world;
 
@@ -456,6 +457,7 @@ void SetStyleColors(ImGuiStyle* dst = 0)
 {
 	ImGuiStyle* style = dst ? dst : &ImGui::GetStyle();
 	ImVec4* colors = style->Colors;
+	style->FrameRounding = 3;
 	style->FramePadding = { 5, 5 };
 	style->WindowTitleAlign = { 0.5, 0.5 };
 	style->WindowRounding = 1;
@@ -517,6 +519,36 @@ void SetStyleColors(ImGuiStyle* dst = 0)
 
 static bool alutInited = true;
 
+void imGuiSetup()
+{
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImPlot::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigWindowsMoveFromTitleBarOnly = true;
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+
+	io.Fonts->AddFontFromFileTTF("Engine/Fonts/arialuni.ttf",
+		20, NULL, io.Fonts->GetGlyphRangesChineseFull());
+
+	static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+	ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
+	io.Fonts->AddFontFromFileTTF(("Engine/Fonts/fa-solid-900.ttf"), 15, &icons_config, icons_ranges);
+
+	io.Fonts->AddFontFromFileTTF("Engine/Fonts/ChakraPetch-Light.ttf", 72, NULL, io.Fonts->GetGlyphRangesChineseFull());
+
+	// Setup Dear ImGui style
+	SetStyleColors();
+}
+
+void imGuiClean()
+{
+	ImPlot::DestroyContext();
+	ImGui::DestroyContext();
+}
+
 void Engine::setup()
 {
 	CoInitialize(0);
@@ -575,26 +607,7 @@ void Engine::setup()
 	}
 #endif // AUDIO_USE_OPENAL
 
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	io.ConfigWindowsMoveFromTitleBarOnly = true;
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-
-	io.Fonts->AddFontFromFileTTF("Engine/Fonts/arialuni.ttf",
-		20, NULL, io.Fonts->GetGlyphRangesChineseFull());
-
-	static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-	ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
-	io.Fonts->AddFontFromFileTTF(("Engine/Fonts/fa-solid-900.ttf"), 15, &icons_config, icons_ranges);
-
-	io.Fonts->AddFontFromFileTTF("Engine/Fonts/ChakraPetch-Light.ttf", 72, NULL, io.Fonts->GetGlyphRangesChineseFull());
-
-	// Setup Dear ImGui style
-	SetStyleColors();
-
+	imGuiSetup();
 	/*----- Vendor ImGui init -----*/
 	{
 		if (!vendor.imGuiInit(engineConfig, windowContext))
@@ -647,7 +660,7 @@ void Engine::clean()
 			throw runtime_error("Vendor ImGui shutdown failed");
 	}
 
-	ImGui::DestroyContext();
+	imGuiClean();
 
 	/*----- Vendor clean -----*/
 	{

@@ -86,7 +86,7 @@ void RenderPool::render(bool guiOnly)
 	Camera& currentCamera = (camera == NULL ? defaultCamera : *camera);
 	RenderInfo info = { currentCamera.projectionViewMat, Matrix4f::Identity(), currentCamera.cameraRender.cameraLoc,
 						currentCamera.cameraRender.cameraDir, currentCamera.size, (float)(currentCamera.fov * PI / 180.0) };
-	info.cmdList = &cmdList;
+	info.sceneData = &sceneData;
 	info.renderGraph = renderGraph;
 	info.camera = &currentCamera;
 
@@ -110,7 +110,7 @@ void RenderPool::render(bool guiOnly)
 					info.tempRender = *objB;
 					(*lightB)->render(info);
 				}
-				cmdList.setLight(*lightB);
+				sceneData.setLight(*lightB);
 			}
 		}
 

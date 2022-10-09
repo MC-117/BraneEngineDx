@@ -110,7 +110,7 @@ void World::afterTick()
 	iter.reset();
 	if (!guiOnly) {
 		while (iter.next())
-			iter.current().prerender(renderPool.cmdList);
+			iter.current().prerender(renderPool.sceneData);
 		timer.record("PreRender");
 	}
 

@@ -14,6 +14,7 @@ public:
 	bool cullFront = false;
 	bool canCastShadow = true;
 	bool isDeferred = false;
+	uint16_t renderOrder = 0;
 
 	static Material nullMaterial;
 	static Shader defaultShader;

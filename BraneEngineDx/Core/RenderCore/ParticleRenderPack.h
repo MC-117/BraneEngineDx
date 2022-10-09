@@ -32,7 +32,7 @@ struct ParticleRenderCommand : public IRenderCommand
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
 	virtual RenderMode getRenderMode() const;
-	virtual IRenderPack* createRenderPack(RenderCommandList& commandList) const;
+	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const;
 };
 
 struct ParticleRenderPack : public IRenderPack

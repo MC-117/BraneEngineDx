@@ -23,6 +23,7 @@ struct RenderTask
 	};
 	size_t hashCode = 0;
 	int age = 0;
+	SceneRenderData* sceneData = NULL;
 	RenderMode renderMode;
 	CameraRenderData* cameraData = NULL;
 	ShaderProgram* shaderProgram = NULL;

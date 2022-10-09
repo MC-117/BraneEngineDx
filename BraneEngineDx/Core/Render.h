@@ -8,21 +8,13 @@ class Camera;
 
 struct RenderInfo
 {
-	enum RenderMode
-	{
-		Forward, Deferred
-	};
-	
 	Matrix4f projectionViewMat;
 	Matrix4f lightSpaceMat;
 	Vector3f cameraLoc;
 	Vector3f cameraDir;
 	Unit2Di viewSize;
 	float fovy;
-	RenderMode mode;
-	bool depthWrite = true;
-	bool alphaTest = false;
-	RenderCommandList* cmdList = NULL;
+	SceneRenderData* sceneData = NULL;
 	RenderGraph* renderGraph = NULL;
 	Camera* camera = NULL;
 	IRendering* tempRender = NULL;
@@ -33,10 +25,7 @@ struct RenderInfo
 		Vector3f cameraLoc = Vector3f::Identity(),
 		Vector3f cameraDir = Vector3f::Identity(),
 		Unit2Di viewSize = { 0, 0 },
-		float fovy = 0,
-		RenderMode mode = Forward,
-		bool depthWrite = true,
-		bool alphaTest = false);
+		float fovy = 0);
 
 	RenderInfo(const RenderInfo& info);
 

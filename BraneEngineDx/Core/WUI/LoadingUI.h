@@ -19,7 +19,7 @@ protected:
 
 	void loadResource();
 	virtual void onPaint(HDC hdc);
-	virtual BOOL onEraseBkgnd(HDC hdc, const PAINTSTRUCT& ps);
+	virtual BOOL onEraseBkgnd(HDC hdc);
 };
 
 #endif // !_LOADINGUI_H_

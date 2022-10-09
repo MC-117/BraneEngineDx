@@ -194,7 +194,7 @@ void SkeletonMeshActor::destroy(bool applyToChild)
 	skeleton.destroy(applyToChild);
 }
 
-void SkeletonMeshActor::prerender(RenderCommandList& cmdLst)
+void SkeletonMeshActor::prerender(SceneRenderData& sceneData)
 {
 	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
 		Skeleton::SkeletonInfo& skeletonInfo = *skeleton.getSkeleton(i);

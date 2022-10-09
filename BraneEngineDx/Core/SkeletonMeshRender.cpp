@@ -49,7 +49,7 @@ void SkeletonMeshRender::render(RenderInfo & info)
 	fillMaterialsByDefault();
 
 	if (!customTransformSubmit)
-		instanceID = info.cmdList->setMeshTransform(transformMats);
+		instanceID = info.sceneData->setMeshTransform(transformMats);
 
 	for (int i = 0; i < materials.size(); i++) {
 		Material* material = materials[i];
@@ -63,9 +63,10 @@ void SkeletonMeshRender::render(RenderInfo & info)
 			continue;
 
 		if (!customTransformSubmit)
-			info.cmdList->setMeshPartTransform(part, material, instanceID);
+			info.sceneData->setMeshPartTransform(part, material, instanceID);
 
 		MeshRenderCommand command;
+		command.sceneData = info.sceneData;
 		command.camera = info.camera;
 		command.material = material;
 		command.mesh = part;
@@ -73,14 +74,14 @@ void SkeletonMeshRender::render(RenderInfo & info)
 		if (morphWeights.getMorphCount() > 0)
 			command.bindings.push_back(morphWeights.getRenderData());
 
-		info.cmdList->setRenderCommand(command);
+		info.renderGraph->setRenderCommand(command);
 
 		Material* outlineMaterial = outlineMaterials[i];
 		if (outlineEnable[i] && outlineMaterial != NULL) {
 			if (!customTransformSubmit)
-				info.cmdList->setMeshPartTransform(part, outlineMaterial, instanceID);
+				info.sceneData->setMeshPartTransform(part, outlineMaterial, instanceID);
 			command.material = outlineMaterial;
-			info.cmdList->setRenderCommand(command);
+			info.renderGraph->setRenderCommand(command);
 		}
 	}
 }

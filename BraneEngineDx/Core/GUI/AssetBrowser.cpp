@@ -10,6 +10,7 @@
 #include "ObjectPreviewWindow.h"
 #include "../Timeline/TimelineWindow.h"
 #include "../Graph/GraphWindow.h"
+#include "AnimationDataWindow.h"
 #include "GUIUtility.h"
 #include "../Utility/EngineUtility.h"
 #include "../MeshActor.h"
@@ -352,6 +353,11 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 		else if (assets[i]->assetInfo.type == "Timeline") {
 			if (canPreview) {
 				TimelineWindow::showTimeline(info.gui, (Timeline*)assets[i]->load());
+			}
+		}
+		else if (assets[i]->assetInfo.type == "AnimationClipData") {
+			if (canPreview) {
+				AnimationDataWindow::showAnimationData(info.gui, (AnimationClipData*)assets[i]->load());
 			}
 		}
 		else if (assets[i]->assetInfo.type == "Graph") {

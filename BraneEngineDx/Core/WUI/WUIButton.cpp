@@ -56,7 +56,7 @@ void WUIButton::updateColor(const Color& color, bool force)
 	if (force || backColor != color) {
 		backColor = color;
 		InvalidateRect(hWnd, NULL, TRUE);
-		SendMessage(hWnd, WM_PAINT, 0, 0);
+		//SendMessage(hWnd, WM_PAINT, 0, 0);
 	}
 }
 

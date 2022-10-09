@@ -390,6 +390,7 @@
     <ClInclude Include="Core\Graph\Variable.h" />
     <ClInclude Include="Core\Graph\VariableEditor.h" />
     <ClInclude Include="Core\Graph\VectorNode.h" />
+    <ClInclude Include="Core\GUI\AnimationDataWindow.h" />
     <ClInclude Include="Core\GUI\CMDWindow.h" />
     <ClInclude Include="Core\Actor.h" />
     <ClInclude Include="Core\Animation\AnimationClip.h" />
@@ -421,6 +422,8 @@
     <ClInclude Include="Core\RenderCore\RenderDefines.h" />
     <ClInclude Include="Core\RenderCore\RenderInterface.h" />
     <ClInclude Include="Core\RenderCore\RenderTask.h" />
+    <ClInclude Include="Core\RenderGraph\DeferredLightingPass.h" />
+    <ClInclude Include="Core\RenderGraph\DeferredRenderGraph.h" />
     <ClInclude Include="Core\RenderGraph\ForwardRenderGraph.h" />
     <ClInclude Include="Core\RenderGraph\ImGUIPass.h" />
     <ClInclude Include="Core\RenderGraph\MeshPass.h" />
@@ -443,6 +446,7 @@
     <ClInclude Include="Core\Terrain\TerrainGeometry.h" />
     <ClInclude Include="Core\Terrain\TerrainGeometryEditor.h" />
     <ClInclude Include="Core\Terrain\TerrainRender.h" />
+    <ClInclude Include="Core\Timeline\AnimationDataTrackEditor.h" />
     <ClInclude Include="Core\Timeline\AnimationPlayable.h" />
     <ClInclude Include="Core\Timeline\AnimationPlayableEditor.h" />
     <ClInclude Include="Core\Timeline\AnimationTrack.h" />
@@ -451,11 +455,14 @@
     <ClInclude Include="Core\Timeline\AudioPlayableEditor.h" />
     <ClInclude Include="Core\Timeline\AudioTrack.h" />
     <ClInclude Include="Core\Timeline\AudioTrackEditor.h" />
+    <ClInclude Include="Core\Timeline\AnimationDataTrack.h" />
     <ClInclude Include="Core\Timeline\ShotPlayable.h" />
     <ClInclude Include="Core\Timeline\ShotPlayableEditor.h" />
     <ClInclude Include="Core\Timeline\ShotTrack.h" />
     <ClInclude Include="Core\Timeline\ShotTrackEditor.h" />
     <ClInclude Include="Core\Timeline\TimelineClipEditor.h" />
+    <ClInclude Include="Core\Timeline\TimelineClipTrack.h" />
+    <ClInclude Include="Core\Timeline\TimelineClipTrackEditor.h" />
     <ClInclude Include="Core\Timeline\TimelineEditor.h" />
     <ClInclude Include="Core\Timeline\TimelineEditorInfo.h" />
     <ClInclude Include="Core\Timeline\TimelinePlayableEditor.h" />
@@ -566,11 +573,13 @@
     <ClInclude Include="Actors\GunTowerActor.h" />
     <ClInclude Include="Core\WUI\HelpUI.h" />
     <ClInclude Include="Core\WUI\LoadingUI.h" />
+    <ClInclude Include="Core\WUI\ProgressUI.h" />
     <ClInclude Include="Core\WUI\WUIButton.h" />
     <ClInclude Include="Core\WUI\WUIControl.h" />
     <ClInclude Include="Core\WUI\WUIESCMenu.h" />
     <ClInclude Include="Core\WUI\WUIFont.h" />
     <ClInclude Include="Core\WUI\WUILabel.h" />
+    <ClInclude Include="Core\WUI\WUIProgressBar.h" />
     <ClInclude Include="Core\WUI\WUIViewPort.h" />
     <ClInclude Include="Core\GUI\PhysicsDebug.h" />
     <ClInclude Include="Core\Physics\D6Constraint.h" />
@@ -602,6 +611,8 @@
     <ClInclude Include="ThirdParty\ImGui\ImGuiNodeEditor\imgui_node_editor.h" />
     <ClInclude Include="ThirdParty\ImGui\ImGuiNodeEditor\imgui_node_editor_internal.h" />
     <ClInclude Include="ThirdParty\ImGui\ImGuiNodeEditor\Widgets.h" />
+    <ClInclude Include="ThirdParty\ImGui\ImPlot\implot.h" />
+    <ClInclude Include="ThirdParty\ImGui\ImPlot\implot_internal.h" />
     <ClInclude Include="ThirdParty\Live2DCubism\include\Live2DCubism\CubismCdiJson.hpp" />
     <ClInclude Include="ThirdParty\Live2DCubism\include\Live2DCubism\CubismDefaultParameterId.hpp" />
     <ClInclude Include="ThirdParty\Live2DCubism\include\Live2DCubism\CubismFramework.hpp" />
@@ -770,6 +781,7 @@
     <ClCompile Include="Core\Graph\ValuePinEditor.cpp" />
     <ClCompile Include="Core\Graph\Variable.cpp" />
     <ClCompile Include="Core\Graph\VariableEditor.cpp" />
+    <ClCompile Include="Core\GUI\AnimationDataWindow.cpp" />
     <ClCompile Include="Core\GUI\CMDWindow.cpp" />
     <ClCompile Include="Core\Actor.cpp" />
     <ClCompile Include="Core\Animation\AnimationClip.cpp" />
@@ -847,6 +859,8 @@
     <ClCompile Include="Core\RenderCore\RenderCommandList.cpp" />
     <ClCompile Include="Core\RenderCore\RenderInterface.cpp" />
     <ClCompile Include="Core\RenderCore\RenderTask.cpp" />
+    <ClCompile Include="Core\RenderGraph\DeferredLightingPass.cpp" />
+    <ClCompile Include="Core\RenderGraph\DeferredRenderGraph.cpp" />
     <ClCompile Include="Core\RenderGraph\ForwardRenderGraph.cpp" />
     <ClCompile Include="Core\RenderGraph\ImGUIPass.cpp" />
     <ClCompile Include="Core\RenderGraph\MeshPass.cpp" />
@@ -889,6 +903,8 @@
     <ClCompile Include="Core\Terrain\TerrainRender.cpp" />
     <ClCompile Include="Core\Texture.cpp" />
     <ClCompile Include="Core\Texture2D.cpp" />
+    <ClCompile Include="Core\Timeline\AnimationDataTrack.cpp" />
+    <ClCompile Include="Core\Timeline\AnimationDataTrackEditor.cpp" />
     <ClCompile Include="Core\Timeline\AnimationPlayable.cpp" />
     <ClCompile Include="Core\Timeline\AnimationPlayableEditor.cpp" />
     <ClCompile Include="Core\Timeline\AnimationTrack.cpp" />
@@ -902,6 +918,8 @@
     <ClCompile Include="Core\Timeline\ShotTrack.cpp" />
     <ClCompile Include="Core\Timeline\ShotTrackEditor.cpp" />
     <ClCompile Include="Core\Timeline\TimelineClipEditor.cpp" />
+    <ClCompile Include="Core\Timeline\TimelineClipTrack.cpp" />
+    <ClCompile Include="Core\Timeline\TimelineClipTrackEditor.cpp" />
     <ClCompile Include="Core\Timeline\TimelineEditor.cpp" />
     <ClCompile Include="Core\Timeline\TimelineEditorInfo.cpp" />
     <ClCompile Include="Core\Timeline\TimelinePlayableEditor.cpp" />
@@ -934,11 +952,13 @@
     <ClCompile Include="Actors\GunTowerActor.cpp" />
     <ClCompile Include="Core\WUI\HelpUI.cpp" />
     <ClCompile Include="Core\WUI\LoadingUI.cpp" />
+    <ClCompile Include="Core\WUI\ProgressUI.cpp" />
     <ClCompile Include="Core\WUI\WUIButton.cpp" />
     <ClCompile Include="Core\WUI\WUIControl.cpp" />
     <ClCompile Include="Core\WUI\WUIESCMenu.cpp" />
     <ClCompile Include="Core\WUI\WUIFont.cpp" />
     <ClCompile Include="Core\WUI\WUILabel.cpp" />
+    <ClCompile Include="Core\WUI\WUIProgressBar.cpp" />
     <ClCompile Include="Core\WUI\WUIViewPort.cpp" />
     <ClCompile Include="Core\Physics\D6Constraint.cpp" />
     <ClCompile Include="Live2D\Live2DActor.cpp" />
@@ -965,6 +985,8 @@
     <ClCompile Include="ThirdParty\ImGui\ImGuiNodeEditor\imgui_node_editor_api.cpp" />
     <ClCompile Include="ThirdParty\ImGui\ImGuiNodeEditor\Widgets.cpp" />
     <ClCompile Include="ThirdParty\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="ThirdParty\ImGui\ImPlot\implot.cpp" />
+    <ClCompile Include="ThirdParty\ImGui\ImPlot\implot_items.cpp" />
     <ClCompile Include="ThirdParty\Live2DCubism\include\Live2DCubism\CubismCdiJson.cpp" />
     <ClCompile Include="ThirdParty\Live2DCubism\include\Live2DCubism\CubismDefaultParameterId.cpp" />
     <ClCompile Include="ThirdParty\Live2DCubism\include\Live2DCubism\CubismFramework.cpp" />

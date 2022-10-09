@@ -2,9 +2,6 @@
 
 void MeshPass::prepare()
 {
-	if (commandList == NULL)
-		return;
-	commandList->prepareCommand();
 }
 
 void MeshPass::execute(IRenderContext& context)
@@ -13,14 +10,6 @@ void MeshPass::execute(IRenderContext& context)
 		return;
 
 	timer.reset();
-
-	commandList->meshTransformDataPack.upload();
-	commandList->particleDataPack.upload();
-	commandList->lightDataPack.upload();
-
-	commandList->meshTransformDataPack.bind(context);
-	commandList->particleDataPack.bind(context);
-	commandList->lightDataPack.bind(context);
 
 	timer.record("Upload");
 	RenderTaskContext taskContext;
@@ -31,6 +20,13 @@ void MeshPass::execute(IRenderContext& context)
 		if (task.renderPack == NULL)
 			continue;
 		Time t = Time::now();
+
+		if (taskContext.sceneData != task.sceneData) {
+			taskContext.sceneData = task.sceneData;
+
+			task.sceneData->bind(context);
+		}
+
 		if (taskContext.cameraData != task.cameraData) {
 			taskContext.cameraData = task.cameraData;
 
@@ -110,4 +106,8 @@ void MeshPass::execute(IRenderContext& context)
 	context.setCullState(CullType::Cull_Back);
 
 	timer.record("Execute");
+}
+
+void MeshPass::reset()
+{
 }
