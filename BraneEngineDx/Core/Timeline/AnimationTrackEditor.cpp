@@ -12,7 +12,7 @@ AnimationTrackEditor::AnimationTrackEditor()
 void AnimationTrackEditor::setInspectedObject(void* object)
 {
     animTrack = dynamic_cast<AnimationTrack*>((Base*)object);
-    TimelineTrackEditor::setInspectedObject(animTrack);
+    TimelineClipTrackEditor::setInspectedObject(animTrack);
 }
 
 void AnimationTrackEditor::onTrackContentGUI(EditorInfo& info, TimelineEditorInfo& timelineInfo, const ImVec2& min_p, const ImVec2& max_p)
@@ -54,8 +54,8 @@ void AnimationTrackEditor::onTrackContentGUI(EditorInfo& info, TimelineEditorInf
 
 void AnimationTrackEditor::onTrackInspectGUI(EditorInfo& info)
 {
-    TimelineTrackEditor::onTrackInspectGUI(info);
+    TimelineClipTrackEditor::onTrackInspectGUI(info);
     SkeletonMeshActor* actor = animTrack->getActor();
-    ImGui::ObjectCombo("Target##AnimationTarget", (Object*&)actor, info.world->getObject(), "SkeletonMeshActor");
-    animTrack->setActor(actor);
+    if (ImGui::ObjectCombo("Target##AnimationTarget", (Object*&)actor, info.world->getObject(), "SkeletonMeshActor"))
+        animTrack->setActor(actor);
 }

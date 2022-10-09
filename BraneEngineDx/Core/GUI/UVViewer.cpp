@@ -124,10 +124,11 @@ void UVViewer::onRenderWindow(GUIRenderInfo& info)
 	ImGui::PopStyleVar(2);
 
 	MeshRenderCommand command;
+	command.sceneData = info.sceneData;
 	command.camera = &camera;
 	command.material = uvMaterial;
 	command.mesh = selectMeshPart;
 	command.isNonTransformIndex = true;
 
-	info.renderCommandList->setRenderCommand(command);
+	info.renderGraph->setRenderCommand(command);
 }

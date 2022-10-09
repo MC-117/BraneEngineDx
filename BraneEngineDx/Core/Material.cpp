@@ -19,6 +19,7 @@ bool Material::isLoadDefaultMaterial = false;
 
 Material::Material(Shader & shader)
 {
+	renderOrder = shader.renderOrder;
 	desc.shader = &shader;
 	desc.colorField.insert(pair<string, MatAttribute<Color>>(string("baseColor"), MatAttribute<Color>({ 255, 255, 255, 255 })));
 }
@@ -31,6 +32,7 @@ Material::Material(const Material & material)
 	cullFront = material.cullFront;
 	canCastShadow = material.canCastShadow;
 	isDeferred = material.isDeferred;
+	renderOrder = material.renderOrder;
 }
 
 Material::~Material()
@@ -49,6 +51,7 @@ void Material::instantiateFrom(const Material& material)
 	cullFront = material.cullFront;
 	canCastShadow = material.canCastShadow;
 	isDeferred = material.isDeferred;
+	renderOrder = material.renderOrder;
 	if (renderData) {
 		renderData->release();
 		delete renderData;
@@ -97,7 +100,7 @@ Color Material::getBaseColor()
 
 int Material::getRenderOrder()
 {
-	return desc.shader == NULL ? -1 : desc.shader->renderOrder;
+	return renderOrder;
 }
 
 void Material::setTwoSide(bool b)
@@ -465,8 +468,10 @@ bool Material::MaterialLoader::loadMaterial(Material& material, const string& fi
 				successed &= parseMaterialAttribute(material, compiler.getLine());
 			break;
 		case ShaderCompiler::ST_Order:
-			if (command.size() == 2)
+			if (command.size() == 2) {
 				shader->renderOrder = atoi(command[1].c_str());
+				material.renderOrder = shader->renderOrder;
+			}
 			else {
 				successed = false;
 			}
@@ -531,6 +536,7 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 	bool castShadow = true;
 	bool noearlyz = false;
 	int passNum = 1;
+	int order = -1;
 	Unit2Du localSize = { 1, 1 };
 	while (1)
 	{
@@ -554,6 +560,12 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 				if (material == NULL)
 					return NULL;
 				material = &material->instantiate();
+			}
+			else if (s[0] == "order") {
+				if (s.size() == 2) {
+					int _order = atoi(s[1].c_str());
+					order = _order < 0 ? 0 : _order;
+				}
 			}
 			else if (s[0] == "twoside") {
 				if (s.size() == 2)
@@ -640,6 +652,8 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 			clip += line + '\n';
 		}
 	}
+	if (order >= 0)
+		material->renderOrder = order;
 	material->isTwoSide = twoSide;
 	material->cullFront = cullFront;
 	material->canCastShadow = castShadow;
@@ -669,6 +683,7 @@ bool Material::MaterialLoader::saveMaterialInstanceToString(string & text, Mater
 	if (shd == NULL)
 		return false;
 	text += "#material " + shd->path + '\n';
+	text += "#order " + to_string(material.getRenderOrder()) + '\n';
 	text += "#twoside ";
 	text += (material.isTwoSide ? "true\n" : "false\n");
 	if (material.cullFront)

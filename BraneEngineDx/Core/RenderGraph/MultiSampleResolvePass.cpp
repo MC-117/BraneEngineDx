@@ -13,3 +13,7 @@ void MultiSampleResolvePass::execute(IRenderContext& context)
 		return;
 	context.resolveMultisampleFrame(renderTarget->getVendorRenderTarget());
 }
+
+void MultiSampleResolvePass::reset()
+{
+}

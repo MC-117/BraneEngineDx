@@ -5,10 +5,11 @@
 class ImGuiPass : public RenderPass
 {
 public:
-	ImDrawData drawData;
+	ImDrawData* drawData;
 
 	void setDrawData(ImDrawData* pDrawData);
 
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);
+	virtual void reset();
 };

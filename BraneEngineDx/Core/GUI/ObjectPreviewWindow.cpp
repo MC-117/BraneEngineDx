@@ -46,12 +46,12 @@ void ObjectPreviewWindow::setAsset(Asset& asset)
 	editorWorld.addChild(*targetObject);
 }
 
-void ObjectPreviewWindow::onUpdateScene(float width, float height)
+void ObjectPreviewWindow::onUpdateScene(RenderGraph& renderGraph, float width, float height)
 {
 	editorWorld.setViewportSize((int)width, (int)height);
 
 	editorWorld.update();
-	editorWorld.render();
+	editorWorld.render(renderGraph);
 }
 
 void ObjectPreviewWindow::onToolBarGUI(GUIRenderInfo& info)
@@ -151,7 +151,7 @@ void ObjectPreviewWindow::onRenderWindow(GUIRenderInfo& info)
 		inspectorSizeRate = inspectorSize / width;
 	}
 
-	onUpdateScene(screenWidth, screenHeight);
+	onUpdateScene(*info.renderGraph, screenWidth, screenHeight);
 	gizmo.onUpdate(editorWorld.camera);
 
 	ImGui::BeginChild("Scene", ImVec2(screenWidth, screenHeight));

@@ -3,6 +3,13 @@
 
 SerializeInstance(ForwardRenderGraph);
 
+bool ForwardRenderGraph::setRenderCommand(const IRenderCommand& cmd)
+{
+	if (cmd.sceneData)
+		sceneDatas.insert(cmd.sceneData);
+	return meshPass.commandList->setRenderCommand(cmd);
+}
+
 void ForwardRenderGraph::setRenderCommandList(RenderCommandList& commandList)
 {
 	meshPass.commandList = &commandList;
@@ -20,11 +27,14 @@ void ForwardRenderGraph::setImGuiDrawData(ImDrawData* drawData)
 
 void ForwardRenderGraph::addPass(RenderPass& pass)
 {
+	pass.renderGraph = this;
 	passes.push_back(&pass);
 }
 
 void ForwardRenderGraph::prepare()
 {
+	for (auto sceneData : sceneDatas)
+		sceneData->create();
 	meshPass.prepare();
 	resolvePass.prepare();
 	for (auto pass : passes)
@@ -34,6 +44,8 @@ void ForwardRenderGraph::prepare()
 
 void ForwardRenderGraph::execute(IRenderContext& context)
 {
+	for (auto sceneData : sceneDatas)
+		sceneData->upload();
 	meshPass.execute(context);
 	resolvePass.execute(context);
 	for (auto pass : passes)
@@ -49,6 +61,17 @@ void ForwardRenderGraph::execute(IRenderContext& context)
 
 void ForwardRenderGraph::reset()
 {
+	for (auto sceneData : sceneDatas)
+		sceneData->reset();
+	sceneDatas.clear();
+
+	meshPass.reset();
+	resolvePass.reset();
+	for (auto pass : passes) {
+		pass->reset();
+		pass->renderGraph = NULL;
+	}
+	imGuiPass.reset();
 	passes.clear();
 }
 

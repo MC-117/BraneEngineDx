@@ -15,7 +15,7 @@ RenderMode Spine2DRenderCommand::getRenderMode() const
 	return RenderMode(RenderStage::RS_Post, blendMode, 0);
 }
 
-IRenderPack* Spine2DRenderCommand::createRenderPack(RenderCommandList& commandList) const
+IRenderPack* Spine2DRenderCommand::createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const
 {
 	return new Spine2DRenderPack();
 }

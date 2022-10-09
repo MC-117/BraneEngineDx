@@ -28,7 +28,7 @@ void ObjectBehavior::afterTick()
 {
 }
 
-void ObjectBehavior::prerender(RenderCommandList& cmdLst)
+void ObjectBehavior::prerender(SceneRenderData& sceneData)
 {
 }
 
@@ -96,7 +96,7 @@ void Object::afterTick()
 	}
 }
 
-void Object::prerender(RenderCommandList& cmdLst)
+void Object::prerender(SceneRenderData& sceneData)
 {
 }
 

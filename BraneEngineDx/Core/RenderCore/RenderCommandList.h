@@ -8,15 +8,12 @@
 class Camera;
 class Render;
 
-class RenderCommandList
+class SceneRenderData
 {
 public:
 	MeshTransformRenderData meshTransformDataPack;
 	ParticleRenderData particleDataPack;
 	LightRenderData lightDataPack;
-
-	unordered_map<size_t, RenderTask*> taskMap;
-	set<RenderTask*, RenderTask::ExecutionOrder> taskSet;
 
 	void setLight(Render* lightRender);
 	unsigned int setMeshTransform(const Matrix4f& transformMat);
@@ -32,14 +29,28 @@ public:
 	void* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex);
 	void cleanStaticMeshTransform(unsigned int base, unsigned int count);
 	void cleanStaticMeshPartTransform(MeshPart* meshPart, Material* material);
-	bool setRenderCommand(const IRenderCommand& cmd, bool isStatic = false);
 
 	void setUpdateStatic();
 	bool willUpdateStatic();
 
+	virtual void create();
+	virtual void reset();
+	virtual void release();
+	virtual void upload();
+	virtual void bind(IRenderContext& context);
+};
+
+class RenderCommandList
+{
+public:
+	unordered_map<size_t, RenderTask*> taskMap;
+	set<RenderTask*, RenderTask::ExecutionOrder> taskSet;
+
+	bool addRenderTask(const IRenderCommand& cmd, RenderTask& task);
+	bool setRenderCommand(const IRenderCommand& cmd, ShaderFeature extraFeature = Shader_Default);
+	bool setRenderCommand(const IRenderCommand& cmd, vector<ShaderFeature> extraFeatures);
+
 	void prepareCommand();
 	void excuteCommand();
 	void resetCommand();
-protected:
-	bool setRenderCommand(const IRenderCommand& cmd, bool isStatic, bool autoFill);
 };

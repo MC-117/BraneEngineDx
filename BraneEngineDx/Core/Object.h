@@ -34,7 +34,7 @@ public:
 	virtual void begin();
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
-	virtual void prerender(RenderCommandList& cmdLst);
+	virtual void prerender(SceneRenderData& sceneData);
 	virtual void end();
 
 	virtual void onAttacted(Object& parent);
@@ -65,7 +65,7 @@ public:
 	virtual void begin();
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
-	virtual void prerender(RenderCommandList& cmdLst);
+	virtual void prerender(SceneRenderData& sceneData);
 	virtual void end();
 
 	virtual void onAttacted(Object& parent);

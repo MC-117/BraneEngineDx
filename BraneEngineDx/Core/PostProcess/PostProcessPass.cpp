@@ -135,6 +135,10 @@ void PostProcessPass::onGUI(GUIRenderInfo& info)
 	ImGui::Checkbox("Enable", &enable);
 }
 
+void PostProcessPass::reset()
+{
+}
+
 Serializable * PostProcessPass::instantiate(const SerializationInfo & from)
 {
 	return nullptr;

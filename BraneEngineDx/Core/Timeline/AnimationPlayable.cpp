@@ -26,20 +26,34 @@ AnimationBlendMode AnimationPlayable::getAnimationBlendMode() const
     return blendMode;
 }
 
+void AnimationPlayable::bindActor(SkeletonMeshActor* actor)
+{
+    if (targetActor == actor || clip.animationClipData == NULL)
+        return;
+    targetActor = actor;
+    clip.setupContext({ &actor->skeleton, &actor->morphTargetRemapper });
+}
+
 void AnimationPlayable::onBeginPlay(const PlayInfo& info)
 {
     clip.setTime(info.currentTime);
     clip.play();
+    isPlaying = true;
 }
 
 void AnimationPlayable::onPlay(const PlayInfo& info)
 {
+    if (!isPlaying) {
+        clip.play();
+        isPlaying = true;
+    }
     clip.update(info.deltaTime);
 }
 
 void AnimationPlayable::onEndPlay(const PlayInfo& info)
 {
     clip.stop();
+    isPlaying = false;
 }
 
 Serializable* AnimationPlayable::instantiate(const SerializationInfo& from)
@@ -73,13 +87,4 @@ bool AnimationPlayable::serialize(SerializationInfo& to)
     to.set("animation", animation);
     to.set("blendMode", (int)blendMode);
     return true;
-}
-
-void AnimationPlayable::bindActor(SkeletonMeshActor* actor)
-{
-    if (targetActor == actor || clip.animationClipData == NULL)
-        return;
-    targetActor = actor;
-    clip.setupContext({ &actor->skeleton, &actor->morphTargetRemapper });
-    bindPose.setContext({ &actor->skeleton, &actor->morphTargetRemapper });
 }

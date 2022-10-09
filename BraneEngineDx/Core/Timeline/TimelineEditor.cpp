@@ -172,169 +172,6 @@ void TimelineEditor::onTimeBarGUI(EditorInfo& info)
 	}
 }
 
-void TimelineEditor::onClipViewGUI(EditorInfo& info, TimelineTrack& track, const Color& trackColor)
-{
-	auto drawList = ImGui::GetWindowDrawList();
-	ImVec2 pos = ImGui::GetCursorScreenPos();
-	ImVec2 endPos = { pos.x + clipViewWidth, pos.y + trackHeight };
-	int framePerUnit = getFramePreUnit();
-	bool dragging = ImGui::IsMouseDragging(0);
-	ClipOperation operation;
-	foregroundDrawList->PushClipRect(pos, endPos);
-
-	for (int i = 0; i < track.clips.size(); i++) {
-		TimelineClip* clip = track.clips[i];
-		if (clip->duration == 0 ||
-			clip->startTime > viewEndTime ||
-			((clip->startTime + clip->duration) < viewStartTime))
-			continue;
-		ImGui::PushID(i);
-		float x0 = pos.x + timeToSize(clip->startTime - viewStartTime);
-		float w = timeToSize(clip->duration);
-		float x1 = x0 + w;
-		ImGui::SetCursorScreenPos({ x0, pos.y });
-		ImGui::InvisibleButton(clip->name.c_str(), { w, trackHeight });
-
-		ImVec2 min_p_min = { x0, pos.y };
-		ImVec2 min_p_max = { x0 + 5, pos.y + trackHeight };
-		ImVec2 max_p_min = { x0 + w - 5, pos.y };
-		ImVec2 max_p_max = { x0 + w, pos.y + trackHeight };
-
-		Color selectedTintColor = Color{ 2.0f, 2.0f, 2.0f };
-		Color viewColor = Color{ 0x25, 0x25, 0x26 };
-
-		drawList->AddRectFilled(min_p_min, max_p_max, (ImColor&)(EditorManager::getSelectedBase() == clip ?
-			viewColor * selectedTintColor : viewColor), 3);
-		drawList->AddRectFilled({ min_p_min.x, max_p_max.y - 5 }, max_p_max, (ImColor&)trackColor, 3);
-
-		ImVec2 textMin = { x0 + timeToSize(clip->blendInDuration), pos.y };
-		textMin.x = max(pos.x, textMin.x);
-		ImVec2 textMax = { x0 + w - timeToSize(clip->blendOutDuration), endPos.y };
-		textMax.x = min(endPos.x, textMax.x);
-
-		ImGui::AddTextCentered(drawList, textMin, textMax, clip->name.c_str());
-
-		if (clip->blendInDuration > 0) {
-			float xb0 = x0 + timeToSize(clip->blendInDuration);
-			ImVec2 max_pb = { xb0, pos.y + trackHeight };
-			drawList->AddRectFilled(min_p_min, max_pb, 0x55AAAAAA);
-			drawList->AddLine(min_p_min, max_pb, 0xFFAAAAAA, 1.5);
-			drawList->AddLine({ x0, pos.y + trackHeight }, { xb0, pos.y }, 0xFFAAAAAA, 1.5);
-		}
-
-		foregroundDrawList->AddRectFilled(min_p_min, min_p_max, 0xFFAAAAAA,
-			3, ImDrawCornerFlags_BotLeft | ImDrawCornerFlags_TopLeft);
-		foregroundDrawList->AddRectFilled(max_p_min, max_p_max, 0xFFAAAAAA,
-			3, ImDrawCornerFlags_BotRight | ImDrawCornerFlags_TopRight);
-
-		bool leftHovering = ImGui::IsMouseHoveringRect(min_p_min, min_p_max);
-		bool rightHovering = ImGui::IsMouseHoveringRect(max_p_min, max_p_max);
-		bool hovering = ImGui::IsItemHovered();
-		bool clicking = ImGui::IsMouseClicked(0);
-
-		if (hovering) {
-			ImGui::BeginTooltip();
-			float startFrame = clip->startTime * frameRate;
-			float durationFrame = clip->duration * frameRate;
-			float endFrame = startFrame + durationFrame;
-			float blendInFrame = clip->blendInDuration * frameRate;
-			float blendOutFrame = clip->blendOutDuration * frameRate;
-			ImGui::Text("Name: %s", clip->name.c_str());
-			ImGui::Text("StartTime: %f sec, %f frame", clip->startTime, startFrame);
-			ImGui::Text("Duration: %f sec, %f frame", clip->duration, durationFrame);
-			ImGui::Text("EndTime: %f sec, %f frame", clip->startTime + clip->duration, endFrame);
-			ImGui::Text("BlendIn: %f sec, %f frame", clip->blendInDuration, blendInFrame);
-			ImGui::Text("BlendOut: %f sec, %f frame", clip->blendOutDuration, blendOutFrame);
-			ImGui::EndTooltip();
-		}
-
-		if (leftHovering || rightHovering)
-			ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
-
-		if (dragging) {
-			if (leftHovering) {
-				if (operation.type < ClipOperation::LeftMove) {
-					operation.type = ClipOperation::LeftMove;
-					operation.clip = clip;
-				}
-			}
-			else if (rightHovering) {
-				if (operation.type < ClipOperation::RightMove) {
-					operation.type = ClipOperation::RightMove;
-					operation.clip = clip;
-				}
-			}
-			else if (hovering) {
-				if (operation.type <= ClipOperation::Move) {
-					operation.type = ClipOperation::Move;
-					operation.clip = clip;
-				}
-			}
-		}
-		else if (hovering && clicking) {
-			operation.type = ClipOperation::Click;
-			operation.clip = clip;
-		}
-		ImGui::PopID();
-	}
-	foregroundDrawList->PopClipRect();
-
-	if (operation.clip == NULL && clipOperation.clip != NULL && !dragging) {
-		clipOperation.clip = NULL;
-		clipOperation.type = ClipOperation::None;
-	}
-
-	if (operation.clip != NULL && clipOperation.clip == NULL) {
-		clipOperation.clip = operation.clip;
-		clipOperation.type = operation.type;
-		if (operation.clip != NULL) {
-			clipOperation.startFrame = operation.clip->startTime * frameRate;
-			clipOperation.durationFrame = operation.clip->duration * frameRate;
-		}
-	}
-
-	if (clipOperation.clip != NULL) {
-		float deltaX = ImGui::GetMouseDragDelta().x;
-		float deltaFrame = deltaX / frameSize;
-		float startFrame = clipOperation.startFrame;
-		float durationFrame = clipOperation.durationFrame;
-		float endFrame = startFrame + durationFrame;
-		switch (clipOperation.type)
-		{
-		default:
-			EditorManager::selectBase(clipOperation.clip);
-		case ClipOperation::LeftMove:
-			startFrame += deltaFrame;
-			startFrame = round(startFrame / framePerUnit) * framePerUnit;
-			if (startFrame >= endFrame) {
-				startFrame = round(endFrame / framePerUnit) * framePerUnit - framePerUnit;
-			}
-			durationFrame = endFrame - startFrame;
-			break;
-		case ClipOperation::RightMove:
-			endFrame += deltaFrame;
-			endFrame = round(endFrame / framePerUnit) * framePerUnit;
-			if (endFrame <= startFrame) {
-				endFrame = round(startFrame / framePerUnit) * framePerUnit + framePerUnit;
-			}
-			durationFrame = endFrame - startFrame;
-			break;
-		case ClipOperation::Move:
-			startFrame += deltaFrame;
-			startFrame = round(startFrame / framePerUnit) * framePerUnit;
-			endFrame = startFrame + durationFrame;
-			break;
-		}
-
-		if (clipOperation.type != ClipOperation::None && clipOperation.type != ClipOperation::Click) {
-			clipOperation.clip->startTime = startFrame / frameRate;
-			clipOperation.clip->duration = durationFrame / frameRate;
-
-			timeline->apply();
-		}
-	}
-}
-
 void TimelineEditor::onToolBarBottomGUI(EditorInfo& info)
 {
 }
@@ -508,15 +345,19 @@ void TimelineEditor::onTimelineGUI(EditorInfo& info)
 	}
 
 	if (timeline != NULL) {
-		TimelineEditorInfo timelineInfo = *this;
+		auto drawList = ImGui::GetWindowDrawList();
+		TimelineEditorInfo& timelineInfo = *this;
 		for (int i = 0; i < timeline->tracks.size(); i++) {
 			TimelineTrack* track = timeline->tracks[i];
+			TimelineClipTrack* clipTrack = dynamic_cast<TimelineClipTrack*>(track);
 
 			ImGui::PushID(i);
 
+			TimelineTrackEditor* trackEditor = (TimelineTrackEditor*)EditorManager::getEditor(*track);
+			float trackHeight = trackEditor->getTrackHeight();
+
 			ImGui::BeginChild("TrackView", ImVec2(trackViewWidth, trackHeight), false,
 				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-			TimelineTrackEditor* trackEditor = (TimelineTrackEditor*)EditorManager::getEditor(*track);
 			if (trackEditor->onTrackGUI(info, timelineInfo)) {
 				EditorManager::selectBase(track);
 			}
@@ -527,8 +368,38 @@ void TimelineEditor::onTimelineGUI(EditorInfo& info)
 
 			ImGui::BeginChild("ClipView", ImVec2(clipViewWidth, trackHeight), false,
 				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-			onClipViewGUI(info, *track, trackColor);
+			trackEditor->onClipGUI(info, timelineInfo);
 			ImGui::EndChild();
+
+			const float resizeButtonExtend = 4;
+			ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+			ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+			ImRect resizeButtonRect = { cursorPos.x,
+				cursorPos.y - resizeButtonExtend,
+				cursorPos.x + trackViewWidth,
+				cursorPos.y };
+			ImRect resizeButtonDrawRect = { cursorScreenPos.x,
+				cursorScreenPos.y - resizeButtonExtend,
+				cursorScreenPos.x + trackViewWidth,
+				cursorScreenPos.y };
+			ImGuiID resizeButtonID = ImGui::GetID("ResizeButton");
+			bool hover = false, held = false;
+			
+			ImGui::KeepAliveID(resizeButtonID);
+			ImGui::ButtonBehavior(resizeButtonRect, resizeButtonID, &hover, &held);
+			bool resizing = held && ImGui::IsMouseDragging(0);
+
+			if (hover || held) {
+				ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+
+				drawList->AddRectFilled(resizeButtonDrawRect.Min,
+					resizeButtonDrawRect.Max, 0xFFFFFFAA);
+			}
+
+			if (resizing) {
+				trackHeight += ImGui::GetIO().MouseDelta.y;
+				trackEditor->setTrackHeight(trackHeight);
+			}
 
 			ImGui::PopID();
 		}
@@ -576,45 +447,4 @@ void TimelineEditor::onTimelineGUI(EditorInfo& info)
 
 void TimelineEditor::onGUI(EditorInfo& info)
 {
-}
-
-float TimelineEditor::getFrameCount() const
-{
-	return timeline == NULL ? 0 : timeline->getDuration() * frameRate;
-}
-
-float TimelineEditor::getFullViewSize() const
-{
-	float frameCount = getFrameCount();
-	frameCount = frameCount == 0 ? defaultFrameCount : frameCount;
-	return unitRefSize / (clipViewWidth / frameCount);
-}
-
-float TimelineEditor::getViewSize() const
-{
-	return unitRefSize / frameSize;
-}
-
-void TimelineEditor::setViewSize(float size)
-{
-	frameSize = unitRefSize / size;
-}
-
-float TimelineEditor::timeToSize(float time) const
-{
-	return time * frameRate * frameSize;
-}
-
-float TimelineEditor::sizeToTime(float size) const
-{
-	return size / frameSize / frameRate;
-}
-
-int TimelineEditor::getFramePreUnit() const
-{
-	float viewSize = getViewSize();
-	float framePerUnit = floor(viewSize);
-
-	framePerUnit = max(framePerUnit, 1);
-	return framePerUnit;
 }

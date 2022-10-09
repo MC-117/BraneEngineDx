@@ -487,6 +487,48 @@ namespace ImGui {
 		}
 	}
 
+	void CurveView(const char* name, Curve<float, float>* curve)
+	{
+		if (curve) {
+			ImGui::PushID(curve);
+			ImPlotGetter getter = [](int index, void* data) {
+				Curve<float, float>* pCurve = (Curve<float, float>*)data;
+				float key = index / 60.0f;
+				return ImPlotPoint(key, pCurve->get(key));
+			};
+			ImPlot::PlotLineG(name, getter, curve, ceilf(curve->duration * 60));
+			//ImPlot::PlotScatterG(name, getter, curve, curve->keys.size());
+			bool drag = false;
+			float oldX, newX, newY;
+
+			for (auto& item : curve->keys) {
+				double x = item.first;
+				double y = item.second.value;
+				if (ImPlot::DragPoint((int&)item.first, &x, &y,
+					{ 1.0f, 1.0f, 1.0f, 1.0f }, 4, ImPlotDragToolFlags_ReleaseReturn)) {
+					drag = true;
+					oldX = item.first;
+					newX = x;
+					newY = y;
+				}
+			}
+			if (drag) {
+				auto iter = curve->keys.find(oldX);
+				if (oldX == newX) {
+					iter->second.value = newY;
+				}
+				else {
+					CurveValue<float> value = iter->second;
+					value.value = newY;
+					curve->keys.erase(oldX);
+					curve->keys.insert(make_pair(newX, value));
+				}
+				
+			}
+			ImGui::PopID();
+		}
+	}
+
 	bool ObjectCombo(const char* label, Object*& selectObject, Object* root, string& filterName, const string& filterType)
 	{
 		Object* object = selectObject;

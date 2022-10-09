@@ -11,6 +11,7 @@ struct MeshPart;
 struct MeshData;
 struct ShaderProgram;
 class RenderTask;
+class SceneRenderData;
 class RenderCommandList;
 
 struct IRenderData
@@ -26,18 +27,20 @@ struct IRenderPack;
 
 struct IRenderCommand
 {
-	Camera* camera;
-	Material* material;
-	MeshPart* mesh;
+	SceneRenderData* sceneData = NULL;
+	Camera* camera = NULL;
+	Material* material = NULL;
+	MeshPart* mesh = NULL;
 	list<IRenderData*> bindings;
 	virtual bool isValid() const = 0;
 	virtual Enum<ShaderFeature> getShaderFeature() const = 0;
 	virtual RenderMode getRenderMode() const = 0;
-	virtual IRenderPack* createRenderPack(RenderCommandList& commandList) const = 0;
+	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const = 0;
 };
 
 struct RenderTaskContext
 {
+	SceneRenderData* sceneData;
 	IRenderData* cameraData;
 	ShaderProgram* shaderProgram;
 	RenderMode renderMode;
@@ -54,11 +57,16 @@ struct IRenderPack
 	virtual void newVendorRenderExecution();
 };
 
+class RenderGraph;
+
 class RenderPass
 {
 public:
+	RenderGraph* renderGraph = NULL;
+
 	virtual void prepare() = 0;
 	virtual void execute(IRenderContext& context) = 0;
+	virtual void reset() = 0;
 };
 
 class RenderGraph : public Serializable
@@ -66,6 +74,9 @@ class RenderGraph : public Serializable
 public:
 	Serialize(RenderGraph,);
 
+	unordered_set<SceneRenderData*> sceneDatas;
+
+	virtual bool setRenderCommand(const IRenderCommand& cmd) = 0;
 	virtual void setRenderCommandList(RenderCommandList& commandList) = 0;
 	virtual void setMainRenderTarget(RenderTarget& renderTarget) = 0;
 	virtual void setImGuiDrawData(ImDrawData* drawData) = 0;

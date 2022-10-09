@@ -26,15 +26,14 @@ public:
 	virtual void begin();
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
-	virtual void prerender(RenderCommandList& cmdLst);
-	virtual void render(RenderCommandList& cmdLst);
+	virtual void prerender(SceneRenderData& sceneData);
+	virtual void render(RenderGraph& renderGraph);
 	virtual void end();
 
 	virtual Object* find(const string& name) const;
 	virtual Object* getObject() const;
 
 	virtual void update();
-	virtual void render();
 	virtual Texture* getSceneTexture();
 
 	void setViewportSize(int width, int height);
@@ -43,6 +42,6 @@ protected:
 	Time lastTime, currentTime, startTime;
 	float deltaTime = 0;
 	ObjectIterator iter = ObjectIterator(this);
-	RenderCommandList cmdLst;
+	SceneRenderData sceneRenderData;
 	bool updatePhysics = false;
 };

@@ -333,7 +333,7 @@ Serializable* GraphNode::instantiate(const SerializationInfo& from)
     GraphNode* node = new GraphNode();
     const SerializationInfo* inputInfos = from.get("inputs");
     if (inputInfos) {
-        for each (auto info in inputInfos->sublists)
+        for each (const auto & info in inputInfos->sublists)
         {
             Serializable* serializable = info.serialization->instantiate(info);
             if (serializable == NULL)
@@ -348,7 +348,7 @@ Serializable* GraphNode::instantiate(const SerializationInfo& from)
     }
     const SerializationInfo* outputInfos = from.get("outputs");
     if (outputInfos) {
-        for each (auto info in outputInfos->sublists)
+        for each (const auto & info in outputInfos->sublists)
         {
             Serializable* serializable = info.serialization->instantiate(info);
             if (serializable == NULL)
@@ -370,7 +370,7 @@ bool GraphNode::deserialize(const SerializationInfo& from)
     from.get("name", name);
     const SerializationInfo* inputInfos = from.get("inputs");
     if (inputInfos) {
-        for each (auto info in inputInfos->sublists)
+        for each (const auto & info in inputInfos->sublists)
         {
             GraphPin* pin = getInput(info.name);
             if (pin) {
@@ -380,7 +380,7 @@ bool GraphNode::deserialize(const SerializationInfo& from)
     }
     const SerializationInfo* outputInfos = from.get("outputs");
     if (outputInfos) {
-        for each (auto info in outputInfos->sublists)
+        for each (const auto & info in outputInfos->sublists)
         {
             GraphPin* pin = getOutput(info.name);
             if (pin) {

@@ -59,12 +59,12 @@ void GrassMeshActor::end()
 	update = true;
 }
 
-void GrassMeshActor::prerender(RenderCommandList& cmdLst)
+void GrassMeshActor::prerender(SceneRenderData& sceneData)
 {
 	if (update) {
-		cmdLst.setUpdateStatic();
+		sceneData.setUpdateStatic();
 	}
-	if (cmdLst.willUpdateStatic()) {
+	if (sceneData.willUpdateStatic()) {
 		meshRender.customTransformSubmit = true;
 		float w = bound.x() / density;
 		int yd = bound.y() / w;
@@ -78,7 +78,7 @@ void GrassMeshActor::prerender(RenderCommandList& cmdLst)
 				m(0, 3) = i * w - hx + ((rand() / (double)RAND_MAX) - 0.5) * 2 * w;
 				m(1, 3) = j * w - hy + yo + ((rand() / (double)RAND_MAX) - 0.5) * 2 * w;
 				m.block(0, 0, 3, 3) = Quaternionf::FromAngleAxis((rand() / (double)RAND_MAX) * 2 * PI, Vector3f(0, 0, 1)).toRotationMatrix();
-				unsigned int transID = cmdLst.setStaticMeshTransform(transformMat * m);
+				unsigned int transID = sceneData.setStaticMeshTransform(transformMat * m);
 				if (baseTransID == -1) {
 					baseTransID = transID;
 				}
@@ -87,7 +87,7 @@ void GrassMeshActor::prerender(RenderCommandList& cmdLst)
 					meshRender.instanceCount = transCount;
 				}
 				for (int i = 0; i < meshRender.mesh->meshParts.size(); i++) {
-					cmdLst.setStaticMeshPartTransform(&meshRender.mesh->meshParts[i], meshRender.materials[i], transID);
+					sceneData.setStaticMeshPartTransform(&meshRender.mesh->meshParts[i], meshRender.materials[i], transID);
 				}
 			}
 		}

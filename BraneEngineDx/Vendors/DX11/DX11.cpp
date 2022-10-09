@@ -129,7 +129,7 @@ void DX11Context::createRenderState()
 	rastDesc.CullMode = D3D11_CULL_NONE;
 	rastDesc.FrontCounterClockwise = true;
 	rastDesc.DepthClipEnable = true;
-	rastDesc.DepthBias = DEPTH_BIAS_D32_FLOAT(-0.0001);
+	//rastDesc.DepthBias = DEPTH_BIAS_D32_FLOAT(-0.0001);
 	device->CreateRasterizerState(&rastDesc, &rasterizerCullOff);
 
 	rastDesc.CullMode = D3D11_CULL_BACK;

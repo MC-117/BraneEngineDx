@@ -11,12 +11,12 @@ ShotTrackEditor::ShotTrackEditor()
 void ShotTrackEditor::setInspectedObject(void* object)
 {
     shotTrack = dynamic_cast<ShotTrack*>((Base*)object);
-    TimelineTrackEditor::setInspectedObject(shotTrack);
+    TimelineClipTrackEditor::setInspectedObject(shotTrack);
 }
 
 void ShotTrackEditor::onTrackContentGUI(EditorInfo& info, TimelineEditorInfo& timelineInfo, const ImVec2& min_p, const ImVec2& max_p)
 {
-    TimelineTrackEditor::onTrackContentGUI(info, timelineInfo, min_p, max_p);
+    TimelineClipTrackEditor::onTrackContentGUI(info, timelineInfo, min_p, max_p);
 
     ImGui::Spring();
 

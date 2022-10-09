@@ -224,7 +224,7 @@ void Live2DActor::tick(float deltaTime)
     _model->Update();
 }
 
-void Live2DActor::prerender(RenderCommandList& cmdLst)
+void Live2DActor::prerender(SceneRenderData& sceneData)
 {
     if (modelAsset == NULL || !modelAsset->isValid())
         return;

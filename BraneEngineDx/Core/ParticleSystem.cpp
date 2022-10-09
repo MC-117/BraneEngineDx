@@ -32,7 +32,7 @@ void ParticleSystem::tick(float deltaTime)
 	this->deltaTime = deltaTime;
 }
 
-void ParticleSystem::prerender(RenderCommandList& cmdLst)
+void ParticleSystem::prerender(SceneRenderData& sceneData)
 {
 	particleRender.update(deltaTime, getPosition(WORLD), transformMat);
 	if (autoDestroy && particleRender.isOver())

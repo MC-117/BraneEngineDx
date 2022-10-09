@@ -99,9 +99,9 @@ void Spine2DActor::afterTick()
         skeleton->updateWorldTransform();
 }
 
-void Spine2DActor::prerender(RenderCommandList& cmdLst)
+void Spine2DActor::prerender(SceneRenderData& sceneData)
 {
-    Actor::prerender(cmdLst);
+    Actor::prerender(sceneData);
     if (skeleton == NULL)
         return;
     spine2DRender.loadDefaultMaterial();

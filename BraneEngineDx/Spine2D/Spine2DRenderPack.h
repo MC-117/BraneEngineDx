@@ -17,7 +17,7 @@ struct Spine2DRenderCommand : public IRenderCommand
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
 	virtual RenderMode getRenderMode() const;
-	virtual IRenderPack* createRenderPack(RenderCommandList& commandList) const;
+	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const;
 };
 
 class Spine2DRenderPack : public IRenderPack

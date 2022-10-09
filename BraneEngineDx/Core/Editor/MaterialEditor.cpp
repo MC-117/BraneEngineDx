@@ -12,6 +12,34 @@ void MaterialEditor::setInspectedObject(void* object)
 	material = (Material*)object;
 }
 
+RenderStage enumRenderStage(uint16_t renderOrder)
+{
+	if (renderOrder < RenderStage::RS_Opaque)
+		return RenderStage::RS_PreBackground;
+	if (renderOrder < RenderStage::RS_Aplha)
+		return RenderStage::RS_Opaque;
+	if (renderOrder < RenderStage::RS_Transparent)
+		return RenderStage::RS_Aplha;
+	if (renderOrder < RenderStage::RS_Post)
+		return RenderStage::RS_Transparent;
+	return RenderStage::RS_Post;
+}
+
+const char* getRenderStageName(RenderStage stage)
+{
+	if (stage == RenderStage::RS_PreBackground)
+		return "PreBackground";
+	if (stage == RenderStage::RS_Opaque)
+		return "Opaque";
+	if (stage == RenderStage::RS_Aplha)
+		return "Aplha";
+	if (stage == RenderStage::RS_Transparent)
+		return "Transparent";
+	if (stage == RenderStage::RS_Post)
+		return "Post";
+	return "Unknown";
+}
+
 void MaterialEditor::onMaterialGUI(EditorInfo& info)
 {
 	if (material == NULL)
@@ -64,6 +92,23 @@ void MaterialEditor::onMaterialGUI(EditorInfo& info)
 		if (baseMaterial) {
 			material->instantiateFrom(*baseMaterial);
 		}
+	}
+	RenderStage renderStage = enumRenderStage(material->renderOrder);
+	static map<RenderStage, const char*> renderStageName = {
+		{ RenderStage::RS_PreBackground, "PreBackground" },
+		{ RenderStage::RS_Opaque, "Opaque" },
+		{ RenderStage::RS_Aplha, "Aplha" },
+		{ RenderStage::RS_Transparent, "Transparent" },
+		{ RenderStage::RS_Post, "Post" }
+	};
+	if (ImGui::BeginCombo("RenderOrder", renderStageName[renderStage])) {
+		for (const auto& item : renderStageName) {
+			bool selected = renderStage == item.first;
+			if (ImGui::Selectable(item.second, &selected)) {
+				material->renderOrder = item.first;
+			}
+		}
+		ImGui::EndCombo();
 	}
 	ImGui::Checkbox("TwoSide", &material->isTwoSide);
 	ImGui::Checkbox("CastShadow", &material->canCastShadow);

@@ -6,6 +6,7 @@
 #include "../../Core/Engine.h"
 #include "../../Core/SkeletonMeshActor.h"
 #include "../../Core/Importer.h"
+#include "../../Core/WUI/ProgressUI.h"
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 #include "../../Core/GUI/SerializationEditor.h"
 #include "utf8/SJ2UTF8Table.h"
@@ -240,9 +241,23 @@ void AnimationConverter::onRenderWindow(GUIRenderInfo & info)
 						ofs.close();
 					}
 					if (animationData != NULL) {
-						AnimationLoader::writeAnimation(*animationData, desc.filePath);
+						struct AnimationWriterInfo
+						{
+							AnimationClipData* data;
+							string path;
+							ProgressUI ui = ProgressUI("Write Animation");
+							bool result;
+						};
+						AnimationWriterInfo info = { animationData, desc.filePath };
+						info.ui.doModelAsync([](WUIControl& ctrl, void* ptr) {
+							AnimationWriterInfo* info = (AnimationWriterInfo*)ptr;
+							info->result = AnimationLoader::writeAnimation(*info->data, info->path, &info->ui.work);
+							}, & info);
+						if (!info.result) {
+							MessageBox(NULL, "Serialize failed", "Error", MB_OK);
+						}
+						info.ui.close();
 					}
-					MessageBoxA(NULL, "Complete", "AnimationConverter", MB_OK);
 				}
 			});
 			td.detach();
@@ -361,8 +376,19 @@ void AnimationConverter::showVmdLoad()
 				else {
 					AnimationClipData data("anim");
 					getAnimation(data, *vmdMotion, camMotionScale, camFovScale);
-					data.write(file);
+					struct AnimationInfo
+					{
+						AnimationClipData& data;
+						ofstream& file;
+						ProgressUI ui = ProgressUI("Write Animation");
+					};
+					AnimationInfo info = { data, file };
+					info.ui.doModelAsync([](WUIControl& ctrl, void* ptr) {
+						AnimationInfo* info = (AnimationInfo*)ptr;
+						info->data.write(info->file, &info->ui.work);
+					}, & info);
 					MessageBoxA(NULL, "Save Complete", "Info", MB_OK);
+					info.ui.close();
 				}
 			}
 		}

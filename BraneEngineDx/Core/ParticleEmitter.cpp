@@ -447,16 +447,15 @@ void ParticleRender::update(float deltaTime, const Vector3f & spawnPosition, con
 
 void ParticleRender::render(RenderInfo & info)
 {
-	if (info.cmdList == NULL)
-		return;
 	for (auto b = particleEmtters.begin(), e = particleEmtters.end(); b != e; b++)
 		if (b->material != NULL) {
 			ParticleRenderCommand command;
+			command.sceneData = info.sceneData;
 			command.camera = info.camera;
 			command.material = b->material;
 			command.mesh = NULL;
 			command.particles = &b->particles;
-			info.cmdList->setRenderCommand(command);
+			info.renderGraph->setRenderCommand(command);
 		}
 }
 

@@ -2,10 +2,10 @@
 
 #include "TimelinePlayable.h"
 
-class TimelineTrack;
+class TimelineClipTrack;
 class TimelineClip : public Base
 {
-	friend class TimelineTrack;
+	friend class TimelineClipTrack;
 public:
 	Serialize(TimelineClip, Base);
 	float startTime = 0;

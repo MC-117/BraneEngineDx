@@ -2,7 +2,7 @@
 
 SerializeInstance(AudioTrack);
 
-AudioTrack::AudioTrack(const string& name) : TimelineTrack(name)
+AudioTrack::AudioTrack(const string& name) : TimelineClipTrack(name)
 {
 }
 
@@ -66,7 +66,7 @@ Serializable* AudioTrack::instantiate(const SerializationInfo& from)
 
 bool AudioTrack::deserialize(const SerializationInfo& from)
 {
-    if (!TimelineTrack::deserialize(from))
+    if (!TimelineClipTrack::deserialize(from))
         return false;
     const SerializationInfo* transformInfo = from.get("transform");
     transform.deserialize(*transformInfo);
@@ -75,7 +75,7 @@ bool AudioTrack::deserialize(const SerializationInfo& from)
 
 bool AudioTrack::serialize(SerializationInfo& to)
 {
-    if (!TimelineTrack::serialize(to))
+    if (!TimelineClipTrack::serialize(to))
         return false;
     SerializationInfo* info = to.add("transform");
     transform.serialize(*info);

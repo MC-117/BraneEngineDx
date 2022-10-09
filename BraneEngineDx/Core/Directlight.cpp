@@ -114,11 +114,7 @@ void DirectLight::preRender()
 
 void DirectLight::render(RenderInfo& info)
 {
-	if (info.cmdList == NULL) {
-		shadowCamera.shadowCameraRender.preRender();
-		shadowCamera.shadowCameraRender.render(info);
-	}
-	else if (!((Render*)info.tempRender->getRender())->hidden && info.tempRender->getCanCastShadow()) {
+	if (!((Render*)info.tempRender->getRender())->hidden && info.tempRender->getCanCastShadow()) {
 		vector<RenderResource> resources;
 		if (info.tempRender->getRenderResource(resources) > 0) {
 			Material* depthMat = &shadowCamera.shadowCameraRender.material;
@@ -129,12 +125,13 @@ void DirectLight::render(RenderInfo& info)
 				if (!resource.material->canCastShadow)
 					continue;
 				for (int j = 0; j < resource.instanceIDCount; j++)
-					info.cmdList->setMeshPartTransform(resource.meshPart, depthMat, resource.instanceID + j);
+					info.sceneData->setMeshPartTransform(resource.meshPart, depthMat, resource.instanceID + j);
 				MeshRenderCommand command;
+				command.sceneData = info.sceneData;
 				command.camera = &shadowCamera;
 				command.material = depthMat;
 				command.mesh = resource.meshPart;
-				info.cmdList->setRenderCommand(command);
+				info.renderGraph->setRenderCommand(command);
 			}
 		}
 	}

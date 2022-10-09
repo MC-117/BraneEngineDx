@@ -40,7 +40,7 @@ void GUI::onGUI(RenderInfo& info)
 			throw runtime_error("Vendor ImGui new frame failed");
 	}
 
-	GUIRenderInfo _info = { viewSize, sceneBlurTex, info.cmdList, *this, info.camera };
+	GUIRenderInfo _info = { viewSize, sceneBlurTex, info.sceneData, info.renderGraph, *this, info.camera };
 
 	// ImGui Dock Begin
 	ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;

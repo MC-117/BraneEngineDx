@@ -7,7 +7,7 @@ Serializable* EntryNode::instantiate(const SerializationInfo& from)
     EntryNode* node = new EntryNode();
     const SerializationInfo* inputInfos = from.get("inputs");
     if (inputInfos) {
-        for each (auto info in inputInfos->sublists)
+        for each (const auto& info in inputInfos->sublists)
         {
             Serializable* serializable = info.serialization->instantiate(info);
             if (serializable == NULL)
@@ -22,7 +22,7 @@ Serializable* EntryNode::instantiate(const SerializationInfo& from)
     }
     const SerializationInfo* outputInfos = from.get("outputs");
     if (outputInfos) {
-        for each (auto info in outputInfos->sublists)
+        for each (const auto & info in outputInfos->sublists)
         {
             Serializable* serializable = info.serialization->instantiate(info);
             if (serializable == NULL)
@@ -45,7 +45,7 @@ Serializable* ReturnNode::instantiate(const SerializationInfo& from)
     ReturnNode* node = new ReturnNode();
     const SerializationInfo* inputInfos = from.get("inputs");
     if (inputInfos) {
-        for each (auto info in inputInfos->sublists)
+        for each (const auto & info in inputInfos->sublists)
         {
             Serializable* serializable = info.serialization->instantiate(info);
             if (serializable == NULL)
@@ -60,7 +60,7 @@ Serializable* ReturnNode::instantiate(const SerializationInfo& from)
     }
     const SerializationInfo* outputInfos = from.get("outputs");
     if (outputInfos) {
-        for each (auto info in outputInfos->sublists)
+        for each (const auto & info in outputInfos->sublists)
         {
             Serializable* serializable = info.serialization->instantiate(info);
             if (serializable == NULL)

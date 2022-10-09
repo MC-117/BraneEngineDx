@@ -36,6 +36,6 @@ void WUILabel::updateText()
 {
     if (hWnd != NULL) {
         InvalidateRect(hWnd, NULL, TRUE);
-        SendMessage(hWnd, WM_PAINT, 0, 0);
+        //SendMessage(hWnd, WM_PAINT, 0, 0);
     }
 }

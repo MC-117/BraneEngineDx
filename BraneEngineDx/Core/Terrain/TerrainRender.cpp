@@ -26,16 +26,17 @@ void TerrainRender::render(RenderInfo& info)
         return;
 
     if (!customTransformSubmit)
-        instanceID = info.cmdList->setMeshTransform(transformMat);
+        instanceID = info.sceneData->setMeshTransform(transformMat);
 
     if (!customTransformSubmit)
-        info.cmdList->setMeshPartTransform(&geometry->meshPart, material, instanceID);
+        info.sceneData->setMeshPartTransform(&geometry->meshPart, material, instanceID);
     MeshRenderCommand command;
+    command.sceneData = info.sceneData;
     command.camera = info.camera;
     command.material = material;
     command.mesh = &geometry->meshPart;
     command.isStatic = isStatic;
-    info.cmdList->setRenderCommand(command);
+    info.renderGraph->setRenderCommand(command);
 }
 
 Matrix4f TerrainRender::getTransformMatrix() const

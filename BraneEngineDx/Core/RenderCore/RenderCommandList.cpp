@@ -7,18 +7,18 @@
 #include "../IVendor.h"
 #include "../Engine.h"
 
-void RenderCommandList::setLight(Render* lightRender)
+void SceneRenderData::setLight(Render* lightRender)
 {
 	if (lightRender->getRenderType() == IRendering::Light)
 		lightDataPack.setLight((Light*)lightRender);
 }
 
-unsigned int RenderCommandList::setMeshTransform(const Matrix4f& transformMat)
+unsigned int SceneRenderData::setMeshTransform(const Matrix4f& transformMat)
 {
 	return meshTransformDataPack.setMeshTransform(transformMat);
 }
 
-unsigned int RenderCommandList::setMeshTransform(const vector<Matrix4f>& transformMats)
+unsigned int SceneRenderData::setMeshTransform(const vector<Matrix4f>& transformMats)
 {
 	return meshTransformDataPack.setMeshTransform(transformMats);
 }
@@ -31,12 +31,12 @@ inline Guid makeGuid(void* ptr0, void* ptr1)
 	return guid;
 }
 
-void* RenderCommandList::getMeshPartTransform(MeshPart* meshPart, Material* material)
+void* SceneRenderData::getMeshPartTransform(MeshPart* meshPart, Material* material)
 {
 	return meshTransformDataPack.getMeshPartTransform(meshPart, material);
 }
 
-void* RenderCommandList::setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
+void* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
 {
 	void* re = meshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex);
 	/*if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
@@ -44,7 +44,7 @@ void* RenderCommandList::setMeshPartTransform(MeshPart* meshPart, Material* mate
 	return re;
 }
 
-void* RenderCommandList::setMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex)
+void* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex)
 {
 	void* re = meshTransformDataPack.setMeshPartTransform(meshPart, material, (MeshTransformIndex*)transformIndex);
 	/*if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
@@ -52,67 +52,126 @@ void* RenderCommandList::setMeshPartTransform(MeshPart* meshPart, Material* mate
 	return re;
 }
 
-unsigned int RenderCommandList::setStaticMeshTransform(const Matrix4f& transformMat)
+unsigned int SceneRenderData::setStaticMeshTransform(const Matrix4f& transformMat)
 {
 	return meshTransformDataPack.setStaticMeshTransform(transformMat);
 }
 
-unsigned int RenderCommandList::setStaticMeshTransform(const vector<Matrix4f>& transformMats)
+unsigned int SceneRenderData::setStaticMeshTransform(const vector<Matrix4f>& transformMats)
 {
 	return meshTransformDataPack.setStaticMeshTransform(transformMats);
 }
 
-void* RenderCommandList::getStaticMeshPartTransform(MeshPart* meshPart, Material* material)
+void* SceneRenderData::getStaticMeshPartTransform(MeshPart* meshPart, Material* material)
 {
 	return meshTransformDataPack.getStaticMeshPartTransform(meshPart, material);
 }
 
-void* RenderCommandList::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
+void* SceneRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
 {
 	void* re = meshTransformDataPack.setStaticMeshPartTransform(meshPart, material, transformIndex);
-	if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
-		meshTransformDataPack.setStaticMeshPartTransform(meshPart, &Material::defaultDepthMaterial, transformIndex);
+	//if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
+	//	meshTransformDataPack.setStaticMeshPartTransform(meshPart, &Material::defaultDepthMaterial, transformIndex);
 	return re;
 }
 
-void* RenderCommandList::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex)
+void* SceneRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex)
 {
 	void* re = meshTransformDataPack.setStaticMeshPartTransform(meshPart, material, (MeshTransformIndex*)transformIndex);
-	if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
-		meshTransformDataPack.setStaticMeshPartTransform(meshPart, &Material::defaultDepthMaterial, (MeshTransformIndex*)transformIndex);
+	//if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
+	//	meshTransformDataPack.setStaticMeshPartTransform(meshPart, &Material::defaultDepthMaterial, (MeshTransformIndex*)transformIndex);
 	return re;
 }
 
-void RenderCommandList::cleanStaticMeshTransform(unsigned int base, unsigned int count)
+void SceneRenderData::cleanStaticMeshTransform(unsigned int base, unsigned int count)
 {
 	meshTransformDataPack.cleanStatic(base, count);
 }
 
-void RenderCommandList::cleanStaticMeshPartTransform(MeshPart* meshPart, Material* material)
+void SceneRenderData::cleanStaticMeshPartTransform(MeshPart* meshPart, Material* material)
 {
 	meshTransformDataPack.cleanPartStatic(meshPart, material);
 }
 
-bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, bool isStatic)
-{
-	return setRenderCommand(cmd, isStatic, true);
-}
-
-void RenderCommandList::setUpdateStatic()
+void SceneRenderData::setUpdateStatic()
 {
 	meshTransformDataPack.setUpdateStatic();
 }
 
-bool RenderCommandList::willUpdateStatic()
+bool SceneRenderData::willUpdateStatic()
 {
 	return meshTransformDataPack.staticUpdate;
 }
 
-bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, bool isStatic, bool autoFill)
+void SceneRenderData::create()
+{
+	meshTransformDataPack.create();
+	particleDataPack.create();
+	lightDataPack.create();
+}
+
+void SceneRenderData::reset()
+{
+	meshTransformDataPack.clean();
+	particleDataPack.clean();
+	lightDataPack.clean();
+}
+
+void SceneRenderData::release()
+{
+	meshTransformDataPack.release();
+	particleDataPack.release();
+	lightDataPack.release();
+}
+
+void SceneRenderData::upload()
+{
+	meshTransformDataPack.upload();
+	particleDataPack.upload();
+	lightDataPack.upload();
+}
+
+void SceneRenderData::bind(IRenderContext& context)
+{
+	meshTransformDataPack.bind(context);
+	particleDataPack.bind(context);
+	lightDataPack.bind(context);
+}
+
+bool RenderCommandList::addRenderTask(const IRenderCommand& cmd, RenderTask& task)
+{
+	task.hashCode = RenderTask::Hasher()(task);
+
+	RenderTask* pTask = NULL;
+	auto taskIter = taskSet.find(&task);
+	if (taskIter == taskSet.end()) {
+		pTask = new RenderTask(task);
+		//taskMap.insert(make_pair(task.hashCode, pTask));
+		taskSet.insert(pTask);
+	}
+	else {
+		pTask = *taskIter;
+		task.renderPack = pTask->renderPack;
+		*pTask = task;
+	}
+
+	if (pTask->renderPack == NULL) {
+		pTask->renderPack = cmd.createRenderPack(*cmd.sceneData, *this);
+	}
+
+	if (!pTask->renderPack->setRenderCommand(cmd))
+		return false;
+
+	pTask->age = 0;
+	return true;
+}
+
+bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, ShaderFeature extraFeature)
 {
 	if (!cmd.isValid())
 		return false;
 	Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
+	shaderFeature |= extraFeature;
 	ShaderProgram* shader = cmd.material->getShader()->getProgram(shaderFeature);
 	if (shader == NULL) {
 		Console::warn("Shader %s don't have mode %d", cmd.material->getShaderName().c_str(), shaderFeature.enumValue);
@@ -146,48 +205,89 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, bool isStati
 		}
 	}
 
+	MeshData* meshData = cmd.mesh == NULL ? NULL : cmd.mesh->meshData;
+	if (meshData)
+		meshData->init();
+
 	RenderTask task;
 	task.age = 0;
+	task.sceneData = cmd.sceneData;
 	task.shaderProgram = shader;
 	task.renderMode = cmd.getRenderMode();
 	task.cameraData = cameraRenderData;
 	task.materialData = materialRenderData;
+	task.meshData = meshData;
 	task.extraData = cmd.bindings;
 
+	return addRenderTask(cmd, task);
+}
+
+bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, vector<ShaderFeature> extraFeatures)
+{
+	if (!cmd.isValid())
+		return false;
+
+	CameraRenderData* cameraRenderData = dynamic_cast<CameraRenderData*>(cmd.camera->getRenderData());
+	if (cameraRenderData == NULL)
+		return false;
+	if (cameraRenderData->usedFrame < (long long)Time::frames()) {
+		cameraRenderData->create();
+		cameraRenderData->usedFrame = Time::frames();
+	}
+
+	for (auto binding : cmd.bindings) {
+		if (binding->usedFrame < (long long)Time::frames()) {
+			binding->create();
+			binding->usedFrame = Time::frames();
+		}
+	}
+
 	MeshData* meshData = cmd.mesh == NULL ? NULL : cmd.mesh->meshData;
-	task.meshData = meshData;
 	if (meshData)
 		meshData->init();
 
-	task.hashCode = RenderTask::Hasher()(task);
+	bool success = true;
 
-	RenderTask* pTask = NULL;
-	auto taskIter = taskSet.find(&task);
-	if (taskIter == taskSet.end()) {
-		pTask = new RenderTask(task);
-		//taskMap.insert(make_pair(task.hashCode, pTask));
-		taskSet.insert(pTask);
+	for (auto extraFeature : extraFeatures) {
+		Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
+		shaderFeature |= extraFeature;
+		ShaderProgram* shader = cmd.material->getShader()->getProgram(shaderFeature);
+		if (shader == NULL) {
+			Console::warn("Shader %s don't have mode %d", cmd.material->getShaderName().c_str(), shaderFeature.enumValue);
+			success &= false;
+			continue;
+		}
+
+		if (!shader->init()) {
+			success &= false;
+			continue;
+		}
+
+		MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(cmd.material->getRenderData());
+		if (materialRenderData == NULL) {
+			success &= false;
+			continue;
+		}
+		if (materialRenderData->usedFrame < (long long)Time::frames()) {
+			materialRenderData->program = shader;
+			materialRenderData->create();
+			materialRenderData->usedFrame = Time::frames();
+		}
+
+		RenderTask task;
+		task.age = 0;
+		task.sceneData = cmd.sceneData;
+		task.shaderProgram = shader;
+		task.renderMode = cmd.getRenderMode();
+		task.cameraData = cameraRenderData;
+		task.materialData = materialRenderData;
+		task.meshData = meshData;
+		task.extraData = cmd.bindings;
+
+		success &= addRenderTask(cmd, task);
 	}
-	else {
-		pTask = *taskIter;
-		task.renderPack = pTask->renderPack;
-		*pTask = task;
-	}
 
-	if (pTask->renderPack == NULL) {
-		pTask->renderPack = cmd.createRenderPack(*this);
-	}
-
-	if (!pTask->renderPack->setRenderCommand(cmd))
-		return false;
-
-	pTask->age = 0;
-	/*if (autoFill && shader->renderOrder >= 1000 && shader->renderOrder < 2450) {
-		RenderCommand _cmd = cmd;
-		_cmd.material = &Material::defaultDepthMaterial;
-		return setRenderCommand(_cmd, isStatic, false);
-	}*/
-	return true;
+	return success;
 }
 
 /*
@@ -198,9 +298,6 @@ Deferred | Light | Depth Pre-Pass | Geomtry | Alpha Geomtry | Pixel  |          
 
 void RenderCommandList::prepareCommand()
 {
-	meshTransformDataPack.create();
-	particleDataPack.create();
-	lightDataPack.create();
 }
 
 void RenderCommandList::excuteCommand()
@@ -209,13 +306,6 @@ void RenderCommandList::excuteCommand()
 	IRenderContext& context = *vendor.getDefaultRenderContext();
 
 	Timer timer;
-	meshTransformDataPack.upload();
-	particleDataPack.upload();
-	lightDataPack.upload();
-
-	meshTransformDataPack.bind(context);
-	particleDataPack.bind(context);
-	lightDataPack.bind(context);
 
 	timer.record("Upload");
 	RenderTaskContext taskContext;
@@ -226,6 +316,14 @@ void RenderCommandList::excuteCommand()
 		if (task.renderPack == NULL)
 			continue;
 		Time t = Time::now();
+
+		if (taskContext.sceneData != task.sceneData) {
+			taskContext.sceneData = task.sceneData;
+
+			task.sceneData->upload();
+			task.sceneData->bind(context);
+		}
+
 		if (taskContext.cameraData != task.cameraData) {
 			taskContext.cameraData = task.cameraData;
 
@@ -315,9 +413,6 @@ void RenderCommandList::excuteCommand()
 
 void RenderCommandList::resetCommand()
 {
-	meshTransformDataPack.clean();
-	particleDataPack.clean();
-	lightDataPack.clean();
 	for (auto b = taskSet.begin(); b != taskSet.end();) {
 		RenderTask* task = *b;
 		delete task->renderPack;

@@ -4,7 +4,7 @@
 
 #include "../Render.h"
 
-class GUIRenderInfo;
+struct GUIRenderInfo;
 
 struct PostProcessResource
 {
@@ -61,6 +61,7 @@ public:
 	virtual void resize(const Unit2Di& size);
 
 	virtual void onGUI(GUIRenderInfo& info);
+	virtual void reset();
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);

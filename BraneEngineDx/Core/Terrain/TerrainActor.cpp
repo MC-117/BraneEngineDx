@@ -36,7 +36,7 @@ void TerrainActor::updateCollision()
         Quaternionf::FromAngleAxis(PI * 0.5f, Vector3f::UnitX()));
 }
 
-void TerrainActor::prerender(RenderCommandList& cmdLst)
+void TerrainActor::prerender(SceneRenderData& sceneData)
 {
     terrainRender.transformMat = transformMat;
 }

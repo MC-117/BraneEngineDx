@@ -393,27 +393,38 @@ bool AnimationClipData::read(istream & in)
 	return true;
 }
 
-void AnimationClipData::write(ostream & out) const
+void AnimationClipData::write(ostream& out, LongProgressWork* work) const
 {
 	writeString("BEAnim", out, false);
 	uint32_t boneLen = transformAnimationDatas.size();
+	uint32_t morphNameLen = curveNames.size();
+	uint32_t morphLen = curves.size();
+
+	float totalSteps = boneLen + morphLen + 1;
+	int step = 0;
+
 	out.write((char*)&boneLen, sizeof(uint32_t));
 	for (int i = 0; i < boneLen; i++) {
 		const TransformAnimationData& data = transformAnimationDatas[i];
+		if (work)
+			work->setProgress(step / totalSteps, "Write Bone " + data.objectName);
 		writeString(data.objectName, out);
 		data.write(out);
+		step++;
 	}
-	uint32_t morphNameLen = curveNames.size();
+	if (work)
+		work->setProgress(step / totalSteps, "Write Morph Names");
 	out.write((char*)&morphNameLen, sizeof(uint32_t));
 	for (auto b = curveNames.begin(), e = curveNames.end(); b != e; b++) {
 		writeString(b->first, out);
 		uint32_t index = b->second;
 		out.write((char*)&index, sizeof(uint32_t));
 	}
-	uint32_t morphLen = curves.size();
 	out.write((char*)&morphLen, sizeof(uint32_t));
 	for (auto b = curves.begin(), e = curves.end(); b != e; b++) {
 		uint32_t index = b->first;
+		if (work)
+			work->setProgress(step / totalSteps, "Write Morph " + to_string(index));
 		out.write((char*)&index, sizeof(uint32_t));
 		const Curve<float, float>& curve = b->second;
 		uint32_t curveLen = curve.keys.size();
@@ -434,7 +445,10 @@ void AnimationClipData::write(ostream & out) const
 			float_t outRate = cb->second.outRate;
 			out.write((char*)&outRate, sizeof(float_t));
 		}
+		step++;
 	}
+	if (work)
+		work->setProgress(1, "Complete");
 }
 
 SerializeInstance(AnimationBase);
@@ -569,11 +583,10 @@ Enum<AnimationUpdateFlags> AnimationClip::update(float deltaTime)
 			animationPose.transformData[i] = bindPose.transformData[i];
 		}
 	}
-	for each (auto item in curvePlayer)
-	{
-		float weight = item.second.update(deltaTime);
-		curveCurrentValue[item.first] = weight;
-		if (item.second.isPlaying)
+	for (auto b = curvePlayer.begin(), e = curvePlayer.end(); b != e; b++) {
+		float weight = b->second.update(deltaTime);
+		curveCurrentValue[b->first] = weight;
+		if (b->second.isPlaying)
 			updateFlags |= AnimationUpdateFlags::Morph;
 	}
 	auto end = curveCurrentValue.end();
@@ -1285,14 +1298,14 @@ AnimationClipData * AnimationLoader::readAnimation(const string & file)
 	return data;
 }
 
-bool AnimationLoader::writeAnimation(const AnimationClipData data, const string & file)
+bool AnimationLoader::writeAnimation(const AnimationClipData& data, const string & file, LongProgressWork* work)
 {
 	ofstream f(file, ios::binary | ios::out);
 	if (f.fail()) {
 		f.close();
 		return false;
 	}
-	data.write(f);
+	data.write(f, work);
 	f.close();
 	return true;
 }

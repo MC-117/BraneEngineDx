@@ -81,7 +81,7 @@ void SkySphere::tick(float deltaTime)
 	time += deltaTime / 400;
 }
 
-void SkySphere::prerender(RenderCommandList& cmdLst)
+void SkySphere::prerender(SceneRenderData& sceneData)
 {
 	meshRender.transformMat = transformMat;
 	Material* mat = meshRender.getMaterial();

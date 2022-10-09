@@ -12,7 +12,7 @@ AudioTrackEditor::AudioTrackEditor()
 void AudioTrackEditor::setInspectedObject(void* object)
 {
     audioTrack = dynamic_cast<AudioTrack*>((Base*)object);
-    TimelineTrackEditor::setInspectedObject(audioTrack);
+    TimelineClipTrackEditor::setInspectedObject(audioTrack);
 }
 
 void AudioTrackEditor::onTrackContentGUI(EditorInfo& info, TimelineEditorInfo& timelineInfo, const ImVec2& min_p, const ImVec2& max_p)
@@ -67,7 +67,7 @@ void AudioTrackEditor::onTrackContentGUI(EditorInfo& info, TimelineEditorInfo& t
 
 void AudioTrackEditor::onTrackInspectGUI(EditorInfo& info)
 {
-    TimelineTrackEditor::onTrackInspectGUI(info);
+    TimelineClipTrackEditor::onTrackInspectGUI(info);
     float volume = audioTrack->getMaxVolume();
     if (ImGui::DragFloat("MaxVolume", &volume, 0.01, 0, 1)) {
         audioTrack->setMaxVolume(volume);

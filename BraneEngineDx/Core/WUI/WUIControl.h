@@ -68,7 +68,7 @@ protected:
 
 	virtual void onCreate();
 	virtual void onPaint(HDC hdc);
-	virtual BOOL onEraseBkgnd(HDC hdc, const PAINTSTRUCT& ps);
+	virtual BOOL onEraseBkgnd(HDC hdc);
 	virtual BOOL onCommand(WPARAM wParam, LPARAM lParam);
 	virtual BOOL onSysCommand(WPARAM wParam, LPARAM lParam);
 	virtual void onParentMove(const Unit2Di& pos, const Unit2Di& size);
