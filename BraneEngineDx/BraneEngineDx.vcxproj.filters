@@ -1221,6 +1221,9 @@
     <ClInclude Include="Core\RenderGraph\DeferredLightingPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\RenderCore\DirectShadowRenderPack.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -2280,6 +2283,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderGraph\DeferredLightingPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\DirectShadowRenderPack.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

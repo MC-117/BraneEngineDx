@@ -48,7 +48,7 @@ FragmentOut DEFAULT_FS_MAIN
     float3 H = normalize(V + L);
     float4 ambience = lerp(baseColor, highlightColor, smoothToon(Float4(1.0f),
         Float4(0.0f), dot(N, H), highlightCut, highlightCutSmooth));
-    ambience = lerp(shadowColor, ambience, ShadowCalculation(depthMap, depthMapSampler, fin.lightSpacePos, N, L));
+    ambience = lerp(shadowColor, ambience, ShadowCalculation(depthMap, depthMapSampler, fin.WorldPos, fin.Normal, directLight));
     ambience = smoothToon(ambience, shadowColor, dot(N, L), shadowCut, shadowCutSmooth);
     ambience = smoothToon(rimColor, ambience, fresnelSchlick(dot(N, normalize(camData.camPos - fin.WorldPos)), 0.33f), rimCut, rimCutSmooth);
 

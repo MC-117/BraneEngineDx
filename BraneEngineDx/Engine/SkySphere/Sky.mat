@@ -23,9 +23,12 @@ Texture starMap: black
 
 #vertex use default
 #fragment
-#include "../Shaders/lib/Basic_FS_Lib.hmat"
-#include "../Shaders/lib/Light_Def.hmat"
-#include "../Shaders/lib/CameraData_Def.hmat"
+#condition deferred
+#condition lighting
+#include "/lib/Basic_FS_Lib.hmat"
+#include "/lib/Light_Def.hmat"
+#include "/lib/CameraData_Def.hmat"
+#include "/lib/GBuffer_Def.hmat"
 
 DEF_MAT_BEGIN
 uniform float4 sunColor;
@@ -47,16 +50,35 @@ uniform float highNoisePower;
 uniform float horizonFalloff;
 DEF_MAT_END
 
+#if defined(LIGHTING_SHADER_FEATURE)
+DEF_GBUFFER
+#else
 DEF_TEX2D(cloudNoiseMap, 0);
 DEF_TEX2D(skyMap, 1);
 DEF_TEX2D(starMap, 2);
+#endif
+
+#ifdef DEFERRED_SHADER_FEATURE
+FS_DEF_OUT_GBUFFER
+#else
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+//FS_DEF_OUT_COLOR(ssnMask, 0);
+FS_DEF_OUT_END
+#endif
+
+#include "/lib/Surface_Def.hmat"
 
 float sphereMask(float pos, float center, float radius, float hardness) {
     return clamp((1 - abs(pos - center) / radius) / (1 - hardness), 0, 1);
 }
 
-float4 DEFAULT_FS_MAIN : SV_TARGET
+FragmentOut SURFACE_MAIN
 {
+    FragmentOut fout;
+    Surface surf = getSurface(fin);
+
+    #ifndef LIGHTING_SHADER_FEATURE
     float4 _sunColor;
     float4 _lightDirection;
     float _sunHeight;
@@ -90,5 +112,19 @@ float4 DEFAULT_FS_MAIN : SV_TARGET
     SkyCol = lerp(SkyCol, horizonColor, cutoff);
     float4 oCol = sunCol + SkyCol;
     oCol = lerp(oCol, rimLight, clamp(power, 0, 1)) * overallColor * 1.5;
-    return oCol;
+
+    oCol = oCol / (oCol + Float4(1.0));
+    oCol = pow(oCol, Float4(1.0/2.2));
+    oCol.a = 1;
+    #endif
+
+    #if defined(DEFERRED_SHADER_FEATURE)
+    surf.albedo = oCol;
+    outputSurface(surf, fout.gBufferA, fout.gBufferB, fout.gBufferC, fout.gBufferD, fout.gBufferE);
+    #elif defined(LIGHTING_SHADER_FEATURE)
+    fout.FragColor = surf.albedo;
+    #else
+    fout.FragColor = oCol;
+    #endif
+    return fout;
 }

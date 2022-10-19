@@ -70,9 +70,14 @@
 Texture2D tex : TEX_BINDING(id);\
 SamplerState tex##Sampler : SAMPLE_BINDING(id);
 
+#define DEF_TEX2D_UINT(tex, id) \
+Texture2D<uint4> tex : TEX_BINDING(id);\
+
 // Only work for pattern [tex] and [tex]Sampler.
 #define SAMPLE_TEX(tex, uv) (tex.Sample(tex##Sampler, (uv)))
 #define SAMPLE_TEX_LOD(tex, uv, lod) (tex.SampleLevel(tex##Sampler, (uv), (lod)))
+#define GATHER_TEX(tex, uv, off) (tex.Gather(tex##Sampler, (uv), (off)))
+#define LOAD_TEX(tex, pos) (tex.Load((pos)))
 
 #define DEF_MAT_BEGIN cbuffer MatInsBuf : register(MAT_INS_BIND_INDEX) {
 #define DEF_MAT_END };
@@ -89,4 +94,8 @@ cbuffer DrawInfoBuf : register(DRAW_INFO_BIND_INDEX)
     uniform uint baseInstance;
     uniform uint passID;
     uniform uint passNum;
+    uniform uint materialID;
+    uniform uint pad0;
+    uniform uint pad1;
+    uniform uint pad2;
 };

@@ -7,7 +7,7 @@ Texture depthMap
 #vertex use postprocess
 #fragment postprocess
 #include "../lib/Basic_FS_Lib.hmat"
-#include "../lib/PostProcess_Def.hmat"
+#include "../lib/ScreenPass_Def.hmat"
 
 #include "../lib/Const_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
@@ -55,18 +55,18 @@ float getDOFFactor(float2 UV)
     return clamp(1 - (focusDistance / realDepth), -2, 1);
 }
 
-FragmentOut DEFAULT_PP_MAIN
+FragmentOut DEFAULT_SCREEN_MAIN
 {
 	FragmentOut fout;
 	if (passID == 0) {
         float weight = 0;
         float3 c = Float3(0);
         int n = blurIter < 1 ? 1 : (blurIter < 2 ? 9 : (blurIter < 3 ? 25 : 57));
-        float centerFactor = getDOFFactor(pin.UV);
+        float centerFactor = getDOFFactor(fin.UV);
         for (int i = 0; i < n; i++) {
             float2 off = dofKernel[i] * blurRadius;
             off /= camData.viewSize;
-            float2 uv = pin.UV + off * centerFactor;
+            float2 uv = fin.UV + off * centerFactor;
             uv = clamp(uv, Float2(0), Float2(1));
             float factor = getDOFFactor(uv);
             float3 cc = SAMPLE_TEX_LOD(screenMap, uv, 0).rgb;
@@ -75,7 +75,7 @@ FragmentOut DEFAULT_PP_MAIN
             c += cc * w;
         }
         if (weight == 0)
-            fout.FragColor.rgb = SAMPLE_TEX_LOD(screenMap, pin.UV, 0).rgb;
+            fout.FragColor.rgb = SAMPLE_TEX_LOD(screenMap, fin.UV, 0).rgb;
         else
             fout.FragColor.rgb = c / weight;//((1 + n) * n);
         fout.FragColor.a = 1.0;

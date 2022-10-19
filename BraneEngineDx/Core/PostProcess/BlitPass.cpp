@@ -26,7 +26,7 @@ void BlitPass::execute(IRenderContext& context)
 	context.bindFrame(resource->finalRenderTarget->getVendorRenderTarget());
 	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, screenMapSlot);
 
-	context.setDrawInfo(0, 1);
+	context.setDrawInfo(0, 1, 0);
 	context.clearFrameColor({ 0, 0, 0, 0 });
 	context.clearFrameDepth(1);
 	context.setViewport(0, 0, size.x, size.y);

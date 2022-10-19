@@ -32,8 +32,10 @@ void MeshPass::execute(IRenderContext& context)
 
 			IRenderTarget* renderTarget = task.cameraData->renderTarget->getVendorRenderTarget();
 			context.bindFrame(renderTarget);
-			context.clearFrameColor(task.cameraData->clearColor);
-			context.clearFrameDepth(1);
+			if (requireClearFrame) {
+				context.clearFrameColors(task.cameraData->clearColors);
+				context.clearFrameDepth(1);
+			}
 			context.setViewport(0, 0, task.cameraData->data.viewSize.x(), task.cameraData->data.viewSize.y());
 
 			task.cameraData->upload();
@@ -52,8 +54,10 @@ void MeshPass::execute(IRenderContext& context)
 
 		if (taskContext.renderMode != task.renderMode) {
 			uint16_t stage = task.renderMode.getRenderStage();
-			if (stage < RenderStage::RS_Opaque)
+			if (stage < RenderStage::RS_Geometry)
 				context.setRenderPreState();
+			if (stage < RenderStage::RS_Opaque)
+				context.setRenderGeomtryState();
 			else if (stage < RenderStage::RS_Aplha)
 				context.setRenderOpaqueState();
 			else if (stage < RenderStage::RS_Transparent)

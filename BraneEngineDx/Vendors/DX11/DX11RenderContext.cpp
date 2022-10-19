@@ -205,6 +205,7 @@ void DX11RenderContext::resolveMultisampleFrame(IRenderTarget* target)
 			clearUAV();
 		}
 	}
+	clearRTV();
 }
 
 void DX11RenderContext::clearFrameColor(const Color& color)
@@ -597,7 +598,7 @@ void DX11RenderContext::setRenderPreState()
 
 void DX11RenderContext::setRenderGeomtryState()
 {
-	deviceContext->OMSetBlendState(dxContext.blendOffWriteOn.Get(), NULL, 0xFFFFFFFF);
+	deviceContext->OMSetBlendState(dxContext.blendGBuffer.Get(), NULL, 0xFFFFFFFF);
 	deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual.Get(), 0);
 }
 
@@ -695,10 +696,11 @@ void DX11RenderContext::setTerrainDrawContext()
 	deviceContext->IASetInputLayout(dxContext.terrainInputLayout.Get());
 }
 
-void DX11RenderContext::setDrawInfo(int passIndex, int passNum)
+void DX11RenderContext::setDrawInfo(int passIndex, int passNum, unsigned int materialID)
 {
 	drawInfo.passID = passIndex;
 	drawInfo.passNum = passNum;
+	drawInfo.materialID = materialID;
 }
 
 void DX11RenderContext::bindDrawInfo()

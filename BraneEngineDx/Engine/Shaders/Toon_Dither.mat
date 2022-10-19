@@ -81,7 +81,7 @@ FragmentOut DEFAULT_FS_MAIN
         float4 Lo_dir = Toon_Lo_DirectLight(directLight, N, V, baseColor, highlightColor,
             highlightCut, highlightCutSmooth);
         Lo = lerp(shadowColor * lightInstansity, Lo_dir, ShadowCalculation(depthMap, depthMapSampler,
-            fin.lightSpacePos, N, L));
+            fin.WorldPos, fin.Normal, directLight));
         L_Dot = dot(N, L);
     }
 

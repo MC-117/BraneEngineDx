@@ -8,8 +8,8 @@ protected:
 	int temp1MapSlot = -1;
 	int temp2MapSlot = -1;
 public:
-	Texture2D passAMap = Texture2D(size.x * screenScale, size.y * screenScale, 4, true, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear, TIT_HRGBA });
-	Texture2D passBMap = Texture2D(size.x * screenScale, size.y * screenScale, 4, true, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear, TIT_HRGBA });
+	Texture2D passAMap = Texture2D(size.x * screenScale, size.y * screenScale, 4, true, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear, TIT_RGB10A2_UF });
+	Texture2D passBMap = Texture2D(size.x * screenScale, size.y * screenScale, 4, true, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear, TIT_RGB10A2_UF });
 
 	RenderTarget passARenderTarget = RenderTarget(size.x * screenScale, size.y * screenScale, 4);
 	RenderTarget passBRenderTarget = RenderTarget(size.x * screenScale, size.y * screenScale, 4);

@@ -53,7 +53,7 @@ FragmentOut DEFAULT_FS_MAIN
 
     if (directLight.intensity != 0) {
         Lo += PBR_Lo_DirectLight(directLight, N, V, albedo, _metallic, _roughness) *
-            ShadowCalculation(depthMap, depthMapSampler, fin.lightSpacePos, N, directLight.direction);
+            ShadowCalculation(depthMap, depthMapSampler, fin.WorldPos, fin.Normal, directLight);
     }
 
     for(int i = 0; i < pointLightCount; ++i) {
@@ -85,8 +85,7 @@ FragmentOut DEFAULT_FS_MAIN
     float3 emissionColor = emissionMap.Sample(colorMapSampler, fin.TexCoords).rgb;
     float3 color = ambient + Lo;
 
-    color = color / (color + Float3(1.0));
-    color = pow(color, Float3(1.0/2.2)) + (emission * baseColor).rgb * emissionColor;
+    color = PBR_ColorCorrection(color) + (emission * baseColor).rgb * emissionColor;
 
     fout.FragColor = float4(color, alpha);
     return fout;

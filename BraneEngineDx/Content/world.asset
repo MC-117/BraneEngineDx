@@ -1,4 +1,4 @@
-World { children: None { Camera: Transform { children: None {  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: -0, y: 0, z: 0,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }, DebugCamera: PostProcessingCamera { children: None {  }, position: SVector3f { x: -40.8586, y: -60.8658, z: 63.0334,  }, postProcessingGraph: PostProcessGraph { Bloom: PostProcessPass { enable: "true", material: "#material Engine/Shaders/PostProcess/BloomPassFS.mat
+World { children: None { Camera: Camera { distance: 0, fov: 90, children: None {  }, clearColor: SColor { a: 0, b: 0, g: 0, r: 0,  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SQuaternionf { w: 1, x: 0, y: 0, z: 0,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }, DebugCamera: PostProcessingCamera { distance: 0, fov: 90, children: None {  }, clearColor: SColor { a: 0, b: 0, g: 0, r: 0,  }, position: SVector3f { x: 5.29384, y: -7.73528, z: 0.31715,  }, postProcessingGraph: PostProcessGraph { Bloom: PostProcessPass { enable: "true", material: "#material Engine/Shaders/PostProcess/BloomPassFS.mat
 #twoside false
 #castshadow true
 Scalar bloomDarkIntensity: 2.500000
@@ -6,24 +6,44 @@ Scalar bloomLightIntensity: 5.000000
 Scalar bloomThreshold: 0.700000
 Scalar exposure: 3.000000
 Scalar gamma: 0.250000
-Scalar height: 132.000000
-Scalar width: 232.000000
+Scalar height: 5.000000
+Scalar width: 9.000000
 Count bloomIter: 6
 Count bloomLevel: 9
-Color baseColor: 1.000000, 0.999990, 0.999990, 1.000000
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
 Texture sampleMap: white
 Texture screenMap: white
-", name: "Bloom",  }, ToneMap: PostProcessPass { enable: "true", material: "#material Engine/Shaders/PostProcess/ToneMapPass.mat
+", name: "Bloom",  }, DOF: PostProcessPass { enable: "false", material: "#material Engine/Shaders/PostProcess/DOFPassFS.mat
+#twoside false
+#castshadow true
+Scalar blurIter: 3.000000
+Scalar blurRadius: 4.000000
+Scalar focusDistance: 100.000000
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+Texture depthMap: white
+Texture screenMap: white
+", name: "DOF",  }, ToneMap: PostProcessPass { enable: "true", material: "#material Engine/Shaders/PostProcess/ToneMapPass.mat
 #twoside false
 #castshadow true
 Scalar exposure: 3.000000
 Scalar gamma: 0.250000
-Scalar lutBlend: 0.700000
+Scalar lutBlend: 0.500000
 Scalar vignettePower: 2.000000
 Scalar vignetteRate: 0.000000
 Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
 Color vignetteColor: 0.000000, 0.000000, 0.000000, 1.000000
-Texture lutMap: Engine/LUTS/X-6500-STD_lut.png
-Texture ssaoMap: white
+Texture lutMap: Engine/Textures/default_lut.png
 Image imageMap: binding(0)
-", name: "ToneMap",  },  }, rotation: SVector3f { x: 167.263, y: 171.263, z: -123.954,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }, DirLight: Transform { children: None {  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: -0, y: -45, z: -45,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }, Floor: MeshActor { children: None {  }, materials: AssetSearch [ { path: "Content/GroundM.imat", pathType: "path",  },  ], mesh: AssetSearch { path: "Engine/Shapes/UnitBox.obj", pathType: "path",  }, position: SVector3f { x: 0, y: 0, z: -0.5,  }, rotation: SVector3f { x: -0, y: 0, z: -0,  }, scale: SVector3f { x: 2000, y: 2000, z: 1,  },  }, Grass: GrassMeshActor { density: 200, bound: SVector2f { x: 2000, y: 2000,  }, children: None {  }, materials: AssetSearch [ { path: "Content/Scene/Material/GrassM1.imat", pathType: "path",  }, { path: "Content/Scene/Material/GrassM2.imat", pathType: "path",  }, { path: "Content/Scene/Material/GrassM3.imat", pathType: "path",  },  ], mesh: AssetSearch { path: "Content/Scene/Mesh/Grass.fbx", pathType: "path",  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: -0, y: 0, z: -0,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }, Input: Object { children: None {  },  }, Jorney: MeshActor { children: None {  }, materials: AssetSearch [ { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  }, { path: "Content/Jorney_clothes_v2/JorneyMat.imat", pathType: "path",  },  ], mesh: AssetSearch { path: "Content/Jorney_clothes_v2/Jorney_clothes_v3.fbx", pathType: "path",  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: 90, y: 0, z: -0,  }, scale: SVector3f { x: 0.5, y: 0.5, z: 0.5,  },  }, SkySphere: Actor { children: None {  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: -0, y: 0, z: 0,  }, scale: SVector3f { x: 50, y: 50, z: 50,  },  },  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SVector3f { x: -0, y: 0, z: -0,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }
+", name: "ToneMap",  }, VolumetricLight: PostProcessPass { enable: "true", material: "#material Engine/Shaders/PostProcess/VolumetricLightFS.mat
+#twoside false
+#castshadow true
+Scalar G_SCATTERING: 0.500000
+Scalar fogDistance: 1000.000000
+Count volumnicFogBlurIter: 3
+Count volumnicFogStep: 50
+Count volumnicFogStepDebug: 0
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color volumnicLightColor: 0.819608, 0.654902, 0.400000, 1.000000
+Texture temp1Map: white
+Texture temp2Map: white
+", name: "VolumetricLight",  },  }, rotation: SQuaternionf { w: 0.513497, x: -0.0229936, y: 0.0137665, z: 0.857673,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }, DirLight: DirectLight { attenuation: 0, intensity: 1, children: None {  }, color: SColor { a: 1, b: 1, g: 1, r: 1,  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SQuaternionf { w: 0.835551, x: -0.227715, y: -0.469788, z: -0.171171,  }, scale: SVector3f { x: 0.999999, y: 0.999998, z: 0.999999,  },  }, Floor: MeshActor { Audio: [ ], children: None {  }, collision: Collision { complexType: 0, physicalLayer: PhysicalLayer { layer: 0, ignoreMask: "0",  }, physicalMaterial: PhysicalMaterial { mass: 0, type: 0,  }, positionOffset: SVector3f { x: 0, y: 0, z: 0,  }, rotationOffset: SQuaternionf { w: 1, x: 0, y: 0, z: 0,  }, shape: AssetSearch { path: "Engine/Shapes/UnitBox.obj", pathType: "path",  },  }, materials: AssetSearch [ { path: "Content/Materials/Cube.imat", pathType: "path",  },  ], mesh: AssetSearch { path: "Engine/Shapes/UnitBox.obj", pathType: "path",  }, position: SVector3f { x: 0, y: 0, z: -6,  }, rotation: SQuaternionf { w: 1, x: 0, y: 0, z: 0,  }, scale: SVector3f { x: 100, y: 100, z: 1,  },  }, Input: Object { children: None {  },  }, SkySphere: Actor { Audio: [ ], children: None {  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SQuaternionf { w: 1, x: 0, y: 0, z: 0,  }, scale: SVector3f { x: 50, y: 50, z: 50,  },  }, Sphere: MeshActor { Audio: [ ], children: None {  }, collision: Collision { complexType: 1, physicalLayer: PhysicalLayer { layer: 0, ignoreMask: "0",  }, physicalMaterial: PhysicalMaterial { mass: 0, type: 0,  }, positionOffset: SVector3f { x: 0, y: 0, z: 0,  }, rotationOffset: SQuaternionf { w: 1, x: 0, y: 0, z: 0,  }, shape: AssetSearch { path: "Engine/Shapes/UnitSphere.fbx", pathType: "path",  },  }, materials: AssetSearch [ { path: "Content/Materials/Cube.imat", pathType: "path",  },  ], mesh: AssetSearch { path: "Engine/Shapes/UnitSphere.fbx", pathType: "path",  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SQuaternionf { w: 1, x: 0, y: 0, z: 0,  }, scale: SVector3f { x: 3, y: 3, z: 3,  },  }, Sphere1: MeshActor { Audio: [ ], children: None {  }, collision: Collision { complexType: 1, physicalLayer: PhysicalLayer { layer: 0, ignoreMask: "0",  }, physicalMaterial: PhysicalMaterial { mass: 100, type: 1,  }, positionOffset: SVector3f { x: 0, y: 0, z: 0,  }, rotationOffset: SQuaternionf { w: 1, x: 0, y: 0, z: 0,  }, shape: AssetSearch { path: "Engine/Shapes/UnitSphere.fbx", pathType: "path",  },  }, materials: AssetSearch [ { path: "Content/Materials/Cube.imat", pathType: "path",  },  ], mesh: AssetSearch { path: "Engine/Shapes/UnitSphere.fbx", pathType: "path",  }, position: SVector3f { x: 0.0648368, y: 0.257399, z: -4.53003,  }, rotation: SQuaternionf { w: 0.992091, x: -0.116396, y: 0.0386757, z: -0.0266703,  }, scale: SVector3f { x: 2, y: 2, z: 2,  },  }, Triangle: MeshActor { Audio: [ ], children: None {  }, collision: Collision { complexType: 0, physicalLayer: PhysicalLayer { layer: 0, ignoreMask: "0",  }, physicalMaterial: PhysicalMaterial { mass: 0, type: 0,  }, positionOffset: SVector3f { x: 0, y: 0, z: 0,  }, rotationOffset: SQuaternionf { w: 1, x: 0, y: 0, z: 0,  }, shape: AssetSearch { path: "Content/TestModel/Triangle.fbx", pathType: "path",  },  }, materials: AssetSearch [ { path: "Content/Materials/TriangleMat.mat", pathType: "path",  },  ], mesh: AssetSearch { path: "Content/TestModel/Triangle.fbx", pathType: "path",  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SQuaternionf { w: 1, x: 0, y: 0, z: 0,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  },  }, position: SVector3f { x: 0, y: 0, z: 0,  }, rotation: SQuaternionf { w: 1, x: 0, y: 0, z: 0,  }, scale: SVector3f { x: 1, y: 1, z: 1,  },  }

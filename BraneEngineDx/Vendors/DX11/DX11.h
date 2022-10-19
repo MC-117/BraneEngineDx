@@ -52,6 +52,7 @@ struct DX11Context
 	ComPtr<ID3D11BlendState> blendPremultiplyAlphaWriteOn = NULL;      // Post
 	ComPtr<ID3D11BlendState> blendMultiplyWriteOn = NULL;              // Post
 	ComPtr<ID3D11BlendState> blendMaskWriteOn = NULL;                  // Post
+	ComPtr<ID3D11BlendState> blendGBuffer = NULL;                      // GBuffer
 
 	ComPtr<ID3D11DepthStencilState> depthWriteOnTestOnLEqual = NULL;   //    0 - 2499
 	ComPtr<ID3D11DepthStencilState> depthWriteOffTestOnLEqual = NULL;  // 2500 - 4999

@@ -104,7 +104,6 @@ DefaultVertexOut main(DefaultTerrainPatchTess patchTess, float2 uv : SV_DomainLo
     vout.WorldPos = mul(float4(vout.LocalPos, 0.0), quad[0].TransMat).xyz;
 
     vout.WorldScale = quad[0].WorldScale;
-    vout.lightSpacePos = mul(float4(vout.WorldPos, 1.0), directLight.lmat);
     
     vout.svPos = mul(float4(vout.WorldPos, 1.0), camData.pmat);
 

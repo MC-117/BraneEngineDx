@@ -145,8 +145,8 @@ Texture2D::Texture2D(unsigned int width, unsigned int height, unsigned int chann
 	if (isStandard) {
 		switch (desc.info.internalType)
 		{
-		case TIT_RGBA:
-			desc.info.internalType = TIT_SRGBA;
+		case TIT_RGBA8_UF:
+			desc.info.internalType = TIT_SRGBA8_UF;
 		default:
 			break;
 		}

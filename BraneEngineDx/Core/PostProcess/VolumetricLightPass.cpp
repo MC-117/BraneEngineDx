@@ -40,7 +40,7 @@ void VolumetricLightPass::execute(IRenderContext& context)
 	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
 	context.bindTexture((ITexture*)resource->lightDepthTexture->getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
 
-	context.setDrawInfo(0, 4);
+	context.setDrawInfo(0, 4, 0);
 
 	context.setViewport(0, 0, screenSize.x, screenSize.y);
 	context.setRenderPostState();
@@ -52,7 +52,7 @@ void VolumetricLightPass::execute(IRenderContext& context)
 	context.bindTexture((ITexture*)passAMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
 	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
 
-	context.setDrawInfo(1, 4);
+	context.setDrawInfo(1, 4, 0);
 
 	context.setViewport(0, 0, screenSize.x, screenSize.y);
 	context.setRenderPostState();
@@ -65,7 +65,7 @@ void VolumetricLightPass::execute(IRenderContext& context)
 	context.bindTexture((ITexture*)passBMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
 	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
 
-	context.setDrawInfo(2, 4);
+	context.setDrawInfo(2, 4, 0);
 
 	context.setViewport(0, 0, screenSize.x, screenSize.y);
 	context.setRenderPostState();
@@ -77,7 +77,7 @@ void VolumetricLightPass::execute(IRenderContext& context)
 	context.bindTexture((ITexture*)passAMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
 	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
 
-	context.setDrawInfo(3, 4);
+	context.setDrawInfo(3, 4, 0);
 
 	context.setViewport(0, 0, size.x, size.y);
 	context.setRenderPostAddState();

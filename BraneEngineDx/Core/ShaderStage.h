@@ -175,10 +175,12 @@ public:
 	void refreshShader();
 
 	static void loadDefaultAdapter(const string& folder);
+	static ShaderStage* getScreenVertexShader();
 	static ShaderManager& getInstance();
 protected:
 	unordered_set<ShaderFile*> processedDirtyShaderFiles;
 	unordered_set<ShaderAdapter*> dirtyAdapters;
+	static ShaderStage* screenShaderStage;
 };
 
 #endif // !_SHADERSTAGE_H_

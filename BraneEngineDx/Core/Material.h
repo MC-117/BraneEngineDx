@@ -116,6 +116,7 @@ protected:
 	IMaterial* vendorMaterial = NULL;
 	IRenderData* renderData = NULL;
 
+	static unsigned int nextMaterialID;
 	static bool isLoadDefaultMaterial;
 	void newVendorMaterial();
 };

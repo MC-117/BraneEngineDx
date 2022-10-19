@@ -23,13 +23,18 @@ enum TexFilter
 enum TexInternalType
 {
 	TIT_Default,
-	TIT_R,
-	TIT_RG,
-	TIT_RGBA,
-	TIT_SRGBA,
-	TIT_HRGBA,
-	TIT_Depth,
-	TIT_R32
+	TIT_R8_UF,
+	TIT_R8_F,
+	TIT_RG8_UF,
+	TIT_RG8_F,
+	TIT_RGBA8_UF,
+	TIT_RGBA8_F,
+	TIT_SRGBA8_UF,
+	TIT_RGB10A2_UF,
+	TIT_D32_F,
+	TIT_R32_F,
+	TIT_RGBA8_UI,
+	TIT_RGBA8_I
 };
 
 enum GPUBufferType
@@ -92,6 +97,7 @@ enum MeshType
 enum RenderStage : uint16_t
 {
 	RS_PreBackground = 0,
+	RS_Geometry = 500,
 	RS_Opaque = 1000,
 	RS_Aplha = 2450,
 	RS_Transparent = 2500,

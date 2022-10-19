@@ -27,6 +27,12 @@ void CameraRenderData::create()
 	renderOrder = camera->cameraRender.renderOrder;
 	renderTarget = &camera->cameraRender.renderTarget;
 
+	if (clearColors.size() != renderTarget->getTextureCount()) {
+		clearColors.resize(renderTarget->getTextureCount(), Color());
+	}
+	if (clearColors.size() > 0)
+		clearColors[0] = camera->clearColor;
+
 	renderTarget->init();
 }
 

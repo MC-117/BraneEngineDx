@@ -34,6 +34,10 @@ struct DrawInfo
 	unsigned int baseInstance;
 	unsigned int passID;
 	unsigned int passNum;
+	unsigned int materialID;
+	unsigned int pad0;
+	unsigned int pad1;
+	unsigned int pad2;
 
 	bool operator==(const DrawInfo& i) const;
 	bool operator!=(const DrawInfo& i) const;

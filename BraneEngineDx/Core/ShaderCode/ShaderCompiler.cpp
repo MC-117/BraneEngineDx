@@ -109,7 +109,7 @@ bool ShaderCompiler::compile()
 			if (command.size() != 0)
 				getTokenInternal(command[0]);
 			if (token != ST_None && token != ST_Include &&
-				stageType != None_Shader_Stage)
+				token != ST_Condition && stageType != None_Shader_Stage)
 				compileAdapter();
 			switch (token)
 			{
@@ -152,7 +152,7 @@ bool ShaderCompiler::compile()
 				}
 				break;
 			case ShaderCompiler::ST_Condition:
-				if (command.size() > 2) {
+				if (command.size() >= 2) {
 					addCondition(command);
 				}
 				break;
@@ -205,7 +205,7 @@ void ShaderCompiler::getTokenInternal(const string& str)
 	else
 		token = iter->second;
 
-	if (token != ST_None && token != ST_Include) {
+	if (token != ST_None && token != ST_Include && token != ST_Condition) {
 		scopeToken = token;
 	}
 }
@@ -366,7 +366,7 @@ void ShaderCompiler::compileAdapter()
 		for (const auto& condition : conditions) {
 			Enum<ShaderFeature> _feature = feature;
 			_feature |= condition.first;
-			adapter->compileShaderStage(feature, condition.second + clip);
+			adapter->compileShaderStage(_feature, condition.second + clip);
 		}
 		clip.clear();
 		localHeadFiles.clear();
@@ -396,30 +396,32 @@ ShaderAdapter* ShaderCompiler::useAdapter(ShaderStageType stageType, const vecto
 	return adapter;
 }
 
-void ShaderCompiler::addCondition(ShaderFeature feature, const string& macro)
+void ShaderCompiler::addCondition(Enum<ShaderFeature> feature, const string& macro)
 {
 	string macroLine = macro.empty() ? "" : ("#define " + macro + '\n');
-	string* macros = NULL;
 	auto iter = conditions.find(feature);
 	if (iter == conditions.end()) {
-		macros = &conditions.insert(make_pair(feature, macro)).first->second;
+		conditions.insert(make_pair(feature, macroLine));
 	}
-	*macros += macroLine;
+	else {
+		iter->second += macroLine;
+	}
 }
 
 void ShaderCompiler::addCondition(const vector<string>& command)
 {
-	const string& featureName = command[1];
-	ShaderFeature feature = getFeatureInternal(featureName);
-	vector<string>& macroList = vector<string>(command.begin() += 2, command.end());
-	if (macroList.empty()) {
-		string macro = featureName;
+	vector<string> featureNames = split(command[1], '.');
+	vector<ShaderFeature> features;
+	Enum<ShaderFeature> feature = Shader_Default;
+	vector<string> macroList = vector<string>(command.begin() += 2, command.end());
+	for (auto& name : featureNames) {
+		feature |= getFeatureInternal(name);
+		string macro = name;
 		std::transform(macro.begin(), macro.end(), macro.begin(), ::toupper);
 		macroList.push_back(macro + "_SHADER_FEATURE");
 	}
-	for (int i = 2; i < command.size(); i++) {
-		addCondition(feature, command[i]);
-	}
+	for (const auto& macro : macroList)
+		addCondition(feature, macro);
 }
 
 void ShaderCompiler::finalize()

@@ -141,6 +141,10 @@ void DX11Context::createRenderState()
 	D3D11_BLEND_DESC blendDesc;
 	ZeroMemory(&blendDesc, sizeof(blendDesc));
 	auto& rt0 = blendDesc.RenderTarget[0];
+	auto& rt1 = blendDesc.RenderTarget[1];
+	auto& rt2 = blendDesc.RenderTarget[2];
+	auto& rt3 = blendDesc.RenderTarget[3];
+	auto& rt4 = blendDesc.RenderTarget[4];
 	blendDesc.AlphaToCoverageEnable = false;
 	blendDesc.IndependentBlendEnable = false;
 	rt0.BlendEnable = false;
@@ -192,6 +196,18 @@ void DX11Context::createRenderState()
 	rt0.SrcBlendAlpha = D3D11_BLEND_ZERO;
 	rt0.DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
 	device->CreateBlendState(&blendDesc, &blendMaskWriteOn);
+
+	rt0.BlendEnable = true;
+	rt0.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	rt0.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	rt0.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rt0.DestBlendAlpha = D3D11_BLEND_ZERO;
+	rt0.BlendOp = D3D11_BLEND_OP_ADD;
+	rt0.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rt1 = rt0;
+	rt1.BlendEnable = false;
+	rt4 = rt3 = rt2 = rt1;
+	device->CreateBlendState(&blendDesc, &blendOnWriteOn);
 
 	D3D11_DEPTH_STENCIL_DESC dsDesc;
 	ZeroMemory(&dsDesc, sizeof dsDesc);

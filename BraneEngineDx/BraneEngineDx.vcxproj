@@ -422,6 +422,7 @@
     <ClInclude Include="Core\RenderCore\RenderDefines.h" />
     <ClInclude Include="Core\RenderCore\RenderInterface.h" />
     <ClInclude Include="Core\RenderCore\RenderTask.h" />
+    <ClInclude Include="Core\RenderCore\DirectShadowRenderPack.h" />
     <ClInclude Include="Core\RenderGraph\DeferredLightingPass.h" />
     <ClInclude Include="Core\RenderGraph\DeferredRenderGraph.h" />
     <ClInclude Include="Core\RenderGraph\ForwardRenderGraph.h" />
@@ -852,6 +853,7 @@
     <ClCompile Include="Core\PostProcess\ToneMapPass.cpp" />
     <ClCompile Include="Core\Render.cpp" />
     <ClCompile Include="Core\RenderCore\CameraRenderData.cpp" />
+    <ClCompile Include="Core\RenderCore\DirectShadowRenderPack.cpp" />
     <ClCompile Include="Core\RenderCore\LightRenderData.cpp" />
     <ClCompile Include="Core\RenderCore\MaterialRenderData.cpp" />
     <ClCompile Include="Core\RenderCore\MeshRenderPack.cpp" />

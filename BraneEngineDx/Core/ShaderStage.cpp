@@ -2,6 +2,7 @@
 #include "IVendor.h"
 #include "Console.h"
 #include <fstream>
+#include <bitset>
 #include "Utility/EngineUtility.h"
 #include "ShaderCode/ShaderAdapterCompiler.h"
 
@@ -195,15 +196,37 @@ ShaderAdapter::ShaderAdapter(const string& name, const string& path, ShaderStage
 
 ShaderStage* ShaderAdapter::getShaderStage(const Enum<ShaderFeature>& feature, bool autoFill)
 {
+	if (shaderStageVersions.empty())
+		return NULL;
 	if (autoFill && stageType == Fragment_Shader_Stage && shaderStageVersions.size() == 1)
 		return shaderStageVersions.begin()->second;
 	auto iter = shaderStageVersions.find(feature);
 	if (iter != shaderStageVersions.end())
 		return iter->second;
 	else if (autoFill) {
-		iter = shaderStageVersions.find(Shader_Default);
-		if (iter != shaderStageVersions.end())
-			return iter->second;
+		ShaderStage* stage = NULL;
+		if (stageType == Fragment_Shader_Stage) {
+			int bitCount = 0;
+			stage = shaderStageVersions.begin()->second;
+			for (auto& item : shaderStageVersions) {
+				int count = bitset<32>(item.first & feature).count();
+				if (count > bitCount) {
+					count = bitCount;
+					stage = item.second;
+				}
+			}
+		}
+		if (stage == NULL) {
+			iter = shaderStageVersions.find(feature & ~Shader_Deferred);
+			if (iter != shaderStageVersions.end())
+				stage = iter->second;
+		}
+		if (stage == NULL) {
+			iter = shaderStageVersions.find(Shader_Default);
+			if (iter != shaderStageVersions.end())
+				stage = iter->second;
+		}
+		return stage;
 	}
 	return NULL;
 }
@@ -305,6 +328,8 @@ void ShaderFile::reset()
 	lastWriteTime = Time(chrono::duration_cast<chrono::steady_clock::duration>
 		(filesystem::last_write_time(path).time_since_epoch()));
 }
+
+ShaderStage* ShaderManager::screenShaderStage = NULL;
 
 ShaderFile* ShaderManager::getShaderFile(const string& path)
 {
@@ -458,6 +483,42 @@ void ShaderManager::refreshShader()
 
 void ShaderManager::loadDefaultAdapter(const string& folder)
 {
+	if (screenShaderStage == NULL) {
+		const char* screenShaderCode =  "\
+		struct ScreenVertexOut										\n\
+		{															\n\
+			float4 svPos : SV_POSITION;								\n\
+			float2 UV : TEXCOORD;									\n\
+		};															\n\
+		static const float2 quadVertices[4] = {						\n\
+			float2(-1.0, -1.0),										\n\
+			float2(1.0, -1.0),										\n\
+			float2(-1.0, 1.0),										\n\
+			float2(1.0, 1.0)										\n\
+		};															\n\
+		static const float2 quadUV[4] = {							\n\
+			float2(0.0, 1.0),										\n\
+			float2(1.0, 1.0),										\n\
+			float2(0.0, 0.0),										\n\
+			float2(1.0, 0.0)										\n\
+		};															\n\
+		ScreenVertexOut main(uint vertexID : SV_VertexID)			\n\
+		{															\n\
+			ScreenVertexOut sout;									\n\
+			sout.svPos = float4(quadVertices[vertexID], 0.0, 1.0);	\n\
+			sout.UV = quadUV[vertexID];								\n\
+			return sout;											\n\
+		}";
+		IVendor& vendor = VendorManager::getInstance().getVendor();
+		static string name = "Screen";
+		screenShaderStage = vendor.newShaderStage({ Vertex_Shader_Stage, Shader_Default, name });
+		string error;
+		if (screenShaderStage->compile(screenShaderCode, error) == 0) {
+			cout << error;
+			throw runtime_error(error);
+		}
+	}
+		
 	namespace FS = filesystem;
 	for (auto& p : FS::recursive_directory_iterator(folder)) {
 		string path = p.path().generic_string();
@@ -473,6 +534,11 @@ void ShaderManager::loadDefaultAdapter(const string& folder)
 			}
 		}
 	}
+}
+
+ShaderStage* ShaderManager::getScreenVertexShader()
+{
+	return screenShaderStage;
 }
 
 ShaderManager & ShaderManager::getInstance()

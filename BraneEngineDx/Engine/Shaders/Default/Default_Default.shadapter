@@ -1,67 +1,45 @@
 #adapter name default
 #vertex
+#condition skeleton
+#condition skeleton.morph
 #include "../lib/TransformData_def.hmat"
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/MeshData_Def.hmat"
-
-DefaultVertexOut MESH_MAIN
-{
-    DefaultVertexOut vout;
-    float4x4 fm = getFinalMat(ins[0]);
-    float4 _WorldPos = mul(float4(pos, 1.0), fm);
-    vout.svPos = mul(_WorldPos, camData.pmat);
-    vout.WorldPos = _WorldPos.xyz;
-    vout.LocalPos = pos;
-    vout.Normal = normalize(mul(float4(norm, 0.0), fm).xyz);
-    vout.LocalNormal = norm;
-    vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
-    vout.TexCoords = uv;
-    vout.TexCoords.y = 1 - vout.TexCoords.y;
-    vout.WorldScale = getWorldScale(fm);
-    return vout;
-}
-#vertex skeleton
-#include "../lib/TransformData_def.hmat"
-#include "../lib/CameraData_Def.hmat"
-#include "../lib/Light_Def.hmat"
-#include "../lib/SkeletonMeshData_Def.hmat"
-
-DefaultVertexOut SKELETON_MAIN
-{
-    DefaultVertexOut vout;
-    float4x4 fm = getFinalMat(ins[0], weights, boneId);
-    float4 _WorldPos = mul(float4(pos, 1.0), fm);
-    vout.WorldPos = _WorldPos.xyz;
-    vout.LocalPos = pos;
-    vout.svPos = mul(_WorldPos, camData.pmat);
-    vout.Normal = normalize(mul(float4(norm, 0.0), fm).xyz);
-    vout.LocalNormal = norm;
-    vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
-    vout.TexCoords = uv;
-    vout.TexCoords.y = 1 - vout.TexCoords.y;
-    vout.WorldScale = getWorldScale(fm);
-    return vout;
-}
-#vertex skeleton morph
-#include "../lib/TransformData_def.hmat"
-#include "../lib/CameraData_Def.hmat"
-#include "../lib/Light_Def.hmat"
 #include "../lib/SkeletonMeshData_Def.hmat"
 #include "../lib/MorphData_def.hmat"
 
-DefaultVertexOut SKELETON_MAIN
+#if defined(SKELETON_SHADER_FEATURE)
+#define VERTEX_MAIN SKELETON_MAIN
+#else
+#define VERTEX_MAIN MESH_MAIN
+#endif
+
+DefaultVertexOut VERTEX_MAIN
 {
     DefaultVertexOut vout;
-    uint vid = ins[1] + vertexID;
+#ifdef SKELETON_SHADER_FEATURE
     float4x4 fm = getFinalMat(ins[0], weights, boneId);
-    float4 _WorldPos = mul(float4(morphPos(vid, pos), 1.0), fm);
-    vout.WorldPos = _WorldPos.xyz;
-    vout.LocalPos = pos;
+#else
+    float4x4 fm = getFinalMat(ins[0]);
+#endif
+
+#ifdef MORPH_SHADER_FEATURE
+    uint vid = ins[1] + vertexID;
+    float3 _pos = morphPos(vid, pos);
+    float3 _norm = morphNorm(vid, norm);
+#else
+    float3 _pos = pos;
+    float3 _norm = norm;
+#endif
+
+    float4 _WorldPos = mul(float4(_pos, 1.0), fm);
+    vout.TransMat = fm;
     vout.svPos = mul(_WorldPos, camData.pmat);
-    vout.Normal = normalize(mul(float4(morphNorm(vid, norm), 0.0), fm).xyz);
-    vout.LocalNormal = norm;
-    vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
+    vout.WorldPos = _WorldPos.xyz;
+    vout.LocalPos = _pos;
+    vout.Normal = normalize(mul(float4(_norm, 0.0), fm).xyz);
+    vout.LocalNormal = _norm;
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
@@ -132,9 +110,9 @@ DefaultVertexOut main(DefaultTerrainPatchTess patchTess, float2 uv : SV_DomainLo
     vout.WorldPos += quad[0].Normal * height;
 
     vout.WorldScale = quad[0].WorldScale;
-    vout.lightSpacePos = mul(float4(vout.WorldPos, 1.0), directLight.lmat);
     
     vout.svPos = mul(float4(vout.WorldPos, 1.0), camData.pmat);
+    vout.TransMat = quad[0].TransMat;
 
     return vout;
 }

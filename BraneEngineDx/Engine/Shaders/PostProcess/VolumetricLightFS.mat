@@ -12,7 +12,7 @@ Texture temp2Map
 
 #pragma debug
 #include "../lib/Basic_FS_Lib.hmat"
-#include "../lib/PostProcess_Def.hmat"
+#include "../lib/ScreenPass_Def.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 
@@ -76,18 +76,18 @@ float computeScattering(float lightDotView)
     return result;
 }
 
-FragmentOut DEFAULT_PP_MAIN
+FragmentOut DEFAULT_SCREEN_MAIN
 {
 	FragmentOut fout;
 
     if (passID == 0) {
         float raylength = fogDistance;
-        float depthVal = SAMPLE_TEX_LOD(DEPTHMAP, pin.UV, 0).r;
+        float depthVal = SAMPLE_TEX_LOD(DEPTHMAP, fin.UV, 0).r;
         raylength = depthFromNDCToView(depthVal);
 
         raylength = min(fogDistance, raylength);
 
-        float3 rayDirWS = getRayDir(pin.UV);
+        float3 rayDirWS = getRayDir(fin.UV);
 
         float3 sunDirWS = directLight.direction;
 
@@ -129,7 +129,7 @@ FragmentOut DEFAULT_PP_MAIN
 		float offset = (-0.02 * volumnicFogBlurIter + 0.6) / texelSize.x;
         float4 pixel = Float4(0.0);
 		for (int dx = -volumnicFogBlurIter; dx <= volumnicFogBlurIter; dx++) {
-			pixel += SAMPLE_TEX(FOGMAP, pin.UV + float2(offset * dx, 0));
+			pixel += SAMPLE_TEX(FOGMAP, fin.UV + float2(offset * dx, 0));
 		}
         pixel /= volumnicFogBlurIter * 2 - 1;
         pixel.a = 1.0;
@@ -140,14 +140,14 @@ FragmentOut DEFAULT_PP_MAIN
 		float offset = (-0.02 * volumnicFogBlurIter + 0.6) / texelSize.y;
         float4 pixel = Float4(0.0);
 		for (int dy = -volumnicFogBlurIter; dy <= volumnicFogBlurIter; dy++) {
-			pixel += SAMPLE_TEX(FOGMAP, pin.UV + float2(0, offset * dy));
+			pixel += SAMPLE_TEX(FOGMAP, fin.UV + float2(0, offset * dy));
 		}
         pixel /= volumnicFogBlurIter * 2 - 1;
         pixel.a = 1.0;
         fout.FragColor = pixel;
 	}
     else if (passID == 3) {
-        fout.FragColor = SAMPLE_TEX(FOGMAP, pin.UV);
+        fout.FragColor = SAMPLE_TEX(FOGMAP, fin.UV);
     }
 
 	return fout;

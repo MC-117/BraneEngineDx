@@ -13,7 +13,7 @@ Texture screenMap
 #vertex use postprocess
 #fragment postprocess
 #include "../lib/Basic_FS_Lib.hmat"
-#include "../lib/PostProcess_Def.hmat"
+#include "../lib/ScreenPass_Def.hmat"
 
 FS_DEF_OUT_BEGIN
 FS_DEF_OUT_COLOR(FragColor, 0);
@@ -34,39 +34,35 @@ DEF_MAT_END
 DEF_TEX2D(sampleMap, 0);
 DEF_TEX2D(screenMap, 1);
 
-FragmentOut DEFAULT_PP_MAIN
+FragmentOut DEFAULT_SCREEN_MAIN
 {
 	FragmentOut fout;
 	float4 pixel = Float4(0.0);
     if (passID == 0) {
-        pixel = SAMPLE_TEX_LOD(sampleMap, pin.UV, 0);
-		float3 col = pixel.rgb;
-        float3 rate = smoothstep(bloomThreshold, bloomThreshold + 0.1, col) * col - Float3(bloomThreshold);
-        col = lerp(bloomDarkIntensity * col, bloomLightIntensity * col, rate);
-		col = Float3(1.0) - exp(-col * exposure);
-        col = pow(col, Float3(1.0/gamma));
-		pixel.rgb = col;
-		//pixel.a = 1.0f;
-        fout.FragColor = pixel;
+        pixel = SAMPLE_TEX_LOD(sampleMap, fin.UV, 0);
+		float totalLuminance = luminance(pixel.rgb);
+		float bloomLuminance = totalLuminance - bloomThreshold;
+		float bloomIntensity = saturate(bloomLuminance * 0.5f);
+        fout.FragColor = float4(bloomIntensity * pixel.rgb, 1);
     }
 	else if (passID == 1) {
 		float bloomOffset = (-0.02 * bloomIter + 0.6) / width * pow(2, passNum);
 		for (int dx = -bloomIter; dx <= bloomIter; dx++) {
-			pixel += SAMPLE_TEX_LOD(sampleMap, pin.UV + float2(bloomOffset * dx, 0), passNum);
+			pixel += SAMPLE_TEX_LOD(sampleMap, fin.UV + float2(bloomOffset * dx, 0), passNum);
 		}
         fout.FragColor = pixel / (bloomIter * 2 - 1);
 	}
 	else if (passID == 2) {
 		float bloomOffset = (-0.02 * bloomIter + 0.6) / height * pow(2, passNum);
 		for (int dy = -bloomIter; dy <= bloomIter; dy++) {
-			pixel += SAMPLE_TEX_LOD(sampleMap, pin.UV + float2(0, bloomOffset * dy), passNum);
+			pixel += SAMPLE_TEX_LOD(sampleMap, fin.UV + float2(0, bloomOffset * dy), passNum);
 		}
         fout.FragColor = pixel / (bloomIter * 2 - 1);
 	}
     else if (passID == 3) {
-        pixel = SAMPLE_TEX(screenMap, pin.UV);
+        pixel = SAMPLE_TEX(screenMap, fin.UV);
         for (int i = 0; i < bloomLevel; i++) {
-            pixel += SAMPLE_TEX_LOD(sampleMap, pin.UV, i) * (1 - i * 0.1);
+            pixel += SAMPLE_TEX_LOD(sampleMap, fin.UV, i);// * (1 - i * 0.1);
         }
 		pixel.a = 1.0;
         fout.FragColor = pixel;

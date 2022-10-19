@@ -5,7 +5,7 @@ Image blurMap: binding(0)
 #localsize 16 16
 #compute postprocess
 #include "../lib/Basic_FS_Lib.hmat"
-#include "../lib/PostProcess_Def.hmat"
+#include "../lib/ScreenPass_Def.hmat"
 
 Texture2D<unorm float4> screenMap : register(t6);
 RWTexture2D<unorm float4> blurMap : register(u0);

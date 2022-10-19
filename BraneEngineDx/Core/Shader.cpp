@@ -120,10 +120,16 @@ ShaderProgram * Shader::getProgram(const Enum<ShaderFeature>& feature)
 	ShaderProgram* program = NULL;
 	auto iter = shaderPrograms.find(feature);
 	if (iter == shaderPrograms.end()) {
-		ShaderAdapter* meshStageAdapter = getMeshStageAdapter();
-		if (meshStageAdapter == NULL)
-			return NULL;
-		ShaderStage* meshStage = meshStageAdapter->getShaderStage(feature, true);
+		ShaderStage* meshStage = NULL;
+		if (feature & Shader_Lighting) {
+			meshStage = ShaderManager::getScreenVertexShader();
+		}
+		else {
+			ShaderAdapter* meshStageAdapter = getMeshStageAdapter();
+			if (meshStageAdapter == NULL)
+				return NULL;
+			meshStage = meshStageAdapter->getShaderStage(feature, true);
+		}
 		if (meshStage == NULL || !meshStage->isValid())
 			return NULL;
 		program = VendorManager::getInstance().getVendor().newShaderProgram();
