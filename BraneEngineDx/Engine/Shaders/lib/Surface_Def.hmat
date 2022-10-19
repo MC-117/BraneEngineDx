@@ -1,0 +1,89 @@
+#include "Basic_FS_Lib.hmat"
+#include "ScreenPass_Def.hmat"
+#include "CameraData_Def.hmat"
+
+struct Surface
+{
+    float4 albedo;
+    float3 WorldPos;
+    float depth;
+    float3 Normal;
+    float roughness;
+    float2 TexCoords;
+    float metallic;
+    float ao;
+    uint matID;
+    uint mask;
+};
+
+void outputSurface(in Surface surf, out float4 A, out float B, out float4 C, out float4 D, out int4 E)
+{
+    A = surf.albedo;
+    B = surf.depth;
+    C.xyz = surf.Normal;
+    C.a = surf.roughness;
+    D.xy = surf.TexCoords;
+    D.z = surf.metallic;
+    D.w = surf.ao;
+    E.r = surf.matID >> 8;
+    E.g = surf.matID & 0xFF;
+    E.b = surf.mask >> 8;
+    E.a = surf.mask & 0xFF;
+}
+
+#if defined(LIGHTING_SHADER_FEATURE)
+#define SURFACE_MAIN DEFAULT_SCREEN_MAIN
+
+float3 depthToWorldPos(float3 UVZ)
+{
+    UVZ.x = UVZ.x * 2.0f - 1.0f;
+    UVZ.y = 1.0f - UVZ.y * 2.0f;
+    float4 clipPos = float4(UVZ, 1.0f);
+    float4 viewPos = mul(clipPos, camData.promatInv);
+    viewPos /= viewPos.w;
+    float4 worldPos = mul(viewPos, camData.vmatInv);
+    return worldPos.xyz / worldPos.w;
+}
+
+Surface getSurface(in ScreenVertexOut fin)
+{
+    Surface surf;
+    uint4 E = LOAD_TEX(gBufferE, int3(fin.UV * camData.viewSize, 0));
+    uint matID = E.r << 8 | E.g;
+    if (matID != materialID)
+        discard;
+    float4 A = SAMPLE_TEX(gBufferA, fin.UV);
+    float B = SAMPLE_TEX(gBufferB, fin.UV);
+    float4 C = SAMPLE_TEX(gBufferC, fin.UV);
+    float4 D = SAMPLE_TEX(gBufferD, fin.UV);
+    surf.albedo = A;
+    surf.depth = B;
+    surf.WorldPos = depthToWorldPos(float3(fin.UV, surf.depth));
+    surf.Normal = C.xyz;
+    surf.roughness = C.a;
+    surf.TexCoords = D.xy;
+    surf.metallic = D.b;
+    surf.ao = D.a;
+    surf.matID = matID;
+    surf.mask = E.b << 8 | E.a;
+    return surf;
+}
+#else
+#define SURFACE_MAIN DEFAULT_FS_MAIN
+
+Surface getSurface(in DefaultVertexOut fin)
+{
+    Surface surf;
+    surf.albedo = float4(1, 1, 1, 1);
+    surf.WorldPos = fin.WorldPos;
+    surf.depth = fin.svPos.z;
+    surf.roughness = 0.5f;
+    surf.Normal = fin.Normal;
+    surf.metallic = 0.5f;
+    surf.TexCoords = fin.TexCoords;
+    surf.ao = 1.0f;
+    surf.matID = materialID;
+    surf.mask = 0.0f;
+    return surf;
+}
+#endif

@@ -1,0 +1,68 @@
+#include "PBR_Lib.hmat"
+#include "Toon_Lib.hmat"
+
+struct Toon_PBR_Param
+{
+    float3 N;
+    float metallic;
+    float3 V;
+    float roughness;
+    float3 albedo;
+    float shadowCut;
+    float3 baseColor;
+    float shadowCutSmooth;
+    float3 highlightColor;
+    float ao;
+    float3 shadowColor;
+    float3 rimColor;
+};
+
+float3 Toon_PBR_Lo(float3 L, float3 radiance, float shadowFactor, in Toon_PBR_Param param)
+{
+    float3 H = normalize(param.V + L);
+    float NdotV = max(dot(param.N, param.V), 0.0);
+    float NdotL = max(dot(param.N, L), 0.0);
+
+    float ToonNdotL = smoothToon(1, 0, NdotL, param.shadowCut, param.shadowCutSmooth);
+
+    float NDF = D_GGX_TR(param.N, H, param.roughness);
+    float G = GeometrySchlickGGX(NdotV, param.roughness) *
+        GeometrySchlickGGX(ToonNdotL, param.roughness) * shadowFactor;
+    float3 F0 = Float3(0.04f);
+    F0 = lerp(F0, param.albedo, metallic);
+    float3 F = fresnelSchlick(max(dot(H, param.V), 0.0), F0);
+
+    float3 kS = F;
+    float3 kD = Float3(1.0) - kS;
+    kD *= 1.0 - metallic;
+
+    float3 nominator = lerp(param.baseColor, param.highlightColor, NDF);
+    nominator = lerp(param.shadowColor, nominator, G);
+    nominator = lerp(nominator, param.rimColor, F);
+
+    nominator *= NDF * G * F;
+
+    float denominator = 4 * NdotV * NdotL + 0.001;
+    float3 specular = nominator / denominator;
+
+    float3 Lo = kD * param.albedo / PI;
+
+    float3 lightColor = Lo * param.baseColor + specular;
+    float3 darkColor = Lo * param.shadowColor;
+
+    return lerp(darkColor, lightColor, ToonNdotL * shadowFactor * param.ao) * radiance;
+}
+
+float3 Toon_PBR_Lo_DirectLight(in DirectLight directLight, float shadowFactor, in Toon_PBR_Param param)
+{
+    float3 L = normalize(directLight.direction);
+    float3 radiance = getLightRadiance(directLight);
+    return Toon_PBR_Lo(L, radiance, shadowFactor, param);
+}
+
+float3 Toon_PBR_Lo_PointLight(in PointLight pointLight, float3 worldPos, float shadowFactor, in Toon_PBR_Param param)
+{
+    float3 L = normalize(pointLight.pos - worldPos);
+    float3 radiance = getLightRadiance(pointLight, worldPos);
+    return Toon_PBR_Lo(L, radiance, shadowFactor, param);
+}

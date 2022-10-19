@@ -6,6 +6,18 @@ float4 smoothToon(float4 base, float4 over, float value, float cut, float smooth
     return lerp(over, base, smoothstep(max(0.0f, cut - hs), min(1.0f, cut + hs), value));
 }
 
+float3 smoothToon(float3 base, float3 over, float value, float cut, float smoothValue)
+{
+    float hs = clamp(smoothValue, 0.0f, 1.0f) / 2.0f;
+    return lerp(over, base, smoothstep(max(0.0f, cut - hs), min(1.0f, cut + hs), value));
+}
+
+float smoothToon(float base, float over, float value, float cut, float smoothValue)
+{
+    float hs = clamp(smoothValue, 0.0f, 1.0f) / 2.0f;
+    return lerp(over, base, smoothstep(max(0.0f, cut - hs), min(1.0f, cut + hs), value));
+}
+
 float4 Toon_Lo(float3 N, float3 V, float3 L, float3 radiance, float4 baseColor, float4 highlightColor,
     float highlightCut, float highlightCutSmooth)
 {

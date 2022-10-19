@@ -119,7 +119,8 @@ bool DrawInfo::operator==(const DrawInfo& i) const
 	return baseVertex == i.baseVertex &&
 		baseInstance == i.baseInstance &&
 		passID == i.passID &&
-		passNum == i.passNum;
+		passNum == i.passNum &&
+		materialID == i.materialID;
 }
 
 bool DrawInfo::operator!=(const DrawInfo& i) const
@@ -127,7 +128,8 @@ bool DrawInfo::operator!=(const DrawInfo& i) const
 	return baseVertex != i.baseVertex ||
 		baseInstance != i.baseInstance ||
 		passID != i.passID ||
-		passNum != i.passNum;
+		passNum != i.passNum ||
+		materialID != i.materialID;
 }
 
 unsigned int DX11ShaderProgram::nextProgramID = 1;

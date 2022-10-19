@@ -36,7 +36,7 @@ void ToneMapPass::execute(IRenderContext& context)
 		localSize.x = ceilf(size.x / (float)localSize.x);
 		localSize.y = ceilf(size.y / (float)localSize.y);
 
-		context.setDrawInfo(0, 1);
+		context.setDrawInfo(0, 1, 0);
 		context.dispatchCompute(localSize.x, localSize.y, 1);
 	}
 	else {
@@ -44,7 +44,7 @@ void ToneMapPass::execute(IRenderContext& context)
 		
 		context.bindFrame(screenRenderTarget.getVendorRenderTarget());
 
-		context.setDrawInfo(0, 1);
+		context.setDrawInfo(0, 1, 0);
 		context.postProcessCall();
 
 		context.clearFrameBindings();

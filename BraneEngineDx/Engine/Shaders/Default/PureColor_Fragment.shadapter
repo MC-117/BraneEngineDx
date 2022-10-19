@@ -6,7 +6,14 @@ DEF_MAT_BEGIN
 uniform float4 baseColor;
 DEF_MAT_END
 
-float4 DEFAULT_FS_MAIN : SV_TARGET
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+//FS_DEF_OUT_COLOR(ssnMask, 0);
+FS_DEF_OUT_END
+
+FragmentOut DEFAULT_FS_MAIN
 {
-    return baseColor;
+    FragmentOut fout;
+    fout.FragColor = baseColor;
+    return fout;
 }

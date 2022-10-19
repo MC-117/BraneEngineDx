@@ -156,7 +156,7 @@ bool RenderCommandList::addRenderTask(const IRenderCommand& cmd, RenderTask& tas
 	}
 
 	if (pTask->renderPack == NULL) {
-		pTask->renderPack = cmd.createRenderPack(*cmd.sceneData, *this);
+		task.renderPack = pTask->renderPack = cmd.createRenderPack(*cmd.sceneData, *this);
 	}
 
 	if (!pTask->renderPack->setRenderCommand(cmd))
@@ -329,7 +329,7 @@ void RenderCommandList::excuteCommand()
 
 			IRenderTarget* renderTarget = task.cameraData->renderTarget->getVendorRenderTarget();
 			context.bindFrame(renderTarget);
-			context.clearFrameColor(task.cameraData->clearColor);
+			context.clearFrameColors(task.cameraData->clearColors);
 			context.clearFrameDepth(1);
 			context.setViewport(0, 0, task.cameraData->data.viewSize.x(), task.cameraData->data.viewSize.y());
 

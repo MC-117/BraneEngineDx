@@ -50,7 +50,7 @@ protected:
 	ShaderToken token = ST_None;
 	ShaderToken scopeToken = ST_None;
 	Enum<ShaderFeature> feature;
-	map<ShaderFeature, string> conditions;
+	map<Enum<ShaderFeature>, string> conditions;
 	unordered_set<ShaderFile*> localHeadFiles;
 	unordered_set<ShaderFile*> globalHeadFiles;
 	map<ShaderStageType, ShaderAdapter*> adapters;
@@ -67,7 +67,7 @@ protected:
 	virtual ShaderAdapter* processAdapter();
 	virtual void compileAdapter();
 	virtual ShaderAdapter* useAdapter(ShaderStageType stageType, const vector<string>& command, bool forceExist = true);
-	virtual void addCondition(ShaderFeature feature, const string& macro);
+	virtual void addCondition(Enum<ShaderFeature> feature, const string& macro);
 	virtual void addCondition(const vector<string>& command);
 	virtual void finalize();
 };

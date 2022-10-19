@@ -73,7 +73,6 @@ DefaultVertexOut MESH_MAIN
     vout.LocalPos = pos;
     vout.svPos = mul(_WorldPos, camData.pmat);
     vout.Normal = normalize(mul(norm, (float3x3)(fm)));
-    vout.lightSpacePos = mul(_WorldPos, directLight.lmat);
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - uv.y;
     return vout;
@@ -126,7 +125,7 @@ FragmentOut DEFAULT_FS_MAIN
     float3 L = normalize(directLight.direction);
     float4 ambience = smoothToon(darkColor, baseColor, fin.TexCoords.y, darkCut, darkSmooth);
     ambience.rgb *= lerp(Float3(1), directLight.color, lightFactor);
-    float shadowFactor = ShadowCalculation(depthMap, depthMapSampler, fin.lightSpacePos, fin.Normal, L);
+    float shadowFactor = ShadowCalculation(depthMap, depthMapSampler, fin.WorldPos, fin.Normal, directLight);
     ambience = lerp(shadowColor, ambience, shadowFactor);
     ambience *= lerp(overColor, noiseColor, SAMPLE_TEX(noiseMap, fin.WorldPos.xy / noiseUVScale));
     

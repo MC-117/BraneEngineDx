@@ -13,6 +13,7 @@ struct DirectLight
     float3 direction;
     float intensity;
     float4x4 lmat;
+    float4 shadowBias;
     float3 color;
 };
 
@@ -39,7 +40,7 @@ float3 getLightRadiance(in PointLight light, in float3 worldPos)
 
 float rgbToIntensity(float3 rgb)
 {
-    return 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b;
+    return dot(rgb, float3(0.299f, 0.587f, 0.114f));
 }
 
 float getLightFinalIntensity(in DirectLight light)

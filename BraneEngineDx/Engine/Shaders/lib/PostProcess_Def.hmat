@@ -1,7 +1,0 @@
-struct PPOut
-{
-    float4 svPos : SV_POSITION;
-    float2 UV : TEXCOORD;
-};
-
-#define DEFAULT_PP_MAIN main(PPOut pin)

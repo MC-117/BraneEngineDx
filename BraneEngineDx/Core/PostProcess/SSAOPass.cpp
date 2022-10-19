@@ -41,7 +41,7 @@ void SSAOPass::execute(IRenderContext& context)
 	context.bindTexture(NULL, Fragment_Shader_Stage, screenMapSlot);
 	context.bindFrame(gtaoRenderTarget.getVendorRenderTarget());
 
-	context.setDrawInfo(0, 2);
+	context.setDrawInfo(0, 2, 0);
 
 	context.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
 	context.setRenderPostState();
@@ -55,7 +55,7 @@ void SSAOPass::execute(IRenderContext& context)
 
 	context.bindFrame(screenRenderTarget.getVendorRenderTarget());
 
-	context.setDrawInfo(1, 2);
+	context.setDrawInfo(1, 2, 0);
 
 	context.setViewport(0, 0, size.x, size.y);
 	context.setRenderPostState();

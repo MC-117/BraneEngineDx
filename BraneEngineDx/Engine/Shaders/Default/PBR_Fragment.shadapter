@@ -40,15 +40,12 @@ FragmentOut DEFAULT_FS_MAIN
     float _metallic = metallic * SAMPLE_TEX(metallicMap, fin.TexCoords).r;
     float _ao = ao * SAMPLE_TEX(aoMap, fin.TexCoords).r;
 
-    float3 F0 = Float3(0.04); 
-    F0 = lerp(F0, albedo, _metallic);
-
     // reflectance equation
     float3 Lo = Float3(0.0);
 
     if (directLight.intensity != 0) {
         Lo += PBR_Lo_DirectLight(directLight, N, V, albedo, _metallic, _roughness) *
-            ShadowCalculation(depthMap, depthMapSampler, fin.lightSpacePos, N, directLight.direction);
+            ShadowCalculation(depthMap, depthMapSampler, fin.WorldPos, fin.Normal, directLight);
     }
 
     for(int i = 0; i < pointLightCount; ++i) {
@@ -62,8 +59,7 @@ FragmentOut DEFAULT_FS_MAIN
     float3 emissionColor = SAMPLE_TEX(emissionMap, fin.TexCoords).rgb;
     float3 color = ambient + Lo;
 
-    color = color / (color + Float3(1.0));
-    color = pow(color, Float3(1.0/2.2)) + (emission * baseColor).rgb * emissionColor;
+    color = PBR_ColorCorrection(color) + (emission * baseColor).rgb * emissionColor;
 
     fout.FragColor = float4(color, alpha);
     return fout;

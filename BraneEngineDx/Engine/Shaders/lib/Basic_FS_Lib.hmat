@@ -2,9 +2,13 @@
 #include "Bindings_Def.hmat"
 #include "Basic_VS_Lib.hmat"
 #include "CameraData_Def.hmat"
+#include "Light_Def.hmat"
 #define FS_DEF_OUT_BEGIN struct FragmentOut {
 #define FS_DEF_OUT_END };
 #define FS_DEF_OUT_COLOR(col, id) float4 col : SV_TARGET##id
+#define FS_DEF_OUT_FLOAT(col, id) float col : SV_TARGET##id
+#define FS_DEF_OUT_COUNT(col, id) uint4 col : SV_TARGET##id
+#define FS_DEF_OUT_STENCIL(stencil) uint stencil : SV_StencilRef
 #define DEFAULT_FS_MAIN main(DefaultVertexOut fin)
 
 float3x3 cotangent(float3 N, float3 p, float2 uv)
@@ -45,9 +49,20 @@ float2 getTexureSize(in Texture2D tex) {
     return size;
 }
 
-float ShadowCalculation(in Texture2D depthMap, in SamplerState depthMapSampler, float4 fragPosLightSpace, float3 N, float3 L)
+float ShadowCalculation(in Texture2D depthMap, in SamplerState depthMapSampler, float3 worldPos, float3 N, in DirectLight directLight)
 {
-    float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    float cos = dot(N, directLight.direction);
+    float sin = sqrt(1 - cos * cos);
+    //float sin = length(cross(N, directLight.direction));
+    float depthScale = max(0.1,sin * rcp(cos));
+    float normalScale = saturate(sin * rcp(cos * cos));
+
+    float3 posWS = worldPos;
+    posWS += directLight.direction * depthScale * directLight.shadowBias.x;
+    posWS += N * normalScale * directLight.shadowBias.y;
+    float4 posLS = mul(float4(posWS, 1.0f), directLight.lmat);
+
+    float3 projCoords = posLS.xyz / posLS.w;
 
     if (projCoords.z >= 1.0) {
         return 1.0;
@@ -59,23 +74,18 @@ float ShadowCalculation(in Texture2D depthMap, in SamplerState depthMapSampler, 
     float currentDepth = projCoords.z;
     
     float shadow = 0.0;
-
-    float2 texelSize = getTexureSize(depthMap);
-    texelSize = 1.0 / texelSize;
     
-    for(int x = -3; x <= 3; ++x)
+    for(int x = -1; x <= 1; ++x)
     {
-        for(int y = -3; y <= 3; ++y)
+        for(int y = -1; y <= 1; ++y)
         {
-            float2 uv = projCoords.xy + float2(x, y) * texelSize;
+            float2 uv = projCoords.xy;
             uv.y = 1 - uv.y;
-            float radius = sqrt(x * x + y * y);
-            float bias = (camData.viewSize.x * texelSize.x * 0.00005 * abs(y)) * (1.0 - dot(N, -L));
-            float pcfDepth = SAMPLE_TEX_LOD(depthMap, uv, 0).r; 
-            shadow += currentDepth - bias > pcfDepth ? 0.0 : 1.0;        
+            float pcfDepth = GATHER_TEX(depthMap, uv, float2(x, y)).r; 
+            shadow += currentDepth > pcfDepth ? 0.0 : 1.0;        
         }
     }
-    shadow /= 49.0;
+    shadow /= 9.0;
     return shadow;
 }
 
@@ -93,4 +103,9 @@ uint getLodLevels(in Texture2D tex)
     uint w, h, l;
     tex.GetDimensions(0, w, h, l);
     return l;
+}
+
+float luminance(float3 linearColor)
+{
+    return dot(linearColor, float3(0.299f, 0.587f, 0.114f));
 }

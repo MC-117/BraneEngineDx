@@ -384,6 +384,8 @@ bool MeshDataRenderPack::setRenderCommand(const IRenderCommand& command)
 		else
 			return false;
 	}
+
+	return true;
 }
 
 void MeshDataRenderPack::setRenderData(MeshPart* part, MeshTransformIndex* data)
@@ -427,7 +429,7 @@ void MeshDataRenderPack::excute(IRenderContext& context, RenderTaskContext& task
 
 	for (int passIndex = 0; passIndex < materialData->desc.passNum; passIndex++) {
 		materialData->desc.currentPass = passIndex;
-		context.setDrawInfo(passIndex, materialData->desc.passNum);
+		context.setDrawInfo(passIndex, materialData->desc.passNum, materialData->desc.materialID);
 		context.execteMeshDraw(vendorRenderExecution, cmds);
 	}
 }

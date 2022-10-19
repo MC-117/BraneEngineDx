@@ -1,0 +1,97 @@
+#order 1000
+#material
+Color baseColor: 255, 255, 255, 255
+Color shadowColor: 150, 150, 150, 255
+Color highlightColor: 255, 255, 255, 255
+Color rimColor: 255, 255, 255, 255
+Color overColor: 255, 255, 255, 255
+Scalar shadowCut: 0.5
+Scalar shadowCutSmooth: 0.0
+Scalar roughness: 1
+Scalar metallic: 1
+Scalar emission: 1
+Texture colorMap: white
+Texture normalMap: black
+Texture rmoMap: white
+Texture emissionMap: black
+Texture depthMap: white
+#vertex use default
+#fragment
+#include "lib/Light_Def.hmat"
+#include "lib/CameraData_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 baseColor;
+uniform float4 shadowColor;
+uniform float4 highlightColor;
+uniform float4 rimColor;
+uniform float4 overColor;
+uniform float shadowCut;
+uniform float shadowCutSmooth;
+uniform float roughness;
+uniform float metallic;
+uniform float emission;
+DEF_MAT_END
+
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(normalMap, 1);
+DEF_TEX2D(rmoMap, 2);
+DEF_TEX2D(emissionMap, 3);
+DEF_TEX2D(depthMap, 4);
+
+#include "lib/Toon_PBR_Lib.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+//FS_DEF_OUT_COLOR(ssnMask, 0);
+FS_DEF_OUT_END
+
+FragmentOut DEFAULT_FS_MAIN
+{
+    FragmentOut fout;
+    float3x3 TBN = cotangent(fin.Normal, fin.WorldPos, fin.TexCoords);
+    float3 tN = normalize(SAMPLE_TEX(normalMap, fin.TexCoords).xyz * 2 - 1);
+    float3 N = normalize(mul(tN, TBN));
+    float3 V = normalize(camData.camPos - fin.WorldPos);
+    float4 albedo = SAMPLE_TEX(colorMap, fin.TexCoords);
+    float3 rmo = SAMPLE_TEX(rmoMap, fin.TexCoords).rgb;
+    float3 emissionColor = SAMPLE_TEX(emissionMap, fin.TexCoords).rgb * emission;
+    float ao = rmo.b;
+    float a = albedo.a * baseColor.a;
+
+    Toon_PBR_Param param;
+    param.roughness = rmo.r * roughness;
+    param.metallic = rmo.r * metallic;
+    param.N = N;
+    param.V = V;
+    param.albedo = albedo.rgb;
+    param.baseColor = baseColor.rgb;
+    param.highlightColor = highlightColor.rgb;
+    param.shadowColor = shadowColor.rgb;
+    param.rimColor = rimColor.rgb;
+    param.ao = ao;
+    param.shadowCut = shadowCut;
+    param.shadowCutSmooth = shadowCutSmooth;
+
+    float3 Lo = Float3(0.0);
+
+    if (directLight.intensity != 0) {
+        float shadowFactor = ShadowCalculation(depthMap,
+            depthMapSampler, fin.WorldPos, fin.Normal, directLight);
+        Lo += Toon_PBR_Lo_DirectLight(directLight, shadowFactor, param);
+    }
+
+    for(int i = 0; i < pointLightCount; ++i) {
+        if (pointLights[i].intensity != 0) {
+            Lo += Toon_PBR_Lo_PointLight(pointLights[i], fin.WorldPos, 1, param);
+        }
+    }
+
+    float3 color = PBR_ColorCorrection(Lo);
+
+    fout.FragColor.rgb = color + emissionColor;
+    fout.FragColor.a = a;
+    fout.FragColor *= overColor;
+    //fout.ssnMask = float4(1);
+    return fout;
+}

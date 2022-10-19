@@ -1,6 +1,7 @@
 #include "Directlight.h"
 #include "Engine.h"
 #include "GUI/Gizmo.h"
+#include "RenderCore/DirectShadowRenderPack.h"
 
 #define DEPTHSIZE 8192
 
@@ -124,13 +125,17 @@ void DirectLight::render(RenderInfo& info)
 					continue;
 				if (!resource.material->canCastShadow)
 					continue;
+				void* transformIndexHandle = NULL;
 				for (int j = 0; j < resource.instanceIDCount; j++)
-					info.sceneData->setMeshPartTransform(resource.meshPart, depthMat, resource.instanceID + j);
-				MeshRenderCommand command;
+					transformIndexHandle = info.sceneData->setMeshPartTransform(
+						resource.meshPart, depthMat, resource.instanceID + j);
+				DirectShadowRenderCommand command;
 				command.sceneData = info.sceneData;
 				command.camera = &shadowCamera;
 				command.material = depthMat;
 				command.mesh = resource.meshPart;
+				command.directLightData = &info.sceneData->lightDataPack.directLightData;
+				command.transformIndexHandle = transformIndexHandle;
 				info.renderGraph->setRenderCommand(command);
 			}
 		}

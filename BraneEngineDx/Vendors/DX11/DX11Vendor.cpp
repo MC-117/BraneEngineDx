@@ -221,7 +221,7 @@ void DX11Vendor::setRenderPreState()
 
 void DX11Vendor::setRenderGeomtryState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetBlendState(dxContext.blendGBuffer.Get(), NULL, 0xFFFFFFFF);
 	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual.Get(), 0);
 }
 

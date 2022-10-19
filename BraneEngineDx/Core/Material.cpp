@@ -15,10 +15,13 @@ Shader Material::defaultParticleShader;
 Material Material::defaultParticleMaterial(Material::defaultParticleShader);
 Shader Material::defaultDepthShader;
 Material Material::defaultDepthMaterial(Material::defaultDepthShader);
+unsigned int Material::nextMaterialID = 1;
 bool Material::isLoadDefaultMaterial = false;
 
 Material::Material(Shader & shader)
 {
+	desc.materialID = nextMaterialID;
+	nextMaterialID++;
 	renderOrder = shader.renderOrder;
 	desc.shader = &shader;
 	desc.colorField.insert(pair<string, MatAttribute<Color>>(string("baseColor"), MatAttribute<Color>({ 255, 255, 255, 255 })));
@@ -27,6 +30,8 @@ Material::Material(Shader & shader)
 Material::Material(const Material & material)
 {
 	desc = material.desc;
+	desc.materialID = nextMaterialID;
+	nextMaterialID++;
 	desc.currentPass = 0;
 	isTwoSide = material.isTwoSide;
 	cullFront = material.cullFront;
@@ -47,6 +52,8 @@ void Material::instantiateFrom(const Material& material)
 {
 	desc = material.desc;
 	desc.currentPass = 0;
+	desc.materialID = nextMaterialID;
+	nextMaterialID++;
 	isTwoSide = material.isTwoSide;
 	cullFront = material.cullFront;
 	canCastShadow = material.canCastShadow;

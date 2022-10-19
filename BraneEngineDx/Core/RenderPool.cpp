@@ -6,13 +6,14 @@
 #include "IVendor.h"
 #include "Engine.h"
 #include "RenderGraph/ForwardRenderGraph.h"
+#include "RenderGraph/DeferredRenderGraph.h"
 
 RenderPool::RenderPool(Camera & defaultCamera)
 	: defaultCamera(defaultCamera), renderThread(renderThreadLoop, this)
 {
 	camera = &defaultCamera;
 	renderFrame = Time::frames();
-	renderGraph = new ForwardRenderGraph();
+	renderGraph = new DeferredRenderGraph();
 }
 
 RenderPool::~RenderPool()

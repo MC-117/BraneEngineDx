@@ -86,7 +86,7 @@ public:
 	virtual void setSkeletonMeshDrawContext();
 	virtual void setTerrainDrawContext();
 
-	virtual void setDrawInfo(int passIndex, int passNum);
+	virtual void setDrawInfo(int passIndex, int passNum, unsigned int materialID);
 	virtual void bindDrawInfo();
 
 	virtual void meshDrawCall(const MeshPartDesc& mesh);

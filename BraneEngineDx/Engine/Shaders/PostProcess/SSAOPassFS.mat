@@ -9,7 +9,7 @@ Texture depthMap
 #vertex use postprocess
 #fragment postprocess
 #include "../lib/Basic_FS_Lib.hmat"
-#include "../lib/PostProcess_Def.hmat"
+#include "../lib/ScreenPass_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 
 #define PI_HALF (PI*0.5)
@@ -219,7 +219,7 @@ float3 MutiBounce(float AO,float3 albedo)
 	return max(AO, ((AO * a + b) * AO + c) * AO);
 }
 
-FragmentOut DEFAULT_PP_MAIN
+FragmentOut DEFAULT_SCREEN_MAIN
 {
 	FragmentOut fout;
     if (passID == 0) {
@@ -248,11 +248,11 @@ FragmentOut DEFAULT_PP_MAIN
 
         //SSAO
         // float2 depthSize = getTexureSize(depthMap);
-        // float depth = SAMPLE_TEX_LOD(depthMap, pin.UV, 0).r;
-        // float3 normal = normalFromDepth(depth, pin.UV, 1 / depthSize.x);
+        // float depth = SAMPLE_TEX_LOD(depthMap, fin.UV, 0).r;
+        // float3 normal = normalFromDepth(depth, fin.UV, 1 / depthSize.x);
         // if (depth < ssaoCutoff && abs(dot(normal, float3(0, 0, 1))) < (1 - ssaobias)) {
-        //     float3 random = normalize(SAMPLE_TEX_LOD(ssaoKernalMap, pin.UV * 8.0, 0).rgb);
-        //     float3 position = float3(pin.UV.x,pin.UV.y,depth);
+        //     float3 random = normalize(SAMPLE_TEX_LOD(ssaoKernalMap, fin.UV * 8.0, 0).rgb);
+        //     float3 position = float3(fin.UV.x,fin.UV.y,depth);
         //     float radiusDepth = ssaoRadius/depth;
         //     float occlusion = 0.0;
         //     //float bias = max(ssaobias * dot(normal, float3(0, 0, 1)), ssaobias * 0.1);
@@ -284,17 +284,17 @@ FragmentOut DEFAULT_PP_MAIN
 
         //GTAO
         float2 depthSize = getTexureSize(depthMap);
-        float ndcDepth = SAMPLE_TEX_LOD(depthMap, pin.UV, 0).r;
+        float ndcDepth = SAMPLE_TEX_LOD(depthMap, fin.UV, 0).r;
         float viewDepth = depthFromNDCToView(ndcDepth);
-        float3 normVS = normalFromDepth(ndcDepth, pin.UV, 1 / depthSize.x);
-        float3 posVS = ScreenToViewPos(pin.UV, ndcDepth);
+        float3 normVS = normalFromDepth(ndcDepth, fin.UV, 1 / depthSize.x);
+        float3 posVS = ScreenToViewPos(fin.UV, ndcDepth);
 
         float3 viewDir = normalize(-posVS.xyz);
         
         float sinDeltaAngle = sin(PI / numAngles);
         float cosDeltaAngle = cos(PI / numAngles);
 
-        float3 random = GetRandomVector(int2(pin.UV * camData.viewSize));
+        float3 random = GetRandomVector(int2(fin.UV * camData.viewSize));
         float2 randomVec = random.xy;
         float offset = random.z;
 
@@ -303,8 +303,8 @@ FragmentOut DEFAULT_PP_MAIN
         float2 screenDir = randomVec;
         for (int angle = 0; angle < numAngles; angle++)
         {
-            float2 Angles = SearchForLargestAngleDual(GTAO_NUMTAPS, pin.UV, screenDir, posVS, viewDir);
-            ao += ComputeInnerIntegral(pin.UV, Angles, screenDir, viewDir, normVS, viewDepth);
+            float2 Angles = SearchForLargestAngleDual(GTAO_NUMTAPS, fin.UV, screenDir, posVS, viewDir);
+            ao += ComputeInnerIntegral(fin.UV, Angles, screenDir, viewDir, normVS, viewDepth);
 		
 		    // Rotate for the next angle
 		    float2 TempScreenDir = screenDir.xy;
@@ -320,8 +320,8 @@ FragmentOut DEFAULT_PP_MAIN
         fout.FragColor = float4(ao, ao, ao, 1);
     }
     else if (passID == 1) {
-        float4 albedo = SAMPLE_TEX_LOD(screenMap, pin.UV, 0);
-        float ao = SAMPLE_TEX_LOD(ssaoMap, pin.UV, 0);
+        float4 albedo = SAMPLE_TEX_LOD(screenMap, fin.UV, 0);
+        float ao = SAMPLE_TEX_LOD(ssaoMap, fin.UV, 0);
         albedo.rgb *= MutiBounce(ao, albedo.rgb);
         albedo.a = 1;
         fout.FragColor = albedo;

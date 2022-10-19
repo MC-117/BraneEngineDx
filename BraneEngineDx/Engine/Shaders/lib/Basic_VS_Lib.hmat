@@ -1,7 +1,7 @@
 struct DefaultVertexOut
 {
+    float4x4 TransMat : TRANSMAT;
     float4 svPos : SV_POSITION;
-    float4 lightSpacePos : LIGHTSAPCEPOS;
     float3 Normal : NORMAL;
     float3 LocalNormal : LOCALNORMAL;
     float3 WorldScale : WOLRDSCALE;
@@ -56,4 +56,19 @@ float4x4 inverse(float4x4 m) {
     ret[3][3] = (n12 * n23 * n31 - n13 * n22 * n31 + n13 * n21 * n32 - n11 * n23 * n32 - n12 * n21 * n33 + n11 * n22 * n33) * idet;
 
     return ret;
+}
+
+float3 getForward(float4x4 tmat)
+{
+    return mul(float4(1.0f, 0.0f, 0.0f, 0.0f), tmat).xyz;
+}
+
+float3 getLeftward(float4x4 tmat)
+{
+    return mul(float4(0.0f, 1.0f, 0.0f, 0.0f), tmat).xyz;
+}
+
+float3 getUpward(float4x4 tmat)
+{
+    return mul(float4(0.0f, 0.0f, 1.0f, 0.0f), tmat).xyz;
 }

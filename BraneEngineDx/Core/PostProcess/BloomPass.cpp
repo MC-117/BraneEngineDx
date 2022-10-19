@@ -32,7 +32,7 @@ void BloomPass::execute(IRenderContext& context)
 	if (program->isComputable()) {
 		Unit2Du localSize = material->getLocalSize();
 
-		context.setDrawInfo(0, 4);
+		context.setDrawInfo(0, 4, 0);
 		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot);
 		Image image;
 		image.texture = &bloomMap;
@@ -42,21 +42,21 @@ void BloomPass::execute(IRenderContext& context)
 			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x), ceilf(size.y / pow(2, i) / (float)localSize.y), 1);
 		}
 
-		context.setDrawInfo(1, 4);
+		context.setDrawInfo(1, 4, 0);
 		for (int i = 0; i < bloomLevel; i++) {
 			image.level = i;
 			context.bindImage(image, imageMapSlot);
 			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x), ceilf(size.y / pow(2, i) / (float)localSize.y), 1);
 		}
 
-		context.setDrawInfo(2, 4);
+		context.setDrawInfo(2, 4, 0);
 		for (int i = 0; i < bloomLevel; i++) {
 			image.level = i;
 			context.bindImage(image, imageMapSlot);
 			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x), ceilf(size.y / pow(2, i) / (float)localSize.y), 1);
 		}
 
-		context.setDrawInfo(3, 4);
+		context.setDrawInfo(3, 4, 0);
 		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot);
 		image.texture = resource->screenTexture;
 		image.level = 0;
@@ -67,7 +67,7 @@ void BloomPass::execute(IRenderContext& context)
 		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot);
 		context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, imageMapSlot);
 
-		context.setDrawInfo(0, 1);
+		context.setDrawInfo(0, 1, 0);
 		for (int i = 0; i < bloomLevel; i++) {
 			int scalar = pow(2, i);
 
@@ -84,7 +84,7 @@ void BloomPass::execute(IRenderContext& context)
 		for (int i = 0; i < bloomLevel; i++) {
 			int scalar = pow(2, i);
 
-			context.setDrawInfo(1, i);
+			context.setDrawInfo(1, i, 0);
 
 			context.bindFrame(screenRenderTargets[i]->getVendorRenderTarget());
 
@@ -98,7 +98,7 @@ void BloomPass::execute(IRenderContext& context)
 		for (int i = 0; i < bloomLevel; i++) {
 			int scalar = pow(2, i);
 
-			context.setDrawInfo(2, i);
+			context.setDrawInfo(2, i, 0);
 
 			context.bindFrame(bloomRenderTargets[i]->getVendorRenderTarget());
 
@@ -106,7 +106,7 @@ void BloomPass::execute(IRenderContext& context)
 			context.postProcessCall();
 		}
 
-		context.setDrawInfo(3, 1);
+		context.setDrawInfo(3, 1, 0);
 
 		context.bindTexture(NULL, Fragment_Shader_Stage, sampleMapSlot);
 		context.bindFrame(screenRenderTargets[0]->getVendorRenderTarget());

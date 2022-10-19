@@ -7,15 +7,45 @@ Scalar borderWidth: 0.1
 Scalar refenceDistance: 0
 #vertex use outline
 #fragment
-#include "lib/Basic_FS_Lib.hmat"
+#condition deferred
+#condition lighting
+#include "lib/GBuffer_Def.hmat"
 
+#ifdef LIGHTING_SHADER_FEATURE
+DEF_GBUFFER
+#else
 DEF_MAT_BEGIN
 uniform float borderWidth;
 uniform float refenceDistance;
 uniform float4 baseColor;
 DEF_MAT_END
+#endif
 
-float4 DEFAULT_FS_MAIN : SV_TARGET
+#ifdef DEFERRED_SHADER_FEATURE
+FS_DEF_OUT_GBUFFER
+#else
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+//FS_DEF_OUT_COLOR(ssnMask, 0);
+FS_DEF_OUT_END
+#endif
+
+#include "lib/Surface_Def.hmat"
+
+FragmentOut SURFACE_MAIN
 {
-    return baseColor;
+    FragmentOut fout;
+    Surface surf = getSurface(fin);
+
+    #ifndef LIGHTING_SHADER_FEATURE
+    surf.albedo = baseColor;
+    #endif
+
+    #ifdef DEFERRED_SHADER_FEATURE
+    outputSurface(surf, fout.gBufferA, fout.gBufferB, fout.gBufferC, fout.gBufferD, fout.gBufferE);
+    #else
+    fout.FragColor = surf.albedo;
+    #endif
+
+    return fout;
 }

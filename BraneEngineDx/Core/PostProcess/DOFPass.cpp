@@ -32,7 +32,7 @@ void DOFPass::execute(IRenderContext& context)
 	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, screenMapSlot);
 	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, depthMapSlot);
 
-	context.setDrawInfo(0, 1);
+	context.setDrawInfo(0, 1, 0);
 
 	context.setViewport(0, 0, size.x, size.y);
 

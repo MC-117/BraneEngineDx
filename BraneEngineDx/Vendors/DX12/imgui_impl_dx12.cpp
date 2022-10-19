@@ -328,7 +328,7 @@ static void ImGui_ImplDX12_CreateFontsTexture()
         g_pFontTextureResourceDesc.channel = 4;
         g_pFontTextureResourceDesc.data = pixels;
         g_pFontTextureResourceDesc.mipLevel = 1;
-        g_pFontTextureResourceDesc.info.internalType = TexInternalType::TIT_RGBA;
+        g_pFontTextureResourceDesc.info.internalType = TexInternalType::TIT_RGBA8_UF;
         g_pFontTextureResourceDesc.info.magFilterType = TexFilter::TF_Linear_Mip_Linear;
         g_pFontTextureResourceDesc.info.minFilterType = TexFilter::TF_Linear_Mip_Linear;
         g_pFontTextureResourceDesc.info.sampleCount = 1;

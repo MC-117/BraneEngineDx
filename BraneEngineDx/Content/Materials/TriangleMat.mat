@@ -1,0 +1,28 @@
+#order 1000
+#material
+Color baseColor: 1.0, 1.0, 1.0, 1.0
+
+#vertex
+#include "/lib/TransformData_def.hmat"
+#include "/lib/CameraData_Def.hmat"
+#include "/lib/Light_Def.hmat"
+#include "/lib/MeshData_Def.hmat"
+
+DefaultVertexOut MESH_MAIN
+{
+    DefaultVertexOut vout;
+    vout.svPos = float4(pos, 1.0);
+    return vout;
+}
+
+#fragment
+#include "/lib/Basic_FS_Lib.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 baseColor;
+DEF_MAT_END
+
+float4 DEFAULT_FS_MAIN : SV_TARGET
+{
+    return baseColor;
+}

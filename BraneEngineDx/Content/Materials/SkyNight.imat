@@ -1,0 +1,25 @@
+#material Engine/SkySphere/Sky.mat
+#order 2500
+#twoside false
+#castshadow true
+Scalar cloudOpacity: 0.580000
+Scalar cloudSpeed: 2.000000
+Scalar highNoisePower: 4.000000
+Scalar horizonFalloff: 8.000000
+Scalar lowNoisePower: 1.000000
+Scalar radius: 3276800.000000
+Scalar starBrightness: 0.000000
+Scalar sunBrightness: 0.000000
+Scalar sunHeight: 1.000000
+Scalar sunRadius: 0.000300
+Scalar time: 290.076233
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color cloudColor: 0.796923, 0.879121, 1.000000, 1.000000
+Color horizonColor: 0.036527, 0.032849, 0.047059, 1.000000
+Color lightDirection: 0.000000, 0.000000, 0.000000, 0.000000
+Color overallColor: 0.552941, 0.552941, 0.552941, 1.000000
+Color sunColor: 1.000000, 0.800000, 0.400000, 1.000000
+Color zenithColor: 0.097193, 0.117204, 0.309804, 1.000000
+Texture cloudNoiseMap: Engine/SkySphere/Clouds.tga
+Texture skyMap: Engine/SkySphere/Sky.tga
+Texture starMap: Engine/SkySphere/Stars.tga
