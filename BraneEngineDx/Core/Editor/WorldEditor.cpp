@@ -21,6 +21,11 @@ void WorldEditor::onWorldGUI(EditorInfo& info)
 		Engine::engineConfig.maxFPS = maxFPS;
 	}
 	ImGui::Checkbox("VSnyc", &Engine::engineConfig.vsnyc);
+	if (ImGui::CollapsingHeader("RenderGraph")) {
+		Editor* editor = EditorManager::getEditor(*world->renderPool.renderGraph);
+		if (editor)
+			editor->onGUI(info);
+	}
 }
 
 void WorldEditor::onDetailGUI(EditorInfo& info)

@@ -353,6 +353,8 @@
     <ClInclude Include="Core\Editor\ParticleSystemEditor.h" />
     <ClInclude Include="Core\Editor\PointLightEditor.h" />
     <ClInclude Include="Core\Editor\PostProcessingCameraEditor.h" />
+    <ClInclude Include="Core\Editor\RenderCore\RenderGraphEditor.h" />
+    <ClInclude Include="Core\Editor\RenderCore\RenderPassEditor.h" />
     <ClInclude Include="Core\Editor\RenderEditor.h" />
     <ClInclude Include="Core\Editor\SkeletonMeshActorEditor.h" />
     <ClInclude Include="Core\Editor\SkeletonMeshRenderEditor.h" />
@@ -747,6 +749,8 @@
     <ClCompile Include="Core\Editor\ParticleSystemEditor.cpp" />
     <ClCompile Include="Core\Editor\PointLightEditor.cpp" />
     <ClCompile Include="Core\Editor\PostProcessingCameraEditor.cpp" />
+    <ClCompile Include="Core\Editor\RenderCore\RenderGraphEditor.cpp" />
+    <ClCompile Include="Core\Editor\RenderCore\RenderPassEditor.cpp" />
     <ClCompile Include="Core\Editor\RenderEditor.cpp" />
     <ClCompile Include="Core\Editor\SkeletonMeshActorEditor.cpp" />
     <ClCompile Include="Core\Editor\SkeletonMeshRenderEditor.cpp" />

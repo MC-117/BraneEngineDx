@@ -19,7 +19,15 @@ void IRenderPack::newVendorRenderExecution()
 
 SerializeInstance(RenderGraph);
 
+void RenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)
+{
+}
+
 Serializable* RenderGraph::instantiate(const SerializationInfo& from)
 {
 	return nullptr;
+}
+
+void RenderPass::getOutputTextures(vector<pair<string, Texture*>>& textures)
+{
 }
