@@ -50,5 +50,7 @@ public:
 	virtual void execute(IRenderContext& context);
 	virtual void reset();
 
+	virtual void getPasses(vector<pair<string, RenderPass*>>& passes);
+
 	static Serializable* instantiate(const SerializationInfo& from);
 };

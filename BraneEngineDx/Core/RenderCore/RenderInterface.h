@@ -7,6 +7,7 @@ class IRenderContext;
 class RenderTarget;
 class Camera;
 class Material;
+class Texture;
 struct MeshPart;
 struct MeshData;
 struct ShaderProgram;
@@ -67,6 +68,8 @@ public:
 	virtual void prepare() = 0;
 	virtual void execute(IRenderContext& context) = 0;
 	virtual void reset() = 0;
+
+	virtual void getOutputTextures(vector<pair<string, Texture*>>& textures);
 };
 
 class RenderGraph : public Serializable
@@ -84,6 +87,8 @@ public:
 	virtual void prepare() = 0;
 	virtual void execute(IRenderContext& context) = 0;
 	virtual void reset() = 0;
+
+	virtual void getPasses(vector<pair<string, RenderPass*>>& passes);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 };

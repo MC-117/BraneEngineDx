@@ -2,6 +2,7 @@
 
 void MeshPass::prepare()
 {
+	outputTextures.clear();
 }
 
 void MeshPass::execute(IRenderContext& context)
@@ -40,6 +41,13 @@ void MeshPass::execute(IRenderContext& context)
 
 			task.cameraData->upload();
 			task.cameraData->bind(context);
+
+			for (auto& tex : renderTarget->desc.textureList) {
+				outputTextures.push_back(make_pair(tex.name, tex.texture));
+			}
+			if (renderTarget->desc.depthTexure) {
+				outputTextures.push_back(make_pair("depthMap", renderTarget->desc.depthTexure));
+			}
 
 			setupTime = setupTime + Time::now() - t;
 		}
@@ -114,4 +122,10 @@ void MeshPass::execute(IRenderContext& context)
 
 void MeshPass::reset()
 {
+}
+
+void MeshPass::getOutputTextures(vector<pair<string, Texture*>>& textures)
+{
+	for (auto& tex : outputTextures)
+		textures.push_back(tex);
 }

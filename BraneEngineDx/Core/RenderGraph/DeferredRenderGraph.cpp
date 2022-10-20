@@ -179,7 +179,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		task.age = 0;
 		task.sceneData = cmd.sceneData;
 		task.shaderProgram = deferredShader;
-		task.renderMode = RenderMode(500, 0, 0);
+		task.renderMode = cmd.getRenderMode();
 		task.cameraData = &gBufferRT->cameraData;
 		task.materialData = deferredMaterialRenderData;
 		task.meshData = meshData;
@@ -282,6 +282,18 @@ void DeferredRenderGraph::reset()
 	}
 	imGuiPass.reset();
 	passes.clear();
+}
+
+void DeferredRenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)
+{
+	passes.push_back(make_pair("geometry", &geometryPass));
+	passes.push_back(make_pair("lighting", &lightingPass));
+	passes.push_back(make_pair("transparent", &transparentPass));
+	int i = 0;
+	for (auto& pass : this->passes) {
+		passes.push_back(make_pair("pass_" + to_string(i), pass));
+	}
+	passes.push_back(make_pair("imGui", &imGuiPass));
 }
 
 Serializable* DeferredRenderGraph::instantiate(const SerializationInfo& from)
