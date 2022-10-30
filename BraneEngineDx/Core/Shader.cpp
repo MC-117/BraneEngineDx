@@ -1,6 +1,57 @@
 #include "Shader.h"
 #include "IVendor.h"
 
+ShaderMatchRule::ShaderMatchRule() :
+	mainFlag(Enum(ShaderMatchFlag::Best) | ShaderMatchFlag::Fallback_Default),
+	tessCtrlFlag(ShaderMatchFlag::Strict),
+	tessEvalFlag(ShaderMatchFlag::Strict),
+	geometryFlag(ShaderMatchFlag::Strict),
+	fragmentFlag(Enum(ShaderMatchFlag::Best) | ShaderMatchFlag::Fallback_Default)
+{
+}
+
+ShaderMatchFlag& ShaderMatchRule::operator[](ShaderStageType stageType)
+{
+	switch (stageType)
+	{
+	case Vertex_Shader_Stage:
+	case Compute_Shader_Stage:
+		return mainFlag;
+	case Tessellation_Control_Shader_Stage:
+		return tessCtrlFlag;
+	case Tessellation_Evalution_Shader_Stage:
+		return tessEvalFlag;
+	case Geometry_Shader_Stage:
+		return geometryFlag;
+	case Fragment_Shader_Stage:
+		return fragmentFlag;
+	default:
+		throw runtime_error("Error ShaderStageType");
+		break;
+	}
+}
+
+ShaderMatchFlag ShaderMatchRule::operator[](ShaderStageType stageType) const
+{
+	switch (stageType)
+	{
+	case Vertex_Shader_Stage:
+	case Compute_Shader_Stage:
+		return mainFlag;
+	case Tessellation_Control_Shader_Stage:
+		return tessCtrlFlag;
+	case Tessellation_Evalution_Shader_Stage:
+		return tessEvalFlag;
+	case Geometry_Shader_Stage:
+		return geometryFlag;
+	case Fragment_Shader_Stage:
+		return fragmentFlag;
+	default:
+		throw runtime_error("Error ShaderStageType");
+		break;
+	}
+}
+
 Shader Shader::nullShader("__Null", 0);
 
 Shader::Shader()
@@ -113,7 +164,7 @@ ShaderAdapter * Shader::getShaderAdapter(ShaderStageType stageType)
 	return NULL;
 }
 
-ShaderProgram * Shader::getProgram(const Enum<ShaderFeature>& feature)
+ShaderProgram * Shader::getProgram(const Enum<ShaderFeature>& feature, const ShaderMatchRule& rule)
 {
 	if (!isValid())
 		return NULL;
@@ -128,7 +179,7 @@ ShaderProgram * Shader::getProgram(const Enum<ShaderFeature>& feature)
 			ShaderAdapter* meshStageAdapter = getMeshStageAdapter();
 			if (meshStageAdapter == NULL)
 				return NULL;
-			meshStage = meshStageAdapter->getShaderStage(feature, true);
+			meshStage = meshStageAdapter->getShaderStage(feature, rule.mainFlag);
 		}
 		if (meshStage == NULL || !meshStage->isValid())
 			return NULL;
@@ -138,7 +189,7 @@ ShaderProgram * Shader::getProgram(const Enum<ShaderFeature>& feature)
 		program->setMeshStage(*meshStage);
 		for (auto b = shaderAdapters.begin(), e = shaderAdapters.end(); b != e; b++) {
 			if (b->first != meshStageType) {
-				ShaderStage* stage = b->second->getShaderStage(feature, true);
+				ShaderStage* stage = b->second->getShaderStage(feature, rule[b->first]);
 				if (stage == NULL)
 					continue;
 				if (!stage->isValid()) {

@@ -184,7 +184,7 @@ unsigned int Material::getPassNum()
 	return desc.passNum;
 }
 
-Unit2Du Material::getLocalSize()
+Vector3u Material::getLocalSize()
 {
 	return desc.localSize;
 }
@@ -499,19 +499,23 @@ bool Material::MaterialLoader::loadMaterial(Material& material, const string& fi
 			noearlyz = true;
 			break;
 		case ShaderCompiler::ST_LocalSize:
-			if (command.size() == 2) {
-				int passNum = atoi(command[1].c_str());
-				material.desc.passNum = passNum < 1 ? 1 : passNum;
-			}
-			break;
-		case ShaderCompiler::ST_Pass:
 			if (command.size() > 1) {
 				int x = atoi(command[1].c_str());
-				material.desc.localSize.x = x < 1 ? 1 : x;
+				material.desc.localSize.x() = x < 1 ? 1 : x;
 			}
 			if (command.size() > 2) {
 				int y = atoi(command[2].c_str());
-				material.desc.localSize.y = y < 1 ? 1 : y;
+				material.desc.localSize.y() = y < 1 ? 1 : y;
+			}
+			if (command.size() > 3) {
+				int z = atoi(command[3].c_str());
+				material.desc.localSize.z() = z < 1 ? 1 : z;
+			}
+			break;
+		case ShaderCompiler::ST_Pass:
+			if (command.size() == 2) {
+				int passNum = atoi(command[1].c_str());
+				material.desc.passNum = passNum < 1 ? 1 : passNum;
 			}
 			break;
 		default:
@@ -544,7 +548,6 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 	bool noearlyz = false;
 	int passNum = 1;
 	int order = -1;
-	Unit2Du localSize = { 1, 1 };
 	while (1)
 	{
 		if (!getline(is, line)) {
@@ -601,16 +604,6 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 					passNum = _passNum < 1 ? 1 : _passNum;
 				}
 			}
-			else if (s[0] == "localsize") {
-				if (s.size() > 1) {
-					int x = atoi(s[1].c_str());
-					localSize.x = x < 1 ? 1 : x;
-				}
-				if (s.size() > 2) {
-					int y = atoi(s[2].c_str());
-					localSize.y = y < 1 ? 1 : y;
-				}
-			}
 		}
 		else if (mat) {
 			vector<string> v = split(line, ' ', 2);
@@ -665,7 +658,6 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 	material->cullFront = cullFront;
 	material->canCastShadow = castShadow;
 	material->desc.passNum = passNum;
-	material->desc.localSize = localSize;
 	if (!success && material != NULL) {
 		delete material;
 		return NULL;

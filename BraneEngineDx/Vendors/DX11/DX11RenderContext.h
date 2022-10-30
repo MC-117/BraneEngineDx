@@ -47,6 +47,9 @@ public:
 	virtual void clearFrameDepth(float depth);
 	virtual void clearFrameStencil(unsigned int stencil);
 
+	virtual void copyTexture2D(ITexture* srcTex, ITexture* dstTex);
+	virtual void copySubTexture2D(ITexture* srcTex, unsigned int srcMip, ITexture* dstTex, unsigned int dstMip);
+
 	virtual unsigned int bindShaderProgram(ShaderProgram* program);
 	virtual unsigned int dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ);
 
@@ -56,10 +59,10 @@ public:
 
 	bool canBindRTV(ITexture* texture);
 
-	virtual void bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index);
+	virtual void bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index, const MipOption& mipOption = MipOption());
 	virtual void bindImage(const Image& image, unsigned int index);
 
-	virtual void bindTexture(ITexture* texture, const string& name);
+	virtual void bindTexture(ITexture* texture, const string& name, const MipOption& mipOption = MipOption());
 	virtual void bindImage(const Image& image, const string& name);
 
 	virtual void clearSRV();

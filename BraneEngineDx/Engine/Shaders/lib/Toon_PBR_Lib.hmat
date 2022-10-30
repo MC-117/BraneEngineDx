@@ -29,12 +29,12 @@ float3 Toon_PBR_Lo(float3 L, float3 radiance, float shadowFactor, in Toon_PBR_Pa
     float G = GeometrySchlickGGX(NdotV, param.roughness) *
         GeometrySchlickGGX(ToonNdotL, param.roughness) * shadowFactor;
     float3 F0 = Float3(0.04f);
-    F0 = lerp(F0, param.albedo, metallic);
+    F0 = lerp(F0, param.albedo, param.metallic);
     float3 F = fresnelSchlick(max(dot(H, param.V), 0.0), F0);
 
     float3 kS = F;
     float3 kD = Float3(1.0) - kS;
-    kD *= 1.0 - metallic;
+    kD *= 1.0 - param.metallic;
 
     float3 nominator = lerp(param.baseColor, param.highlightColor, NDF);
     nominator = lerp(param.shadowColor, nominator, G);

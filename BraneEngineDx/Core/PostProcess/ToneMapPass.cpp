@@ -32,12 +32,12 @@ void ToneMapPass::execute(IRenderContext& context)
 
 		context.bindImage(image, imageMapSlot);
 
-		Unit2Du localSize = material->getLocalSize();
-		localSize.x = ceilf(size.x / (float)localSize.x);
-		localSize.y = ceilf(size.y / (float)localSize.y);
+		Vector3u localSize = material->getLocalSize();
+		localSize.x() = ceilf(size.x / (float)localSize.x());
+		localSize.y() = ceilf(size.y / (float)localSize.y());
 
 		context.setDrawInfo(0, 1, 0);
-		context.dispatchCompute(localSize.x, localSize.y, 1);
+		context.dispatchCompute(localSize.x(), localSize.y(), 1);
 	}
 	else {
 		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, imageMapSlot);

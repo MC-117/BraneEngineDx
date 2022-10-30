@@ -34,17 +34,6 @@ void outputSurface(in Surface surf, out float4 A, out float B, out float4 C, out
 #if defined(LIGHTING_SHADER_FEATURE)
 #define SURFACE_MAIN DEFAULT_SCREEN_MAIN
 
-float3 depthToWorldPos(float3 UVZ)
-{
-    UVZ.x = UVZ.x * 2.0f - 1.0f;
-    UVZ.y = 1.0f - UVZ.y * 2.0f;
-    float4 clipPos = float4(UVZ, 1.0f);
-    float4 viewPos = mul(clipPos, camData.promatInv);
-    viewPos /= viewPos.w;
-    float4 worldPos = mul(viewPos, camData.vmatInv);
-    return worldPos.xyz / worldPos.w;
-}
-
 Surface getSurface(in ScreenVertexOut fin)
 {
     Surface surf;

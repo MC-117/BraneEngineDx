@@ -43,6 +43,7 @@ public:
 
 	Matrix4f getProjectionMatrix() const;
 	Matrix4f getViewMatrix() const;
+	Matrix4f getViewOriginMatrix() const;
 
 	Vector3f getFinalWorldPosition();
 

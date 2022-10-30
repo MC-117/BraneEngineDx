@@ -45,6 +45,7 @@ protected:
 	bool successed = true;
 	bool isCommand = false;
 	bool noEarlyZ = false;
+	Vector3u localSize = { 1, 1, 1 };
 	vector<string> command;
 	ShaderStageType stageType = None_Shader_Stage;
 	ShaderToken token = ST_None;

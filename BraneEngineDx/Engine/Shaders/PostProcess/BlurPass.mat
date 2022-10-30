@@ -2,7 +2,7 @@
 Count kernelRadius: 5
 Texture screenMap
 Image blurMap: binding(0)
-#localsize 16 16
+#localsize 8 8
 #compute postprocess
 #include "../lib/Basic_FS_Lib.hmat"
 #include "../lib/ScreenPass_Def.hmat"
@@ -14,7 +14,7 @@ DEF_MAT_BEGIN
 uniform int kernelRadius;
 DEF_MAT_END
 
-[numthreads(LOCAL_SIZE_2D, LOCAL_SIZE_2D, 1)]
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
 void main(uint3 gid : SV_DispatchThreadID)
 {
     int2 pos = int2(gid.xy);

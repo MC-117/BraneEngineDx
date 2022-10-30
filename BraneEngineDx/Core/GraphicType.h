@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 
 enum TexWrapType
 {
@@ -35,6 +36,12 @@ enum TexInternalType
 	TIT_R32_F,
 	TIT_RGBA8_UI,
 	TIT_RGBA8_I
+};
+
+struct MipOption
+{
+	unsigned int detailMip = 0;
+	unsigned int mipCount = 0;
 };
 
 enum GPUBufferType

@@ -52,6 +52,11 @@ Matrix4f Camera::getViewMatrix() const
 	return Camera::lookAt(cameraRender.cameraLoc, cameraRender.cameraLoc + cameraRender.cameraDir, cameraRender.cameraUp);
 }
 
+Matrix4f Camera::getViewOriginMatrix() const
+{
+	return Camera::lookAt(Vector3f::Zero(), cameraRender.cameraLoc + cameraRender.cameraDir, cameraRender.cameraUp);
+}
+
 Vector3f Camera::getFinalWorldPosition()
 {
 	Vector3f offset = getForward(WORLD) * -distance;

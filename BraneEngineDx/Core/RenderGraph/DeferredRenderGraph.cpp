@@ -1,4 +1,5 @@
 #include "DeferredRenderGraph.h"
+#include "../RenderCore/DirectShadowRenderPack.h"
 #include "../Engine.h"
 
 SerializeInstance(DeferredRenderGraph);
@@ -20,12 +21,17 @@ DeferredRenderGraph::GBufferRT::GBufferRT()
 void DeferredRenderGraph::GBufferRT::prepare()
 {
 	renderTarget.resize(camera->size.x, camera->size.y);
+	int widthP2 = 1 << max(int(log2(camera->size.x)), 1);
+	int heightP2 = 1 << max(int(log2(camera->size.y)), 1);
+	hizTexture.resize(widthP2, heightP2);
+	hitDataMap.resize(camera->size.x, camera->size.y);
+	hitColorMap.resize(camera->size.x, camera->size.y);
 }
 
 DeferredRenderGraph::DeferredRenderGraph()
 {
-	transparentPass.commandList = &transparentList;
-	transparentPass.requireClearFrame = false;
+	forwardPass.commandList = &forwardList;
+	forwardPass.requireClearFrame = false;
 }
 
 DeferredRenderGraph::GBufferRT* DeferredRenderGraph::getGBufferRT(Camera* camera)
@@ -53,50 +59,6 @@ DeferredRenderGraph::GBufferRT* DeferredRenderGraph::getGBufferRT(Camera* camera
 	return rt;
 }
 
-string getShaderFeatureName(Enum<ShaderFeature> feature)
-{
-	if (feature.enumValue == Shader_Default)
-		return "[default]";
-	string name = "";
-	if (feature.has(Shader_Custom)) {
-		if (feature.has(Shader_Custom_1))
-			name += "[custom1]";
-		if (feature.has(Shader_Custom_2))
-			name += "[custom2]";
-		if (feature.has(Shader_Custom_3))
-			name += "[custom3]";
-		if (feature.has(Shader_Custom_4))
-			name += "[custom4]";
-		if (feature.has(Shader_Custom_5))
-			name += "[custom5]";
-		if (feature.has(Shader_Custom_6))
-			name += "[custom6]";
-		if (feature.has(Shader_Custom_7))
-			name += "[custom7]";
-		if (feature.has(Shader_Custom_8))
-			name += "[custom8]";
-	}
-	else {
-		if (feature.has(Shader_Deferred))
-			name += "[deferred]";
-		if (feature.has(Shader_Lighting))
-			name += "[lighting]";
-		if (feature.has(Shader_Postprocess))
-			name += "[postprocess]";
-		if (feature.has(Shader_Skeleton))
-			name += "[skeleton]";
-		if (feature.has(Shader_Morph))
-			name += "[morph]";
-		if (feature.has(Shader_Particle))
-			name += "[particle]";
-		if (feature.has(Shader_Modifier))
-			name += "[modifier]";
-		if (feature.has(Shader_Terrain))
-			name += "[terrain]";
-	}
-	return name;
-}
-
 bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 {
 	if (!cmd.isValid())
@@ -105,14 +67,22 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 	if (cmd.sceneData)
 		sceneDatas.insert(cmd.sceneData);
 
-	const MeshRenderCommand* meshRenderCommand = dynamic_cast<const MeshRenderCommand*>(&cmd);
+	ShaderMatchRule matchRule;
+	matchRule.fragmentFlag = ShaderMatchFlag::Best;
+
+	const DirectShadowRenderCommand* shadowRenderCommand = dynamic_cast<const DirectShadowRenderCommand*>(&cmd);
 	uint16_t renderStage = cmd.getRenderMode().getRenderStage();
 
-	if (renderStage >= RS_Transparent) {
-		transparentList.setRenderCommand(cmd);
-	}
-	else if (meshRenderCommand == NULL) {
+	Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
+	Enum<ShaderFeature> deferredShaderFeature = shaderFeature;
+	deferredShaderFeature |= Shader_Deferred;
+	ShaderProgram* deferredShader = cmd.material->getShader()->getProgram(deferredShaderFeature, matchRule);
+
+	if (shadowRenderCommand) {
 		geometryPass.commandList->setRenderCommand(cmd);
+	}
+	else if (renderStage >= RS_Transparent || deferredShader == NULL) {
+		forwardList.setRenderCommand(cmd);
 	}
 	else {
 		GBufferRT* gBufferRT = getGBufferRT(cmd.camera);
@@ -136,32 +106,8 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		if (meshData)
 			meshData->init();
 
-		Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
-		Enum<ShaderFeature> deferredShaderFeature = shaderFeature;
-		deferredShaderFeature |= Shader_Deferred;
-		ShaderProgram* deferredShader = cmd.material->getShader()->getProgram(deferredShaderFeature);
-		if (deferredShader == NULL) {
-			Console::warn("Shader %s don't have mode %s",
-				cmd.material->getShaderName().c_str(),
-				getShaderFeatureName(deferredShaderFeature.enumValue).c_str());
-			return false;
-		}
-
-		Enum<ShaderFeature> lightingShaderFeature = shaderFeature;
-		lightingShaderFeature |= Shader_Lighting;
-		ShaderProgram* lightingShader = cmd.material->getShader()->getProgram(lightingShaderFeature);
-		if (lightingShader == NULL) {
-			Console::warn("Shader %s don't have mode %s",
-				cmd.material->getShaderName().c_str(),
-				getShaderFeatureName(deferredShaderFeature.enumValue).c_str());
-			return false;
-		}
-
+		// Deferred geometry pass
 		if (!deferredShader->init()) {
-			return false;
-		}
-
-		if (!lightingShader->init()) {
 			return false;
 		}
 
@@ -187,14 +133,25 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 
 		geometryPass.commandList->addRenderTask(cmd, task);
 
-		DeferredLightingTask lightingTask;
-		lightingTask.sceneData = cmd.sceneData;
-		lightingTask.program = lightingShader;
-		lightingTask.gBufferRT = &gBufferRT->renderTarget;
-		lightingTask.cameraRenderData = cameraRenderData;
-		lightingTask.material = cmd.material;
+		// Lighting pass
+		Enum<ShaderFeature> lightingShaderFeature = shaderFeature;
+		lightingShaderFeature |= Shader_Lighting;
+		ShaderProgram* lightingShader = cmd.material->getShader()->getProgram(lightingShaderFeature, matchRule);
 
-		lightingPass.addTask(lightingTask);
+		if (lightingShader) {
+			if (!lightingShader->init()) {
+				return false;
+			}
+
+			DeferredLightingTask lightingTask;
+			lightingTask.sceneData = cmd.sceneData;
+			lightingTask.program = lightingShader;
+			lightingTask.gBufferRT = &gBufferRT->renderTarget;
+			lightingTask.cameraRenderData = cameraRenderData;
+			lightingTask.material = cmd.material;
+
+			lightingPass.addTask(lightingTask);
+		}
 	}
 	return true;
 }
@@ -226,8 +183,10 @@ void DeferredRenderGraph::prepare()
 	for (auto& rt : gBufferRTs)
 		rt.second->prepare();
 	geometryPass.prepare();
+	hizPass.prepare();
+	ssrPass.prepare();
 	lightingPass.prepare();
-	transparentPass.prepare();
+	forwardPass.prepare();
 	for (auto pass : passes)
 		pass->prepare();
 	imGuiPass.prepare();
@@ -243,8 +202,26 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	context.bindTexture(NULL, Fragment_Shader_Stage, 9);
 	context.bindTexture(NULL, Fragment_Shader_Stage, 10);
 	geometryPass.execute(context);
+	context.clearFrameBindings();
+
+	for (auto& item : gBufferRTs) {
+		hizPass.depthTexture = &item.second->gBufferB;
+		hizPass.hizTexture = &item.second->hizTexture;
+		hizPass.execute(context);
+	}
+
+	for (auto& item : gBufferRTs) {
+		ssrPass.gBufferA = &item.second->gBufferA;
+		ssrPass.gBufferB = &item.second->gBufferB;
+		ssrPass.gBufferC = &item.second->gBufferC;
+		ssrPass.hiZMap = &item.second->hizTexture;
+		ssrPass.hitDataMap = &item.second->hitDataMap;
+		ssrPass.hitColorMap = &item.second->hitColorMap;
+		ssrPass.execute(context);
+	}
+
 	lightingPass.execute(context);
-	transparentPass.execute(context);
+	forwardPass.execute(context);
 	context.clearFrameBindings();
 	for (auto pass : passes)
 		pass->execute(context);
@@ -273,9 +250,11 @@ void DeferredRenderGraph::reset()
 	sceneDatas.clear();
 
 	geometryPass.reset();
+	hizPass.reset();
+	ssrPass.reset();
 	lightingPass.reset();
-	transparentList.resetCommand();
-	transparentPass.reset();
+	forwardList.resetCommand();
+	forwardPass.reset();
 	for (auto pass : passes) {
 		pass->reset();
 		pass->renderGraph = NULL;
@@ -288,7 +267,7 @@ void DeferredRenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)
 {
 	passes.push_back(make_pair("geometry", &geometryPass));
 	passes.push_back(make_pair("lighting", &lightingPass));
-	passes.push_back(make_pair("transparent", &transparentPass));
+	passes.push_back(make_pair("forward", &forwardPass));
 	int i = 0;
 	for (auto& pass : this->passes) {
 		passes.push_back(make_pair("pass_" + to_string(i), pass));

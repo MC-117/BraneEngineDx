@@ -7,6 +7,8 @@ struct CameraData
     float4x4 promatInv;
     float4x4 vmat;
     float4x4 vmatInv;
+    float4x4 vomat;
+    float4x4 vomatInv;
     float3 camPos;
     float zNear;
     float3 camDir;

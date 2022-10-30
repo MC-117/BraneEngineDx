@@ -1,0 +1,110 @@
+#material
+Count hiZStartLevel: 5
+Count hiZStopLevel: -1
+Count hiZMaxStep: 20
+#localsize 8 8
+#computer
+
+#include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/Light_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform int hiZStartLevel;
+uniform int hiZStopLevel;
+uniform int hiZMaxStep;
+DEF_MAT_END
+
+#define gBufferA texture0
+#define gBufferB texture1
+#define gBufferC texture2
+#define hiZMap texture3
+
+#define inHitColorMap texture0
+
+#define hitDataMap rwTexture0
+#define hitColorMap rwTexture1
+
+#define outGBufferA rwTexture1
+
+DEF_TEX2D(texture0, 0);
+DEF_TEX2D(texture1, 1);
+DEF_TEX2D(texture2, 2);
+DEF_TEX2D(texture3, 3);
+
+RWTexture2D<float4> rwTexture0 : register(u0);
+RWTexture2D<float4> rwTexture1 : register(u1);
+
+float getCellSize(float2 stepUV, float2 detailCellSize, float mipLevel)
+{
+    float2 size = detailCellSize * exp2(mipLevel + 1);
+    return length(min(stepUV, size));
+}
+
+bool rayTraceHiZ(float3 dirUVZ, out float3 hitUVZ)
+{
+    bool hit = false;
+    int mipLevel = hiZStartLevel;
+    int stepNum = 0;
+    float cellSize = getCellSize(endUV.xy, mipLevel);
+    while(mipLevel > hiZStopLevel && stepNum < hiZMaxStep) {
+        hitUVZ += dirUVZ * cellSize;
+        float depth = SAMPLE_TEX_LOD(hiZMap, hitUVZ.xy, mipLevel);
+        if (hitUVZ.z > depth) {
+            mipLevel--;
+            cellSize = getCellSize(endUV.xy, mipLevel);
+            hit = true;
+        }
+        stepNum++;
+    }
+    return hit;
+}
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 tid : SV_DispatchThreadID)
+{
+	uint2 size;
+    texture0.GetDimensions(size.x, size.y);
+    if (all(tid < size)) {
+        if (passID == 0) {
+            float B = SAMPLE_TEX(gBufferB, fin.UV);
+            float4 C = SAMPLE_TEX(gBufferC, fin.UV);
+            float depth = B;
+            float3 N = C.xyz;
+            float roughness = C.a;
+
+            float3 viewOriginPos = depthToViewOriginPos(float3(fin.UV, depth));
+            float3 V = normalize(worldViewOriginPos);
+
+            float3x3 tangentBasis = getTangentBasis(N);
+            float4 HPDF = importanceSampleGGX(float2(0, 0), roughness * roughness).xyz;
+            float3 H = mul(HPDF.xyz, tangentBasis);
+            float3 L = reflect(V, H);
+
+            float3 startUVZ = float3(fin.UV, depth);
+            float3 dirUVZ = normalize(mul(mul(float4(L, 0), camData.vomat), camData.promat).xyz);
+            dirUVZ.y *= -1.0f;
+            float3 hitUVZ = startUVZ;
+            float4 hitData, hitColor;
+            if (rayTraceHiZ(dirUVZ, hitUVZ)) {
+                hitData = float4(hitUVZ, HPDF.a);
+                hitColor = SAMPLE_TEX_LOD(gBufferA, hitUVZ.xy, 0);
+            }
+            else {
+                hitData = float4(hitUVZ, 0.0f);
+                hitColor = float4(0.0f);
+            }
+
+            hitDataMap[tid] = hitData;
+            hitColorMap[tid] = color;
+        }
+        else if (passID == 1) {
+            float2 UV = float2(tid.x / float(size.x), tid.y / float(size.y));
+            float4 hitData = hitDataMap[tid];
+            float4 hitColor = SAMPLE_TEX_LOD(inHitColorMap, UV, 0);
+            float4 color = outGBufferA[tid];
+            color.rgb += hitColor.rgb;
+            outGBufferA[tid] = color;
+        }
+    }
+}

@@ -1230,6 +1230,15 @@
     <ClInclude Include="Core\Editor\RenderCore\RenderGraphEditor.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Utility\RenderUtility.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderGraph\ScreenSpaceReflectionPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderGraph\HiZPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -2298,6 +2307,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\Editor\RenderCore\RenderGraphEditor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Utility\RenderUtility.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderGraph\HiZPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderGraph\ScreenSpaceReflectionPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

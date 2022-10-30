@@ -50,7 +50,7 @@ public:
 	bool setTexture(const string& name, Texture& value);
 	bool setImage(const string& name, const Image& value);
 	unsigned int getPassNum();
-	Unit2Du getLocalSize();
+	Vector3u getLocalSize();
 	float* getScaler(const string& name);
 	int* getCount(const string& name);
 	Color* getColor(const string& name);
