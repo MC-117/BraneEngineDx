@@ -6,6 +6,7 @@
 #include "../Console.h"
 #include "../IVendor.h"
 #include "../Engine.h"
+#include "../Utility/RenderUtility.h"
 
 void SceneRenderData::setLight(Render* lightRender)
 {
@@ -174,7 +175,9 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, ShaderFeatur
 	shaderFeature |= extraFeature;
 	ShaderProgram* shader = cmd.material->getShader()->getProgram(shaderFeature);
 	if (shader == NULL) {
-		Console::warn("Shader %s don't have mode %d", cmd.material->getShaderName().c_str(), shaderFeature.enumValue);
+		Console::warn("Shader %s don't have mode %s",
+			cmd.material->getShaderName().c_str(),
+			getShaderFeatureNames(shaderFeature).c_str());
 		return false;
 	}
 

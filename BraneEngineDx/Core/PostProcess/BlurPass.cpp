@@ -38,23 +38,23 @@ void BlurPass::render(RenderInfo& info)
 	}
 	if (program->isComputable()) {
 		program->bind();
-		Unit2Du localSize = material->getLocalSize();
-		localSize.x = ceilf(size.x / (float)localSize.x);
-		localSize.y = ceilf(size.y / (float)localSize.y);
+		Vector3u localSize = material->getLocalSize();
+		localSize.x() = ceilf(size.x / (float)localSize.x());
+		localSize.y() = ceilf(size.y / (float)localSize.y());
 
 		*screenMapSlot = resource->screenTexture;
 		blurMapSlot->texture = &blurXMap;
 
 		material->setPass(0);
 		material->processInstanceData();
-		program->dispatchCompute(localSize.x, localSize.y, 1);
+		program->dispatchCompute(localSize.x(), localSize.y(), 1);
 
 		*screenMapSlot = &blurXMap;
 		blurMapSlot->texture = &blurYMap;
 
 		material->setPass(1);
 		material->processInstanceData();
-		program->dispatchCompute(localSize.x, localSize.y, 1);
+		program->dispatchCompute(localSize.x(), localSize.y(), 1);
 
 		resource->blurTexture = &blurYMap;
 	}

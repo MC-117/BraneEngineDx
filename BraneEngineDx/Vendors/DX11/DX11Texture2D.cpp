@@ -371,20 +371,36 @@ unsigned int DX11Texture2D::resize(unsigned int width, unsigned int height)
 	return desc.textureHandle;
 }
 
-ComPtr<ID3D11ShaderResourceView> DX11Texture2D::getSRV()
+ComPtr<ID3D11ShaderResourceView> DX11Texture2D::getSRV(const MipOption& mipOption)
 {
 	if (bind() == 0)
 		return NULL;
+
+	bool create = false;
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+
 	if (dx11SRV == NULL) {
-		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		create = true;
+	}
+	else {
+		dx11SRV->GetDesc(&srvDesc);
+		create = (mipOption.mipCount != 0 &&
+			srvDesc.Texture2D.MipLevels != mipOption.mipCount) || 
+			srvDesc.Texture2D.MostDetailedMip != mipOption.detailMip;
+	}
+
+	if (create) {
+		ZeroMemory(&srvDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
 		srvDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
 		if (desc.info.sampleCount > 1) {
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
 		}
 		else {
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-			srvDesc.Texture2D.MipLevels = info.texture2DDesc.MipLevels;
-			srvDesc.Texture2D.MostDetailedMip = 0;
+			srvDesc.Texture2D.MipLevels =
+				(mipOption.mipCount == 0 | mipOption.mipCount > info.texture2DDesc.MipLevels) ?
+				info.texture2DDesc.MipLevels : mipOption.mipCount;
+			srvDesc.Texture2D.MostDetailedMip = mipOption.detailMip;
 		}
 		if (FAILED(dxContext.device->CreateShaderResourceView(dx11Texture2D.Get(), &srvDesc, &dx11SRV)))
 			throw runtime_error("DX11Tetxture2D: CreateShaderResourceView failed");

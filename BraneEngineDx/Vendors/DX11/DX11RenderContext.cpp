@@ -244,6 +244,27 @@ void DX11RenderContext::clearFrameStencil(unsigned int stencil)
 		dxContext.deviceContext->ClearDepthStencilView(dx11DSV.Get(), D3D11_CLEAR_STENCIL, 0, stencil);
 }
 
+void DX11RenderContext::copyTexture2D(ITexture* srcTex, ITexture* dstTex)
+{
+	DX11Texture2D* dxSrcTex = dynamic_cast<DX11Texture2D*>(srcTex);
+	DX11Texture2D* dxDstTex = dynamic_cast<DX11Texture2D*>(dstTex);
+	if (dxSrcTex && dxDstTex)
+		dxContext.deviceContext->CopyResource(dxDstTex->dx11Texture2D.Get(), dxSrcTex->dx11Texture2D.Get());
+}
+
+void DX11RenderContext::copySubTexture2D(ITexture* srcTex, unsigned int srcMip, ITexture* dstTex, unsigned int dstMip)
+{
+	DX11Texture2D* dxSrcTex = dynamic_cast<DX11Texture2D*>(srcTex);
+	DX11Texture2D* dxDstTex = dynamic_cast<DX11Texture2D*>(dstTex);
+	if (dxSrcTex && dxDstTex) {
+		dxContext.deviceContext->CopySubresourceRegion(
+			dxDstTex->dx11Texture2D.Get(),
+			D3D11CalcSubresource(dstMip, 0, 1),
+			0, 0, 0, dxSrcTex->dx11Texture2D.Get(),
+			D3D11CalcSubresource(srcMip, 0, 1), NULL);
+	}
+}
+
 unsigned int DX11RenderContext::bindShaderProgram(ShaderProgram* program)
 {
 	DX11ShaderProgram* dxProgram = dynamic_cast<DX11ShaderProgram*>(program);
@@ -383,7 +404,7 @@ bool DX11RenderContext::canBindRTV(ITexture* texture)
 		uavBindings.find(texture) == uavBindings.end();
 }
 
-void DX11RenderContext::bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index)
+void DX11RenderContext::bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index, const MipOption& mipOption)
 {
 	DX11Texture2D* dxTex = dynamic_cast<DX11Texture2D*>(texture);
 	ComPtr<ID3D11ShaderResourceView> tex = NULL;
@@ -410,7 +431,7 @@ void DX11RenderContext::bindTexture(ITexture* texture, ShaderStageType stage, un
 	}
 #else
 	if (dxTex != NULL) {
-		tex = dxTex->getSRV();
+		tex = dxTex->getSRV(mipOption);
 		sample = dxTex->getSampler();
 	}
 #endif
@@ -480,7 +501,7 @@ void DX11RenderContext::bindImage(const Image& image, unsigned int index)
 #endif
 }
 
-void DX11RenderContext::bindTexture(ITexture* texture, const string& name)
+void DX11RenderContext::bindTexture(ITexture* texture, const string& name, const MipOption& mipOption)
 {
 	if (currentProgram == NULL)
 		return;
@@ -490,7 +511,7 @@ void DX11RenderContext::bindTexture(ITexture* texture, const string& name)
 	DX11ShaderProgram::AttributeDesc desc = currentProgram->getAttributeOffset(name);
 	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
 		return;
-	bindTexture(dxTex, (ShaderStageType)desc.meta, desc.offset);
+	bindTexture(dxTex, (ShaderStageType)desc.meta, desc.offset, mipOption);
 }
 
 void DX11RenderContext::bindImage(const Image& image, const string& name)

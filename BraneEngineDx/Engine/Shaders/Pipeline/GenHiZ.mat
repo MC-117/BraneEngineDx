@@ -1,0 +1,22 @@
+#material
+#localsize 8 8
+#compute
+#include "../lib/Basic_FS_Lib.hmat"
+
+DEF_TEX2D(srcDepth, 0);
+RWTexture2D<float> dstDepth : register(u0);
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 gid : SV_GroupID,
+	uint2 tid : SV_DispatchThreadID)
+{
+	uint2 size;
+    srcDepth.GetDimensions(size.x, size.y);
+    if (all(tid < size))
+    {
+        float2 UV = ((tid + 0.5) * 2.0f + float2(-0.25f, -0.25f)) / size;
+        float4 z4 = srcDepth.GatherRed(srcDepthSampler, UV, 0);
+        float minZ = min(min(z4.x, z4.y), min(z4.z, z4.w));
+        dstDepth[tid] = minZ;
+    }
+}

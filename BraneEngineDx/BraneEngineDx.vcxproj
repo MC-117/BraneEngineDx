@@ -428,9 +428,11 @@
     <ClInclude Include="Core\RenderGraph\DeferredLightingPass.h" />
     <ClInclude Include="Core\RenderGraph\DeferredRenderGraph.h" />
     <ClInclude Include="Core\RenderGraph\ForwardRenderGraph.h" />
+    <ClInclude Include="Core\RenderGraph\HiZPass.h" />
     <ClInclude Include="Core\RenderGraph\ImGUIPass.h" />
     <ClInclude Include="Core\RenderGraph\MeshPass.h" />
     <ClInclude Include="Core\RenderGraph\MultiSampleResolvePass.h" />
+    <ClInclude Include="Core\RenderGraph\ScreenSpaceReflectionPass.h" />
     <ClInclude Include="Core\Script\PythonFreeze.h" />
     <ClInclude Include="Core\Script\PythonObjectBehaviorEditor.h" />
     <ClInclude Include="Core\ShaderCode\ShaderAdapterCompiler.h" />
@@ -560,6 +562,7 @@
     <ClInclude Include="Core\Utility\hash.h" />
     <ClInclude Include="Core\Utility\MathUtility.h" />
     <ClInclude Include="Core\Utility\Octree.h" />
+    <ClInclude Include="Core\Utility\RenderUtility.h" />
     <ClInclude Include="Core\Utility\Utility.h" />
     <ClInclude Include="Core\MathLibrary.h" />
     <ClInclude Include="Core\SkeletonMesh.h" />
@@ -868,9 +871,11 @@
     <ClCompile Include="Core\RenderGraph\DeferredLightingPass.cpp" />
     <ClCompile Include="Core\RenderGraph\DeferredRenderGraph.cpp" />
     <ClCompile Include="Core\RenderGraph\ForwardRenderGraph.cpp" />
+    <ClCompile Include="Core\RenderGraph\HiZPass.cpp" />
     <ClCompile Include="Core\RenderGraph\ImGUIPass.cpp" />
     <ClCompile Include="Core\RenderGraph\MeshPass.cpp" />
     <ClCompile Include="Core\RenderGraph\MultiSampleResolvePass.cpp" />
+    <ClCompile Include="Core\RenderGraph\ScreenSpaceReflectionPass.cpp" />
     <ClCompile Include="Core\RenderPool.cpp" />
     <ClCompile Include="Core\RenderTarget.cpp" />
     <ClCompile Include="Core\Physics\RigidBody.cpp" />
@@ -943,6 +948,7 @@
     <ClCompile Include="Core\Utility\EngineUtility.cpp" />
     <ClCompile Include="Core\Utility\Guid.cpp" />
     <ClCompile Include="Core\Utility\MathUtility.cpp" />
+    <ClCompile Include="Core\Utility\RenderUtility.cpp" />
     <ClCompile Include="Core\Utility\Utility.cpp" />
     <ClCompile Include="Core\MathLibrary.cpp" />
     <ClCompile Include="Core\SkeletonMesh.cpp" />

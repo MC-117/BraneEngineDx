@@ -36,6 +36,9 @@ public:
 	virtual void clearFrameDepth(float depth) = 0;
 	virtual void clearFrameStencil(unsigned int stencil) = 0;
 
+	virtual void copyTexture2D(ITexture* srcTex, ITexture* dstTex) = 0;
+	virtual void copySubTexture2D(ITexture* srcTex, unsigned int srcMip, ITexture* dstTex, unsigned int dstMip) = 0;
+
 	virtual unsigned int bindShaderProgram(ShaderProgram* program) = 0;
 	virtual unsigned int dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ) = 0;
 	
@@ -43,10 +46,10 @@ public:
 	virtual void bindMaterialImages(IMaterial* material) = 0;
 	virtual void bindMaterialBuffer(IMaterial* material) = 0;
 
-	virtual void bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index) = 0;
+	virtual void bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index, const MipOption& mipOption = MipOption()) = 0;
 	virtual void bindImage(const Image& image, unsigned int index) = 0;
 
-	virtual void bindTexture(ITexture* texture, const string& name) = 0;
+	virtual void bindTexture(ITexture* texture, const string& name, const MipOption& mipOption = MipOption()) = 0;
 	virtual void bindImage(const Image& image, const string& name) = 0;
 
 	virtual void bindMeshData(MeshData* meshData) = 0;

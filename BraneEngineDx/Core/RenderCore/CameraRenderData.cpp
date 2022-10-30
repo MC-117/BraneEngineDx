@@ -14,6 +14,10 @@ void CameraRenderData::create()
 	Matrix4f vmatInv = vmat.inverse();
 	data.viewMat = MATRIX_UPLOAD_OP(vmat);
 	data.viewMatInv = MATRIX_UPLOAD_OP(vmatInv);
+	Matrix4f vomat = camera->getViewOriginMatrix();
+	Matrix4f vomatInv = vomat.inverse();
+	data.viewOriginMat = MATRIX_UPLOAD_OP(vomat);
+	data.viewOriginMatInv = MATRIX_UPLOAD_OP(vomatInv);
 	data.cameraLoc = camera->cameraRender.cameraLoc;
 	data.cameraDir = camera->cameraRender.cameraDir;
 	data.cameraUp = camera->cameraRender.cameraUp;

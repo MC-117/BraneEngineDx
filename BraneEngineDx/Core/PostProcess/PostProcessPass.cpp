@@ -102,13 +102,13 @@ void PostProcessPass::render(RenderInfo & info)
 	if (program->isComputable()) {
 		program->bind();
 		material->processInstanceData();
-		Unit2Du localSize = material->getLocalSize();
-		localSize.x = ceilf(size.x / (float)localSize.x);
-		localSize.y = ceilf(size.y / (float)localSize.y);
+		Vector3u localSize = material->getLocalSize();
+		localSize.x() = ceilf(size.x / (float)localSize.x());
+		localSize.y() = ceilf(size.y / (float)localSize.y());
 		for (int i = 0; i < material->getPassNum(); i++) {
 			material->setPass(i);
 			material->processBaseData();
-			program->dispatchCompute(localSize.x, localSize.y, 1);
+			program->dispatchCompute(localSize.x(), localSize.y(), 1);
 		}
 		material->setPass(0);
 	}

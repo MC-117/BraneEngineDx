@@ -8,7 +8,7 @@ Color vignetteColor: 0, 0, 0, 255
 Scalar lutBlend: 0.5
 Texture lutMap: defaultLut
 Image imageMap: binding(0)
-#localsize 16 16
+#localsize 8 8
 #compute postprocess
 #include "../lib/Basic_FS_Lib.hmat"
 #include "../lib/ScreenPass_Def.hmat"
@@ -55,7 +55,7 @@ float4 lookupTable(float4 color, Texture2D LUT, SamplerState LUTSampler)
     return float4(newColor.rgb, color.w);
 }
 
-[numthreads(LOCAL_SIZE_2D, LOCAL_SIZE_2D, 1)]
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
 void main(uint3 gid : SV_DispatchThreadID)
 {
 	uint2 pos = uint2(gid.xy);

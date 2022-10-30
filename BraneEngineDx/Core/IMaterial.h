@@ -27,7 +27,7 @@ struct MaterialDesc
 	unsigned int currentPass = 0;
 	unsigned int passNum = 1;
 	unsigned int materialID = 0;
-	Unit2Du localSize = { 1, 1 };
+	Vector3u localSize = { 1, 1, 1 };
 	map<string, MatAttribute<float>> scalarField;
 	map<string, MatAttribute<int>> countField;
 	map<string, MatAttribute<Color>> colorField;

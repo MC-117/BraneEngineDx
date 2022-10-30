@@ -30,7 +30,7 @@ void BloomPass::execute(IRenderContext& context)
 	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
 
 	if (program->isComputable()) {
-		Unit2Du localSize = material->getLocalSize();
+		Vector3u localSize = material->getLocalSize();
 
 		context.setDrawInfo(0, 4, 0);
 		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot);
@@ -39,28 +39,28 @@ void BloomPass::execute(IRenderContext& context)
 		for (int i = 0; i < bloomLevel; i++) {
 			image.level = i;
 			context.bindImage(image, imageMapSlot);
-			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x), ceilf(size.y / pow(2, i) / (float)localSize.y), 1);
+			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x()), ceilf(size.y / pow(2, i) / (float)localSize.y()), 1);
 		}
 
 		context.setDrawInfo(1, 4, 0);
 		for (int i = 0; i < bloomLevel; i++) {
 			image.level = i;
 			context.bindImage(image, imageMapSlot);
-			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x), ceilf(size.y / pow(2, i) / (float)localSize.y), 1);
+			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x()), ceilf(size.y / pow(2, i) / (float)localSize.y()), 1);
 		}
 
 		context.setDrawInfo(2, 4, 0);
 		for (int i = 0; i < bloomLevel; i++) {
 			image.level = i;
 			context.bindImage(image, imageMapSlot);
-			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x), ceilf(size.y / pow(2, i) / (float)localSize.y), 1);
+			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x()), ceilf(size.y / pow(2, i) / (float)localSize.y()), 1);
 		}
 
 		context.setDrawInfo(3, 4, 0);
 		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot);
 		image.texture = resource->screenTexture;
 		image.level = 0;
-		context.dispatchCompute(ceilf(size.x / (float)localSize.x), ceilf(size.y / (float)localSize.y), 1);
+		context.dispatchCompute(ceilf(size.x / (float)localSize.x()), ceilf(size.y / (float)localSize.y()), 1);
 	}
 	else {
 		context.clearFrameBindings();

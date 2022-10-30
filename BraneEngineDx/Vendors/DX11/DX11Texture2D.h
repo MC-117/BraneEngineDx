@@ -47,7 +47,7 @@ public:
 	virtual unsigned int bind();
 	virtual unsigned int bindBase(unsigned int index);
 	virtual unsigned int resize(unsigned int width, unsigned int height);
-	virtual ComPtr<ID3D11ShaderResourceView> getSRV();
+	virtual ComPtr<ID3D11ShaderResourceView> getSRV(const MipOption& mipOption = MipOption());
 	virtual ComPtr<ID3D11RenderTargetView> getRTV(unsigned int mipLevel, bool isMS);
 	virtual ComPtr<ID3D11SamplerState> getSampler();
 	virtual ComPtr<ID3D11UnorderedAccessView> getUAV(unsigned int mipLevel);

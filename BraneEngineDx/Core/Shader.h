@@ -4,6 +4,20 @@
 
 #include "ShaderStage.h"
 
+struct ShaderMatchRule
+{
+	ShaderMatchFlag mainFlag;
+	ShaderMatchFlag tessCtrlFlag;
+	ShaderMatchFlag tessEvalFlag;
+	ShaderMatchFlag geometryFlag;
+	ShaderMatchFlag fragmentFlag;
+
+	ShaderMatchRule();
+
+	ShaderMatchFlag& operator[](ShaderStageType stageType);
+	ShaderMatchFlag operator[](ShaderStageType stageType) const;
+};
+
 class Shader
 {
 public:
@@ -31,7 +45,7 @@ public:
 	ShaderAdapter* getMeshStageAdapter();
 	bool addShaderAdapter(ShaderAdapter& adapter);
 	ShaderAdapter* getShaderAdapter(ShaderStageType stageType);
-	ShaderProgram* getProgram(const Enum<ShaderFeature>& feature);
+	ShaderProgram* getProgram(const Enum<ShaderFeature>& feature, const ShaderMatchRule& rule = ShaderMatchRule());
 	static unsigned int getCurrentProgramId();
 protected:
 	ShaderStageType meshStageType = None_Shader_Stage;

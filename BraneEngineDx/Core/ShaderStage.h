@@ -98,6 +98,17 @@ protected:
 	static unsigned int currentProgram;
 };
 
+enum struct ShaderMatchFlag : uint16_t
+{
+	Strict = 0,
+	Best = 1,
+	Fallback_Deferred = 2,
+	Fallback_Default = 4,
+	Fallback_Auto = Fallback_Deferred | Fallback_Default,
+	Fill = 8,
+	Auto = Best | Fallback_Auto | Fill
+};
+
 class ShaderAdapter
 {
 public:
@@ -108,9 +119,11 @@ public:
 
 	ShaderAdapter(const string& name, const string& path, ShaderStageType stageType);
 
-	ShaderStage* getShaderStage(const Enum<ShaderFeature>& feature, bool autoFill = false);
+	ShaderStage* getShaderStage(const Enum<ShaderFeature>& feature, const Enum<ShaderMatchFlag>& flag = ShaderMatchFlag::Auto);
 	ShaderStage* addShaderStage(const Enum<ShaderFeature>& feature);
 	ShaderStage* compileShaderStage(const Enum<ShaderFeature>& feature, const string& code);
+protected:
+	ShaderStage* bestMacthShaderStage(const Enum<ShaderFeature>& feature, ShaderFeature excludeFeature);
 };
 
 class ShaderFile

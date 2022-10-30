@@ -109,3 +109,64 @@ float luminance(float3 linearColor)
 {
     return dot(linearColor, float3(0.299f, 0.587f, 0.114f));
 }
+
+float3 depthToWorldPos(float3 UVZ)
+{
+    UVZ.x = UVZ.x * 2.0f - 1.0f;
+    UVZ.y = 1.0f - UVZ.y * 2.0f;
+    float4 clipPos = float4(UVZ, 1.0f);
+    float4 viewPos = mul(clipPos, camData.promatInv);
+    viewPos /= viewPos.w;
+    float4 worldPos = mul(viewPos, camData.vmatInv);
+    return worldPos.xyz / worldPos.w;
+}
+
+float3 depthToViewPos(float3 UVZ)
+{
+    UVZ.x = UVZ.x * 2.0f - 1.0f;
+    UVZ.y = 1.0f - UVZ.y * 2.0f;
+    float4 clipPos = float4(UVZ, 1.0f);
+    float4 viewPos = mul(clipPos, camData.promatInv);
+    return viewPos.xyz / viewPos.w;
+}
+
+float3 depthToViewOriginPos(float3 UVZ)
+{
+    UVZ.x = UVZ.x * 2.0f - 1.0f;
+    UVZ.y = 1.0f - UVZ.y * 2.0f;
+    float4 clipPos = float4(UVZ, 1.0f);
+    float4 viewPos = mul(clipPos, camData.promatInv);
+    viewPos /= viewPos.w;
+    float4 worldPos = mul(viewPos, camData.vomatInv);
+    return worldPos.xyz / worldPos.w;
+}
+
+float3x3 getTangentBasis( float3 TangentZ )
+{
+	const float Sign = TangentZ.z >= 0 ? 1 : -1;
+	const float a = -rcp( Sign + TangentZ.z );
+	const float b = TangentZ.x * TangentZ.y * a;
+	
+	float3 TangentX = { 1 + Sign * a * Pow2( TangentZ.x ), Sign * b, -Sign * TangentZ.x };
+	float3 TangentY = { b,  Sign + a * Pow2( TangentZ.y ), -TangentZ.y };
+
+	return float3x3( TangentX, TangentY, TangentZ );
+}
+
+float4 importanceSampleGGX( float2 E, float a2 )
+{
+	float Phi = 2 * PI * E.x;
+	float CosTheta = sqrt( (1 - E.y) / ( 1 + (a2 - 1) * E.y ) );
+	float SinTheta = sqrt( 1 - CosTheta * CosTheta );
+
+	float3 H;
+	H.x = SinTheta * cos( Phi );
+	H.y = SinTheta * sin( Phi );
+	H.z = CosTheta;
+	
+	float d = ( CosTheta * a2 - CosTheta ) * CosTheta + 1;
+	float D = a2 / ( PI*d*d );
+	float PDF = D * CosTheta;
+
+	return float4( H, PDF );
+}

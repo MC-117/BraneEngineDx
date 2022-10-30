@@ -194,37 +194,32 @@ ShaderAdapter::ShaderAdapter(const string& name, const string& path, ShaderStage
 {
 }
 
-ShaderStage* ShaderAdapter::getShaderStage(const Enum<ShaderFeature>& feature, bool autoFill)
+ShaderStage* ShaderAdapter::getShaderStage(const Enum<ShaderFeature>& feature, const Enum<ShaderMatchFlag>& flag)
 {
 	if (shaderStageVersions.empty())
 		return NULL;
-	if (autoFill && stageType == Fragment_Shader_Stage && shaderStageVersions.size() == 1)
+
+	if (flag.has(ShaderMatchFlag::Fill) && shaderStageVersions.size() == 1)
 		return shaderStageVersions.begin()->second;
+
 	auto iter = shaderStageVersions.find(feature);
 	if (iter != shaderStageVersions.end())
 		return iter->second;
-	else if (autoFill) {
+	else if (flag != Enum(ShaderMatchFlag::Strict)) {
 		ShaderStage* stage = NULL;
-		if (stageType == Fragment_Shader_Stage) {
-			int bitCount = 0;
+		if (flag.has(ShaderMatchFlag::Best)) {
+			stage = bestMacthShaderStage(feature, ShaderFeature::Shader_Default);
+		}
+		if (stage == NULL && flag.has(ShaderMatchFlag::Fallback_Deferred)) {
+			stage = bestMacthShaderStage(feature, ShaderFeature::Shader_Deferred);
+		}
+		if (stage == NULL && flag.has(ShaderMatchFlag::Fallback_Default)) {
+			iter = shaderStageVersions.find(ShaderFeature::Shader_Default);
+			if (iter != shaderStageVersions.end())
+				stage = iter->second;
+		}
+		if (stage == NULL && flag.has(ShaderMatchFlag::Fill)) {
 			stage = shaderStageVersions.begin()->second;
-			for (auto& item : shaderStageVersions) {
-				int count = bitset<32>(item.first & feature).count();
-				if (count > bitCount) {
-					count = bitCount;
-					stage = item.second;
-				}
-			}
-		}
-		if (stage == NULL) {
-			iter = shaderStageVersions.find(feature & ~Shader_Deferred);
-			if (iter != shaderStageVersions.end())
-				stage = iter->second;
-		}
-		if (stage == NULL) {
-			iter = shaderStageVersions.find(Shader_Default);
-			if (iter != shaderStageVersions.end())
-				stage = iter->second;
 		}
 		return stage;
 	}
@@ -285,6 +280,20 @@ ShaderStage* ShaderAdapter::compileShaderStage(const Enum<ShaderFeature>& featur
 			Console::error("%s (%s Shader) compile failed:\n%s", name.c_str(), shaderTypeName, errorStr.c_str());
 		}
 	//}
+	return stage;
+}
+
+ShaderStage* ShaderAdapter::bestMacthShaderStage(const Enum<ShaderFeature>& feature, ShaderFeature excludeFeature)
+{
+	int bitCount = 0;
+	ShaderStage* stage = NULL;
+	for (auto& item : shaderStageVersions) {
+		int count = bitset<32>((item.first.enumValue | excludeFeature) & feature).count();
+		if (count > bitCount) {
+			count = bitCount;
+			stage = item.second;
+		}
+	}
 	return stage;
 }
 

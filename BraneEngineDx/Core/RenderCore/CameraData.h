@@ -9,6 +9,8 @@ struct CameraData
 	Matrix4f projectionMatInv;
 	Matrix4f viewMat;
 	Matrix4f viewMatInv;
+	Matrix4f viewOriginMat;
+	Matrix4f viewOriginMatInv;
 	Vector3f cameraLoc;
 	float zNear;
 	Vector3f cameraDir;

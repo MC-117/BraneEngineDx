@@ -17,8 +17,13 @@ Texture emissionMap: black
 Texture depthMap: white
 #vertex use default
 #fragment
+#condition deferred
+#condition lighting
 #include "lib/Light_Def.hmat"
 #include "lib/CameraData_Def.hmat"
+
+#include "lib/Toon_PBR_Lib.hmat"
+#include "lib/GBuffer_Def.hmat"
 
 DEF_MAT_BEGIN
 uniform float4 baseColor;
@@ -33,65 +38,92 @@ uniform float metallic;
 uniform float emission;
 DEF_MAT_END
 
+#if defined(DEFERRED_SHADER_FEATURE)
 DEF_TEX2D(colorMap, 0);
 DEF_TEX2D(normalMap, 1);
 DEF_TEX2D(rmoMap, 2);
-DEF_TEX2D(emissionMap, 3);
-DEF_TEX2D(depthMap, 4);
+#elif defined(LIGHTING_SHADER_FEATURE)
+DEF_GBUFFER
+DEF_TEX2D(depthMap, 5);
+#else
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(normalMap, 1);
+DEF_TEX2D(rmoMap, 2);
+DEF_TEX2D(depthMap, 3);
+#endif
 
-#include "lib/Toon_PBR_Lib.hmat"
-
+#ifdef DEFERRED_SHADER_FEATURE
+FS_DEF_OUT_GBUFFER
+#else
 FS_DEF_OUT_BEGIN
 FS_DEF_OUT_COLOR(FragColor, 0);
 //FS_DEF_OUT_COLOR(ssnMask, 0);
 FS_DEF_OUT_END
+#endif
 
-FragmentOut DEFAULT_FS_MAIN
+#include "lib/Surface_Def.hmat"
+
+#ifndef DEFERRED_SHADER_FEATURE
+float getShadow(in DirectLight directLight, in Surface surf)
+{
+    return ShadowCalculation(depthMap, depthMapSampler,
+        surf.WorldPos, surf.Normal, directLight);
+}
+#endif
+
+FragmentOut SURFACE_MAIN
 {
     FragmentOut fout;
-    float3x3 TBN = cotangent(fin.Normal, fin.WorldPos, fin.TexCoords);
-    float3 tN = normalize(SAMPLE_TEX(normalMap, fin.TexCoords).xyz * 2 - 1);
-    float3 N = normalize(mul(tN, TBN));
-    float3 V = normalize(camData.camPos - fin.WorldPos);
-    float4 albedo = SAMPLE_TEX(colorMap, fin.TexCoords);
-    float3 rmo = SAMPLE_TEX(rmoMap, fin.TexCoords).rgb;
-    float3 emissionColor = SAMPLE_TEX(emissionMap, fin.TexCoords).rgb * emission;
-    float ao = rmo.b;
-    float a = albedo.a * baseColor.a;
+    Surface surf = getSurface(fin);
 
+    #ifndef LIGHTING_SHADER_FEATURE
+    float3x3 TBN = cotangent(surf.Normal, surf.WorldPos, surf.TexCoords);
+    float3 tN = normalize(SAMPLE_TEX(normalMap, surf.TexCoords).xyz * 2 - 1);
+    surf.Normal = normalize(mul(tN, TBN));
+    surf.albedo = SAMPLE_TEX(colorMap, surf.TexCoords);
+    surf.albedo.a *= baseColor.a;
+    float3 rmo = SAMPLE_TEX(rmoMap, surf.TexCoords).rgb;
+    surf.roughness = rmo.r * roughness;
+    surf.metallic = rmo.g * metallic;
+    surf.ao = rmo.b;
+    #endif
+
+    #ifdef DEFERRED_SHADER_FEATURE
+    outputSurface(surf, fout.gBufferA, fout.gBufferB, fout.gBufferC, fout.gBufferD, fout.gBufferE);
+    #else
     Toon_PBR_Param param;
-    param.roughness = rmo.r * roughness;
-    param.metallic = rmo.r * metallic;
-    param.N = N;
-    param.V = V;
-    param.albedo = albedo.rgb;
+    param.roughness = surf.roughness;
+    param.metallic = surf.metallic;
+    param.N = surf.Normal;
+    param.V = normalize(camData.camPos - surf.WorldPos);
+    param.albedo = surf.albedo.rgb;
     param.baseColor = baseColor.rgb;
     param.highlightColor = highlightColor.rgb;
     param.shadowColor = shadowColor.rgb;
     param.rimColor = rimColor.rgb;
-    param.ao = ao;
+    param.ao = surf.ao;
     param.shadowCut = shadowCut;
     param.shadowCutSmooth = shadowCutSmooth;
 
     float3 Lo = Float3(0.0);
 
     if (directLight.intensity != 0) {
-        float shadowFactor = ShadowCalculation(depthMap,
-            depthMapSampler, fin.WorldPos, fin.Normal, directLight);
+        float shadowFactor = getShadow(directLight, surf);
         Lo += Toon_PBR_Lo_DirectLight(directLight, shadowFactor, param);
     }
 
     for(int i = 0; i < pointLightCount; ++i) {
         if (pointLights[i].intensity != 0) {
-            Lo += Toon_PBR_Lo_PointLight(pointLights[i], fin.WorldPos, 1, param);
+            Lo += Toon_PBR_Lo_PointLight(pointLights[i], surf.WorldPos, 1, param);
         }
     }
 
     float3 color = PBR_ColorCorrection(Lo);
 
-    fout.FragColor.rgb = color + emissionColor;
-    fout.FragColor.a = a;
+    fout.FragColor.rgb = color;
+    fout.FragColor.a = surf.albedo.a;
     fout.FragColor *= overColor;
     //fout.ssnMask = float4(1);
+    #endif
     return fout;
 }

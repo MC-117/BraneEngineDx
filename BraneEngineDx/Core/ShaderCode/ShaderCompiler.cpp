@@ -146,6 +146,21 @@ bool ShaderCompiler::compile()
 			case ShaderCompiler::ST_NoEarlyZ:
 				noEarlyZ = true;
 				break;
+
+			case ShaderCompiler::ST_LocalSize:
+				if (command.size() > 1) {
+					int x = atoi(command[1].c_str());
+					localSize.x() = x < 1 ? 1 : x;
+				}
+				if (command.size() > 2) {
+					int y = atoi(command[2].c_str());
+					localSize.y() = y < 1 ? 1 : y;
+				}
+				if (command.size() > 3) {
+					int z = atoi(command[2].c_str());
+					localSize.z() = z < 1 ? 1 : z;
+				}
+				break;
 			case ShaderCompiler::ST_Include:
 				if (!readHeadFile(envPath)) {
 					successed = false;
@@ -361,6 +376,13 @@ void ShaderCompiler::compileAdapter()
 				return;
 			}
 			adapters.insert(make_pair(stageType, adapter));
+		}
+		if (stageType == Compute_Shader_Stage) {
+			string localString =
+				"#define LOCAL_SIZE_X " + to_string(localSize.x()) + '\n' +
+				"#define LOCAL_SIZE_Y " + to_string(localSize.y()) + '\n' +
+				"#define LOCAL_SIZE_Z " + to_string(localSize.z()) + '\n';
+			clip = localString + clip;
 		}
 		addCondition(Shader_Default, "");
 		for (const auto& condition : conditions) {
