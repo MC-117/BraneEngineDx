@@ -34,6 +34,7 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 	case GB_Constant:
 		deviceContext->VSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
 		deviceContext->PSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
+		deviceContext->CSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
 		deviceContext->GSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
 		deviceContext->HSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
 		deviceContext->DSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
@@ -58,6 +59,7 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 			return 0;
 		deviceContext->VSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
 		deviceContext->PSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
+		deviceContext->CSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
 		deviceContext->GSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
 		deviceContext->HSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
 		deviceContext->DSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
@@ -474,11 +476,13 @@ void DX11RenderContext::bindTexture(ITexture* texture, ShaderStageType stage, un
 
 void DX11RenderContext::bindImage(const Image& image, unsigned int index)
 {
-	DX11Texture2D* dxTex = dynamic_cast<DX11Texture2D*>((ITexture*)image.texture->getVendorTexture());
-	if (dxTex == NULL)
-		return;
-
-	ComPtr<ID3D11UnorderedAccessView> tex = dxTex->getUAV(image.level);
+	DX11Texture2D* dxTex = NULL;
+	ComPtr<ID3D11UnorderedAccessView> tex = NULL;
+	if (image.texture) {
+		dxTex = dynamic_cast<DX11Texture2D*>((ITexture*)image.texture->getVendorTexture());
+		if (dxTex)
+			tex = dxTex->getUAV(image.level);
+	}
 	deviceContext->CSSetUnorderedAccessViews(index, 1, tex.GetAddressOf(), NULL);
 
 #if TEX_BINGING_REC
@@ -506,8 +510,6 @@ void DX11RenderContext::bindTexture(ITexture* texture, const string& name, const
 	if (currentProgram == NULL)
 		return;
 	DX11Texture2D* dxTex = dynamic_cast<DX11Texture2D*>(texture);
-	if (dxTex == NULL)
-		return;
 	DX11ShaderProgram::AttributeDesc desc = currentProgram->getAttributeOffset(name);
 	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
 		return;
@@ -516,10 +518,7 @@ void DX11RenderContext::bindTexture(ITexture* texture, const string& name, const
 
 void DX11RenderContext::bindImage(const Image& image, const string& name)
 {
-	if (currentProgram == NULL || image.texture == NULL)
-		return;
-	DX11Texture2D* dxTex = dynamic_cast<DX11Texture2D*>((ITexture*)image.texture->getVendorTexture());
-	if (dxTex == NULL)
+	if (currentProgram == NULL)
 		return;
 	DX11ShaderProgram::AttributeDesc desc = currentProgram->getAttributeOffset(name);
 	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)

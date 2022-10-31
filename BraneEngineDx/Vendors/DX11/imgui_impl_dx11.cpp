@@ -23,6 +23,7 @@
 #include "../../ThirdParty/ImGui/imgui.h"
 #include "imgui_impl_dx11.h"
 #include "../DXGI_Helper.h"
+#include "DX11Texture2D.h"
 
 // DirectX
 #include <stdio.h>
@@ -237,13 +238,22 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data, ID3D11DeviceContext* d
                 const D3D11_RECT r = { (LONG)(pcmd->ClipRect.x - clip_off.x), (LONG)(pcmd->ClipRect.y - clip_off.y), (LONG)(pcmd->ClipRect.z - clip_off.x), (LONG)(pcmd->ClipRect.w - clip_off.y) };
                 ctx->RSSetScissorRects(1, &r);
 
-                ID3D11ShaderResourceView* texture_srv = (ID3D11ShaderResourceView*)(void*)pcmd->TextureId;
-                D3D11_SHADER_RESOURCE_VIEW_DESC desc;
-                texture_srv->GetDesc(&desc);
+                ID3D11ShaderResourceView* texture_srv = NULL;
+                int mipLevel = 0;
+                int channels = 4;
+                if (pcmd->TextureId.ptr == g_pFontTextureView) {
+                    texture_srv = g_pFontTextureView;
+                }
+                else {
+                    DX11Texture2D* dx11Tex = (DX11Texture2D*)pcmd->TextureId.ptr;
+                    texture_srv = dx11Tex->getSRV().Get();
+                    mipLevel = pcmd->TextureId.mipLevel;
+                    channels = dx11Tex->desc.channel;
+                }
 
                 // Setup mipLevel into our constant buffer
                 {
-                    PIXEL_CONSTANT_BUFFER mipInfo = { pcmd->TextureId.mipLevel, GetNumChannelsOfDXGIFormat(desc.Format), 0, 0 };
+                    PIXEL_CONSTANT_BUFFER mipInfo = { mipLevel, channels, 0, 0 };
                     D3D11_MAPPED_SUBRESOURCE mapped_resource;
                     if (ctx->Map(g_pPixelConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource) != S_OK)
                         return;

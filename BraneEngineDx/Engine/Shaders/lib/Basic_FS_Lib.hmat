@@ -138,7 +138,7 @@ float3 depthToViewOriginPos(float3 UVZ)
     float4 viewPos = mul(clipPos, camData.promatInv);
     viewPos /= viewPos.w;
     float4 worldPos = mul(viewPos, camData.vomatInv);
-    return worldPos.xyz / worldPos.w;
+    return worldPos.xyz;
 }
 
 float3x3 getTangentBasis( float3 TangentZ )
@@ -147,8 +147,8 @@ float3x3 getTangentBasis( float3 TangentZ )
 	const float a = -rcp( Sign + TangentZ.z );
 	const float b = TangentZ.x * TangentZ.y * a;
 	
-	float3 TangentX = { 1 + Sign * a * Pow2( TangentZ.x ), Sign * b, -Sign * TangentZ.x };
-	float3 TangentY = { b,  Sign + a * Pow2( TangentZ.y ), -TangentZ.y };
+	float3 TangentX = { 1 + Sign * a * TangentZ.x * TangentZ.x, Sign * b, -Sign * TangentZ.x };
+	float3 TangentY = { b,  Sign + a * TangentZ.y * TangentZ.y, -TangentZ.y };
 
 	return float3x3( TangentX, TangentY, TangentZ );
 }

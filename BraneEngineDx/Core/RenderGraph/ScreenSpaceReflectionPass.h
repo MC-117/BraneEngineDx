@@ -5,9 +5,11 @@
 #include "../RenderCore/CameraRenderData.h"
 #include "../RenderTarget.h"
 
-class ScreenSpaceReflectionPass : RenderPass
+class ScreenSpaceReflectionPass : public RenderPass
 {
 public:
+	CameraRenderData* cameraData = NULL;
+
 	Texture* gBufferA = NULL;
 	Texture* gBufferB = NULL;
 	Texture* gBufferC = NULL;
@@ -26,5 +28,5 @@ protected:
 
 	Material* material = NULL;
 	ShaderProgram* program = NULL;
-	MaterialRenderData* materialRenderData = NULL;
+	MaterialRenderData materialRenderData;
 };
