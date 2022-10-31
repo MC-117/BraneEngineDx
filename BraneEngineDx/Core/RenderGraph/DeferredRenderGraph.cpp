@@ -183,9 +183,9 @@ void DeferredRenderGraph::prepare()
 	for (auto& rt : gBufferRTs)
 		rt.second->prepare();
 	geometryPass.prepare();
+	lightingPass.prepare();
 	hizPass.prepare();
 	ssrPass.prepare();
-	lightingPass.prepare();
 	forwardPass.prepare();
 	for (auto pass : passes)
 		pass->prepare();
@@ -201,8 +201,28 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	context.bindTexture(NULL, Fragment_Shader_Stage, 8);
 	context.bindTexture(NULL, Fragment_Shader_Stage, 9);
 	context.bindTexture(NULL, Fragment_Shader_Stage, 10);
+	context.bindTexture(NULL, Compute_Shader_Stage, 6);
+	context.bindTexture(NULL, Compute_Shader_Stage, 7);
+	context.bindTexture(NULL, Compute_Shader_Stage, 8);
+	context.bindTexture(NULL, Compute_Shader_Stage, 9);
+	context.bindTexture(NULL, Compute_Shader_Stage, 10);
 	geometryPass.execute(context);
+
 	context.clearFrameBindings();
+
+	lightingPass.execute(context);
+
+	context.clearFrameBindings();
+	context.bindTexture(NULL, Fragment_Shader_Stage, 6);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 7);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 8);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 9);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 10);
+	context.bindTexture(NULL, Compute_Shader_Stage, 6);
+	context.bindTexture(NULL, Compute_Shader_Stage, 7);
+	context.bindTexture(NULL, Compute_Shader_Stage, 8);
+	context.bindTexture(NULL, Compute_Shader_Stage, 9);
+	context.bindTexture(NULL, Compute_Shader_Stage, 10);
 
 	for (auto& item : gBufferRTs) {
 		hizPass.depthTexture = &item.second->gBufferB;
@@ -211,7 +231,8 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	}
 
 	for (auto& item : gBufferRTs) {
-		ssrPass.gBufferA = &item.second->gBufferA;
+		ssrPass.cameraData = &item.second->cameraData;
+		ssrPass.gBufferA = item.second->camera->cameraRender.renderTarget.getTexture(0);
 		ssrPass.gBufferB = &item.second->gBufferB;
 		ssrPass.gBufferC = &item.second->gBufferC;
 		ssrPass.hiZMap = &item.second->hizTexture;
@@ -220,7 +241,6 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 		ssrPass.execute(context);
 	}
 
-	lightingPass.execute(context);
 	forwardPass.execute(context);
 	context.clearFrameBindings();
 	for (auto pass : passes)
@@ -250,9 +270,9 @@ void DeferredRenderGraph::reset()
 	sceneDatas.clear();
 
 	geometryPass.reset();
+	lightingPass.reset();
 	hizPass.reset();
 	ssrPass.reset();
-	lightingPass.reset();
 	forwardList.resetCommand();
 	forwardPass.reset();
 	for (auto pass : passes) {
@@ -265,14 +285,16 @@ void DeferredRenderGraph::reset()
 
 void DeferredRenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)
 {
-	passes.push_back(make_pair("geometry", &geometryPass));
-	passes.push_back(make_pair("lighting", &lightingPass));
-	passes.push_back(make_pair("forward", &forwardPass));
+	passes.push_back(make_pair("Geometry", &geometryPass));
+	passes.push_back(make_pair("Lighting", &lightingPass));
+	passes.push_back(make_pair("HiZ", &hizPass));
+	passes.push_back(make_pair("SSR", &ssrPass));
+	passes.push_back(make_pair("Forward", &forwardPass));
 	int i = 0;
 	for (auto& pass : this->passes) {
-		passes.push_back(make_pair("pass_" + to_string(i), pass));
+		passes.push_back(make_pair("Pass_" + to_string(i), pass));
 	}
-	passes.push_back(make_pair("imGui", &imGuiPass));
+	passes.push_back(make_pair("ImGui", &imGuiPass));
 }
 
 Serializable* DeferredRenderGraph::instantiate(const SerializationInfo& from)

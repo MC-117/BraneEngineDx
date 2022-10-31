@@ -28,24 +28,29 @@ void HiZPass::execute(IRenderContext& context)
 
 	MipOption mipOption = { 0, 1 };
 
-	context.bindImage(image, "dstDepth");
-	context.bindTexture((ITexture*)depthTexture->getVendorTexture(), "srcDepth");
+	const char* srcDepth = "srcDepth";
+	const char* dstDepth = "dstDepth";
+
+	context.bindImage(image, dstDepth);
+	context.bindTexture((ITexture*)depthTexture->getVendorTexture(), srcDepth);
 	context.dispatchCompute(width / localSize.x(), height / localSize.y(), 1);
 
 	for (; mipOption.detailMip < miplevel - 1; mipOption.detailMip++) {
 		width /= 2;
 		height /= 2;
 		image.level = mipOption.detailMip + 1;
-		context.bindImage(image, "dstDepth");
-		context.bindTexture((ITexture*)hizTexture->getVendorTexture(), "srcDepth", mipOption);
+		context.bindImage(image, dstDepth);
+		context.bindTexture((ITexture*)hizTexture->getVendorTexture(), srcDepth, mipOption);
 		context.dispatchCompute(width / localSize.x(), height / localSize.y(), 1);
 	}
+	image.texture = NULL;
+	context.bindImage(image, dstDepth);
 }
 
 void HiZPass::reset()
 {
-	depthTexture = NULL;
-	hizTexture = NULL;
+	/*depthTexture = NULL;
+	hizTexture = NULL;*/
 }
 
 void HiZPass::getOutputTextures(vector<pair<string, Texture*>>& textures)

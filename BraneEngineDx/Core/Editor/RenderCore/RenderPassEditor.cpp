@@ -1,5 +1,6 @@
 #include "RenderPassEditor.h"
 #include "../../GUI/GUIUtility.h"
+#include "../../GUI/TextureViewer.h"
 
 RegistEditor(RenderPass);
 
@@ -20,7 +21,10 @@ void RenderPassEditor::onRenderPassGUI(EditorInfo& info)
 		if (tex2D) {
 			float width = ImGui::GetWindowContentRegionWidth();
 			float aspect = tex2D->getHeight() / (float)tex2D->getWidth();
-			ImGui::Image((ImTextureID)tex2D->getTextureID(), { width, width * aspect });
+			tex2D->bind();
+			if (ImGui::ImageButton((ImTextureID)tex2D->getTextureID(), { width, width * aspect })) {
+				TextureViewer::showTexture(*info.gui, *tex2D);
+			}
 		}
 		ImGui::EndHeaderBox();
 		ImGui::PopID();

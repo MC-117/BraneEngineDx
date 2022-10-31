@@ -10,24 +10,25 @@ void ScreenSpaceReflectionPass::prepare()
 	}
 	if (material) {
 		program = material->getShader()->getProgram(Shader_Default);
-		materialRenderData = (MaterialRenderData*)material->getRenderData();
-		materialRenderData->program = program;
-		materialRenderData->create();
+		program->init();
+		materialRenderData.material = material;
+		materialRenderData.program = program;
+		materialRenderData.create();
 	}
 }
 
 void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 {
-	if (program == NULL || gBufferA == NULL || gBufferB == NULL ||
+	if (program == NULL || cameraData == NULL || gBufferA == NULL || gBufferB == NULL ||
 		gBufferC == NULL || hiZMap == NULL || hitDataMap == NULL || hitColorMap == NULL)
 		return;
 
-	const char* gBufferASlot = "texture0";
-	const char* gBufferBSlot = "texture1";
-	const char* gBufferCSlot = "texture2";
-	const char* hiZMapSlot = "texture3";
+	const char* gBufferASlot = "inTexture0";
+	const char* gBufferBSlot = "inTexture1";
+	const char* gBufferCSlot = "inTexture2";
+	const char* hiZMapSlot = "inTexture3";
 
-	const char* inHitColorMapSlot = "texture0";
+	const char* inHitColorMapSlot = "inTexture0";
 
 	const char* hitDataMapSlot = "rwTexture0";
 	const char* hitColorMapSlot = "rwTexture1";
@@ -35,24 +36,31 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 	const char* outGBufferASlot = "rwTexture1";
 
 	int width = gBufferA->getWidth();
-	int height = gBufferA->getWidth();
+	int height = gBufferA->getHeight();
+	int hiZWidth = hiZMap->getWidth();
+	int hiZHeight = hiZMap->getHeight();
 	Vector3u localSize = material->getLocalSize();
 	int dimX = ceilf(width / float(localSize.x())) * localSize.x();
 	int dimY = ceilf(height / float(localSize.y())) * localSize.y();
 
 	context.bindShaderProgram(program);
 
-	context.bindMaterialBuffer(materialRenderData->vendorMaterial);
+	cameraData->bind(context);
+
+	materialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val =
+		Color(width * 0.5f / hiZWidth, height * 0.5f / hiZHeight, 2.0f / width, 2.0f / height);
+	materialRenderData.upload();
+	context.bindMaterialBuffer(materialRenderData.vendorMaterial);
 	context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferASlot);
 	context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBSlot);
 	context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCSlot);
 	context.bindTexture((ITexture*)hiZMap->getVendorTexture(), hiZMapSlot);
+
 	Image image0, image1;
 	image0.level = 0;
 	image1.level = 0;
 	image0.texture = hitDataMap;
 	image1.texture = hitColorMap;
-
 	context.bindImage(image0, hitDataMapSlot);
 	context.bindImage(image1, hitColorMapSlot);
 
@@ -66,16 +74,21 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 
 	context.setDrawInfo(1, 2, 0);
 	context.dispatchCompute(dimX, dimY, 1);
+
+	image0.texture = NULL;
+	image1.texture = NULL;
+	context.bindImage(image0, hitDataMapSlot);
+	context.bindImage(image1, outGBufferASlot);
 }
 
 void ScreenSpaceReflectionPass::reset()
 {
-	gBufferA = NULL;
+	/*gBufferA = NULL;
 	gBufferB = NULL;
 	gBufferC = NULL;
 	hiZMap = NULL;
 	hitDataMap = NULL;
-	hitColorMap = NULL;
+	hitColorMap = NULL;*/
 }
 
 void ScreenSpaceReflectionPass::getOutputTextures(vector<pair<string, Texture*>>& textures)

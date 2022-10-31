@@ -236,7 +236,7 @@ bool DX11Texture2D::isValid() const
 unsigned long long DX11Texture2D::getTextureID()
 {
 	if (isValid())
-		return (unsigned long long)getSRV().Get();
+		return (unsigned long long)this;
 	else
 		return 0;
 }
@@ -329,7 +329,7 @@ unsigned int DX11Texture2D::bind()
 		if (initData != NULL)
 			delete[] initData;
 	}
-	desc.textureHandle = (unsigned int)dx11Texture2D.Get();
+	desc.textureHandle = (unsigned long long)this;
 	desc.needUpdate = false;
 	return desc.textureHandle;
 }
@@ -524,8 +524,6 @@ DXGI_FORMAT DX11Texture2D::getColorType(unsigned int channel, DXGI_FORMAT intern
 		}
 		return internalType;
 	}
-	else if (internalType == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
-		return DXGI_FORMAT_R8G8B8A8_UNORM;
 	return internalType;
 }
 
