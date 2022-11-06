@@ -15,6 +15,37 @@ float D_GGX_TR(float3 N, float3 H, float a)
     return nom / denom;
 }
 
+float D_GGX_TR(float NdotH, float a)
+{
+    float a2 = a*a;
+    a2 *= a2;
+    float NdotH2 = NdotH*NdotH;
+
+    float nom = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return nom / denom;
+}
+
+float4 ImportanceSampleGGX( float2 E, float a2 )
+{
+	float Phi = 2 * PI * E.x;
+	float CosTheta = sqrt( (1 - E.y) / ( 1 + (a2 - 1) * E.y ) );
+	float SinTheta = sqrt( 1 - CosTheta * CosTheta );
+
+	float3 H;
+	H.x = SinTheta * cos( Phi );
+	H.y = SinTheta * sin( Phi );
+	H.z = CosTheta;
+	
+	float d = ( CosTheta * a2 - CosTheta ) * CosTheta + 1;
+	float D = a2 / ( PI*d*d );
+	float PDF = D * CosTheta;
+
+	return float4( H, PDF );
+}
+
 float GeometrySchlickGGX(float NdotV, float roughness)
 {
     float r = (roughness + 1.0);
@@ -34,6 +65,20 @@ float GeometrySmith(float3 N, float3 V, float3 L, float k)
     float ggx2 = GeometrySchlickGGX(NdotL, k);
 
     return ggx1 * ggx2;
+}
+
+float2 Hammersley( uint Index, uint NumSamples, uint2 Random )
+{
+	float E1 = frac( (float)Index / NumSamples + float( Random.x & 0xffff ) / (1<<16) );
+	float E2 = float( reversebits(Index) ^ Random.y ) * 2.3283064365386963e-10;
+	return float2( E1, E2 );
+}
+
+float2 Hammersley16( uint Index, uint NumSamples, uint2 Random )
+{
+	float E1 = frac( (float)Index / NumSamples + float( Random.x ) * (1.0 / 65536.0) );
+	float E2 = float( ( reversebits(Index) >> 16 ) ^ Random.y ) * (1.0 / 65536.0);
+	return float2( E1, E2 );
 }
 
 float3 PBR_Lo(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, float metallic, float roughness)

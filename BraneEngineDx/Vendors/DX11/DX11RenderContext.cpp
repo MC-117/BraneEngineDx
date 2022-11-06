@@ -552,6 +552,8 @@ void DX11RenderContext::clearUAV()
 void DX11RenderContext::clearRTV()
 {
 	deviceContext->OMSetRenderTargets(0, NULL, NULL);
+	DX11RenderTarget::currentRenderTarget = nullptr;
+	currentRenderTarget = nullptr;
 }
 
 void DX11RenderContext::bindMeshData(MeshData* meshData)

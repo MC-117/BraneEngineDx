@@ -54,7 +54,7 @@ Matrix4f Camera::getViewMatrix() const
 
 Matrix4f Camera::getViewOriginMatrix() const
 {
-	return Camera::lookAt(Vector3f::Zero(), cameraRender.cameraLoc + cameraRender.cameraDir, cameraRender.cameraUp);
+	return Camera::lookAt(Vector3f::Zero(), cameraRender.cameraDir, cameraRender.cameraUp);
 }
 
 Vector3f Camera::getFinalWorldPosition()

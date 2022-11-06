@@ -110,35 +110,102 @@ float luminance(float3 linearColor)
     return dot(linearColor, float3(0.299f, 0.587f, 0.114f));
 }
 
-float3 depthToWorldPos(float3 UVZ)
+float2 clipToUV(float2 clip)
 {
-    UVZ.x = UVZ.x * 2.0f - 1.0f;
-    UVZ.y = 1.0f - UVZ.y * 2.0f;
-    float4 clipPos = float4(UVZ, 1.0f);
+    return clip * float2(0.5f, -0.5f) + float2(0.5f, 0.5f);
+}
+
+float2 uvToClip(float2 UV)
+{
+    return UV * float2(2.0f, -2.0f) + float2(-1.0f, 1.0f);
+}
+
+float depthFromNDCToView(float depth)
+{
+    return camData.zNear * camData.zFar / (camData.zFar - depth * (camData.zFar - camData.zNear));
+}
+
+float3 clipToUVZ(float3 clip)
+{
+    return float3(clipToUV(clip.xy), clip.z);
+}
+
+float3 uvzToClip(float3 UVZ)
+{
+    return float3(uvToClip(UVZ.xy), UVZ.z);
+}
+
+float3 clipPosToView(float3 clipPos)
+{
+    float4 viewPos = mul(float4(clipPos, 1.0f), camData.promatInv);
+    return viewPos.xyz / viewPos.w;
+}
+
+float3 viewPosToWorld(float3 viewPos)
+{
+    return mul(float4(viewPos, 1.0f), camData.vmatInv).xyz;
+}
+
+float3 viewPosToViewOrigin(float3 viewPos)
+{
+    return mul(float4(viewPos, 1.0f), camData.vomatInv).xyz;
+}
+
+float3 viewOriginPosToView(float3 viewOriginPos)
+{
+    return mul(float4(viewOriginPos, 1.0f), camData.vomat).xyz;
+}
+
+float3 uvzPosToWorld(float3 UVZ)
+{
+    float4 clipPos = float4(uvzToClip(UVZ), 1.0f);
     float4 viewPos = mul(clipPos, camData.promatInv);
     viewPos /= viewPos.w;
     float4 worldPos = mul(viewPos, camData.vmatInv);
     return worldPos.xyz / worldPos.w;
 }
 
-float3 depthToViewPos(float3 UVZ)
+float3 uvzPosToView(float3 UVZ)
 {
-    UVZ.x = UVZ.x * 2.0f - 1.0f;
-    UVZ.y = 1.0f - UVZ.y * 2.0f;
-    float4 clipPos = float4(UVZ, 1.0f);
+    float4 clipPos = float4(uvzToClip(UVZ), 1.0f);
     float4 viewPos = mul(clipPos, camData.promatInv);
     return viewPos.xyz / viewPos.w;
 }
 
-float3 depthToViewOriginPos(float3 UVZ)
+float3 uvzDirToView(float3 UVZ)
 {
-    UVZ.x = UVZ.x * 2.0f - 1.0f;
-    UVZ.y = 1.0f - UVZ.y * 2.0f;
+    float4 clipPos = float4(uvzToClip(UVZ), 0.0f);
+    float4 viewPos = mul(clipPos, camData.promatInv);
+    return viewPos.xyz / viewPos.w;
+}
+
+float3 viewPosToClip(float3 viewPos)
+{
+    float4 clipPos = mul(float4(viewPos, 1), camData.promat);
+    clipPos /= clipPos.w;
+    return clipPos.xyz;
+}
+
+float3 viewPosToUVZ(float3 viewPos)
+{
+    float4 clipPos = mul(float4(viewPos, 1), camData.promat);
+    clipPos /= clipPos.w;
+    return clipToUVZ(clipPos.xyz);
+}
+
+float3 uvzPosToViewOrigin(float3 UVZ)
+{
+    UVZ.xy = UVZ.xy * float2(2.0f, -2.0f) +float2(-1.0f, 1.0f);
     float4 clipPos = float4(UVZ, 1.0f);
     float4 viewPos = mul(clipPos, camData.promatInv);
     viewPos /= viewPos.w;
     float4 worldPos = mul(viewPos, camData.vomatInv);
     return worldPos.xyz;
+}
+
+float3 worldDirToView(float3 worldDir)
+{
+    return mul(float4(worldDir, 0), camData.vmat).xyz;
 }
 
 float3x3 getTangentBasis( float3 TangentZ )
@@ -151,22 +218,4 @@ float3x3 getTangentBasis( float3 TangentZ )
 	float3 TangentY = { b,  Sign + a * TangentZ.y * TangentZ.y, -TangentZ.y };
 
 	return float3x3( TangentX, TangentY, TangentZ );
-}
-
-float4 importanceSampleGGX( float2 E, float a2 )
-{
-	float Phi = 2 * PI * E.x;
-	float CosTheta = sqrt( (1 - E.y) / ( 1 + (a2 - 1) * E.y ) );
-	float SinTheta = sqrt( 1 - CosTheta * CosTheta );
-
-	float3 H;
-	H.x = SinTheta * cos( Phi );
-	H.y = SinTheta * sin( Phi );
-	H.z = CosTheta;
-	
-	float d = ( CosTheta * a2 - CosTheta ) * CosTheta + 1;
-	float D = a2 / ( PI*d*d );
-	float PDF = D * CosTheta;
-
-	return float4( H, PDF );
 }
