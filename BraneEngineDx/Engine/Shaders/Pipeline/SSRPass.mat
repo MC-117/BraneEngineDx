@@ -1,16 +1,19 @@
 #material
+Count resolveSamples: 5
 Count hiZStartLevel: 5
 Count hiZStopLevel: -1
-Count hiZMaxStep: 20
+Count hiZMaxStep: 48
 Color hiZUVScale: 1.0, 1.0, 1.0, 1.0
 #localsize 8 8
 #compute
+#pragma debug
 
-#include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/PBR_Lib.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 
 DEF_MAT_BEGIN
+uniform int resolveSamples;
 uniform int hiZStartLevel;
 uniform int hiZStopLevel;
 uniform int hiZMaxStep;
@@ -37,33 +40,96 @@ DEF_TEX2D(inTexture3, 3);
 RWTexture2D<snorm float4> rwTexture0 : register(u0);
 RWTexture2D<unorm float4> rwTexture1 : register(u1);
 
-float getCellSize(float2 stepUV, float2 detailUVSize, float mipLevel)
+float2 getCellSize(float2 detailUVSize, float mipLevel)
 {
-    float2 size = detailUVSize * exp2(mipLevel + 1);
-    return length(min(stepUV, size));
+    return detailUVSize * exp2(mipLevel);
 }
 
-bool rayTraceHiZ(float3 dirUVZ, out float3 hitUVZ)
+float getStepSize(float2 startUV, float curUV, float2 dirUV, float2 cellSize)
+{
+    float2 solution = abs((curUV + sign(dirUV) * cellSize - startUV) / dirUV);
+    return length(solution);
+}
+
+int2 getCellIndex(float2 curUV, float2 cellSize)
+{
+    return int2(curUV.x / cellSize.x, curUV.y / cellSize.y);
+}
+
+bool rayTraceHiZ_UVZ(float3 startUVZ, float3 dirUVZ, out float3 hitUVZ)
 {
     bool hit = false;
+    hitUVZ = startUVZ;
     int mipLevel = hiZStartLevel;
     int stepNum = 0;
-    float cellSize = getCellSize(dirUVZ.xy, hiZUVScale.zw, mipLevel);
-    while(mipLevel > hiZStopLevel && stepNum < hiZMaxStep) {
-        hitUVZ += dirUVZ * cellSize;
-        float depth = SAMPLE_TEX_LOD(hiZMap, hitUVZ.xy * hiZUVScale.xy, mipLevel);
-        if (hitUVZ.z > depth) {
+    float minZ;
+    float stepSize;
+    while (mipLevel > hiZStopLevel && stepNum < hiZMaxStep) {
+        float stepSize = length(getCellSize(hiZUVScale.zw, mipLevel));
+        float3 stepUVZ = dirUVZ * stepSize;
+        float3 nextUVZ = hitUVZ + stepUVZ;
+        minZ = SAMPLE_TEX_LOD(hiZMap, nextUVZ.xy * hiZUVScale.xy, mipLevel);
+        float deltaDepth = nextUVZ.z - minZ;
+        if (hit = deltaDepth > 0) {
             mipLevel--;
-            cellSize = getCellSize(dirUVZ.xy, hiZUVScale.zw, mipLevel);
-            hit = true;
+            hit = deltaDepth < stepUVZ.z * 2;
+            //hitUVZ -= dirUVZ / dirUVZ.z * deltaDepth * 0.001;
         }
-        else if (hitUVZ.z < depth && mipLevel < hiZStartLevel) {
-            mipLevel++;
-            cellSize = getCellSize(dirUVZ.xy, hiZUVScale.zw, mipLevel);
+        else {
+            mipLevel = min(mipLevel + 1, hiZStartLevel);
+            hitUVZ = nextUVZ;
         }
         stepNum++;
     }
     return hit;
+}
+
+bool rayTraceHiZ_View(float3 startViewPos, float3 viewDir, out float3 hitUVZ)
+{
+    bool hit = false;
+    int mipLevel = hiZStartLevel;
+    int stepNum = 0;
+    float2 detailCellSize = float2(camData.aspect, 1) * 0.1;
+    float3 curViewPos = startViewPos;
+    while (mipLevel > hiZStopLevel && stepNum < hiZMaxStep) {
+        float cellSize = length(getCellSize(detailCellSize, mipLevel));
+        float3 nextViewPos = curViewPos + viewDir * cellSize;
+        float3 nextUVZ = viewPosToUVZ(nextViewPos);
+        float depth = SAMPLE_TEX_LOD(hiZMap, nextUVZ.xy * hiZUVScale.xy, mipLevel);
+        float deltaDepth = nextUVZ.z - depth;
+        if (deltaDepth > 0) {
+            mipLevel--;
+            hit = deltaDepth < (1 / camData.zFar * 20);
+            hitUVZ = nextUVZ;
+        }
+        else {
+            mipLevel = min(mipLevel + 1, hiZStartLevel);
+            curViewPos = nextViewPos;
+            hit = false;
+        }
+        stepNum++;
+    }
+    return hit;
+}
+
+float SSR_BRDF(float3 V, float3 L, float3 N, float roughness)
+{
+	float3 H = normalize(L + V);
+
+	float NdotH = max(dot(N, H), 0);
+	float NdotL = max(dot(N, L), 0);
+	float NdotV = max(dot(N, V), 0);
+
+	float D = D_GGX_TR(NdotH, roughness);
+	float G = GeometrySchlickGGX(NdotV, roughness) * GeometrySchlickGGX(NdotL, roughness);
+
+	return max(0, D * G);
+}
+
+float GetScreenFadeBord(float2 pos, float value, float power)
+{
+    float borderDist = min(1 - max(pos.x, pos.y), min(pos.x, pos.y));
+    return pow(saturate(borderDist > value ? 1 : borderDist / value), power);
 }
 
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
@@ -74,45 +140,75 @@ void main(uint2 tid : SV_DispatchThreadID)
     if (tid.x < size.x && tid.y < size.y) {
         float2 UV = tid * hiZUVScale.zw * 0.5f;
         if (passID == 0) {
-            float4 B = SAMPLE_TEX_LOD(gBufferB, UV, 0);
-            float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
-            float depth = B.r;
-            float3 N = C.xyz;
-            float roughness = C.a;
+            float depth = SAMPLE_TEX_LOD(gBufferB, UV, 0);
+            float4 hitData = float4(-1, -1, -1, 0.0f);
+            float4 hitColor = 0.0f.rrrr;
 
-            float3 viewOriginPos = depthToViewOriginPos(float3(UV, depth));
-            float3 V = normalize(viewOriginPos);
+            if ((1.0f - depth) > 1 / camData.zFar) {
+                float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
+                float3 N = C.xyz;
+                float roughness = C.a;
 
-            float3x3 tangentBasis = getTangentBasis(N);
-            float4 HPDF = importanceSampleGGX(float2(0, 0), roughness * roughness);
-            float3 H = normalize(mul(HPDF.xyz, tangentBasis));
-            float3 L = reflect(V, H);
+                float3 startUVZ = float3(UV, depth);
+                float3 startView = uvzPosToView(startUVZ);
+                float3 startViewOrigin = viewPosToViewOrigin(startView);
+                float3 V = normalize(startViewOrigin);
 
-            float3 startUVZ = float3(UV, depth);
-            float4 dirClip = mul(mul(float4(L, 0), camData.vomat), camData.promat);
-            dirClip /= dirClip.w;
-            dirClip.xy *= float2(0.5, -0.5f);
-            float3 dirUVZ = dirClip.xyz;
-            float3 hitUVZ = startUVZ;
-            float4 hitData, hitColor;
-            if (rayTraceHiZ(dirUVZ, hitUVZ)) {
-                hitData = float4(hitUVZ, HPDF.a);
-                hitColor = SAMPLE_TEX_LOD(gBufferA, hitUVZ.xy, 0);
+                float3x3 tangentBasis = getTangentBasis(N);
+                float4 HPDF = ImportanceSampleGGX(float2(0, 0), roughness * roughness);
+                float3 H = normalize(mul(HPDF.xyz, tangentBasis));
+                float3 L = normalize(reflect(V, H));
+                float3 hitUVZ;
+#if 1
+                float3 endView = viewOriginPosToView(startViewOrigin + L);
+                float3 endUVZ = viewPosToUVZ(endView);
+                float3 dirUVZ = normalize(endUVZ - startUVZ);
+                if (rayTraceHiZ_UVZ(startUVZ, dirUVZ, hitUVZ))
+#else
+                float4 dirView = mul(float4(L, 0), camData.vmat);
+                if (rayTraceHiZ_View(startView, dirView.xyz, hitUVZ))
+#endif
+                {
+                    if (all(hitUVZ > float2(0, 0)) && all(hitUVZ < float2(1, 1))) {
+                        hitData = float4(hitUVZ, HPDF.a);
+                        hitColor = SAMPLE_TEX_LOD(gBufferA, hitUVZ.xy, 0);
+                    }
+                }
             }
-            else {
-                hitData = float4(hitUVZ, 0.0f);
-                hitColor = 0.0f.rrrr;
-            }
+
+            hitColor.a = hitData.a * GetScreenFadeBord(hitData.xy, 1, 1.5);
 
             hitDataMap[tid] = hitData;
             hitColorMap[tid] = hitColor;
         }
         else if (passID == 1) {
-            float4 hitData = hitDataMap[tid];
-            float4 hitColor = SAMPLE_TEX_LOD(inHitColorMap, UV, 0);
-            float4 color = outGBufferA[tid];
-            color.rgb += hitColor.rgb * hitData.a * 0.1;
-            outGBufferA[tid] = color;
+            float depth = SAMPLE_TEX_LOD(gBufferB, UV, 0);
+            float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
+            float roughness = clamp(C.a, 0.02, 1);
+            float3 viewN = normalize(worldDirToView(C.xyz));
+            float3 viewPos = uvzPosToView(float3(UV, depth));
+            float3 V = normalize(viewPos);
+            int2 sampleIndex0 = UV / hiZUVScale.zw * 2.0f;
+            float4 hitData0 = hitDataMap[sampleIndex0];
+            float4 hitColor0 = SAMPLE_TEX_LOD(inHitColorMap, UV, 0);
+
+            float3 color = 0;
+            float weightSum = 0;
+            for (int i = 0; i < resolveSamples; i++) {
+                float2 offUV = Hammersley16(i, resolveSamples, uint2(0x0f3a, 0xd20c)) * camData.aspect * 0.002f;
+                float2 sampleUV = UV + offUV;
+                int2 sampleIndex = sampleUV / hiZUVScale.zw * 2.0f;
+                float4 hitData = hitDataMap[sampleIndex];
+                float4 hitColor = SAMPLE_TEX_LOD(inHitColorMap, sampleUV, 0);
+                float3 hitPosView = uvzPosToView(hitData.xyz);
+                float weight = SSR_BRDF(-V, normalize(hitPosView - viewPos), viewN, roughness) * rcp(max(1e-5, hitData.a));
+                weightSum += weight;
+                color += hitColor.xyz * weight;
+            }
+            color = max(1e-5, color) * rcp(max(1e-5, weightSum)) * hitColor0.a;
+            float4 sceneColor = outGBufferA[tid];
+            sceneColor.xyz = lerp(sceneColor.xyz, color, luminance(color) * (1 - roughness) * hitData0.a);
+            outGBufferA[tid] = sceneColor;
         }
     }
 }

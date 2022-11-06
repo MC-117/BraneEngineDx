@@ -62,13 +62,6 @@ float3 getRayDir(float2 uv) {
     return normalize(ndcPos.xyz);
 }
 
-float depthFromNDCToView(float depth)
-{
-    float ndcZ = 2.0 * depth - 1.0;
-    float z = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear - ndcZ * (camData.zFar - camData.zNear));
-    return z;
-}
-
 float computeScattering(float lightDotView)
 {
     float result = 1.0 - G_SCATTERING * G_SCATTERING;

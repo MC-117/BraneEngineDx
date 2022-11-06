@@ -1,4 +1,8 @@
 #include "DX11ShaderStage.h"
+#include "../../Core/Utility/RenderUtility.h"
+#include "../../Core/Utility/EngineUtility.h"
+#include "../../Core/Engine.h"
+#include <fstream>
 
 #ifdef VENDOR_USE_DX11
 
@@ -12,6 +16,26 @@ DX11ShaderStage::~DX11ShaderStage()
 	release();
 }
 
+const char* getShaderExtension(ShaderStageType type)
+{
+	switch (type)
+	{
+	case Vertex_Shader_Stage:
+		return ".vs";
+	case Tessellation_Control_Shader_Stage:
+		return ".tcs";
+	case Tessellation_Evalution_Shader_Stage:
+		return ".tes";
+	case Geometry_Shader_Stage:
+		return ".gs";
+	case Fragment_Shader_Stage:
+		return ".fs";
+	case Compute_Shader_Stage:
+		return ".cs";
+	}
+	return "";
+}
+
 unsigned int DX11ShaderStage::compile(const string& code, string& errorString)
 {
 	ComPtr<ID3DBlob> errorBlob = NULL;
@@ -21,10 +45,27 @@ unsigned int DX11ShaderStage::compile(const string& code, string& errorString)
 		compileFlag |= D3DCOMPILE_SKIP_OPTIMIZATION |
 			D3DCOMPILE_DEBUG | D3DCOMPILE_PREFER_FLOW_CONTROL;
 	}
-	if (FAILED(D3DCompile(code.c_str(), code.size() * sizeof(char), name.c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"main", getShaderVersion(stageType), compileFlag, 0, &dx11ShaderBlob, &errorBlob))) {
-		errorString = (const char*)errorBlob->GetBufferPointer();
-		return 0;
+	const char* shdtmp = ".shdtmp/";
+	if (!filesystem::exists(shdtmp))
+		filesystem::create_directory(shdtmp);
+	string rootPath = getFileRoot(Engine::windowContext.executionPath);
+	string shaderPath = rootPath + '/' + shdtmp + name + "_" + getShaderFeatureNames(this->shaderFeature) + getShaderExtension(stageType);
+	ofstream f = ofstream(shaderPath);
+	if (f.fail()) {
+		if (FAILED(D3DCompile(code.c_str(), code.size() * sizeof(char), name.c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+			"main", getShaderVersion(stageType), compileFlag, 0, &dx11ShaderBlob, &errorBlob))) {
+			errorString = (const char*)errorBlob->GetBufferPointer();
+			return 0;
+		}
+	}
+	else {
+		f << code;
+		f.close();
+		if (FAILED(D3DCompileFromFile(filesystem::path(shaderPath).c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+			"main", getShaderVersion(stageType), compileFlag, 0, &dx11ShaderBlob, &errorBlob))) {
+			errorString = (const char*)errorBlob->GetBufferPointer();
+			return 0;
+		}
 	}
 	/*if (errorBlob != NULL)
 		errorBlob->Release();*/

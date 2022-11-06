@@ -70,29 +70,11 @@ float3 normalFromDepth(in float depth, in float2 texcoords, in float offset)
 	return normalize(normal);
 }
 
-float depthFromNDCToView(float depth)
-{
-    float ndcZ = 2.0 * depth - 1.0;
-    float z = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear - ndcZ * (camData.zFar - camData.zNear));
-    return z;
-}
-
 float3 reflection(float3 v1,float3 v2)
 {
     float3 result= 2.0 * dot(v2, v1) * v2;
     result=v1-result;
     return result;
-}
-
-float3 ScreenToViewPos(float2 uv, float ndcDepth)
-{
-    float4 ndcPos;
-    ndcPos.x = uv.x * 2.0f - 1.0f;
-    ndcPos.y = 1.0f - uv.y * 2.0f;
-    ndcPos.z = ndcDepth;
-    ndcPos.w = 1.0f;
-    ndcPos = mul(ndcPos, camData.promatInv);
-    return ndcPos.xyz / ndcPos.w;
 }
 
 float InterleavedGradientNoise(float2 iPos)
@@ -156,7 +138,7 @@ float2 SearchForLargestAngleDual(uint NumSteps, float2 BaseUV, float2 ScreenDir,
 		SceneDepths.y = SAMPLE_TEX_LOD(depthMap, UV2.zw, 0).r;
 		
 		//正向 slider54
-		Ds = ScreenToViewPos(UV2.xy, SceneDepths.x) - ViewPos;	
+		Ds = uvzPosToView(float3(UV2.xy, SceneDepths.x)) - ViewPos;	
 		LenDsSquare = dot(Ds, Ds);
 		LenDsInv = rsqrt(LenDsSquare + 0.0001);
 		Ang = dot(Ds, ViewDir) * LenDsInv;
@@ -167,7 +149,7 @@ float2 SearchForLargestAngleDual(uint NumSteps, float2 BaseUV, float2 ScreenDir,
 		BestAng.x = (Ang > BestAng.x) ? Ang : lerp(Ang, BestAng.x, Thickness);;
 
 		//反向
-		Ds = ScreenToViewPos(UV2.zw, SceneDepths.x) - ViewPos;
+		Ds = uvzPosToView(float3(UV2.zw, SceneDepths.x)) - ViewPos;
 		LenDsSquare = dot(Ds, Ds);
 		LenDsInv = rsqrt(LenDsSquare + 0.0001);
 		Ang = dot(Ds, ViewDir) * LenDsInv;
@@ -287,7 +269,7 @@ FragmentOut DEFAULT_SCREEN_MAIN
         float ndcDepth = SAMPLE_TEX_LOD(depthMap, fin.UV, 0).r;
         float viewDepth = depthFromNDCToView(ndcDepth);
         float3 normVS = normalFromDepth(ndcDepth, fin.UV, 1 / depthSize.x);
-        float3 posVS = ScreenToViewPos(fin.UV, ndcDepth);
+        float3 posVS = uvzPosToView(float3(fin.UV, ndcDepth));
 
         float3 viewDir = normalize(-posVS.xyz);
         

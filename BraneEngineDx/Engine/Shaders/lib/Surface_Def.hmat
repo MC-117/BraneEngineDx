@@ -47,7 +47,7 @@ Surface getSurface(in ScreenVertexOut fin)
     float4 D = SAMPLE_TEX(gBufferD, fin.UV);
     surf.albedo = A;
     surf.depth = B;
-    surf.WorldPos = depthToWorldPos(float3(fin.UV, surf.depth));
+    surf.WorldPos = uvzPosToWorld(float3(fin.UV, surf.depth));
     surf.Normal = C.xyz;
     surf.roughness = C.a;
     surf.TexCoords = D.xy;
