@@ -6,8 +6,6 @@ Count hiZMaxStep: 48
 Color hiZUVScale: 1.0, 1.0, 1.0, 1.0
 #localsize 8 8
 #compute
-#pragma debug
-
 #include "../lib/PBR_Lib.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
@@ -59,25 +57,26 @@ int2 getCellIndex(float2 curUV, float2 cellSize)
 bool rayTraceHiZ_UVZ(float3 startUVZ, float3 dirUVZ, out float3 hitUVZ)
 {
     bool hit = false;
-    hitUVZ = startUVZ;
     int mipLevel = hiZStartLevel;
     int stepNum = 0;
     float minZ;
     float stepSize;
+    float3 curUVZ = startUVZ;
     while (mipLevel > hiZStopLevel && stepNum < hiZMaxStep) {
         float stepSize = length(getCellSize(hiZUVScale.zw, mipLevel));
         float3 stepUVZ = dirUVZ * stepSize;
-        float3 nextUVZ = hitUVZ + stepUVZ;
+        float3 nextUVZ = curUVZ + stepUVZ;
         minZ = SAMPLE_TEX_LOD(hiZMap, nextUVZ.xy * hiZUVScale.xy, mipLevel);
         float deltaDepth = nextUVZ.z - minZ;
         if (hit = deltaDepth > 0) {
             mipLevel--;
-            hit = deltaDepth < stepUVZ.z * 2;
+            hit = true;//deltaDepth < stepUVZ.z * 50;
             //hitUVZ -= dirUVZ / dirUVZ.z * deltaDepth * 0.001;
+            hitUVZ = curUVZ;
         }
         else {
             mipLevel = min(mipLevel + 1, hiZStartLevel);
-            hitUVZ = nextUVZ;
+            curUVZ = nextUVZ;
         }
         stepNum++;
     }
@@ -121,15 +120,15 @@ float SSR_BRDF(float3 V, float3 L, float3 N, float roughness)
 	float NdotV = max(dot(N, V), 0);
 
 	float D = D_GGX_TR(NdotH, roughness);
-	float G = GeometrySchlickGGX(NdotV, roughness) * GeometrySchlickGGX(NdotL, roughness);
+	float G = GeometrySchlickGGX(NdotV, roughness);
 
 	return max(0, D * G);
 }
 
-float GetScreenFadeBord(float2 pos, float value, float power)
+float GetScreenFadeBord(float2 pos)
 {
-    float borderDist = min(1 - max(pos.x, pos.y), min(pos.x, pos.y));
-    return pow(saturate(borderDist > value ? 1 : borderDist / value), power);
+    float2 Vignette = saturate(abs(pos) * 5 - 4.3);
+    return saturate(1.0 - dot(Vignette, Vignette));
 }
 
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
@@ -169,14 +168,11 @@ void main(uint2 tid : SV_DispatchThreadID)
                 if (rayTraceHiZ_View(startView, dirView.xyz, hitUVZ))
 #endif
                 {
-                    if (all(hitUVZ > float2(0, 0)) && all(hitUVZ < float2(1, 1))) {
-                        hitData = float4(hitUVZ, HPDF.a);
-                        hitColor = SAMPLE_TEX_LOD(gBufferA, hitUVZ.xy, 0);
-                    }
+                    hitData = float4(hitUVZ, HPDF.a);
+                    hitColor = SAMPLE_TEX_LOD(gBufferA, hitUVZ.xy, 0);
+                    hitColor.rgb *= GetScreenFadeBord(uvToClip(hitUVZ.xy));
                 }
             }
-
-            hitColor.a = hitData.a * GetScreenFadeBord(hitData.xy, 1, 1.5);
 
             hitDataMap[tid] = hitData;
             hitColorMap[tid] = hitColor;
@@ -194,20 +190,25 @@ void main(uint2 tid : SV_DispatchThreadID)
 
             float3 color = 0;
             float weightSum = 0;
+            float radius = lerp(0.0005, 0.005, roughness * roughness);
             for (int i = 0; i < resolveSamples; i++) {
-                float2 offUV = Hammersley16(i, resolveSamples, uint2(0x0f3a, 0xd20c)) * camData.aspect * 0.002f;
+                float2 offUV = Hammersley16(i, resolveSamples, uint2(0x0f3a, 0xd20c)) * camData.aspect * radius;
                 float2 sampleUV = UV + offUV;
                 int2 sampleIndex = sampleUV / hiZUVScale.zw * 2.0f;
                 float4 hitData = hitDataMap[sampleIndex];
                 float4 hitColor = SAMPLE_TEX_LOD(inHitColorMap, sampleUV, 0);
+                //hitColor.rgb /= 1 + luminance(hitColor.rgb);
                 float3 hitPosView = uvzPosToView(hitData.xyz);
-                float weight = SSR_BRDF(-V, normalize(hitPosView - viewPos), viewN, roughness) * rcp(max(1e-5, hitData.a));
+                float weight = SSR_BRDF(-V, normalize(hitPosView - viewPos), viewN, roughness);
+                //weight = max(weight, hitData.a);
                 weightSum += weight;
-                color += hitColor.xyz * weight;
+                color += hitColor.rgb * weight;
             }
-            color = max(1e-5, color) * rcp(max(1e-5, weightSum)) * hitColor0.a;
+            color /= weightSum;
+            //color /= 1 - luminance(color);
+            color = max(1e-5, color);
             float4 sceneColor = outGBufferA[tid];
-            sceneColor.xyz = lerp(sceneColor.xyz, color, luminance(color) * (1 - roughness) * hitData0.a);
+            sceneColor.xyz += color * 0.2;
             outGBufferA[tid] = sceneColor;
         }
     }

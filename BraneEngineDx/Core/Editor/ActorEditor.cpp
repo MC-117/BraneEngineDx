@@ -1,6 +1,7 @@
 #include "ActorEditor.h"
 #include "../MeshRender.h"
 #include "../SkeletonMeshRender.h"
+#include "../GUI/GUIUtility.h"
 
 RegistEditor(Actor);
 
@@ -24,17 +25,30 @@ void ActorEditor::onAudioGUI(EditorInfo& info)
 	}
 	ImGui::Separator();
 	for (int i = 0; i < actor->audioSources.size(); i++) {
-		ImGui::Text(actor->audioSources[i]->audioData->name.c_str());
-		ImGui::SameLine();
-		if (actor->audioSources[i]->getState() == AudioSource::Playing) {
-			if (ImGui::Button(("Pause##Pause" + to_string(i)).c_str()))
-				actor->audioSources[i]->pause();
-			ImGui::SameLine();
-			if (ImGui::Button(("Stop##Stop" + to_string(i)).c_str()))
-				actor->audioSources[i]->stop();
+		AudioSource* source = actor->audioSources[i];
+		if (source) {
+			ImGui::PushID(i);
+			bool isValid = source->isValid();
+			if (ImGui::BeginHeaderBox(isValid ? actor->audioSources[i]->audioData->name.c_str() : "Null Source")) {
+				if (isValid) {
+					if (source->getState() == AudioSource::Playing) {
+						if (ImGui::Button(("Pause##Pause" + to_string(i)).c_str()))
+							actor->audioSources[i]->pause();
+						ImGui::SameLine();
+						if (ImGui::Button(("Stop##Stop" + to_string(i)).c_str()))
+							actor->audioSources[i]->stop();
+					}
+					else if (ImGui::Button(("Play##Play" + to_string(i)).c_str()))
+						actor->audioSources[i]->play();
+				}
+			}
+			else {
+				actor->audioSources.erase(actor->audioSources.begin()+=i);
+				i--;
+			}
+			ImGui::EndHeaderBox();
+			ImGui::PopID();
 		}
-		else if (ImGui::Button(("Play##Play" + to_string(i)).c_str()))
-			actor->audioSources[i]->play();
 	}
 #endif // AUDIO_USE_OPENAL
 }
