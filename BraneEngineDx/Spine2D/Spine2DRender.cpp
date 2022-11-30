@@ -151,7 +151,6 @@ void Spine2DRender::render(RenderInfo& info)
 
     Spine2DRenderCommand command;
     command.sceneData = info.sceneData;
-    command.camera = info.camera;
     command.material = material;
 
     for (int i = 0; i < partCount; i++) {
@@ -218,7 +217,7 @@ Matrix4f Spine2DRender::getTransformMatrix() const
 
 IRendering::RenderType Spine2DRender::getRenderType() const
 {
-    return IRendering::RenderType();
+    return IRendering::Normal;
 }
 
 Shape* Spine2DRender::getShape() const

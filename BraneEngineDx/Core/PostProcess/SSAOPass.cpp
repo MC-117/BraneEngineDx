@@ -34,11 +34,11 @@ void SSAOPass::execute(IRenderContext& context)
 
 	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
 
-	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, depthMapSlot);
+	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, depthMapSlot, depthMapSamplerSlot);
 
 	// Pass 0 GTAO
-	context.bindTexture(NULL, Fragment_Shader_Stage, ssaoMapSlot);
-	context.bindTexture(NULL, Fragment_Shader_Stage, screenMapSlot);
+	context.bindTexture(NULL, Fragment_Shader_Stage, ssaoMapSlot, ssaoMapSamplerSlot);
+	context.bindTexture(NULL, Fragment_Shader_Stage, screenMapSlot, screenMapSamplerSlot);
 	context.bindFrame(gtaoRenderTarget.getVendorRenderTarget());
 
 	context.setDrawInfo(0, 2, 0);
@@ -50,8 +50,8 @@ void SSAOPass::execute(IRenderContext& context)
 	context.clearFrameBindings();
 
 	// Pass 1 Add
-	context.bindTexture((ITexture*)gtaoMap.getVendorTexture(), Fragment_Shader_Stage, ssaoMapSlot);
-	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, screenMapSlot);
+	context.bindTexture((ITexture*)gtaoMap.getVendorTexture(), Fragment_Shader_Stage, ssaoMapSlot, ssaoMapSamplerSlot);
+	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, screenMapSlot, screenMapSamplerSlot);
 
 	context.bindFrame(screenRenderTarget.getVendorRenderTarget());
 
@@ -96,13 +96,16 @@ void SSAOPass::render(RenderInfo & info)
 		program->init();
 
 		depthMapSlot = program->getAttributeOffset("depthMap").offset;
+		depthMapSamplerSlot = program->getAttributeOffset("depthMapSampler").offset;
 		ssaoMapSlot = program->getAttributeOffset("ssaoMap").offset;
+		ssaoMapSamplerSlot = program->getAttributeOffset("ssaoMapSampler").offset;
 		screenMapSlot = program->getAttributeOffset("screenMap").offset;
+		screenMapSamplerSlot = program->getAttributeOffset("screenMapSampler").offset;
 
 		if (depthMapSlot == -1 || ssaoMapSlot == -1 || screenMapSlot == -1)
 			return;
 
-		cameraRenderData = info.camera->getRenderData();
+		cameraRenderData = resource->cameraRenderData;
 		if (cameraRenderData == NULL)
 			return;
 

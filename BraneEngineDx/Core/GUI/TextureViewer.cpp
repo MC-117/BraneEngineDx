@@ -1,8 +1,9 @@
 #include "TextureViewer.h"
 #include "../Engine.h"
+#include "../TextureCube.h"
 
 TextureViewer::TextureViewer(string name, bool defaultShow)
-	: UIWindow(world, name, defaultShow)
+	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
 {
 }
 
@@ -30,6 +31,19 @@ void TextureViewer::onRenderWindow(GUIRenderInfo & info)
 					texture2D->save(desc.filePath);
 				}
 			}
+			TextureCube* textureCube = dynamic_cast<TextureCube*>(texture);
+			if (textureCube) {
+				FileDlgDesc desc;
+				desc.title = "Capture";
+				desc.filter = "mip(*.mip)|*.mip";
+				desc.initDir = "";
+				desc.defFileExt = "png";
+				desc.save = true;
+
+				if (openFileDlg(desc)) {
+					textureCube->save(desc.filePath);
+				}
+			}
 		}
 		ImGui::SliderFloat("MipLevel", &mipLevel, 0, texture->getMipLevels());
 
@@ -54,7 +68,9 @@ void TextureViewer::onRenderWindow(GUIRenderInfo & info)
 		float hph = (height - th) / 2.0f;
 
 		auto list = ImGui::GetWindowDrawList();
-		unsigned long long id = texture->getTextureID();
+		ImTextureID id;
+		id.ptr = (void*)texture->getTextureID();
+		id.mipLevel = mipLevel;
 		ImVec2 uv_min, uv_max;
 		if (invert) {
 			uv_min = { 0, 1 };
@@ -64,8 +80,8 @@ void TextureViewer::onRenderWindow(GUIRenderInfo & info)
 			uv_min = { 0, 0 };
 			uv_max = { 1, 1 };
 		}
-		if (id != 0)
-			list->AddImage({ id, mipLevel }, { pos.x + padding + hpw, pos.y + padding + hph },
+		if (id.ptr != 0)
+			list->AddImage(id, { pos.x + padding + hpw, pos.y + padding + hph },
 				{ pos.x + padding + hpw + tw, pos.y + padding + hph + th }, uv_min, uv_max);
 	}
 }

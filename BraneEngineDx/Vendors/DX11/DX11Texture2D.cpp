@@ -31,6 +31,8 @@ DX11Texture2DInfo::DX11Texture2DInfo(const Texture2DInfo & info)
 	texture2DDesc.ArraySize = 1;
 	texture2DDesc.SampleDesc.Count = info.sampleCount == 0 ? 1 : info.sampleCount;
 	texture2DDesc.SampleDesc.Quality = 0;
+	if (info.dimension & TD_Cube)
+		texture2DDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
 	samplerDesc.Filter = toDX11FilterType(info.minFilterType, info.magFilterType);
 	samplerDesc.AddressU = toDX11WrapType(info.wrapSType);
 	samplerDesc.AddressV = toDX11WrapType(info.wrapTType);
@@ -70,6 +72,8 @@ DX11Texture2DInfo& DX11Texture2DInfo::operator=(const Texture2DInfo& info)
 	texture2DDesc.ArraySize = 1;
 	texture2DDesc.SampleDesc.Count = info.sampleCount == 0 ? 1 : info.sampleCount;
 	texture2DDesc.SampleDesc.Quality = 0;
+	if (info.dimension & TD_Cube)
+		texture2DDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
 	samplerDesc.Filter = toDX11FilterType(info.minFilterType, info.magFilterType);
 	samplerDesc.AddressU = toDX11WrapType(info.wrapSType);
 	samplerDesc.AddressV = toDX11WrapType(info.wrapTType);
@@ -272,6 +276,7 @@ unsigned int DX11Texture2D::bind()
 	info = desc.info;
 	info.texture2DDesc.Width = desc.width;
 	info.texture2DDesc.Height = desc.height;
+	info.texture2DDesc.ArraySize = desc.arrayCount;
 	if (desc.info.sampleCount > 1) {
 		unsigned int q = 0;
 		dxContext.device->CheckMultisampleQualityLevels(info.texture2DDesc.Format, desc.info.sampleCount, &q);
@@ -297,10 +302,10 @@ unsigned int DX11Texture2D::bind()
 			/*if (dx11SRV != NULL)
 				dx11SRV->Release();*/
 			dxContext.deviceContext->UpdateSubresource(dx11Texture2D.Get(), 0, NULL, desc.data, desc.width * desc.channel * sizeof(unsigned char),
-				desc.height * desc.width * desc.channel * sizeof(unsigned char));
+				desc.height * desc.width * desc.channel * desc.arrayCount * sizeof(unsigned char));
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 			srvDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
-			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			srvDesc.ViewDimension = getSrvDimension(desc.info.dimension, false);
 			srvDesc.Texture2D.MipLevels = -1;
 			srvDesc.Texture2D.MostDetailedMip = 0;
 			if (FAILED(dxContext.device->CreateShaderResourceView(dx11Texture2D.Get(), &srvDesc, &dx11SRV)))
@@ -313,15 +318,17 @@ unsigned int DX11Texture2D::bind()
 		info.texture2DDesc.MipLevels = desc.mipLevel;
 		D3D11_SUBRESOURCE_DATA* initData = NULL;
 		if (desc.data != NULL) {
-			initData = new D3D11_SUBRESOURCE_DATA[desc.mipLevel];
+			initData = new D3D11_SUBRESOURCE_DATA[desc.mipLevel * desc.arrayCount];
 			int offset = 0;
-			int _width = desc.width, _height = desc.height;
-			for (int level = 0; level < desc.mipLevel; level++) {
-				initData[level].pSysMem = (const void*)(desc.data + offset);
-				initData[level].SysMemPitch = _width * desc.channel * sizeof(unsigned char);
-				initData[level].SysMemSlicePitch = 0;
-				offset += desc.channel * _width * _height * sizeof(char);
-				_width /= 2, _height /= 2;
+			for (int array = 0; array < desc.arrayCount; array++) {
+				int _width = desc.width, _height = desc.height;
+				for (int level = 0; level < desc.mipLevel; level++) {
+					initData[level].pSysMem = (const void*)(desc.data + offset);
+					initData[level].SysMemPitch = _width * desc.channel * sizeof(unsigned char);
+					initData[level].SysMemSlicePitch = array;
+					offset += desc.channel * _width * _height * sizeof(char);
+					_width /= 2, _height /= 2;
+				}
 			}
 		}
 		if (FAILED(dxContext.device->CreateTexture2D(&info.texture2DDesc, initData, &dx11Texture2D)))
@@ -376,31 +383,50 @@ ComPtr<ID3D11ShaderResourceView> DX11Texture2D::getSRV(const MipOption& mipOptio
 	if (bind() == 0)
 		return NULL;
 
+	bool isMS = desc.info.sampleCount > 1;
 	bool create = false;
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+
+	TexDimension dimension = mipOption.dimension == TD_Default ? desc.info.dimension : mipOption.dimension;
+
+	D3D_SRV_DIMENSION dxDimension = getSrvDimension(dimension, isMS);
 
 	if (dx11SRV == NULL) {
 		create = true;
 	}
 	else {
 		dx11SRV->GetDesc(&srvDesc);
-		create = (mipOption.mipCount != 0 &&
-			srvDesc.Texture2D.MipLevels != mipOption.mipCount) || 
-			srvDesc.Texture2D.MostDetailedMip != mipOption.detailMip;
+		create = srvDesc.ViewDimension != dxDimension;
+		if (isMS) {
+			create |= srvDesc.Texture2DMSArray.FirstArraySlice != mipOption.arrayBase ||
+				srvDesc.Texture2DMSArray.ArraySize != mipOption.arrayCount;
+		}
+		else {
+			create |= srvDesc.Texture2D.MipLevels != mipOption.mipCount ||
+				srvDesc.Texture2D.MostDetailedMip != mipOption.detailMip ||
+				srvDesc.Texture2DArray.FirstArraySlice != mipOption.arrayBase ||
+				srvDesc.Texture2DArray.ArraySize != mipOption.arrayCount;
+		}
 	}
 
 	if (create) {
 		ZeroMemory(&srvDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
 		srvDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
-		if (desc.info.sampleCount > 1) {
-			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
+		srvDesc.ViewDimension = dxDimension;
+		if (isMS) {
+			srvDesc.Texture2DMSArray.FirstArraySlice = mipOption.arrayBase;
+			srvDesc.Texture2DMSArray.ArraySize = mipOption.arrayCount;
 		}
 		else {
-			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			srvDesc.Texture2D.MipLevels =
-				(mipOption.mipCount == 0 | mipOption.mipCount > info.texture2DDesc.MipLevels) ?
+				(mipOption.mipCount == 0 || (mipOption.mipCount > info.texture2DDesc.MipLevels)) ?
 				info.texture2DDesc.MipLevels : mipOption.mipCount;
 			srvDesc.Texture2D.MostDetailedMip = mipOption.detailMip;
+			srvDesc.Texture2DArray.FirstArraySlice = mipOption.arrayBase;
+			if (dimension & TD_Cube)
+				srvDesc.TextureCubeArray.NumCubes = mipOption.arrayCount / 6;
+			else
+				srvDesc.Texture2DArray.ArraySize = mipOption.arrayCount;
 		}
 		if (FAILED(dxContext.device->CreateShaderResourceView(dx11Texture2D.Get(), &srvDesc, &dx11SRV)))
 			throw runtime_error("DX11Tetxture2D: CreateShaderResourceView failed");
@@ -408,7 +434,7 @@ ComPtr<ID3D11ShaderResourceView> DX11Texture2D::getSRV(const MipOption& mipOptio
 	return dx11SRV;
 }
 
-ComPtr<ID3D11RenderTargetView> DX11Texture2D::getRTV(unsigned int mipLevel, bool isMS)
+ComPtr<ID3D11RenderTargetView> DX11Texture2D::getRTV(const RTOption& rtOption)
 {
 	if (bind() == 0)
 		return NULL;
@@ -420,7 +446,15 @@ ComPtr<ID3D11RenderTargetView> DX11Texture2D::getRTV(unsigned int mipLevel, bool
 	}
 	else {
 		dx11RTV->GetDesc(&rtvDesc);
-		create = rtvDesc.Texture2D.MipSlice != mipLevel;
+		if (rtOption.multisample) {
+			create = rtvDesc.Texture2DMSArray.FirstArraySlice != rtOption.arrayBase ||
+				rtvDesc.Texture2DMSArray.ArraySize != rtOption.arrayCount;
+		}
+		else {
+			create = rtvDesc.Texture2D.MipSlice != rtOption.mipLevel ||
+				rtvDesc.Texture2DArray.FirstArraySlice != rtOption.arrayBase ||
+				rtvDesc.Texture2DArray.ArraySize != rtOption.arrayCount;
+		}
 	}
 
 	if (create) {
@@ -429,8 +463,16 @@ ComPtr<ID3D11RenderTargetView> DX11Texture2D::getRTV(unsigned int mipLevel, bool
 		}*/
 		ZeroMemory(&rtvDesc, sizeof(D3D11_RENDER_TARGET_VIEW_DESC));
 		rtvDesc.Format = info.texture2DDesc.Format;
-		rtvDesc.Texture2D.MipSlice = mipLevel;
-		rtvDesc.ViewDimension = isMS ? D3D11_RTV_DIMENSION_TEXTURE2DMS : D3D11_RTV_DIMENSION_TEXTURE2D;
+		rtvDesc.ViewDimension = getRtvDimension(desc.info.dimension, rtOption.multisample);
+		if (rtOption.multisample) {
+			rtvDesc.Texture2DMSArray.FirstArraySlice = rtOption.arrayBase;
+			rtvDesc.Texture2DMSArray.ArraySize = rtOption.arrayCount;
+		}
+		else {
+			rtvDesc.Texture2DArray.MipSlice = rtOption.mipLevel;
+			rtvDesc.Texture2DArray.FirstArraySlice = rtOption.arrayBase;
+			rtvDesc.Texture2DArray.ArraySize = rtOption.arrayCount;
+		}
 		if (FAILED(dxContext.device->CreateRenderTargetView(dx11Texture2D.Get(), &rtvDesc, &dx11RTV)))
 			throw runtime_error("DX11Tetxture2D: CreateRenderTargetView failed");
 	}
@@ -448,7 +490,7 @@ ComPtr<ID3D11SamplerState> DX11Texture2D::getSampler()
 	return dx11Sampler;
 }
 
-ComPtr<ID3D11UnorderedAccessView> DX11Texture2D::getUAV(unsigned int mipLevel)
+ComPtr<ID3D11UnorderedAccessView> DX11Texture2D::getUAV(const RWOption& rwOption)
 {
 	if (bind() == 0)
 		return NULL;
@@ -460,15 +502,19 @@ ComPtr<ID3D11UnorderedAccessView> DX11Texture2D::getUAV(unsigned int mipLevel)
 	}
 	else {
 		dx11UAV->GetDesc(&uavDesc);
-		create = uavDesc.Texture2D.MipSlice != mipLevel;
+		create = uavDesc.Texture2D.MipSlice != rwOption.mipLevel ||
+			uavDesc.Texture2DArray.FirstArraySlice != rwOption.arrayBase ||
+			uavDesc.Texture2DArray.ArraySize != rwOption.arrayCount;
 	}
 
 	if (create) {
 		/*if (dx11UAV != NULL)
 			dx11UAV->Release();*/
 		uavDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
-		uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-		uavDesc.Texture2D.MipSlice = mipLevel;
+		uavDesc.ViewDimension = getUavDimension(desc.info.dimension);
+		uavDesc.Texture2D.MipSlice = rwOption.mipLevel;
+		uavDesc.Texture2DArray.FirstArraySlice = rwOption.arrayBase;
+		uavDesc.Texture2DArray.ArraySize = rwOption.arrayCount;
 		if (FAILED(dxContext.device->CreateUnorderedAccessView(dx11Texture2D.Get(), &uavDesc, &dx11UAV)))
 			throw runtime_error("DX11Tetxture2D: CreateUnorderedAccessView failed");
 	}
@@ -525,6 +571,56 @@ DXGI_FORMAT DX11Texture2D::getColorType(unsigned int channel, DXGI_FORMAT intern
 		return internalType;
 	}
 	return internalType;
+}
+
+D3D_SRV_DIMENSION DX11Texture2D::getSrvDimension(TexDimension dimension, bool isMS)
+{
+	switch (dimension)
+	{
+	case TD_Single:
+		return isMS ? D3D11_SRV_DIMENSION_TEXTURE2DMS : D3D11_SRV_DIMENSION_TEXTURE2D;
+	case TD_Array:
+		return isMS ? D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY : D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+	case TD_Cube:
+		if (isMS)
+			throw runtime_error("DX11Texture2D: MS Cube texture is not allowed");
+		return D3D11_SRV_DIMENSION_TEXTURECUBE;
+	case TD_CubeArray:
+		if (isMS)
+			throw runtime_error("DX11Texture2D: MS Cube Array texture is not allowed");
+		return D3D11_SRV_DIMENSION_TEXTURECUBEARRAY;
+	default:
+		throw runtime_error("DX11Texture2D: Unknow dimension");
+	}
+}
+
+D3D11_RTV_DIMENSION DX11Texture2D::getRtvDimension(TexDimension dimension, bool isMS)
+{
+	switch (dimension)
+	{
+	case TD_Single:
+		return isMS ? D3D11_RTV_DIMENSION_TEXTURE2DMS : D3D11_RTV_DIMENSION_TEXTURE2D;
+	case TD_Cube:
+	case TD_Array:
+		return isMS ? D3D11_RTV_DIMENSION_TEXTURE2DMSARRAY : D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+	default:
+		throw runtime_error("DX11Texture2D: Unknow dimension");
+	}
+}
+
+D3D11_UAV_DIMENSION DX11Texture2D::getUavDimension(TexDimension dimension)
+{
+	switch (dimension)
+	{
+	case TD_Single:
+		return D3D11_UAV_DIMENSION_TEXTURE2D;
+	case TD_Cube:
+	case TD_Array:
+	case TD_CubeArray:
+		return D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
+	default:
+		throw runtime_error("DX11Texture2D: Unknow dimension");
+	}
 }
 
 #endif // VENDOR_USE_DX11

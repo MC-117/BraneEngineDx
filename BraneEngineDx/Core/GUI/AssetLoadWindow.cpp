@@ -11,6 +11,7 @@ AssetLoadWindow::AssetLoadWindow(Object & object, string name, bool defaultShow)
 
 void AssetLoadWindow::onRenderWindow(GUIRenderInfo & info)
 {
+	World& world = *Engine::getCurrentWorld();
 	if (ImGui::Button(willLoad ? "File" : "RAM")) {
 		willLoad = !willLoad;
 	}

@@ -195,8 +195,10 @@ void PhysicalWorld::updatePhysicalWorld(float deltaTime)
 	if (pause) {
 		return;
 	}
+#ifndef PHYSICS_USE_PHYSX5
 	if (isInit)
 		physicsScene->fetchResults(true);
+#endif
 	isInit = true;
 	dirty = false;
 #ifdef PHYSICS_USE_BULLET
@@ -221,6 +223,9 @@ void PhysicalWorld::updatePhysicalWorld(float deltaTime)
 	if (accumulator > 0 && accumulator < stepSize) {
 		onStepSimulation(this, accumulator);
 		physicsScene->simulate(accumulator);
+#ifdef PHYSICS_USE_PHYSX5
+		physicsScene->fetchResults(true);
+#endif
 		accumulator = 0;
 	}
 	else {
@@ -231,12 +236,17 @@ void PhysicalWorld::updatePhysicalWorld(float deltaTime)
 				accumulator = 0;
 				break;
 			}
+#ifndef PHYSICS_USE_PHYSX5
 			if (step > 0)
 				physicsScene->fetchResults(true);
+#endif
 			step++;
 			accumulator -= stepSize;
 			onStepSimulation(this, stepSize);
 			physicsScene->simulate(stepSize);
+#ifdef PHYSICS_USE_PHYSX5
+			physicsScene->fetchResults(true);
+#endif
 		}
 	}
 	for (auto b = clothSolvers.begin(), e = clothSolvers.end(); b != e; b++) {
@@ -596,7 +606,7 @@ void PhysicalWorld::drawDedug(ImDrawList * list, const PxRenderBuffer & buffer, 
 			{ (_p2.x() + 1.0f) * 0.5f * cam.size.x, (1.0f - _p2.y()) * 0.5f * cam.size.y },
 			(tri.color0 + tri.color1 + tri.color2) / 3);
 	}*/
-	for (PxU32 i = 0; i < buffer.getNbTexts(); i++)
+	/*for (PxU32 i = 0; i < buffer.getNbTexts(); i++)
 	{
 		const PxDebugText& text = buffer.getTexts()[i];
 		Vector3f p0 = toVector3f(text.position);
@@ -605,6 +615,6 @@ void PhysicalWorld::drawDedug(ImDrawList * list, const PxRenderBuffer & buffer, 
 		if (_p0.z() < 0)
 			continue;
 		list->AddText(ImVec2(_p0.x(), _p0.y()), text.color, text.string);
-	}
+	}*/
 }
 #endif // !PHYSICS_USE_PHYSX

@@ -2,6 +2,9 @@
 
 #include "../Texture2D.h"
 
+struct RenderInfo;
+class MeshPart;
+class Material;
 class Camera;
 class Object;
 class Gizmo;
@@ -49,6 +52,15 @@ public:
 		Color color;
 	};
 
+	struct MeshDraw
+	{
+		MeshPart* meshPart;
+		Material* material;
+		Matrix4f transformMat;
+		int instanceID;
+		int instanceCount;
+	};
+
 	enum struct HandleType
 	{
 		Transition, Rotation, Scaling
@@ -63,6 +75,7 @@ public:
 	vector<LineDraw> lines;
 	vector<TextDraw> texts;
 	vector<IconDraw> icons;
+	vector<MeshDraw> meshes;
 
 	Gizmo();
 	Gizmo(const string& name);
@@ -96,6 +109,9 @@ public:
 	void drawIcon(Texture2D& icon, const Vector3f& position, int size = 20, const Color& color = Color(1.0f, 1.0f, 1.0f, 1.0f));
 	bool drawHandle(void* id, HandleType type, TransformSpace space, Matrix4f& matrix, const Vector3f& snapVector = Vector3f());
 
+	bool drawMesh(MeshPart& meshPart, Material& material, int instanceBase, int instanceCount = 1);
+	bool drawMesh(MeshPart& meshPart, Material& material, const Matrix4f& transformMat);
+
 	void setCameraControl(CameraControlMode mode, float transitionSensitivity = 30, float rotationSensitivity = 0.1, float distanceSensitivity = 500);
 	
 	void reset();
@@ -109,8 +125,8 @@ public:
 
 	virtual void onUpdate(Camera& camera);
 
-	virtual void onRender();
-
+	virtual void onRender2D();
+	virtual void onRender3D(RenderInfo& info);
 protected:
 	string name;
 	ImDrawList* drawList = NULL;

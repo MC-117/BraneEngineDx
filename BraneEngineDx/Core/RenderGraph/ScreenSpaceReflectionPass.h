@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../RenderCore/RenderInterface.h"
-#include "../RenderCore/MaterialRenderData.h"
-#include "../RenderCore/CameraRenderData.h"
+#include "../RenderCore/RenderCommandList.h"
 #include "../RenderTarget.h"
 
 class ScreenSpaceReflectionPass : public RenderPass
 {
 public:
+	bool enable = true;
+	SceneRenderData* sceneData = NULL;
 	CameraRenderData* cameraData = NULL;
 
 	Texture* gBufferA = NULL;

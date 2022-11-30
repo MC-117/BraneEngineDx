@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "GUI/Gizmo.h"
 #include "Editor/Editor.h"
+#include "RenderCore/RenderCore.h"
 
 MeshRender::MeshRender()
 {
@@ -172,10 +173,11 @@ void MeshRender::render(RenderInfo& info)
 			info.sceneData->setMeshPartTransform(part, material, instanceID);
 		MeshRenderCommand command;
 		command.sceneData = info.sceneData;
-		command.camera = info.camera;
 		command.material = material;
 		command.mesh = part;
 		command.isStatic = isStatic;
+		command.instanceID = instanceID;
+		command.instanceIDCount = instanceCount;
 		info.renderGraph->setRenderCommand(command);
 
 		Material* outlineMaterial = outlineMaterials[i];
@@ -222,27 +224,6 @@ bool MeshRender::getMaterialEnable(unsigned int index)
 Shader * MeshRender::getShader() const
 {
 	return materials[0]->getShader();
-}
-
-int MeshRender::getRenderResource(vector<RenderResource>& resources)
-{
-	int count = 0;
-	for (int i = 0; i < materials.size(); i++) {
-		Material* material = materials[i];
-		if (material == NULL)
-			continue;
-		MeshPart* part = &mesh->meshParts[i];
-		if (!part->isValid())
-			continue;
-		RenderResource& resource = resources.emplace_back();
-		resource.enable = meshPartsEnable[i];
-		resource.instanceID = instanceID;
-		resource.instanceIDCount = instanceCount;
-		resource.material = material;
-		resource.meshPart = part;
-		count++;
-	}
-	return count;
 }
 
 void MeshRender::remapMaterial()

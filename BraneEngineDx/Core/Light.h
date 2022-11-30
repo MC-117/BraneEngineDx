@@ -2,8 +2,8 @@
 #ifndef _LIGHT_H_
 #define _LIGHT_H_
 
-#include "ShadowCamera.h"
 #include "Geometry.h"
+#include "Transform.h"
 
 class Light : public Transform, public Render
 {

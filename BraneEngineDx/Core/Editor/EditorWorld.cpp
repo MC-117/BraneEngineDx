@@ -1,22 +1,28 @@
 #include "EditorWorld.h"
+#include "../RenderCore/RenderCore.h"
 
 EditorWorld::EditorWorld()
 	: directLight("directLight"),
 	camera("camera")
 {
+	sceneRenderData = new SceneRenderData();
 	directLight.setRotation(0, -45, -45);
 	this->addChild(directLight);
 	this->addChild(camera);
 	camera.setActive(true);
-	camera.postProcessCameraRender.graph.removePostProcessPass("SSAO");
-	camera.postProcessCameraRender.graph.removePostProcessPass("DOF");
-	camera.postProcessCameraRender.graph.removePostProcessPass("VolumetricLight");
-	camera.postProcessCameraRender.graph.removePostProcessPass("Blit");
-	camera.postProcessCameraRender.graph.resource.finalRenderTarget = NULL;
+	camera.cameraRender.createDefaultPostProcessGraph();
+	camera.cameraRender.graph->removePostProcessPass("SSAO");
+	camera.cameraRender.graph->removePostProcessPass("DOF");
+	camera.cameraRender.graph->removePostProcessPass("VolumetricLight");
+	camera.cameraRender.graph->removePostProcessPass("Blit");
+	camera.cameraRender.graph->resource.finalRenderTarget = NULL;
 }
 
 EditorWorld::~EditorWorld()
 {
+	if (sceneRenderData)
+		delete sceneRenderData;
+	sceneRenderData = NULL;
 }
 
 void EditorWorld::begin()
@@ -92,37 +98,34 @@ void EditorWorld::render(RenderGraph& renderGraph)
 	if (camera.size.x == 0 || camera.size.y == 0)
 		return;
 
-	prerender(sceneRenderData);
+	prerender(*sceneRenderData);
 
+	vector<Render*> prerenders;
 	vector<Render*> renders;
 
-	RenderInfo info = {
-		camera.projectionViewMat, Matrix4f::Identity(),
-		camera.cameraRender.cameraLoc, camera.cameraRender.cameraDir,
-		camera.size, (float)(camera.fov * PI / 180.0) };
-	info.sceneData = &sceneRenderData;
+	RenderInfo info;
+	info.sceneData = sceneRenderData;
 	info.renderGraph = &renderGraph;
 	info.camera = &camera;
-
-	sceneRenderData.setLight(&directLight);
 
 	iter.reset();
 	while (iter.next()) {
 		Object& obj = iter.current();
-		renders.clear();
-		obj.getRenders(renders);
-		for (int i = 0; i < renders.size(); i++) {
-			Render* renderer = renders[i];
-			if (renderer == NULL || isClassOf<Light>(renderer))
-				continue;
-			renderer->render(info);
-			info.tempRender = renderer;
-			directLight.render(info);
+		vector<Render*> tempRenders;
+		obj.getRenders(tempRenders);
+		for (auto& renderer : tempRenders) {
+			if (isClassOf<Light>(renderer) || isClassOf<CameraRender>(renderer))
+				prerenders.push_back(renderer);
+			else
+				renders.push_back(renderer);
 		}
 	}
 
-	camera.cameraRender.render(info);
-	camera.cameraRender.postRender();
+	for (auto& renderer : prerenders)
+		renderer->render(info);
+
+	for (auto& renderer : renders)
+		renderer->render(info);
 }
 
 void EditorWorld::end()
@@ -159,12 +162,12 @@ void EditorWorld::update()
 
 Texture* EditorWorld::getSceneTexture()
 {
-	RenderTarget* screenRenderTarget = camera.postProcessCameraRender.graph.resource.screenRenderTarget;
-	if (screenRenderTarget == NULL)
-		screenRenderTarget = &camera.renderTarget;
-	screenRenderTarget->clearBind();
-	screenRenderTarget->getTexture(0);
-	return screenRenderTarget->getTexture(0);
+	return camera.cameraRender.getSceneMap();
+}
+
+SceneRenderData* EditorWorld::getSceneRenderData()
+{
+	return sceneRenderData;
 }
 
 void EditorWorld::setViewportSize(int width, int height)

@@ -1,4 +1,5 @@
 #include "TerrainRender.h"
+#include "../RenderCore/RenderCore.h"
 
 TerrainRender::TerrainRender() : Render()
 {
@@ -32,10 +33,11 @@ void TerrainRender::render(RenderInfo& info)
         info.sceneData->setMeshPartTransform(&geometry->meshPart, material, instanceID);
     MeshRenderCommand command;
     command.sceneData = info.sceneData;
-    command.camera = info.camera;
     command.material = material;
     command.mesh = &geometry->meshPart;
     command.isStatic = isStatic;
+    command.instanceID = instanceID;
+    command.instanceIDCount = instanceCount;
     info.renderGraph->setRenderCommand(command);
 }
 
@@ -67,18 +69,4 @@ bool TerrainRender::getMaterialEnable(unsigned int index)
 Shader* TerrainRender::getShader() const
 {
     return material ? material->getShader() : NULL;
-}
-
-int TerrainRender::getRenderResource(vector<RenderResource>& resources)
-{
-    if (geometry && geometry->isValid() && material) {
-        RenderResource& resource = resources.emplace_back();
-        resource.enable = true;
-        resource.instanceID = instanceID;
-        resource.instanceIDCount = instanceCount;
-        resource.material = material;
-        resource.meshPart = &geometry->meshPart;
-        return 1;
-    }
-    return 0;
 }

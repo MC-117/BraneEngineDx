@@ -7,8 +7,6 @@
 #include "World.h"
 #include "Input.h"
 
-extern World world;
-
 class WUIViewport;
 
 static class Engine

@@ -57,15 +57,20 @@ unsigned int DX11RenderTarget::bindFrame()
 	if (currentRenderTarget == this)
 		return desc.frameID;
 	for (int i = 0; i < desc.textureList.size(); i++) {
-		if (desc.multisampleLevel > 1) {
-			RTInfo& rtInfo = desc.textureList[i];
+		RTInfo& rtInfo = desc.textureList[i];
+		RTOption option;
+		option.mipLevel = rtInfo.mipLevel;
+		option.arrayBase = rtInfo.arrayBase;
+		option.arrayCount = rtInfo.arrayCount;
+		option.multisample = desc.multisampleLevel > 1;
+		if (option.multisample) {
 			MSTex& mstex = multisampleTexs[i];
-			dx11RTVs[i] = mstex.tex->getRTV(rtInfo.mipLevel, true);
+			option.multisample = true;
+			dx11RTVs[i] = mstex.tex->getRTV(option);
 		}
 		else {
-			RTInfo& rtInfo = desc.textureList[i];
 			DX11Texture2D* tex = (DX11Texture2D*)rtInfo.texture->getVendorTexture();
-			dx11RTVs[i] = tex->getRTV(rtInfo.mipLevel, false);
+			dx11RTVs[i] = tex->getRTV(option);
 		}
 	}
 	dxContext.clearSRV();
@@ -122,8 +127,12 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 					throw runtime_error("DX11: Resize texture failed");
 				if (mstex.tex->resize(width, height) == 0)
 					throw runtime_error("DX11: Resize ms texture failed");
-
-				dx11RTVs[i] = mstex.tex->getRTV(rtInfo.mipLevel, true);
+				RTOption option;
+				option.mipLevel = rtInfo.mipLevel;
+				option.arrayBase = rtInfo.arrayBase;
+				option.arrayCount = rtInfo.arrayCount;
+				option.multisample = true;
+				dx11RTVs[i] = mstex.tex->getRTV(option);
 			}
 		}
 		else {
@@ -134,7 +143,12 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 				tex->desc.info.sampleCount = desc.multisampleLevel == 0 ? 1 : desc.multisampleLevel;
 				if (tex->resize(width, height) == 0)
 					throw runtime_error("DX11: Resize texture failed");
-				dx11RTVs[i] = tex->getRTV(rtInfo.mipLevel, false);
+				RTOption option;
+				option.mipLevel = rtInfo.mipLevel;
+				option.arrayBase = rtInfo.arrayBase;
+				option.arrayCount = rtInfo.arrayCount;
+				option.multisample = false;
+				dx11RTVs[i] = tex->getRTV(option);
 			}
 		}
 	}
@@ -199,7 +213,9 @@ void DX11RenderTarget::SetMultisampleFrame()
 			//initDepthBlit();
 			depthBlitCSShader->bind();
 			auto srv = multisampleDepthTex->getSRV();
-			auto uav = dx11DepthTex->getUAV(0);
+			RWOption rwOption;
+			rwOption.mipLevel = 0;
+			auto uav = dx11DepthTex->getUAV(rwOption);
 			dxContext.clearSRV();
 			dxContext.clearUAV();
 			dxContext.clearRTV();

@@ -3,7 +3,7 @@
 #define _VEHICLEACTOR_H_
 
 #include "../Core/MeshActor.h"
-#include "../Core/PostProcess/PostProcessingCamera.h"
+#include "../Core/Camera.h"
 
 struct PhysicsState
 {
@@ -60,8 +60,8 @@ class VehicleActor : public MeshActor
 {
 public:
 	VehicleDesc desc;
-	PostProcessingCamera TPCamera;
-	PostProcessingCamera FPCamera;
+	Camera TPCamera;
+	Camera FPCamera;
 	vector<WheelActor*> wheels;
 
 	VehicleActor(Mesh& mesh, Material& material, string name = "VehicleActor");

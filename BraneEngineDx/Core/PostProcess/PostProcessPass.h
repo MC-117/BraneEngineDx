@@ -8,14 +8,14 @@ struct GUIRenderInfo;
 
 struct PostProcessResource
 {
+	SceneRenderData* sceneRenderData = NULL;
+	CameraRenderData* cameraRenderData = NULL;
+
 	Texture* screenTexture = NULL;
 	RenderTarget* screenRenderTarget = NULL;
 
 	Texture* depthTexture = NULL;
 	RenderTarget* depthRenderTarget = NULL;
-
-	Texture* lightDepthTexture = NULL;
-	RenderTarget* lightDepthRenderTarget = NULL;
 
 	Texture* bloomTexture = NULL;
 	RenderTarget* bloomRenderTarget = NULL;

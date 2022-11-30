@@ -199,7 +199,7 @@ Vector3f Transform::getForward(TransformSpace space)
 		return forward;
 }
 
-Vector3f Transform::getRightward(TransformSpace space)
+Vector3f Transform::getLeftward(TransformSpace space)
 {
 	if (space == WORLD) {
 		updateTransform();

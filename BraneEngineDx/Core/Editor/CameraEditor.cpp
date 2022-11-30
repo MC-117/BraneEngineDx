@@ -35,11 +35,11 @@ void CameraEditor::onHandleGizmo(GizmoInfo& info)
 	float hLen = vLen * camera->aspect;
 	Vector3f worldPos = camera->getFinalWorldPosition();
 	Vector3f upVec = camera->getUpward(WORLD);
-	Vector3f rightVec = camera->getRightward(WORLD);
+	Vector3f leftVec = camera->getLeftward(WORLD);
 	Vector3f forVec = camera->getForward(WORLD);
 
 	Vector3f vVec = upVec * vLen;
-	Vector3f hVec = rightVec * hLen;
+	Vector3f hVec = leftVec * hLen;
 
 	Vector3f farPoint = worldPos + forVec * camera->zFar;
 	Vector3f nearPoint = worldPos + forVec * camera->zNear;
@@ -64,6 +64,7 @@ void CameraEditor::onHandleGizmo(GizmoInfo& info)
 
 void CameraEditor::onCameraGUI(EditorInfo& info)
 {
+	World& world = *Engine::getCurrentWorld();
 	if (&world.getCurrentCamera() != camera)
 		if (ImGui::Button("SetCamera", { -1, 36 }))
 			world.switchCamera(*camera);
@@ -88,9 +89,9 @@ void CameraEditor::onCameraGUI(EditorInfo& info)
 	Color clearColor = camera->clearColor;
 	if (ImGui::ColorEdit4("ClearColor", (float*)&clearColor))
 		camera->clearColor = clearColor;
-	int massLevel = camera->cameraRender.renderTarget.getMultisampleLevel() / 4;
+	int massLevel = camera->cameraRender.getRenderTarget().getMultisampleLevel() / 4;
 	if (ImGui::Combo("MSAA", &massLevel, "None\0""4x\0""8x\0""16x\0")) {
-		camera->cameraRender.renderTarget.setMultisampleLevel(massLevel * 4);
+		camera->cameraRender.getRenderTarget().setMultisampleLevel(massLevel * 4);
 	}
 }
 
@@ -167,6 +168,27 @@ void CameraEditor::onAnimation(EditorInfo& info)
 
 void CameraEditor::onPostprocess(EditorInfo& info)
 {
+	if (camera->cameraRender.graph == NULL)
+		return;
+	PostProcessGraph& graph = *camera->cameraRender.graph;
+	int i = 0;
+	for (auto b = graph.passes.begin(), e = graph.passes.end(); b != e; b++, i++) {
+		ImGui::PushID(i);
+		bool enable = (*b)->getEnable();
+		if (ImGui::Checkbox("##Enable", &enable)) {
+			(*b)->setEnable(enable);
+		}
+		ImGui::SameLine();
+		if (ImGui::CollapsingHeader((*b)->getName().c_str())) {
+			ImGui::Indent(20);
+			Editor* editor = EditorManager::getEditor("Material", (*b)->getMaterial());
+			if (editor != NULL) {
+				editor->onGUI(info);
+			}
+			ImGui::Unindent(20);
+		}
+		ImGui::PopID();
+	}
 }
 
 void CameraEditor::onDetailGUI(EditorInfo& info)

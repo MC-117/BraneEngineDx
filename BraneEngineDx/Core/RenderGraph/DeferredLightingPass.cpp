@@ -8,18 +8,14 @@ bool DeferredLightingTask::ExecutionOrder::operator()(const DeferredLightingTask
 	if (t0.sceneData < t1.sceneData)
 		return true;
 	if (t0.sceneData == t1.sceneData) {
-		if (t0.program < t1.program)
-			return true;
-		if (t0.program == t1.program) {
-			if (t0.gBufferRT < t1.gBufferRT)
+			if (t0.cameraRenderData < t1.cameraRenderData)
 				return true;
-			if (t0.gBufferRT == t1.gBufferRT) {
-				if (t0.cameraRenderData < t1.cameraRenderData)
+			if (t0.cameraRenderData == t1.cameraRenderData) {
+				if (t0.program < t1.program)
 					return true;
-				if (t0.cameraRenderData == t1.cameraRenderData)
+				if (t0.program == t1.program)
 					return t0.material < t1.material;
 			}
-		}
 	}
 	return false;
 }
@@ -51,7 +47,11 @@ bool DeferredLightingPass::addTask(DeferredLightingTask& task)
 		pTask = *iter;
 		materialData = pTask->materialRenderData;
 	}
-	materialData->create();
+	if (materialData->usedFrame < (long long)Time::frames()) {
+		materialData->create();
+		materialData->upload();
+		materialData->usedFrame = Time::frames();
+	}
 	pTask->age = 0;
 	return true;
 }
@@ -68,35 +68,44 @@ void DeferredLightingPass::execute(IRenderContext& context)
 	for (auto item : lightingTask) {
 		DeferredLightingTask& task = *item;
 		task.age++;
+		if (task.age > 1)
+			continue;
+
+		bool cameraDataSwitch = false;
+		bool shaderSwitch = false;
 
 		if (taskContext.cameraRenderData != task.cameraRenderData) {
 			taskContext.cameraRenderData = task.cameraRenderData;
 
-			task.cameraRenderData->upload();
-			task.cameraRenderData->bind(context);
-
 			context.bindFrame(task.cameraRenderData->renderTarget->getVendorRenderTarget());
 			context.clearFrameColors(task.cameraRenderData->clearColors);
 			context.clearFrameDepth(1);
+			context.setViewport(0, 0, task.cameraRenderData->data.viewSize.x(), task.cameraRenderData->data.viewSize.y());
 			blitSceneColor(context, task.gBufferRT->getTexture(0), task.gBufferRT->getTexture(1));
 			taskContext.program = blitProgram;
-		}
-
-		if (taskContext.sceneData != task.sceneData) {
-			taskContext.sceneData = task.sceneData;
-
-			task.sceneData->bind(context);
+			cameraDataSwitch = true;
 		}
 
 		if (taskContext.program != task.program) {
 			taskContext.program = task.program;
 
 			context.bindShaderProgram(task.program);
+
+			shaderSwitch = true;
+			task.sceneData->bind(context);
+		}
+
+		if (cameraDataSwitch || shaderSwitch)
+			task.cameraRenderData->bind(context);
+
+		if (taskContext.sceneData != task.sceneData || shaderSwitch) {
+			taskContext.sceneData = task.sceneData;
+
+			task.sceneData->bind(context);
 		}
 		
 		if (taskContext.materialRenderData != task.materialRenderData) {
 			taskContext.materialRenderData = task.materialRenderData;
-			task.materialRenderData->upload();
 			task.materialRenderData->bind(context);
 			if (task.sceneData->lightDataPack.shadowTarget == NULL)
 				context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), "depthMap");

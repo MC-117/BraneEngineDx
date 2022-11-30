@@ -3,7 +3,7 @@
 
 bool DirectShadowRenderCommand::isValid() const
 {
-	return sceneData && material && !material->isNull() && camera && mesh != NULL && mesh->isValid();
+	return sceneData && material && !material->isNull() && mesh != NULL && mesh->isValid();
 }
 
 Enum<ShaderFeature> DirectShadowRenderCommand::getShaderFeature() const
@@ -25,6 +25,11 @@ Enum<ShaderFeature> DirectShadowRenderCommand::getShaderFeature() const
 RenderMode DirectShadowRenderCommand::getRenderMode() const
 {
 	return RenderMode(material->getRenderOrder(), 0, 0);
+}
+
+bool DirectShadowRenderCommand::canCastShadow() const
+{
+	return false;
 }
 
 IRenderPack* DirectShadowRenderCommand::createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const
@@ -66,7 +71,6 @@ void DirectShadowRenderPack::excute(IRenderContext& context, RenderTaskContext& 
 
 	if (taskContext.materialData != materialData) {
 		taskContext.materialData = materialData;
-		materialData->upload();
 		materialData->bind(context);
 	}
 

@@ -24,12 +24,12 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 	if (size == 0) {
 		release();
 	}
-	else if (size > desc.capacity || size < desc.capacity / 2) {
+	else if (size != desc.capacity) {
 		release();
-		desc.capacity = size * 1.5;
+		desc.capacity = size;
 		unsigned int alignedSize = ceil(desc.capacity * desc.cellSize / 16.0f) * 16;
 
-		alignedSize = max(64, alignedSize);
+		//alignedSize = max(64, alignedSize);
 
 		D3D11_BUFFER_DESC bd;
 		ZeroMemory(&bd, sizeof(bd));

@@ -24,6 +24,17 @@ void DX11RenderContext::release()
         deviceContext.Reset();
 }
 
+unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, const string& name)
+{
+	if (currentProgram == NULL)
+		return 0;
+	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(buffer);
+	DX11ShaderProgram::AttributeDesc desc = currentProgram->getAttributeOffset(name);
+	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
+		return 0;
+	return bindBufferBase(dxBuffer, desc.offset);
+}
+
 unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int index)
 {
 	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(buffer);
@@ -155,13 +166,18 @@ unsigned int DX11RenderContext::bindFrame(IRenderTarget* target)
 		else {
 			tex = (DX11Texture2D*)rtInfo.texture->getVendorTexture();
 		}
+		RTOption option;
+		option.mipLevel = rtInfo.mipLevel;
+		option.arrayBase = rtInfo.arrayBase;
+		option.arrayCount = rtInfo.arrayCount;
+		option.multisample = isMs;
 #if TEX_BINGING_REC
 		if (canBindRTV(tex))
-			dx11RTVs[i] = tex->getRTV(rtInfo.mipLevel, isMs);
+			dx11RTVs[i] = tex->getRTV(option);
 		else
 			throw runtime_error("Texture is still binded as SRV or UAV");
 #else
-		dx11RTVs[i] = tex->getRTV(rtInfo.mipLevel, isMs);
+		dx11RTVs[i] = tex->getRTV(option);
 #endif
 	}
 	
@@ -196,7 +212,9 @@ void DX11RenderContext::resolveMultisampleFrame(IRenderTarget* target)
 				multisampleDepthTex->dx11Texture2D, 0, DXGI_FORMAT_D32_FLOAT);*/
 			bindShaderProgram(DX11RenderTarget::depthBlitCSShader);
 			auto srv = dxTarget->multisampleDepthTex->getSRV();
-			auto uav = dxTarget->dx11DepthTex->getUAV(0);
+			RWOption rwOption;
+			rwOption.mipLevel = 0;
+			auto uav = dxTarget->dx11DepthTex->getUAV(rwOption);
 			clearSRV();
 			clearUAV();
 			clearRTV();
@@ -396,7 +414,9 @@ void DX11RenderContext::bindMaterialBuffer(IMaterial* material)
 		deviceContext->Map(dxMaterial->matInsBuf.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mpd);
 		memcpy_s(mpd.pData, dxMaterial->matInsBufSize, dxMaterial->matInsBufHost, dxMaterial->matInsBufSize);
 		deviceContext->Unmap(dxMaterial->matInsBuf.Get(), 0);
-		bindCBToStage(deviceContext, currentProgram, dxMaterial->matInsBuf, MAT_INS_BIND_INDEX);
+		int index = currentProgram->getAttributeOffset("MatInsBuf").offset;
+		if (index >= 0)
+			bindCBToStage(deviceContext, currentProgram, dxMaterial->matInsBuf, index); // MAT_INS_BIND_INDEX
 	}
 }
 
@@ -406,7 +426,7 @@ bool DX11RenderContext::canBindRTV(ITexture* texture)
 		uavBindings.find(texture) == uavBindings.end();
 }
 
-void DX11RenderContext::bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index, const MipOption& mipOption)
+void DX11RenderContext::bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index, unsigned int sampleIndex, const MipOption& mipOption)
 {
 	DX11Texture2D* dxTex = dynamic_cast<DX11Texture2D*>(texture);
 	ComPtr<ID3D11ShaderResourceView> tex = NULL;
@@ -441,33 +461,33 @@ void DX11RenderContext::bindTexture(ITexture* texture, ShaderStageType stage, un
 	{
 	case Vertex_Shader_Stage:
 		deviceContext->VSSetShaderResources(index, 1, tex.GetAddressOf());
-		if (index < 16)
-			deviceContext->VSSetSamplers(index, 1, sample.GetAddressOf());
+		if (sampleIndex != -1)
+			deviceContext->VSSetSamplers(sampleIndex, 1, sample.GetAddressOf());
 		break;
 	case Fragment_Shader_Stage:
 		deviceContext->PSSetShaderResources(index, 1, tex.GetAddressOf());
-		if (index < 16)
-			deviceContext->PSSetSamplers(index, 1, sample.GetAddressOf());
+		if (sampleIndex != -1)
+			deviceContext->PSSetSamplers(sampleIndex, 1, sample.GetAddressOf());
 		break;
 	case Geometry_Shader_Stage:
 		deviceContext->GSSetShaderResources(index, 1, tex.GetAddressOf());
-		if (index < 16)
-			deviceContext->GSSetSamplers(index, 1, sample.GetAddressOf());
+		if (sampleIndex != -1)
+			deviceContext->GSSetSamplers(sampleIndex, 1, sample.GetAddressOf());
 		break;
 	case Compute_Shader_Stage:
 		deviceContext->CSSetShaderResources(index, 1, tex.GetAddressOf());
-		if (index < 16)
-			deviceContext->CSSetSamplers(index, 1, sample.GetAddressOf());
+		if (sampleIndex != -1)
+			deviceContext->CSSetSamplers(sampleIndex, 1, sample.GetAddressOf());
 		break;
 	case Tessellation_Control_Shader_Stage:
 		deviceContext->HSSetShaderResources(index, 1, tex.GetAddressOf());
-		if (index < 16)
-			deviceContext->HSSetSamplers(index, 1, sample.GetAddressOf());
+		if (sampleIndex != -1)
+			deviceContext->HSSetSamplers(sampleIndex, 1, sample.GetAddressOf());
 		break;
 	case Tessellation_Evalution_Shader_Stage:
 		deviceContext->DSSetShaderResources(index, 1, tex.GetAddressOf());
-		if (index < 16)
-			deviceContext->DSSetSamplers(index, 1, sample.GetAddressOf());
+		if (sampleIndex != -1)
+			deviceContext->DSSetSamplers(sampleIndex, 1, sample.GetAddressOf());
 		break;
 	default:
 		return;
@@ -480,8 +500,13 @@ void DX11RenderContext::bindImage(const Image& image, unsigned int index)
 	ComPtr<ID3D11UnorderedAccessView> tex = NULL;
 	if (image.texture) {
 		dxTex = dynamic_cast<DX11Texture2D*>((ITexture*)image.texture->getVendorTexture());
-		if (dxTex)
-			tex = dxTex->getUAV(image.level);
+		if (dxTex) {
+			RWOption rwOption;
+			rwOption.mipLevel = image.level;
+			rwOption.arrayBase = image.arrayBase;
+			rwOption.arrayCount = image.arrayCount;
+			tex = dxTex->getUAV(rwOption);
+		}
 	}
 	deviceContext->CSSetUnorderedAccessViews(index, 1, tex.GetAddressOf(), NULL);
 
@@ -511,9 +536,10 @@ void DX11RenderContext::bindTexture(ITexture* texture, const string& name, const
 		return;
 	DX11Texture2D* dxTex = dynamic_cast<DX11Texture2D*>(texture);
 	DX11ShaderProgram::AttributeDesc desc = currentProgram->getAttributeOffset(name);
+	DX11ShaderProgram::AttributeDesc sampleDesc = currentProgram->getAttributeOffset(name + "Sampler");
 	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
 		return;
-	bindTexture(dxTex, (ShaderStageType)desc.meta, desc.offset, mipOption);
+	bindTexture(dxTex, (ShaderStageType)desc.meta, desc.offset, sampleDesc.offset, mipOption);
 }
 
 void DX11RenderContext::bindImage(const Image& image, const string& name)
@@ -743,7 +769,9 @@ void DX11RenderContext::bindDrawInfo()
 		memcpy_s(mpd.pData, sizeof(DrawInfo), &uploadedDrawInfo, sizeof(DrawInfo));
 		deviceContext->Unmap(drawInfoBuf.Get(), 0);
 	}
-	bindCBToStage(deviceContext, currentProgram, drawInfoBuf, DRAW_INFO_BIND_INDEX);
+	int index = currentProgram->getAttributeOffset("DrawInfoBuf").offset;
+	if (index >= 0)
+		bindCBToStage(deviceContext, currentProgram, drawInfoBuf, index); // DRAW_INFO_BIND_INDEX
 }
 
 void DX11RenderContext::meshDrawCall(const MeshPartDesc& mesh)

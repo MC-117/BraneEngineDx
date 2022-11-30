@@ -9,11 +9,14 @@ class PostProcessGraph : public Serializable
 public:
 	Serialize(PostProcessGraph,);
 
+	RenderTarget postRenderTarget = RenderTarget(1280, 720, 4);
 	PostProcessResource resource;
 
 	list<PostProcessPass*> passes;
 
-	~PostProcessGraph();
+	PostProcessGraph();
+
+	virtual ~PostProcessGraph();
 
 	void addPostProcessPass(PostProcessPass& pass);
 	void removePostProcessPass(const string& name);

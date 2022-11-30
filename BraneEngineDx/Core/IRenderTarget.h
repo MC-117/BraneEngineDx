@@ -9,6 +9,8 @@ struct RTInfo
 	unsigned int index;
 	string name;
 	unsigned int mipLevel;
+	unsigned int arrayBase;
+	unsigned int arrayCount;
 	Texture* texture;
 };
 

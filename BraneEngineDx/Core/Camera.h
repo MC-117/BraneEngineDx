@@ -11,8 +11,6 @@
 
 class Camera : public Transform
 {
-private:
-	CameraRender* _cameraRender = NULL;
 public:
 	Serialize(Camera, Transform);
 	enum CameraMode {
@@ -30,13 +28,12 @@ public:
 
 	Matrix4f projectionViewMat;
 
-	CameraRender& cameraRender;
+	CameraRender cameraRender;
 
 	AnimationClip animationClip;
 
 	Camera(string name = "Camera");
-	Camera(CameraRender& cameraRender, string name = "Camera");
-	Camera(RenderTarget& renderTarget, Material& material = Material::nullMaterial, string name = "Camera");
+	Camera(RenderTarget& renderTarget, string name = "Camera");
 	virtual ~Camera();
 
 	void setAnimationClip(AnimationClipData& data);
@@ -52,16 +49,14 @@ public:
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
 
-	void setSize(Unit2Di size);
+	virtual Render* getRender();
+	virtual unsigned int getRenders(vector<Render*>& renders);
+
+	virtual void setSize(Unit2Di size);
 	void setMode(CameraMode mode);
 	void setActive(bool active);
 
 	bool isActive();
-
-	void uploadCameraData();
-	void bindCameraData();
-
-	IRenderData* getRenderData();
 
 	static Matrix4f perspective(float fovy, float aspect, float zNear, float zFar);
 	static Matrix4f orthotropic(float left, float right, float bottom, float top, float zNear, float zFar);
@@ -71,9 +66,6 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
-protected:
-	GPUBuffer cameraDataBuffer = GPUBuffer(GB_Constant, sizeof(CameraData));
-	IRenderData* renderData = NULL;
 };
 
 #endif // !_CAMERA_H_

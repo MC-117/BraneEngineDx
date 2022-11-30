@@ -1,50 +1,91 @@
 #include "CameraRender.h"
+#include "RenderCore/RenderCore.h"
 
-CameraRender::CameraRender(RenderTarget& renderTarget, Material& material) : renderTarget(renderTarget), material(material)
+CameraRender* CameraRender::mainCameraRender = NULL;
+
+CameraRender::CameraRender()
+{
+	createInternalRenderTarget();
+}
+
+CameraRender::CameraRender(RenderTarget& renderTarget) : renderTarget(&renderTarget)
 {
 }
 
 CameraRender::~CameraRender()
 {
-	for (auto b = extraRenderTex.begin(), e = extraRenderTex.end(); b != e; b++)
-		delete *b;
-	extraRenderTex.clear();
+	if (mainCameraRender == this)
+		mainCameraRender = NULL;
+	if (graph) {
+		delete graph;
+		graph = NULL;
+	}
+	if (renderData) {
+		renderData->release();
+		delete renderData;
+		renderData = NULL;
+	}
+	if (internalRenderTarget) {
+		delete internalRenderTarget;
+		internalRenderTarget = NULL;
+	}
+	if (internalTexture) {
+		delete internalTexture;
+		internalTexture = NULL;
+	}
 }
 
-Texture2D * CameraRender::getSceneBlurTex()
+bool CameraRender::isMainCameraRender() const
 {
-	return NULL;
+	return mainCameraRender == this;
+}
+
+void CameraRender::setMainCameraRender()
+{
+	mainCameraRender = this;
+}
+
+void CameraRender::createDefaultPostProcessGraph()
+{
+	if (graph)
+		return;
+	graph = new PostProcessGraph();
+	graph->addDefaultPasses();
+	graph->resize(size);
+}
+
+Texture* CameraRender::getSceneMap()
+{
+	return graph ? graph->resource.screenTexture : (renderTarget ? renderTarget->getTexture(0) : NULL);
+}
+
+RenderTarget& CameraRender::getRenderTarget()
+{
+	return renderTarget ? *renderTarget : RenderTarget::defaultRenderTarget;
+}
+
+Texture2D* CameraRender::getSceneBlurTex()
+{
+	return graph ? dynamic_cast<Texture2D*>(graph->resource.blurTexture) : NULL;
 }
 
 void CameraRender::setSize(Unit2Di size)
 {
-	renderTarget.resize(size.x, size.y);
-	this->size = size;
-}
-
-void CameraRender::addExtraRenderTex(string & name, const Texture2DInfo& info)
-{
-	if (renderTarget.isDefault())
+	if (size == this->size)
 		return;
-	Texture2D* tex = new Texture2D(info);
-	extraRenderTex.push_back(tex);
-	renderTarget.addTexture(name, *tex);
-}
-
-void CameraRender::addExtraRenderTex(const Texture2DInfo & info, unsigned int num)
-{
-	if (renderTarget.isDefault())
-		return;
-	for (int i = 0; i < num; i++) {
-		Texture2D* tex = new Texture2D(size.x, size.y, 4);
-		extraRenderTex.push_back(tex);
-		renderTarget.addTexture("extraMap_" + to_string(i), *tex);
+	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
+	context.clearFrameBindings();
+	if (!getRenderTarget().isDefault()) {
+		renderTarget->resize(size.x, size.y);
 	}
+	if (graph)
+		graph->resize(size);
+	this->size = size;
 }
 
 bool CameraRender::isValid()
 {
-	return !renderTarget.isDefault();
+	return renderTarget;
 }
 
 IRendering::RenderType CameraRender::getRenderType() const
@@ -54,15 +95,45 @@ IRendering::RenderType CameraRender::getRenderType() const
 
 void CameraRender::preRender()
 {
-	renderTarget.bindFrame();
-	if (!material.isNull())
-		renderTarget.setTexture(material);
 }
 
 void CameraRender::render(RenderInfo& info)
 {
-	info.renderGraph->setMainRenderTarget(renderTarget);
-	if (isValid() && !material.isNull()) {
-		renderTarget.setTexture(material);
+	DrawElementsIndirectCommand cmd = { 4, 1, 0, 0 };
+	if (isValid() && !hidden) {
+		info.sceneData->setCamera(this);
+		if (graph) {
+			graph->resource.reset();
+			graph->resource.sceneRenderData = info.sceneData;
+			graph->resource.cameraRenderData = getRenderData();
+			graph->resource.depthTexture = renderTarget->getInternalDepthTexture();
+			graph->resource.screenTexture = renderTarget->getTexture(0);
+			graph->resource.screenRenderTarget = renderTarget;
+			//graph->postRenderTarget.addTexture("screenMap", *graph->resource.screenTexture);
+			graph->render(info);
+		}
 	}
+}
+
+CameraRenderData* CameraRender::getRenderData()
+{
+	if (renderData)
+		return renderData;
+	CameraRenderData* cameraRenderData = new CameraRenderData();
+	cameraRenderData->cameraRender = this;
+	renderData = cameraRenderData;
+	return renderData;
+}
+
+CameraRender* CameraRender::getMainCameraRender()
+{
+	return mainCameraRender;
+}
+
+void CameraRender::createInternalRenderTarget()
+{
+	internalTexture = new Texture2D(size.x, size.y, 4, true, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
+	internalRenderTarget = new RenderTarget(size.x, size.y, 4, true);
+	internalRenderTarget->addTexture("screenMap", *internalTexture);
+	renderTarget = internalRenderTarget;
 }

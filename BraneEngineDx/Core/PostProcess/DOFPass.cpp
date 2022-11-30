@@ -3,6 +3,7 @@
 #include "../Console.h"
 #include "../Camera.h"
 #include "../GUI/UIControl.h"
+#include "../RenderCore/RenderCore.h"
 
 DOFPass::DOFPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -29,8 +30,8 @@ void DOFPass::execute(IRenderContext& context)
 
 	context.bindFrame(dofRenderTarget.getVendorRenderTarget());
 
-	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, screenMapSlot);
-	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, depthMapSlot);
+	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, screenMapSlot, screenMapSamplerSlot);
+	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, depthMapSlot, depthMapSamplerSlot);
 
 	context.setDrawInfo(0, 1, 0);
 
@@ -73,11 +74,13 @@ void DOFPass::render(RenderInfo & info)
 		program->init();
 
 		screenMapSlot = program->getAttributeOffset("screenMap").offset;
+		screenMapSamplerSlot = program->getAttributeOffset("screenMapSampler").offset;
 		depthMapSlot = program->getAttributeOffset("depthMap").offset;
-		if (screenMapSlot == -1 || depthMapSlot == -1)
-			return;
+		depthMapSamplerSlot = program->getAttributeOffset("depthMapSampler").offset;
+		cameraRenderData = resource->cameraRenderData;
 
-		cameraRenderData = info.camera->getRenderData();
+		if (screenMapSlot == -1 || depthMapSlot == -1 || cameraRenderData == NULL)
+			return;
 
 		info.renderGraph->addPass(*this);
 	}

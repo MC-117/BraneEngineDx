@@ -90,6 +90,15 @@ public:
 	static AssetInfo& getInstance();
 };
 
+class TextureCubeAssetInfo : public AssetInfo {
+	TextureCubeAssetInfo();
+public:
+	static TextureCubeAssetInfo assetInfo;
+
+	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
+	static AssetInfo& getInstance();
+};
+
 class MaterialAssetInfo : public AssetInfo {
 	MaterialAssetInfo();
 public:

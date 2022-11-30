@@ -67,11 +67,15 @@ struct MeshTransformRenderData : public IRenderData
 
 struct MeshRenderCommand : public IRenderCommand
 {
+	int instanceID = 0;
+	int instanceIDCount = 0;
 	bool isStatic = false;
 	bool isNonTransformIndex = false;
+	bool hasShadow = true;
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
 	virtual RenderMode getRenderMode() const;
+	virtual bool canCastShadow() const;
 	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const;
 };
 

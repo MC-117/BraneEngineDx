@@ -1,6 +1,7 @@
 #include "SkeletonMeshRender.h"
 #include "Asset.h"
 #include "Console.h"
+#include "RenderCore/RenderCore.h"
 
 SkeletonMeshRender::SkeletonMeshRender() : MeshRender()
 {
@@ -67,10 +68,11 @@ void SkeletonMeshRender::render(RenderInfo & info)
 
 		MeshRenderCommand command;
 		command.sceneData = info.sceneData;
-		command.camera = info.camera;
 		command.material = material;
 		command.mesh = part;
 		command.isStatic = isStatic;
+		command.instanceID = instanceID;
+		command.instanceIDCount = instanceCount;
 		if (morphWeights.getMorphCount() > 0)
 			command.bindings.push_back(morphWeights.getRenderData());
 

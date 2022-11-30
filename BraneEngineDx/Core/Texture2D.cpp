@@ -1,77 +1,7 @@
 #include "Texture2D.h"
-#define STBI_WINDOWS_UTF8
-#define __STDC_LIB_EXT1__
-#define STB_IMAGE_IMPLEMENTATION
-#include "../ThirdParty/STB/stb_image.h"
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "../ThirdParty/STB/stb_image_resize.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../ThirdParty/STB/stb_image_write.h"
-#include "Utility/Utility.h"
+#include "Utility/TextureUtility.h"
 #include "Utility/EngineUtility.h"
-#include <fstream>
 #include "Asset.h"
-
-unsigned char* rgb2rgba(unsigned char* data, unsigned char* dst, unsigned int pixles, bool discard = true)
-{
-	int size = pixles * 4;
-	unsigned char* p = new unsigned char[size];
-	for (unsigned char *bp = dst, *ep = dst + size, *bd = data; bp < ep; bp += 4, bd += 3) {
-		memcpy(bp, bd, sizeof(unsigned char) * 3);
-		bp[3] = 255;
-	}
-	if (discard)
-		delete[] data;
-	return dst;
-}
-
-unsigned char* loadMip(const string& file, int& channel, vector<pair<int, int>>& mips) {
-	ifstream iff = ifstream(file, ios::binary);
-	if (iff.fail())
-		return NULL;
-	int count;
-	iff.read((char*)&count, sizeof(int));
-	iff.read((char*)&channel, sizeof(int));
-	mips.resize(count);
-	unsigned int w = -1, h = -1;
-	int psize = 0;
-	for (int i = 0; i < count; i++) {
-		iff.read((char*)&mips[i].first, sizeof(int));
-		iff.read((char*)&mips[i].second, sizeof(int));
-		if (w == -1 || h == -1) {
-			w = mips[i].first;
-			h = mips[i].second;
-		}
-		else if (w != mips[i].first || h != mips[i].second) {
-			iff.close();
-			return NULL;
-		}
-		psize += (channel == 3 ? 4 : channel) * mips[i].first * mips[i].second;
-		w /= 2, h /= 2;
-	}
-	unsigned char* data = new unsigned char[psize];
-	unsigned char* temp = NULL;
-	if (channel == 3)
-		temp = new unsigned char[mips.front().first * mips.front().second * 3];
-	int pos = 0;
-	for (int i = 0; i < count; i++) {
-		int ps = mips[i].first * mips[i].second;
-		int size = channel * ps;
-		if (channel == 3) {
-			iff.read((char*)temp, sizeof(unsigned char) * size);
-			rgb2rgba(temp, data + pos, ps, false);
-		}
-		else
-			iff.read((char*)(data + pos), sizeof(unsigned char) * size);
-		pos += size + (channel == 3 ? ps : 0);
-	}
-	iff.close();
-	if (channel == 3) {
-		channel = 4;
-		delete[] temp;
-	}
-	return data;
-}
 
 Texture2D Texture2D::blackRGBDefaultTex({ 0, 0, 0, 255 }, 2, 2, 3);
 Texture2D Texture2D::whiteRGBDefaultTex({ 255, 255, 255, 255 }, 2, 2, 3);
@@ -147,6 +77,7 @@ Texture2D::Texture2D(unsigned int width, unsigned int height, unsigned int chann
 		{
 		case TIT_RGBA8_UF:
 			desc.info.internalType = TIT_SRGBA8_UF;
+			break;
 		default:
 			break;
 		}
@@ -204,7 +135,19 @@ void* Texture2D::getVendorTexture() const
 
 void Texture2D::setAutoGenMip(bool value)
 {
-	desc.autoGenMip = value;
+	if (desc.autoGenMip != value) {
+		desc.autoGenMip = value;
+		desc.needUpdate = true;
+	}
+}
+
+void Texture2D::setViewAsArray(bool value)
+{
+	TexDimension dimension = value ? TD_Single : TD_Array;
+	if (desc.info.dimension != dimension) {
+		desc.info.dimension = dimension;
+		desc.needUpdate = true;
+	}
 }
 
 void Texture2D::setTextureInfo(const Texture2DInfo& info)
@@ -232,17 +175,30 @@ bool Texture2D::load(const string & file)
 	if (vendorTexture != NULL) {
 		vendorTexture->release();
 	}
-	string ext = split(file, '.').back();
-	if (!_stricmp(ext.c_str(), "mip")) {
+	string ext = getExtension(file);
+	if (!_stricmp(ext.c_str(), ".mip")) {
+		MipFileHeader header;
 		vector<pair<int, int>> mipSizes;
-		desc.data = loadMip(file.c_str(), desc.channel, mipSizes);
-		desc.width = mipSizes.front().first;
-		desc.height = mipSizes.front().second;
-		desc.mipLevel = mipSizes.size();
-		desc.autoGenMip = false;
+		desc.data = loadMip(file.c_str(), header, mipSizes);
+		if (header.dimension == TexDimension::TD_Single) {
+			desc.info.wrapSType = (TexWrapType)header.wrapS;
+			desc.info.wrapTType = (TexWrapType)header.wrapT;
+			desc.info.minFilterType = (TexFilter)header.minFilter;
+			desc.info.magFilterType = (TexFilter)header.magFilter;
+			desc.info.internalType = (TexInternalType)header.format;
+			desc.channel = header.channel;
+			desc.width = mipSizes.front().first;
+			desc.height = mipSizes.front().second;
+			desc.mipLevel = mipSizes.size();
+			desc.autoGenMip = false;
+		}
+		else {
+			free(desc.data);
+			desc.data = NULL;
+		}
 	}
 	else {
-		desc.data = stbi_load(file.c_str(), &desc.width, &desc.height, &desc.channel, 0);
+		desc.data = loadTexture(file, desc.width, desc.height, desc.channel);
 		if (desc.channel == 3) {
 			unsigned int pixles = desc.width * desc.height;
 			unsigned char* data = new unsigned char[pixles * 4];
@@ -250,9 +206,7 @@ bool Texture2D::load(const string & file)
 			desc.channel = 4;
 		}
 	}
-	if (desc.data == NULL)
-		return false;
-	return true;
+	return desc.data;
 }
 
 unsigned int Texture2D::bind()
@@ -274,12 +228,7 @@ unsigned int Texture2D::resize(unsigned int width, unsigned int height)
 	if (desc.data) {
 		if (desc.width != width || desc.height != height) {
 			unsigned char* outData = new unsigned char[width * height * desc.channel];
-			stbir_resize(desc.data, desc.width, desc.height, 0, outData, width, height, 0,
-				STBIR_TYPE_UINT8, desc.channel, STBIR_ALPHA_CHANNEL_NONE, 0,
-				STBIR_EDGE_CLAMP, STBIR_EDGE_CLAMP,
-				STBIR_FILTER_DEFAULT, STBIR_FILTER_DEFAULT,
-				isStandard ? STBIR_COLORSPACE_SRGB : STBIR_COLORSPACE_LINEAR, nullptr
-			);
+			resizeTexture(desc.data, desc.width, desc.height, desc.channel, outData, width, height, isStandard);
 			delete[] desc.data;
 			desc.data = outData;
 			if (vendorTexture == NULL) {
@@ -315,12 +264,8 @@ bool Texture2D::copyFrom(const Texture2D& src, unsigned int width, unsigned int 
 	}
 
 	if (src.desc.width != width || src.desc.height != height)
-		stbir_resize(src.desc.data, src.desc.width, src.desc.height, 0, desc.data, width, height, 0,
-			STBIR_TYPE_UINT8, src.desc.channel, STBIR_ALPHA_CHANNEL_NONE, 0,
-			STBIR_EDGE_CLAMP, STBIR_EDGE_CLAMP,
-			STBIR_FILTER_DEFAULT, STBIR_FILTER_DEFAULT,
-			isStandard ? STBIR_COLORSPACE_SRGB : STBIR_COLORSPACE_LINEAR, nullptr
-		);
+		resizeTexture(src.desc.data, src.desc.width, src.desc.height, src.desc.channel,
+			desc.data, width, height, isStandard);
 	else
 		memcpy(desc.data, src.desc.data, sizeof(unsigned char) * srcPixels);
 	desc.autoGenMip = src.desc.autoGenMip;
@@ -345,18 +290,7 @@ bool Texture2D::save(const string& file)
 		vendor.readBackTexture2D(vendorTexture, outData);
 	}
 
-	string ext = getExtension(file);
-
-	bool ret = false;
-
-	if (!_stricmp(ext.c_str(), ".png"))
-		ret = stbi_write_png(file.c_str(), desc.width, desc.height, desc.channel, outData, 0);
-	else if (!_stricmp(ext.c_str(), ".jpg"))
-		ret = stbi_write_jpg(file.c_str(), desc.width, desc.height, desc.channel, outData, 0);
-	else if (!_stricmp(ext.c_str(), ".tga"))
-		ret = stbi_write_tga(file.c_str(), desc.width, desc.height, desc.channel, outData);
-	else if (!_stricmp(ext.c_str(), ".bmp"))
-		ret = stbi_write_bmp(file.c_str(), desc.width, desc.height, desc.channel, outData);
+	bool ret = writeTexture(file, desc.width, desc.height, desc.channel, outData);
 
 	if (desc.data == NULL)
 		delete[] outData;
@@ -426,11 +360,6 @@ bool Texture2D::loadDefaultTexture()
 	defaultLUTTex.bind();
 	isLoadDefaultTexture = true;
 	return true;
-}
-
-unsigned char * Texture2D::loadImageBytes(const char * file, int * w, int * h, int * c)
-{
-	return stbi_load(file, w, h, c, 0);
 }
 
 void Texture2D::newVendorTexture()

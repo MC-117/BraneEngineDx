@@ -6,7 +6,6 @@
 #include "BlendSpaceWindow.h"
 #include "TextureViewer.h"
 #include "../Console.h"
-#include "../PostProcess/PostProcessingCamera.h"
 #include "../../Actors/VehicleActor.h"
 #include "../../Core/ParticleSystem.h"
 #include "../Editor/Editor.h"

@@ -280,7 +280,7 @@ void MeshTransformRenderData::upload()
 
 void MeshTransformRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(transformBuffer.getVendorGPUBuffer(), TRANS_BIND_INDEX);
+	context.bindBufferBase(transformBuffer.getVendorGPUBuffer(), "Transforms"); // TRANS_BIND_INDEX
 	context.bindBufferBase(transformIndexBuffer.getVendorGPUBuffer(), TRANS_INDEX_BIND_INDEX);
 }
 
@@ -321,7 +321,7 @@ void MeshTransformRenderData::cleanPartStatic(MeshPart* meshPart, Material* mate
 
 bool MeshRenderCommand::isValid() const
 {
-	return sceneData && material && !material->isNull() && camera && mesh != NULL && mesh->isValid();
+	return sceneData && material && !material->isNull() && mesh != NULL && mesh->isValid();
 }
 
 Enum<ShaderFeature> MeshRenderCommand::getShaderFeature() const
@@ -343,6 +343,11 @@ Enum<ShaderFeature> MeshRenderCommand::getShaderFeature() const
 RenderMode MeshRenderCommand::getRenderMode() const
 {
 	return RenderMode(material->getRenderOrder(), 0, 0);
+}
+
+bool MeshRenderCommand::canCastShadow() const
+{
+	return material->canCastShadow && hasShadow;
 }
 
 IRenderPack* MeshRenderCommand::createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const
@@ -402,7 +407,6 @@ void MeshDataRenderPack::excute(IRenderContext& context, RenderTaskContext& task
 
 	if (taskContext.materialData != materialData) {
 		taskContext.materialData = materialData;
-		materialData->upload();
 		materialData->bind(context);
 		if (lightDataPack.shadowTarget == NULL)
 			context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), "depthMap");

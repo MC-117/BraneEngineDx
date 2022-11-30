@@ -6,26 +6,16 @@
 
 SerializeInstance(Camera);
 
-Camera::Camera(string name) : Transform(name), _cameraRender(new CameraRender()),cameraRender(*_cameraRender)
+Camera::Camera(string name) : Transform(name)
 {
 }
 
-Camera::Camera(CameraRender & cameraRender, string name) : Transform(name), cameraRender(cameraRender)
-{
-}
-
-Camera::Camera(RenderTarget & renderTarget, Material & material, string name) : Transform(name), _cameraRender(new CameraRender(renderTarget, material)), cameraRender(*_cameraRender)
+Camera::Camera(RenderTarget & renderTarget, string name) : Transform(name), cameraRender(renderTarget)
 {
 }
 
 Camera::~Camera()
 {
-	if (_cameraRender != NULL)
-		delete _cameraRender;
-	if (renderData) {
-		renderData->release();
-		delete renderData;
-	}
 }
 
 void Camera::setAnimationClip(AnimationClipData & data)
@@ -49,12 +39,14 @@ Matrix4f Camera::getProjectionMatrix() const
 
 Matrix4f Camera::getViewMatrix() const
 {
-	return Camera::lookAt(cameraRender.cameraLoc, cameraRender.cameraLoc + cameraRender.cameraDir, cameraRender.cameraUp);
+	return Camera::lookAt(cameraRender.cameraData.cameraLoc,
+		cameraRender.cameraData.cameraLoc + cameraRender.cameraData.cameraDir,
+		cameraRender.cameraData.cameraUp);
 }
 
 Matrix4f Camera::getViewOriginMatrix() const
 {
-	return Camera::lookAt(Vector3f::Zero(), cameraRender.cameraDir, cameraRender.cameraUp);
+	return Camera::lookAt(Vector3f::Zero(), cameraRender.cameraData.cameraDir, cameraRender.cameraData.cameraUp);
 }
 
 Vector3f Camera::getFinalWorldPosition()
@@ -217,55 +209,48 @@ void Camera::tick(float deltaTime)
 void Camera::afterTick()
 {
 	Transform::afterTick();
-	cameraRender.cameraDir = getForward(WORLD);
-	cameraRender.cameraUp = getUpward(WORLD);
-	cameraRender.cameraLeft = getRightward(WORLD);
+	cameraRender.cameraData.cameraDir = getForward(WORLD);
+	cameraRender.cameraData.cameraUp = getUpward(WORLD);
+	cameraRender.cameraData.cameraLeft = getLeftward(WORLD);
 
 	if (distance != 0) {
-		Vector3f offset = cameraRender.cameraDir * -distance;
+		Vector3f offset = cameraRender.cameraData.cameraDir * -distance;
 		Matrix4f T = Matrix4f::Identity();
 		T(0, 3) = position.x();
 		T(1, 3) = position.y();
 		T(2, 3) = position.z();
-		cameraRender.cameraLoc = getPosition(WORLD) + offset;
+		cameraRender.cameraData.cameraLoc = getPosition(WORLD) + offset;
 		cameraRender.transformMat = T * transformMat;
 	}
 	else {
-		cameraRender.cameraLoc = getPosition(WORLD);
+		cameraRender.cameraData.cameraLoc = getPosition(WORLD);
 		cameraRender.transformMat = transformMat;
 	}
-	projectionViewMat = getProjectionMatrix() * getViewMatrix();
-	cameraRender.projectionViewMat = projectionViewMat;
+	cameraRender.cameraData.projectionMat = getProjectionMatrix();
+	cameraRender.cameraData.viewMat = getViewMatrix();
+	cameraRender.cameraData.viewOriginMat = getViewOriginMatrix();
+	projectionViewMat = cameraRender.cameraData.projectionMat * cameraRender.cameraData.viewMat;
+	cameraRender.cameraData.projectionViewMat = projectionViewMat;
+	cameraRender.cameraData.projectionMatInv = cameraRender.cameraData.projectionMat.inverse();
+	cameraRender.cameraData.viewMatInv = cameraRender.cameraData.viewMat.inverse();
+	cameraRender.cameraData.viewOriginMatInv = cameraRender.cameraData.viewOriginMat.inverse();
+	cameraRender.cameraData.fovy = fov;
+	cameraRender.cameraData.aspect = aspect;
+	cameraRender.cameraData.zFar = zFar;
+	cameraRender.cameraData.zNear = zNear;
+	cameraRender.cameraData.viewSize = { (float)size.x, (float)size.y };
+	cameraRender.clearColor = clearColor;
+}
 
-	/*float vLen = zFar * tan(fov * PI / 360.0f * 0.5f);
-	float hLen = vLen * aspect;
-	Vector3f worldPos = getPosition(WORLD);
-	Vector3f upVec = getUpward(WORLD);
-	Vector3f rightVec = getRightward(WORLD);
-	Vector3f forVec = getForward(WORLD);
+Render* Camera::getRender()
+{
+	return &cameraRender;
+}
 
-	Vector3f vVec = upVec * vLen;
-	Vector3f hVec = rightVec * hLen;
-
-	Vector3f farPoint = worldPos + forVec * zFar;
-	Vector3f nearPoint = worldPos + forVec * zNear;
-
-	Vector3f corner[4] =
-	{
-		farPoint - vVec - hVec,
-		farPoint - vVec + hVec,
-		farPoint + vVec - hVec,
-		farPoint + vVec + hVec,
-	};
-
-	Gizmo::instance().drawLine(corner[0], worldPos, Color(0.0f, 1.0f, 0.0f));
-	Gizmo::instance().drawLine(corner[1], worldPos, Color(0.0f, 1.0f, 0.0f));
-	Gizmo::instance().drawLine(corner[2], worldPos, Color(0.0f, 1.0f, 0.0f));
-	Gizmo::instance().drawLine(corner[3], worldPos, Color(0.0f, 1.0f, 0.0f));
-	Gizmo::instance().drawLine(corner[0], corner[1], Color(0.0f, 1.0f, 0.0f));
-	Gizmo::instance().drawLine(corner[0], corner[2], Color(0.0f, 1.0f, 0.0f));
-	Gizmo::instance().drawLine(corner[3], corner[1], Color(0.0f, 1.0f, 0.0f));
-	Gizmo::instance().drawLine(corner[3], corner[2], Color(0.0f, 1.0f, 0.0f));*/
+unsigned int Camera::getRenders(vector<Render*>& renders)
+{
+	renders.push_back(&cameraRender);
+	return 1;
 }
 
 void Camera::setSize(Unit2Di size)
@@ -283,50 +268,12 @@ void Camera::setMode(CameraMode mode)
 void Camera::setActive(bool active)
 {
 	this->active = active;
+	cameraRender.hidden = !active;
 }
 
 bool Camera::isActive()
 {
 	return active;
-}
-
-void Camera::uploadCameraData()
-{
-	CameraData data;
-	data.projectionViewMat = MATRIX_UPLOAD_OP(cameraRender.projectionViewMat);
-	Matrix4f promat = getProjectionMatrix();
-	Matrix4f promatInv = promat.inverse();
-	data.projectionMat = MATRIX_UPLOAD_OP(promat);
-	data.projectionMatInv = MATRIX_UPLOAD_OP(promatInv);
-	Matrix4f vmat = getViewMatrix();
-	Matrix4f vmatInv = vmat.inverse();
-	data.viewMat = MATRIX_UPLOAD_OP(vmat);
-	data.viewMatInv = MATRIX_UPLOAD_OP(vmatInv);
-	data.cameraLoc = cameraRender.cameraLoc;
-	data.cameraDir = cameraRender.cameraDir;
-	data.cameraUp = cameraRender.cameraUp;
-	data.cameraLeft = cameraRender.cameraLeft;
-	data.viewSize = Vector2f(size.x, size.y);
-	data.zNear = zNear;
-	data.zFar = zFar;
-	data.fovy = fov;
-	data.aspect = aspect;
-	cameraDataBuffer.uploadData(1, &data);
-}
-
-void Camera::bindCameraData()
-{
-	cameraDataBuffer.bindBase(CAM_BIND_INDEX);
-}
-
-IRenderData* Camera::getRenderData()
-{
-	if (renderData)
-		return renderData;
-	CameraRenderData* cameraRenderData = new CameraRenderData();
-	cameraRenderData->camera = this;
-	renderData = cameraRenderData;
-	return renderData;
 }
 
 Matrix4f Camera::perspective(float fovy, float aspect, float zNear, float zFar)
@@ -417,6 +364,10 @@ bool Camera::deserialize(const SerializationInfo& from)
 	SColor color;
 	from.get("clearColor", color);
 	clearColor = color;
+	if (from.subfeilds.find("postProcessingGraph") != from.subfeilds.end()) {
+		cameraRender.createDefaultPostProcessGraph();
+		from.get("postProcessingGraph", *cameraRender.graph);
+	}
 	return true;
 }
 
@@ -427,5 +378,7 @@ bool Camera::serialize(SerializationInfo& to)
 	to.set("fov", fov);
 	to.set("distance", distance);
 	to.set("clearColor", SColor(clearColor));
+	if (cameraRender.graph)
+		to.set("postProcessingGraph", *cameraRender.graph);
 	return true;
 }

@@ -260,7 +260,7 @@ public:
 	static PyObject* getEulerAngle(PyObject * self, PyObject * args);
 	static PyObject* getScale(PyObject * self, PyObject * args);
 	static PyObject* getForward(PyObject * self, PyObject * args);
-	static PyObject* getRightward(PyObject * self, PyObject * args);
+	static PyObject* getLeftward(PyObject * self, PyObject * args);
 	static PyObject* getUpward(PyObject * self, PyObject * args);
 	static PyObject* setPosition(PyObject * self, PyObject * args);
 	static PyObject* setRotation(PyObject * self, PyObject * args);

@@ -2,6 +2,7 @@
 #include "Utility/Utility.h"
 #include "Asset.h"
 #include "Engine.h"
+#include "RenderCore/RenderCore.h"
 #undef min
 #undef max
 

@@ -1,7 +1,8 @@
 #pragma once
 
 #include "MeshPass.h"
-#include "MultiSampleResolvePass.h"
+#include "ShadowDepthPass.h"
+#include "BlitPass.h"
 #include "ImGUIPass.h"
 
 class ForwardRenderGraph : public RenderGraph
@@ -9,15 +10,14 @@ class ForwardRenderGraph : public RenderGraph
 public:
 	Serialize(ForwardRenderGraph, RenderGraph);
 
+	ShadowDepthPass shadowDepthPass;
 	MeshPass meshPass;
-	MultiSampleResolvePass resolvePass;
+	BlitPass blitPass;
 	ImGuiPass imGuiPass;
 
 	list<RenderPass*> passes;
 
 	virtual bool setRenderCommand(const IRenderCommand& cmd);
-	virtual void setRenderCommandList(RenderCommandList& commandList);
-	virtual void setMainRenderTarget(RenderTarget& renderTarget);
 	virtual void setImGuiDrawData(ImDrawData* drawData);
 	virtual void addPass(RenderPass& pass);
 	virtual void prepare();

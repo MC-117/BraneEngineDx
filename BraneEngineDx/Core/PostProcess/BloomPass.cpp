@@ -3,6 +3,7 @@
 #include "../Asset.h"
 #include "../Console.h"
 #include "../GUI/UIControl.h"
+#include "../RenderCore/RenderCore.h"
 
 BloomPass::BloomPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -33,7 +34,7 @@ void BloomPass::execute(IRenderContext& context)
 		Vector3u localSize = material->getLocalSize();
 
 		context.setDrawInfo(0, 4, 0);
-		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot);
+		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
 		Image image;
 		image.texture = &bloomMap;
 		for (int i = 0; i < bloomLevel; i++) {
@@ -57,15 +58,15 @@ void BloomPass::execute(IRenderContext& context)
 		}
 
 		context.setDrawInfo(3, 4, 0);
-		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot);
+		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
 		image.texture = resource->screenTexture;
 		image.level = 0;
 		context.dispatchCompute(ceilf(size.x / (float)localSize.x()), ceilf(size.y / (float)localSize.y()), 1);
 	}
 	else {
 		context.clearFrameBindings();
-		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot);
-		context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, imageMapSlot);
+		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
+		context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, imageMapSlot, imageMapSamplerSlot);
 
 		context.setDrawInfo(0, 1, 0);
 		for (int i = 0; i < bloomLevel; i++) {
@@ -79,7 +80,7 @@ void BloomPass::execute(IRenderContext& context)
 		}
 
 		context.clearFrameBindings();
-		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot);
+		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
 
 		for (int i = 0; i < bloomLevel; i++) {
 			int scalar = pow(2, i);
@@ -93,7 +94,7 @@ void BloomPass::execute(IRenderContext& context)
 		}
 
 		context.clearFrameBindings();
-		context.bindTexture((ITexture*)screenMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot);
+		context.bindTexture((ITexture*)screenMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
 
 		for (int i = 0; i < bloomLevel; i++) {
 			int scalar = pow(2, i);
@@ -108,11 +109,11 @@ void BloomPass::execute(IRenderContext& context)
 
 		context.setDrawInfo(3, 1, 0);
 
-		context.bindTexture(NULL, Fragment_Shader_Stage, sampleMapSlot);
+		context.bindTexture(NULL, Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
 		context.bindFrame(screenRenderTargets[0]->getVendorRenderTarget());
 
-		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot);
-		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, imageMapSlot);
+		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
+		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, imageMapSlot, imageMapSamplerSlot);
 
 		context.setViewport(0, 0, size.x, size.y);
 		context.postProcessCall();
@@ -154,11 +155,16 @@ void BloomPass::render(RenderInfo& info)
 	program->init();
 
 	sampleMapSlot = program->getAttributeOffset("sampleMap").offset;
+	sampleMapSamplerSlot = program->getAttributeOffset("sampleMapSampler").offset;
 
-	if (program->isComputable())
+	if (program->isComputable()) {
 		imageMapSlot = program->getAttributeOffset("imageMap").offset;
-	else
+		imageMapSamplerSlot = program->getAttributeOffset("imageMapSampler").offset;
+	}
+	else {
 		imageMapSlot = program->getAttributeOffset("screenMap").offset;
+		imageMapSamplerSlot = program->getAttributeOffset("screenMapSampler").offset;
+	}
 
 	if (sampleMapSlot == -1 || imageMapSlot == -1)
 		return;

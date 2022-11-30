@@ -21,7 +21,7 @@ public:
 	void init();
 	virtual unsigned int bindFrame();
 	virtual void clearBind();
-	virtual void addTexture(const string& name, Texture& texture, unsigned int mipLevel = 0);
+	virtual void addTexture(const string& name, Texture& texture, unsigned int mipLevel = 0, unsigned int arrayBase = 0, unsigned int arrayCount = 1);
 	virtual Texture* getTexture(const string& name);
 	virtual Texture* getTexture(unsigned int index);
 	virtual unsigned int getTextureCount();

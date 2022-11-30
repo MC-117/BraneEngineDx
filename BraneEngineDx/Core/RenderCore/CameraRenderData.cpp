@@ -1,43 +1,29 @@
 #include "CameraRenderData.h"
-#include "../Camera.h"
+#include "../CameraRender.h"
 
 void CameraRenderData::create()
 {
-	if (camera == NULL)
+	if (cameraRender == NULL)
 		return;
-	data.projectionViewMat = MATRIX_UPLOAD_OP(camera->cameraRender.projectionViewMat);
-	Matrix4f promat = camera->getProjectionMatrix();
-	Matrix4f promatInv = promat.inverse();
-	data.projectionMat = MATRIX_UPLOAD_OP(promat);
-	data.projectionMatInv = MATRIX_UPLOAD_OP(promatInv);
-	Matrix4f vmat = camera->getViewMatrix();
-	Matrix4f vmatInv = vmat.inverse();
-	data.viewMat = MATRIX_UPLOAD_OP(vmat);
-	data.viewMatInv = MATRIX_UPLOAD_OP(vmatInv);
-	Matrix4f vomat = camera->getViewOriginMatrix();
-	Matrix4f vomatInv = vomat.inverse();
-	data.viewOriginMat = MATRIX_UPLOAD_OP(vomat);
-	data.viewOriginMatInv = MATRIX_UPLOAD_OP(vomatInv);
-	data.cameraLoc = camera->cameraRender.cameraLoc;
-	data.cameraDir = camera->cameraRender.cameraDir;
-	data.cameraUp = camera->cameraRender.cameraUp;
-	data.cameraLeft = camera->cameraRender.cameraLeft;
-	data.viewSize = Vector2f(camera->size.x, camera->size.y);
-	data.zNear = camera->zNear;
-	data.zFar = camera->zFar;
-	data.fovy = camera->fov;
-	data.aspect = camera->aspect;
+	data = cameraRender->cameraData;
+	data.projectionViewMat = MATRIX_UPLOAD_OP(data.projectionViewMat);
+	data.projectionMat = MATRIX_UPLOAD_OP(data.projectionMat);
+	data.projectionMatInv = MATRIX_UPLOAD_OP(data.projectionMatInv);
+	data.viewMat = MATRIX_UPLOAD_OP(data.viewMat);
+	data.viewMatInv = MATRIX_UPLOAD_OP(data.viewMatInv);
+	data.viewOriginMat = MATRIX_UPLOAD_OP(data.viewOriginMat);
+	data.viewOriginMatInv = MATRIX_UPLOAD_OP(data.viewOriginMatInv);
 
-	renderOrder = camera->cameraRender.renderOrder;
-	renderTarget = &camera->cameraRender.renderTarget;
+	renderOrder = cameraRender->renderOrder;
+	renderTarget = &cameraRender->getRenderTarget();
 
 	if (clearColors.size() != renderTarget->getTextureCount()) {
 		clearColors.resize(renderTarget->getTextureCount(), Color());
 	}
 	if (clearColors.size() > 0)
-		clearColors[0] = camera->clearColor;
+		clearColors[0] = cameraRender->clearColor;
 
-	renderTarget->init();
+	renderTarget->resize(data.viewSize.x(), data.viewSize.y());
 }
 
 void CameraRenderData::release()
@@ -52,5 +38,5 @@ void CameraRenderData::upload()
 
 void CameraRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(buffer.getVendorGPUBuffer(), CAM_BIND_INDEX);
+	context.bindBufferBase(buffer.getVendorGPUBuffer(), "CameraDataBuf"); // CAM_BIND_INDEX
 }

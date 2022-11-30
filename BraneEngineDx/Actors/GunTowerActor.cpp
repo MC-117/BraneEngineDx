@@ -61,7 +61,7 @@ float sign(float v)
 void GunTowerActor::update(float deltaTime)
 {
 	Vector3f wFor = getForward(WORLD);
-	Vector3f wLef = getRightward(WORLD);
+	Vector3f wLef = getLeftward(WORLD);
 	Vector3f wUp = getUpward(WORLD);
 	currentDirection = lerp(currentDirection, targetDirection, deltaTime * directionStep).normalized();
 	Vector2f xy = Vector2f(currentDirection.dot(wFor), currentDirection.dot(wLef)).normalized();

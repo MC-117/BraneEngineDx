@@ -86,7 +86,7 @@ void MorphTargetWeightRenderData::upload()
 
 void MorphTargetWeightRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(weightGPUBuffer.getVendorGPUBuffer(), MORPHWEIGHT_BIND_INDEX);
+	context.bindBufferBase(weightGPUBuffer.getVendorGPUBuffer(), "morphWeight"); // MORPHWEIGHT_BIND_INDEX
 }
 
 void MorphTargetRemapper::addMorphTargetWeight(MorphTargetWeight& weights)

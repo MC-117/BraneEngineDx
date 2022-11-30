@@ -162,7 +162,11 @@ void DX11Material::processImageData()
 		if (b->second.val.texture->bind() == 0)
 			continue;
 		DX11Texture2D* tex = (DX11Texture2D*)b->second.val.texture->getVendorTexture();
-		uploadImage(b->first, tex->getUAV(b->second.val.level));
+		RWOption rwOption;
+		rwOption.mipLevel = b->second.val.level;
+		rwOption.arrayBase = b->second.val.arrayBase;
+		rwOption.arrayCount = b->second.val.arrayCount;
+		uploadImage(b->first, tex->getUAV(rwOption));
 	}
 }
 

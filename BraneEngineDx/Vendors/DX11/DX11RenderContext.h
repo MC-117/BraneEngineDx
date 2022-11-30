@@ -35,6 +35,7 @@ public:
 	virtual void reset();
 	virtual void release();
 
+	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, const string& name);
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, unsigned int index);
 	virtual unsigned int uploadBufferData(IGPUBuffer* buffer, unsigned int size, void* data);
 	virtual unsigned int uploadBufferSubData(IGPUBuffer* buffer, unsigned int first, unsigned int size, void* data);
@@ -59,7 +60,7 @@ public:
 
 	bool canBindRTV(ITexture* texture);
 
-	virtual void bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index, const MipOption& mipOption = MipOption());
+	virtual void bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index, unsigned int sampleIndex, const MipOption& mipOption = MipOption());
 	virtual void bindImage(const Image& image, unsigned int index);
 
 	virtual void bindTexture(ITexture* texture, const string& name, const MipOption& mipOption = MipOption());

@@ -4,6 +4,7 @@
 #include "LightRenderData.h"
 #include "ParticleRenderPack.h"
 #include "MeshRenderPack.h"
+#include "ReflectionProbeRenderData.h"
 
 class Camera;
 class Render;
@@ -11,11 +12,15 @@ class Render;
 class SceneRenderData
 {
 public:
+	vector<CameraRenderData*> cameraRenderDatas;
 	MeshTransformRenderData meshTransformDataPack;
 	ParticleRenderData particleDataPack;
 	LightRenderData lightDataPack;
+	ReflectionProbeRenderData reflectionProbeDataPack;
 
+	void setCamera(Render* cameraRender);
 	void setLight(Render* lightRender);
+	int setReflectionCapture(Render* captureRender);
 	unsigned int setMeshTransform(const Matrix4f& transformMat);
 	unsigned int setMeshTransform(const vector<Matrix4f>& transformMats);
 	void* getMeshPartTransform(MeshPart* meshPart, Material* material);
@@ -40,6 +45,15 @@ public:
 	virtual void bind(IRenderContext& context);
 };
 
+struct RenderCommandExecutionInfo
+{
+	IRenderContext& context;
+	bool requireClearFrame = false;
+	Timer* timer = NULL;
+	vector<pair<string, Texture*>>* outputTextures = NULL;
+	RenderCommandExecutionInfo(IRenderContext& context);
+};
+
 class RenderCommandList
 {
 public:
@@ -50,7 +64,6 @@ public:
 	bool setRenderCommand(const IRenderCommand& cmd, ShaderFeature extraFeature = Shader_Default);
 	bool setRenderCommand(const IRenderCommand& cmd, vector<ShaderFeature> extraFeatures);
 
-	void prepareCommand();
-	void excuteCommand();
+	void excuteCommand(RenderCommandExecutionInfo& executionInfo);
 	void resetCommand();
 };

@@ -164,8 +164,8 @@ void TerrainPatchMeshData::bindShapeWithContext(IRenderContext& context)
 	context.bindBufferBase(vertexBuffer.getVendorGPUBuffer(), 1);
 	context.bindBufferBase(uvBuffer.getVendorGPUBuffer(), 2);
 	context.bindBufferBase(elementBuffer.getVendorGPUBuffer(), 0);
-	context.bindBufferBase(terrainBuffer.getVendorGPUBuffer(), MAT_BASE_BIND_INDEX);
-	context.bindTexture((ITexture*)heightMap.getVendorTexture(), Tessellation_Evalution_Shader_Stage, TERRAIN_MAP_BIND_INDEX);
+	context.bindBufferBase(terrainBuffer.getVendorGPUBuffer(), "TerrainData"); // MAT_BASE_BIND_INDEX
+	context.bindTexture((ITexture*)heightMap.getVendorTexture(), "terrainMap");// TERRAIN_MAP_BIND_INDEX, TERRAIN_MAP_BIND_INDEX);
 	context.currentMeshData = this;
 }
 

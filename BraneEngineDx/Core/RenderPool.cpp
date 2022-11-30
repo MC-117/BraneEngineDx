@@ -13,6 +13,7 @@ RenderPool::RenderPool(Camera & defaultCamera)
 {
 	camera = &defaultCamera;
 	renderFrame = Time::frames();
+	sceneData = new SceneRenderData();
 	renderGraph = new DeferredRenderGraph();
 }
 
@@ -20,8 +21,12 @@ RenderPool::~RenderPool()
 {
 	destory = true;
 	gameFence();
+	if (sceneData)
+		delete sceneData;
+	sceneData = NULL;
 	if (renderGraph)
 		delete renderGraph;
+	renderGraph = NULL;
 }
 
 void RenderPool::start()
@@ -48,13 +53,13 @@ void RenderPool::switchToDefaultCamera()
 void RenderPool::switchCamera(Camera & camera)
 {
 	this->camera = &camera;
-	camera.cameraRender.renderTarget.setMultisampleLevel(Engine::engineConfig.msaa);
+	camera.cameraRender.getRenderTarget().setMultisampleLevel(Engine::engineConfig.msaa);
 }
 
 void RenderPool::add(Render & render)
 {
 	if (render.isValid) {
-		if (isClassOf<Light>(&render))
+		if (isClassOf<Light>(&render) || isClassOf<CameraRender>(&render))
 			prePool.insert(&render);
 		else
 			pool.insert(&render);
@@ -77,17 +82,14 @@ void RenderPool::render(bool guiOnly)
 	gameFence();
 	timer.record("Fence");
 
-	cmdList.resetCommand();
 	renderGraph->reset();
-	renderGraph->setRenderCommandList(cmdList);
 	timer.record("Reset");
 
 	IVendor& vendor = VendorManager::getInstance().getVendor();
 
 	Camera& currentCamera = (camera == NULL ? defaultCamera : *camera);
-	RenderInfo info = { currentCamera.projectionViewMat, Matrix4f::Identity(), currentCamera.cameraRender.cameraLoc,
-						currentCamera.cameraRender.cameraDir, currentCamera.size, (float)(currentCamera.fov * PI / 180.0) };
-	info.sceneData = &sceneData;
+	RenderInfo info;
+	info.sceneData = sceneData;
 	info.renderGraph = renderGraph;
 	info.camera = &currentCamera;
 
@@ -95,8 +97,12 @@ void RenderPool::render(bool guiOnly)
 	timer.record("GUI");
 
 	if (!guiOnly) {
+		for (auto lightB = prePool.begin(), lightE = prePool.end(); lightB != lightE; lightB++) {
+			(*(lightB))->render(info);
+		}
 
-		int pid = 0;
+		timer.record("SceneData");
+
 		RenderTarget* shadowTarget = NULL;
 		for (auto b = pool.begin(), e = pool.end(); b != e; b++) {
 			(*b)->render(info);
@@ -104,30 +110,12 @@ void RenderPool::render(bool guiOnly)
 
 		timer.record("Objects");
 
-		for (auto lightB = prePool.begin(), lightE = prePool.end(); lightB != lightE; lightB++) {
-			IRendering::RenderType type = (*lightB)->getRenderType();
-			if (type == IRendering::Light) {
-				for (auto objB = pool.begin(), objE = pool.end(); objB != objE; objB++) {
-					info.tempRender = *objB;
-					(*lightB)->render(info);
-				}
-				sceneData.setLight(*lightB);
-			}
-		}
-
-		timer.record("Shadow");
-
-		currentCamera.cameraRender.render(info);
-		currentCamera.cameraRender.postRender();
-
-		timer.record("Post");
-
 		gui.setSceneBlurTex(currentCamera.cameraRender.getSceneBlurTex());
 	}
 	else {
 		IRenderContext& context = *vendor.getDefaultRenderContext();
-		currentCamera.cameraRender.renderTarget.resize(currentCamera.size.x, currentCamera.size.y);
-		context.bindFrame(currentCamera.cameraRender.renderTarget.getVendorRenderTarget());
+		currentCamera.cameraRender.getRenderTarget().resize(currentCamera.size.x, currentCamera.size.y);
+		context.bindFrame(currentCamera.cameraRender.getRenderTarget().getVendorRenderTarget());
 		context.clearFrameColor(currentCamera.clearColor);
 	}
 

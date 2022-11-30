@@ -120,13 +120,13 @@ protected:
 	Vector3fPin* valuePin = NULL;
 };
 
-class TransformGetRightwardNode : public GraphNode
+class TransformGetLeftwardNode : public GraphNode
 {
 public:
-	Serialize(TransformGetRightwardNode, GraphNode);
+	Serialize(TransformGetLeftwardNode, GraphNode);
 
-	TransformGetRightwardNode();
-	virtual ~TransformGetRightwardNode() = default;
+	TransformGetLeftwardNode();
+	virtual ~TransformGetLeftwardNode() = default;
 
 	virtual bool process(GraphContext& context);
 

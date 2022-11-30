@@ -3,7 +3,7 @@
 
 void ScreenSpaceReflectionPass::prepare()
 {
-	if (gBufferA == NULL)
+	if (!enable || gBufferA == NULL)
 		return;
 	if (material == NULL) {
 		material = getAssetByPath<Material>("Engine/Shaders/Pipeline/SSRPass.mat");
@@ -19,7 +19,7 @@ void ScreenSpaceReflectionPass::prepare()
 
 void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 {
-	if (program == NULL || cameraData == NULL || gBufferA == NULL || gBufferB == NULL ||
+	if (!enable || program == NULL || cameraData == NULL || gBufferA == NULL || gBufferB == NULL ||
 		gBufferC == NULL || hiZMap == NULL || hitDataMap == NULL || hitColorMap == NULL)
 		return;
 
@@ -44,6 +44,8 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 	int dimY = ceilf(height / float(localSize.y())) * localSize.y();
 
 	context.bindShaderProgram(program);
+
+	sceneData->bind(context);
 
 	cameraData->bind(context);
 
@@ -93,6 +95,8 @@ void ScreenSpaceReflectionPass::reset()
 
 void ScreenSpaceReflectionPass::getOutputTextures(vector<pair<string, Texture*>>& textures)
 {
+	if (!enable)
+		return;
 	if (hitDataMap)
 		textures.push_back(make_pair("SSR_HitDataMap", hitDataMap));
 	if (hitColorMap)

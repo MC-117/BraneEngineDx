@@ -2,6 +2,7 @@
 #include "RenderInterface.h"
 #include "../GPUBuffer.h"
 #include "../RenderTarget.h"
+#include "CameraRenderData.h"
 
 class Light;
 
@@ -31,6 +32,7 @@ struct LightRenderData : public IRenderData
 	GPUBuffer pointLightBuffer = GPUBuffer(GB_Struct, sizeof(PointLightData));
 
 	RenderTarget* shadowTarget = NULL;
+	CameraRenderData shadowCameraRenderData;
 
 	void setLight(Light* light);
 	virtual void create();

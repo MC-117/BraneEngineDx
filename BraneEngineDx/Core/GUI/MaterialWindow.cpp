@@ -3,16 +3,28 @@
 #include "../Engine.h"
 
 MaterialWindow::MaterialWindow(Material * material, string name, bool defaultShow)
-	: UIWindow(world, name, defaultShow), material(material)
+	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow), material(material), meshActor("PreviewMeshActor")
 {
 	events.registerFunc("setMaterial", [](void* win, void* mat) {
 		((MaterialWindow*)win)->material = (Material*)mat;
 	});
+	Mesh* mesh = getAssetByPath<Mesh>("Engine/Shapes/UnitSphere.fbx");
+	meshActor.setMesh(mesh);
+	if (material)
+		meshActor.meshRender.setMaterial(0, *material);
+	meshActor.setScale({ 10, 10, 10 });
+	editorWorld.camera.distance = 15;
+	editorWorld.addChild(meshActor);
+	editorWorld.camera.clearColor = Color(88, 88, 88, 255);
+	//editorWorld.camera.renderTarget.setMultisampleLevel(4);
+	editorWorld.begin();
+	gizmo.setCameraControl(Gizmo::CameraControlMode::Turn, 0, 1, 100);
 }
 
 void MaterialWindow::setMaterial(Material & material)
 {
 	this->material = &material;
+	meshActor.meshRender.setMaterial(0, material);
 }
 
 Material * MaterialWindow::getMaterial()
@@ -20,10 +32,49 @@ Material * MaterialWindow::getMaterial()
 	return material;
 }
 
+void MaterialWindow::onMaterialPreview(GUIRenderInfo& info)
+{
+	float width = ImGui::GetWindowContentRegionWidth();
+
+	editorWorld.setViewportSize((int)width, (int)width);
+
+	editorWorld.update();
+	editorWorld.render(*info.renderGraph);
+
+	gizmo.onUpdate(editorWorld.camera);
+
+	ImGui::BeginChild("Scene", ImVec2(width, width));
+	auto drawList = ImGui::GetWindowDrawList();
+	gizmo.beginFrame(drawList);
+
+	Texture* texture = editorWorld.getSceneTexture();
+	if (texture != NULL) {
+		texture->bind();
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 0 });
+
+		auto list = ImGui::GetWindowDrawList();
+		float padding = 0;
+		ImVec2 pos = ImGui::GetWindowPos();
+		unsigned long long id = texture->getTextureID();
+		if (id != 0)
+			list->AddImage((ImTextureID)id, { pos.x + padding, pos.y + padding },
+				{ pos.x + padding + width, pos.y + padding + width });
+		ImGui::PopStyleVar(2);
+	}
+
+	gizmo.onGUI(&editorWorld);
+	gizmo.endFrame();
+	ImGui::EndChild();
+}
+
 void MaterialWindow::onRenderWindow(GUIRenderInfo & info)
 {
 	if (material == NULL)
 		return;
+
+	onMaterialPreview(info);
+
 	if (ImGui::Button("Save Material", { -1, 36 })) {
 		string s = AssetInfo::getPath(material);
 		if (!s.empty()) {

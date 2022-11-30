@@ -4,7 +4,7 @@
 
 SerializeInstance(DeferredRenderGraph);
 
-DeferredRenderGraph::GBufferRT::GBufferRT()
+DeferredRenderGraph::DeferredViewData::DeferredViewData()
 {
 	gBufferA.setAutoGenMip(false);
 	gBufferB.setAutoGenMip(false);
@@ -18,31 +18,31 @@ DeferredRenderGraph::GBufferRT::GBufferRT()
 	renderTarget.addTexture("gBufferE", gBufferE);
 }
 
-void DeferredRenderGraph::GBufferRT::prepare()
+void DeferredRenderGraph::DeferredViewData::prepare()
 {
-	renderTarget.resize(camera->size.x, camera->size.y);
-	int widthP2 = 1 << max(int(log2(camera->size.x)), 1);
-	int heightP2 = 1 << max(int(log2(camera->size.y)), 1);
+	renderTarget.resize(cameraRender->size.x, cameraRender->size.y);
+	int widthP2 = 1 << max(int(log2(cameraRender->size.x)), 1);
+	int heightP2 = 1 << max(int(log2(cameraRender->size.y)), 1);
 	hizTexture.resize(widthP2, heightP2);
-	hitDataMap.resize(camera->size.x, camera->size.y);
-	hitColorMap.resize(camera->size.x, camera->size.y);
+	hitDataMap.resize(cameraRender->size.x, cameraRender->size.y);
+	hitColorMap.resize(cameraRender->size.x, cameraRender->size.y);
 }
 
 DeferredRenderGraph::DeferredRenderGraph()
 {
-	forwardPass.commandList = &forwardList;
 	forwardPass.requireClearFrame = false;
 }
 
-DeferredRenderGraph::GBufferRT* DeferredRenderGraph::getGBufferRT(Camera* camera)
+DeferredRenderGraph::DeferredViewData* DeferredRenderGraph::getGBufferRT(CameraRender* cameraRender, SceneRenderData* sceneRenderData)
 {
-	GBufferRT* rt = NULL;
-	auto iter = gBufferRTs.find(camera);
-	if (iter == gBufferRTs.end()) {
-		rt = new GBufferRT();
-		rt->camera = camera;
-		rt->cameraData.camera = camera;
-		gBufferRTs.insert(make_pair(camera, rt));
+	DeferredViewData* rt = NULL;
+	auto iter = viewDatas.find(cameraRender);
+	if (iter == viewDatas.end()) {
+		rt = new DeferredViewData();
+		rt->sceneData = sceneRenderData;
+		rt->cameraRender = cameraRender;
+		rt->cameraData.cameraRender = cameraRender;
+		viewDatas.insert(make_pair(cameraRender, rt));
 	}
 	else {
 		iter->second->age = 0;
@@ -52,8 +52,9 @@ DeferredRenderGraph::GBufferRT* DeferredRenderGraph::getGBufferRT(Camera* camera
 		rt->cameraData.create();
 		rt->cameraData.renderTarget = &rt->renderTarget;
 		rt->cameraData.clearColors.resize(5, { 0, 0, 0, 0 });
-		rt->cameraData.clearColors[0] = camera->clearColor;
+		rt->cameraData.clearColors[0] = cameraRender->clearColor;
 		rt->cameraData.clearColors[1] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		rt->cameraData.upload();
 		rt->cameraData.usedFrame = Time::frames();
 	}
 	return rt;
@@ -70,7 +71,6 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 	ShaderMatchRule matchRule;
 	matchRule.fragmentFlag = ShaderMatchFlag::Best;
 
-	const DirectShadowRenderCommand* shadowRenderCommand = dynamic_cast<const DirectShadowRenderCommand*>(&cmd);
 	uint16_t renderStage = cmd.getRenderMode().getRenderStage();
 
 	Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
@@ -78,26 +78,16 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 	deferredShaderFeature |= Shader_Deferred;
 	ShaderProgram* deferredShader = cmd.material->getShader()->getProgram(deferredShaderFeature, matchRule);
 
-	if (shadowRenderCommand) {
-		geometryPass.commandList->setRenderCommand(cmd);
-	}
-	else if (renderStage >= RS_Transparent || deferredShader == NULL) {
-		forwardList.setRenderCommand(cmd);
+	shadowDepthPass.setRenderCommand(cmd);
+
+	if (renderStage >= RS_Transparent || deferredShader == NULL) {
+		forwardPass.commandList.setRenderCommand(cmd);
 	}
 	else {
-		GBufferRT* gBufferRT = getGBufferRT(cmd.camera);
-
-		CameraRenderData* cameraRenderData = dynamic_cast<CameraRenderData*>(cmd.camera->getRenderData());
-		if (cameraRenderData == NULL)
-			return false;
-		if (cameraRenderData->usedFrame < (long long)Time::frames()) {
-			cameraRenderData->create();
-			cameraRenderData->usedFrame = Time::frames();
-		}
-
 		for (auto binding : cmd.bindings) {
 			if (binding->usedFrame < (long long)Time::frames()) {
 				binding->create();
+				binding->upload();
 				binding->usedFrame = Time::frames();
 			}
 		}
@@ -118,6 +108,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		if (deferredMaterialRenderData->usedFrame < (long long)Time::frames()) {
 			deferredMaterialRenderData->program = deferredShader;
 			deferredMaterialRenderData->create();
+			deferredMaterialRenderData->upload();
 			deferredMaterialRenderData->usedFrame = Time::frames();
 		}
 
@@ -126,43 +117,34 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		task.sceneData = cmd.sceneData;
 		task.shaderProgram = deferredShader;
 		task.renderMode = cmd.getRenderMode();
-		task.cameraData = &gBufferRT->cameraData;
 		task.materialData = deferredMaterialRenderData;
 		task.meshData = meshData;
 		task.extraData = cmd.bindings;
-
-		geometryPass.commandList->addRenderTask(cmd, task);
 
 		// Lighting pass
 		Enum<ShaderFeature> lightingShaderFeature = shaderFeature;
 		lightingShaderFeature |= Shader_Lighting;
 		ShaderProgram* lightingShader = cmd.material->getShader()->getProgram(lightingShaderFeature, matchRule);
 
-		if (lightingShader) {
-			if (!lightingShader->init()) {
-				return false;
+		bool hasLightingPass = lightingShader && lightingShader->init();
+
+		DeferredLightingTask lightingTask;
+		lightingTask.sceneData = cmd.sceneData;
+		lightingTask.program = lightingShader;
+		lightingTask.material = cmd.material;
+
+		for (auto& cameraRenderData : cmd.sceneData->cameraRenderDatas) {
+			DeferredViewData* gBufferRT = getGBufferRT(cameraRenderData->cameraRender, cmd.sceneData);
+			task.cameraData = &gBufferRT->cameraData;
+			geometryPass.commandList.addRenderTask(cmd, task);
+			if (hasLightingPass) {
+				lightingTask.gBufferRT = &gBufferRT->renderTarget;
+				lightingTask.cameraRenderData = cameraRenderData;
+				lightingPass.addTask(lightingTask);
 			}
-
-			DeferredLightingTask lightingTask;
-			lightingTask.sceneData = cmd.sceneData;
-			lightingTask.program = lightingShader;
-			lightingTask.gBufferRT = &gBufferRT->renderTarget;
-			lightingTask.cameraRenderData = cameraRenderData;
-			lightingTask.material = cmd.material;
-
-			lightingPass.addTask(lightingTask);
 		}
 	}
 	return true;
-}
-
-void DeferredRenderGraph::setRenderCommandList(RenderCommandList& commandList)
-{
-	geometryPass.commandList = &commandList;
-}
-
-void DeferredRenderGraph::setMainRenderTarget(RenderTarget& renderTarget)
-{
 }
 
 void DeferredRenderGraph::setImGuiDrawData(ImDrawData* drawData)
@@ -180,8 +162,9 @@ void DeferredRenderGraph::prepare()
 {
 	for (auto sceneData : sceneDatas)
 		sceneData->create();
-	for (auto& rt : gBufferRTs)
+	for (auto& rt : viewDatas)
 		rt.second->prepare();
+	shadowDepthPass.prepare();
 	geometryPass.prepare();
 	lightingPass.prepare();
 	hizPass.prepare();
@@ -189,6 +172,7 @@ void DeferredRenderGraph::prepare()
 	forwardPass.prepare();
 	for (auto pass : passes)
 		pass->prepare();
+	blitPass.prepare();
 	imGuiPass.prepare();
 }
 
@@ -196,16 +180,17 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 {
 	for (auto sceneData : sceneDatas)
 		sceneData->upload();
-	context.bindTexture(NULL, Fragment_Shader_Stage, 6);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 7);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 8);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 9);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 10);
-	context.bindTexture(NULL, Compute_Shader_Stage, 6);
-	context.bindTexture(NULL, Compute_Shader_Stage, 7);
-	context.bindTexture(NULL, Compute_Shader_Stage, 8);
-	context.bindTexture(NULL, Compute_Shader_Stage, 9);
-	context.bindTexture(NULL, Compute_Shader_Stage, 10);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 6, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 7, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 8, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 9, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 10, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 6, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 7, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 8, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 9, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 10, -1);
+	shadowDepthPass.execute(context);
 	geometryPass.execute(context);
 
 	context.clearFrameBindings();
@@ -213,26 +198,27 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	lightingPass.execute(context);
 
 	context.clearFrameBindings();
-	context.bindTexture(NULL, Fragment_Shader_Stage, 6);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 7);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 8);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 9);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 10);
-	context.bindTexture(NULL, Compute_Shader_Stage, 6);
-	context.bindTexture(NULL, Compute_Shader_Stage, 7);
-	context.bindTexture(NULL, Compute_Shader_Stage, 8);
-	context.bindTexture(NULL, Compute_Shader_Stage, 9);
-	context.bindTexture(NULL, Compute_Shader_Stage, 10);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 6, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 7, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 8, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 9, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 10, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 6, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 7, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 8, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 9, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 10, -1);
 
-	for (auto& item : gBufferRTs) {
+	for (auto& item : viewDatas) {
 		hizPass.depthTexture = &item.second->gBufferB;
 		hizPass.hizTexture = &item.second->hizTexture;
 		hizPass.execute(context);
 	}
 
-	for (auto& item : gBufferRTs) {
+	for (auto& item : viewDatas) {
+		ssrPass.sceneData = item.second->sceneData;
 		ssrPass.cameraData = &item.second->cameraData;
-		ssrPass.gBufferA = item.second->camera->cameraRender.renderTarget.getTexture(0);
+		ssrPass.gBufferA = item.second->cameraRender->getSceneMap();
 		ssrPass.gBufferB = &item.second->gBufferB;
 		ssrPass.gBufferC = &item.second->gBufferC;
 		ssrPass.hiZMap = &item.second->hizTexture;
@@ -241,10 +227,31 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 		ssrPass.execute(context);
 	}
 
+	context.clearFrameBindings();
+	context.bindTexture(NULL, Fragment_Shader_Stage, 6, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 7, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 8, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 9, -1);
+	context.bindTexture(NULL, Fragment_Shader_Stage, 10, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 6, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 7, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 8, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 9, -1);
+	context.bindTexture(NULL, Compute_Shader_Stage, 10, -1);
+
+	for (auto sceneData : sceneDatas)
+		sceneData->reflectionProbeDataPack.cubeMapPool.refreshCubePool(context);
+
 	forwardPass.execute(context);
 	context.clearFrameBindings();
+
+	for (auto sceneData : sceneDatas)
+		for (auto& cameraRenderData : sceneData->cameraRenderDatas)
+			context.resolveMultisampleFrame(cameraRenderData->renderTarget->getVendorRenderTarget());
+
 	for (auto pass : passes)
 		pass->execute(context);
+	blitPass.execute(context);
 	imGuiPass.execute(context);
 
 	/*----- Vendor swap -----*/
@@ -256,11 +263,11 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 void DeferredRenderGraph::reset()
 {
-	for (auto b = gBufferRTs.begin(), e = gBufferRTs.end(); b != e;) {
+	for (auto b = viewDatas.begin(), e = viewDatas.end(); b != e;) {
 		b->second->age++;
 		if (b->second->age >= 2) {
 			delete b->second;
-			b = gBufferRTs.erase(b);
+			b = viewDatas.erase(b);
 		}
 		else b++;
 	}
@@ -269,16 +276,17 @@ void DeferredRenderGraph::reset()
 		sceneData->reset();
 	sceneDatas.clear();
 
+	shadowDepthPass.reset();
 	geometryPass.reset();
 	lightingPass.reset();
 	hizPass.reset();
 	ssrPass.reset();
-	forwardList.resetCommand();
 	forwardPass.reset();
 	for (auto pass : passes) {
 		pass->reset();
 		pass->renderGraph = NULL;
 	}
+	blitPass.reset();
 	imGuiPass.reset();
 	passes.clear();
 }
@@ -294,6 +302,7 @@ void DeferredRenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)
 	for (auto& pass : this->passes) {
 		passes.push_back(make_pair("Pass_" + to_string(i), pass));
 	}
+	passes.push_back(make_pair("Blit", &blitPass));
 	passes.push_back(make_pair("ImGui", &imGuiPass));
 }
 

@@ -60,7 +60,7 @@ public:
 	virtual Vector3f getEulerAngle(TransformSpace space = RELATE);
 	virtual Vector3f getScale(TransformSpace space = RELATE);
 	virtual Vector3f getForward(TransformSpace space = RELATE);
-	virtual Vector3f getRightward(TransformSpace space = RELATE);
+	virtual Vector3f getLeftward(TransformSpace space = RELATE);
 	virtual Vector3f getUpward(TransformSpace space = RELATE);
 
 	virtual void setMatrix(const Matrix4f& mat, TransformSpace space = RELATE);

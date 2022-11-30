@@ -9,13 +9,14 @@
 #include "GUIUtility.h"
 #include "../Utility/EngineUtility.h"
 #include "../GrassMeshActor.h"
-#include "../PostProcess/PostProcessingCamera.h"
 #include "../DirectLight.h"
 #include "../PointLight.h"
 #include "../ObjectUltility.h"
 #include "../ParticleSystem.h"
 #include "../Character.h"
+#include "../SkeletonMesh.h"
 #include "../Terrain/TerrainActor.h"
+#include "../ReflectionProbe.h"
 
 EditorWindow::EditorWindow(Object & object, Material& baseMat, string name, bool defaultShow) : UIWindow(object, name, defaultShow), baseMat(baseMat)
 {
@@ -324,6 +325,7 @@ void EditorWindow::traverse(Object & obj, GUI& gui, Object*& dragObj, Object*& t
 
 void EditorWindow::select(Object * obj, GUI& gui)
 {
+	World& world = *Engine::getCurrentWorld();
 	InspectorWindow* ipw = dynamic_cast<InspectorWindow*>(gui.getUIControl("Inspector"));
 	if (ipw == NULL) {
 		ipw = new InspectorWindow(world, "Inspector", true);
@@ -415,19 +417,6 @@ void EditorWindow::objectContextMenu(Object * obj)
 				if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
 					if (ImGui::Button("Create", { -1, 36 })) {
 						::Transform* t = new ::Transform(newObjectName);
-						target.addChild(*t);
-					}
-				}
-				else {
-					ImGui::Text("Name exists");
-				}
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu("PostProcessingCamera##PostProcessingCameraMenu")) {
-				ImGui::InputText("Name", &newObjectName);
-				if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
-					if (ImGui::Button("Create", { -1, 36 })) {
-						PostProcessingCamera* t = new PostProcessingCamera(newObjectName);
 						target.addChild(*t);
 					}
 				}
@@ -530,6 +519,23 @@ void EditorWindow::objectContextMenu(Object * obj)
 				}
 				if (ImGui::Button("Create", { -1, 36 })) {
 					TerrainActor* t = new TerrainActor(newObjectName);
+					target.addChild(*t);
+				}
+			}
+			else {
+				ImGui::Text("Name exists");
+			}
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("ReflectionProbe")) {
+			ImGui::InputText("Name", &newObjectName);
+			if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
+				if (ImGui::DragFloat("Radius", &reflectionProbeRadius)) {
+					terrainUnit = max(0, reflectionProbeRadius);
+				}
+				if (ImGui::Button("Create", { -1, 36 })) {
+					ReflectionProbe* t = new ReflectionProbe(newObjectName);
 					target.addChild(*t);
 				}
 			}

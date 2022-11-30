@@ -69,18 +69,20 @@ void RenderTarget::clearBind()
 	vendorRenderTarget->clearBind();
 }
 
-void RenderTarget::addTexture(const string & name, Texture & texture, unsigned int mipLevel)
+void RenderTarget::addTexture(const string & name, Texture & texture, unsigned int mipLevel, unsigned int arrayBase, unsigned int arrayCount)
 {
 	auto iter = desc.textures.find(name);
 	if (iter == desc.textures.end()) {
 		unsigned int index = desc.textureList.size();
 		desc.textures.insert(pair<string, int>(name, index));
-		desc.textureList.push_back({ index, name, mipLevel, &texture });
+		desc.textureList.push_back({ index, name, mipLevel, arrayBase, arrayCount, &texture });
 	}
 	else {
 		RTInfo& info = desc.textureList[iter->second];
 		info.texture = &texture;
 		info.mipLevel = mipLevel;
+		info.arrayBase = arrayBase;
+		info.arrayBase = arrayCount;
 	}
 	desc.inited = false;
 }

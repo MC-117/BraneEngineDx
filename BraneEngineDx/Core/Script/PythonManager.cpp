@@ -139,6 +139,7 @@ PyObject * UtilityPy::destroyObject(PyObject * self, PyObject * args)
 		PyErr_BadArgument();
 		return NULL;
 	}
+	World& world = *Engine::getCurrentWorld();
 	world.destroyObject(name);
 	Py_RETURN_NONE;
 }
@@ -228,6 +229,7 @@ PyObject * UtilityPy::spawnMeshActor(PyObject * self, PyObject * args)
 	else
 		ma = new MeshActor(*m, *mat, { mass, (PhysicalType)ptype }, *m, name, SIMPLE,
 			sca == NULL ? Vector3f::Ones() : Vector3f{ sca->x, sca->y, sca->z });
+	World& world = *Engine::getCurrentWorld();
 	world += ma;
 	if (PyObject_TypeCheck(_pos, &Vec3Py::Type)) {
 		Vec3Py::Vec3* pos = (Vec3Py::Vec3*)_pos;
@@ -300,6 +302,7 @@ PyObject * UtilityPy::setGravity(PyObject * self, PyObject * args)
 		PyErr_SetString(PyExc_TypeError, "setGravity(Vec3) or setGravity(num, num, num)");
 		Py_RETURN_NONE;
 	}
+	World& world = *Engine::getCurrentWorld();
 	world.physicalWorld.setGravity(v);
 	Py_RETURN_NONE;
 }
@@ -1780,7 +1783,7 @@ PyMethodDef TransformPy::Methods[16] = {
 	{ "getEulerAngle", TransformPy::getEulerAngle, METH_VARARGS, "getEulerAngle(int = 2(RELATE))" },
 	{ "getScale", TransformPy::getScale, METH_VARARGS, "getScale(int = 2(RELATE))" },
 	{ "getForward", TransformPy::getForward, METH_VARARGS, "getForward(int = 2(RELATE))" },
-	{ "getRightward", TransformPy::getRightward, METH_VARARGS, "getRightward(int = 2(RELATE))" },
+	{ "getLeftward", TransformPy::getLeftward, METH_VARARGS, "getLeftward(int = 2(RELATE))" },
 	{ "getUpward", TransformPy::getUpward, METH_VARARGS, "getUpward(int = 2(RELATE))" },
 	{ "setPosition", TransformPy::setPosition, METH_VARARGS, "setPosition(Vec3, int = 2(RELATE)) or setPosition(float, float, float, int = 2(RELATE))" },
 	{ "setRotation", TransformPy::setRotation, METH_VARARGS, "setRotation(Vec3, int = 2(RELATE)) or setRotation(float, float, float, int = 2(RELATE))" },
@@ -1933,7 +1936,7 @@ PyObject * TransformPy::getForward(PyObject * self, PyObject * args)
 	return Vec3Py::New(tran->getForward(space));
 }
 
-PyObject * TransformPy::getRightward(PyObject * self, PyObject * args)
+PyObject * TransformPy::getLeftward(PyObject * self, PyObject * args)
 {
 	int s = PyTuple_Size(args);
 	TransformSpace space = TransformSpace::RELATE;
@@ -1944,7 +1947,7 @@ PyObject * TransformPy::getRightward(PyObject * self, PyObject * args)
 			space = (TransformSpace)i;
 	}
 	else if (s != 0) {
-		PyErr_SetString(PyExc_TypeError, "getRightward(int = 2(RELATE))");
+		PyErr_SetString(PyExc_TypeError, "getLeftward(int = 2(RELATE))");
 		return NULL;
 	}
 	::Transform* tran = ObjectPy::cast<::Transform>(self);
@@ -1952,7 +1955,7 @@ PyObject * TransformPy::getRightward(PyObject * self, PyObject * args)
 		PyErr_SetString(PyExc_MemoryError, "access c pointer failed");
 		return NULL;
 	}
-	return Vec3Py::New(tran->getRightward(space));
+	return Vec3Py::New(tran->getLeftward(space));
 }
 
 PyObject * TransformPy::getUpward(PyObject * self, PyObject * args)

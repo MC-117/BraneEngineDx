@@ -19,6 +19,7 @@ public:
 	virtual int getWidth() const;
 	virtual int getHeight() const;
 	virtual int getChannel() const;
+	virtual int getArrayCount() const;
 	virtual int getMipLevels() const;
 
 	virtual unsigned int bind();
@@ -32,10 +33,8 @@ struct Image
 {
 	Texture* texture = NULL;
 	unsigned int level = 0;
-	bool layered = false;
-	unsigned layer = 0;
-	unsigned int access = 0;
-	unsigned int format = 0;
+	unsigned int arrayBase = 0;
+	unsigned int arrayCount = 1;
 
 	unsigned int binding = -1;
 	bool isValid() const;

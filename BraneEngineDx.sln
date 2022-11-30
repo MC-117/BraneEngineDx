@@ -13,6 +13,8 @@ Global
 		AudioRelease|x86 = AudioRelease|x86
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		PhysX5Release|x64 = PhysX5Release|x64
+		PhysX5Release|x86 = PhysX5Release|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
@@ -29,6 +31,10 @@ Global
 		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.Debug|x64.Build.0 = Debug|x64
 		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.Debug|x86.ActiveCfg = Debug|Win32
 		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.Debug|x86.Build.0 = Debug|Win32
+		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.PhysX5Release|x64.ActiveCfg = PhysX5Release|x64
+		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.PhysX5Release|x64.Build.0 = PhysX5Release|x64
+		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.PhysX5Release|x86.ActiveCfg = PhysX5Release|Win32
+		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.PhysX5Release|x86.Build.0 = PhysX5Release|Win32
 		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.Release|x64.ActiveCfg = Release|x64
 		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.Release|x64.Build.0 = Release|x64
 		{260BBD95-42E2-4EB4-972B-A1DCC44B1202}.Release|x86.ActiveCfg = Release|Win32

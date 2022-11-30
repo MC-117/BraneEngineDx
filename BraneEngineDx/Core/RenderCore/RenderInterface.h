@@ -5,7 +5,6 @@
 
 class IRenderContext;
 class RenderTarget;
-class Camera;
 class Material;
 class Texture;
 struct MeshPart;
@@ -29,13 +28,13 @@ struct IRenderPack;
 struct IRenderCommand
 {
 	SceneRenderData* sceneData = NULL;
-	Camera* camera = NULL;
 	Material* material = NULL;
 	MeshPart* mesh = NULL;
 	list<IRenderData*> bindings;
 	virtual bool isValid() const = 0;
 	virtual Enum<ShaderFeature> getShaderFeature() const = 0;
 	virtual RenderMode getRenderMode() const = 0;
+	virtual bool canCastShadow() const = 0;
 	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const = 0;
 };
 
@@ -80,8 +79,6 @@ public:
 	unordered_set<SceneRenderData*> sceneDatas;
 
 	virtual bool setRenderCommand(const IRenderCommand& cmd) = 0;
-	virtual void setRenderCommandList(RenderCommandList& commandList) = 0;
-	virtual void setMainRenderTarget(RenderTarget& renderTarget) = 0;
 	virtual void setImGuiDrawData(ImDrawData* drawData) = 0;
 	virtual void addPass(RenderPass& pass) = 0;
 	virtual void prepare() = 0;

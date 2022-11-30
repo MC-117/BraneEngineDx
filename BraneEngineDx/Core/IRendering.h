@@ -3,27 +3,17 @@
 #define _IRENDERING_H_
 
 #include "Unit.h"
-#include "RenderCore/RenderCommandList.h"
-
-class RenderResource
-{
-public:
-	int instanceID;
-	int instanceIDCount;
-	bool enable;
-	Material* material;
-	MeshPart* meshPart;
-
-	virtual ~RenderResource() = default;
-	virtual bool isValid() const;
-};
+#include "Shader.h"
+#include "RenderTarget.h"
+#include "Material.h"
+#include "RenderCore/CameraData.h"
 
 class IRendering
 {
 public:
 	enum RenderType
 	{
-		None, Normal, Light, Camera, PostProcess, Particles, PreProcess
+		None, Normal, Camera, Light, Particles, SceneCapture
 	};
 
 	virtual ~IRendering() {}
@@ -37,7 +27,6 @@ public:
 	virtual unsigned int getInstanceID() const = 0;
 	virtual unsigned int getInstanceCount() const = 0;
 	virtual void* getRender() const = 0;
-	virtual int getRenderResource(vector<RenderResource>& resources) { return 0; };
 };
 
 #endif // !_IRENDERING_H_

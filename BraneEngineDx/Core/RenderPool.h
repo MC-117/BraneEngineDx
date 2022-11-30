@@ -13,8 +13,7 @@ public:
 	Camera& defaultCamera;
 	Camera* camera = NULL;
 	GUI gui;
-	RenderCommandList cmdList;
-	SceneRenderData sceneData;
+	SceneRenderData* sceneData = NULL;
 	RenderGraph* renderGraph = NULL;
 
 	RenderPool(Camera& defaultCamera);

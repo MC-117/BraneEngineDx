@@ -240,12 +240,6 @@
     <ClInclude Include="Core\Light.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\ShadowCameraRender.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\ShadowCamera.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Vendors\DX11\DX11RenderExecution.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -312,19 +306,13 @@
     <ClInclude Include="Actors\SkySphere.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\PostProcess\PostProcessCameraRender.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Core\PostProcess\PostProcessGraph.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\PostProcess\PostProcessingCamera.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\PostProcess\PostProcessPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\PostProcess\BlitPass.h">
+    <ClInclude Include="Core\RenderGraph\BlitPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\PostProcess\BloomPass.h">
@@ -577,9 +565,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\Editor\EditorWorld.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Editor\PostProcessingCameraEditor.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\GUI\ObjectPreviewWindow.h">
@@ -1161,9 +1146,6 @@
     <ClInclude Include="Core\RenderGraph\MeshPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\RenderGraph\MultiSampleResolvePass.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Core\RenderGraph\ForwardRenderGraph.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -1237,6 +1219,48 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\RenderGraph\HiZPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\TextureCube.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Utility\TextureUtility.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\GUI\TextureCubeEditorWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\SceneCaptureCube.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\SceneCapture.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderGraph\ReflectionProbeArrayPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderGraph\ShadowDepthPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ReflectionCapture.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ReflectionProbe.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\ReflectionProbeRenderData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\TextureCubePool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Editor\RenderCore\DeferredRenderGraphEditor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Editor\ReflectionProbeEditor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\RenderCore.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1406,12 +1430,6 @@
     <ClCompile Include="Core\Light.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\ShadowCamera.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\ShadowCameraRender.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Vendors\DX11\DX11RenderExecution.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -1484,19 +1502,13 @@
     <ClCompile Include="Actors\SkySphere.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\PostProcess\PostProcessCameraRender.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Core\PostProcess\PostProcessGraph.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\PostProcess\PostProcessingCamera.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\PostProcess\PostProcessPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\PostProcess\BlitPass.cpp">
+    <ClCompile Include="Core\RenderGraph\BlitPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\PostProcess\DOFPass.cpp">
@@ -1719,9 +1731,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\Editor\EditorWorld.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Editor\PostProcessingCameraEditor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\GUI\ObjectPreviewWindow.cpp">
@@ -2210,9 +2219,6 @@
     <ClCompile Include="Core\Terrain\TerrainActorEditor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\IRendering.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Vendors\DXGI_Helper.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -2241,9 +2247,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderGraph\MeshPass.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\RenderGraph\MultiSampleResolvePass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderGraph\ForwardRenderGraph.cpp">
@@ -2316,6 +2319,45 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderGraph\ScreenSpaceReflectionPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\TextureCube.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Utility\TextureUtility.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\GUI\TextureCubeEditorWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\SceneCaptureCube.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\SceneCapture.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderGraph\ReflectionProbeArrayPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderGraph\ShadowDepthPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ReflectionProbe.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ReflectionCapture.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\ReflectionProbeRenderData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\TextureCubePool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Editor\RenderCore\DeferredRenderGraphEditor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Editor\ReflectionProbeEditor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

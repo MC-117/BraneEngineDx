@@ -3,33 +3,19 @@
 #define _RENDER_H_
 
 #include "IRendering.h"
+#include "Shape.h"
 
 class Camera;
+class SceneRenderData;
+class CameraRenderData;
+class MaterialRenderData;
+class RenderGraph;
 
 struct RenderInfo
 {
-	Matrix4f projectionViewMat;
-	Matrix4f lightSpaceMat;
-	Vector3f cameraLoc;
-	Vector3f cameraDir;
-	Unit2Di viewSize;
-	float fovy;
 	SceneRenderData* sceneData = NULL;
 	RenderGraph* renderGraph = NULL;
 	Camera* camera = NULL;
-	IRendering* tempRender = NULL;
-	list<IRendering*> taskList;
-
-	RenderInfo(Matrix4f projectionViewMat = Matrix4f::Identity(),
-		Matrix4f lightSpaceMat = Matrix4f::Identity(),
-		Vector3f cameraLoc = Vector3f::Identity(),
-		Vector3f cameraDir = Vector3f::Identity(),
-		Unit2Di viewSize = { 0, 0 },
-		float fovy = 0);
-
-	RenderInfo(const RenderInfo& info);
-
-	RenderInfo& operator=(const RenderInfo& info);
 };
 
 class Render : public IRendering

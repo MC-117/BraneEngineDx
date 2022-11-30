@@ -6,6 +6,7 @@ void LightRenderData::setLight(Light* light)
 {
 	if (shadowTarget == NULL && light->getShadowRenderTarget() != NULL) {
 		shadowTarget = light->getShadowRenderTarget();
+		shadowTarget->init();
 	}
 	DirectLight* directLight = dynamic_cast<DirectLight*>(light);
 	if (directLight != NULL) {
@@ -14,6 +15,11 @@ void LightRenderData::setLight(Light* light)
 		directLightData.lightSpaceMat = MATRIX_UPLOAD_OP(directLight->getLightSpaceMatrix());
 		directLightData.shadowBias = directLight->getShadowBias();
 		directLightData.color = Vector3f(directLight->color.r, directLight->color.g, directLight->color.b);
+		shadowCameraRenderData.data = directLight->shadowData.cameraData;
+		shadowCameraRenderData.renderTarget = shadowTarget;
+		shadowCameraRenderData.clearColors.resize(1);
+		shadowCameraRenderData.clearColors[0] = Color();
+		shadowCameraRenderData.renderOrder = 0;
 	}
 	PointLight* pointLight = dynamic_cast<PointLight*>(light);
 	if (pointLight != NULL) {
@@ -44,9 +50,9 @@ void LightRenderData::upload()
 
 void LightRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(directLightBuffer.getVendorGPUBuffer(), DIRECT_LIGHT_BIND_INDEX);
+	context.bindBufferBase(directLightBuffer.getVendorGPUBuffer(), "DirectLightBuffer"); // DIRECT_LIGHT_BIND_INDEX
 	if (directLightData.pointLightCount > 0)
-		context.bindBufferBase(pointLightBuffer.getVendorGPUBuffer(), POINT_LIGHT_BIND_INDEX);
+		context.bindBufferBase(pointLightBuffer.getVendorGPUBuffer(), "pointLights"); // POINT_LIGHT_BIND_INDEX
 }
 
 void LightRenderData::clean()

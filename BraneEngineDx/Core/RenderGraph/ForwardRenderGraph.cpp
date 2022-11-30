@@ -7,17 +7,8 @@ bool ForwardRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 {
 	if (cmd.sceneData)
 		sceneDatas.insert(cmd.sceneData);
-	return meshPass.commandList->setRenderCommand(cmd);
-}
-
-void ForwardRenderGraph::setRenderCommandList(RenderCommandList& commandList)
-{
-	meshPass.commandList = &commandList;
-}
-
-void ForwardRenderGraph::setMainRenderTarget(RenderTarget& renderTarget)
-{
-	resolvePass.renderTarget = &renderTarget;
+	shadowDepthPass.setRenderCommand(cmd);
+	return meshPass.commandList.setRenderCommand(cmd);
 }
 
 void ForwardRenderGraph::setImGuiDrawData(ImDrawData* drawData)
@@ -35,10 +26,11 @@ void ForwardRenderGraph::prepare()
 {
 	for (auto sceneData : sceneDatas)
 		sceneData->create();
+	shadowDepthPass.prepare();
 	meshPass.prepare();
-	resolvePass.prepare();
 	for (auto pass : passes)
 		pass->prepare();
+	blitPass.prepare();
 	imGuiPass.prepare();
 }
 
@@ -46,10 +38,14 @@ void ForwardRenderGraph::execute(IRenderContext& context)
 {
 	for (auto sceneData : sceneDatas)
 		sceneData->upload();
+	shadowDepthPass.execute(context);
 	meshPass.execute(context);
-	resolvePass.execute(context);
+	for (auto sceneData : sceneDatas)
+		for (auto& cameraRenderData : sceneData->cameraRenderDatas)
+			context.resolveMultisampleFrame(cameraRenderData->renderTarget->getVendorRenderTarget());
 	for (auto pass : passes)
 		pass->execute(context);
+	blitPass.execute(context);
 	imGuiPass.execute(context);
 
 	/*----- Vendor swap -----*/
@@ -65,12 +61,13 @@ void ForwardRenderGraph::reset()
 		sceneData->reset();
 	sceneDatas.clear();
 
+	shadowDepthPass.reset();
 	meshPass.reset();
-	resolvePass.reset();
 	for (auto pass : passes) {
 		pass->reset();
 		pass->renderGraph = NULL;
 	}
+	blitPass.reset();
 	imGuiPass.reset();
 	passes.clear();
 }

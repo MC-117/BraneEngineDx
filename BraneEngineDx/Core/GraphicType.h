@@ -1,6 +1,15 @@
 #pragma once
 #include <iostream>
 
+enum TexDimension
+{
+	TD_Default = -1,
+	TD_Single = 0,
+	TD_Array = 1,
+	TD_Cube = 2,
+	TD_CubeArray = 3
+};
+
 enum TexWrapType
 {
 	TW_Repeat,
@@ -38,10 +47,39 @@ enum TexInternalType
 	TIT_RGBA8_I
 };
 
+enum CubeFace
+{
+	CF_Front,
+	CF_Back,
+	CF_Left,
+	CF_Right,
+	CF_Top,
+	CF_Bottom,
+	CF_Faces
+};
+
 struct MipOption
 {
+	TexDimension dimension = TD_Default;
 	unsigned int detailMip = 0;
 	unsigned int mipCount = 0;
+	unsigned int arrayBase = 0;
+	unsigned int arrayCount = 1;
+};
+
+struct RTOption
+{
+	unsigned int mipLevel = 0;
+	unsigned int arrayBase = 0;
+	unsigned int arrayCount = 1;
+	bool multisample = false;
+};
+
+struct RWOption
+{
+	unsigned int mipLevel = 0;
+	unsigned int arrayBase = 0;
+	unsigned int arrayCount = 1;
 };
 
 enum GPUBufferType

@@ -273,7 +273,7 @@ void Live2DRender::render(RenderInfo& info)
         isCulling = model->GetDrawableCulling(drawableIndex) != 0;
 
         if (_is3DMode) {
-            info.camera->cameraRender.renderTarget.bindFrame();
+            info.camera->cameraRender.getRenderTarget().bindFrame();
         }
         else
             drawRenderTarget.bindFrame();
@@ -289,7 +289,7 @@ Matrix4f Live2DRender::getTransformMatrix() const
 
 IRendering::RenderType Live2DRender::getRenderType() const
 {
-	return IRendering::RenderType::PreProcess;
+	return IRendering::RenderType::Normal;
 }
 
 Shape* Live2DRender::getShape() const

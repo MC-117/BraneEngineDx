@@ -4,11 +4,11 @@
 #include "CameraData.h"
 #include "../GPUBuffer.h"
 
-class Camera;
+class CameraRender;
 
 struct CameraRenderData : public IRenderData
 {
-	Camera* camera;
+	CameraRender* cameraRender;
 	CameraData data;
 	vector<Color> clearColors;
 	int renderOrder;

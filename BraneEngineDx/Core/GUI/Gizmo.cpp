@@ -3,6 +3,8 @@
 #include "../Engine.h"
 #include "../Editor/Editor.h"
 #include "../Editor/CameraEditor.h"
+#include "../Mesh.h"
+#include "../RenderCore/RenderCore.h"
 
 Gizmo::Gizmo()
 {
@@ -730,6 +732,20 @@ bool Gizmo::drawHandle(void* id, HandleType type, TransformSpace space, Matrix4f
 	return operated;
 }
 
+bool Gizmo::drawMesh(MeshPart& meshPart, Material& material, int instanceBase, int instanceCount)
+{
+	if (instanceBase < 0)
+		return false;
+	meshes.push_back({ &meshPart, &material, Matrix4f::Identity(), instanceBase, instanceCount });
+	return true;
+}
+
+bool Gizmo::drawMesh(MeshPart& meshPart, Material& material, const Matrix4f& transformMat)
+{
+	meshes.push_back({ &meshPart, &material, transformMat, -1, 1 });
+	return true;
+}
+
 void Gizmo::setCameraControl(CameraControlMode mode, float transitionSensitivity, float rotationSensitivity, float distanceSensitivity)
 {
 	cameraControlMode = mode;
@@ -902,7 +918,7 @@ void clip(Vector3f& p0, const Vector3f p1, const Vector3f& camDir, const Vector3
 	p0 += a * t;
 }
 
-void Gizmo::onRender()
+void Gizmo::onRender2D()
 {
 	if (camera == NULL)
 		return;
@@ -1062,4 +1078,24 @@ void Gizmo::onRender()
 			ImColor(icon.color.r, icon.color.g, icon.color.b, icon.color.a));
 	}
 	list->PopClipRect();
+}
+
+void Gizmo::onRender3D(RenderInfo& info)
+{
+	for (auto& draw : meshes) {
+		if (draw.instanceID < 0) {
+			draw.instanceID = info.sceneData->setMeshTransform(draw.transformMat);
+			draw.instanceCount = 1;
+		}
+		info.sceneData->setMeshPartTransform(draw.meshPart, draw.material, draw.instanceID);
+		MeshRenderCommand cmd;
+		cmd.mesh = draw.meshPart;
+		cmd.material = draw.material;
+		cmd.sceneData = info.sceneData;
+		cmd.instanceID = draw.instanceID;
+		cmd.instanceIDCount = draw.instanceCount;
+		cmd.hasShadow = false;
+		info.renderGraph->setRenderCommand(cmd);
+	}
+	meshes.clear();
 }

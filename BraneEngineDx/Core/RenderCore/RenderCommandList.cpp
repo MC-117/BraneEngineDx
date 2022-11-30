@@ -3,15 +3,32 @@
 #include "../Render.h"
 #include "../DirectLight.h"
 #include "../PointLight.h"
+#include "../ReflectionCapture.h"
 #include "../Console.h"
 #include "../IVendor.h"
 #include "../Engine.h"
 #include "../Utility/RenderUtility.h"
 
+void SceneRenderData::setCamera(Render* cameraRender)
+{
+	CameraRender* _cameraRender = dynamic_cast<CameraRender*>(cameraRender);
+	if (_cameraRender) {
+		if (_cameraRender->isMainCameraRender())
+			cameraRenderDatas.insert(cameraRenderDatas.begin(), _cameraRender->getRenderData());
+		else
+			cameraRenderDatas.push_back(_cameraRender->getRenderData());
+	}
+}
+
 void SceneRenderData::setLight(Render* lightRender)
 {
 	if (lightRender->getRenderType() == IRendering::Light)
 		lightDataPack.setLight((Light*)lightRender);
+}
+
+int SceneRenderData::setReflectionCapture(Render* captureRender)
+{
+	return reflectionProbeDataPack.setProbe(dynamic_cast<ReflectionCapture*>(captureRender));
 }
 
 unsigned int SceneRenderData::setMeshTransform(const Matrix4f& transformMat)
@@ -109,6 +126,14 @@ void SceneRenderData::create()
 	meshTransformDataPack.create();
 	particleDataPack.create();
 	lightDataPack.create();
+	reflectionProbeDataPack.create();
+	for (auto& cameraRenderData : cameraRenderDatas) {
+		if (cameraRenderData->usedFrame < (long long)Time::frames()) {
+			cameraRenderData->create();
+			cameraRenderData->upload();
+			cameraRenderData->usedFrame = Time::frames();
+		}
+	}
 }
 
 void SceneRenderData::reset()
@@ -116,6 +141,8 @@ void SceneRenderData::reset()
 	meshTransformDataPack.clean();
 	particleDataPack.clean();
 	lightDataPack.clean();
+	reflectionProbeDataPack.clean();
+	cameraRenderDatas.clear();
 }
 
 void SceneRenderData::release()
@@ -123,6 +150,7 @@ void SceneRenderData::release()
 	meshTransformDataPack.release();
 	particleDataPack.release();
 	lightDataPack.release();
+	reflectionProbeDataPack.release();
 }
 
 void SceneRenderData::upload()
@@ -130,6 +158,7 @@ void SceneRenderData::upload()
 	meshTransformDataPack.upload();
 	particleDataPack.upload();
 	lightDataPack.upload();
+	reflectionProbeDataPack.upload();
 }
 
 void SceneRenderData::bind(IRenderContext& context)
@@ -137,6 +166,11 @@ void SceneRenderData::bind(IRenderContext& context)
 	meshTransformDataPack.bind(context);
 	particleDataPack.bind(context);
 	lightDataPack.bind(context);
+	reflectionProbeDataPack.bind(context);
+}
+
+RenderCommandExecutionInfo::RenderCommandExecutionInfo(IRenderContext& context) : context(context)
+{
 }
 
 bool RenderCommandList::addRenderTask(const IRenderCommand& cmd, RenderTask& task)
@@ -184,26 +218,20 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, ShaderFeatur
 	if (!shader->init())
 		return false;
 
-	CameraRenderData* cameraRenderData = dynamic_cast<CameraRenderData*>(cmd.camera->getRenderData());
-	if (cameraRenderData == NULL)
-		return false;
-	if (cameraRenderData->usedFrame < (long long)Time::frames()) {
-		cameraRenderData->create();
-		cameraRenderData->usedFrame = Time::frames();
-	}
-
 	MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(cmd.material->getRenderData());
 	if (materialRenderData == NULL)
 		return false;
 	if (materialRenderData->usedFrame < (long long)Time::frames()) {
 		materialRenderData->program = shader;
 		materialRenderData->create();
+		materialRenderData->upload();
 		materialRenderData->usedFrame = Time::frames();
 	}
 
 	for (auto binding : cmd.bindings) {
 		if (binding->usedFrame < (long long)Time::frames()) {
 			binding->create();
+			binding->upload();
 			binding->usedFrame = Time::frames();
 		}
 	}
@@ -217,12 +245,18 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, ShaderFeatur
 	task.sceneData = cmd.sceneData;
 	task.shaderProgram = shader;
 	task.renderMode = cmd.getRenderMode();
-	task.cameraData = cameraRenderData;
 	task.materialData = materialRenderData;
 	task.meshData = meshData;
 	task.extraData = cmd.bindings;
 
-	return addRenderTask(cmd, task);
+	bool success = true;
+
+	for (auto& cameraRenderData : cmd.sceneData->cameraRenderDatas) {
+		task.cameraData = cameraRenderData;
+		success &= addRenderTask(cmd, task);
+	}
+
+	return success;
 }
 
 bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, vector<ShaderFeature> extraFeatures)
@@ -230,17 +264,10 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, vector<Shade
 	if (!cmd.isValid())
 		return false;
 
-	CameraRenderData* cameraRenderData = dynamic_cast<CameraRenderData*>(cmd.camera->getRenderData());
-	if (cameraRenderData == NULL)
-		return false;
-	if (cameraRenderData->usedFrame < (long long)Time::frames()) {
-		cameraRenderData->create();
-		cameraRenderData->usedFrame = Time::frames();
-	}
-
 	for (auto binding : cmd.bindings) {
 		if (binding->usedFrame < (long long)Time::frames()) {
 			binding->create();
+			binding->upload();
 			binding->usedFrame = Time::frames();
 		}
 	}
@@ -274,6 +301,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, vector<Shade
 		if (materialRenderData->usedFrame < (long long)Time::frames()) {
 			materialRenderData->program = shader;
 			materialRenderData->create();
+			materialRenderData->upload();
 			materialRenderData->usedFrame = Time::frames();
 		}
 
@@ -282,12 +310,14 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, vector<Shade
 		task.sceneData = cmd.sceneData;
 		task.shaderProgram = shader;
 		task.renderMode = cmd.getRenderMode();
-		task.cameraData = cameraRenderData;
 		task.materialData = materialRenderData;
 		task.meshData = meshData;
 		task.extraData = cmd.bindings;
 
-		success &= addRenderTask(cmd, task);
+		for (auto& cameraRenderData : cmd.sceneData->cameraRenderDatas) {
+			task.cameraData = cameraRenderData;
+			success &= addRenderTask(cmd, task);
+		}
 	}
 
 	return success;
@@ -299,45 +329,44 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, vector<Shade
 Deferred | Light | Depth Pre-Pass | Geomtry | Alpha Geomtry | Pixel  |            |             |         |
 */
 
-void RenderCommandList::prepareCommand()
+void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 {
-}
-
-void RenderCommandList::excuteCommand()
-{
-	IVendor& vendor = VendorManager::getInstance().getVendor();
-	IRenderContext& context = *vendor.getDefaultRenderContext();
-
-	Timer timer;
-
-	timer.record("Upload");
+	IRenderContext& context = executionInfo.context;
 	RenderTaskContext taskContext;
-	Time setupTime, uploadBaseTime, uploadInsTime, execTime;
+	Time setupTime, uploadInsTime, execTime;
 	for (auto item : taskSet) {
 		RenderTask& task = *item;
 		task.age++;
-		if (task.renderPack == NULL)
+		if (task.age > 1)
 			continue;
 		Time t = Time::now();
 
-		if (taskContext.sceneData != task.sceneData) {
-			taskContext.sceneData = task.sceneData;
-
-			task.sceneData->upload();
-			task.sceneData->bind(context);
-		}
+		bool cameraDataSwitch = false;
+		bool shaderSwitch = false;
 
 		if (taskContext.cameraData != task.cameraData) {
 			taskContext.cameraData = task.cameraData;
 
 			IRenderTarget* renderTarget = task.cameraData->renderTarget->getVendorRenderTarget();
 			context.bindFrame(renderTarget);
-			context.clearFrameColors(task.cameraData->clearColors);
-			context.clearFrameDepth(1);
+			if (executionInfo.requireClearFrame) {
+				context.clearFrameColors(task.cameraData->clearColors);
+				context.clearFrameDepth(1);
+			}
 			context.setViewport(0, 0, task.cameraData->data.viewSize.x(), task.cameraData->data.viewSize.y());
 
-			task.cameraData->upload();
 			task.cameraData->bind(context);
+
+			if (executionInfo.outputTextures) {
+				for (auto& tex : renderTarget->desc.textureList) {
+					executionInfo.outputTextures->push_back(make_pair(tex.name, tex.texture));
+				}
+				if (renderTarget->desc.depthTexure) {
+					executionInfo.outputTextures->push_back(make_pair("depthMap", renderTarget->desc.depthTexure));
+				}
+			}
+
+			cameraDataSwitch = true;
 
 			setupTime = setupTime + Time::now() - t;
 		}
@@ -347,7 +376,17 @@ void RenderCommandList::excuteCommand()
 			taskContext.shaderProgram = task.shaderProgram;
 			context.bindShaderProgram(task.shaderProgram);
 
-			uploadBaseTime = uploadBaseTime + Time::now() - t;
+			shaderSwitch = true;
+			task.sceneData->bind(context);
+		}
+
+		if (cameraDataSwitch || shaderSwitch)
+			task.cameraData->bind(context);
+
+		if (taskContext.sceneData != task.sceneData || shaderSwitch) {
+			taskContext.sceneData = task.sceneData;
+
+			task.sceneData->bind(context);
 		}
 
 		if (taskContext.renderMode != task.renderMode) {
@@ -387,7 +426,6 @@ void RenderCommandList::excuteCommand()
 		}
 
 		for (auto data : task.extraData) {
-			data->upload();
 			data->bind(context);
 		}
 
@@ -403,30 +441,30 @@ void RenderCommandList::excuteCommand()
 		execTime = execTime + Time::now() - t;
 	}
 
-	timer.record("Execute");
-	/*Console::getTimer("RCMDL") = timer;
-	Timer& execTimer = Console::getTimer("RCMDL Exec");
-	execTimer.setIntervalMode(true);
-	execTimer.reset();
-	execTimer.record("Setup", setupTime);
-	execTimer.record("Base", uploadBaseTime);
-	execTimer.record("Instance", uploadInsTime);
-	execTimer.record("Exec", execTime);*/
+	context.setCullState(CullType::Cull_Back);
+
+	if (executionInfo.timer) {
+		executionInfo.timer->setIntervalMode(true);
+		executionInfo.timer->reset();
+		executionInfo.timer->record("Setup", setupTime);
+		executionInfo.timer->record("Instance", uploadInsTime);
+		executionInfo.timer->record("Exec", execTime);
+	}
 }
 
 void RenderCommandList::resetCommand()
 {
-	for (auto b = taskSet.begin(); b != taskSet.end();) {
-		RenderTask* task = *b;
-		delete task->renderPack;
-		task->renderPack = NULL;
-		if (task->age > 2) {
-			//taskMap.erase(task->hashCode);
-			b = taskSet.erase(b);
-			delete task;
-		}
-		else b++;
-	}
-	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
-	context.reset();
+	//for (auto b = taskSet.begin(); b != taskSet.end();) {
+	//	RenderTask* task = *b;
+	//	if (task->age > 2) {
+	//		//taskMap.erase(task->hashCode);
+	//		if (task->renderPack) {
+	//			delete task->renderPack;
+	//			task->renderPack = NULL;
+	//		}
+	//		b = taskSet.erase(b);
+	//		delete task;
+	//	}
+	//	else b++;
+	//}
 }

@@ -1,5 +1,6 @@
 #include "Core\Engine.h"
 #include "Core\Console.h"
+#include "Core\DirectLight.h"
 #include "Core\GUI\EditorWindow.h"
 #include "Core\GUI\ESCMenu.h"
 #include "Core\GUI\DebugLogWindow.h"
@@ -20,6 +21,7 @@
 
 VehicleActor* loadCubeVehicle(float unit = 2)
 {
+	World& world = *Engine::getCurrentWorld();
 	Material* gridM = getAssetByPath<Material>("Content/GridM.imat");
 	SerializationInfo* tpCamAsset = getAssetByPath<SerializationInfo>("Content/CubeVehicle/CubeVehicleTPCameraPack.asset");
 	SerializationInfo* fpCamAsset = getAssetByPath<SerializationInfo>("Content/CubeVehicle/CubeVehicleFPCameraPack.asset");
@@ -68,6 +70,7 @@ VehicleActor* loadCubeVehicle(float unit = 2)
 
 VehicleActor* loadVehicle()
 {
+	World& world = *Engine::getCurrentWorld();
 	Mesh* bodyMesh = getAssetByPath<Mesh>("Content/Vehicle/VehicleBody.fbx");
 	Mesh* FLWMesh = getAssetByPath<Mesh>("Content/Vehicle/VehicleFLW.fbx");
 	Mesh* FRWMesh = getAssetByPath<Mesh>("Content/Vehicle/VehicleFRW.fbx");
@@ -139,6 +142,7 @@ VehicleActor* loadVehicle()
 
 void InitialWorld()
 {
+	World& world = *Engine::getCurrentWorld();
 	//world.input.setCursorHidden(true);
 
 	//world.physicalWorld.setPause(true);

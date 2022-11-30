@@ -6,6 +6,7 @@
 #include "Core/Timeline/TimelineWindow.h"
 
 void InitialTool() {
+	World& world = *Engine::getCurrentWorld();
 	Material& pbr_mat = *getAssetByPath<Material>("Engine/Shaders/PBR.mat");
 	ToolShelf& toolShelf = *new ToolShelf("ToolShelf", true);
 	toolShelf.showCloseButton = false;

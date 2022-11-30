@@ -41,7 +41,6 @@ public:
 	virtual Material* getMaterial(unsigned int index = 0);
 	virtual bool getMaterialEnable(unsigned int index = 0);
 	virtual Shader* getShader() const;
-	virtual int getRenderResource(vector<RenderResource>& resources);
 protected:
 	virtual void remapMaterial();
 };

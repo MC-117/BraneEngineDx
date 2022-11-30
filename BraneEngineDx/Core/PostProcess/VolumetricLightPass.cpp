@@ -3,6 +3,7 @@
 #include "../Console.h"
 #include "../Camera.h"
 #include "../GUI/UIControl.h"
+#include "../RenderCore/RenderCore.h"
 
 VolumetricLightPass::VolumetricLightPass(const string& name, Material* material)
 	: PostProcessPass(name, material)
@@ -37,8 +38,8 @@ void VolumetricLightPass::execute(IRenderContext& context)
 	// Pass 0 VolumetricLight
 	context.bindFrame(passARenderTarget.getVendorRenderTarget());
 
-	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
-	context.bindTexture((ITexture*)resource->lightDepthTexture->getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
+	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot, temp1MapSamplerSlot);
+	context.bindTexture((ITexture*)directShadowMap->getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot, temp2MapSamplerSlot);
 
 	context.setDrawInfo(0, 4, 0);
 
@@ -49,8 +50,8 @@ void VolumetricLightPass::execute(IRenderContext& context)
 	// Pass 1 BlurX
 	context.bindFrame(passBRenderTarget.getVendorRenderTarget());
 
-	context.bindTexture((ITexture*)passAMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
-	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
+	context.bindTexture((ITexture*)passAMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot, temp1MapSamplerSlot);
+	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot, temp2MapSamplerSlot);
 
 	context.setDrawInfo(1, 4, 0);
 
@@ -59,11 +60,11 @@ void VolumetricLightPass::execute(IRenderContext& context)
 	context.postProcessCall();
 
 	// Pass 2 BlurY
-	context.bindTexture(NULL, Fragment_Shader_Stage, temp1MapSlot);
+	context.bindTexture(NULL, Fragment_Shader_Stage, temp1MapSlot, temp1MapSamplerSlot);
 	context.bindFrame(passARenderTarget.getVendorRenderTarget());
 
-	context.bindTexture((ITexture*)passBMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
-	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
+	context.bindTexture((ITexture*)passBMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot, temp1MapSamplerSlot);
+	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot, temp2MapSamplerSlot);
 
 	context.setDrawInfo(2, 4, 0);
 
@@ -74,8 +75,8 @@ void VolumetricLightPass::execute(IRenderContext& context)
 	// Pass 3 Add
 	context.bindFrame(resource->screenRenderTarget->getVendorRenderTarget());
 
-	context.bindTexture((ITexture*)passAMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot);
-	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot);
+	context.bindTexture((ITexture*)passAMap.getVendorTexture(), Fragment_Shader_Stage, temp1MapSlot, temp1MapSamplerSlot);
+	context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, temp2MapSlot, temp2MapSamplerSlot);
 
 	context.setDrawInfo(3, 4, 0);
 
@@ -93,7 +94,11 @@ bool VolumetricLightPass::mapMaterialParameter(RenderInfo& info)
 	if (material == NULL)
 		material = getAssetByPath<Material>("Engine/Shaders/PostProcess/VolumetricLightFS.mat");
 	if (material == NULL || resource == NULL || resource->screenRenderTarget == NULL ||
-		resource->depthTexture == NULL || resource->lightDepthTexture == NULL)
+		resource->depthTexture == NULL || resource->sceneRenderData == NULL ||
+		resource->sceneRenderData->lightDataPack.shadowTarget == NULL)
+		return false;
+	directShadowMap = resource->sceneRenderData->lightDataPack.shadowTarget->getDepthTexture();
+	if (directShadowMap == NULL)
 		return false;
 	materialRenderData = material->getRenderData();
 	return materialRenderData;
@@ -116,8 +121,10 @@ void VolumetricLightPass::render(RenderInfo& info)
 		program->init();
 
 		temp1MapSlot = program->getAttributeOffset("temp1Map").offset;
+		temp1MapSamplerSlot = program->getAttributeOffset("temp1MapSampler").offset;
 		temp2MapSlot = program->getAttributeOffset("temp2Map").offset;
-		cameraRenderData = info.camera->getRenderData();
+		temp2MapSamplerSlot = program->getAttributeOffset("temp2MapSampler").offset;
+		cameraRenderData = resource->cameraRenderData;
 
 		if (temp1MapSlot >= 0 && temp2MapSlot >= 0 && cameraRenderData)
 			info.renderGraph->addPass(*this);

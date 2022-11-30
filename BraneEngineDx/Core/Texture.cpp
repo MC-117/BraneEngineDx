@@ -41,6 +41,11 @@ int Texture::getChannel() const
 	return 0;
 }
 
+int Texture::getArrayCount() const
+{
+	return 1;
+}
+
 int Texture::getMipLevels() const
 {
 	return 1;
@@ -85,10 +90,8 @@ Image::Image(const Image& img)
 {
 	texture = img.texture;
 	level = img.level;
-	layered = img.layered;
-	layer = img.layer;
-	access = img.access;
-	format = img.format;
+	arrayBase = img.arrayBase;
+	arrayCount = img.arrayCount;
 
 	binding = img.binding;
 }
@@ -97,10 +100,8 @@ Image& Image::operator=(const Image& img)
 {
 	texture = img.texture;
 	level = img.level;
-	layered = img.layered;
-	layer = img.layer;
-	access = img.access;
-	format = img.format;
+	arrayBase = img.arrayBase;
+	arrayCount = img.arrayCount;
 	if (binding == -1)
 		binding = img.binding;
 	return *this;

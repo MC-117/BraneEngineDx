@@ -29,6 +29,8 @@ Texture * PostProcessResource::getTexture(const string & name)
 
 void PostProcessResource::reset()
 {
+	sceneRenderData = NULL;
+	cameraRenderData = NULL;
 	screenTexture = NULL;
 	screenRenderTarget = NULL;
 	depthTexture = NULL;

@@ -297,7 +297,7 @@ DX11ShaderProgram::AttributeDesc DX11ShaderProgram::getAttributeOffset(const str
 		}
 	}
 	if (desc.offset == -1)
-		for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e; b++) {
+		for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e && desc.offset == -1; b++) {
 			DX11ShaderStage* dss = (DX11ShaderStage*)b->second;
 			if (dss->dx11ShaderReflector == NULL)
 				continue;
@@ -313,11 +313,8 @@ DX11ShaderProgram::AttributeDesc DX11ShaderProgram::getAttributeOffset(const str
 					}
 				}
 			}
-			if (desc.offset != -1) {
-				attributes.emplace(make_pair(name, desc));
-				break;
-			}
 		}
+	attributes.emplace(make_pair(name, desc));
 	return desc;
 }
 

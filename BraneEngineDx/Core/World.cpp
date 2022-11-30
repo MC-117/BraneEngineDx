@@ -110,7 +110,7 @@ void World::afterTick()
 	iter.reset();
 	if (!guiOnly) {
 		while (iter.next())
-			iter.current().prerender(renderPool.sceneData);
+			iter.current().prerender(*renderPool.sceneData);
 		timer.record("PreRender");
 	}
 
@@ -238,6 +238,7 @@ void World::switchCamera(Camera & camera)
 		this->camera->setActive(false);
 	this->camera = &camera;
 	camera.setActive(true);
+	camera.cameraRender.setMainCameraRender();
 	camera.setSize(screenSize);
 	renderPool.switchCamera(camera);
 }
@@ -248,6 +249,7 @@ void World::switchToDefaultCamera()
 		camera->setActive(false);
 	camera = &defaultCamera;
 	camera->setActive(true);
+	camera->cameraRender.setMainCameraRender();
 	defaultCamera.setSize(screenSize);
 	renderPool.switchToDefaultCamera();
 }

@@ -70,7 +70,7 @@ void ParticleRenderData::upload()
 
 void ParticleRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(particleBuffer.getVendorGPUBuffer(), PARTICLE_BIND_INDEX);
+	context.bindBufferBase(particleBuffer.getVendorGPUBuffer(), "Particles"); // PARTICLE_BIND_INDEX
 }
 
 void ParticleRenderData::clean()
@@ -83,7 +83,7 @@ void ParticleRenderData::clean()
 
 bool ParticleRenderCommand::isValid() const
 {
-	return sceneData && material && !material->isNull() && camera && particles && (mesh == NULL || (mesh && mesh->isValid()));
+	return sceneData && material && !material->isNull() && particles && (mesh == NULL || (mesh && mesh->isValid()));
 }
 
 Enum<ShaderFeature> ParticleRenderCommand::getShaderFeature() const
@@ -96,6 +96,11 @@ Enum<ShaderFeature> ParticleRenderCommand::getShaderFeature() const
 RenderMode ParticleRenderCommand::getRenderMode() const
 {
 	return RenderMode(material->getRenderOrder(), 0, 0);
+}
+
+bool ParticleRenderCommand::canCastShadow() const
+{
+	return false;
 }
 
 IRenderPack* ParticleRenderCommand::createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const
@@ -123,7 +128,6 @@ void ParticleRenderPack::excute(IRenderContext& context, RenderTaskContext& task
 
 	if (taskContext.materialData != materialData) {
 		taskContext.materialData = materialData;
-		materialData->upload();
 		materialData->bind(context);
 	}
 

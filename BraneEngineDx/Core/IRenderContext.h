@@ -24,6 +24,7 @@ public:
 	virtual void reset() = 0;
 	virtual void release() = 0;
 
+	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, const string& name) = 0;
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, unsigned int index) = 0;
 	virtual unsigned int uploadBufferData(IGPUBuffer* buffer, unsigned int size, void* data) = 0;
 	virtual unsigned int uploadBufferSubData(IGPUBuffer* buffer, unsigned int first, unsigned int size, void* data) = 0;
@@ -46,7 +47,7 @@ public:
 	virtual void bindMaterialImages(IMaterial* material) = 0;
 	virtual void bindMaterialBuffer(IMaterial* material) = 0;
 
-	virtual void bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index, const MipOption& mipOption = MipOption()) = 0;
+	virtual void bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index, unsigned int sampleIndex, const MipOption& mipOption = MipOption()) = 0;
 	virtual void bindImage(const Image& image, unsigned int index) = 0;
 
 	virtual void bindTexture(ITexture* texture, const string& name, const MipOption& mipOption = MipOption()) = 0;

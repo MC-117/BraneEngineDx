@@ -5,7 +5,7 @@
 class MeshPass : public RenderPass
 {
 public:
-	RenderCommandList* commandList = NULL;
+	RenderCommandList commandList;
 	bool requireClearFrame = true;
 
 	virtual void prepare();

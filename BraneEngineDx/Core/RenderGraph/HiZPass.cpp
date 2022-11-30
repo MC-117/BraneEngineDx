@@ -26,7 +26,9 @@ void HiZPass::execute(IRenderContext& context)
 
 	Vector3u localSize = material->getLocalSize();
 
-	MipOption mipOption = { 0, 1 };
+	MipOption mipOption;
+	mipOption.detailMip = 0;
+	mipOption.mipCount = 1;
 
 	const char* srcDepth = "srcDepth";
 	const char* dstDepth = "dstDepth";

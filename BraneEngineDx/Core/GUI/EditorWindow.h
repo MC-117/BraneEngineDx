@@ -4,6 +4,8 @@
 
 #include "InspectorWindow.h"
 
+class Mesh;
+
 class EditorWindow : public UIWindow
 {
 public:
@@ -47,6 +49,9 @@ protected:
 	float terrainUnit = 500;
 	float terrainHeight = 500;
 	Vector2u terrainGrid = { 100, 100 };
+
+	// ReflectionProbe
+	float reflectionProbeRadius = 10;
 };
 
 #endif // !_EDITORWINDOW_H_

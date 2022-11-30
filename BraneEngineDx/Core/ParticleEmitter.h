@@ -3,6 +3,7 @@
 #define _PARTICLEEMITTER_H_
 
 #include "Render.h"
+#include "Mesh.h"
 
 class ParticleEmitter : public Serializable
 {

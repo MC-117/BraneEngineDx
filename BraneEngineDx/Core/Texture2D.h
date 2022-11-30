@@ -30,7 +30,7 @@ public:
 	virtual void* getVendorTexture() const;
 
 	void setAutoGenMip(bool value);
-
+	void setViewAsArray(bool value);
 	void setTextureInfo(const Texture2DInfo& info);
 
 	virtual bool assign(ITexture2D* venderTex);
@@ -55,7 +55,6 @@ public:
 	static Texture2D defaultLUTTex;
 
 	static bool loadDefaultTexture();
-	static unsigned char* loadImageBytes(const char* file, int* w, int* h, int* c);
 protected:
 	bool readOnly = false;
 	Texture2DDesc desc;

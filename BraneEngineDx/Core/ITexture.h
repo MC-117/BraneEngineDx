@@ -15,6 +15,7 @@ struct Texture2DInfo
 	Color borderColor = { 0, 0, 0, 0 };
 	unsigned int sampleCount = 1;
 	CPUAccessFlag cpuAccessFlag = CAF_None;
+	TexDimension dimension = TD_Single;
 
 	Texture2DInfo(
 		TexWrapType wrapSType = TW_Repeat,
@@ -24,7 +25,8 @@ struct Texture2DInfo
 		TexInternalType internalType = TIT_Default,
 		Color borderColor = { 0, 0, 0, 0 },
 		unsigned int sampleCount = 1,
-		CPUAccessFlag cpuAccessFlag = CAF_None) :
+		CPUAccessFlag cpuAccessFlag = CAF_None,
+		TexDimension dimension = TD_Single) :
 		wrapSType(wrapSType),
 		wrapTType(wrapTType),
 		minFilterType(minFilterType),
@@ -32,7 +34,8 @@ struct Texture2DInfo
 		internalType(internalType),
 		borderColor(borderColor),
 		sampleCount(sampleCount),
-		cpuAccessFlag(cpuAccessFlag) { }
+		cpuAccessFlag(cpuAccessFlag),
+		dimension(dimension) { }
 
 	Texture2DInfo(const Texture2DInfo& info)
 	{
@@ -43,13 +46,14 @@ struct Texture2DInfo
 		internalType = info.internalType;
 		borderColor = info.borderColor;
 		cpuAccessFlag = info.cpuAccessFlag;
+		dimension = info.dimension;
 	}
 };
 
 struct TextureDesc
 {
 	unsigned long long textureHandle = 0;
-	int width = 0, height = 0, channel = 0;
+	int width = 0, height = 0, channel = 0, arrayCount = 1;
 	bool needUpdate = false;
 };
 

@@ -3,6 +3,7 @@
 #include "../Asset.h"
 #include "../Editor/Editor.h"
 #include "../GUI/GUIUtility.h"
+#include "../RenderCore/RenderCore.h"
 
 UVViewer::UVViewer(string name, bool defaultShow)
 	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
@@ -125,7 +126,6 @@ void UVViewer::onRenderWindow(GUIRenderInfo& info)
 
 	MeshRenderCommand command;
 	command.sceneData = info.sceneData;
-	command.camera = &camera;
 	command.material = uvMaterial;
 	command.mesh = selectMeshPart;
 	command.isNonTransformIndex = true;

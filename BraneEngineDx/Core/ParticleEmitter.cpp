@@ -1,6 +1,7 @@
 #include "ParticleEmitter.h"
 #include "Asset.h"
 #include "Engine.h"
+#include "RenderCore/RenderCore.h"
 
 SerializeInstance(ParticleEmitter);
 
@@ -451,7 +452,6 @@ void ParticleRender::render(RenderInfo & info)
 		if (b->material != NULL) {
 			ParticleRenderCommand command;
 			command.sceneData = info.sceneData;
-			command.camera = info.camera;
 			command.material = b->material;
 			command.mesh = NULL;
 			command.particles = &b->particles;

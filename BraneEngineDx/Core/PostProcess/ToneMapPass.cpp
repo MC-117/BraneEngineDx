@@ -2,6 +2,7 @@
 #include "../Asset.h"
 #include "../Console.h"
 #include "../GUI/UIControl.h"
+#include "../RenderCore/RenderCore.h"
 
 ToneMapPass::ToneMapPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -40,7 +41,7 @@ void ToneMapPass::execute(IRenderContext& context)
 		context.dispatchCompute(localSize.x(), localSize.y(), 1);
 	}
 	else {
-		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, imageMapSlot);
+		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, imageMapSlot, imageMapSamplerSlot);
 		
 		context.bindFrame(screenRenderTarget.getVendorRenderTarget());
 
@@ -80,11 +81,13 @@ void ToneMapPass::render(RenderInfo & info)
 	program->init();
 	if (program->isComputable()) {
 		imageMapSlot = program->getAttributeOffset("imageMap").offset;
+		imageMapSamplerSlot = program->getAttributeOffset("imageMapSampler").offset;
 		if (imageMapSlot >= 0)
 			info.renderGraph->addPass(*this);
 	}
 	else {
 		imageMapSlot = program->getAttributeOffset("screenMap").offset;
+		imageMapSamplerSlot = program->getAttributeOffset("screenMapSampler").offset;
 		if (imageMapSlot >= 0)
 			info.renderGraph->addPass(*this);
 	}

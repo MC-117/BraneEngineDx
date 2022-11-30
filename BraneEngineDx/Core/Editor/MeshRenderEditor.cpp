@@ -1,4 +1,5 @@
 #include "MeshRenderEditor.h"
+#include "../SkeletonMesh.h"
 #include <fstream>
 
 RegistEditor(MeshRender);

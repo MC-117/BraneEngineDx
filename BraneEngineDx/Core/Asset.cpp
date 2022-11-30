@@ -8,6 +8,7 @@
 #include "Script/PythonScript.h"
 #include "Transform.h"
 #include "Texture2D.h"
+#include "TextureCube.h"
 #include "AudioSource.h"
 #include "Geometry.h"
 
@@ -381,6 +382,53 @@ void * Texture2DAssetInfo::load(const string& name, const string & path, const v
 }
 
 AssetInfo & Texture2DAssetInfo::getInstance()
+{
+	return assetInfo;
+}
+
+TextureCubeAssetInfo TextureCubeAssetInfo::assetInfo;
+
+TextureCubeAssetInfo::TextureCubeAssetInfo() : AssetInfo("TextureCube")
+{
+	properties = { "isStandard", "wrapSType", "wrapTType", "minFilterType", "magFilterType" };
+}
+
+void* TextureCubeAssetInfo::load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const
+{
+	bool isStd;
+	Texture2DInfo info;
+	if (settings[0] == "true")
+		isStd = true;
+	else if (settings[0] == "false")
+		isStd = false;
+	else
+		return NULL;
+	if (settings[1] == "TW_Repeat")
+		info.wrapSType = TW_Repeat;
+	else
+		info.wrapSType = TW_Repeat;
+	if (settings[2] == "TW_Repeat")
+		info.wrapTType = TW_Repeat;
+	else
+		info.wrapTType = TW_Repeat;
+	if (settings[3] == "TF_Linear")
+		info.minFilterType = TF_Linear;
+	else
+		info.minFilterType = TF_Linear_Mip_Linear;
+	if (settings[4] == "TF_Linear")
+		info.magFilterType = TF_Linear;
+	else
+		info.magFilterType = TF_Linear_Mip_Linear;
+	TextureCube* tex = new TextureCube(info, isStd);
+	if (!tex->load(path)) {
+		cout << "TextureCube: Texture file load failed\n";
+		delete tex;
+		tex = NULL;
+	}
+	return tex;
+}
+
+AssetInfo& TextureCubeAssetInfo::getInstance()
 {
 	return assetInfo;
 }

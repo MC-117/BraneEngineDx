@@ -3,6 +3,7 @@
 #include <tchar.h>
 #include <fstream>
 #include "Engine.h"
+#include "Utility/TextureUtility.h"
 #include "InitializationManager.h"
 #include "../resource.h"
 #include "Console.h"
@@ -13,8 +14,6 @@
 #include "../ThirdParty/ImGui/imgui_internal.h"
 #include "../ThirdParty/ImGui/ImGuiIconHelp.h"
 #include "../ThirdParty/ImGui/ImPlot/implot.h"
-
-World world;
 
 void SetTopWindow(HWND hWnd)
 {
@@ -153,9 +152,23 @@ void loadAssets(LoadingUI& log, const char* path, vector<filesystem::path>& dela
 						asset = ass;
 				}
 			}
+			else if (!_stricmp(ext.c_str(), ".mip")) {
+				const char* stdStr = "true";
+				const char* filterStr = "TF_Linear_Mip_Linear";
+				if (name.find("_N") != string::npos)
+					stdStr = "false";
+				if (name.find("_lut") != string::npos)
+					filterStr = "TF_Linear";
+
+				uint8_t dimension = peakMipDimension(path);
+
+				if (dimension == TD_Cube)
+					asset = AssetManager::loadAsset("TextureCube", name, path, { stdStr, "TW_Repeat", "TW_Repeat", filterStr, filterStr }, {});
+				else
+					asset = AssetManager::loadAsset("Texture2D", name, path, { stdStr, "TW_Repeat", "TW_Repeat", filterStr, filterStr }, {});
+			}
 			else if (!_stricmp(ext.c_str(), ".png") || !_stricmp(ext.c_str(), ".tga") ||
-				!_stricmp(ext.c_str(), ".jpg") || !_stricmp(ext.c_str(), ".bmp") ||
-				!_stricmp(ext.c_str(), ".mip")) {
+				!_stricmp(ext.c_str(), ".jpg") || !_stricmp(ext.c_str(), ".bmp")) {
 				const char* stdStr = "true";
 				const char* filterStr = "TF_Linear_Mip_Linear";
 				if (name.find("_N") != string::npos)
@@ -338,7 +351,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 }
 string Engine::version = ENGINE_VERSION;
 Input Engine::input;
-World* Engine::currentWorld = &world;
+World* Engine::currentWorld = NULL;
 WindowContext Engine::windowContext =
 {
 	{ 100, 100 },
@@ -362,7 +375,8 @@ void Engine::setViewportSize(const Unit2Di& size)
 {
 	if (!windowContext.fullscreen)
 		windowContext.screenSize = size;
-	world.setViewportSize(size.x, size.y);
+	if (currentWorld)
+		currentWorld->setViewportSize(size.x, size.y);
 	/*----- Vendor resize window -----*/
 	{
 		if (!VendorManager::getInstance().getVendor().resizeWindow(Engine::engineConfig, Engine::windowContext, size.x, size.y))
@@ -616,6 +630,8 @@ void Engine::setup()
 
 	InitializationManager::instance().initialze();
 
+	currentWorld = new World();
+
 	loadingUI.setText("Start BraneEngine");
 	loadingUI.doModelAsync([](WUIControl& control, void* ptr)
 		{
@@ -624,7 +640,8 @@ void Engine::setup()
 
 			ui.setText("Initial...");
 			if (engineConfig.guiOnly) {
-				world.setGUIOnly(true);
+				if (currentWorld)
+					currentWorld->setGUIOnly(true);
 				InitialTool();
 			}
 			else
@@ -639,7 +656,7 @@ void Engine::setup()
 
 void Engine::start()
 {
-	world.begin();
+	currentWorld->begin();
 	viewport.doModel(false);
 }
 
@@ -648,7 +665,7 @@ void Engine::clean()
 	input.release();
 	PythonManager::end();
 #if ENABLE_PHYSICS
-	world.physicalWorld.physicsScene->release();
+	currentWorld->physicalWorld.physicsScene->release();
 	PhysicalWorld::release();
 #endif
 
@@ -675,13 +692,13 @@ void Engine::clean()
 void Engine::mainLoop(float deltaTime)
 {
 	Timer timer;
-	if (world.willQuit()) {
-		PostQuitMessage(world.willRestart() ? 42 : 0);
+	if (currentWorld->willQuit()) {
+		PostQuitMessage(currentWorld->willRestart() ? 42 : 0);
 	}
 	Time::update();
 	input.update();
-	world.tick(deltaTime);
-	world.afterTick();
+	currentWorld->tick(deltaTime);
+	currentWorld->afterTick();
 	timer.record("CPU");
 
 	timer.record("GPU Wait");

@@ -9,7 +9,7 @@ ObjectPreviewWindow::ObjectPreviewWindow(string name, bool defaultShow)
 	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
 {
 	editorWorld.camera.clearColor = Color(88, 88, 88, 255);
-	editorWorld.camera.renderTarget.setMultisampleLevel(4);
+	//editorWorld.camera.renderTarget.setMultisampleLevel(4);
 	editorWorld.begin();
 	gizmo.setCameraControl(Gizmo::CameraControlMode::Turn);
 	this->styleVars.insert(make_pair(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 }));
@@ -168,8 +168,13 @@ void ObjectPreviewWindow::onRenderWindow(GUIRenderInfo& info)
 	onInspectorBarGUI(info);
 	ImGui::EndChild();
 
-	gizmo.onRender();
+	gizmo.onRender2D();
 	gizmo.reset();
+	RenderInfo renderInfo;
+	renderInfo.sceneData = editorWorld.getSceneRenderData();
+	renderInfo.renderGraph = info.renderGraph;
+	renderInfo.camera = &editorWorld.camera;
+	gizmo.onRender3D(renderInfo);
 
 	ImGui::EndChild();
 }

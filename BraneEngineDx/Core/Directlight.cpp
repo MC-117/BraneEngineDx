@@ -1,66 +1,72 @@
 #include "Directlight.h"
 #include "Engine.h"
 #include "GUI/Gizmo.h"
-#include "RenderCore/DirectShadowRenderPack.h"
+#include "RenderCore/RenderCore.h"
 
 #define DEPTHSIZE 8192
 
 SerializeInstance(DirectLight);
 
-DirectLight::DirectLight(const string& name, Color color, float intensity) : Light::Light(name, color, intensity, 0, Box()), shadowCamera({ 8132, 8132 }, name + "_ShadowCamera")
+DirectLight::DirectLight(const string& name, Color color, float intensity)
+	: Light::Light(name, color, intensity, 0, Box()),
+	depthTex(DEPTHSIZE, DEPTHSIZE, 1, false,
+		{ TW_Border, TW_Border, TF_Point, TF_Point, TIT_D32_F, { 255, 255, 255, 255 } }),
+	depthRenderTarget(DEPTHSIZE, DEPTHSIZE, depthTex)
 {
-	shadowCamera.setMode(Camera::Orthotropic);
-	shadowCamera.setSize({ DEPTHSIZE, DEPTHSIZE }); 
-	shadowCamera.left = -DEPTHSIZE / 16;
-	shadowCamera.right = DEPTHSIZE / 16;
-	shadowCamera.bottom = -DEPTHSIZE / 16;
-	shadowCamera.top = DEPTHSIZE / 16;
-	shadowCamera.zNear = 10000;
-	shadowCamera.zFar = -10000;
-	events.registerFunc("shadowCamDiv", [](void* obj, float v) {
-		ShadowCamera& shadowCamera = ((DirectLight*)obj)->shadowCamera;
-		shadowCamera.left = -DEPTHSIZE / v;
-		shadowCamera.right = DEPTHSIZE / v;
-		shadowCamera.bottom = -DEPTHSIZE / v;
-		shadowCamera.top = DEPTHSIZE / v;
-	});
-	//addInternalNode(shadowCamera);
+	shadowData.cameraData.viewSize = { DEPTHSIZE, DEPTHSIZE };
+	scaleShadowResolution(16);
+	shadowData.cameraData.zNear = 10000;
+	shadowData.cameraData.zFar = -10000;
+}
+
+void DirectLight::resizeShadowMap(Unit2Di size)
+{
+	depthRenderTarget.resize(size.x, size.y);
+	shadowData.cameraData.viewSize = { (float)size.x, (float)size.y };
+}
+
+void DirectLight::scaleShadowResolution(float scalar)
+{
+	shadowData.left = -shadowData.cameraData.viewSize.x() / scalar;
+	shadowData.right = shadowData.cameraData.viewSize.x() / scalar;
+	shadowData.bottom = -shadowData.cameraData.viewSize.y() / scalar;
+	shadowData.top = shadowData.cameraData.viewSize.y() / scalar;
 }
 
 void DirectLight::setShadowBiasDepthScale(float scale)
 {
-	shadowBiasDepthScale = scale;
+	shadowData.shadowBiasDepthScale = scale;
 }
 
 void DirectLight::setShadowBiasNormalScale(float scale)
 {
-	shadowBiasNormalScale = scale;
+	shadowData.shadowBiasNormalScale = scale;
 }
 
 float DirectLight::getShadowBiasDepthScale() const
 {
-	return shadowBiasDepthScale;
+	return shadowData.shadowBiasDepthScale;
 }
 
 float DirectLight::getShadowBiasNormalScale() const
 {
-	return shadowBiasNormalScale;
+	return shadowData.shadowBiasNormalScale;
 }
 
 Matrix4f DirectLight::getLightSpaceMatrix() const
 {
-	return shadowCamera.shadowCameraRender.projectionViewMat;
+	return lightSpaceMatrix;
 }
 
 Vector4f DirectLight::getShadowBias() const
 {
-	float bias = 3 * shadowCamera.right / DEPTHSIZE;
-	return Vector4f(shadowBiasDepthScale * bias, shadowBiasNormalScale * bias);
+	float bias = 3 * shadowData.right / DEPTHSIZE;
+	return Vector4f(shadowData.shadowBiasDepthScale * bias, shadowData.shadowBiasNormalScale * bias);
 }
 
-RenderTarget * DirectLight::getShadowRenderTarget() const
+RenderTarget* DirectLight::getShadowRenderTarget() const
 {
-	return (RenderTarget*)&(shadowCamera.shadowCameraRender.depthRenderTarget);
+	return (RenderTarget*)&depthRenderTarget;
 }
 
 void DirectLight::afterTick()
@@ -70,43 +76,51 @@ void DirectLight::afterTick()
 	Vector3f dirPos = getPosition(WORLD);
 	Quaternionf dirRot = getRotation(WORLD);
 	Vector3f dirFW = getForward(WORLD);
-	Vector3f dirRW = getRightward(WORLD);
+	Vector3f dirLW = getLeftward(WORLD);
 	Vector3f dirUW = getUpward(WORLD);
 
 	if (world != NULL) {
 		::Camera& cam = world->getCurrentCamera();
-		Vector3f camRW = cam.getRightward(WORLD);
+		Vector3f camLW = cam.getLeftward(WORLD);
 		Vector3f camFW = cam.getForward(WORLD);
 		Vector3f dirFW = getForward(WORLD);
-		Vector3f projv = dirFW.cross(camRW.cross(dirFW));
+		Vector3f projv = dirFW.cross(camLW.cross(dirFW));
 		projv.normalize();
-		Vector3f dirRW = getRightward(WORLD);
-		Quaternionf quat = Quaternionf::FromTwoVectors(dirRW, projv);
+		Vector3f dirLW = getLeftward(WORLD);
+		Quaternionf quat = Quaternionf::FromTwoVectors(dirLW, projv);
 
 		dirPos = cam.getPosition(WORLD);
 		dirRot = quat * dirRot;
-		dirRW = quat * dirRW;
+		dirLW = quat * dirLW;
 		dirUW = quat * dirUW;
 
 		Vector3f fw = Vector3f(camFW.x(), camFW.y(), 0).normalized();
-		dirPos += fw * (shadowCamera.bottom / dirUW.dot(fw) * 0.5);
-		Vector3f rw = Vector3f(camRW.x(), camRW.y(), 0).normalized();
-		float cosd = dirRW.dot(rw);
-		dirPos += rw * ((shadowCamera.left / cosd - shadowCamera.left * cosd) * 0.5);
+		dirPos += fw * (shadowData.bottom / dirUW.dot(fw) * 0.5);
+		Vector3f rw = Vector3f(camLW.x(), camLW.y(), 0).normalized();
+		float cosd = dirLW.dot(rw);
+		dirPos += rw * ((shadowData.left / cosd - shadowData.left * cosd) * 0.5);
 	}
-	shadowCamera.position = dirPos;
-	shadowCamera.rotation = dirRot;
-	shadowCamera.scale = scale;
-	shadowCamera.forward = dirFW;
-	shadowCamera.rightward = dirRW;
-	shadowCamera.upward = dirUW;
-	//shadowCamera.afterTick();
-	shadowCamera.cameraRender.transformMat = Transform::transformMat;
-	shadowCamera.cameraRender.cameraLoc = shadowCamera.position;
-	shadowCamera.cameraRender.cameraDir = shadowCamera.forward;
-	shadowCamera.cameraRender.cameraUp = shadowCamera.upward;
-	shadowCamera.projectionViewMat = shadowCamera.getProjectionMatrix() * shadowCamera.getViewMatrix();
-	shadowCamera.cameraRender.projectionViewMat = shadowCamera.projectionViewMat;
+	Matrix4f promat = Camera::orthotropic(shadowData.left, shadowData.right, shadowData.bottom,
+		shadowData.top, shadowData.cameraData.zNear, shadowData.cameraData.zFar);
+	Matrix4f vmat = Camera::lookAt(dirPos, dirPos + dirFW, dirUW);
+	lightSpaceMatrix = promat * vmat;
+	shadowData.cameraData.projectionViewMat = MATRIX_UPLOAD_OP(lightSpaceMatrix);
+	Matrix4f promatInv = promat.inverse();
+	shadowData.cameraData.projectionMat = MATRIX_UPLOAD_OP(promat);
+	shadowData.cameraData.projectionMatInv = MATRIX_UPLOAD_OP(promatInv);
+	Matrix4f vmatInv = vmat.inverse();
+	shadowData.cameraData.viewMat = MATRIX_UPLOAD_OP(vmat);
+	shadowData.cameraData.viewMatInv = MATRIX_UPLOAD_OP(vmatInv);
+	Matrix4f vomat = Camera::lookAt(Vector3f::Zero(), dirFW, dirUW);
+	Matrix4f vomatInv = vomat.inverse();
+	shadowData.cameraData.viewOriginMat = MATRIX_UPLOAD_OP(vomat);
+	shadowData.cameraData.viewOriginMatInv = MATRIX_UPLOAD_OP(vomatInv);
+	shadowData.cameraData.cameraLoc = dirPos;
+	shadowData.cameraData.cameraDir = dirFW;
+	shadowData.cameraData.cameraUp = dirUW;
+	shadowData.cameraData.cameraLeft = dirLW;
+	shadowData.cameraData.fovy = 0;
+	shadowData.cameraData.aspect = 1;
 }
 
 void DirectLight::preRender()
@@ -115,31 +129,7 @@ void DirectLight::preRender()
 
 void DirectLight::render(RenderInfo& info)
 {
-	if (!((Render*)info.tempRender->getRender())->hidden && info.tempRender->getCanCastShadow()) {
-		vector<RenderResource> resources;
-		if (info.tempRender->getRenderResource(resources) > 0) {
-			Material* depthMat = &shadowCamera.shadowCameraRender.material;
-			for each (auto & resource in resources)
-			{
-				if (!resource.enable || !resource.isValid())
-					continue;
-				if (!resource.material->canCastShadow)
-					continue;
-				void* transformIndexHandle = NULL;
-				for (int j = 0; j < resource.instanceIDCount; j++)
-					transformIndexHandle = info.sceneData->setMeshPartTransform(
-						resource.meshPart, depthMat, resource.instanceID + j);
-				DirectShadowRenderCommand command;
-				command.sceneData = info.sceneData;
-				command.camera = &shadowCamera;
-				command.material = depthMat;
-				command.mesh = resource.meshPart;
-				command.directLightData = &info.sceneData->lightDataPack.directLightData;
-				command.transformIndexHandle = transformIndexHandle;
-				info.renderGraph->setRenderCommand(command);
-			}
-		}
-	}
+	info.sceneData->setLight(this);
 }
 
 Serializable* DirectLight::instantiate(const SerializationInfo& from)

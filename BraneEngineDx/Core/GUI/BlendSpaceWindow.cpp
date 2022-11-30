@@ -14,7 +14,7 @@ ImVec2 to(const Vector2f & v)
 }
 
 BlendSpaceWindow::BlendSpaceWindow(string name, bool defaultShow)
-	: UIWindow(world, name, defaultShow)
+	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
 {
 }
 

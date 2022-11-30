@@ -2,7 +2,7 @@
 
 bool Spine2DRenderCommand::isValid() const
 {
-	return material && !material->isNull() && camera && mesh != NULL && mesh->isValid();
+	return material && !material->isNull() && mesh != NULL && mesh->isValid();
 }
 
 Enum<ShaderFeature> Spine2DRenderCommand::getShaderFeature() const
@@ -13,6 +13,11 @@ Enum<ShaderFeature> Spine2DRenderCommand::getShaderFeature() const
 RenderMode Spine2DRenderCommand::getRenderMode() const
 {
 	return RenderMode(RenderStage::RS_Post, blendMode, 0);
+}
+
+bool Spine2DRenderCommand::canCastShadow() const
+{
+	return false;
 }
 
 IRenderPack* Spine2DRenderCommand::createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const
@@ -56,7 +61,6 @@ void Spine2DRenderPack::excute(IRenderContext& context, RenderTaskContext& taskC
 		if (iter != materialData->desc.colorField.end()) {
 			iter->second.val = draw.resource.color;
 		}
-		materialData->upload();
 		context.bindTexture((ITexture*)draw.resource.texture->getVendorTexture(), "mainTexture");
 		context.bindMaterialBuffer(materialData->vendorMaterial);
 

@@ -100,7 +100,7 @@ void GUI::onGUI(RenderInfo& info)
 			focusControl = win;
 	}
 
-	gizmo.onRender();
+	gizmo.onRender2D();
 
 	GUIPostInfo postInfo = { focusControl, *this };
 
@@ -119,6 +119,7 @@ void GUI::onGUI(RenderInfo& info)
 
 void GUI::render(RenderInfo& info)
 {
+	gizmo.onRender3D(info);
 	ImGui::Render();
 	info.renderGraph->setImGuiDrawData(ImGui::GetDrawData());
 }

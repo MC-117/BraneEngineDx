@@ -193,31 +193,31 @@ Serializable* TransformGetForwardNode::instantiate(const SerializationInfo& from
 	return new TransformGetForwardNode();
 }
 
-SerializeInstance(TransformGetRightwardNode);
+SerializeInstance(TransformGetLeftwardNode);
 
-TransformGetRightwardNode::TransformGetRightwardNode()
+TransformGetLeftwardNode::TransformGetLeftwardNode()
 {
 	flag = Flag::Expression;
-	displayName = "GetRightward";
+	displayName = "GetLeftward";
 	transformPin = new TransformRefPin("Transform");
-	valuePin = new Vector3fPin("Rightward");
+	valuePin = new Vector3fPin("Leftward");
 	addInput(*transformPin);
 	addOutput(*valuePin);
 }
 
-bool TransformGetRightwardNode::process(GraphContext& context)
+bool TransformGetLeftwardNode::process(GraphContext& context)
 {
 	Transform* trans = transformPin->getRef();
 	if (trans)
-		valuePin->setValue(trans->getRightward(WORLD));
+		valuePin->setValue(trans->getLeftward(WORLD));
 	else
 		valuePin->setValue(Vector3f::Zero());
 	return true;
 }
 
-Serializable* TransformGetRightwardNode::instantiate(const SerializationInfo& from)
+Serializable* TransformGetLeftwardNode::instantiate(const SerializationInfo& from)
 {
-	return new TransformGetRightwardNode();
+	return new TransformGetLeftwardNode();
 }
 
 SerializeInstance(TransformGetUpwardNode);

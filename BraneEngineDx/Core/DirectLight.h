@@ -4,14 +4,31 @@
 
 #include "Light.h"
 
+struct DirectLightShadowData
+{
+	float left = 0;
+	float right = 0;
+	float bottom = 0;
+	float top = 0;
+	float shadowBiasDepthScale = 1;
+	float shadowBiasNormalScale = 1;
+	CameraData cameraData;
+};
+
 class DirectLight : public Light
 {
 public:
 	Serialize(DirectLight, Light);
 
-	ShadowCamera shadowCamera;
+	Texture2D depthTex;
+	RenderTarget depthRenderTarget;
+
+	DirectLightShadowData shadowData;
 
 	DirectLight(const string& name, Color color = { 255, 255, 255, 255 }, float intensity = 1);
+
+	void resizeShadowMap(Unit2Di size);
+	void scaleShadowResolution(float scalar);
 
 	void setShadowBiasDepthScale(float scale);
 	void setShadowBiasNormalScale(float scale);
@@ -32,8 +49,7 @@ public:
 	virtual bool serialize(SerializationInfo& to);
 protected:
 	int directionIdx = -1;
-	float shadowBiasDepthScale = 1;
-	float shadowBiasNormalScale = 1;
+	Matrix4f lightSpaceMatrix = Matrix4f::Identity();
 };
 
 #endif // !_DIRECTLIGHT_H_

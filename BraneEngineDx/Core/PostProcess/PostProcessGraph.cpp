@@ -3,11 +3,15 @@
 #include "BloomPass.h"
 #include "ToneMapPass.h"
 #include "BlurPass.h"
-#include "BlitPass.h"
 #include "DOFPass.h"
 #include "VolumetricLightPass.h"
 
 SerializeInstance(PostProcessGraph);
+
+PostProcessGraph::PostProcessGraph()
+{
+	//resource.screenRenderTarget = &postRenderTarget;
+}
 
 PostProcessGraph::~PostProcessGraph()
 {
@@ -42,7 +46,6 @@ void PostProcessGraph::addDefaultPasses()
 	addPostProcessPass(*new VolumetricLightPass());
 	addPostProcessPass(*new ToneMapPass());
 	//addPostProcessPass(*new BlurPass());
-	addPostProcessPass(*new BlitPass());
 }
 
 PostProcessPass* PostProcessGraph::getPostProcessPass(const string& name)
@@ -63,6 +66,7 @@ void PostProcessGraph::render(RenderInfo & info)
 
 void PostProcessGraph::resize(Unit2Di size)
 {
+	//postRenderTarget.resize(size.x, size.y);
 	for (auto b = passes.begin(), e = passes.end(); b != e; b++) {
 		(*b)->resize(size);
 	}
@@ -78,8 +82,7 @@ Serializable * PostProcessGraph::instantiate(const SerializationInfo & from)
 bool PostProcessGraph::deserialize(const SerializationInfo & from)
 {
 	for (auto b = passes.begin(), e = passes.end(); b != e; b++) {
-		if (!isClassOf<BlitPass>(*b))
-			from.get((*b)->getName(), *(PostProcessPass*)(*b));
+		from.get((*b)->getName(), *(PostProcessPass*)(*b));
 	}
 	return true;
 }
@@ -88,8 +91,7 @@ bool PostProcessGraph::serialize(SerializationInfo & to)
 {
 	Serializable::serialize(to);
 	for (auto b = passes.begin(), e = passes.end(); b != e; b++) {
-		if (!isClassOf<BlitPass>(*b))
-			to.set((*b)->getName(), **b);
+		to.set((*b)->getName(), **b);
 	}
 	return true;
 }

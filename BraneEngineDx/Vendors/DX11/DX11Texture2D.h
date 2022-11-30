@@ -48,12 +48,15 @@ public:
 	virtual unsigned int bindBase(unsigned int index);
 	virtual unsigned int resize(unsigned int width, unsigned int height);
 	virtual ComPtr<ID3D11ShaderResourceView> getSRV(const MipOption& mipOption = MipOption());
-	virtual ComPtr<ID3D11RenderTargetView> getRTV(unsigned int mipLevel, bool isMS);
+	virtual ComPtr<ID3D11RenderTargetView> getRTV(const RTOption& rtOption);
 	virtual ComPtr<ID3D11SamplerState> getSampler();
-	virtual ComPtr<ID3D11UnorderedAccessView> getUAV(unsigned int mipLevel);
+	virtual ComPtr<ID3D11UnorderedAccessView> getUAV(const RWOption& rwOption);
 	virtual ComPtr<ID3D11DepthStencilView> getDSV(unsigned int mipLevel);
 protected:
 	static DXGI_FORMAT getColorType(unsigned int channel, DXGI_FORMAT internalType);
+	static D3D_SRV_DIMENSION getSrvDimension(TexDimension dimension, bool isMS);
+	static D3D11_RTV_DIMENSION getRtvDimension(TexDimension dimension, bool isMS);
+	static D3D11_UAV_DIMENSION getUavDimension(TexDimension dimension);
 };
 
 #endif // !_DX11TEXTURE2D_H_

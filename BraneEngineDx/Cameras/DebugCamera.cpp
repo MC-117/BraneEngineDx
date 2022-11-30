@@ -1,7 +1,7 @@
 #include "DebugCamera.h"
 #include "../Core/Engine.h"
 
-DebugCamera::DebugCamera(string name) : PostProcessingCamera(name)
+DebugCamera::DebugCamera(string name) : Camera(name)
 {
 	events.registerFunc("SetCameraSpeed", [](void* obj, float v) {
 		((DebugCamera*)obj)->cameraSpeed = v;
@@ -32,5 +32,5 @@ void DebugCamera::tick(float deltaTime)
 	}
 
 	//rotate(0, 0, deltaTime * 1000, WORLD);
-	PostProcessingCamera::tick(deltaTime);
+	Camera::tick(deltaTime);
 }

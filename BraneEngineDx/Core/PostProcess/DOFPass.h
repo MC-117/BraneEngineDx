@@ -20,7 +20,9 @@ public:
 	virtual void resize(const Unit2Di& size);
 protected:
 	int screenMapSlot = -1;
+	int screenMapSamplerSlot = -1;
 	int depthMapSlot = -1;
+	int depthMapSamplerSlot = -1;
 };
 
 #endif // !_DOFPASS_H_

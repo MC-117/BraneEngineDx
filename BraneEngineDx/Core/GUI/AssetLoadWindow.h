@@ -3,6 +3,8 @@
 #define _ASSETLOADWINDOW_H_
 
 #include "UIWindow.h"
+#include "../SkeletonMesh.h"
+#include "../Material.h"
 
 class AssetLoadWindow : public UIWindow
 {
