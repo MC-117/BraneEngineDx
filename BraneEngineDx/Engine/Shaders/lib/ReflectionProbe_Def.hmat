@@ -1,0 +1,40 @@
+#include "Bindings_Def.hmat"
+
+struct ReflectionProbeData
+{
+	float4 tintColor;
+	float3 position;
+	float radius;
+	float falloff;
+	float cutoff;
+	int cubeMapIndex;
+	int reverseIndex;
+};
+
+StructuredBuffer<ReflectionProbeData> reflectionProbes : register(RELFECTION_PROBE_BIND_INDEX);
+TextureCubeArray reflectionCubeMap : register(t3);
+SamplerState reflectionCubeMapSampler : register(s3);
+
+float4 getReflectionColor(float3 L, float3 worldPos)
+{
+	uint count, stride;
+	reflectionProbes.GetDimensions(count, stride);
+	float minDis = 10000000;
+	float4 color = float4(0, 0, 0, 0);
+	float weightSum = 0;
+	for (int i = 0; i < count; i++) {
+		ReflectionProbeData data = reflectionProbes[i];
+		if (data.cubeMapIndex < 0)
+			continue;
+		float dis = distance(data.position, worldPos);
+		float diff = data.radius - dis;
+		if (diff > 0) {
+			float weight = 1 - dis / data.radius;
+			float4 sampleColor = SAMPLE_TEX_LOD(reflectionCubeMap, float4(L, data.cubeMapIndex), 0);
+			color += sampleColor * weight * smoothstep(data.cutoff, data.falloff, diff);
+			weightSum += weight;
+		}
+	}
+	color *= rcp(weightSum);
+	return max(0, color);
+}

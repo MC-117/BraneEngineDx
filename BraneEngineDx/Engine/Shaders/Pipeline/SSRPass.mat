@@ -1,5 +1,5 @@
 #material
-Count resolveSamples: 5
+Count resolveSamples: 9
 Count hiZStartLevel: 5
 Count hiZStopLevel: -1
 Count hiZMaxStep: 48
@@ -9,6 +9,7 @@ Color hiZUVScale: 1.0, 1.0, 1.0, 1.0
 #include "../lib/PBR_Lib.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
+#include "../lib/ReflectionProbe_def.hmat"
 
 DEF_MAT_BEGIN
 uniform int resolveSamples;
@@ -68,9 +69,9 @@ bool rayTraceHiZ_UVZ(float3 startUVZ, float3 dirUVZ, out float3 hitUVZ)
         float3 nextUVZ = curUVZ + stepUVZ;
         minZ = SAMPLE_TEX_LOD(hiZMap, nextUVZ.xy * hiZUVScale.xy, mipLevel);
         float deltaDepth = nextUVZ.z - minZ;
-        if (hit = deltaDepth > 0) {
+        if (deltaDepth > 0) {
             mipLevel--;
-            hit = true;//deltaDepth < stepUVZ.z * 50;
+            hit = deltaDepth < stepUVZ.z * 2;
             //hitUVZ -= dirUVZ / dirUVZ.z * deltaDepth * 0.001;
             hitUVZ = curUVZ;
         }
@@ -145,32 +146,41 @@ void main(uint2 tid : SV_DispatchThreadID)
 
             if ((1.0f - depth) > 1 / camData.zFar) {
                 float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
-                float3 N = C.xyz;
+                float3 N = normalize(worldDirToView(C.xyz));
                 float roughness = C.a;
 
                 float3 startUVZ = float3(UV, depth);
                 float3 startView = uvzPosToView(startUVZ);
-                float3 startViewOrigin = viewPosToViewOrigin(startView);
-                float3 V = normalize(startViewOrigin);
+                float3 V = normalize(startView);
 
                 float3x3 tangentBasis = getTangentBasis(N);
                 float4 HPDF = ImportanceSampleGGX(float2(0, 0), roughness * roughness);
                 float3 H = normalize(mul(HPDF.xyz, tangentBasis));
                 float3 L = normalize(reflect(V, H));
                 float3 hitUVZ;
+                float fadeFactor = 1;
 #if 1
-                float3 endView = viewOriginPosToView(startViewOrigin + L);
+                float3 endView = startView + L;
                 float3 endUVZ = viewPosToUVZ(endView);
                 float3 dirUVZ = normalize(endUVZ - startUVZ);
                 if (rayTraceHiZ_UVZ(startUVZ, dirUVZ, hitUVZ))
 #else
-                float4 dirView = mul(float4(L, 0), camData.vmat);
-                if (rayTraceHiZ_View(startView, dirView.xyz, hitUVZ))
+                if (rayTraceHiZ_View(startView, L, hitUVZ))
 #endif
                 {
-                    hitData = float4(hitUVZ, HPDF.a);
                     hitColor = SAMPLE_TEX_LOD(gBufferA, hitUVZ.xy, 0);
-                    hitColor.rgb *= GetScreenFadeBord(uvToClip(hitUVZ.xy));
+                    fadeFactor = GetScreenFadeBord(uvToClip(hitUVZ.xy));
+                }
+                else fadeFactor = 0;
+                hitData = float4(L, HPDF.a);
+                if (fadeFactor < 1) {
+                    float3 worldPos = viewPosToWorld(startView);
+                    float3 worldL = mul(float4(L, 0), camData.vmatInv).xyz;
+                    float4 refColor = getReflectionColor(worldL, worldPos);
+                    if (refColor.a != 0) {
+                        float3 hitPosView = uvzPosToView(hitUVZ);
+                        hitColor = lerp(refColor, hitColor, fadeFactor);
+                    }
                 }
             }
 
@@ -198,13 +208,13 @@ void main(uint2 tid : SV_DispatchThreadID)
                 float4 hitData = hitDataMap[sampleIndex];
                 float4 hitColor = SAMPLE_TEX_LOD(inHitColorMap, sampleUV, 0);
                 //hitColor.rgb /= 1 + luminance(hitColor.rgb);
-                float3 hitPosView = uvzPosToView(hitData.xyz);
-                float weight = SSR_BRDF(-V, normalize(hitPosView - viewPos), viewN, roughness);
+                float3 L = hitData.xyz;
+                float weight = SSR_BRDF(-V, L, viewN, roughness);
                 //weight = max(weight, hitData.a);
                 weightSum += weight;
                 color += hitColor.rgb * weight;
             }
-            color /= weightSum;
+            color *= rcp(weightSum);
             //color /= 1 - luminance(color);
             color = max(1e-5, color);
             float4 sceneColor = outGBufferA[tid];

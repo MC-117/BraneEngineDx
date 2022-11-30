@@ -5,6 +5,7 @@
 #define MAT_INS_BIND_INDEX b2
 #define CAM_BIND_INDEX b3
 #define DIRECT_LIGHT_BIND_INDEX b4
+#define RELFECTION_PROBE_BIND_INDEX t5
 #define TRANS_BIND_INDEX t0
 #define MORPHDATA_BIND_INDEX t1
 #define MORPHWEIGHT_BIND_INDEX t2
@@ -13,22 +14,22 @@
 #define TERRAIN_MAP_BIND_INDEX t5
 #define TERRAIN_MAP_SAMPLER_INDEX s5
 
-#define __B0 b4
-#define __B1 b5
-#define __B2 b6
-#define __B3 b7
-#define __B4 b8
-#define __B5 b9
-#define __B6 b10
-#define __B7 b11
-#define __B8 b12
-#define __B9 b13
-#define __B10 b14
-#define __B11 b15
-#define __B12 b16
-#define __B13 b17
-#define __B14 b18
-#define __B15 b19
+#define __B0 b6
+#define __B1 b7
+#define __B2 b8
+#define __B3 b9
+#define __B4 b10
+#define __B5 b11
+#define __B6 b12
+#define __B7 b13
+#define __B8 b14
+#define __B9 b15
+#define __B10 b16
+#define __B11 b17
+#define __B12 b18
+#define __B13 b19
+#define __B14 b20
+#define __B15 b21
 
 #define __T0 t6
 #define __T1 t7
@@ -68,6 +69,15 @@
 #define SAMPLE_BINDING(i) register(__S##i)
 #define DEF_TEX2D(tex, id) \
 Texture2D tex : TEX_BINDING(id);\
+SamplerState tex##Sampler : SAMPLE_BINDING(id);
+#define DEF_TEX2DARRAY(tex, id) \
+Texture2DArray tex : TEX_BINDING(id);\
+SamplerState tex##Sampler : SAMPLE_BINDING(id);
+#define DEF_TEXCUBE(tex, id) \
+TextureCube tex : TEX_BINDING(id);\
+SamplerState tex##Sampler : SAMPLE_BINDING(id);
+#define DEF_TEXCUBEARRAY(tex, id) \
+TextureCubeArray tex : TEX_BINDING(id);\
 SamplerState tex##Sampler : SAMPLE_BINDING(id);
 
 #define DEF_TEX2D_UINT(tex, id) \

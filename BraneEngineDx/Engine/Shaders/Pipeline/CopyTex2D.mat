@@ -1,0 +1,18 @@
+#material
+#localsize 8 8
+#compute
+#include "../lib/Basic_FS_Lib.hmat"
+
+DEF_TEX2D(srcTex, 0);
+RWTexture2D<float4> dstTex : register(u0);
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 tid : SV_DispatchThreadID)
+{
+	float2 size;
+    dstTex.GetDimensions(size.x, size.y);
+    if (all(tid < size)){
+        float2 UV = tid / size;
+        dstTex[tid] = SAMPLE_TEX_LOD(srcTex, UV, 0);
+    }
+}
