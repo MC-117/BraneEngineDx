@@ -18,6 +18,16 @@ Gizmo::~Gizmo()
 {
 }
 
+void Gizmo::setEnableGUI(bool enable)
+{
+	enableGUI = enable;
+}
+
+bool Gizmo::getEnableGUI() const
+{
+	return enableGUI;
+}
+
 void Gizmo::drawAABB(const Range<Vector3f>& bound, const Matrix4f& transformMat, Color color)
 {
 	Vector3f extend = (bound.maxVal - bound.minVal) * 0.5f;
@@ -846,6 +856,8 @@ void Gizmo::endWindow()
 
 void Gizmo::onGUI(Object* root)
 {
+	if (!enableGUI)
+		return;
 	GizmoInfo info = { this, camera };
 	ObjectIterator iter(root);
 	while (iter.next()) {

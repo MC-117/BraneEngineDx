@@ -10,6 +10,8 @@ public:
 	Range<Vector3f> bound;
 	int resolution = 128;
 	Color tintColor = Color(1.0f, 1.0f, 1.0f, 1.0f);
+	float falloff = 5;
+	float cutoff = 0;
 
 	ReflectionCapture(const string& name = "ReflectionCapture");
 

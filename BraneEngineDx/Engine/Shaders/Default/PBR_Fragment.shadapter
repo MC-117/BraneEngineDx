@@ -70,6 +70,7 @@ FragmentOut SURFACE_MAIN
     surf.roughness = roughness * SAMPLE_TEX(roughnessMap, surf.TexCoords).r;
     surf.metallic = metallic * SAMPLE_TEX(metallicMap, surf.TexCoords).r;
     surf.ao = ao * SAMPLE_TEX(aoMap, surf.TexCoords).r;
+    surf.mask |= REFLECTION_MASK;
     #endif
 
     #ifdef DEFERRED_SHADER_FEATURE

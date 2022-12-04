@@ -21,6 +21,7 @@ void SSAOPass::prepare()
 	MaterialRenderData* materialRenderData = (MaterialRenderData*)this->materialRenderData;
 	materialRenderData->program = program;
 	materialRenderData->create();
+	Texture2D::whiteRGBADefaultTex.bind();
 }
 
 void SSAOPass::execute(IRenderContext& context)
@@ -37,8 +38,10 @@ void SSAOPass::execute(IRenderContext& context)
 	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, depthMapSlot, depthMapSamplerSlot);
 
 	// Pass 0 GTAO
-	context.bindTexture(NULL, Fragment_Shader_Stage, ssaoMapSlot, ssaoMapSamplerSlot);
-	context.bindTexture(NULL, Fragment_Shader_Stage, screenMapSlot, screenMapSamplerSlot);
+	context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(),
+		Fragment_Shader_Stage, ssaoMapSlot, ssaoMapSamplerSlot);
+	context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(),
+		Fragment_Shader_Stage, screenMapSlot, screenMapSamplerSlot);
 	context.bindFrame(gtaoRenderTarget.getVendorRenderTarget());
 
 	context.setDrawInfo(0, 2, 0);

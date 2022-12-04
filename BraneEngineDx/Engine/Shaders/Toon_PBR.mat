@@ -86,6 +86,7 @@ FragmentOut SURFACE_MAIN
     surf.roughness = rmo.r * roughness;
     surf.metallic = rmo.g * metallic;
     surf.ao = rmo.b;
+    surf.mask |= REFLECTION_MASK;
     #endif
 
     #ifdef DEFERRED_SHADER_FEATURE

@@ -31,7 +31,7 @@ float4 getReflectionColor(float3 L, float3 worldPos)
 		if (diff > 0) {
 			float weight = 1 - dis / data.radius;
 			float4 sampleColor = SAMPLE_TEX_LOD(reflectionCubeMap, float4(L, data.cubeMapIndex), 0);
-			color += sampleColor * weight * smoothstep(data.cutoff, data.falloff, diff);
+			color += sampleColor * weight * smoothstep(data.cutoff, data.falloff, diff) * data.tintColor;
 			weightSum += weight;
 		}
 	}

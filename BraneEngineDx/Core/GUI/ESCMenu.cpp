@@ -146,6 +146,7 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 			EditorWindow* win = new EditorWindow(*world, Material::nullMaterial, "Editor", true);
 			(*world) += win;
 		}
+		info.gui.gizmo.setEnableGUI(true);
 	}
 	if (ImGui::Button("Toggle Fullscreen", size)) {
 		Engine::viewport.toggleFullscreen();

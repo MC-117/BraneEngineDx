@@ -80,6 +80,9 @@ public:
 	Gizmo();
 	Gizmo(const string& name);
 	virtual ~Gizmo();
+	
+	void setEnableGUI(bool enable);
+	bool getEnableGUI() const;
 
 	void drawAABB(const Range<Vector3f>& bound, const Matrix4f& transformMat, Color color);
 	void drawPoint(const Vector3f& p, float size, Color color);
@@ -134,6 +137,7 @@ protected:
 	Matrix4f projMatrix;
 	Matrix4f viewMatrix;
 	Camera* camera = NULL;
+	bool enableGUI = true;
 	bool isFocused = true;
 	bool isLastUsing = false;
 	bool isUsing = false;

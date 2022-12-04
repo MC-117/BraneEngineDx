@@ -153,6 +153,7 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 		if (ImGui::Button("Hide UI", size)) {
 			Engine::input.setCursorHidden(true);
 			gui.hideAllUIControl();
+			gui.gizmo.setEnableGUI(false);
 		}
 		ImGui::SameLine();
 	}

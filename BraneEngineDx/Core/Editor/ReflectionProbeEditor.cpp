@@ -36,14 +36,33 @@ void ReflectionProbeEditor::onHandleGizmo(GizmoInfo& info)
 
 void ReflectionProbeEditor::onReflectionProbeGUI(EditorInfo& info)
 {
+	if (ImGui::Button("UpdateCapture", { -1, 36 })) {
+		reflectionProbe->capture.updateCapture();
+	}
+
 	float radius = reflectionProbe->capture.getRadius();
 	if (ImGui::DragFloat("Radius", &radius, 0.01f)) {
 		radius = max(radius, 0);
 		reflectionProbe->capture.setRadius(radius);
 	}
-	if (ImGui::Button("UpdateCapture", { -1, 36 })) {
-		reflectionProbe->capture.updateCapture();
+
+	Color tintColor = reflectionProbe->capture.tintColor;
+	if (ImGui::ColorEdit4("TintColor", (float*)&tintColor)) {
+		reflectionProbe->capture.tintColor = tintColor;
 	}
+
+	float falloff = reflectionProbe->capture.falloff;
+	if (ImGui::DragFloat("Falloff", &falloff, 0.01f)) {
+		falloff = max(falloff, 0);
+		reflectionProbe->capture.falloff = falloff;
+	}
+
+	float cutoff = reflectionProbe->capture.cutoff;
+	if (ImGui::DragFloat("Cutoff", &cutoff, 0.01f)) {
+		cutoff = max(cutoff, 0);
+		reflectionProbe->capture.cutoff = cutoff;
+	}
+
 	int probeIndex = reflectionProbe->capture.getProbeIndex();
 	if (probeIndex >= 0) {
 		loadDefaultResource();

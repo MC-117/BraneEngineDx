@@ -35,7 +35,6 @@ bool MipFileHeader::isValid() const
 unsigned char* rgb2rgba(unsigned char* data, unsigned char* dst, unsigned int pixles, bool discard)
 {
 	int size = pixles * 4;
-	unsigned char* p = new unsigned char[size];
 	for (unsigned char* bp = dst, *ep = dst + size, *bd = data; bp < ep; bp += 4, bd += 3) {
 		memcpy(bp, bd, sizeof(unsigned char) * 3);
 		bp[3] = 255;

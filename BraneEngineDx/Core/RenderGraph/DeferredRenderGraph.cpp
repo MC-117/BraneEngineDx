@@ -11,11 +11,15 @@ DeferredRenderGraph::DeferredViewData::DeferredViewData()
 	gBufferC.setAutoGenMip(false);
 	gBufferD.setAutoGenMip(false);
 	gBufferE.setAutoGenMip(false);
+	hitDataMap.setAutoGenMip(false);
+	hitColorMap.setAutoGenMip(false);
 	renderTarget.addTexture("gBufferA", gBufferA);
 	renderTarget.addTexture("gBufferB", gBufferB);
 	renderTarget.addTexture("gBufferC", gBufferC);
 	renderTarget.addTexture("gBufferD", gBufferD);
 	renderTarget.addTexture("gBufferE", gBufferE);
+	traceRenderTarget.addTexture("hitDataMap", hitDataMap);
+	traceRenderTarget.addTexture("hitColorMap", hitColorMap);
 }
 
 void DeferredRenderGraph::DeferredViewData::prepare()
@@ -24,8 +28,8 @@ void DeferredRenderGraph::DeferredViewData::prepare()
 	int widthP2 = 1 << max(int(log2(cameraRender->size.x)), 1);
 	int heightP2 = 1 << max(int(log2(cameraRender->size.y)), 1);
 	hizTexture.resize(widthP2, heightP2);
-	hitDataMap.resize(cameraRender->size.x, cameraRender->size.y);
-	hitColorMap.resize(cameraRender->size.x, cameraRender->size.y);
+	traceRenderTarget.resize(cameraRender->size.x, cameraRender->size.y);
+	resolveRenderTarget.resize(cameraRender->size.x, cameraRender->size.y);
 }
 
 DeferredRenderGraph::DeferredRenderGraph()
@@ -42,6 +46,7 @@ DeferredRenderGraph::DeferredViewData* DeferredRenderGraph::getGBufferRT(CameraR
 		rt->sceneData = sceneRenderData;
 		rt->cameraRender = cameraRender;
 		rt->cameraData.cameraRender = cameraRender;
+		rt->resolveRenderTarget.addTexture("gBufferA", *cameraRender->getSceneMap());
 		viewDatas.insert(make_pair(cameraRender, rt));
 	}
 	else {
@@ -221,9 +226,12 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 		ssrPass.gBufferA = item.second->cameraRender->getSceneMap();
 		ssrPass.gBufferB = &item.second->gBufferB;
 		ssrPass.gBufferC = &item.second->gBufferC;
+		ssrPass.gBufferE = &item.second->gBufferE;
 		ssrPass.hiZMap = &item.second->hizTexture;
 		ssrPass.hitDataMap = &item.second->hitDataMap;
 		ssrPass.hitColorMap = &item.second->hitColorMap;
+		ssrPass.traceRenderTarget = &item.second->traceRenderTarget;
+		ssrPass.resolveRenderTarget = &item.second->resolveRenderTarget;
 		ssrPass.execute(context);
 	}
 

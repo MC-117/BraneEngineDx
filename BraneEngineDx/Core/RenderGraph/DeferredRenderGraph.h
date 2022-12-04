@@ -31,6 +31,8 @@ public:
 		Texture2D hitDataMap = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F });
 		Texture2D hitColorMap = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear, TIT_RGBA8_UF });
 
+		RenderTarget traceRenderTarget = RenderTarget(1280, 720, 4);
+		RenderTarget resolveRenderTarget = RenderTarget(1280, 720, 4);
 		DeferredViewData();
 		void prepare();
 	};

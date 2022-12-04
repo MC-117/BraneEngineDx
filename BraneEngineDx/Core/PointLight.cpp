@@ -1,5 +1,6 @@
 #include "PointLight.h"
 #include "Geometry.h"
+#include "RenderCore/RenderCore.h"
 
 SerializeInstance(PointLight);
 
@@ -26,6 +27,7 @@ void PointLight::preRender()
 
 void PointLight::render(RenderInfo & info)
 {
+	info.sceneData->setLight(this);
 }
 
 Serializable* PointLight::instantiate(const SerializationInfo& from)

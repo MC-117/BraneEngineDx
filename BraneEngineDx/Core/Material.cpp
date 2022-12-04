@@ -50,7 +50,44 @@ Material::~Material()
 
 void Material::instantiateFrom(const Material& material)
 {
+	MaterialDesc tempDesc = desc;
 	desc = material.desc;
+	for (const auto& item : tempDesc.scalarField) {
+		auto iter = desc.scalarField.find(item.first);
+		if (iter != desc.scalarField.end()) {
+			iter->second.val = item.second.val;
+		}
+	}
+	for (const auto& item : tempDesc.countField) {
+		auto iter = desc.countField.find(item.first);
+		if (iter != desc.countField.end()) {
+			iter->second.val = item.second.val;
+		}
+	}
+	for (const auto& item : tempDesc.colorField) {
+		auto iter = desc.colorField.find(item.first);
+		if (iter != desc.colorField.end()) {
+			iter->second.val = item.second.val;
+		}
+	}
+	for (const auto& item : tempDesc.matrixField) {
+		auto iter = desc.matrixField.find(item.first);
+		if (iter != desc.matrixField.end()) {
+			iter->second.val = item.second.val;
+		}
+	}
+	for (const auto& item : tempDesc.textureField) {
+		auto iter = desc.textureField.find(item.first);
+		if (iter != desc.textureField.end()) {
+			iter->second.val = item.second.val;
+		}
+	}
+	for (const auto& item : tempDesc.imageField) {
+		auto iter = desc.imageField.find(item.first);
+		if (iter != desc.imageField.end()) {
+			iter->second.val = item.second.val;
+		}
+	}
 	desc.currentPass = 0;
 	desc.materialID = nextMaterialID;
 	nextMaterialID++;

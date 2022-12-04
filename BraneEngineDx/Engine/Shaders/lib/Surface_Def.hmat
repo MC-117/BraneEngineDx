@@ -2,6 +2,8 @@
 #include "ScreenPass_Def.hmat"
 #include "CameraData_Def.hmat"
 
+#define REFLECTION_MASK 1
+
 struct Surface
 {
     float4 albedo;
@@ -25,10 +27,10 @@ void outputSurface(in Surface surf, out float4 A, out float B, out float4 C, out
     D.xy = surf.TexCoords;
     D.z = surf.metallic;
     D.w = surf.ao;
-    E.r = surf.matID >> 8;
-    E.g = surf.matID & 0xFF;
-    E.b = surf.mask >> 8;
-    E.a = surf.mask & 0xFF;
+    E.r = surf.matID >> 16;
+    E.g = (surf.matID >> 8) & 0xFF;
+    E.b = surf.matID & 0xFF;
+    E.a = surf.mask;
 }
 
 #if defined(LIGHTING_SHADER_FEATURE)
@@ -38,7 +40,7 @@ Surface getSurface(in ScreenVertexOut fin)
 {
     Surface surf;
     uint4 E = LOAD_TEX(gBufferE, int3(fin.UV * camData.viewSize, 0));
-    uint matID = E.r << 8 | E.g;
+    uint matID = E.r << 16 | E.g << 8 | E.b;
     if (matID != materialID)
         discard;
     float4 A = SAMPLE_TEX(gBufferA, fin.UV);
@@ -54,7 +56,7 @@ Surface getSurface(in ScreenVertexOut fin)
     surf.metallic = D.b;
     surf.ao = D.a;
     surf.matID = matID;
-    surf.mask = E.b << 8 | E.a;
+    surf.mask = E.a;
     return surf;
 }
 #else
@@ -72,7 +74,7 @@ Surface getSurface(in DefaultVertexOut fin)
     surf.TexCoords = fin.TexCoords;
     surf.ao = 1.0f;
     surf.matID = materialID;
-    surf.mask = 0.0f;
+    surf.mask = 0;
     return surf;
 }
 #endif

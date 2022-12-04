@@ -13,10 +13,13 @@ public:
 	Texture* gBufferA = NULL;
 	Texture* gBufferB = NULL;
 	Texture* gBufferC = NULL;
+	Texture* gBufferE = NULL;
 	Texture* hiZMap = NULL;
 
 	Texture* hitDataMap = NULL;
 	Texture* hitColorMap = NULL;
+	RenderTarget* traceRenderTarget = NULL;
+	RenderTarget* resolveRenderTarget = NULL;
 
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);
@@ -26,7 +29,16 @@ public:
 protected:
 	Timer timer;
 
-	Material* material = NULL;
-	ShaderProgram* program = NULL;
-	MaterialRenderData materialRenderData;
+	bool useComputeShader = false;
+
+	Material* computeMaterial = NULL;
+	ShaderProgram* computeProgram = NULL;
+	MaterialRenderData computeMaterialRenderData;
+
+	Material* traceMaterial = NULL;
+	ShaderProgram* traceProgram = NULL;
+	Material* resolveMaterial = NULL;
+	ShaderProgram* resolveProgram = NULL;
+	MaterialRenderData traceMaterialRenderData;
+	MaterialRenderData resolveMaterialRenderData;
 };

@@ -68,6 +68,8 @@ FragmentOut SURFACE_MAIN
     surf.albedo = SAMPLE_TEX(colorMap, fin.TexCoords);
     surf.ao = SAMPLE_TEX(aoMap, surf.TexCoords).r;
     surf.albedo.a *= baseColor.a;
+    surf.metallic = 0.1;
+    surf.roughness = 0.9;
     #endif
 
     #ifdef DEFERRED_SHADER_FEATURE

@@ -1,8 +1,13 @@
+#define ENABLE_MEMTRACER 0
 #define _AFXDLL
 #include <filesystem>
 #include <tchar.h>
 #include <fstream>
 #include "Engine.h"
+#if ENABLE_MEMTRACER
+#include <memoryhook.h>
+#include <memorytracer.h>
+#endif // ENABLE_MEMTRACER
 #include "Utility/TextureUtility.h"
 #include "InitializationManager.h"
 #include "../resource.h"
@@ -366,6 +371,8 @@ WindowContext Engine::windowContext =
 EngineConfig Engine::engineConfig;
 WUIViewport Engine::viewport;
 
+static bool enableMemTracer = false;
+
 World * Engine::getCurrentWorld()
 {
 	return currentWorld;
@@ -453,6 +460,9 @@ void Engine::config()
 	engineConfig.screenWidth = screenWidth;
 	conf.get(".screenHeight", screenHeight);
 	engineConfig.screenHeight = screenHeight;
+
+	if (conf.get(".enableMemTracer", boolStr))
+		enableMemTracer = boolStr == "true";
 
 	SerializationInfo* layers = conf.get("layers");
 	if (layers != NULL) {
@@ -565,6 +575,12 @@ void imGuiClean()
 
 void Engine::setup()
 {
+	if (enableMemTracer) {
+#if ENABLE_MEMTRACER
+		mtracer::install_hook(true);
+#endif
+	}
+
 	CoInitialize(0);
 	{
 
@@ -689,6 +705,26 @@ void Engine::clean()
 	CoUninitialize();
 }
 
+#if ENABLE_MEMTRACER
+void dumpTraceFile()
+{
+	mtracer::MemoryTracer* tracer = mtracer::MemoryTracer::instance();
+	if (tracer == NULL)
+		return;
+	const char* traceFolder = "MemTracer";
+	if (!filesystem::exists(traceFolder)) {
+		filesystem::create_directory(traceFolder);
+	}
+	Time nowTime = Time::now();
+	string timeStr = nowTime.toString();
+	for (char& c : timeStr)
+		if (c == ':')
+			c = '_';
+	string filename = string(traceFolder) + '/' + timeStr + ".memtrace";
+	tracer->dump_trace_file(filename.c_str());
+}
+#endif
+
 void Engine::mainLoop(float deltaTime)
 {
 	Timer timer;
@@ -705,4 +741,9 @@ void Engine::mainLoop(float deltaTime)
 	Console::getTimer("Engine") = timer;
 	Console::resetNewLogCount();
 	Console::resetNewPyLogCount();
+
+#if ENABLE_MEMTRACER
+	if (input.getKeyPress(VK_F8))
+		dumpTraceFile();
+#endif
 }

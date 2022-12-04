@@ -133,6 +133,7 @@ void DeferredLightingPass::execute(IRenderContext& context)
 		context.setDrawInfo(0, 0, task.materialRenderData->desc.materialID);
 		context.postProcessCall();
 	}
+	context.setCullState(Cull_Back);
 }
 
 void DeferredLightingPass::reset()

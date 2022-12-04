@@ -1,0 +1,90 @@
+#material
+Count hiZStartLevel: 5
+Count hiZStopLevel: -1
+Count hiZMaxStep: 48
+Color hiZUVScale: 1.0, 1.0, 1.0, 1.0
+#vertex use postprocess
+#fragment postprocess
+#include "../lib/Light_Def.hmat"
+#include "../lib/ReflectionProbe_def.hmat"
+#include "../lib/Surface_def.hmat"
+#include "../lib/SSR_Lib.hmat"
+
+DEF_MAT_BEGIN
+uniform int hiZStartLevel;
+uniform int hiZStopLevel;
+uniform int hiZMaxStep;
+uniform float4 hiZUVScale;
+DEF_MAT_END
+
+DEF_TEX2D(gBufferA, 0);
+DEF_TEX2D(gBufferB, 1);
+DEF_TEX2D(gBufferC, 2);
+DEF_TEX2D_UINT(gBufferE, 3);
+DEF_TEX2D(hiZMap, 4);
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(hitData, 0);
+FS_DEF_OUT_COLOR(hitColor, 1);
+FS_DEF_OUT_END
+
+FragmentOut DEFAULT_SCREEN_MAIN
+{
+	FragmentOut fout;
+    float2 UV = fin.UV;
+    float4 hitData = 0.0f.rrrr;
+    float4 hitColor = 0.0f.rrrr;
+    uint mask = LOAD_TEX(gBufferE, int3(UV * camData.viewSize, 0)).a;
+    if (mask & REFLECTION_MASK) {
+        float depth = SAMPLE_TEX_LOD(gBufferB, UV, 0);
+
+        if ((1.0f - depth) > 1 / camData.zFar) {
+            float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
+            float3 N = normalize(worldDirToView(C.xyz));
+            float roughness = C.a;
+
+            float3 startUVZ = float3(UV, depth);
+            float3 startView = uvzPosToView(startUVZ);
+            float3 V = normalize(startView);
+
+            float3x3 tangentBasis = getTangentBasis(N);
+            float4 HPDF = ImportanceSampleGGX(float2(0, 0), roughness * roughness);
+            float3 H = normalize(mul(HPDF.xyz, tangentBasis));
+            float3 L = normalize(reflect(V, H));
+            float3 hitUVZ;
+            float fadeFactor = 1;
+#if 1
+            float3 endView = startView + L;
+            float3 endUVZ = viewPosToUVZ(endView);
+            float3 dirUVZ = normalize(endUVZ - startUVZ);
+            if (rayTraceHiZ_UVZ(hiZMap, hiZMapSampler,
+                hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
+                startUVZ, dirUVZ, hitUVZ))
+#else
+            if (rayTraceHiZ_View(hiZMap, hiZMapSampler,
+                hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
+                startView, L, hitUVZ))
+#endif
+            {
+                hitColor = SAMPLE_TEX_LOD(gBufferA, hitUVZ.xy, 0);
+                fadeFactor = GetScreenFadeBord(uvToClip(hitUVZ.xy));
+            }
+            else fadeFactor = 0;
+            hitData = float4(L, HPDF.a);
+            if (fadeFactor < 1) {
+                float3 worldPos = viewPosToWorld(startView);
+                float3 worldL = mul(float4(L, 0), camData.vmatInv).xyz;
+                float4 refColor = getReflectionColor(worldL, worldPos);
+                if (refColor.a != 0) {
+                    float3 hitPosView = uvzPosToView(hitUVZ);
+                    hitColor = lerp(refColor, hitColor, fadeFactor);
+                }
+            }
+        }
+    }
+
+    fout.hitData = hitData;
+    fout.hitColor = hitColor;
+
+    return fout;
+}

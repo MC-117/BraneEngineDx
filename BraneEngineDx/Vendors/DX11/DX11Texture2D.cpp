@@ -336,6 +336,10 @@ unsigned int DX11Texture2D::bind()
 		if (initData != NULL)
 			delete[] initData;
 	}
+	if (desc.data) {
+		free(desc.data);
+		desc.data = NULL;
+	}
 	desc.textureHandle = (unsigned long long)this;
 	desc.needUpdate = false;
 	return desc.textureHandle;
