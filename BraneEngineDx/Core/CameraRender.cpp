@@ -132,7 +132,7 @@ CameraRender* CameraRender::getMainCameraRender()
 
 void CameraRender::createInternalRenderTarget()
 {
-	internalTexture = new Texture2D(size.x, size.y, 4, true, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
+	internalTexture = new Texture2D(size.x, size.y, 4, true, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear, TIT_RGBA16_FF });
 	internalRenderTarget = new RenderTarget(size.x, size.y, 4, true);
 	internalRenderTarget->addTexture("screenMap", *internalTexture);
 	renderTarget = internalRenderTarget;

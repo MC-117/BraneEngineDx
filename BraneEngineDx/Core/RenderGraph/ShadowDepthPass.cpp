@@ -13,17 +13,18 @@ bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	const MeshRenderCommand* meshRenderCommand = dynamic_cast<const MeshRenderCommand*>(&cmd);
 	if (meshRenderCommand == NULL || !cmd.canCastShadow())
 		return false;
-	void* transformIndexHandle = NULL;
+	MeshTransformIndex* transformIndex = NULL;
 	for (int j = 0; j < meshRenderCommand->instanceIDCount; j++)
-		transformIndexHandle = cmd.sceneData->setMeshPartTransform(
+		transformIndex = cmd.sceneData->setMeshPartTransform(
 			meshRenderCommand->mesh, material, meshRenderCommand->instanceID + j);
 
 	DirectShadowRenderCommand command;
 	command.sceneData = cmd.sceneData;
+	command.transformData = cmd.transformData;
 	command.material = material;
 	command.mesh = meshRenderCommand->mesh;
 	command.directLightData = &cmd.sceneData->lightDataPack.directLightData;
-	command.transformIndexHandle = transformIndexHandle;
+	command.transformIndex = transformIndex;
 	command.bindings = cmd.bindings;
 
 	ShaderProgram* program = material->getShader()->getProgram(cmd.getShaderFeature());
@@ -63,6 +64,7 @@ bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	RenderTask task;
 	task.age = 0;
 	task.sceneData = command.sceneData;
+	task.transformData = command.transformData;
 	task.shaderProgram = program;
 	task.renderMode = command.getRenderMode();
 	task.cameraData = &cameraRenderData;

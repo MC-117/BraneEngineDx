@@ -7,7 +7,7 @@
 class DOFPass : public PostProcessPass
 {
 public:
-	Texture2D dofMap = Texture2D(size.x, size.y, 4, true, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
+	Texture2D dofMap = Texture2D(size.x, size.y, 4, true);
 	RenderTarget dofRenderTarget = RenderTarget(size.x, size.y, 4);
 
 	DOFPass(const string& name = "DOF", Material* material = NULL);

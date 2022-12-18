@@ -24,9 +24,9 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 	if (size == 0) {
 		release();
 	}
-	else if (size != desc.capacity) {
+	else if (size > desc.capacity || size < desc.capacity / 2) {
 		release();
-		desc.capacity = size;
+		desc.capacity = size * 1.5;
 		unsigned int alignedSize = ceil(desc.capacity * desc.cellSize / 16.0f) * 16;
 
 		//alignedSize = max(64, alignedSize);

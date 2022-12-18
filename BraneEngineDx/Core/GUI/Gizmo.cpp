@@ -1099,7 +1099,6 @@ void Gizmo::onRender3D(RenderInfo& info)
 			draw.instanceID = info.sceneData->setMeshTransform(draw.transformMat);
 			draw.instanceCount = 1;
 		}
-		info.sceneData->setMeshPartTransform(draw.meshPart, draw.material, draw.instanceID);
 		MeshRenderCommand cmd;
 		cmd.mesh = draw.meshPart;
 		cmd.material = draw.material;
@@ -1107,6 +1106,8 @@ void Gizmo::onRender3D(RenderInfo& info)
 		cmd.instanceID = draw.instanceID;
 		cmd.instanceIDCount = draw.instanceCount;
 		cmd.hasShadow = false;
+		cmd.transformData = &info.sceneData->meshTransformDataPack;
+		cmd.transformIndex = info.sceneData->setMeshPartTransform(draw.meshPart, draw.material, draw.instanceID);
 		info.renderGraph->setRenderCommand(cmd);
 	}
 	meshes.clear();

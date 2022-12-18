@@ -19,7 +19,7 @@ public:
 		SceneRenderData* sceneData = NULL;
 		CameraRender* cameraRender = NULL;
 		CameraRenderData cameraData;
-		Texture2D gBufferA = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_UF });
+		Texture2D gBufferA = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGB10A2_UF });
 		Texture2D gBufferB = Texture2D(1280, 720, 1, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_R32_F });
 		Texture2D gBufferC = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F });
 		Texture2D gBufferD = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F });
@@ -35,6 +35,8 @@ public:
 		RenderTarget resolveRenderTarget = RenderTarget(1280, 720, 4);
 		DeferredViewData();
 		void prepare();
+
+		bool isCubeFace() const;
 	};
 
 	ShadowDepthPass shadowDepthPass;

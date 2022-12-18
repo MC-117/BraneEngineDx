@@ -114,10 +114,18 @@ void EditorWorld::render(RenderGraph& renderGraph)
 		vector<Render*> tempRenders;
 		obj.getRenders(tempRenders);
 		for (auto& renderer : tempRenders) {
-			if (isClassOf<Light>(renderer) || isClassOf<CameraRender>(renderer))
+			IRendering::RenderType renderType = renderer->getRenderType();
+			switch (renderType)
+			{
+			case IRendering::Camera:
+			case IRendering::Light:
+			case IRendering::SceneCapture:
 				prerenders.push_back(renderer);
-			else
+				break;
+			default:
 				renders.push_back(renderer);
+				break;
+			}
 		}
 	}
 

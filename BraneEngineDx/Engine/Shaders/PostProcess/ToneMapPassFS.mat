@@ -11,6 +11,7 @@ Texture lutMap: defaultLut
 #vertex use postprocess
 #fragment postprocess
 #include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/Gamma_Correction_Lib.hmat"
 #include "../lib/ScreenPass_Def.hmat"
 
 DEF_MAT_BEGIN
@@ -60,7 +61,7 @@ FragmentOut DEFAULT_SCREEN_MAIN
 	FragmentOut fout;
 	float2 uv = fin.UV;
 	float4 c = SAMPLE_TEX_LOD(screenMap, uv, 0);
-	c.rgb = Float3(1.0) - exp(-c.rgb * exposure);
+    c.rgb = Float3(1.0) - exp(-c.rgb * exposure);
 	c.rgb = pow(c.rgb, Float3(1.0/gamma));
 	if (vignetteRate != 0) {
 		float vx = abs(uv.x * 2 - 1);
@@ -73,6 +74,6 @@ FragmentOut DEFAULT_SCREEN_MAIN
 		c = lerp(c, vignetteColor, v);
 	}
 	c = lerp(c, tan(lookupTable(atan(c) * (2.0 / PI), lutMap, lutMapSampler) * (PI / 2.0)), lutBlend);
-	fout.FragColor = c;
+    fout.FragColor = c;
 	return fout;
 }

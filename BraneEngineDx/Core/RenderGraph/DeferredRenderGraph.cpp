@@ -32,6 +32,11 @@ void DeferredRenderGraph::DeferredViewData::prepare()
 	resolveRenderTarget.resize(cameraRender->size.x, cameraRender->size.y);
 }
 
+bool DeferredRenderGraph::DeferredViewData::isCubeFace() const
+{
+	return cameraRender != NULL && cameraRender->getSceneMap()->getArrayCount() > 1;
+}
+
 DeferredRenderGraph::DeferredRenderGraph()
 {
 	forwardPass.requireClearFrame = false;
@@ -120,6 +125,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		RenderTask task;
 		task.age = 0;
 		task.sceneData = cmd.sceneData;
+		task.transformData = cmd.transformData;
 		task.shaderProgram = deferredShader;
 		task.renderMode = cmd.getRenderMode();
 		task.materialData = deferredMaterialRenderData;
@@ -221,9 +227,12 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	}
 
 	for (auto& item : viewDatas) {
+		Texture* sceneMap = item.second->cameraRender->getSceneMap();
+		if (sceneMap->getArrayCount() > 1)
+			continue;
 		ssrPass.sceneData = item.second->sceneData;
 		ssrPass.cameraData = &item.second->cameraData;
-		ssrPass.gBufferA = item.second->cameraRender->getSceneMap();
+		ssrPass.gBufferA = sceneMap;
 		ssrPass.gBufferB = &item.second->gBufferB;
 		ssrPass.gBufferC = &item.second->gBufferC;
 		ssrPass.gBufferE = &item.second->gBufferE;

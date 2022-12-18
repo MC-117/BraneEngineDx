@@ -16,7 +16,7 @@ protected:
 	int screenMapSamplerSlot = -1;
 public:
 	Texture2D gtaoMap = Texture2D(size.x * screenScale, size.y * screenScale, 1, true, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear });
-	Texture2D screenMap = Texture2D(size.x, size.y, 4, true, { TW_Clamp, TW_Clamp, TF_Linear_Mip_Point, TF_Linear_Mip_Point });
+	Texture2D screenMap = Texture2D(size.x, size.y, 4, true);
 
 	RenderTarget gtaoRenderTarget = RenderTarget(size.x * screenScale, size.y * screenScale, 1);
 	RenderTarget screenRenderTarget = RenderTarget(size.x, size.y, 4);

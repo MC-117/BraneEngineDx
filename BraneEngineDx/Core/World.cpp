@@ -108,6 +108,10 @@ void World::afterTick()
 	updateListener();
 #endif // AUDIO_USE_OPENAL
 	iter.reset();
+
+	renderPool.beginRender();
+	timer.record("Fence");
+
 	if (!guiOnly) {
 		while (iter.next())
 			iter.current().prerender(*renderPool.sceneData);

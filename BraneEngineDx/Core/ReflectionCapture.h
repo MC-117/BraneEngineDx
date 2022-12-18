@@ -27,6 +27,7 @@ public:
 	void updateCapture();
 	int getProbeIndex() const;
 
+	virtual RenderType getRenderType() const;
 	virtual void render(RenderInfo& info);
 protected:
 	bool update = false;

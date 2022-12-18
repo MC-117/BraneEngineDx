@@ -14,7 +14,7 @@ RenderPool::RenderPool(Camera & defaultCamera)
 	camera = &defaultCamera;
 	renderFrame = Time::frames();
 	sceneData = new SceneRenderData();
-	renderGraph = new DeferredRenderGraph();
+	renderGraph = Engine::engineConfig.guiOnly ? (RenderGraph*)new ForwardRenderGraph() : (RenderGraph*)new DeferredRenderGraph();
 }
 
 RenderPool::~RenderPool()
@@ -59,31 +59,49 @@ void RenderPool::switchCamera(Camera & camera)
 void RenderPool::add(Render & render)
 {
 	if (render.isValid) {
-		if (isClassOf<Light>(&render) || isClassOf<CameraRender>(&render))
+		IRendering::RenderType renderType = render.getRenderType();
+		switch (renderType)
+		{
+		case IRendering::Camera:
+		case IRendering::Light:
+		case IRendering::SceneCapture:
 			prePool.insert(&render);
-		else
+			break;
+		default:
 			pool.insert(&render);
+			break;
+		}
 		render.renderPool = this;
 	}
 }
 
 void RenderPool::remove(Render & render)
 {
-	if (isClassOf<Light>(&render))
+	IRendering::RenderType renderType = render.getRenderType();
+	switch (renderType)
+	{
+	case IRendering::Camera:
+	case IRendering::Light:
+	case IRendering::SceneCapture:
 		prePool.erase(&render);
-	else
+		break;
+	default:
 		pool.erase(&render);
+		break;
+	}
 	render.renderPool = NULL;
+}
+
+void RenderPool::beginRender()
+{
+	gameFence();
+
+	renderGraph->reset();
 }
 
 void RenderPool::render(bool guiOnly)
 {
 	Timer timer;
-	gameFence();
-	timer.record("Fence");
-
-	renderGraph->reset();
-	timer.record("Reset");
 
 	IVendor& vendor = VendorManager::getInstance().getVendor();
 
@@ -114,8 +132,8 @@ void RenderPool::render(bool guiOnly)
 	}
 	else {
 		IRenderContext& context = *vendor.getDefaultRenderContext();
-		currentCamera.cameraRender.getRenderTarget().resize(currentCamera.size.x, currentCamera.size.y);
-		context.bindFrame(currentCamera.cameraRender.getRenderTarget().getVendorRenderTarget());
+		RenderTarget::defaultRenderTarget.resize(currentCamera.size.x, currentCamera.size.y);
+		context.bindFrame(RenderTarget::defaultRenderTarget.getVendorRenderTarget());
 		context.clearFrameColor(currentCamera.clearColor);
 	}
 
@@ -142,14 +160,14 @@ RenderPool & RenderPool::operator-=(Render & render)
 
 void RenderPool::gameFence()
 {
-	while (Time::frames() > 0 && Time::frames() > renderFrame) { Sleep(0); }
+	while (Time::frames() > 0 && Time::frames() > renderFrame) { this_thread::sleep_for(0ms); }
 	if (!destory)
 		VendorManager::getInstance().getVendor().frameFence();
 }
 
 void RenderPool::renderFence()
 {
-	while (Time::frames() <= renderFrame) { Sleep(0); }
+	while (Time::frames() <= renderFrame) { this_thread::sleep_for(0ms); }
 }
 
 void RenderPool::renderThreadMain()

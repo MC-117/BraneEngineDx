@@ -54,18 +54,32 @@ bool MeshTransformData::clean(unsigned int base, unsigned int count)
 	return true;
 }
 
-void MeshTransformRenderData::setUpdateStatic()
+void MeshTransformRenderData::setFrequentUpdate(bool value)
 {
-	willStaticUpdate = true;
+	frequentUpdate = value;
+}
+
+void MeshTransformRenderData::setDelayUpdate()
+{
+	delayUpdate = true;
+}
+
+bool MeshTransformRenderData::getNeedUpdate() const
+{
+	return needUpdate;
 }
 
 unsigned int MeshTransformRenderData::setMeshTransform(const Matrix4f& transformMat)
 {
+	if (!needUpdate)
+		return -1;
 	return meshTransformData.setMeshTransform(transformMat);
 }
 
 unsigned int MeshTransformRenderData::setMeshTransform(const vector<Matrix4f>& transformMats)
 {
+	if (!needUpdate)
+		return -1;
 	return meshTransformData.setMeshTransform(transformMats);
 }
 
@@ -90,7 +104,7 @@ MeshTransformIndex* MeshTransformRenderData::getMeshPartTransform(MeshPart* mesh
 
 MeshTransformIndex* MeshTransformRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
 {
-	if (meshPart == NULL || material == NULL)
+	if (!needUpdate || meshPart == NULL || material == NULL)
 		return NULL;
 	Guid guid = makeGuid(meshPart, material);
 	auto meshIter = meshTransformIndex.find(guid);
@@ -114,7 +128,7 @@ MeshTransformIndex* MeshTransformRenderData::setMeshPartTransform(MeshPart* mesh
 
 MeshTransformIndex* MeshTransformRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, MeshTransformIndex* transformIndex)
 {
-	if (meshPart == NULL || material == NULL || transformIndex == NULL)
+	if (!needUpdate || meshPart == NULL || material == NULL || transformIndex == NULL)
 		return NULL;
 	Guid guid = makeGuid(meshPart, material);
 	auto meshIter = meshTransformIndex.find(guid);
@@ -139,103 +153,15 @@ MeshTransformIndex* MeshTransformRenderData::setMeshPartTransform(MeshPart* mesh
 	return trans;
 }
 
-unsigned int MeshTransformRenderData::setStaticMeshTransform(const Matrix4f& transformMat)
-{
-	if (staticUpdate)
-		return staticMeshTransformData.setMeshTransform(transformMat);
-	else
-		return -1;
-}
-
-unsigned int MeshTransformRenderData::setStaticMeshTransform(const vector<Matrix4f>& transformMats)
-{
-	if (staticUpdate)
-		return staticMeshTransformData.setMeshTransform(transformMats);
-	else
-		return -1;
-}
-
-MeshTransformIndex* MeshTransformRenderData::getStaticMeshPartTransform(MeshPart* meshPart, Material* material)
-{
-	if (meshPart == NULL || material == NULL)
-		return NULL;
-	Guid guid = makeGuid(meshPart, material);
-	auto meshIter = staticMeshTransformIndex.find(guid);
-	if (meshIter != staticMeshTransformIndex.end())
-		return &meshIter->second;
-	return NULL;
-}
-
-MeshTransformIndex* MeshTransformRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
-{
-	if (!staticUpdate || meshPart == NULL || material == NULL)
-		return NULL;
-	Guid guid = makeGuid(meshPart, material);
-	auto meshIter = staticMeshTransformIndex.find(guid);
-	MeshTransformIndex* trans;
-	if (meshIter == staticMeshTransformIndex.end()) {
-		trans = &staticMeshTransformIndex.insert(pair<Guid, MeshTransformIndex>(guid,
-			MeshTransformIndex())).first->second;
-	}
-	else {
-		trans = &meshIter->second;
-	}
-	InstanceDrawData data = { transformIndex, meshPart->vertexFirst };
-	if (trans->batchCount >= trans->indices.size())
-		trans->indices.push_back(data);
-	else
-		trans->indices[trans->batchCount] = data;
-	trans->batchCount++;
-	staticTotalTransformIndexCount++;
-	return trans;
-}
-
-MeshTransformIndex* MeshTransformRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, MeshTransformIndex* transformIndex)
-{
-	if (!staticUpdate || meshPart == NULL || material == NULL || transformIndex == NULL)
-		return NULL;
-	Guid guid = makeGuid(meshPart, material);
-	auto meshIter = staticMeshTransformIndex.find(guid);
-	MeshTransformIndex* trans;
-	if (meshIter == staticMeshTransformIndex.end()) {
-		trans = &staticMeshTransformIndex.insert(pair<Guid, MeshTransformIndex>(guid,
-			MeshTransformIndex())).first->second;
-	}
-	else {
-		trans = &meshIter->second;
-	}
-	unsigned int size = trans->batchCount + transformIndex->batchCount;
-	if (size > trans->indices.size())
-		trans->indices.resize(size);
-	for (int i = trans->batchCount; i < size; i++) {
-		InstanceDrawData data = transformIndex->indices[i - trans->batchCount];
-		data.baseVertex = meshPart->vertexFirst;
-		trans->indices[i] = data;
-	}
-	trans->batchCount = size;
-	staticTotalTransformIndexCount += transformIndex->batchCount;
-	return trans;
-}
-
 void MeshTransformRenderData::create()
 {
-	unsigned int dataSize = meshTransformData.batchCount + staticMeshTransformData.batchCount;
-	unsigned int indexSize = totalTransformIndexCount + staticTotalTransformIndexCount;
-	bool needUpdate = dataSize > transformBuffer.capacity() || indexSize > transformIndexBuffer.capacity();
+	if (!needUpdate)
+		return;
+	unsigned int dataSize = meshTransformData.batchCount;
+	unsigned int indexSize = totalTransformIndexCount;
 	transformBuffer.resize(dataSize);
 	transformIndexBuffer.resize(indexSize);
 	unsigned int transformBase = 0, transformIndexBase = 0;
-	if (needUpdate || staticUpdate) {
-		transformBase += staticMeshTransformData.batchCount;
-		for (auto b = staticMeshTransformIndex.begin(), e = staticMeshTransformIndex.end(); b != e; b++) {
-			b->second.indexBase = transformIndexBase;
-			transformIndexBase += b->second.batchCount;
-		}
-	}
-	else {
-		transformBase = staticMeshTransformData.batchCount;
-		transformIndexBase = staticTotalTransformIndexCount;
-	}
 	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
 		b->second.indexBase = transformIndexBase;
 		for (int i = 0; i < b->second.batchCount; i++) {
@@ -251,31 +177,18 @@ void MeshTransformRenderData::release()
 
 void MeshTransformRenderData::upload()
 {
-	unsigned int dataSize = meshTransformData.batchCount + staticMeshTransformData.batchCount;
-	unsigned int indexSize = totalTransformIndexCount + staticTotalTransformIndexCount;
-	bool needUpdate = dataSize > transformBuffer.capacity() || indexSize > transformIndexBuffer.capacity();
+	if (!needUpdate)
+		return;
+	unsigned int dataSize = meshTransformData.batchCount;
+	unsigned int indexSize = totalTransformIndexCount;
 	transformBuffer.resize(dataSize);
 	transformIndexBuffer.resize(indexSize);
-	if (needUpdate || staticUpdate) {
-		transformBuffer.uploadSubData(0, staticMeshTransformData.batchCount,
-			staticMeshTransformData.transforms.data()->data());
-		for (auto b = staticMeshTransformIndex.begin(), e = staticMeshTransformIndex.end(); b != e; b++) {
-			transformIndexBuffer.uploadSubData(b->second.indexBase, b->second.batchCount,
-				b->second.indices.data());
-		}
-	}
-	transformBuffer.uploadSubData(staticMeshTransformData.batchCount, meshTransformData.batchCount,
-		meshTransformData.transforms.data()->data());
+	transformBuffer.uploadSubData(0, meshTransformData.batchCount, meshTransformData.transforms.data()->data());
 	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
 		transformIndexBuffer.uploadSubData(b->second.indexBase, b->second.batchCount,
 			b->second.indices.data());
 	}
-	if (willStaticUpdate) {
-		staticUpdate = true;
-		willStaticUpdate = false;
-	}
-	else
-		staticUpdate = false;
+	needUpdate = false;
 }
 
 void MeshTransformRenderData::bind(IRenderContext& context)
@@ -286,42 +199,36 @@ void MeshTransformRenderData::bind(IRenderContext& context)
 
 void MeshTransformRenderData::clean()
 {
+	if (!frequentUpdate && !delayUpdate)
+		return;
 	meshTransformData.clean();
 	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
 		b->second.batchCount = 0;
 	}
 	totalTransformIndexCount = 0;
+	needUpdate = true;
+	delayUpdate = false;
 }
 
-void MeshTransformRenderData::cleanStatic()
+void MeshTransformRenderData::cleanTransform(unsigned int base, unsigned int count)
 {
-	if (staticUpdate) {
-		staticMeshTransformData.clean();
-		for (auto b = staticMeshTransformIndex.begin(), e = staticMeshTransformIndex.end(); b != e; b++) {
-			b->second.batchCount = 0;
-		}
-		staticTotalTransformIndexCount = 0;
-	}
+	if (meshTransformData.clean(base, count))
+		needUpdate = true;
 }
 
-void MeshTransformRenderData::cleanStatic(unsigned int base, unsigned int count)
-{
-	staticMeshTransformData.clean(base, count);
-}
-
-void MeshTransformRenderData::cleanPartStatic(MeshPart* meshPart, Material* material)
+void MeshTransformRenderData::cleanPart(MeshPart* meshPart, Material* material)
 {
 	Guid guid = makeGuid(meshPart, material);
-	auto iter = staticMeshTransformIndex.find(guid);
-	if (iter != staticMeshTransformIndex.end()) {
-		staticUpdate = true;
+	auto iter = meshTransformIndex.find(guid);
+	if (iter != meshTransformIndex.end()) {
+		needUpdate = true;
 		iter->second.batchCount = 0;
 	}
 }
 
 bool MeshRenderCommand::isValid() const
 {
-	return sceneData && material && !material->isNull() && mesh != NULL && mesh->isValid();
+	return sceneData && transformData && material && !material->isNull() && mesh != NULL && mesh->isValid();
 }
 
 Enum<ShaderFeature> MeshRenderCommand::getShaderFeature() const
@@ -352,11 +259,11 @@ bool MeshRenderCommand::canCastShadow() const
 
 IRenderPack* MeshRenderCommand::createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const
 {
-	return new MeshDataRenderPack(sceneData.meshTransformDataPack, sceneData.lightDataPack);
+	return new MeshDataRenderPack(sceneData.lightDataPack);
 }
 
-MeshDataRenderPack::MeshDataRenderPack(MeshTransformRenderData& meshTransformDataPack, LightRenderData& lightDataPack)
-	: meshTransformDataPack(meshTransformDataPack), lightDataPack(lightDataPack)
+MeshDataRenderPack::MeshDataRenderPack(LightRenderData& lightDataPack)
+	: lightDataPack(lightDataPack)
 {
 }
 
@@ -370,24 +277,8 @@ bool MeshDataRenderPack::setRenderCommand(const IRenderCommand& command)
 	if (materialData == NULL)
 		return false;
 
-	if (meshRenderCommand->isNonTransformIndex) {
-		setRenderData(meshRenderCommand->mesh, NULL);
-	}
-	else if (meshRenderCommand->isStatic) {
-		auto meshTDIter = meshTransformDataPack.staticMeshTransformIndex.find(
-			makeGuid(meshRenderCommand->mesh, meshRenderCommand->material));
-		if (meshTDIter != meshTransformDataPack.staticMeshTransformIndex.end())
-			setRenderData(meshRenderCommand->mesh, &meshTDIter->second);
-		else
-			return false;
-	}
-	else {
-		auto meshTDIter = meshTransformDataPack.meshTransformIndex.find(
-			makeGuid(meshRenderCommand->mesh, meshRenderCommand->material));
-		if (meshTDIter != meshTransformDataPack.meshTransformIndex.end())
-			setRenderData(meshRenderCommand->mesh, &meshTDIter->second);
-		else
-			return false;
+	if (meshRenderCommand->transformIndex) {
+		setRenderData(meshRenderCommand->mesh, meshRenderCommand->transformIndex);
 	}
 
 	return true;

@@ -46,6 +46,7 @@ void ToneMapPass::execute(IRenderContext& context)
 		context.bindFrame(screenRenderTarget.getVendorRenderTarget());
 
 		context.setDrawInfo(0, 1, 0);
+		context.setRenderPostState();
 		context.postProcessCall();
 
 		context.clearFrameBindings();

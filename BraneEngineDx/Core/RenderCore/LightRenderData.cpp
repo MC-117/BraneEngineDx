@@ -2,6 +2,15 @@
 #include "../DirectLight.h"
 #include "../PointLight.h"
 
+Vector3f toLinearColor(const Color& color)
+{
+	return Vector3f{
+		pow(color.r, 2.2f),
+		pow(color.g, 2.2f),
+		pow(color.b, 2.2f),
+	};
+}
+
 void LightRenderData::setLight(Light* light)
 {
 	if (shadowTarget == NULL && light->getShadowRenderTarget() != NULL) {
@@ -14,7 +23,7 @@ void LightRenderData::setLight(Light* light)
 		directLightData.intensity = directLight->intensity;
 		directLightData.lightSpaceMat = MATRIX_UPLOAD_OP(directLight->getLightSpaceMatrix());
 		directLightData.shadowBias = directLight->getShadowBias();
-		directLightData.color = Vector3f(directLight->color.r, directLight->color.g, directLight->color.b);
+		directLightData.color = toLinearColor(directLight->color);
 		shadowCameraRenderData.data = directLight->shadowData.cameraData;
 		shadowCameraRenderData.renderTarget = shadowTarget;
 		shadowCameraRenderData.clearColors.resize(1);
@@ -26,7 +35,7 @@ void LightRenderData::setLight(Light* light)
 		PointLightData data;
 		data.position = pointLight->getPosition(WORLD);
 		data.intensity = pointLight->intensity;
-		data.color = Vector3f(pointLight->color.r, pointLight->color.g, pointLight->color.b);
+		data.color = toLinearColor(pointLight->color);
 		data.radius = pointLight->getRadius();
 		pointLightDatas.emplace_back(data);
 	}

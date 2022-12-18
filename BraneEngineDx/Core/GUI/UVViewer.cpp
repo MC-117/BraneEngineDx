@@ -128,7 +128,6 @@ void UVViewer::onRenderWindow(GUIRenderInfo& info)
 	command.sceneData = info.sceneData;
 	command.material = uvMaterial;
 	command.mesh = selectMeshPart;
-	command.isNonTransformIndex = true;
 
 	info.renderGraph->setRenderCommand(command);
 }

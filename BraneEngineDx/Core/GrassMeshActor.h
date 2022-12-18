@@ -26,7 +26,6 @@ public:
 	virtual bool serialize(SerializationInfo& to);
 protected:
 	bool update = true;
-	unsigned int baseTransID = -1;
 	unsigned int transCount = 0;
 };
 

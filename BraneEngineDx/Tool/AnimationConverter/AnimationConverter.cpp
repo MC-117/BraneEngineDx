@@ -411,6 +411,7 @@ void AnimationConverter::showPmxLoad()
 	}
 	ImGui::SameLine();
 	ImGui::InputText("Pmx", &pmxPath);
+	ImGui::InputFloat("BoneScale", &boneScale, 0.01f);
 	if (ImGui::Button("Pmx2Fbx", { -1, 40 })) {
 		if (!vmdPath.empty() && !pmxPath.empty()) {
 			prepare();
@@ -565,7 +566,7 @@ void AnimationConverter::generateAsset()
 	info.add("outlines");
 	info.set("position", SVector3f(0, 0, 0));
 	info.set("rotation", SVector3f(90, 0, 0));
-	info.set("scale", SVector3f(5, 5, 5));
+	info.set("scale", SVector3f(boneScale, boneScale, boneScale));
 	SerializationInfo& minfo = *info.get("materials");
 	minfo.type = "MaterialMap";
 	SerializationInfo& outlineinfo = *info.get("outlines");

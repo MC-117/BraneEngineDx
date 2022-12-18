@@ -29,15 +29,17 @@ void TerrainRender::render(RenderInfo& info)
     if (!customTransformSubmit)
         instanceID = info.sceneData->setMeshTransform(transformMat);
 
-    if (!customTransformSubmit)
-        info.sceneData->setMeshPartTransform(&geometry->meshPart, material, instanceID);
     MeshRenderCommand command;
     command.sceneData = info.sceneData;
     command.material = material;
     command.mesh = &geometry->meshPart;
-    command.isStatic = isStatic;
     command.instanceID = instanceID;
     command.instanceIDCount = instanceCount;
+    command.transformData = isStatic ? &info.sceneData->staticMeshTransformDataPack : &info.sceneData->meshTransformDataPack;
+    if (customTransformSubmit)
+        command.transformIndex = info.sceneData->getMeshPartTransform(&geometry->meshPart, material);
+    else
+        command.transformIndex = info.sceneData->setMeshPartTransform(&geometry->meshPart, material, instanceID);
     info.renderGraph->setRenderCommand(command);
 }
 

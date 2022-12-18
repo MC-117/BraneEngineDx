@@ -178,8 +178,10 @@ void loadAssets(LoadingUI& log, const char* path, vector<filesystem::path>& dela
 				const char* filterStr = "TF_Linear_Mip_Linear";
 				if (name.find("_N") != string::npos)
 					stdStr = "false";
-				if (name.find("_lut") != string::npos)
+				if (name.find("_lut") != string::npos) {
+					stdStr = "false";
 					filterStr = "TF_Linear";
+				}
 				asset = AssetManager::loadAsset("Texture2D", name, path, { stdStr, "TW_Repeat", "TW_Repeat", filterStr, filterStr }, {});
 			}
 			else if (!_stricmp(ext.c_str(), ".mat")) {

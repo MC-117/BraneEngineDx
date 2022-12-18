@@ -3,9 +3,10 @@
 #castshadow false
 #material
 Scalar noiseUVScale: 500
-Scalar lightFactor: 0.5
 Scalar darkCut: 0.5
 Scalar darkSmooth: 0.5
+Scalar roughness: 0.5
+Scalar metallic: 0.5
 Scalar alphaCut: 0.5
 Scalar time: 0
 Scalar windDensity: 1
@@ -29,13 +30,13 @@ uniform float time;
 uniform float windDensity;
 uniform float4 windForce;
 uniform float noiseUVScale;
-uniform float lightFactor;
 uniform float darkCut;
 uniform float darkSmooth;
 uniform float alphaCut;
+uniform float roughness;
+uniform float metallic;
 uniform float4 baseColor;
 uniform float4 darkColor;
-uniform float4 shadowColor;
 uniform float4 noiseColor;
 uniform float4 overColor;
 DEF_MAT_END
@@ -84,6 +85,7 @@ DefaultVertexOut MESH_MAIN
 #include "lib/Light_Def.hmat"
 #include "lib/CameraData_Def.hmat"
 #include "lib/Toon_Lib.hmat"
+#include "lib/PBR_Lib.hmat"
 #include "lib/GBuffer_Def.hmat"
 
 static const float4x4 thresholdMatrix = float4x4(
@@ -98,13 +100,13 @@ uniform float time;
 uniform float windDensity;
 uniform float4 windForce;
 uniform float noiseUVScale;
-uniform float lightFactor;
 uniform float darkCut;
 uniform float darkSmooth;
 uniform float alphaCut;
+uniform float roughness;
+uniform float metallic;
 uniform float4 baseColor;
 uniform float4 darkColor;
-uniform float4 shadowColor;
 uniform float4 noiseColor;
 uniform float4 overColor;
 DEF_MAT_END
@@ -149,8 +151,8 @@ FragmentOut SURFACE_MAIN
     float4 tintColor = smoothToon(darkColor, baseColor, fin.TexCoords.y, darkCut, darkSmooth);
     tintColor *= lerp(overColor, noiseColor, SAMPLE_TEX(noiseMap, fin.WorldPos.xy / noiseUVScale));
     surf.albedo = SAMPLE_TEX(colorMap, fin.TexCoords) * tintColor;
-    surf.metallic = 0.1;
-    surf.roughness = 0.9;
+    surf.metallic = metallic;
+    surf.roughness = roughness;
     #endif
     
     if (surf.albedo.a < alphaCut)
@@ -159,28 +161,25 @@ FragmentOut SURFACE_MAIN
     #ifdef DEFERRED_SHADER_FEATURE
     outputSurface(surf, fout.gBufferA, fout.gBufferB, fout.gBufferC, fout.gBufferD, fout.gBufferE);
     #else
-    float3 Lo = Float4(0.0f);
-    
-    float intensity = getLightFinalIntensity(directLight);
-    if (intensity != 0) {
+    float3 V = normalize(camData.camPos - surf.WorldPos);
+    float3 Lo = Float3(0.0);
+
+    if (directLight.intensity != 0) {
         float shadowFactor = getShadow(directLight, surf);
-        Lo += lerp(shadowColor * intensity, directLight.color, shadowFactor);
+        Lo += PBR_Lo_DirectLight(directLight, surf.Normal, V, surf.albedo.xyz,
+            surf.metallic, surf.roughness) * shadowFactor;
     }
 
     for(int i = 0; i < pointLightCount; ++i) {
         if (pointLights[i].intensity != 0) {
-            Lo += pointLights[i].color;
+            Lo += PBR_Lo_PointLight(pointLights[i], surf.WorldPos, surf.Normal, V, surf.albedo.xyz, surf.metallic, surf.roughness);
         }
     }
-    
-    Lo = lerp(Float3(1), Lo, lightFactor);
 
-    float4 ambient = Toon_Ambient(surf.albedo, surf.ao);
+    float3 ambient = PBR_Ambient(surf.albedo.xyz, surf.ao);
+    float3 color = ambient + Lo;
     
-    fout.FragColor.rgb = surf.albedo.rgb * Lo + ambient.rgb;
-    fout.FragColor.a = surf.albedo.a;
-    fout.FragColor *= overColor;
-    //fout.ssnMask = float4(1);
+    fout.FragColor = float4(color, surf.albedo.a);
     #endif
     return fout;
 }

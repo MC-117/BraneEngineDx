@@ -25,6 +25,7 @@ public:
 	virtual int getHeight() const;
 	virtual int getChannel() const;
 	virtual int getMipLevels() const;
+	Texture2DInfo getTextureInfo() const;
 
 	virtual unsigned long long getTextureID();
 	virtual void* getVendorTexture() const;

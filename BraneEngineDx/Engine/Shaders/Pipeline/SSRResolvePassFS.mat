@@ -29,7 +29,7 @@ FragmentOut DEFAULT_SCREEN_MAIN
     float2 UV = fin.UV;
     float depth = SAMPLE_TEX_LOD(gBufferB, UV, 0);
     float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
-    float roughness = clamp(C.a, 0.02, 1);
+    float roughness = C.a;
     float3 viewN = normalize(worldDirToView(C.xyz));
     float3 viewPos = uvzPosToView(float3(UV, depth));
     float3 V = normalize(viewPos);
@@ -53,7 +53,7 @@ FragmentOut DEFAULT_SCREEN_MAIN
         }
         color *= rcp(weightSum);
         //color /= 1 - luminance(color);
-        color = max(1e-5, color) * 0.2f;
+        color = max(1e-5, color) * 0.2f * smoothstep(0.0f, 0.2f, 1 - roughness);
     }
 
     fout.FragColor = float4(color, 1);

@@ -58,6 +58,11 @@ float4x4 inverse(float4x4 m) {
     return ret;
 }
 
+float3 getPosition(float4x4 tmat)
+{
+    return mul(float4(0.0f, 0.0f, 0.0f, 1.0f), tmat).xyz;
+}
+
 float3 getForward(float4x4 tmat)
 {
     return mul(float4(1.0f, 0.0f, 0.0f, 0.0f), tmat).xyz;

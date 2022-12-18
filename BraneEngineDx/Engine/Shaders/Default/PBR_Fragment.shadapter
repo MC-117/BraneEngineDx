@@ -67,6 +67,7 @@ FragmentOut SURFACE_MAIN
     float3 tN = normalize(SAMPLE_TEX(normalMap, surf.TexCoords).xyz * 2 - 1) * normalScale;
     surf.Normal = normalize(mul(tN, TBN));
     surf.albedo = baseColor * SAMPLE_TEX(colorMap, surf.TexCoords);
+    //surf.albedo.rgb = pow(surf.albedo.rgb, 2.2);
     surf.roughness = roughness * SAMPLE_TEX(roughnessMap, surf.TexCoords).r;
     surf.metallic = metallic * SAMPLE_TEX(metallicMap, surf.TexCoords).r;
     surf.ao = ao * SAMPLE_TEX(aoMap, surf.TexCoords).r;

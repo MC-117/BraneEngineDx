@@ -8,10 +8,12 @@ SerializeInstance(Camera);
 
 Camera::Camera(string name) : Transform(name)
 {
+	cameraRender.setSize(size);
 }
 
 Camera::Camera(RenderTarget & renderTarget, string name) : Transform(name), cameraRender(renderTarget)
 {
+	cameraRender.setSize(size);
 }
 
 Camera::~Camera()

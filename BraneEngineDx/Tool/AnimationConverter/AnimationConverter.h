@@ -93,7 +93,7 @@ protected:
 	char execCmdChars[200];
 	bool encoding = true, enablePhysics = false, enableIK = false;
 	int stage = 0, subStage = -1;
-	float camMotionScale = 1, camFovScale = 1;
+	float camMotionScale = 1, camFovScale = 1, boneScale = 1;
 
 	const aiScene* scene = NULL;
 	const vmd::VmdMotion* vmdMotion = NULL;

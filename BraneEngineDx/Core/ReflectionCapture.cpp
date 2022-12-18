@@ -71,6 +71,11 @@ int ReflectionCapture::getProbeIndex() const
 	return probeIndex;
 }
 
+IRendering::RenderType ReflectionCapture::getRenderType() const
+{
+	return RenderType::SceneCapture;
+}
+
 void ReflectionCapture::render(RenderInfo& info)
 {
 	if (reflectionCubeMap == NULL)

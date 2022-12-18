@@ -176,6 +176,12 @@ DXGI_FORMAT DX11Texture2DInfo::toDX11InternalType(const TexInternalType & type)
 		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	case TIT_RGB10A2_UF:
 		return DXGI_FORMAT_R10G10B10A2_UNORM;
+	case TIT_RGBA16_UF:
+		return DXGI_FORMAT_R16G16B16A16_UNORM;
+	case TIT_RGBA16_F:
+		return DXGI_FORMAT_R16G16B16A16_SNORM;
+	case TIT_RGBA16_FF:
+		return DXGI_FORMAT_R16G16B16A16_FLOAT;
 	case TIT_D32_F:
 		return DXGI_FORMAT_R32_TYPELESS;
 	case TIT_R32_F:
@@ -210,6 +216,12 @@ DXGI_FORMAT DX11Texture2DInfo::toDX11ColorType(const TexInternalType& type)
 		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	case TIT_RGB10A2_UF:
 		return DXGI_FORMAT_R10G10B10A2_UNORM;
+	case TIT_RGBA16_UF:
+		return DXGI_FORMAT_R16G16B16A16_UNORM;
+	case TIT_RGBA16_F:
+		return DXGI_FORMAT_R16G16B16A16_SNORM;
+	case TIT_RGBA16_FF:
+		return DXGI_FORMAT_R16G16B16A16_FLOAT;
 	case TIT_D32_F:
 		return DXGI_FORMAT_R32_FLOAT;
 	case TIT_R32_F:
@@ -387,7 +399,7 @@ ComPtr<ID3D11ShaderResourceView> DX11Texture2D::getSRV(const MipOption& mipOptio
 	if (bind() == 0)
 		return NULL;
 
-	bool isMS = desc.info.sampleCount > 1;
+	bool isMS = (mipOption.mipCount == 0 && desc.info.sampleCount > 1) || mipOption.mipCount > 1;
 	bool create = false;
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 

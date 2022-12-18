@@ -45,14 +45,14 @@ DirectShadowRenderPack::DirectShadowRenderPack(MeshTransformRenderData& meshTran
 bool DirectShadowRenderPack::setRenderCommand(const IRenderCommand& command)
 {
 	const DirectShadowRenderCommand* directShadowRenderCommand = dynamic_cast<const DirectShadowRenderCommand*>(&command);
-	if (directShadowRenderCommand == NULL || directShadowRenderCommand->transformIndexHandle == NULL)
+	if (directShadowRenderCommand == NULL || directShadowRenderCommand->transformIndex == NULL)
 		return false;
 
 	materialData = dynamic_cast<MaterialRenderData*>(command.material->getRenderData());
 	if (materialData == NULL)
 		return false;
 
-	setRenderData(directShadowRenderCommand->mesh, (MeshTransformIndex*)directShadowRenderCommand->transformIndexHandle);
+	setRenderData(directShadowRenderCommand->mesh, directShadowRenderCommand->transformIndex);
 
 	return true;
 }

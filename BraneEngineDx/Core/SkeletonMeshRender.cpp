@@ -63,16 +63,18 @@ void SkeletonMeshRender::render(RenderInfo & info)
 		if (!part->isValid())
 			continue;
 
-		if (!customTransformSubmit)
-			info.sceneData->setMeshPartTransform(part, material, instanceID);
-
 		MeshRenderCommand command;
 		command.sceneData = info.sceneData;
 		command.material = material;
 		command.mesh = part;
-		command.isStatic = isStatic;
 		command.instanceID = instanceID;
 		command.instanceIDCount = instanceCount;
+		MeshTransformRenderData* transformData = isStatic ? &info.sceneData->staticMeshTransformDataPack : &info.sceneData->meshTransformDataPack;
+		command.transformData = transformData;
+		if (customTransformSubmit)
+			command.transformIndex = transformData->getMeshPartTransform(part, material);
+		else
+			command.transformIndex = transformData->setMeshPartTransform(part, material, instanceID);
 		if (morphWeights.getMorphCount() > 0)
 			command.bindings.push_back(morphWeights.getRenderData());
 
@@ -80,8 +82,11 @@ void SkeletonMeshRender::render(RenderInfo & info)
 
 		Material* outlineMaterial = outlineMaterials[i];
 		if (outlineEnable[i] && outlineMaterial != NULL) {
-			if (!customTransformSubmit)
-				info.sceneData->setMeshPartTransform(part, outlineMaterial, instanceID);
+			command.instanceIDCount = instanceCount;
+			if (customTransformSubmit)
+				command.transformIndex = transformData->getMeshPartTransform(part, outlineMaterial);
+			else
+				command.transformIndex = transformData->setMeshPartTransform(part, outlineMaterial, instanceID);
 			command.material = outlineMaterial;
 			info.renderGraph->setRenderCommand(command);
 		}

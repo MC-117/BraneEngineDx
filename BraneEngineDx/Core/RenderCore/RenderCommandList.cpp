@@ -9,6 +9,11 @@
 #include "../Engine.h"
 #include "../Utility/RenderUtility.h"
 
+SceneRenderData::SceneRenderData()
+{
+	staticMeshTransformDataPack.setFrequentUpdate(false);
+}
+
 void SceneRenderData::setCamera(Render* cameraRender)
 {
 	CameraRender* _cameraRender = dynamic_cast<CameraRender*>(cameraRender);
@@ -49,76 +54,64 @@ inline Guid makeGuid(void* ptr0, void* ptr1)
 	return guid;
 }
 
-void* SceneRenderData::getMeshPartTransform(MeshPart* meshPart, Material* material)
+MeshTransformIndex* SceneRenderData::getMeshPartTransform(MeshPart* meshPart, Material* material)
 {
 	return meshTransformDataPack.getMeshPartTransform(meshPart, material);
 }
 
-void* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
+MeshTransformIndex* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
 {
-	void* re = meshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex);
-	/*if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
-		meshTransformDataPack.setMeshPartTransform(meshPart, &Material::defaultDepthMaterial, transformIndex);*/
-	return re;
+	return meshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex);
 }
 
-void* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex)
+MeshTransformIndex* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex)
 {
-	void* re = meshTransformDataPack.setMeshPartTransform(meshPart, material, (MeshTransformIndex*)transformIndex);
-	/*if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
-		meshTransformDataPack.setMeshPartTransform(meshPart, &Material::defaultDepthMaterial, (MeshTransformIndex*)transformIndex);*/
-	return re;
+	return meshTransformDataPack.setMeshPartTransform(meshPart, material, (MeshTransformIndex*)transformIndex);
 }
 
 unsigned int SceneRenderData::setStaticMeshTransform(const Matrix4f& transformMat)
 {
-	return meshTransformDataPack.setStaticMeshTransform(transformMat);
+	return staticMeshTransformDataPack.setMeshTransform(transformMat);
 }
 
 unsigned int SceneRenderData::setStaticMeshTransform(const vector<Matrix4f>& transformMats)
 {
-	return meshTransformDataPack.setStaticMeshTransform(transformMats);
+	return staticMeshTransformDataPack.setMeshTransform(transformMats);
 }
 
-void* SceneRenderData::getStaticMeshPartTransform(MeshPart* meshPart, Material* material)
+MeshTransformIndex* SceneRenderData::getStaticMeshPartTransform(MeshPart* meshPart, Material* material)
 {
-	return meshTransformDataPack.getStaticMeshPartTransform(meshPart, material);
+	return staticMeshTransformDataPack.getMeshPartTransform(meshPart, material);
 }
 
-void* SceneRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
+MeshTransformIndex* SceneRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
 {
-	void* re = meshTransformDataPack.setStaticMeshPartTransform(meshPart, material, transformIndex);
-	//if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
-	//	meshTransformDataPack.setStaticMeshPartTransform(meshPart, &Material::defaultDepthMaterial, transformIndex);
-	return re;
+	return staticMeshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex);
 }
 
-void* SceneRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex)
+MeshTransformIndex* SceneRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex)
 {
-	void* re = meshTransformDataPack.setStaticMeshPartTransform(meshPart, material, (MeshTransformIndex*)transformIndex);
-	//if (re != NULL && material->getRenderOrder() >= 1000 && material->getRenderOrder() < 2450 && material->canCastShadow)
-	//	meshTransformDataPack.setStaticMeshPartTransform(meshPart, &Material::defaultDepthMaterial, (MeshTransformIndex*)transformIndex);
-	return re;
+	return staticMeshTransformDataPack.setMeshPartTransform(meshPart, material, (MeshTransformIndex*)transformIndex);
 }
 
 void SceneRenderData::cleanStaticMeshTransform(unsigned int base, unsigned int count)
 {
-	meshTransformDataPack.cleanStatic(base, count);
+	staticMeshTransformDataPack.cleanTransform(base, count);
 }
 
 void SceneRenderData::cleanStaticMeshPartTransform(MeshPart* meshPart, Material* material)
 {
-	meshTransformDataPack.cleanPartStatic(meshPart, material);
+	staticMeshTransformDataPack.cleanPart(meshPart, material);
 }
 
 void SceneRenderData::setUpdateStatic()
 {
-	meshTransformDataPack.setUpdateStatic();
+	staticMeshTransformDataPack.setDelayUpdate();
 }
 
 bool SceneRenderData::willUpdateStatic()
 {
-	return meshTransformDataPack.staticUpdate;
+	return staticMeshTransformDataPack.getNeedUpdate();
 }
 
 void SceneRenderData::create()
@@ -139,6 +132,7 @@ void SceneRenderData::create()
 void SceneRenderData::reset()
 {
 	meshTransformDataPack.clean();
+	staticMeshTransformDataPack.clean();
 	particleDataPack.clean();
 	lightDataPack.clean();
 	reflectionProbeDataPack.clean();
@@ -148,6 +142,7 @@ void SceneRenderData::reset()
 void SceneRenderData::release()
 {
 	meshTransformDataPack.release();
+	staticMeshTransformDataPack.release();
 	particleDataPack.release();
 	lightDataPack.release();
 	reflectionProbeDataPack.release();
@@ -156,6 +151,7 @@ void SceneRenderData::release()
 void SceneRenderData::upload()
 {
 	meshTransformDataPack.upload();
+	staticMeshTransformDataPack.upload();
 	particleDataPack.upload();
 	lightDataPack.upload();
 	reflectionProbeDataPack.upload();
@@ -163,7 +159,6 @@ void SceneRenderData::upload()
 
 void SceneRenderData::bind(IRenderContext& context)
 {
-	meshTransformDataPack.bind(context);
 	particleDataPack.bind(context);
 	lightDataPack.bind(context);
 	reflectionProbeDataPack.bind(context);
@@ -243,6 +238,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, ShaderFeatur
 	RenderTask task;
 	task.age = 0;
 	task.sceneData = cmd.sceneData;
+	task.transformData = cmd.transformData;
 	task.shaderProgram = shader;
 	task.renderMode = cmd.getRenderMode();
 	task.materialData = materialRenderData;
@@ -308,6 +304,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, vector<Shade
 		RenderTask task;
 		task.age = 0;
 		task.sceneData = cmd.sceneData;
+		task.transformData = cmd.transformData;
 		task.shaderProgram = shader;
 		task.renderMode = cmd.getRenderMode();
 		task.materialData = materialRenderData;
@@ -387,6 +384,13 @@ void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 			taskContext.sceneData = task.sceneData;
 
 			task.sceneData->bind(context);
+		}
+
+		if (taskContext.transformData != task.transformData || shaderSwitch) {
+			taskContext.transformData = task.transformData;
+
+			if (task.transformData)
+				task.transformData->bind(context);
 		}
 
 		if (taskContext.renderMode != task.renderMode) {

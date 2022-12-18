@@ -122,6 +122,11 @@ int Texture2D::getMipLevels() const
 	return max(1, desc.mipLevel);
 }
 
+Texture2DInfo Texture2D::getTextureInfo() const
+{
+	return desc.info;
+}
+
 unsigned long long Texture2D::getTextureID()
 {
 	newVendorTexture();
@@ -152,6 +157,8 @@ void Texture2D::setViewAsArray(bool value)
 
 void Texture2D::setTextureInfo(const Texture2DInfo& info)
 {
+	if (desc.info == info)
+		return;
 	desc.info = info;
 	desc.needUpdate = true;
 }
@@ -205,6 +212,26 @@ bool Texture2D::load(const string & file)
 			desc.data = rgb2rgba(desc.data, data, pixles);
 			desc.channel = 4;
 		}
+	}
+	if (desc.info.internalType == TIT_Default) {
+		switch (desc.channel)
+		{
+		case 1:
+			desc.info.internalType = TIT_R8_UF;
+			break;
+		case 2:
+			desc.info.internalType = TIT_RG8_UF;
+			break;
+		case 4:
+			desc.info.internalType = TIT_RGBA8_UF;
+			break;
+		default:
+			break;
+		}
+	}
+	if (isStandard) {
+		if (desc.info.internalType == TIT_RGBA8_UF)
+			desc.info.internalType = TIT_SRGBA8_UF;
 	}
 	return desc.data;
 }

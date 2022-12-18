@@ -11,6 +11,7 @@ Image imageMap: binding(0)
 #localsize 8 8
 #compute postprocess
 #include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/Gamma_Correction_Lib.hmat"
 #include "../lib/ScreenPass_Def.hmat"
 
 DEF_MAT_BEGIN

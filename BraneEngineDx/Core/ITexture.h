@@ -48,6 +48,18 @@ struct Texture2DInfo
 		cpuAccessFlag = info.cpuAccessFlag;
 		dimension = info.dimension;
 	}
+
+	bool operator==(const Texture2DInfo& info) const
+	{
+		return wrapSType == info.wrapSType &&
+		wrapTType == info.wrapTType &&
+		minFilterType == info.minFilterType &&
+		magFilterType == info.magFilterType &&
+		internalType == info.internalType &&
+		borderColor == info.borderColor &&
+		cpuAccessFlag == info.cpuAccessFlag &&
+		dimension == info.dimension;
+	}
 };
 
 struct TextureDesc

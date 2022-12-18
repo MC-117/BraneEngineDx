@@ -26,6 +26,9 @@ public:
 	void switchCamera(Camera& camera);
 	void add(Render& render);
 	void remove(Render& render);
+
+	void beginRender();
+
 	void render(bool guiOnly = false);
 
 	RenderPool& operator+=(Render& render);

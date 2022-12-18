@@ -9,7 +9,7 @@ BloomPass::BloomPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
 {
 	int newBloomLevel = 1 + floor(log2(max(size.x, size.y)));
-	newBloomLevel = min(newBloomLevel, 9);
+	newBloomLevel = min(newBloomLevel, 5);
 	resizeBloomLevel(newBloomLevel);
 }
 
@@ -66,9 +66,9 @@ void BloomPass::execute(IRenderContext& context)
 	else {
 		context.clearFrameBindings();
 		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
-		context.bindTexture((ITexture*)Texture2D::blackRGBADefaultTex.getVendorTexture(), Fragment_Shader_Stage, imageMapSlot, imageMapSamplerSlot);
 
 		context.setDrawInfo(0, 1, 0);
+		context.setRenderPostState();
 		for (int i = 0; i < bloomLevel; i++) {
 			int scalar = pow(2, i);
 
@@ -110,18 +110,15 @@ void BloomPass::execute(IRenderContext& context)
 		context.setDrawInfo(3, 1, 0);
 
 		context.bindTexture(NULL, Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
-		context.bindFrame(screenRenderTargets[0]->getVendorRenderTarget());
+		context.bindFrame(resource->screenRenderTarget->getVendorRenderTarget());
 
 		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
-		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, imageMapSlot, imageMapSamplerSlot);
 
 		context.setViewport(0, 0, size.x, size.y);
+		context.setRenderPostAddState();
 		context.postProcessCall();
 
 		context.clearFrameBindings();
-
-		resource->screenRenderTarget = screenRenderTargets[0];
-		resource->screenTexture = &screenMap;
 	}
 }
 
@@ -160,13 +157,12 @@ void BloomPass::render(RenderInfo& info)
 	if (program->isComputable()) {
 		imageMapSlot = program->getAttributeOffset("imageMap").offset;
 		imageMapSamplerSlot = program->getAttributeOffset("imageMapSampler").offset;
-	}
-	else {
-		imageMapSlot = program->getAttributeOffset("screenMap").offset;
-		imageMapSamplerSlot = program->getAttributeOffset("screenMapSampler").offset;
+
+		if (sampleMapSlot == -1 || imageMapSlot == -1)
+			return;
 	}
 
-	if (sampleMapSlot == -1 || imageMapSlot == -1)
+	if (sampleMapSlot == -1)
 		return;
 
 	info.renderGraph->addPass(*this);
@@ -176,7 +172,7 @@ void BloomPass::resize(const Unit2Di & size)
 {
 	PostProcessPass::resize(size);
 	int newBloomLevel = 1 + floor(log2(max(size.x, size.y)));
-	newBloomLevel = min(newBloomLevel, 9);
+	newBloomLevel = min(newBloomLevel, 5);
 	resizeBloomLevel(newBloomLevel);
 }
 
@@ -199,7 +195,7 @@ void BloomPass::resizeBloomLevel(int levels)
 	}
 	else {
 		for (int i = 0; i < -diffLevel; i++) {
-			delete bloomRenderTargets.back();
+			delete bloomRenderTargets[i];
 		}
 		bloomRenderTargets.resize(bloomLevel);
 	}

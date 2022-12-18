@@ -16,6 +16,9 @@ SSAOPass::SSAOPass(const string & name, Material * material)
 
 void SSAOPass::prepare()
 {
+	Texture2D* sceneMap = dynamic_cast<Texture2D*>(resource->screenTexture);
+	if (sceneMap)
+		screenMap.setTextureInfo(sceneMap->getTextureInfo());
 	gtaoRenderTarget.init();
 	screenRenderTarget.init();
 	MaterialRenderData* materialRenderData = (MaterialRenderData*)this->materialRenderData;

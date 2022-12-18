@@ -110,6 +110,8 @@ FragmentOut SURFACE_MAIN
         normalize(camData.camPos - surf.WorldPos)), 0.33f),
         rimCut, rimCutSmooth);
 
+    Lo *= 0.1f;
+
     float4 ambient = Toon_Ambient(surf.albedo, surf.ao);
 
     fout.FragColor = surf.albedo * Lo + ambient;

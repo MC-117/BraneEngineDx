@@ -13,6 +13,9 @@ DOFPass::DOFPass(const string & name, Material * material)
 
 void DOFPass::prepare()
 {
+	Texture2D* sceneMap = dynamic_cast<Texture2D*>(resource->screenTexture);
+	if (sceneMap)
+		dofMap.setTextureInfo(sceneMap->getTextureInfo());
 	dofRenderTarget.init();
 	MaterialRenderData* materialRenderData = (MaterialRenderData*)this->materialRenderData;
 	materialRenderData->program = program;

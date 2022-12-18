@@ -28,6 +28,7 @@ struct IRenderPack;
 struct IRenderCommand
 {
 	SceneRenderData* sceneData = NULL;
+	IRenderData* transformData = NULL;
 	Material* material = NULL;
 	MeshPart* mesh = NULL;
 	list<IRenderData*> bindings;
@@ -41,6 +42,7 @@ struct IRenderCommand
 struct RenderTaskContext
 {
 	SceneRenderData* sceneData;
+	IRenderData* transformData;
 	IRenderData* cameraData;
 	ShaderProgram* shaderProgram;
 	RenderMode renderMode;

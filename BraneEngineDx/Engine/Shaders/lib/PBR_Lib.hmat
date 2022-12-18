@@ -124,8 +124,8 @@ float3 PBR_Ambient(float3 albedo, float ao)
 
 float3 PBR_ColorCorrection(float3 color)
 {
-    //color = color / (color + Float3(1.0));
-    color = Float3(1.0) - exp(-color * 3);
-    color = pow(color, Float3(1.0/2.2));
+    // color = color / (color + Float3(1.0));
+    // color = Float3(1.0) - exp(-color * 3);
+    // color = pow(color, Float3(1.0/2.2));
     return color;
 }

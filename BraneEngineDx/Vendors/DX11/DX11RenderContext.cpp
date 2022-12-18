@@ -290,8 +290,8 @@ unsigned int DX11RenderContext::bindShaderProgram(ShaderProgram* program)
 	DX11ShaderProgram* dxProgram = dynamic_cast<DX11ShaderProgram*>(program);
 	if (dxProgram == NULL)
 		return 0;
-	if (dxProgram->isDirty())
-		throw runtime_error("Shader is not ready");
+	/*if (dxProgram->isDirty())
+		throw runtime_error("Shader is not ready");*/
 	if (currentProgram == dxProgram)
 		return dxProgram->getProgramID();
 	deviceContext->VSSetShader(NULL, NULL, 0);
