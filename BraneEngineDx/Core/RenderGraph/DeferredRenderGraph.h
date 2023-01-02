@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MeshPass.h"
+#include "ScreenHitPass.h"
 #include "ShadowDepthPass.h"
 #include "DeferredLightingPass.h"
 #include "HiZPass.h"
@@ -18,7 +19,7 @@ public:
 		int age = 0;
 		SceneRenderData* sceneData = NULL;
 		CameraRender* cameraRender = NULL;
-		CameraRenderData cameraData;
+		CameraRenderData* cameraData = NULL;
 		Texture2D gBufferA = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGB10A2_UF });
 		Texture2D gBufferB = Texture2D(1280, 720, 1, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_R32_F });
 		Texture2D gBufferC = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F });
@@ -39,7 +40,19 @@ public:
 		bool isCubeFace() const;
 	};
 
+	Timer timer;
+
+	bool enablePreDepthPass = true;
+
+	SurfaceData defaultPreDepthSurfaceData;
+	SurfaceData defaultGeometrySurfaceData;
+	SurfaceData defaultLightingSurfaceData;
+
+	Material* preDepthMaterial;
+
+	ScreenHitPass screenHitPass;
 	ShadowDepthPass shadowDepthPass;
+	MeshPass preDepthPass;
 	MeshPass geometryPass;
 	DeferredLightingPass lightingPass;
 

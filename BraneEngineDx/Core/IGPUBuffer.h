@@ -15,7 +15,9 @@ public:
 struct GPUBufferDesc
 {
 	GPUBufferType type = GB_Constant;
-	TexInternalType internalType = TIT_Default;
+	GPUBufferFormat format = GBF_Float;
+	CPUAccessFlag cpuAccess = CAF_None;
+	GPUAccessFlag gpuAccess = GAF_Read;
 	unsigned int cellSize = 0;
 	unsigned int size = 0;
 	unsigned int capacity = 0;

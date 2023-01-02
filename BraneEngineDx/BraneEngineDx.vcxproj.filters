@@ -1263,6 +1263,18 @@
     <ClInclude Include="Core\RenderCore\RenderCore.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Utility\half.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderGraph\ScreenHitPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\ScreenHitData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\TransformRenderData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -2358,6 +2370,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\Editor\ReflectionProbeEditor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderGraph\ScreenHitPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\ScreenHitData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\TransformRenderData.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

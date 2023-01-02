@@ -22,12 +22,9 @@ void TerrainRender::preRender()
 
 void TerrainRender::render(RenderInfo& info)
 {
-    if (material == NULL || geometry == NULL || !geometry->meshPart.isValid() ||
-        hidden || customRenaderSubmit)
+    if (material == NULL || geometry == NULL ||
+        !geometry->meshPart.isValid() || hidden)
         return;
-
-    if (!customTransformSubmit)
-        instanceID = info.sceneData->setMeshTransform(transformMat);
 
     MeshRenderCommand command;
     command.sceneData = info.sceneData;
@@ -36,10 +33,7 @@ void TerrainRender::render(RenderInfo& info)
     command.instanceID = instanceID;
     command.instanceIDCount = instanceCount;
     command.transformData = isStatic ? &info.sceneData->staticMeshTransformDataPack : &info.sceneData->meshTransformDataPack;
-    if (customTransformSubmit)
-        command.transformIndex = info.sceneData->getMeshPartTransform(&geometry->meshPart, material);
-    else
-        command.transformIndex = info.sceneData->setMeshPartTransform(&geometry->meshPart, material, instanceID);
+    command.transformIndex = info.sceneData->setMeshPartTransform(&geometry->meshPart, material, instanceID, instanceCount);
     info.renderGraph->setRenderCommand(command);
 }
 

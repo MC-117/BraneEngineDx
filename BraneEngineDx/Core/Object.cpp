@@ -169,6 +169,11 @@ ObjectBehavior* Object::getBehavior(Serialization& type) const
 	return NULL;
 }
 
+int Object::getObjectID() const
+{
+	return objectID;
+}
+
 Render* Object::getRender()
 {
 	return NULL;

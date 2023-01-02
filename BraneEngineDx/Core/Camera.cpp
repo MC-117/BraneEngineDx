@@ -2,6 +2,7 @@
 #include "Geometry.h"
 #include "GUI/Gizmo.h"
 #include "Utility/MathUtility.h"
+#include "Utility/RenderUtility.h"
 #include "RenderCore/RenderTask.h"
 
 SerializeInstance(Camera);
@@ -111,30 +112,32 @@ bool Camera::culling(const Range<Vector3f>& bound, const Matrix4f& mat)
 
 	return IntersectAABB8Plane(center, extend, planes);*/
 
-	Matrix4f MVP = getProjectionMatrix() * getViewMatrix() * mat;
+	//Matrix4f MVP = getProjectionMatrix() * getViewMatrix() * mat;
 
-	Vector4f corners[8] = {
-		{bound.minVal.x(), bound.minVal.y(), bound.minVal.z(), 1.0}, // x y z
-		{bound.maxVal.x(), bound.minVal.y(), bound.minVal.z(), 1.0}, // X y z
-		{bound.minVal.x(), bound.maxVal.y(), bound.minVal.z(), 1.0}, // x Y z
-		{bound.maxVal.x(), bound.maxVal.y(), bound.minVal.z(), 1.0}, // X Y z
+	//Vector4f corners[8] = {
+	//	{bound.minVal.x(), bound.minVal.y(), bound.minVal.z(), 1.0}, // x y z
+	//	{bound.maxVal.x(), bound.minVal.y(), bound.minVal.z(), 1.0}, // X y z
+	//	{bound.minVal.x(), bound.maxVal.y(), bound.minVal.z(), 1.0}, // x Y z
+	//	{bound.maxVal.x(), bound.maxVal.y(), bound.minVal.z(), 1.0}, // X Y z
 
-		{bound.minVal.x(), bound.minVal.y(), bound.maxVal.z(), 1.0}, // x y Z
-		{bound.maxVal.x(), bound.minVal.y(), bound.maxVal.z(), 1.0}, // X y Z
-		{bound.minVal.x(), bound.maxVal.y(), bound.maxVal.z(), 1.0}, // x Y Z
-		{bound.maxVal.x(), bound.maxVal.y(), bound.maxVal.z(), 1.0}, // X Y Z
-	};
+	//	{bound.minVal.x(), bound.minVal.y(), bound.maxVal.z(), 1.0}, // x y Z
+	//	{bound.maxVal.x(), bound.minVal.y(), bound.maxVal.z(), 1.0}, // X y Z
+	//	{bound.minVal.x(), bound.maxVal.y(), bound.maxVal.z(), 1.0}, // x Y Z
+	//	{bound.maxVal.x(), bound.maxVal.y(), bound.maxVal.z(), 1.0}, // X Y Z
+	//};
 
-	for (size_t corner_idx = 0; corner_idx < 8; corner_idx++) {
-		// Transform vertex
-		Vector4f corner = MVP * corners[corner_idx];
-		// Check vertex against clip space bounds
-		if (-corner.w() < corner.x() && corner.x() < corner.w() &&
-			-corner.w() < corner.y() && corner.y() < corner.w() &&
-			0.0f < corner.z() && corner.z() < corner.w())
-			return false;
-	}
-	return true;
+	//for (size_t corner_idx = 0; corner_idx < 8; corner_idx++) {
+	//	// Transform vertex
+	//	Vector4f corner = MVP * corners[corner_idx];
+	//	// Check vertex against clip space bounds
+	//	if (-corner.w() < corner.x() && corner.x() < corner.w() &&
+	//		-corner.w() < corner.y() && corner.y() < corner.w() &&
+	//		0.0f < corner.z() && corner.z() < corner.w())
+	//		return false;
+	//}
+	//return true;
+
+	return frustumCulling(cameraRender.cameraData, bound, mat);
 }
 
 Color hsv2rgb(float h, float s, float v, float a = 1)

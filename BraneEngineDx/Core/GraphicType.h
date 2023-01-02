@@ -89,11 +89,26 @@ enum GPUBufferType
 {
 	GB_Constant,
 	GB_Storage,
-	GB_Struct,
 	GB_Command,
 	GB_Vertex,
-	GB_Index,
-	GB_ReadBack
+	GB_Index
+};
+
+enum GPUBufferFormat
+{
+	GBF_Struct,
+	GBF_Float,
+	GBF_Float2,
+	GBF_Float3,
+	GBF_Float4,
+	GBF_Int,
+	GBF_Int2,
+	GBF_Int3,
+	GBF_Int4,
+	GBF_UInt,
+	GBF_UInt2,
+	GBF_UInt3,
+	GBF_UInt4,
 };
 
 enum CPUAccessFlag
@@ -102,6 +117,12 @@ enum CPUAccessFlag
 	CAF_Read = 1,
 	CAF_Write = 2,
 	CAF_ReadWrite = 3
+};
+
+enum GPUAccessFlag
+{
+	GAF_Read = 0,
+	GAF_ReadWrite = 1
 };
 
 enum CullType
@@ -140,6 +161,15 @@ enum MeshType
 	MT_Mesh,
 	MT_SkeletonMesh,
 	MT_Terrain
+};
+
+enum ClearFlags : uint8_t
+{
+	Clear_None = 0,
+	Clear_Colors = 1,
+	Clear_Depth = 2,
+	Clear_Stencil = 4,
+	Clear_All = Clear_Colors | Clear_Depth | Clear_Stencil
 };
 
 enum RenderStage : uint16_t

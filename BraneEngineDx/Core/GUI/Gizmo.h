@@ -61,6 +61,13 @@ public:
 		int instanceCount;
 	};
 
+	struct ScreenHit
+	{
+		MeshPart* meshPart;
+		int instanceID;
+		int instanceCount;
+	};
+
 	enum struct HandleType
 	{
 		Transition, Rotation, Scaling
@@ -76,6 +83,7 @@ public:
 	vector<TextDraw> texts;
 	vector<IconDraw> icons;
 	vector<MeshDraw> meshes;
+	vector<ScreenHit> screenHits;
 
 	Gizmo();
 	Gizmo(const string& name);
@@ -115,6 +123,8 @@ public:
 	bool drawMesh(MeshPart& meshPart, Material& material, int instanceBase, int instanceCount = 1);
 	bool drawMesh(MeshPart& meshPart, Material& material, const Matrix4f& transformMat);
 
+	void doScreenHit(InstanceID obejctInstanceID, MeshPart& meshPart, int instanceBase, int instanceCount = 1);
+
 	void setCameraControl(CameraControlMode mode, float transitionSensitivity = 30, float rotationSensitivity = 0.1, float distanceSensitivity = 500);
 	
 	void reset();
@@ -149,6 +159,7 @@ protected:
 	Vector3f cameraDeltaTransition = Vector3f::Zero();
 	Vector3f cameraDeltaRollPitchYaw = Vector3f::Zero();
 	float cameraDeltaDistance = 0;
+	unordered_map<int, InstanceID> objectIDToInstanceID;
 
 	float cullDistance = 10000;
 

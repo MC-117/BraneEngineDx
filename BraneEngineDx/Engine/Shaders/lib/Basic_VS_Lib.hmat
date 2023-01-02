@@ -8,6 +8,7 @@ struct DefaultVertexOut
     float3 WorldPos : WOLRDPOS;
     float3 LocalPos : LOCALPOS;
     float2 TexCoords : TEXCOORD;
+    uint InstanceID : INSTANCEID;
 };
 
 float3 getWorldScale(float4x4 tmat)
@@ -76,4 +77,33 @@ float3 getLeftward(float4x4 tmat)
 float3 getUpward(float4x4 tmat)
 {
     return mul(float4(0.0f, 0.0f, 1.0f, 0.0f), tmat).xyz;
+}
+
+uint3 packUIntToUInt3(uint value)
+{
+    uint3 res;
+    res.r = value >> 16;
+    res.g = (value >> 8) & 0xFF;
+    res.b = value & 0xFF;
+    return res;
+}
+
+uint unpackUInt3ToUInt(uint3 value)
+{
+    return value.r << 16 | value.g << 8 | value.b;
+}
+
+uint4 packUIntToUInt4(uint value)
+{
+    uint4 res;
+    res.r = value >> 24;
+    res.g = (value >> 16) & 0xFF;
+    res.b = (value >> 8) & 0xFF;
+    res.a = value & 0xFF;
+    return res;
+}
+
+uint unpackUInt4ToUInt(uint4 value)
+{
+    return value.r << 24 | value.g << 16 | value.b << 8 | value.a;
 }

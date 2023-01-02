@@ -27,9 +27,7 @@ void outputSurface(in Surface surf, out float4 A, out float B, out float4 C, out
     D.xy = surf.TexCoords;
     D.z = surf.metallic;
     D.w = surf.ao;
-    E.r = surf.matID >> 16;
-    E.g = (surf.matID >> 8) & 0xFF;
-    E.b = surf.matID & 0xFF;
+    E.rgb = packUIntToUInt3(surf.matID);
     E.a = surf.mask;
 }
 
@@ -40,7 +38,7 @@ Surface getSurface(in ScreenVertexOut fin)
 {
     Surface surf;
     uint4 E = LOAD_TEX(gBufferE, int3(fin.UV * camData.viewSize, 0));
-    uint matID = E.r << 16 | E.g << 8 | E.b;
+    uint matID = unpackUInt3ToUInt(E);
     if (matID != materialID)
         discard;
     float4 A = SAMPLE_TEX(gBufferA, fin.UV);

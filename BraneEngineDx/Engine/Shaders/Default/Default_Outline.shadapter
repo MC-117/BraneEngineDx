@@ -54,5 +54,6 @@ DefaultVertexOut VERTEX_MAIN
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
+    vout.InstanceID = ins[0];
     return vout;
 }

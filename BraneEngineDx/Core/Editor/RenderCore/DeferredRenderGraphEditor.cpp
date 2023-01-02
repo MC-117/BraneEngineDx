@@ -10,6 +10,7 @@ void DeferredRenderGraphEditor::setInspectedObject(void* object)
 
 void DeferredRenderGraphEditor::onRenderGraphGUI(EditorInfo& info)
 {
+	ImGui::Checkbox("EnablePreDepth", &deferredRenderGraph->enablePreDepthPass);
 	ImGui::Checkbox("EnableSSR", &deferredRenderGraph->ssrPass.enable);
 	RenderGraphEditor::onRenderGraphGUI(info);
 }

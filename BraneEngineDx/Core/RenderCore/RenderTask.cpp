@@ -10,6 +10,7 @@ size_t RenderTask::Hasher::operator()(const RenderTask& t) const
 	size_t hash = (size_t)t.sceneData;
 	hash_combine(hash, (size_t)t.transformData);
 	hash_combine(hash, (size_t)t.shaderProgram);
+	hash_combine(hash, (size_t)t.surface.renderTarget);
 	hash_combine(hash, (size_t)t.cameraData->cameraRender);
 	hash_combine(hash, (size_t)t.materialData->material);
 	hash_combine(hash, (size_t)t.meshData);
@@ -28,6 +29,9 @@ bool RenderTask::ExecutionOrder::operator()(const RenderTask& t0, const RenderTa
 	if (t0.sceneData < t1.sceneData)
 		return true;
 	if (t0.sceneData == t1.sceneData) {
+		if (t0.surface.renderTarget < t1.surface.renderTarget)
+			return true;
+		if (t0.surface.renderTarget == t1.surface.renderTarget) {
 			if (t0.cameraData->renderOrder < t1.cameraData->renderOrder)
 				return true;
 			if (t0.cameraData->renderOrder == t1.cameraData->renderOrder) {
@@ -54,6 +58,7 @@ bool RenderTask::ExecutionOrder::operator()(const RenderTask& t0, const RenderTa
 					}
 				}
 			}
+		}
 	}
 	return false;
 }

@@ -1,11 +1,16 @@
 #include "GPUBuffer.h"
+#include "Utility/RenderUtility.h"
 
-GPUBuffer::GPUBuffer(GPUBufferType type, unsigned int cellSize, unsigned int size)
+GPUBuffer::GPUBuffer(GPUBufferType type, GPUBufferFormat format, unsigned int structSize, GPUAccessFlag gpuAccess, CPUAccessFlag cpuAccess)
 {
 	desc.type = type;
-	desc.cellSize = cellSize;
-	if (size != 0)
-		resize(size);
+	desc.format = format;
+	if (format == GBF_Struct)
+		desc.cellSize = structSize;
+	else
+		desc.cellSize = getGPUBufferFormatCellSize(format);
+	desc.gpuAccess = gpuAccess;
+	desc.cpuAccess = cpuAccess;
 }
 
 GPUBuffer::~GPUBuffer()

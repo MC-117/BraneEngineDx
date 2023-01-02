@@ -98,7 +98,7 @@ void ReflectionProbeEditor::loadDefaultResource()
 {
 	if (isInited)
 		return;
-	visualMaterial = getAssetByPath<Material>("Engine/Shaders/Debug/VisualReflectionProbe.mat");
+	visualMaterial = getAssetByPath<Material>("Engine/Shaders/Editor/VisualReflectionProbe.mat");
 	sphereMesh = getAssetByPath<Mesh>("Engine/Shapes/UnitSphere.fbx");
 	if (visualMaterial == NULL || sphereMesh == NULL)
 		throw runtime_error("Failed to load default resource");

@@ -43,14 +43,11 @@ void SkeletonMeshRender::fillMaterialsByDefault()
 
 void SkeletonMeshRender::render(RenderInfo & info)
 {
-	if (mesh == NULL || hidden || customRenaderSubmit)
+	if (mesh == NULL || hidden || instanceID < 0)
 		return;
 
 	remapMaterial();
 	fillMaterialsByDefault();
-
-	if (!customTransformSubmit)
-		instanceID = info.sceneData->setMeshTransform(transformMats);
 
 	for (int i = 0; i < materials.size(); i++) {
 		Material* material = materials[i];
@@ -71,10 +68,7 @@ void SkeletonMeshRender::render(RenderInfo & info)
 		command.instanceIDCount = instanceCount;
 		MeshTransformRenderData* transformData = isStatic ? &info.sceneData->staticMeshTransformDataPack : &info.sceneData->meshTransformDataPack;
 		command.transformData = transformData;
-		if (customTransformSubmit)
-			command.transformIndex = transformData->getMeshPartTransform(part, material);
-		else
-			command.transformIndex = transformData->setMeshPartTransform(part, material, instanceID);
+		command.transformIndex = transformData->setMeshPartTransform(part, material, instanceID, instanceCount);
 		if (morphWeights.getMorphCount() > 0)
 			command.bindings.push_back(morphWeights.getRenderData());
 
@@ -83,10 +77,7 @@ void SkeletonMeshRender::render(RenderInfo & info)
 		Material* outlineMaterial = outlineMaterials[i];
 		if (outlineEnable[i] && outlineMaterial != NULL) {
 			command.instanceIDCount = instanceCount;
-			if (customTransformSubmit)
-				command.transformIndex = transformData->getMeshPartTransform(part, outlineMaterial);
-			else
-				command.transformIndex = transformData->setMeshPartTransform(part, outlineMaterial, instanceID);
+			command.transformIndex = transformData->setMeshPartTransform(part, outlineMaterial, instanceID, instanceCount);
 			command.material = outlineMaterial;
 			info.renderGraph->setRenderCommand(command);
 		}

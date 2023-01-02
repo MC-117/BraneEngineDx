@@ -5,8 +5,8 @@
 class BlurPass : public PostProcessPass
 {
 public:
-	Texture2D blurXMap = Texture2D(size.x, size.y, 4, true, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
-	Texture2D blurYMap = Texture2D(size.x, size.y, 4, true, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
+	Texture2D blurXMap = Texture2D(size.x, size.y, 4, false, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
+	Texture2D blurYMap = Texture2D(size.x, size.y, 4, false, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
 	BlurPass(const string& name = "Blur", Material* material = NULL);
 
 	virtual bool mapMaterialParameter(RenderInfo& info);

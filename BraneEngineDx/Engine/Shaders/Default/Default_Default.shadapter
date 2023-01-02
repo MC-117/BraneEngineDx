@@ -43,6 +43,7 @@ DefaultVertexOut VERTEX_MAIN
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
+    vout.InstanceID = ins[0];
     return vout;
 }
 #vertex terrain
@@ -60,6 +61,7 @@ DefaultTerrainVertexOut TERRAIN_MAIN
     vout.Normal = normalize(mul(float4(0.0, 0.0, 1.0, 0.0), fm).xyz);
     vout.TexCoords = uv;
     vout.WorldScale = getWorldScale(fm);
+    vout.InstanceID = ins[0];
     return vout;
 }
 #tess_ctrl terrain
@@ -113,6 +115,7 @@ DefaultVertexOut main(DefaultTerrainPatchTess patchTess, float2 uv : SV_DomainLo
     
     vout.svPos = mul(float4(vout.WorldPos, 1.0), camData.pmat);
     vout.TransMat = quad[0].TransMat;
+    vout.InstanceID = quad[0].InstanceID;
 
     return vout;
 }

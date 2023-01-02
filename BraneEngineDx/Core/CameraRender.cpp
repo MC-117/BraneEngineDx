@@ -25,6 +25,10 @@ CameraRender::~CameraRender()
 		delete renderData;
 		renderData = NULL;
 	}
+	if (hitData) {
+		delete hitData;
+		hitData = NULL;
+	}
 	if (internalRenderTarget) {
 		delete internalRenderTarget;
 		internalRenderTarget = NULL;
@@ -52,6 +56,24 @@ void CameraRender::createDefaultPostProcessGraph()
 	graph = new PostProcessGraph();
 	graph->addDefaultPasses();
 	graph->resize(size);
+}
+
+void CameraRender::triggerScreenHit(const Vector2u& hitPosition)
+{
+	createInternalHitData();
+	hitData->triggerFrame = Time::frames();
+	hitData->hitFrame = 0;
+	hitData->hitInfo.hitDepth = 0;
+	hitData->hitInfo.hitInstanceID = -1;
+	hitData->hitInfo.hitPosition = hitPosition;
+}
+
+bool CameraRender::fetchScreenHit(ScreenHitInfo& hitInfo) const
+{
+	if (hitData == NULL || hitData->hitFrame != Time::frames())
+		return false;
+	hitInfo = hitData->hitInfo;
+	return true;
 }
 
 Texture* CameraRender::getSceneMap()
@@ -132,8 +154,20 @@ CameraRender* CameraRender::getMainCameraRender()
 
 void CameraRender::createInternalRenderTarget()
 {
-	internalTexture = new Texture2D(size.x, size.y, 4, true, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear, TIT_RGBA16_FF });
+	internalTexture = new Texture2D(size.x, size.y, 4, false, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear, TIT_RGBA16_FF });
 	internalRenderTarget = new RenderTarget(size.x, size.y, 4, true);
 	internalRenderTarget->addTexture("screenMap", *internalTexture);
 	renderTarget = internalRenderTarget;
+}
+
+void CameraRender::createInternalHitData()
+{
+	if (hitData)
+		return;
+	hitData = new ScreenHitData();
+}
+
+ScreenHitData* CameraRender::getTriggeredScreenHitData()
+{
+	return hitData && hitData->triggerFrame == Time::frames() ? hitData : NULL;
 }

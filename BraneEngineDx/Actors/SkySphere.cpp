@@ -1,5 +1,6 @@
 #include "SkySphere.h"
 #include "../Core/Asset.h"
+#include "../Core/RenderCore/RenderCore.h"
 
 SerializeInstance(SkySphere);
 
@@ -83,6 +84,9 @@ void SkySphere::tick(float deltaTime)
 
 void SkySphere::prerender(SceneRenderData& sceneData)
 {
+	objectID = sceneData.setMeshTransform(transformMat);
+	meshRender.instanceID = objectID;
+	meshRender.instanceCount = 1;
 	meshRender.transformMat = transformMat;
 	Material* mat = meshRender.getMaterial();
 	if (mat != NULL) {

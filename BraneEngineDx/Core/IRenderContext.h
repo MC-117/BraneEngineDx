@@ -28,6 +28,8 @@ public:
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, unsigned int index) = 0;
 	virtual unsigned int uploadBufferData(IGPUBuffer* buffer, unsigned int size, void* data) = 0;
 	virtual unsigned int uploadBufferSubData(IGPUBuffer* buffer, unsigned int first, unsigned int size, void* data) = 0;
+	virtual void copyBufferData(IGPUBuffer* srcBuffer, IGPUBuffer* dstBuffer) = 0;
+	virtual void copyBufferSubData(IGPUBuffer* srcBuffer, unsigned int srcFirst, IGPUBuffer* dstBuffer, unsigned int dstFirst, unsigned int size) = 0;
 
 	virtual unsigned int bindFrame(IRenderTarget* target) = 0;
 	virtual void clearFrameBindings() = 0;

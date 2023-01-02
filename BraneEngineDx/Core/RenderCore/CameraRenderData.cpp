@@ -1,6 +1,18 @@
 #include "CameraRenderData.h"
 #include "../CameraRender.h"
 
+void SurfaceData::bind(IRenderContext& context, Enum<ClearFlags> plusClearFlags, Enum<ClearFlags> minusClearFlags)
+{
+	context.bindFrame(renderTarget->getVendorRenderTarget());
+	Enum<ClearFlags> flag = (clearFlags | plusClearFlags) & ~minusClearFlags;
+	if (flag.has(Clear_Colors))
+		context.clearFrameColors(clearColors);
+	if (flag.has(Clear_Depth))
+		context.clearFrameDepth(clearDepth);
+	if (flag.has(Clear_Stencil))
+		context.clearFrameStencil(clearStencil);
+}
+
 void CameraRenderData::create()
 {
 	if (cameraRender == NULL)
@@ -14,16 +26,23 @@ void CameraRenderData::create()
 	data.viewOriginMat = MATRIX_UPLOAD_OP(data.viewOriginMat);
 	data.viewOriginMatInv = MATRIX_UPLOAD_OP(data.viewOriginMatInv);
 
+	hitData = cameraRender->getTriggeredScreenHitData();
+
 	renderOrder = cameraRender->renderOrder;
-	renderTarget = &cameraRender->getRenderTarget();
+	surface.clearFlags = Clear_All;
+	surface.renderTarget = &cameraRender->getRenderTarget();
 
-	if (clearColors.size() != renderTarget->getTextureCount()) {
-		clearColors.resize(renderTarget->getTextureCount(), Color());
+	if (surface.clearColors.size() != surface.renderTarget->getTextureCount()) {
+		surface.clearColors.resize(surface.renderTarget->getTextureCount(), Color());
 	}
-	if (clearColors.size() > 0)
-		clearColors[0] = cameraRender->clearColor;
+	if (surface.clearColors.size() > 0)
+		surface.clearColors[0] = cameraRender->clearColor;
 
-	renderTarget->resize(data.viewSize.x(), data.viewSize.y());
+	surface.renderTarget->resize(data.viewSize.x(), data.viewSize.y());
+	if (hitData) {
+		hitData->resize(data.viewSize.x(), data.viewSize.y());
+		hitData->create();
+	}
 }
 
 void CameraRenderData::release()
@@ -34,6 +53,8 @@ void CameraRenderData::release()
 void CameraRenderData::upload()
 {
 	buffer.uploadData(1, &data);
+	if (hitData)
+		hitData->upload();
 }
 
 void CameraRenderData::bind(IRenderContext& context)

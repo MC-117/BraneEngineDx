@@ -7,8 +7,8 @@
 class BloomPass : public PostProcessPass
 {
 public:
-	Texture2D bloomMap = Texture2D(size.x, size.y, 4, true, { TW_Clamp, TW_Clamp, TF_Linear_Mip_Point, TF_Linear_Mip_Point, TIT_RGB10A2_UF });
-	Texture2D screenMap = Texture2D(size.x, size.y, 4, true, { TW_Clamp, TW_Clamp, TF_Linear_Mip_Point, TF_Linear_Mip_Point, TIT_RGB10A2_UF });
+	Texture2D bloomMap = Texture2D(size.x, size.y, 4, false, { TW_Clamp, TW_Clamp, TF_Linear_Mip_Point, TF_Linear_Mip_Point, TIT_RGB10A2_UF });
+	Texture2D screenMap = Texture2D(size.x, size.y, 4, false, { TW_Clamp, TW_Clamp, TF_Linear_Mip_Point, TF_Linear_Mip_Point, TIT_RGB10A2_UF });
 	vector<RenderTarget*> bloomRenderTargets;
 	vector<RenderTarget*> screenRenderTargets;
 	unsigned int bloomLevel = 5;

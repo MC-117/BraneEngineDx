@@ -8,6 +8,9 @@ bool DeferredLightingTask::ExecutionOrder::operator()(const DeferredLightingTask
 	if (t0.sceneData < t1.sceneData)
 		return true;
 	if (t0.sceneData == t1.sceneData) {
+		if (t0.surface.renderTarget < t1.surface.renderTarget)
+			return true;
+		if (t0.surface.renderTarget == t1.surface.renderTarget) {
 			if (t0.cameraRenderData < t1.cameraRenderData)
 				return true;
 			if (t0.cameraRenderData == t1.cameraRenderData) {
@@ -16,6 +19,7 @@ bool DeferredLightingTask::ExecutionOrder::operator()(const DeferredLightingTask
 				if (t0.program == t1.program)
 					return t0.material < t1.material;
 			}
+		}
 	}
 	return false;
 }
@@ -74,16 +78,12 @@ void DeferredLightingPass::execute(IRenderContext& context)
 		bool cameraDataSwitch = false;
 		bool shaderSwitch = false;
 
-		if (taskContext.cameraRenderData != task.cameraRenderData) {
-			taskContext.cameraRenderData = task.cameraRenderData;
+		if (taskContext.surface.renderTarget != task.surface.renderTarget) {
+			taskContext.surface = task.surface;
 
-			context.bindFrame(task.cameraRenderData->renderTarget->getVendorRenderTarget());
-			context.clearFrameColors(task.cameraRenderData->clearColors);
-			context.clearFrameDepth(1);
-			context.setViewport(0, 0, task.cameraRenderData->data.viewSize.x(), task.cameraRenderData->data.viewSize.y());
+			task.surface.bind(context);
 			blitSceneColor(context, task.gBufferRT->getTexture(0), task.gBufferRT->getTexture(1));
 			taskContext.program = blitProgram;
-			cameraDataSwitch = true;
 		}
 
 		if (taskContext.program != task.program) {
@@ -95,8 +95,12 @@ void DeferredLightingPass::execute(IRenderContext& context)
 			task.sceneData->bind(context);
 		}
 
-		if (cameraDataSwitch || shaderSwitch)
+		if (taskContext.cameraRenderData != task.cameraRenderData || shaderSwitch) {
+			taskContext.cameraRenderData = task.cameraRenderData;
+
+			context.setViewport(0, 0, task.cameraRenderData->data.viewSize.x(), task.cameraRenderData->data.viewSize.y());
 			task.cameraRenderData->bind(context);
+		}
 
 		if (taskContext.sceneData != task.sceneData || shaderSwitch) {
 			taskContext.sceneData = task.sceneData;

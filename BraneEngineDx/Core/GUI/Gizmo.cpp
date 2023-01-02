@@ -756,6 +756,12 @@ bool Gizmo::drawMesh(MeshPart& meshPart, Material& material, const Matrix4f& tra
 	return true;
 }
 
+void Gizmo::doScreenHit(InstanceID objectInstanceID, MeshPart& meshPart, int instanceBase, int instanceCount)
+{
+	screenHits.push_back({ &meshPart, instanceBase, instanceCount });
+	objectIDToInstanceID[instanceBase] = objectInstanceID;
+}
+
 void Gizmo::setCameraControl(CameraControlMode mode, float transitionSensitivity, float rotationSensitivity, float distanceSensitivity)
 {
 	cameraControlMode = mode;
@@ -789,9 +795,16 @@ void Gizmo::beginFrame(ImDrawList* drawList)
 	projMatrix = camera->getProjectionMatrix();
 	viewMatrix = camera->getViewMatrix();
 
-	if (ImGui::IsWindowHovered())
-		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+	if (ImGui::IsWindowHovered()) {
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)) {
 			ImGui::SetWindowFocus();
+		}
+		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+			ImVec2 pos = ImGui::GetMousePos();
+			if (pos.x >= 0 && pos.y >= 0)
+				camera->cameraRender.triggerScreenHit({ (unsigned int)pos.x, (unsigned int)pos.y });
+		}
+	}
 
 	isFocused = ImGui::IsWindowFocused();
 }
@@ -836,9 +849,28 @@ void Gizmo::begineWindow()
 	projMatrix = camera->getProjectionMatrix();
 	viewMatrix = camera->getViewMatrix();
 
-	if (ImGui::IsWindowHovered())
-		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+	ScreenHitInfo hitInfo;
+	if (camera->cameraRender.fetchScreenHit(hitInfo)) {
+		auto iter = objectIDToInstanceID.find(hitInfo.hitInstanceID);
+		if (iter != objectIDToInstanceID.end()) {
+			picked = true;
+			Object* object = (Object*)Brane::getPtrByInsID(iter->second);
+			EditorManager::selectObject(object);
+		}
+	}
+
+	objectIDToInstanceID.clear();
+
+	if (ImGui::IsWindowHovered()) {
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)) {
 			ImGui::SetWindowFocus();
+		}
+		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+			ImVec2 pos = ImGui::GetMousePos();
+			if (pos.x >= 0 && pos.y >= 0)
+				camera->cameraRender.triggerScreenHit({ (unsigned int)pos.x, (unsigned int)pos.y });
+		}
+	}
 
 	isFocused = ImGui::IsWindowFocused();
 }
@@ -1110,5 +1142,19 @@ void Gizmo::onRender3D(RenderInfo& info)
 		cmd.transformIndex = info.sceneData->setMeshPartTransform(draw.meshPart, draw.material, draw.instanceID);
 		info.renderGraph->setRenderCommand(cmd);
 	}
+
+	for (auto& hit : screenHits) {
+		if (hit.instanceID < 0 || hit.instanceCount <= 0) {
+			continue;
+		}
+		ScreenHitRenderCommand cmd;
+		cmd.mesh = hit.meshPart;
+		cmd.sceneData = info.sceneData;
+		cmd.instanceID = hit.instanceID;
+		cmd.instanceIDCount = hit.instanceCount;
+		cmd.transformData = &info.sceneData->meshTransformDataPack;
+		info.renderGraph->setRenderCommand(cmd);
+	}
 	meshes.clear();
+	screenHits.clear();
 }

@@ -8,7 +8,8 @@ void MeshPass::prepare()
 void MeshPass::execute(IRenderContext& context)
 {
 	RenderCommandExecutionInfo executionInfo(context);
-	executionInfo.requireClearFrame = requireClearFrame;
+	executionInfo.plusClearFlags = plusClearFlags;
+	executionInfo.minusClearFlags = minusClearFlags;
 	executionInfo.outputTextures = &outputTextures;
 	executionInfo.timer = &timer;
 	commandList.excuteCommand(executionInfo);

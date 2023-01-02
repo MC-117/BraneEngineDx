@@ -1,0 +1,9 @@
+#material Engine/Shaders/PBR.mat
+#twoside false
+#castshadow true
+Scalar ao: 1.000000
+Scalar metallic: 0.000000
+Scalar roughness: 1.000000
+Texture colorMap: Content/CityPark/Meshes/Road/T_M_SM_Sidewalk03_MI_Sidewalk01_BaseColor.png
+Texture normalMap: Content/CityPark/Meshes/Road/T_M_SM_Sidewalk03_MI_Sidewalk01_Normal.png
+Texture roughnessMap: Content/CityPark/Meshes/Road/T_M_SM_Sidewalk03_MI_Sidewalk01_Roughness.png

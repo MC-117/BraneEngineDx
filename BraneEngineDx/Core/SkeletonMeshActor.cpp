@@ -1,6 +1,7 @@
 #include "SkeletonMeshActor.h"
 #include "Asset.h"
 #include "Console.h"
+#include "RenderCore/RenderCore.h"
 
 SerializeInstance(SkeletonMeshActor);
 
@@ -211,6 +212,9 @@ void SkeletonMeshActor::prerender(SceneRenderData& sceneData)
 				render.transformMats[j] = t * boneInfo.data->offsetMatrix;
 			}
 		}
+		objectID = sceneData.setMeshTransform(render.transformMats);
+		render.instanceID = objectID;
+		render.instanceCount = 1;
 	}
 }
 

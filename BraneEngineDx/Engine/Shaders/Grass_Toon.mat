@@ -75,6 +75,7 @@ DefaultVertexOut MESH_MAIN
     vout.Normal = normalize(mul(norm, (float3x3)(fm)));
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - uv.y;
+    vout.InstanceID = ins[0];
     return vout;
 }
 

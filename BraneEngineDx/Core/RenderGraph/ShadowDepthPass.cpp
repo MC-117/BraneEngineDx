@@ -13,10 +13,8 @@ bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	const MeshRenderCommand* meshRenderCommand = dynamic_cast<const MeshRenderCommand*>(&cmd);
 	if (meshRenderCommand == NULL || !cmd.canCastShadow())
 		return false;
-	MeshTransformIndex* transformIndex = NULL;
-	for (int j = 0; j < meshRenderCommand->instanceIDCount; j++)
-		transformIndex = cmd.sceneData->setMeshPartTransform(
-			meshRenderCommand->mesh, material, meshRenderCommand->instanceID + j);
+	MeshTransformIndex* transformIndex = cmd.sceneData->setMeshPartTransform(
+		meshRenderCommand->mesh, material, meshRenderCommand->instanceID, meshRenderCommand->instanceIDCount);
 
 	DirectShadowRenderCommand command;
 	command.sceneData = cmd.sceneData;
@@ -68,34 +66,10 @@ bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	task.shaderProgram = program;
 	task.renderMode = command.getRenderMode();
 	task.cameraData = &cameraRenderData;
+	task.surface = cameraRenderData.surface;
 	task.materialData = materialRenderData;
 	task.meshData = meshData;
 	task.extraData = command.bindings;
 
-	commandList.addRenderTask(command, task);
-}
-
-void ShadowDepthPass::prepare()
-{
-	outputTextures.clear();
-}
-
-void ShadowDepthPass::execute(IRenderContext& context)
-{
-	RenderCommandExecutionInfo executionInfo(context);
-	executionInfo.requireClearFrame = requireClearFrame;
-	executionInfo.outputTextures = &outputTextures;
-	executionInfo.timer = &timer;
-	commandList.excuteCommand(executionInfo);
-}
-
-void ShadowDepthPass::reset()
-{
-	commandList.resetCommand();
-}
-
-void ShadowDepthPass::getOutputTextures(vector<pair<string, Texture*>>& textures)
-{
-	for (auto& tex : outputTextures)
-		textures.push_back(tex);
+	return commandList.addRenderTask(command, task);
 }

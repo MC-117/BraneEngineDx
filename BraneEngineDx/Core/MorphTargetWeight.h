@@ -28,7 +28,7 @@ struct MorphTargetWeightRenderData : public IRenderData
 	MorphTargetWeight* source = NULL;
 	vector<float> morphWeights;
 	bool needUpdate = false;
-	GPUBuffer weightGPUBuffer = GPUBuffer(GPUBufferType::GB_Storage, sizeof(float));
+	GPUBuffer weightGPUBuffer = GPUBuffer(GB_Storage, GBF_Float);
 
 	virtual void create();
 	virtual void release();

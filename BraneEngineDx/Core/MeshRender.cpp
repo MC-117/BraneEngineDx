@@ -147,14 +147,11 @@ void MeshRender::preRender()
 
 void MeshRender::render(RenderInfo& info)
 {
-	if (mesh == NULL || hidden || customRenaderSubmit)
+	if (mesh == NULL || hidden || instanceID < 0)
 		return;
 
 	remapMaterial();
 	fillMaterialsByDefault();
-
-	if (!customTransformSubmit)
-		instanceID = info.sceneData->setMeshTransform(transformMat);
 
 	for (int i = 0; i < materials.size(); i++) {
 		Material* material = materials[i];
@@ -165,7 +162,7 @@ void MeshRender::render(RenderInfo& info)
 		if (!part->isValid())
 			continue;
 
-		/*if (frustumCulling && info.camera->culling(part->bound, transformMat)) {
+		/*if (frustumCulling && !info.sceneData->frustumCulling(part->bound, transformMat)) {
 			continue;
 		}*/
 
@@ -173,22 +170,17 @@ void MeshRender::render(RenderInfo& info)
 		command.sceneData = info.sceneData;
 		command.material = material;
 		command.mesh = part;
+		command.hasPreDepth = hasPrePass;
 		command.instanceID = instanceID;
 		command.instanceIDCount = instanceCount;
 		MeshTransformRenderData* transformData = isStatic ? &info.sceneData->staticMeshTransformDataPack : &info.sceneData->meshTransformDataPack;
 		command.transformData = transformData;
-		if (customTransformSubmit)
-			command.transformIndex = transformData->getMeshPartTransform(part, material);
-		else
-			command.transformIndex = transformData->setMeshPartTransform(part, material, instanceID);
+		command.transformIndex = transformData->setMeshPartTransform(part, material, instanceID, instanceCount);
 		info.renderGraph->setRenderCommand(command);
 
 		Material* outlineMaterial = outlineMaterials[i];
 		if (outlineEnable[i] && outlineMaterial != NULL) {
-			if (customTransformSubmit)
-				command.transformIndex = transformData->getMeshPartTransform(part, outlineMaterial);
-			else
-				command.transformIndex = transformData->setMeshPartTransform(part, outlineMaterial, instanceID);
+			command.transformIndex = transformData->setMeshPartTransform(part, outlineMaterial, instanceID, instanceCount);
 			command.material = outlineMaterial;
 			info.renderGraph->setRenderCommand(command);
 		}

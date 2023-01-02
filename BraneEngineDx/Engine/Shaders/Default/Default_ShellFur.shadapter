@@ -26,6 +26,7 @@ DefaultVertexOut MESH_MAIN
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
+    vout.InstanceID = ins[0];
     return vout;
 }
 #vertex skeleton
@@ -54,6 +55,7 @@ DefaultVertexOut SKELETON_MAIN
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
+    vout.InstanceID = ins[0];
     return vout;
 }
 #vertex skeleton morph
@@ -84,5 +86,6 @@ DefaultVertexOut SKELETON_MAIN
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
+    vout.InstanceID = ins[0];
     return vout;
 }

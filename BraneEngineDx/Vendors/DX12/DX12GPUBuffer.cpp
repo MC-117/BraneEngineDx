@@ -1,4 +1,5 @@
 #include "DX12GPUBuffer.h"
+#include "../DXGI_Helper.h"
 
 DX12GPUBuffer::DX12GPUBuffer(DX12Context& context, GPUBufferDesc& desc)
     : dxContext(context), IGPUBuffer(desc)
@@ -55,16 +56,13 @@ const char* getGPUBufferTypeName(GPUBufferType type)
 	case GB_Storage:
 		return ("GB_Storage");
 		break;
-	case GB_Struct:
-		return ("GB_Struct");
-		break;
 	}
 	return "";
 }
 
 unsigned int DX12GPUBuffer::bindBase(unsigned int index)
 {
-	if (desc.type == GB_Struct && index == 0) {
+	if (desc.type == GB_Storage && desc.format == GBF_Struct && index == 0) {
 		OutputDebugStringA(("[Brane]--------Frame(" + to_string(dxContext.activeBackBufferIndex) + ")--------\n").c_str());
 		OutputDebugStringA((string("[Brane] ") + getGPUBufferTypeName(desc.type) + "(" + to_string(index) + ")\n").c_str());
 		list<Task>& task = tasks[dxContext.activeBackBufferIndex];
@@ -114,21 +112,10 @@ unsigned int DX12GPUBuffer::bindBase(unsigned int index)
 	{
 		if (dx12Buffer == NULL)
 			return 0;
-		DXGI_FORMAT format;
-		if (desc.cellSize == sizeof(float)) {
-			format = DXGI_FORMAT_R32_FLOAT;
-		}
-		else {
-			format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-		}
+		DXGI_FORMAT format = getDXGIFormat(desc.format);
 		dxContext.graphicContext.bindDefaultSRV(index, dx12Buffer->getBufferSRV(format));
 		break;
 	}
-	case GB_Struct:
-		if (dx12Buffer == NULL)
-			return 0;
-		dxContext.graphicContext.bindDefaultSRV(index, dx12Buffer->getStructSRV());
-		break;
 	default:
 		throw runtime_error("Unknown Error");
 		break;
@@ -288,31 +275,32 @@ void DX12GPUBuffer::processTasks(int backBufferIndex, bool skip)
 
 void DX12GPUBuffer::resizeInternal(int backBufferIndex, unsigned int size)
 {
-	backBufferIndex = desc.type == GB_ReadBack ? 0 : backBufferIndex;
+	backBufferIndex = desc.cpuAccess == CAF_Read || desc.cpuAccess == CAF_ReadWrite ? 0 : backBufferIndex;
 	DX12SubBuffer*& dx12Buffer = dx12Buffers[backBufferIndex];
 	unsigned int alignedSize = size * desc.cellSize;
-	switch (desc.type)
-	{
-	case GB_Storage:
-	case GB_Vertex:
-	case GB_Index:
-	case GB_Struct:
-		dx12Buffer = dxContext.constantBufferPool.suballocate(alignedSize, desc.cellSize);
-		break;
-	case GB_Constant:
-		alignedSize = GRS_UPPER(alignedSize, 256);
-		dx12Buffer = dxContext.constantBufferPool.suballocate(alignedSize, 256);
-		break;
-	case GB_ReadBack:
+	if (desc.cpuAccess == CAF_Read || desc.cpuAccess == CAF_ReadWrite)
 		dx12Buffer = dxContext.readBackBufferPool.suballocate(alignedSize, desc.cellSize);
-	default:
-		break;
+	else {
+		switch (desc.type)
+		{
+		case GB_Storage:
+		case GB_Vertex:
+		case GB_Index:
+			dx12Buffer = dxContext.constantBufferPool.suballocate(alignedSize, desc.cellSize);
+			break;
+		case GB_Constant:
+			alignedSize = GRS_UPPER(alignedSize, 256);
+			dx12Buffer = dxContext.constantBufferPool.suballocate(alignedSize, 256);
+			break;
+		default:
+			break;
+		}
 	}
 }
 
 void DX12GPUBuffer::releaseInternal(int backBufferIndex)
 {
-	backBufferIndex = desc.type == GB_ReadBack ? 0 : backBufferIndex;
+	backBufferIndex = desc.cpuAccess == CAF_Read || desc.cpuAccess == CAF_ReadWrite ? 0 : backBufferIndex;
 	DX12SubBuffer*& dx12Buffer = dx12Buffers[backBufferIndex];
 	if (dx12Buffer != NULL) {
 		dx12Buffer->release();
@@ -322,7 +310,7 @@ void DX12GPUBuffer::releaseInternal(int backBufferIndex)
 
 void DX12GPUBuffer::uploadInternal(int backBufferIndex, unsigned int first, unsigned int size, void* data)
 {
-	backBufferIndex = desc.type == GB_ReadBack ? 0 : backBufferIndex;
+	backBufferIndex = desc.cpuAccess == CAF_Read || desc.cpuAccess == CAF_ReadWrite ? 0 : backBufferIndex;
 	DX12SubBuffer*& dx12Buffer = dx12Buffers[dxContext.activeBackBufferIndex];
 	dx12Buffer->upload(data, size * desc.cellSize, first * desc.cellSize);
 }

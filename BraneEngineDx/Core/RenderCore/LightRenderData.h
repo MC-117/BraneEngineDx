@@ -28,8 +28,8 @@ struct LightRenderData : public IRenderData
 {
 	DirectLightData directLightData;
 	vector<PointLightData> pointLightDatas;
-	GPUBuffer directLightBuffer = GPUBuffer(GB_Constant, sizeof(DirectLightData));
-	GPUBuffer pointLightBuffer = GPUBuffer(GB_Struct, sizeof(PointLightData));
+	GPUBuffer directLightBuffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(DirectLightData));
+	GPUBuffer pointLightBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(PointLightData));
 
 	RenderTarget* shadowTarget = NULL;
 	CameraRenderData shadowCameraRenderData;

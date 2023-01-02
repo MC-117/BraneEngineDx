@@ -128,3 +128,38 @@ int GetNumChannelsOfDXGIFormat(DXGI_FORMAT format)
     }
     return 0;
 }
+
+DXGI_FORMAT getDXGIFormat(GPUBufferFormat format)
+{
+    switch (format)
+    {
+    case GBF_Struct:
+        return DXGI_FORMAT_UNKNOWN;
+    case GBF_Float:
+        return DXGI_FORMAT_R32_FLOAT;
+    case GBF_Float2:
+        return DXGI_FORMAT_R32G32_FLOAT;
+    case GBF_Float3:
+        return DXGI_FORMAT_R32G32B32_FLOAT;
+    case GBF_Float4:
+        return DXGI_FORMAT_R32G32B32A32_FLOAT;
+    case GBF_Int:
+        return DXGI_FORMAT_R32_SINT;
+    case GBF_Int2:
+        return DXGI_FORMAT_R32G32_SINT;
+    case GBF_Int3:
+        return DXGI_FORMAT_R32G32B32_SINT;
+    case GBF_Int4:
+        return DXGI_FORMAT_R32G32B32A32_SINT;
+    case GBF_UInt:
+        return DXGI_FORMAT_R32_UINT;
+    case GBF_UInt2:
+        return DXGI_FORMAT_R32G32_UINT;
+    case GBF_UInt3:
+        return DXGI_FORMAT_R32G32B32_UINT;
+    case GBF_UInt4:
+        return DXGI_FORMAT_R32G32B32A32_UINT;
+    default:
+        return DXGI_FORMAT_UNKNOWN;
+    }
+}

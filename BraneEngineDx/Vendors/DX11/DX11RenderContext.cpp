@@ -65,15 +65,22 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 		break;
 	}
 	case GB_Storage:
-	case GB_Struct:
-		if (dxBuffer->dx11BufferView == NULL)
-			return 0;
-		deviceContext->VSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
-		deviceContext->PSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
-		deviceContext->CSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
-		deviceContext->GSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
-		deviceContext->HSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
-		deviceContext->DSSetShaderResources(index, 1, dxBuffer->dx11BufferView.GetAddressOf());
+		if (dxBuffer->dx11BufferSRV != NULL) {
+			dxContext.deviceContext->VSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			dxContext.deviceContext->PSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			dxContext.deviceContext->GSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			dxContext.deviceContext->HSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			dxContext.deviceContext->DSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			dxContext.deviceContext->CSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+		}
+		else if (dxBuffer->dx11BufferUAV != NULL) {
+			if (currentProgram->isComputable())
+				dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
+			else
+				dxContext.deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
+					NULL, NULL, index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
+		}
+		else return 0;
 		break;
 	default:
 		throw runtime_error("Unknown Error");
@@ -108,6 +115,35 @@ unsigned int DX11RenderContext::uploadBufferSubData(IGPUBuffer* buffer, unsigned
 	memcpy_s((char*)mpd.pData + first * dxBuffer->desc.cellSize, size * dxBuffer->desc.cellSize, data, size * dxBuffer->desc.cellSize);
 	deviceContext->Unmap(dxBuffer->dx11Buffer.Get(), 0);
 	return dxBuffer->desc.id;
+}
+
+void DX11RenderContext::copyBufferData(IGPUBuffer* srcBuffer, IGPUBuffer* dstBuffer)
+{
+	DX11GPUBuffer* srcDxBuffer = dynamic_cast<DX11GPUBuffer*>(srcBuffer);
+	DX11GPUBuffer* dstDxBuffer = dynamic_cast<DX11GPUBuffer*>(dstBuffer);
+	if (srcDxBuffer && dstDxBuffer)
+		deviceContext->CopyResource(dstDxBuffer->dx11Buffer.Get(), srcDxBuffer->dx11Buffer.Get());
+}
+
+void DX11RenderContext::copyBufferSubData(IGPUBuffer* srcBuffer, unsigned int srcFirst, IGPUBuffer* dstBuffer, unsigned int dstFirst, unsigned int size)
+{
+	DX11GPUBuffer* srcDxBuffer = dynamic_cast<DX11GPUBuffer*>(srcBuffer);
+	DX11GPUBuffer* dstDxBuffer = dynamic_cast<DX11GPUBuffer*>(dstBuffer);
+	if (srcBuffer->desc.cellSize != dstBuffer->desc.cellSize)
+		throw runtime_error("Data format is not the same");
+	int cellSize = srcBuffer->desc.cellSize;
+	if (srcDxBuffer && dstDxBuffer) {
+		D3D11_BOX srcBox;
+		srcBox.left = srcFirst * cellSize;
+		srcBox.right = (srcFirst + size) * cellSize;
+		srcBox.top = 0;
+		srcBox.bottom = 1;
+		srcBox.front = 0;
+		srcBox.back = 1;
+		dxContext.deviceContext->CopySubresourceRegion(
+			dstDxBuffer->dx11Buffer.Get(), 0, dstFirst * cellSize,
+			0, 0, srcDxBuffer->dx11Buffer.Get(), 0, &srcBox);
+	}
 }
 
 unsigned int DX11RenderContext::bindFrame(IRenderTarget* target)

@@ -15,6 +15,7 @@ struct DeferredLightingTask
 	int age = 0;
 	SceneRenderData* sceneData = NULL;
 	ShaderProgram* program = NULL;
+	SurfaceData surface;
 	RenderTarget* gBufferRT = NULL;
 	CameraRenderData* cameraRenderData = NULL;
 	Material* material = NULL;

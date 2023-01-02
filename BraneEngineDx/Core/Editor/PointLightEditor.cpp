@@ -23,7 +23,11 @@ void PointLightEditor::onPersistentGizmo(GizmoInfo& info)
 			{ (float)icon->getWidth(), (float)icon->getHeight() }))
 			EditorManager::selectObject(pointLight);
 	}
-	info.gizmo->drawSphere(Vector3f::Zero() , pointLight->getRadius(), pointLight->getTransformMat(), pointLight->color);
+}
+
+void PointLightEditor::onHandleGizmo(GizmoInfo& info)
+{
+	info.gizmo->drawSphere(Vector3f::Zero(), pointLight->getRadius(), pointLight->getTransformMat(), pointLight->color);
 }
 
 void PointLightEditor::onLightGUI(EditorInfo& info)

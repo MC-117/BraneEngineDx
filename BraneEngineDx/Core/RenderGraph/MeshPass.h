@@ -6,7 +6,8 @@ class MeshPass : public RenderPass
 {
 public:
 	RenderCommandList commandList;
-	bool requireClearFrame = true;
+	Enum<ClearFlags> plusClearFlags = Clear_None;
+	Enum<ClearFlags> minusClearFlags = Clear_None;
 
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);

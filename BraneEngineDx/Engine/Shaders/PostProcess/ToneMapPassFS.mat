@@ -61,8 +61,9 @@ FragmentOut DEFAULT_SCREEN_MAIN
 	FragmentOut fout;
 	float2 uv = fin.UV;
 	float4 c = SAMPLE_TEX_LOD(screenMap, uv, 0);
-    c.rgb = Float3(1.0) - exp(-c.rgb * exposure);
-	c.rgb = pow(c.rgb, Float3(1.0/gamma));
+    // c.rgb = Float3(1.0) - exp(-c.rgb * exposure);
+	// c.rgb = pow(c.rgb, Float3(1.0/gamma));
+    c.rgb = ACESToneMapping(c.rgb, exposure);
 	if (vignetteRate != 0) {
 		float vx = abs(uv.x * 2 - 1);
 		float vy = abs(uv.y * 2 - 1);

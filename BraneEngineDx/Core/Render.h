@@ -8,6 +8,7 @@
 class Camera;
 class SceneRenderData;
 class CameraRenderData;
+class ScreenHitData;
 class MaterialRenderData;
 class RenderGraph;
 
@@ -28,7 +29,6 @@ public:
 	bool isStatic = false;
 	bool canCastShadow = false;
 	bool customTransformSubmit = false;
-	bool customRenaderSubmit = false;
 	unsigned int instanceID = -1;
 	unsigned int instanceCount = 1;
 	Matrix4f transformMat;

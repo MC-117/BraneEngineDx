@@ -42,7 +42,7 @@ void ForwardRenderGraph::execute(IRenderContext& context)
 	meshPass.execute(context);
 	for (auto sceneData : sceneDatas)
 		for (auto& cameraRenderData : sceneData->cameraRenderDatas)
-			context.resolveMultisampleFrame(cameraRenderData->renderTarget->getVendorRenderTarget());
+			context.resolveMultisampleFrame(cameraRenderData->surface.renderTarget->getVendorRenderTarget());
 	for (auto pass : passes)
 		pass->execute(context);
 	blitPass.execute(context);

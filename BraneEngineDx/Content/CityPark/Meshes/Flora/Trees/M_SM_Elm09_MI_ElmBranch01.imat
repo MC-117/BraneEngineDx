@@ -1,0 +1,17 @@
+#material Engine/Shaders/PBR.mat
+#order 2450
+#twoside true
+#castshadow true
+Scalar ao: 1.000000
+Scalar emission: 0.000000
+Scalar metallic: 0.000000
+Scalar normalScale: 1.000000
+Scalar roughness: 1.000000
+Color baseColor: 1.000000, 1.000000, 1.000000, 1.000000
+Texture aoMap: white
+Texture colorMap: Content/CityPark/Meshes/Flora/Trees/T_M_SM_Elm09_MI_ElmBranch01_BaseColor.png
+Texture depthMap: white
+Texture emissionMap: white
+Texture metallicMap: white
+Texture normalMap: Content/CityPark/Meshes/Flora/Trees/T_M_SM_Elm09_MI_ElmBranch01_Normal.png
+Texture roughnessMap: Content/CityPark/Meshes/Flora/Trees/T_M_SM_Elm09_MI_ElmBranch01_Roughness.png

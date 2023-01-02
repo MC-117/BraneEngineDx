@@ -13,7 +13,8 @@ class DX11GPUBuffer : public IGPUBuffer
 public:
 	DX11Context& dxContext;
 	ComPtr<ID3D11Buffer> dx11Buffer;
-	ComPtr<ID3D11ShaderResourceView> dx11BufferView;
+	ComPtr<ID3D11ShaderResourceView> dx11BufferSRV;
+	ComPtr<ID3D11UnorderedAccessView> dx11BufferUAV;
 
 	DX11GPUBuffer(DX11Context& context, GPUBufferDesc& desc);
 	virtual ~DX11GPUBuffer();

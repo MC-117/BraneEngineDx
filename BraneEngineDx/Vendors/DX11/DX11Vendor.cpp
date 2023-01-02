@@ -1,5 +1,6 @@
 #include "DX11Vendor.h"
 #include "DX11Texture2D.h"
+#include "../../Core/Utility/RenderUtility.h"
 #include "../imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 
@@ -367,7 +368,7 @@ void DX11Vendor::readBackTexture2D(ITexture2D* texture, void* data)
 	dxContext.deviceContext->CopySubresourceRegion(buffer->dx11Texture2D.Get(), 0, 0, 0, 0,
 		dxTexture->dx11Texture2D.Get(), 0, &hSrcBox);
 
-	int bytesPerPixel = desc.channel * sizeof(char);
+	int bytesPerPixel = getPixelSize(desc.info.internalType, desc.channel);
 	int bytesPerRow = desc.width * bytesPerPixel;
 
 	D3D11_MAPPED_SUBRESOURCE mpd;

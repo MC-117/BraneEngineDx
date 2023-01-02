@@ -43,6 +43,7 @@ struct RenderTaskContext
 {
 	SceneRenderData* sceneData;
 	IRenderData* transformData;
+	RenderTarget* renderTarget;
 	IRenderData* cameraData;
 	ShaderProgram* shaderProgram;
 	RenderMode renderMode;

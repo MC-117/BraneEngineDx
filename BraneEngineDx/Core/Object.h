@@ -78,6 +78,7 @@ public:
 	ObjectBehavior* getBehavior(const string& name) const;
 	ObjectBehavior* getBehavior(Serialization& type) const;
 
+	int getObjectID() const;
 	virtual Render* getRender();
 	virtual unsigned int getRenders(vector<Render*>& renders);
 #if ENABLE_PHYSICS
@@ -111,6 +112,7 @@ protected:
 	DestroyFlag destroyFlag = DestroyFlag::None;
 	bool internalNode = false; // internal node: can not change its hierarchy
 	int siblingIdx = -1;
+	int objectID = -1;
 
 	virtual void addInternalNode(Object& object);
 };

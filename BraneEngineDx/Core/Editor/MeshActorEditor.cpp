@@ -1,5 +1,6 @@
 #include "MeshActorEditor.h"
 #include "../Camera.h"
+#include "../Engine.h"
 
 RegistEditor(MeshActor);
 
@@ -19,9 +20,14 @@ void MeshActorEditor::onPersistentGizmo(GizmoInfo& info)
 				continue;
 			MeshPart* part = &meshActor->meshRender.mesh->meshParts[i];
 
-			if (camera->culling(part->bound, meshActor->meshRender.transformMat)) {
+			if (!camera->culling(part->bound, meshActor->meshRender.transformMat)) {
 				info.gizmo->drawAABB(part->bound, meshActor->meshRender.transformMat, { 255, 0, 0 });
 			}
+		}
+	}
+	if (Engine::input.getMouseButtonRelease(MouseButtonEnum::Left)) {
+		for (auto& meshPart : meshActor->meshRender.mesh->meshParts) {
+			info.gizmo->doScreenHit(meshActor->getInstanceID(), meshPart, meshActor->meshRender.instanceID, meshActor->meshRender.instanceCount);
 		}
 	}
 }

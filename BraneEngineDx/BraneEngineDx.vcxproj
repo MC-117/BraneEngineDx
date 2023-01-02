@@ -500,8 +500,11 @@
     <ClInclude Include="Core\ReflectionProbe.h" />
     <ClInclude Include="Core\RenderCore\ReflectionProbeRenderData.h" />
     <ClInclude Include="Core\RenderCore\RenderCore.h" />
+    <ClInclude Include="Core\RenderCore\ScreenHitData.h" />
     <ClInclude Include="Core\RenderCore\TextureCubePool.h" />
+    <ClInclude Include="Core\RenderCore\TransformRenderData.h" />
     <ClInclude Include="Core\RenderGraph\ReflectionProbeArrayPass.h" />
+    <ClInclude Include="Core\RenderGraph\ScreenHitPass.h" />
     <ClInclude Include="Core\RenderGraph\ShadowDepthPass.h" />
     <ClInclude Include="Core\SceneCaptureCube.h" />
     <ClInclude Include="Core\RenderCore\CameraData.h" />
@@ -646,6 +649,7 @@
     <ClInclude Include="Core\Utility\Decimal.h" />
     <ClInclude Include="Core\Utility\EngineUtility.h" />
     <ClInclude Include="Core\Utility\Guid.h" />
+    <ClInclude Include="Core\Utility\half.hpp" />
     <ClInclude Include="Core\Utility\hash.h" />
     <ClInclude Include="Core\Utility\MathUtility.h" />
     <ClInclude Include="Core\Utility\Octree.h" />
@@ -827,8 +831,11 @@
     <ClCompile Include="Core\ReflectionCapture.cpp" />
     <ClCompile Include="Core\ReflectionProbe.cpp" />
     <ClCompile Include="Core\RenderCore\ReflectionProbeRenderData.cpp" />
+    <ClCompile Include="Core\RenderCore\ScreenHitData.cpp" />
     <ClCompile Include="Core\RenderCore\TextureCubePool.cpp" />
+    <ClCompile Include="Core\RenderCore\TransformRenderData.cpp" />
     <ClCompile Include="Core\RenderGraph\ReflectionProbeArrayPass.cpp" />
+    <ClCompile Include="Core\RenderGraph\ScreenHitPass.cpp" />
     <ClCompile Include="Core\RenderGraph\ShadowDepthPass.cpp" />
     <ClCompile Include="Core\SceneCaptureCube.cpp" />
     <ClCompile Include="Core\Editor\ActorEditor.cpp" />

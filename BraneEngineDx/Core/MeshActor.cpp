@@ -2,16 +2,19 @@
 #include "Utility/Utility.h"
 #include "Asset.h"
 #include "Console.h"
+#include "RenderCore/RenderCore.h"
 
 SerializeInstance(MeshActor);
 
 MeshActor::MeshActor(const string& name) : Actor::Actor(name)
 {
+	meshRender.hasPrePass = true;
 }
 
 MeshActor::MeshActor(Mesh & mesh, Material & material, const string& name, const Vector3f & localScale)
 	: meshRender(mesh, material), Actor::Actor(name)
 {
+	meshRender.hasPrePass = true;
 	setScale(localScale);
 	rigidBody = new RigidBody(*this, PhysicalMaterial());
 	rigidBody->addCollider(&mesh, SIMPLE);
@@ -20,6 +23,7 @@ MeshActor::MeshActor(Mesh & mesh, Material & material, const string& name, const
 MeshActor::MeshActor(Mesh & mesh, Material & material, const PhysicalMaterial & physicalMaterial, Shape & collisionShape, const string& name, ShapeComplexType complexType, const Vector3f & localScale)
 	: meshRender(mesh, material), Actor::Actor(name)
 {
+	meshRender.hasPrePass = true;
 	setScale(localScale);
 	rigidBody = new RigidBody(*this, physicalMaterial);
 	rigidBody->addCollider(&collisionShape, complexType);
@@ -46,7 +50,11 @@ bool MeshActor::isHidden()
 
 void MeshActor::prerender(SceneRenderData& sceneData)
 {
+	objectID = sceneData.setMeshTransform(transformMat);
+	meshRender.instanceID = objectID;
+	meshRender.instanceCount = 1;
 	meshRender.transformMat = transformMat;
+
 }
 
 Render* MeshActor::getRender()

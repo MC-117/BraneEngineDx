@@ -9,6 +9,7 @@ struct DefaultTerrainVertexOut
     float3 WorldPos : POSITION;
     float3 LocalPos : LOCALPOS;
     float2 TexCoords : TEXCOORD;
+    float2 InstanceID : INSTANCEID;
 };
 
 struct DefaultTerrainPatchTess

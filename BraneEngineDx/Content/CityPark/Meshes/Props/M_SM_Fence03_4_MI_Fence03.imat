@@ -1,0 +1,8 @@
+#material Engine/Shaders/PBR.mat
+#twoside false
+#castshadow true
+Scalar ao: 1.000000
+Scalar metallic: 1.000000
+Scalar roughness: 0.132868
+Texture colorMap: Content/CityPark/Meshes/Props/T_M_SM_Fence03_4_MI_Fence03_BaseColor.png
+Texture normalMap: Content/CityPark/Meshes/Props/T_M_SM_Fence03_4_MI_Fence03_Normal.png

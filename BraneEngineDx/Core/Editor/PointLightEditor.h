@@ -13,6 +13,8 @@ public:
 	virtual void setInspectedObject(void* object);
 
 	virtual void onPersistentGizmo(GizmoInfo& info);
+	virtual void onHandleGizmo(GizmoInfo& info);
+
 	virtual void onLightGUI(EditorInfo& info);
 protected:
 	static Texture2D* icon;

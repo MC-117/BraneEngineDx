@@ -10,10 +10,10 @@ class Texture2D : public Texture
 public:
 	bool isStandard = false;
 
-	Texture2D(bool isStandard = true);
+	Texture2D(bool isStandard = false);
 	Texture2D(ITexture2D* vendorTexture);
-	Texture2D(const Texture2DInfo& info, bool isStandard = true);
-	Texture2D(const string& file, bool isStandard = true);
+	Texture2D(const Texture2DInfo& info, bool isStandard = false);
+	Texture2D(const string& file, bool isStandard = false);
 	Texture2D(Color color, unsigned int width, unsigned int height, unsigned int channel, bool isStandard = false);
 	Texture2D(unsigned int width, unsigned int height, unsigned int channel, bool isStandard = false, const Texture2DInfo& info = Texture2DInfo());
 	virtual ~Texture2D();

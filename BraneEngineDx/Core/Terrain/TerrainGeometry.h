@@ -27,10 +27,10 @@ public:
 	Texture2D heightMap;
 	TerrainData data;
 
-	GPUBuffer vertexBuffer = GPUBuffer(GPUBufferType::GB_Vertex, sizeof(Vector3f));
-	GPUBuffer uvBuffer = GPUBuffer(GPUBufferType::GB_Vertex, sizeof(Vector2f));
-	GPUBuffer elementBuffer = GPUBuffer(GPUBufferType::GB_Index, sizeof(unsigned int));
-	GPUBuffer terrainBuffer = GPUBuffer(GPUBufferType::GB_Constant, sizeof(TerrainData));
+	GPUBuffer vertexBuffer = GPUBuffer(GB_Vertex, GBF_Float3);
+	GPUBuffer uvBuffer = GPUBuffer(GB_Vertex, GBF_Float2);
+	GPUBuffer elementBuffer = GPUBuffer(GB_Index, GBF_UInt);
+	GPUBuffer terrainBuffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(TerrainData));
 
 	TerrainPatchMeshData();
 	virtual ~TerrainPatchMeshData();

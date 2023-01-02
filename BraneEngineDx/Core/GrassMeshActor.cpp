@@ -14,6 +14,7 @@ GrassMeshActor::GrassMeshActor(Mesh & mesh, Material & material, string name)
 	meshRender.isStatic = true;
 	meshRender.canCastShadow = false;
 	meshRender.frustumCulling = false;
+	meshRender.hasPrePass = false;
 	events.registerFunc("updateData", [](void* obj) {
 		((GrassMeshActor*)obj)->updateData();
 	});
@@ -63,7 +64,6 @@ void GrassMeshActor::end()
 void GrassMeshActor::prerender(SceneRenderData& sceneData)
 {
 	if (sceneData.willUpdateStatic()) {
-		meshRender.customTransformSubmit = true;
 		float w = bound.x() / density;
 		int yd = bound.y() / w;
 		float yo = (bound.y() - yd * w) * 0.5;
@@ -80,9 +80,6 @@ void GrassMeshActor::prerender(SceneRenderData& sceneData)
 				if (i == 0 && j == 0) {
 					meshRender.instanceID = transID;
 					meshRender.instanceCount = transCount;
-				}
-				for (int i = 0; i < meshRender.mesh->meshParts.size(); i++) {
-					sceneData.setStaticMeshPartTransform(&meshRender.mesh->meshParts[i], meshRender.materials[i], transID);
 				}
 			}
 		}

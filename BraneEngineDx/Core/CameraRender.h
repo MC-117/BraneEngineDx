@@ -9,6 +9,7 @@
 
 class CameraRender : public Render
 {
+	friend struct CameraRenderData;
 public:
 	Unit2Di size = { 0, 0 };
 	RenderTarget* renderTarget = NULL;
@@ -26,6 +27,9 @@ public:
 	virtual void setMainCameraRender();
 
 	virtual void createDefaultPostProcessGraph();
+
+	virtual void triggerScreenHit(const Vector2u& hitPosition);
+	virtual bool fetchScreenHit(ScreenHitInfo& hitInfo) const;
 	
 	virtual Texture* getSceneMap();
 	virtual RenderTarget& getRenderTarget();
@@ -46,8 +50,12 @@ protected:
 	CameraRenderData* renderData = NULL;
 	Texture2D* internalTexture = NULL;
 	RenderTarget* internalRenderTarget = NULL;
+	ScreenHitData* hitData = NULL;
 
 	void createInternalRenderTarget();
+	void createInternalHitData();
+
+	ScreenHitData* getTriggeredScreenHitData();
 };
 
 #endif // !_CAMERARENDER_H_

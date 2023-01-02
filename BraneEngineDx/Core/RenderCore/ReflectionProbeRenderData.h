@@ -24,7 +24,7 @@ struct ReflectionProbeRenderData : public IRenderData
 {
 	vector<TextureCube*> cubeMaps;
 	vector<ReflectionProbeData> probeDatas;
-	GPUBuffer probeDataBuffer = GPUBuffer(GB_Struct, sizeof(ReflectionProbeData));
+	GPUBuffer probeDataBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(ReflectionProbeData));
 	TextureCubePool cubeMapPool;
 
 	int setProbe(ReflectionCapture* capture);

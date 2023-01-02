@@ -1,4 +1,5 @@
 #include "DX11GPUBuffer.h"
+#include "../DXGI_Helper.h"
 
 #ifdef VENDOR_USE_DX11
 
@@ -33,55 +34,91 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 
 		D3D11_BUFFER_DESC bd;
 		ZeroMemory(&bd, sizeof(bd));
-		if (desc.type == GB_ReadBack)
+
+		if (desc.cpuAccess == CAF_None)
+			bd.Usage = desc.gpuAccess == GAF_ReadWrite ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
+		else if (desc.cpuAccess == CAF_Write && desc.gpuAccess == GAF_Read)
+			bd.Usage = D3D11_USAGE_DYNAMIC;
+		else if (desc.cpuAccess & CAF_Read)
 			bd.Usage = D3D11_USAGE_STAGING;
 		else
-			bd.Usage = D3D11_USAGE_DYNAMIC;
+			throw runtime_error("Unknown GPU CPU Access Flag Combination");
+
+		if (desc.cpuAccess & CAF_Read)
+			bd.CPUAccessFlags |= D3D11_CPU_ACCESS_READ;
+
+		if (desc.cpuAccess & CAF_Write)
+			bd.CPUAccessFlags |= D3D11_CPU_ACCESS_WRITE;
+
+		if (bd.Usage != D3D11_USAGE_STAGING) {
+			switch (desc.type)
+			{
+			case GB_Constant:
+				bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+				break;
+			case GB_Vertex:
+				bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+				break;
+			case GB_Index:
+				bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+				break;
+			case GB_Storage:
+				bd.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+				bd.MiscFlags = desc.format == GBF_Struct ? D3D11_RESOURCE_MISC_BUFFER_STRUCTURED : 0;
+				break;
+			case GB_Command:
+				bd.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+				bd.MiscFlags = D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS;
+				break;
+			default:
+				throw runtime_error("Unknown Buffer Type");
+				break;
+			}
+
+			if (desc.gpuAccess == GAF_ReadWrite) {
+				bd.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
+			}
+		}
+
 		bd.ByteWidth = alignedSize;
-		if (desc.type == GB_ReadBack)
-			bd.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-		else
-			bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		if (desc.type == GB_Constant)
-			bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		else if (desc.type == GB_Vertex)
-			bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		else if (desc.type == GB_Index)
-			bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		else if (desc.type != GB_ReadBack)
-			bd.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 		bd.StructureByteStride = desc.cellSize;
-		if (desc.type == GB_Struct)
-			bd.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-		else if (desc.type == GB_Command)
-			bd.MiscFlags = D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS;
+
 		if (FAILED(dxContext.device->CreateBuffer(&bd, NULL, &dx11Buffer)))
 			throw runtime_error("CreateBuffer failed");
 
-		if (desc.type != GB_Constant && desc.type != GB_Vertex && desc.type != GB_Index && desc.type != GB_ReadBack) {
-			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-			srvDesc.Buffer.FirstElement = 0;
-			if (desc.type == GB_Struct) {
-				srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-				srvDesc.Buffer.NumElements = desc.capacity;
-			}
-			else {
-				if (desc.cellSize == sizeof(float)) {
-					srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-					srvDesc.Buffer.NumElements = alignedSize / 4;
-				}
-				else {
-					srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-					srvDesc.Buffer.NumElements = alignedSize / 16;
-				}
-			}
-			if (FAILED(dxContext.device->CreateShaderResourceView(dx11Buffer.Get(), &srvDesc, &dx11BufferView)))
-				throw runtime_error("CreateShaderResourceView failed");
-			desc.id = (unsigned int)dx11BufferView.Get();
-		}
-		else
+		if (desc.cpuAccess & CAF_Read ||
+			desc.type == GB_Constant ||
+			desc.type == GB_Vertex ||
+			desc.type == GB_Index) {
 			desc.id = (unsigned int)dx11Buffer.Get();
+		}
+		else {
+			if (desc.gpuAccess == GAF_Read) {
+				D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+				srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+				srvDesc.Format = getDXGIFormat(desc.format);
+				srvDesc.Buffer.FirstElement = 0;
+				srvDesc.Buffer.NumElements = desc.format == GBF_Struct ?
+					desc.capacity : alignedSize / desc.cellSize;
+				if (FAILED(dxContext.device->CreateShaderResourceView(dx11Buffer.Get(), &srvDesc, &dx11BufferSRV)))
+					throw runtime_error("CreateShaderResourceView failed");
+				desc.id = (unsigned int)dx11BufferSRV.Get();
+			}
+			else if (desc.gpuAccess == GAF_ReadWrite) {
+				D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+				uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+				uavDesc.Format = getDXGIFormat(desc.format);
+				uavDesc.Buffer.FirstElement = 0;
+				uavDesc.Buffer.NumElements = desc.format == GBF_Struct ?
+					desc.capacity : alignedSize / desc.cellSize;
+				uavDesc.Buffer.Flags = 0;
+				if (FAILED(dxContext.device->CreateUnorderedAccessView(dx11Buffer.Get(), &uavDesc, &dx11BufferUAV)))
+					throw runtime_error("CreateUnorderedAccessView failed");
+				desc.id = (unsigned int)dx11BufferUAV.Get();
+			}
+			else
+				throw runtime_error("Unknown GPU Access Flag");
+		}
 	}
 	desc.size = size;
 	return desc.id;
@@ -89,8 +126,11 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 
 void DX11GPUBuffer::release()
 {
-	if (dx11BufferView != NULL) {
-		dx11BufferView.Reset();
+	if (dx11BufferSRV != NULL) {
+		dx11BufferSRV.Reset();
+	}
+	if (dx11BufferUAV != NULL) {
+		dx11BufferUAV.Reset();
 	}
 	if (dx11Buffer != NULL) {
 		dx11Buffer.Reset();
@@ -132,14 +172,20 @@ unsigned int DX11GPUBuffer::bindBase(unsigned int index)
 		break;
 	}
 	case GB_Storage:
-	case GB_Struct:
-		if (dx11BufferView == NULL)
-			return 0;
-		dxContext.deviceContext->VSSetShaderResources(index, 1, dx11BufferView.GetAddressOf());
-		dxContext.deviceContext->PSSetShaderResources(index, 1, dx11BufferView.GetAddressOf());
-		dxContext.deviceContext->GSSetShaderResources(index, 1, dx11BufferView.GetAddressOf());
-		dxContext.deviceContext->HSSetShaderResources(index, 1, dx11BufferView.GetAddressOf());
-		dxContext.deviceContext->DSSetShaderResources(index, 1, dx11BufferView.GetAddressOf());
+		if (dx11BufferSRV != NULL) {
+			dxContext.deviceContext->VSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
+			dxContext.deviceContext->PSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
+			dxContext.deviceContext->GSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
+			dxContext.deviceContext->HSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
+			dxContext.deviceContext->DSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
+			dxContext.deviceContext->CSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
+		}
+		else if (dx11BufferUAV != NULL) {
+			dxContext.deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
+				NULL, NULL, index, 1, dx11BufferUAV.GetAddressOf(), NULL);
+			dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dx11BufferUAV.GetAddressOf(), NULL);
+		}
+		else return 0;
 		break;
 	default:
 		throw runtime_error("Unknown Error");
@@ -153,10 +199,22 @@ unsigned int DX11GPUBuffer::uploadData(unsigned int size, void* data)
 	resize(size);
 	if (size == 0)
 		return desc.id;
-	D3D11_MAPPED_SUBRESOURCE mpd;
-	dxContext.deviceContext->Map(dx11Buffer.Get(), 0, desc.type == GB_Constant ? D3D11_MAP_WRITE_DISCARD : D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mpd);
-	memcpy_s((char*)mpd.pData, size * desc.cellSize, data, size * desc.cellSize);
-	dxContext.deviceContext->Unmap(dx11Buffer.Get(), 0);
+	if ((desc.cpuAccess & CAF_Read) || (desc.cpuAccess == CAF_Write && desc.gpuAccess == GAF_Read)) {
+		D3D11_MAPPED_SUBRESOURCE mpd;
+		dxContext.deviceContext->Map(dx11Buffer.Get(), 0, desc.type == GB_Constant ? D3D11_MAP_WRITE_DISCARD : D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mpd);
+		memcpy_s((char*)mpd.pData, size * desc.cellSize, data, size * desc.cellSize);
+		dxContext.deviceContext->Unmap(dx11Buffer.Get(), 0);
+	}
+	else {
+		D3D11_BOX destRegion;
+		destRegion.left = 0;
+		destRegion.right = desc.cellSize * size;
+		destRegion.top = 0;
+		destRegion.bottom = 1;
+		destRegion.front = 0;
+		destRegion.back = 1;
+		dxContext.deviceContext->UpdateSubresource(dx11Buffer.Get(), 0, NULL, data, desc.cellSize, 0);
+	}
 	return desc.id;
 }
 
@@ -164,10 +222,22 @@ unsigned int DX11GPUBuffer::uploadSubData(unsigned int first, unsigned int size,
 {
 	if (size == 0)
 		return desc.id;
-	D3D11_MAPPED_SUBRESOURCE mpd;
-	dxContext.deviceContext->Map(dx11Buffer.Get(), 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mpd);
-	memcpy_s((char*)mpd.pData + first * desc.cellSize, size * desc.cellSize, data, size * desc.cellSize);
-	dxContext.deviceContext->Unmap(dx11Buffer.Get(), 0);
+	if ((desc.cpuAccess & CAF_Read) || (desc.cpuAccess == CAF_Write && desc.gpuAccess == GAF_Read)) {
+		D3D11_MAPPED_SUBRESOURCE mpd;
+		dxContext.deviceContext->Map(dx11Buffer.Get(), 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mpd);
+		memcpy_s((char*)mpd.pData + first * desc.cellSize, size * desc.cellSize, data, size * desc.cellSize);
+		dxContext.deviceContext->Unmap(dx11Buffer.Get(), 0);
+	}
+	else {
+		D3D11_BOX destRegion;
+		destRegion.left = desc.cellSize * first;
+		destRegion.right = desc.cellSize * (first + size);
+		destRegion.top = 0;
+		destRegion.bottom = 1;
+		destRegion.front = 0;
+		destRegion.back = 1;
+		dxContext.deviceContext->UpdateSubresource(dx11Buffer.Get(), 0, NULL, data, desc.cellSize, 0);
+	}
     return desc.id;
 }
 

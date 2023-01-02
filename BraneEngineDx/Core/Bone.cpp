@@ -29,16 +29,12 @@ void Bone::prerender(SceneRenderData& sceneData)
 	Actor::prerender(sceneData);
 	if (sphereMeshRender.hidden && coneMeshRender.hidden)
 		return;
-	sphereMeshRender.customTransformSubmit = true;
-	coneMeshRender.customTransformSubmit = true;
 	Matrix4f _transformMat = transformMat;
 	_transformMat(0, 0) /= scale.x();
 	_transformMat(1, 1) /= scale.y();
 	_transformMat(2, 2) /= scale.z();
 	unsigned int transID = sceneData.setMeshTransform(_transformMat);
 	sphereMeshRender.instanceID = transID;
-	for (int i = 0; i < sphereMesh.meshParts.size(); i++)
-		sceneData.setMeshPartTransform(&sphereMesh.meshParts[i], sphereMeshRender.materials[i], transID);
 	for (int i = 0; i < children.size(); i++) {
 		Bone* cb = dynamic_cast<Bone*>(children[i]);
 		if (cb != NULL) {
@@ -50,8 +46,6 @@ void Bone::prerender(SceneRenderData& sceneData)
 			R.block(0, 0, 3, 3) = Quaternionf::FromTwoVectors(Vector3f(1, 0, 0), cb->position.normalized()).toRotationMatrix();
 			unsigned int transID = sceneData.setMeshTransform(transformMat * T * R * S);
 			coneMeshRender.instanceID = transID;
-			for (int i = 0; i < sphereMesh.meshParts.size(); i++)
-				sceneData.setMeshPartTransform(&coneMesh.meshParts[i], coneMeshRender.materials[i], transID);
 		}
 	}
 }

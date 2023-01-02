@@ -27,7 +27,7 @@ public:
 	unsigned int setMeshTransform(const Matrix4f& transformMat);
 	unsigned int setMeshTransform(const vector<Matrix4f>& transformMats);
 	MeshTransformIndex* getMeshPartTransform(MeshPart* meshPart, Material* material);
-	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex);
+	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount = 1);
 	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex);
 
 	unsigned int setStaticMeshTransform(const Matrix4f& transformMat);
@@ -41,6 +41,8 @@ public:
 	void setUpdateStatic();
 	bool willUpdateStatic();
 
+	bool frustumCulling(const Range<Vector3f>& bound, const Matrix4f& mat) const;
+
 	virtual void create();
 	virtual void reset();
 	virtual void release();
@@ -51,7 +53,8 @@ public:
 struct RenderCommandExecutionInfo
 {
 	IRenderContext& context;
-	bool requireClearFrame = false;
+	Enum<ClearFlags> plusClearFlags = Clear_None;
+	Enum<ClearFlags> minusClearFlags = Clear_None;
 	Timer* timer = NULL;
 	vector<pair<string, Texture*>>* outputTextures = NULL;
 	RenderCommandExecutionInfo(IRenderContext& context);

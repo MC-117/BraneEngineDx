@@ -57,6 +57,7 @@ float getShadow(in DirectLight directLight, in Surface surf)
 }
 #endif
 
+[earlydepthstencil]
 FragmentOut SURFACE_MAIN
 {
     FragmentOut fout;

@@ -10,6 +10,7 @@ class MeshRender : public Render
 public:
 	Mesh* mesh;
 	bool frustumCulling = true;
+	bool hasPrePass = false;
 	vector<Material*> materials;
 	vector<Material*> outlineMaterials;
 	vector<bool> meshPartsEnable;

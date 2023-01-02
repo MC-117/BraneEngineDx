@@ -18,10 +18,12 @@ void SceneRenderData::setCamera(Render* cameraRender)
 {
 	CameraRender* _cameraRender = dynamic_cast<CameraRender*>(cameraRender);
 	if (_cameraRender) {
+		CameraRenderData* cameraRenderData = _cameraRender->getRenderData();
 		if (_cameraRender->isMainCameraRender())
-			cameraRenderDatas.insert(cameraRenderDatas.begin(), _cameraRender->getRenderData());
+			cameraRenderDatas.insert(cameraRenderDatas.begin(), cameraRenderData);
 		else
-			cameraRenderDatas.push_back(_cameraRender->getRenderData());
+			cameraRenderDatas.push_back(cameraRenderData);
+		cameraRenderData->create();
 	}
 }
 
@@ -59,9 +61,9 @@ MeshTransformIndex* SceneRenderData::getMeshPartTransform(MeshPart* meshPart, Ma
 	return meshTransformDataPack.getMeshPartTransform(meshPart, material);
 }
 
-MeshTransformIndex* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
+MeshTransformIndex* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount)
 {
-	return meshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex);
+	return meshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex, transformCount);
 }
 
 MeshTransformIndex* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex)
@@ -114,19 +116,21 @@ bool SceneRenderData::willUpdateStatic()
 	return staticMeshTransformDataPack.getNeedUpdate();
 }
 
+bool SceneRenderData::frustumCulling(const Range<Vector3f>& bound, const Matrix4f& mat) const
+{
+	for (const auto& data : cameraRenderDatas) {
+		if (::frustumCulling(data->data, bound, mat))
+			return true;
+	}
+	return false;
+}
+
 void SceneRenderData::create()
 {
 	meshTransformDataPack.create();
 	particleDataPack.create();
 	lightDataPack.create();
 	reflectionProbeDataPack.create();
-	for (auto& cameraRenderData : cameraRenderDatas) {
-		if (cameraRenderData->usedFrame < (long long)Time::frames()) {
-			cameraRenderData->create();
-			cameraRenderData->upload();
-			cameraRenderData->usedFrame = Time::frames();
-		}
-	}
 }
 
 void SceneRenderData::reset()
@@ -155,6 +159,12 @@ void SceneRenderData::upload()
 	particleDataPack.upload();
 	lightDataPack.upload();
 	reflectionProbeDataPack.upload();
+	for (auto& cameraRenderData : cameraRenderDatas) {
+		if (cameraRenderData->usedFrame < (long long)Time::frames()) {
+			cameraRenderData->upload();
+			cameraRenderData->usedFrame = Time::frames();
+		}
+	}
 }
 
 void SceneRenderData::bind(IRenderContext& context)
@@ -249,6 +259,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, ShaderFeatur
 
 	for (auto& cameraRenderData : cmd.sceneData->cameraRenderDatas) {
 		task.cameraData = cameraRenderData;
+		task.surface = cameraRenderData->surface;
 		success &= addRenderTask(cmd, task);
 	}
 
@@ -313,6 +324,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, vector<Shade
 
 		for (auto& cameraRenderData : cmd.sceneData->cameraRenderDatas) {
 			task.cameraData = cameraRenderData;
+			task.surface = cameraRenderData->surface;
 			success &= addRenderTask(cmd, task);
 		}
 	}
@@ -329,31 +341,22 @@ Deferred | Light | Depth Pre-Pass | Geomtry | Alpha Geomtry | Pixel  |          
 void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 {
 	IRenderContext& context = executionInfo.context;
-	RenderTaskContext taskContext;
-	Time setupTime, uploadInsTime, execTime;
+	RenderTaskContext taskContext = { 0 };
+	//Time setupTime, uploadInsTime, execTime;
 	for (auto item : taskSet) {
 		RenderTask& task = *item;
 		task.age++;
 		if (task.age > 1)
 			continue;
-		Time t = Time::now();
+		//Time t = Time::now();
 
-		bool cameraDataSwitch = false;
 		bool shaderSwitch = false;
 
-		if (taskContext.cameraData != task.cameraData) {
-			taskContext.cameraData = task.cameraData;
+		if (taskContext.renderTarget != task.surface.renderTarget) {
+			taskContext.renderTarget = task.surface.renderTarget;
 
-			IRenderTarget* renderTarget = task.cameraData->renderTarget->getVendorRenderTarget();
-			context.bindFrame(renderTarget);
-			if (executionInfo.requireClearFrame) {
-				context.clearFrameColors(task.cameraData->clearColors);
-				context.clearFrameDepth(1);
-			}
-			context.setViewport(0, 0, task.cameraData->data.viewSize.x(), task.cameraData->data.viewSize.y());
-
-			task.cameraData->bind(context);
-
+			task.surface.bind(context, executionInfo.plusClearFlags, executionInfo.minusClearFlags);
+			IRenderTarget* renderTarget = task.surface.renderTarget->getVendorRenderTarget();
 			if (executionInfo.outputTextures) {
 				for (auto& tex : renderTarget->desc.textureList) {
 					executionInfo.outputTextures->push_back(make_pair(tex.name, tex.texture));
@@ -362,14 +365,16 @@ void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 					executionInfo.outputTextures->push_back(make_pair("depthMap", renderTarget->desc.depthTexure));
 				}
 			}
+		}
 
-			cameraDataSwitch = true;
+		if (taskContext.cameraData != task.cameraData) {
+			taskContext.cameraData = task.cameraData;
 
-			setupTime = setupTime + Time::now() - t;
+			context.setViewport(0, 0, task.cameraData->data.viewSize.x(), task.cameraData->data.viewSize.y());
+			task.cameraData->bind(context);
 		}
 
 		if (taskContext.shaderProgram != task.shaderProgram) {
-			t = Time::now();
 			taskContext.shaderProgram = task.shaderProgram;
 			context.bindShaderProgram(task.shaderProgram);
 
@@ -377,8 +382,13 @@ void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 			task.sceneData->bind(context);
 		}
 
-		if (cameraDataSwitch || shaderSwitch)
+		if (taskContext.cameraData != task.cameraData || shaderSwitch) {
+			taskContext.cameraData = task.cameraData;
+
+			context.setViewport(0, 0, task.cameraData->data.viewSize.x(), task.cameraData->data.viewSize.y());
 			task.cameraData->bind(context);
+
+		}
 
 		if (taskContext.sceneData != task.sceneData || shaderSwitch) {
 			taskContext.sceneData = task.sceneData;
@@ -432,8 +442,9 @@ void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 		for (auto data : task.extraData) {
 			data->bind(context);
 		}
+		//setupTime = setupTime + Time::now() - t;
 
-		t = Time::now();
+		//t = Time::now();
 		if (taskContext.meshData != task.meshData) {
 			taskContext.meshData = task.meshData;
 			if (task.meshData)
@@ -442,18 +453,18 @@ void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 
 		task.renderPack->excute(context, taskContext);
 
-		execTime = execTime + Time::now() - t;
+		//execTime = execTime + Time::now() - t;
 	}
 
 	context.setCullState(CullType::Cull_Back);
 
-	if (executionInfo.timer) {
+	/*if (executionInfo.timer) {
 		executionInfo.timer->setIntervalMode(true);
 		executionInfo.timer->reset();
 		executionInfo.timer->record("Setup", setupTime);
 		executionInfo.timer->record("Instance", uploadInsTime);
 		executionInfo.timer->record("Exec", execTime);
-	}
+	}*/
 }
 
 void RenderCommandList::resetCommand()

@@ -22,3 +22,10 @@ struct CameraData
 	Vector2f viewSize;
 	Vector2f user;
 };
+
+struct ScreenHitInfo
+{
+	Vector2u hitPosition;
+	unsigned int hitDepth;
+	unsigned int hitInstanceID;
+};

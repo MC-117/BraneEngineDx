@@ -1,6 +1,10 @@
 #include "Texture2D.h"
 #include "Utility/TextureUtility.h"
 #include "Utility/EngineUtility.h"
+#include "Utility/RenderUtility.h"
+#undef min
+#undef max
+#include "Utility/half.hpp"
 #include "Asset.h"
 
 Texture2D Texture2D::blackRGBDefaultTex({ 0, 0, 0, 255 }, 2, 2, 3);
@@ -119,7 +123,7 @@ int Texture2D::getChannel() const
 
 int Texture2D::getMipLevels() const
 {
-	return max(1, desc.mipLevel);
+	return max(1u, desc.mipLevel);
 }
 
 Texture2DInfo Texture2D::getTextureInfo() const
@@ -305,6 +309,38 @@ bool Texture2D::copyFrom(const Texture2D& src, unsigned int width, unsigned int 
 	desc.needUpdate = true;
 }
 
+template<class T>
+void convertIntegerPixelsToBytes(void* rawData, unsigned char* outData, int pixelsByChannels)
+{
+	T* srcData = (T*)rawData;
+	for (int i = 0; i < pixelsByChannels; i++)
+		outData[i] = (unsigned char)roundf(srcData[i] / (float)sizeof(T) * 255.0f);
+}
+
+template<class T>
+void convertFloatPixelsToBytes(void* rawData, unsigned char* outData, int pixelsByChannels)
+{
+	T* srcData = (T*)rawData;
+	for (int i = 0; i < pixelsByChannels; i++)
+		outData[i] = (unsigned char)roundf(srcData[i] * 255.0f);
+}
+
+void convertRGB10A2ToBytes(void* rawData, unsigned char* outData, int pixels)
+{
+	int* srcData = (int*)rawData;
+	int* dstData = (int*)outData;
+	for (int i = 0; i < pixels; i++) {
+		const float rgbMax = (1 << 10) - 1;
+		const float aMax = (1 << 2) - 1;
+		int p = srcData[i];
+		dstData[i] =
+			((int)roundf(((p >> 30) & 0x3  ) / aMax   * 255.0f) << 24) |
+			((int)roundf(((p >> 20) & 0x3ff) / rgbMax * 255.0f) << 16) |
+			((int)roundf(((p >> 10) & 0x3ff) / rgbMax * 255.0f) << 8) |
+			((int)roundf(((p >>  0) & 0x3ff) / rgbMax * 255.0f));
+	}
+}
+
 bool Texture2D::save(const string& file)
 {
 	unsigned char* outData = NULL;
@@ -312,15 +348,56 @@ bool Texture2D::save(const string& file)
 		outData = desc.data;
 	}
 	else {
+		void* rawData = NULL;
 		IVendor& vendor = VendorManager::getInstance().getVendor();
-		outData = new unsigned char[desc.width * desc.height * desc.channel];
-		vendor.readBackTexture2D(vendorTexture, outData);
+		const int pixels = desc.width * desc.height;
+		const int pixelsByChannels = pixels * desc.channel;
+		const int pixelSize = getPixelSize(desc.info.internalType, desc.channel);
+		const int unitSize = pixelSize / desc.channel;
+		rawData = malloc(desc.width * desc.height * pixelSize);
+		vendor.readBackTexture2D(vendorTexture, rawData);
+
+		if (desc.info.internalType == TIT_RGB10A2_UF) {
+			outData = (unsigned char*)malloc(pixelsByChannels * sizeof(unsigned char));
+			convertRGB10A2ToBytes(rawData, outData, pixels);
+			free(rawData);
+		}
+		else if (isFloatPixel(desc.info.internalType)) {
+			outData = (unsigned char*)malloc(pixelsByChannels * sizeof(unsigned char));
+			switch (unitSize)
+			{
+			case sizeof(half_float::half):
+				convertFloatPixelsToBytes<half_float::half>(rawData, outData, pixelsByChannels);
+				break;
+			case sizeof(float):
+				convertFloatPixelsToBytes<float>(rawData, outData, pixelsByChannels);
+				break;
+			default:
+				throw runtime_error("Unsupport format");
+			}
+			free(rawData);
+		}
+		else if (unitSize != sizeof(unsigned char)) {
+			switch (unitSize)
+			{
+			case sizeof(unsigned short):
+				convertIntegerPixelsToBytes<unsigned short>(rawData, outData, pixelsByChannels);
+				break;
+			case sizeof(unsigned int):
+				convertIntegerPixelsToBytes<unsigned int>(rawData, outData, pixelsByChannels);
+				break;
+			default:
+				throw runtime_error("Unsupport format");
+			}
+			free(rawData);
+		}
+		else outData = (unsigned char*)rawData;
 	}
 
 	bool ret = writeTexture(file, desc.width, desc.height, desc.channel, outData);
 
 	if (desc.data == NULL)
-		delete[] outData;
+		free(outData);
 	return ret;
 }
 

@@ -15,7 +15,7 @@ struct ParticleRenderData : public IRenderData
 {
 	unsigned int totalParticleCount = 0;
 	map<Material*, ParticleData> particles;
-	GPUBuffer particleBuffer = GPUBuffer(GB_Struct, sizeof(Particle));
+	GPUBuffer particleBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(Particle));
 
 	ParticleData* setParticles(Material* material, const list<Particle>& particles);
 	ParticleData* setParticles(Material* material, const vector<Particle>& particles);
@@ -43,7 +43,7 @@ struct ParticleRenderPack : public IRenderPack
 	MaterialRenderData* materialData = NULL;
 	ParticleData* particleData = NULL;
 	DrawArraysIndirectCommand cmd;
-	GPUBuffer cmdBuffer = GPUBuffer(GB_Command, sizeof(DrawElementsIndirectCommand));
+	GPUBuffer cmdBuffer = GPUBuffer(GB_Command, GBF_Struct, sizeof(DrawElementsIndirectCommand));
 
 	ParticleRenderPack(ParticleRenderData& particleRenderData);
 

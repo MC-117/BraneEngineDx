@@ -25,9 +25,10 @@ void LightRenderData::setLight(Light* light)
 		directLightData.shadowBias = directLight->getShadowBias();
 		directLightData.color = toLinearColor(directLight->color);
 		shadowCameraRenderData.data = directLight->shadowData.cameraData;
-		shadowCameraRenderData.renderTarget = shadowTarget;
-		shadowCameraRenderData.clearColors.resize(1);
-		shadowCameraRenderData.clearColors[0] = Color();
+		shadowCameraRenderData.surface.clearFlags = Clear_Depth;
+		shadowCameraRenderData.surface.renderTarget = shadowTarget;
+		shadowCameraRenderData.surface.clearColors.resize(1);
+		shadowCameraRenderData.surface.clearColors[0] = Color();
 		shadowCameraRenderData.renderOrder = 0;
 	}
 	PointLight* pointLight = dynamic_cast<PointLight*>(light);

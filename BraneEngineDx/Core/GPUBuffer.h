@@ -7,7 +7,7 @@
 class GPUBuffer
 {
 public:
-	GPUBuffer(GPUBufferType type, unsigned int cellSize, unsigned int size = 0);
+	GPUBuffer(GPUBufferType type, GPUBufferFormat format, unsigned int structSize = 0, GPUAccessFlag gpuAccess = GAF_Read, CPUAccessFlag cpuAccess = CAF_Write);
 	~GPUBuffer();
 
 	unsigned int size() const;

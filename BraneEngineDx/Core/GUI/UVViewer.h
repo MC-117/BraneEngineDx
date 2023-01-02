@@ -15,7 +15,7 @@ public:
 
 	virtual void onRenderWindow(GUIRenderInfo& info);
 protected:
-	Texture2D uvTexture = Texture2D(128, 128, 4, true, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
+	Texture2D uvTexture = Texture2D(128, 128, 4, false, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
 	RenderTarget renderTarget = RenderTarget(128, 128, 4);
 	Material* uvMaterial;
 	Camera camera;
