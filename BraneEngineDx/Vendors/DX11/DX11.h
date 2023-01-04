@@ -2,22 +2,10 @@
 #ifndef _DX11_H_
 #define _DX11_H_
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
-#include <windows.h>
+#include "../DX_Helper.h"
 
 #include <dxgi1_6.h>
 #include <d3d11.h>
-#include <D3Dcompiler.h>
-
-#include <wrl.h>
-
-#include "../../Core/Unit.h"
-
-template <class T>
-using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 struct DX11Context
 {

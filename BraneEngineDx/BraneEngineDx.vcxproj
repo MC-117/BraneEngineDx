@@ -813,6 +813,7 @@
     <ClInclude Include="Vendors\DX12\DX12Context.h" />
     <ClInclude Include="Vendors\DX12\imgui_impl_dx12.h" />
     <ClInclude Include="Vendors\DXGI_Helper.h" />
+    <ClInclude Include="Vendors\DX_Helper.h" />
     <ClInclude Include="Vendors\imgui_impl_win32.h" />
   </ItemGroup>
   <ItemGroup>

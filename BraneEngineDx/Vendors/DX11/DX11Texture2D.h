@@ -30,10 +30,11 @@ public:
 	DX11Texture2DInfo info;
 	ComPtr<ID3D11Texture2D> dx11Texture2D = NULL;
 
-	ComPtr<ID3D11ShaderResourceView> dx11SRV = NULL;
-	ComPtr<ID3D11RenderTargetView> dx11RTV = NULL;
-	ComPtr<ID3D11UnorderedAccessView> dx11UAV = NULL;
-	ComPtr<ID3D11DepthStencilView> dx11DSV = NULL;
+	DXViewSet<D3D11_SHADER_RESOURCE_VIEW_DESC, ID3D11ShaderResourceView> dx11SRVs;
+	DXViewSet<D3D11_RENDER_TARGET_VIEW_DESC, ID3D11RenderTargetView> dx11RTVs;
+	DXViewSet<D3D11_UNORDERED_ACCESS_VIEW_DESC, ID3D11UnorderedAccessView> dx11UAVs;
+	DXViewSet<D3D11_DEPTH_STENCIL_VIEW_DESC, ID3D11DepthStencilView> dx11DSVs;
+
 	ComPtr<ID3D11SamplerState> dx11Sampler = NULL;
 
 	DX11Texture2D(DX11Context& context, Texture2DDesc& desc);

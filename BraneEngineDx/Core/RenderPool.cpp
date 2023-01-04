@@ -161,8 +161,8 @@ RenderPool & RenderPool::operator-=(Render & render)
 void RenderPool::gameFence()
 {
 	while (Time::frames() > 0 && Time::frames() > renderFrame) { this_thread::sleep_for(0ms); }
-	if (!destory)
-		VendorManager::getInstance().getVendor().frameFence();
+	/*if (!destory)
+		VendorManager::getInstance().getVendor().frameFence();*/
 }
 
 void RenderPool::renderFence()

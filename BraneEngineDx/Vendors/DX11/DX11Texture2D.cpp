@@ -259,18 +259,10 @@ unsigned long long DX11Texture2D::getTextureID()
 
 void DX11Texture2D::release()
 {
-	if (dx11SRV != NULL) {
-		dx11SRV.Reset();
-	}
-	if (dx11RTV != NULL) {
-		dx11RTV.Reset();
-	}
-	if (dx11UAV != NULL) {
-		dx11UAV.Reset();
-	}
-	if (dx11DSV != NULL) {
-		dx11DSV.Reset();
-	}
+	dx11SRVs.clear();
+	dx11RTVs.clear();
+	dx11UAVs.clear();
+	dx11DSVs.clear();
 	if (dx11Texture2D != NULL) {
 		dx11Texture2D.Reset();
 	}
@@ -320,9 +312,11 @@ unsigned int DX11Texture2D::bind()
 			srvDesc.ViewDimension = getSrvDimension(desc.info.dimension, false);
 			srvDesc.Texture2D.MipLevels = -1;
 			srvDesc.Texture2D.MostDetailedMip = 0;
+			ID3D11ShaderResourceView* dx11SRV = NULL;
 			if (FAILED(dxContext.device->CreateShaderResourceView(dx11Texture2D.Get(), &srvDesc, &dx11SRV)))
 				throw runtime_error("DX11Tetxture2D: CreateShaderResourceView failed");
-			dxContext.deviceContext->GenerateMips(dx11SRV.Get());
+			dxContext.deviceContext->GenerateMips(dx11SRV);
+			dx11SRVs.setView(srvDesc, dx11SRV);
 		}
 		desc.mipLevel = info.texture2DDesc.MipLevels;
 	}
@@ -400,52 +394,37 @@ ComPtr<ID3D11ShaderResourceView> DX11Texture2D::getSRV(const MipOption& mipOptio
 		return NULL;
 
 	bool isMS = (mipOption.mipCount == 0 && desc.info.sampleCount > 1) || mipOption.mipCount > 1;
-	bool create = false;
+
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	ZeroMemory(&srvDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
 
 	TexDimension dimension = mipOption.dimension == TD_Default ? desc.info.dimension : mipOption.dimension;
 
 	D3D_SRV_DIMENSION dxDimension = getSrvDimension(dimension, isMS);
 
-	if (dx11SRV == NULL) {
-		create = true;
+	srvDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
+	srvDesc.ViewDimension = dxDimension;
+	if (isMS) {
+		srvDesc.Texture2DMSArray.FirstArraySlice = mipOption.arrayBase;
+		srvDesc.Texture2DMSArray.ArraySize = mipOption.arrayCount;
 	}
 	else {
-		dx11SRV->GetDesc(&srvDesc);
-		create = srvDesc.ViewDimension != dxDimension;
-		if (isMS) {
-			create |= srvDesc.Texture2DMSArray.FirstArraySlice != mipOption.arrayBase ||
-				srvDesc.Texture2DMSArray.ArraySize != mipOption.arrayCount;
-		}
-		else {
-			create |= srvDesc.Texture2D.MipLevels != mipOption.mipCount ||
-				srvDesc.Texture2D.MostDetailedMip != mipOption.detailMip ||
-				srvDesc.Texture2DArray.FirstArraySlice != mipOption.arrayBase ||
-				srvDesc.Texture2DArray.ArraySize != mipOption.arrayCount;
-		}
+		srvDesc.Texture2D.MipLevels =
+			(mipOption.mipCount == 0 || (mipOption.mipCount > info.texture2DDesc.MipLevels)) ?
+			info.texture2DDesc.MipLevels : mipOption.mipCount;
+		srvDesc.Texture2D.MostDetailedMip = mipOption.detailMip;
+		srvDesc.Texture2DArray.FirstArraySlice = mipOption.arrayBase;
+		if (dimension & TD_Cube)
+			srvDesc.TextureCubeArray.NumCubes = mipOption.arrayCount / 6;
+		else
+			srvDesc.Texture2DArray.ArraySize = mipOption.arrayCount;
 	}
 
-	if (create) {
-		ZeroMemory(&srvDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
-		srvDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
-		srvDesc.ViewDimension = dxDimension;
-		if (isMS) {
-			srvDesc.Texture2DMSArray.FirstArraySlice = mipOption.arrayBase;
-			srvDesc.Texture2DMSArray.ArraySize = mipOption.arrayCount;
-		}
-		else {
-			srvDesc.Texture2D.MipLevels =
-				(mipOption.mipCount == 0 || (mipOption.mipCount > info.texture2DDesc.MipLevels)) ?
-				info.texture2DDesc.MipLevels : mipOption.mipCount;
-			srvDesc.Texture2D.MostDetailedMip = mipOption.detailMip;
-			srvDesc.Texture2DArray.FirstArraySlice = mipOption.arrayBase;
-			if (dimension & TD_Cube)
-				srvDesc.TextureCubeArray.NumCubes = mipOption.arrayCount / 6;
-			else
-				srvDesc.Texture2DArray.ArraySize = mipOption.arrayCount;
-		}
+	ComPtr<ID3D11ShaderResourceView> dx11SRV = dx11SRVs.getView(srvDesc);
+	if (dx11SRV == NULL) {
 		if (FAILED(dxContext.device->CreateShaderResourceView(dx11Texture2D.Get(), &srvDesc, &dx11SRV)))
 			throw runtime_error("DX11Tetxture2D: CreateShaderResourceView failed");
+		dx11SRVs.setView(srvDesc, dx11SRV);
 	}
 	return dx11SRV;
 }
@@ -454,43 +433,27 @@ ComPtr<ID3D11RenderTargetView> DX11Texture2D::getRTV(const RTOption& rtOption)
 {
 	if (bind() == 0)
 		return NULL;
-	bool create = false;
-	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
 
-	if (dx11RTV == NULL) {
-		create = true;
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+	ZeroMemory(&rtvDesc, sizeof(D3D11_RENDER_TARGET_VIEW_DESC));
+	rtvDesc.Format = info.texture2DDesc.Format;
+	rtvDesc.ViewDimension = getRtvDimension(desc.info.dimension, rtOption.multisample);
+	if (rtOption.multisample) {
+		rtvDesc.Texture2DMSArray.FirstArraySlice = rtOption.arrayBase;
+		rtvDesc.Texture2DMSArray.ArraySize = rtOption.arrayCount;
 	}
 	else {
-		dx11RTV->GetDesc(&rtvDesc);
-		if (rtOption.multisample) {
-			create = rtvDesc.Texture2DMSArray.FirstArraySlice != rtOption.arrayBase ||
-				rtvDesc.Texture2DMSArray.ArraySize != rtOption.arrayCount;
-		}
-		else {
-			create = rtvDesc.Texture2D.MipSlice != rtOption.mipLevel ||
-				rtvDesc.Texture2DArray.FirstArraySlice != rtOption.arrayBase ||
-				rtvDesc.Texture2DArray.ArraySize != rtOption.arrayCount;
-		}
+		rtvDesc.Texture2DArray.MipSlice = rtOption.mipLevel;
+		rtvDesc.Texture2DArray.FirstArraySlice = rtOption.arrayBase;
+		rtvDesc.Texture2DArray.ArraySize = rtOption.arrayCount;
 	}
 
-	if (create) {
-		/*if (dx11RTV != NULL) {
-			dx11RTV->Release();
-		}*/
-		ZeroMemory(&rtvDesc, sizeof(D3D11_RENDER_TARGET_VIEW_DESC));
-		rtvDesc.Format = info.texture2DDesc.Format;
-		rtvDesc.ViewDimension = getRtvDimension(desc.info.dimension, rtOption.multisample);
-		if (rtOption.multisample) {
-			rtvDesc.Texture2DMSArray.FirstArraySlice = rtOption.arrayBase;
-			rtvDesc.Texture2DMSArray.ArraySize = rtOption.arrayCount;
-		}
-		else {
-			rtvDesc.Texture2DArray.MipSlice = rtOption.mipLevel;
-			rtvDesc.Texture2DArray.FirstArraySlice = rtOption.arrayBase;
-			rtvDesc.Texture2DArray.ArraySize = rtOption.arrayCount;
-		}
+	ComPtr<ID3D11RenderTargetView> dx11RTV = dx11RTVs.getView(rtvDesc);
+
+	if (dx11RTV == NULL) {
 		if (FAILED(dxContext.device->CreateRenderTargetView(dx11Texture2D.Get(), &rtvDesc, &dx11RTV)))
 			throw runtime_error("DX11Tetxture2D: CreateRenderTargetView failed");
+		dx11RTVs.setView(rtvDesc, dx11RTV);
 	}
 	return dx11RTV;
 }
@@ -510,29 +473,19 @@ ComPtr<ID3D11UnorderedAccessView> DX11Texture2D::getUAV(const RWOption& rwOption
 {
 	if (bind() == 0)
 		return NULL;
-	bool create = false;
-	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+	ZeroMemory(&uavDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+	uavDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
+	uavDesc.ViewDimension = getUavDimension(desc.info.dimension);
+	uavDesc.Texture2D.MipSlice = rwOption.mipLevel;
+	uavDesc.Texture2DArray.FirstArraySlice = rwOption.arrayBase;
+	uavDesc.Texture2DArray.ArraySize = rwOption.arrayCount;
 
+	ComPtr<ID3D11UnorderedAccessView> dx11UAV = dx11UAVs.getView(uavDesc);
 	if (dx11UAV == NULL) {
-		create = true;
-	}
-	else {
-		dx11UAV->GetDesc(&uavDesc);
-		create = uavDesc.Texture2D.MipSlice != rwOption.mipLevel ||
-			uavDesc.Texture2DArray.FirstArraySlice != rwOption.arrayBase ||
-			uavDesc.Texture2DArray.ArraySize != rwOption.arrayCount;
-	}
-
-	if (create) {
-		/*if (dx11UAV != NULL)
-			dx11UAV->Release();*/
-		uavDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
-		uavDesc.ViewDimension = getUavDimension(desc.info.dimension);
-		uavDesc.Texture2D.MipSlice = rwOption.mipLevel;
-		uavDesc.Texture2DArray.FirstArraySlice = rwOption.arrayBase;
-		uavDesc.Texture2DArray.ArraySize = rwOption.arrayCount;
 		if (FAILED(dxContext.device->CreateUnorderedAccessView(dx11Texture2D.Get(), &uavDesc, &dx11UAV)))
 			throw runtime_error("DX11Tetxture2D: CreateUnorderedAccessView failed");
+		dx11UAVs.setView(uavDesc, dx11UAV);
 	}
 	return dx11UAV;
 }
@@ -541,30 +494,24 @@ ComPtr<ID3D11DepthStencilView> DX11Texture2D::getDSV(unsigned int mipLevel)
 {
 	if (bind() == 0)
 		return NULL;
-	bool create = false;
-	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 
-	if (dx11DSV == NULL) {
-		create = true;
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+	ZeroMemory(&dsvDesc, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
+	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	if (desc.info.sampleCount > 1) {
+		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
 	}
 	else {
-		dx11DSV->GetDesc(&dsvDesc);
-		create = dsvDesc.Texture2D.MipSlice != mipLevel;
+		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+		dsvDesc.Texture2D.MipSlice = mipLevel;
 	}
 
-	if (create) {
-		/*if (dx11DSV != NULL)
-			dx11DSV->Release();*/
-		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-		if (desc.info.sampleCount > 1) {
-			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-		}
-		else {
-			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-			dsvDesc.Texture2D.MipSlice = mipLevel;
-		}
+	ComPtr<ID3D11DepthStencilView> dx11DSV = dx11DSVs.getView(dsvDesc);
+
+	if (dx11DSV == NULL) {
 		if (FAILED(dxContext.device->CreateDepthStencilView(dx11Texture2D.Get(), &dsvDesc, &dx11DSV)))
 			throw runtime_error("DX11Tetxture2D: CreateDepthStencilView failed");
+		dx11DSVs.setView(dsvDesc, dx11DSV);
 	}
 	return dx11DSV;
 }

@@ -81,8 +81,8 @@ void DX11Material::uploadImage(const string& name, ComPtr<ID3D11UnorderedAccessV
 
 void DX11Material::preprocess()
 {
-	dxContext.clearUAV();
-	dxContext.clearSRV();
+	//dxContext.clearUAV();
+	//dxContext.clearSRV();
 
 	int bufSize = program->getMaterialBufferSize();
 	if (bufSize > 0 && matInsBufSize != bufSize) {

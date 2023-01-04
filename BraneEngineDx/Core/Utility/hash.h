@@ -13,6 +13,27 @@
 #   define FUNCTIONAL_HASH_ROTL32(x, r) (x << r) | (x >> (32 - r))
 #endif
 
+inline size_t hash_bytes(const unsigned char* first, size_t count) {
+#if defined(_WIN64)
+    static_assert(sizeof(size_t) == 8, "This code is for 64-bit size_t.");
+    const size_t fnv_offset_basis = 14695981039346656037ULL;
+    const size_t fnv_prime = 1099511628211ULL;
+#else /* defined(_WIN64) */
+    static_assert(sizeof(size_t) == 4, "This code is for 32-bit size_t.");
+    const size_t fnv_offset_basis = 2166136261U;
+    const size_t fnv_prime = 16777619U;
+#endif /* defined(_WIN64) */
+
+    size_t result = fnv_offset_basis;
+    for (size_t next = 0; next < count; ++next)
+    {
+        // fold in another byte
+        result ^= (size_t)first[next];
+        result *= fnv_prime;
+    }
+    return (result);
+}
+
 template <class T>
 inline std::size_t hash_value_signed(T val)
 {

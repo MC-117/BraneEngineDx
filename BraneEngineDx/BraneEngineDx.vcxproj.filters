@@ -1275,6 +1275,9 @@
     <ClInclude Include="Core\RenderCore\TransformRenderData.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Vendors\DX_Helper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">

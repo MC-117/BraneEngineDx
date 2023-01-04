@@ -121,7 +121,7 @@ MeshTransformIndex* MeshTransformRenderData::setMeshPartTransform(MeshPart* mesh
 	if (newBatchCount > trans->indices.size())
 		trans->indices.resize(newBatchCount);
 
-	for (int index = 0; index < transformCount; index++)
+	for (int index = 0; index < transformCount; index++, data.instanceID++)
 		trans->indices[trans->batchCount + index] = data;
 	trans->batchCount = newBatchCount;
 	totalTransformIndexCount += transformCount;
