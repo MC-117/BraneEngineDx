@@ -30,7 +30,7 @@ void ScreenHitData::upload()
 
 void ScreenHitData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(hitInfoBuffer.getVendorGPUBuffer(), "hitData");
+	context.bindBufferBase(hitInfoBuffer.getVendorGPUBuffer(), "hitData", { true });
 }
 
 void ScreenHitData::readBack(IRenderContext& context)

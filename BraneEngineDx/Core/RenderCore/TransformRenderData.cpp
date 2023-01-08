@@ -1,12 +1,37 @@
 #include "TransformRenderData.h"
 #include "RenderCommandList.h"
+#include "../Asset.h"
+
+MeshTransformData::MeshTransformData()
+{
+	uploadIndices.resize(1);
+}
+
+void MeshTransformData::resetUpload()
+{
+	uploadTransforms.clear();
+	uploadIndices.resize(1);
+}
 
 unsigned int MeshTransformData::setMeshTransform(const Matrix4f& transformMat)
 {
-	if (batchCount >= transforms.size())
+	if (batchCount >= transforms.size()) {
 		transforms.emplace_back(MATRIX_UPLOAD_OP(transformMat));
-	else
-		transforms[batchCount] = MATRIX_UPLOAD_OP(transformMat);
+		resetUpload();
+		updateAll = true;
+	}
+	else {
+		Matrix4f& mat = transforms[batchCount];
+		Matrix4f newMat = MATRIX_UPLOAD_OP(transformMat);
+		if (updateAll) {
+			mat = newMat;
+		}
+		else if (mat != newMat) {
+			mat = newMat;
+			uploadTransforms.push_back(newMat);
+			uploadIndices.push_back(batchCount);
+		}
+	}
 	batchCount++;
 	return batchCount - 1;
 }
@@ -16,9 +41,21 @@ unsigned int MeshTransformData::setMeshTransform(const vector<Matrix4f>& transfo
 	unsigned int size = batchCount + transformMats.size();
 	if (size > transforms.size()) {
 		transforms.resize(size);
+		resetUpload();
+		updateAll = true;
 	}
-	for (int i = batchCount; i < size; i++)
-		transforms[i] = MATRIX_UPLOAD_OP(transformMats[i - batchCount]);
+	for (int i = batchCount; i < size; i++) {
+		Matrix4f& mat = transforms[i];
+		Matrix4f newMat = MATRIX_UPLOAD_OP(transformMats[i - batchCount]);
+		if (updateAll) {
+			mat = newMat;
+		}
+		else if (mat != newMat) {
+			mat = newMat;
+			uploadTransforms.push_back(newMat);
+			uploadIndices.push_back(i);
+		}
+	}
 	unsigned int id = batchCount;
 	batchCount = size;
 	return id;
@@ -44,6 +81,7 @@ bool MeshTransformData::updataMeshTransform(const vector<Matrix4f>& transformMat
 void MeshTransformData::clean()
 {
 	batchCount = 0;
+	resetUpload();
 }
 
 bool MeshTransformData::clean(unsigned int base, unsigned int count)
@@ -51,8 +89,13 @@ bool MeshTransformData::clean(unsigned int base, unsigned int count)
 	if (base + count >= batchCount)
 		return false;
 	transforms.erase(transforms.begin() + base, transforms.begin() + (base + count));
+	resetUpload();
+	updateAll = true;
 	return true;
 }
+
+Material* MeshTransformRenderData::uploadMaterial = NULL;
+ShaderProgram* MeshTransformRenderData::uploadProgram = NULL;
 
 void MeshTransformRenderData::setFrequentUpdate(bool value)
 {
@@ -155,10 +198,26 @@ MeshTransformIndex* MeshTransformRenderData::setMeshPartTransform(MeshPart* mesh
 	return trans;
 }
 
+void MeshTransformRenderData::loadDefaultResource()
+{
+	if (uploadProgram == NULL) {
+		uploadMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/UploadTransform.mat");
+		if (uploadMaterial == NULL)
+			return;
+		uploadProgram = uploadMaterial->getShader()->getProgram(Shader_Default);
+	}
+	if (uploadProgram == NULL)
+		throw runtime_error("UploadTransform shader program is invalid");
+	uploadProgram->init();
+}
+
 void MeshTransformRenderData::create()
 {
+	loadDefaultResource();
+
 	if (!needUpdate)
 		return;
+
 	unsigned int dataSize = meshTransformData.batchCount;
 	unsigned int indexSize = totalTransformIndexCount;
 	transformBuffer.resize(dataSize);
@@ -185,7 +244,36 @@ void MeshTransformRenderData::upload()
 	unsigned int indexSize = totalTransformIndexCount;
 	transformBuffer.resize(dataSize);
 	transformIndexBuffer.resize(indexSize);
-	transformBuffer.uploadSubData(0, meshTransformData.batchCount, meshTransformData.transforms.data()->data());
+	if (meshTransformData.updateAll) {
+		transformBuffer.uploadData(meshTransformData.batchCount, meshTransformData.transforms.data()->data());
+		meshTransformData.updateAll = false;
+	}
+	else {
+		unsigned int uploadSize = meshTransformData.uploadTransforms.size();
+		if (uploadSize) {
+			meshTransformData.uploadIndices[0] = uploadSize;
+			transformUploadBuffer.uploadData(uploadSize, meshTransformData.uploadTransforms.data());
+			transformUploadIndexBuffer.uploadData(uploadSize + 1, meshTransformData.uploadIndices.data());
+			IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
+			context.bindShaderProgram(uploadProgram);
+			context.bindBufferBase(transformUploadIndexBuffer.getVendorGPUBuffer(), "indexBuf");
+			context.bindBufferBase(transformUploadBuffer.getVendorGPUBuffer(), "srcBuf");
+			context.bindTexture(NULL, Vertex_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindTexture(NULL, Tessellation_Control_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindTexture(NULL, Tessellation_Evalution_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindTexture(NULL, Geometry_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindTexture(NULL, Fragment_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindTexture(NULL, Compute_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindBufferBase(transformBuffer.getVendorGPUBuffer(), "dstBuf", { true });
+			Vector3u dim = uploadMaterial->getLocalSize();
+			context.dispatchCompute(ceilf(uploadSize / (float)dim.x()), 1, 1);
+			context.clearOutputBufferBindings();
+		}
+		else {
+			transformUploadBuffer.resize(0);
+			transformUploadIndexBuffer.resize(0);
+		}
+	}
 	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
 		transformIndexBuffer.uploadSubData(b->second.indexBase, b->second.batchCount,
 			b->second.indices.data());

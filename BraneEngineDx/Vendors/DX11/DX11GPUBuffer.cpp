@@ -93,18 +93,16 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 			desc.id = (unsigned int)dx11Buffer.Get();
 		}
 		else {
-			if (desc.gpuAccess == GAF_Read) {
-				D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-				srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-				srvDesc.Format = getDXGIFormat(desc.format);
-				srvDesc.Buffer.FirstElement = 0;
-				srvDesc.Buffer.NumElements = desc.format == GBF_Struct ?
-					desc.capacity : alignedSize / desc.cellSize;
-				if (FAILED(dxContext.device->CreateShaderResourceView(dx11Buffer.Get(), &srvDesc, &dx11BufferSRV)))
-					throw runtime_error("CreateShaderResourceView failed");
-				desc.id = (unsigned int)dx11BufferSRV.Get();
-			}
-			else if (desc.gpuAccess == GAF_ReadWrite) {
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+			srvDesc.Format = getDXGIFormat(desc.format);
+			srvDesc.Buffer.FirstElement = 0;
+			srvDesc.Buffer.NumElements = desc.format == GBF_Struct ?
+				desc.capacity : alignedSize / desc.cellSize;
+			if (FAILED(dxContext.device->CreateShaderResourceView(dx11Buffer.Get(), &srvDesc, &dx11BufferSRV)))
+				throw runtime_error("CreateShaderResourceView failed");
+			desc.id = (unsigned int)dx11BufferSRV.Get();
+			if (desc.gpuAccess == GAF_ReadWrite) {
 				D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
 				uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 				uavDesc.Format = getDXGIFormat(desc.format);
@@ -114,10 +112,7 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 				uavDesc.Buffer.Flags = 0;
 				if (FAILED(dxContext.device->CreateUnorderedAccessView(dx11Buffer.Get(), &uavDesc, &dx11BufferUAV)))
 					throw runtime_error("CreateUnorderedAccessView failed");
-				desc.id = (unsigned int)dx11BufferUAV.Get();
 			}
-			else
-				throw runtime_error("Unknown GPU Access Flag");
 		}
 	}
 	desc.size = size;
@@ -140,7 +135,7 @@ void DX11GPUBuffer::release()
 	desc.id = 0;
 }
 
-unsigned int DX11GPUBuffer::bindBase(unsigned int index)
+unsigned int DX11GPUBuffer::bindBase(unsigned int index, BufferOption bufferOption)
 {
 	switch (desc.type)
 	{
@@ -172,7 +167,14 @@ unsigned int DX11GPUBuffer::bindBase(unsigned int index)
 		break;
 	}
 	case GB_Storage:
-		if (dx11BufferSRV != NULL) {
+		if (bufferOption.output && desc.gpuAccess != GAF_ReadWrite)
+			throw runtime_error("Buffer with GAF_Read cannot be binded on output");
+		if (bufferOption.output) {
+			dxContext.deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
+				NULL, NULL, index, 1, dx11BufferUAV.GetAddressOf(), NULL);
+			dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dx11BufferUAV.GetAddressOf(), NULL);
+		}
+		else {
 			dxContext.deviceContext->VSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->PSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->GSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
@@ -180,12 +182,6 @@ unsigned int DX11GPUBuffer::bindBase(unsigned int index)
 			dxContext.deviceContext->DSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->CSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
 		}
-		else if (dx11BufferUAV != NULL) {
-			dxContext.deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
-				NULL, NULL, index, 1, dx11BufferUAV.GetAddressOf(), NULL);
-			dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dx11BufferUAV.GetAddressOf(), NULL);
-		}
-		else return 0;
 		break;
 	default:
 		throw runtime_error("Unknown Error");
@@ -213,7 +209,7 @@ unsigned int DX11GPUBuffer::uploadData(unsigned int size, void* data)
 		destRegion.bottom = 1;
 		destRegion.front = 0;
 		destRegion.back = 1;
-		dxContext.deviceContext->UpdateSubresource(dx11Buffer.Get(), 0, NULL, data, desc.cellSize, 0);
+		dxContext.deviceContext->UpdateSubresource(dx11Buffer.Get(), 0, &destRegion, data, desc.cellSize, 0);
 	}
 	return desc.id;
 }
@@ -236,7 +232,7 @@ unsigned int DX11GPUBuffer::uploadSubData(unsigned int first, unsigned int size,
 		destRegion.bottom = 1;
 		destRegion.front = 0;
 		destRegion.back = 1;
-		dxContext.deviceContext->UpdateSubresource(dx11Buffer.Get(), 0, NULL, data, desc.cellSize, 0);
+		dxContext.deviceContext->UpdateSubresource(dx11Buffer.Get(), 0, &destRegion, data, desc.cellSize, 0);
 	}
     return desc.id;
 }

@@ -26,8 +26,6 @@ struct DX11Context
 	ComPtr<ID3D11Texture2D> backBuffer[3] = { 0 };
 	ComPtr<ID3D11RenderTargetView> backBufferRTV[3] = { 0 };
 
-	ComPtr<ID3D11Query> endQuery = NULL;
-
 	ComPtr<ID3D11RasterizerState> rasterizerCullOff = NULL;
 	ComPtr<ID3D11RasterizerState> rasterizerCullBack = NULL;
 	ComPtr<ID3D11RasterizerState> rasterizerCullFront = NULL;

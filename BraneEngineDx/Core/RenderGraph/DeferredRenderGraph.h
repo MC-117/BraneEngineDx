@@ -42,7 +42,7 @@ public:
 
 	Timer timer;
 
-	bool enablePreDepthPass = true;
+	bool enablePreDepthPass = false;
 
 	SurfaceData defaultPreDepthSurfaceData;
 	SurfaceData defaultGeometrySurfaceData;

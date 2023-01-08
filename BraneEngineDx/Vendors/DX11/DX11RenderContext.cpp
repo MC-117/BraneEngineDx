@@ -24,7 +24,7 @@ void DX11RenderContext::release()
         deviceContext.Reset();
 }
 
-unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, const string& name)
+unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, const string& name, BufferOption bufferOption)
 {
 	if (currentProgram == NULL)
 		return 0;
@@ -32,10 +32,10 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, const string&
 	DX11ShaderProgram::AttributeDesc desc = currentProgram->getAttributeOffset(name);
 	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
 		return 0;
-	return bindBufferBase(dxBuffer, desc.offset);
+	return bindBufferBase(dxBuffer, desc.offset, bufferOption);
 }
 
-unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int index)
+unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int index, BufferOption bufferOption)
 {
 	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(buffer);
 	if (dxBuffer == NULL || dxBuffer->dx11Buffer == NULL)
@@ -65,7 +65,16 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 		break;
 	}
 	case GB_Storage:
-		if (dxBuffer->dx11BufferSRV != NULL) {
+		if (bufferOption.output && dxBuffer->desc.gpuAccess != GAF_ReadWrite)
+			throw runtime_error("Buffer with GAF_Read cannot be binded on output");
+		if (bufferOption.output) {
+			if (currentProgram->isComputable())
+				dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
+			else
+				dxContext.deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
+					NULL, NULL, index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
+		}
+		else{
 			dxContext.deviceContext->VSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->PSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->GSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
@@ -73,14 +82,6 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 			dxContext.deviceContext->DSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->CSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
 		}
-		else if (dxBuffer->dx11BufferUAV != NULL) {
-			if (currentProgram->isComputable())
-				dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
-			else
-				dxContext.deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
-					NULL, NULL, index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
-		}
-		else return 0;
 		break;
 	default:
 		throw runtime_error("Unknown Error");
@@ -221,6 +222,11 @@ unsigned int DX11RenderContext::bindFrame(IRenderTarget* target)
 		(ID3D11RenderTargetView* const*)dx11RTVs.data(), dx11DSV.Get());
 	currentRenderTarget = dxTarget;
 	return dxTarget->desc.frameID;
+}
+
+void DX11RenderContext::clearOutputBufferBindings()
+{
+	clearUAV();
 }
 
 void DX11RenderContext::clearFrameBindings()
@@ -604,9 +610,11 @@ void DX11RenderContext::clearSRV()
 
 void DX11RenderContext::clearUAV()
 {
-	ID3D11UnorderedAccessView* srvs[D3D11_PS_CS_UAV_REGISTER_COUNT] = { NULL };
+	ID3D11UnorderedAccessView* uavs[D3D11_PS_CS_UAV_REGISTER_COUNT] = { NULL };
 	unsigned int offs[D3D11_PS_CS_UAV_REGISTER_COUNT] = { -1 };
-	deviceContext->CSSetUnorderedAccessViews(0, D3D11_PS_CS_UAV_REGISTER_COUNT, srvs, offs);
+	deviceContext->CSSetUnorderedAccessViews(0, D3D11_PS_CS_UAV_REGISTER_COUNT, uavs, offs);
+	deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
+		NULL, NULL, 0, D3D11_PS_CS_UAV_REGISTER_COUNT, uavs, NULL);
 	uavBindings.clear();
 	uavSlots.clear();
 }

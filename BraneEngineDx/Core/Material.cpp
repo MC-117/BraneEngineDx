@@ -496,7 +496,6 @@ bool Material::MaterialLoader::loadMaterial(Material& material, const string& fi
 		return false;
 	ShaderCompiler compiler;
 	compiler.init(file);
-	bool noearlyz = false;
 	bool successed = true;
 	while (compiler.compile()) {
 		successed &= compiler.isSuccessed();
@@ -532,23 +531,6 @@ bool Material::MaterialLoader::loadMaterial(Material& material, const string& fi
 			if (command.size() == 2)
 				material.canCastShadow = command[1] != "false";
 			break;
-		case ShaderCompiler::ST_NoEarlyZ:
-			noearlyz = true;
-			break;
-		case ShaderCompiler::ST_LocalSize:
-			if (command.size() > 1) {
-				int x = atoi(command[1].c_str());
-				material.desc.localSize.x() = x < 1 ? 1 : x;
-			}
-			if (command.size() > 2) {
-				int y = atoi(command[2].c_str());
-				material.desc.localSize.y() = y < 1 ? 1 : y;
-			}
-			if (command.size() > 3) {
-				int z = atoi(command[3].c_str());
-				material.desc.localSize.z() = z < 1 ? 1 : z;
-			}
-			break;
 		case ShaderCompiler::ST_Pass:
 			if (command.size() == 2) {
 				int passNum = atoi(command[1].c_str());
@@ -562,6 +544,7 @@ bool Material::MaterialLoader::loadMaterial(Material& material, const string& fi
 			break;
 	}
 	if (successed) {
+		material.desc.localSize = compiler.getLocalSize();
 		shader->name = compiler.getName();
 		auto adapters = compiler.getAdapters();
 		for (auto b = adapters.begin(), e = adapters.end(); b != e; b++) {

@@ -29,8 +29,6 @@ bool DX11Context::createDevice(unsigned int width, unsigned int height)
 	createRenderState();
 	createInputLayout();
 
-	D3D11_QUERY_DESC queryDesc = { D3D11_QUERY_EVENT, 0 };
-	device->CreateQuery(&queryDesc, endQuery.ReleaseAndGetAddressOf());
 	return true;
 }
 
@@ -382,8 +380,6 @@ void DX11Context::swap(bool vsync, unsigned int maxFPS)
 {
 	this->maxFPS = maxFPS;
 
-	deviceContext->End(endQuery.Get());
-
 	swapChain->Present(vsync ? 1 : 0, 0);
 
 	//DWORD result = WaitForSingleObjectEx(
@@ -417,26 +413,6 @@ void DX11Context::swap(bool vsync, unsigned int maxFPS)
 
 void DX11Context::fence()
 {
-	if (endQuery == NULL)
-		return;
-	BOOL completed = false;
-
-	do
-	{
-		HRESULT hr = deviceContext->GetData(endQuery.Get(), &completed, sizeof(BOOL), 0);
-		if (hr == S_FALSE)
-		{
-		}
-		else if (SUCCEEDED(hr) && completed)
-		{
-			break;
-		}
-		else
-		{
-			// error
-			break;
-		}
-	} while (!completed);
 }
 
 void DX11Context::clearSRV()

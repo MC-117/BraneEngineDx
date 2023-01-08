@@ -85,6 +85,11 @@ const map<ShaderStageType, ShaderAdapter*>& ShaderCompiler::getAdapters() const
 	return adapters;
 }
 
+Vector3u ShaderCompiler::getLocalSize() const
+{
+	return localSize;
+}
+
 void ShaderCompiler::setAdapaterName(const string& name)
 {
 	adapterName = name;

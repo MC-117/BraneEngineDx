@@ -258,21 +258,21 @@ void DeferredRenderGraph::prepare()
 
 void DeferredRenderGraph::execute(IRenderContext& context)
 {
+	auto clearTexFrameBindings = [&]() {
+		context.clearFrameBindings();
+		for (int i = 6; i < 16; i++) {
+			context.bindTexture(NULL, Fragment_Shader_Stage, i, -1);
+			context.bindTexture(NULL, Compute_Shader_Stage, i, -1);
+		}
+	};
+
 	timer.reset();
+
+	clearTexFrameBindings();
+
 	for (auto sceneData : sceneDatas)
 		sceneData->upload();
 	timer.record("SceneDataUpload");
-
-	context.bindTexture(NULL, Fragment_Shader_Stage, 6, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 7, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 8, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 9, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 10, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 6, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 7, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 8, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 9, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 10, -1);
 
 	screenHitPass.execute(context);
 
@@ -296,17 +296,7 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 	timer.record("Lighting");
 
-	context.clearFrameBindings();
-	context.bindTexture(NULL, Fragment_Shader_Stage, 6, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 7, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 8, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 9, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 10, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 6, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 7, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 8, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 9, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 10, -1);
+	clearTexFrameBindings();
 
 	for (auto& item : viewDatas) {
 		hizPass.depthTexture = &item.second->gBufferB;
@@ -336,17 +326,7 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 	timer.record("SSR");
 
-	context.clearFrameBindings();
-	context.bindTexture(NULL, Fragment_Shader_Stage, 6, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 7, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 8, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 9, -1);
-	context.bindTexture(NULL, Fragment_Shader_Stage, 10, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 6, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 7, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 8, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 9, -1);
-	context.bindTexture(NULL, Compute_Shader_Stage, 10, -1);
+	clearTexFrameBindings();
 
 	for (auto sceneData : sceneDatas)
 		sceneData->reflectionProbeDataPack.cubeMapPool.refreshCubePool(context);

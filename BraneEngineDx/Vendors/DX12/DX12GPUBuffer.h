@@ -17,7 +17,7 @@ public:
 	virtual unsigned int bind();
 	virtual unsigned int resize(unsigned int size);
 	virtual void release();
-	virtual unsigned int bindBase(unsigned int index);
+	virtual unsigned int bindBase(unsigned int index, BufferOption bufferOption = BufferOption());
 	virtual unsigned int uploadData(unsigned int size, void* data);
 	virtual unsigned int uploadSubData(unsigned int first, unsigned int size, void* data);
 	virtual bool readData(void* data);

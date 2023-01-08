@@ -1278,6 +1278,9 @@
     <ClInclude Include="Vendors\DX_Helper.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Test\GPUBufferTest.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -2382,6 +2385,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderCore\TransformRenderData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Test\GPUBufferTest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

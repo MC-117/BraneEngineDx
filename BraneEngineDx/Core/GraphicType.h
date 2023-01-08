@@ -61,6 +61,11 @@ enum CubeFace
 	CF_Faces
 };
 
+struct BufferOption
+{
+	bool output = false;
+};
+
 struct MipOption
 {
 	TexDimension dimension = TD_Default;

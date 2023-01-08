@@ -27,6 +27,7 @@ public:
 	const vector<string>& getCommand() const;
 	const string& getLine() const;
 	const map<ShaderStageType, ShaderAdapter*>& getAdapters() const;
+	Vector3u getLocalSize() const;
 
 	void setAdapaterName(const string& name);
 

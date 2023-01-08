@@ -128,6 +128,7 @@ bool SceneRenderData::frustumCulling(const Range<Vector3f>& bound, const Matrix4
 void SceneRenderData::create()
 {
 	meshTransformDataPack.create();
+	staticMeshTransformDataPack.create();
 	particleDataPack.create();
 	lightDataPack.create();
 	reflectionProbeDataPack.create();

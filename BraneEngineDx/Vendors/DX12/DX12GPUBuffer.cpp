@@ -60,7 +60,7 @@ const char* getGPUBufferTypeName(GPUBufferType type)
 	return "";
 }
 
-unsigned int DX12GPUBuffer::bindBase(unsigned int index)
+unsigned int DX12GPUBuffer::bindBase(unsigned int index, BufferOption bufferOption)
 {
 	if (desc.type == GB_Storage && desc.format == GBF_Struct && index == 0) {
 		OutputDebugStringA(("[Brane]--------Frame(" + to_string(dxContext.activeBackBufferIndex) + ")--------\n").c_str());
@@ -112,6 +112,8 @@ unsigned int DX12GPUBuffer::bindBase(unsigned int index)
 	{
 		if (dx12Buffer == NULL)
 			return 0;
+		if (bufferOption.output)
+			throw runtime_error("Not implemented");
 		DXGI_FORMAT format = getDXGIFormat(desc.format);
 		dxContext.graphicContext.bindDefaultSRV(index, dx12Buffer->getBufferSRV(format));
 		break;
