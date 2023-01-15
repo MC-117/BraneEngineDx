@@ -25,9 +25,9 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 	if (size == 0) {
 		release();
 	}
-	else if (size > desc.capacity || size < desc.capacity / 2) {
+	else if (size > desc.capacity /*|| size < desc.capacity / 2*/) {
 		release();
-		desc.capacity = size * 1.5;
+		desc.capacity = size;// *1.5;
 		unsigned int alignedSize = ceil(desc.capacity * desc.cellSize / 16.0f) * 16;
 
 		//alignedSize = max(64, alignedSize);
@@ -78,6 +78,18 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 			if (desc.gpuAccess == GAF_ReadWrite) {
 				bd.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
 			}
+
+			if (desc.format == GBF_Struct) {
+				bd.StructureByteStride = desc.cellSize;
+			}
+
+			if (desc.format == GBF_Raw) {
+				if (desc.type == GB_Constant)
+					throw runtime_error("Constant Buffer cannot use raw format");
+				else {
+					bd.MiscFlags |= D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
+				}
+			}
 		}
 
 		bd.ByteWidth = alignedSize;
@@ -94,25 +106,48 @@ unsigned int DX11GPUBuffer::resize(unsigned int size)
 		}
 		else {
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-			srvDesc.Format = getDXGIFormat(desc.format);
-			srvDesc.Buffer.FirstElement = 0;
-			srvDesc.Buffer.NumElements = desc.format == GBF_Struct ?
-				desc.capacity : alignedSize / desc.cellSize;
+
+			if (desc.format == GBF_Raw) {
+				srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
+				srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+				srvDesc.BufferEx.Flags = D3D11_BUFFEREX_SRV_FLAG_RAW;
+				srvDesc.BufferEx.FirstElement = 0;
+				srvDesc.BufferEx.NumElements = desc.format == GBF_Struct ?
+					desc.capacity : alignedSize / desc.cellSize;
+			}
+			else {
+				srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+				srvDesc.Format = getDXGIFormat(desc.format);
+				srvDesc.Buffer.FirstElement = 0;
+				srvDesc.Buffer.NumElements = desc.format == GBF_Struct ?
+					desc.capacity : alignedSize / desc.cellSize;
+			}
+
 			if (FAILED(dxContext.device->CreateShaderResourceView(dx11Buffer.Get(), &srvDesc, &dx11BufferSRV)))
 				throw runtime_error("CreateShaderResourceView failed");
 			desc.id = (unsigned int)dx11BufferSRV.Get();
-			if (desc.gpuAccess == GAF_ReadWrite) {
-				D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+		}
+
+		if (!(desc.cpuAccess & CAF_Read) && desc.gpuAccess == GAF_ReadWrite) {
+			D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+			if (desc.format == GBF_Raw) {
+				uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+				uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+				uavDesc.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
+				uavDesc.Buffer.FirstElement = 0;
+				uavDesc.Buffer.NumElements = desc.format == GBF_Struct ?
+					desc.capacity : alignedSize / desc.cellSize;
+			}
+			else {
 				uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 				uavDesc.Format = getDXGIFormat(desc.format);
 				uavDesc.Buffer.FirstElement = 0;
 				uavDesc.Buffer.NumElements = desc.format == GBF_Struct ?
 					desc.capacity : alignedSize / desc.cellSize;
 				uavDesc.Buffer.Flags = 0;
-				if (FAILED(dxContext.device->CreateUnorderedAccessView(dx11Buffer.Get(), &uavDesc, &dx11BufferUAV)))
-					throw runtime_error("CreateUnorderedAccessView failed");
 			}
+			if (FAILED(dxContext.device->CreateUnorderedAccessView(dx11Buffer.Get(), &uavDesc, &dx11BufferUAV)))
+				throw runtime_error("CreateUnorderedAccessView failed");
 		}
 	}
 	desc.size = size;
@@ -137,67 +172,68 @@ void DX11GPUBuffer::release()
 
 unsigned int DX11GPUBuffer::bindBase(unsigned int index, BufferOption bufferOption)
 {
-	switch (desc.type)
-	{
-	case GB_Constant:
-		if (dx11Buffer == NULL)
-			return 0;
-		dxContext.deviceContext->VSSetConstantBuffers(index, 1, dx11Buffer.GetAddressOf());
-		dxContext.deviceContext->PSSetConstantBuffers(index, 1, dx11Buffer.GetAddressOf());
-		dxContext.deviceContext->GSSetConstantBuffers(index, 1, dx11Buffer.GetAddressOf());
-		dxContext.deviceContext->HSSetConstantBuffers(index, 1, dx11Buffer.GetAddressOf());
-		dxContext.deviceContext->DSSetConstantBuffers(index, 1, dx11Buffer.GetAddressOf());
-		break;
-	case GB_Vertex:
-	{
-		if (dx11Buffer == NULL)
-			return 0;
-		unsigned int strides = desc.cellSize;
-		unsigned int offset = 0;
-		dxContext.deviceContext->IASetVertexBuffers(index, 1, dx11Buffer.GetAddressOf(), &strides, &offset);
-		break;
+	if (bufferOption.output && desc.gpuAccess != GAF_ReadWrite)
+		throw runtime_error("Buffer with GAF_Read cannot be binded on output");
+	if (bufferOption.output) {
+		dxContext.deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
+			NULL, NULL, index, 1, dx11BufferUAV.GetAddressOf(), NULL);
+		dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dx11BufferUAV.GetAddressOf(), NULL);
 	}
-	case GB_Index:
-	{
-		if (dx11Buffer == NULL)
-			return 0;
-		unsigned int strides = sizeof(unsigned int);
-		unsigned int offset = 0;
-		dxContext.deviceContext->IASetIndexBuffer(dx11Buffer.Get(), DXGI_FORMAT_R32_UINT, offset);
-		break;
-	}
-	case GB_Storage:
-		if (bufferOption.output && desc.gpuAccess != GAF_ReadWrite)
-			throw runtime_error("Buffer with GAF_Read cannot be binded on output");
-		if (bufferOption.output) {
-			dxContext.deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
-				NULL, NULL, index, 1, dx11BufferUAV.GetAddressOf(), NULL);
-			dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dx11BufferUAV.GetAddressOf(), NULL);
+	else {
+		switch (desc.type)
+		{
+		case GB_Constant:
+			if (dx11Buffer == NULL)
+				return 0;
+			dxContext.deviceContext->VSSetConstantBuffers(index, 1, dx11Buffer.GetAddressOf());
+			dxContext.deviceContext->PSSetConstantBuffers(index, 1, dx11Buffer.GetAddressOf());
+			dxContext.deviceContext->GSSetConstantBuffers(index, 1, dx11Buffer.GetAddressOf());
+			dxContext.deviceContext->HSSetConstantBuffers(index, 1, dx11Buffer.GetAddressOf());
+			dxContext.deviceContext->DSSetConstantBuffers(index, 1, dx11Buffer.GetAddressOf());
+			break;
+		case GB_Vertex:
+		{
+			if (dx11Buffer == NULL)
+				return 0;
+			unsigned int strides = desc.cellSize;
+			unsigned int offset = 0;
+			dxContext.deviceContext->IASetVertexBuffers(index, 1, dx11Buffer.GetAddressOf(), &strides, &offset);
+			break;
 		}
-		else {
+		case GB_Index:
+		{
+			if (dx11Buffer == NULL)
+				return 0;
+			unsigned int strides = sizeof(unsigned int);
+			unsigned int offset = 0;
+			dxContext.deviceContext->IASetIndexBuffer(dx11Buffer.Get(), DXGI_FORMAT_R32_UINT, offset);
+			break;
+		}
+		case GB_Storage:
 			dxContext.deviceContext->VSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->PSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->GSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->HSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->DSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->CSSetShaderResources(index, 1, dx11BufferSRV.GetAddressOf());
+			break;
+		default:
+			throw runtime_error("Unknown Error");
+			break;
 		}
-		break;
-	default:
-		throw runtime_error("Unknown Error");
-		break;
 	}
     return desc.id;
 }
 
-unsigned int DX11GPUBuffer::uploadData(unsigned int size, void* data)
+unsigned int DX11GPUBuffer::uploadData(unsigned int size, void* data, bool discard)
 {
 	resize(size);
 	if (size == 0)
 		return desc.id;
 	if ((desc.cpuAccess & CAF_Read) || (desc.cpuAccess == CAF_Write && desc.gpuAccess == GAF_Read)) {
 		D3D11_MAPPED_SUBRESOURCE mpd;
-		dxContext.deviceContext->Map(dx11Buffer.Get(), 0, desc.type == GB_Constant ? D3D11_MAP_WRITE_DISCARD : D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mpd);
+		dxContext.deviceContext->Map(dx11Buffer.Get(), 0, desc.type == GB_Constant || discard ?
+			D3D11_MAP_WRITE_DISCARD : D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mpd);
 		memcpy_s((char*)mpd.pData, size * desc.cellSize, data, size * desc.cellSize);
 		dxContext.deviceContext->Unmap(dx11Buffer.Get(), 0);
 	}

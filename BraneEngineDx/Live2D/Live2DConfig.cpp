@@ -7,7 +7,7 @@ Live2DInitialization Live2DInitialization::instance;
 Csm::CubismFramework::Option option;
 Live2DAllocator allocator;
 
-Live2DInitialization::Live2DInitialization() : Initialization(0)
+Live2DInitialization::Live2DInitialization() : Initialization(InitializeStage::BeforeAssetLoading, 0)
 {
     option.LogFunction = CubismPrintMessage_Impl;
     option.LoggingLevel = Csm::CubismFramework::Option::LogLevel_Verbose;

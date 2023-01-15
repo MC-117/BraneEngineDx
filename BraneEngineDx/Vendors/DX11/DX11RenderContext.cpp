@@ -24,6 +24,19 @@ void DX11RenderContext::release()
         deviceContext.Reset();
 }
 
+void* DX11RenderContext::getDeviceHandle() const
+{
+	return dxContext.device.Get();
+}
+
+void DX11RenderContext::clearVertexBindings()
+{
+	ID3D11Buffer* buffers[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT] = { NULL };
+	unsigned int offsets[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT] = { 0 };
+	unsigned int strides[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT] = { 0 };
+	deviceContext->IASetVertexBuffers(0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT, buffers, strides, offsets);
+}
+
 unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, const string& name, BufferOption bufferOption)
 {
 	if (currentProgram == NULL)
@@ -40,52 +53,52 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(buffer);
 	if (dxBuffer == NULL || dxBuffer->dx11Buffer == NULL)
 		return 0;
-	switch (dxBuffer->desc.type)
-	{
-	case GB_Constant:
-		deviceContext->VSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-		deviceContext->PSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-		deviceContext->CSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-		deviceContext->GSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-		deviceContext->HSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-		deviceContext->DSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-		break;
-	case GB_Vertex:
-	{
-		unsigned int strides = dxBuffer->desc.cellSize;
-		unsigned int offset = 0;
-		deviceContext->IASetVertexBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf(), &strides, &offset);
-		break;
+	if (bufferOption.output && dxBuffer->desc.gpuAccess != GAF_ReadWrite)
+		throw runtime_error("Buffer with GAF_Read cannot be binded on output");
+	if (bufferOption.output) {
+		if (currentProgram->isComputable())
+			dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
+		else
+			dxContext.deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
+				NULL, NULL, index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
 	}
-	case GB_Index:
-	{
-		unsigned int strides = sizeof(unsigned int);
-		unsigned int offset = 0;
-		deviceContext->IASetIndexBuffer(dxBuffer->dx11Buffer.Get(), DXGI_FORMAT_R32_UINT, offset);
-		break;
-	}
-	case GB_Storage:
-		if (bufferOption.output && dxBuffer->desc.gpuAccess != GAF_ReadWrite)
-			throw runtime_error("Buffer with GAF_Read cannot be binded on output");
-		if (bufferOption.output) {
-			if (currentProgram->isComputable())
-				dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
-			else
-				dxContext.deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
-					NULL, NULL, index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
+	else {
+		switch (dxBuffer->desc.type)
+		{
+		case GB_Constant:
+			deviceContext->VSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
+			deviceContext->PSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
+			deviceContext->CSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
+			deviceContext->GSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
+			deviceContext->HSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
+			deviceContext->DSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
+			break;
+		case GB_Vertex:
+		{
+			unsigned int strides = dxBuffer->desc.cellSize;
+			unsigned int offset = 0;
+			deviceContext->IASetVertexBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf(), &strides, &offset);
+			break;
 		}
-		else{
+		case GB_Index:
+		{
+			unsigned int strides = sizeof(unsigned int);
+			unsigned int offset = 0;
+			deviceContext->IASetIndexBuffer(dxBuffer->dx11Buffer.Get(), DXGI_FORMAT_R32_UINT, offset);
+			break;
+		}
+		case GB_Storage:
 			dxContext.deviceContext->VSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->PSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->GSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->HSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->DSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
 			dxContext.deviceContext->CSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			break;
+		default:
+			throw runtime_error("Unknown Error");
+			break;
 		}
-		break;
-	default:
-		throw runtime_error("Unknown Error");
-		break;
 	}
 	return dxBuffer->desc.id;
 }
@@ -377,6 +390,23 @@ unsigned int DX11RenderContext::dispatchCompute(unsigned int dimX, unsigned int 
 		return false;
 	bindDrawInfo();
 	deviceContext->Dispatch(dimX, dimY, dimZ);
+	return true;
+}
+
+unsigned int DX11RenderContext::dispatchComputeIndirect(IGPUBuffer* buffer, unsigned int byteOffset)
+{
+	if (!currentProgram->isComputable())
+		return false;
+
+	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(buffer);
+	if (dxBuffer == NULL)
+		return false;
+
+	if (dxBuffer->desc.type != GB_Command)
+		throw runtime_error("dispatchComputeIndirect: GPUBuffer with GB_Command is required");
+
+	bindDrawInfo();
+	deviceContext->DispatchIndirect(dxBuffer->dx11Buffer.Get(), byteOffset);
 	return true;
 }
 

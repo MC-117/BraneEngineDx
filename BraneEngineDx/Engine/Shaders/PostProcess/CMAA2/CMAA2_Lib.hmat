@@ -1,3 +1,5 @@
+#include "CMAA2_Config.hmat"
+
 // If the color buffer range is bigger than [0, 1] then use this, otherwise don't (and gain some precision - see https://bartwronski.com/2017/04/02/small-float-formats-r11g11b10f-precision/)
 #ifndef CMAA2_SUPPORT_HDR_COLOR_RANGE
 #define CMAA2_SUPPORT_HDR_COLOR_RANGE 0
@@ -374,3 +376,158 @@ void FinalUAVStore( uint2 pixelPos, lpfloat3 color )
 }
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Edge detection and local contrast adaptation helpers
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+lpfloat GetActualEdgeThreshold( )
+{
+    lpfloat retVal = g_CMAA2_EdgeThreshold;
+    return retVal;
+}
+//
+lpfloat EdgeDetectColorCalcDiff( lpfloat3 colorA, lpfloat3 colorB )
+{
+    const lpfloat3 LumWeights = lpfloat3( 0.299, 0.587, 0.114 );
+    lpfloat3 diff = abs( (colorA.rgb - colorB.rgb) );
+    return dot( diff.rgb, LumWeights.rgb );
+}
+//
+// apply custom curve / processing to put input color (linear) in the format required by ComputeEdge
+lpfloat3 ProcessColorForEdgeDetect( lpfloat3 color )
+{
+    //pixelColors[i] = LINEAR_to_SRGB( pixelColors[i] );            // correct reference
+    //pixelColors[i] = pow( max( 0, pixelColors[i], 1.0 / 2.4 ) );  // approximate sRGB curve
+    return sqrt( color ); // just very roughly approximate RGB curve
+}
+//
+lpfloat2 ComputeEdge( int x, int y, lpfloat3 pixelColors[3 * 3 - 1] )
+{
+    lpfloat2 temp;
+    temp.x = EdgeDetectColorCalcDiff( pixelColors[x + y * 3].rgb, pixelColors[x + 1 + y * 3].rgb );
+    temp.y = EdgeDetectColorCalcDiff( pixelColors[x + y * 3].rgb, pixelColors[x + ( y + 1 ) * 3].rgb );
+    return temp;    // for HDR edge detection it might be good to premultiply both of these by some factor - otherwise clamping to 1 might prevent some local contrast adaptation. It's a very minor nitpick though, unlikely to significantly affect things.
+}                                     
+// color -> log luma-for-edges conversion
+float RGBToLumaForEdges( float3 linearRGB )
+{
+#if 0
+    // this matches Miniengine luma path
+    float Luma = dot( linearRGB, float3(0.212671, 0.715160, 0.072169) );
+    return log2(1 + Luma * 15) / 4;
+#else
+    // this is what original FXAA (and consequently CMAA2) use by default - these coefficients correspond to Rec. 601 and those should be
+    // used on gamma-compressed components (see https://en.wikipedia.org/wiki/Luma_(video)#Rec._601_luma_versus_Rec._709_luma_coefficients), 
+    float luma = dot( sqrt( linearRGB.rgb ), float3( 0.299, 0.587, 0.114 ) );  // http://en.wikipedia.org/wiki/CCIR_601
+    // using sqrt luma for now but log luma like in miniengine provides a nicer curve on the low-end
+    return luma;
+#endif
+}
+lpfloat2 ComputeEdgeLuma( int x, int y, lpfloat pixelLumas[3 * 3 - 1] )
+{
+    lpfloat2 temp;
+    temp.x = abs( pixelLumas[x + y * 3] - pixelLumas[x + 1 + y * 3] );
+    temp.y = abs( pixelLumas[x + y * 3] - pixelLumas[x + ( y + 1 ) * 3] );
+    return temp;    // for HDR edge detection it might be good to premultiply both of these by some factor - otherwise clamping to 1 might prevent some local contrast adaptation. It's a very minor nitpick though, unlikely to significantly affect things.
+}
+//
+lpfloat ComputeLocalContrastV( int x, int y, in lpfloat2 neighbourhood[4][4] )
+{
+    // new, small kernel 4-connecting-edges-only local contrast adaptation
+    return max( max( neighbourhood[x + 1][y + 0].y, neighbourhood[x + 1][y + 1].y ), max( neighbourhood[x + 2][y + 0].y, neighbourhood[x + 2][y + 1].y ) ) * lpfloat( g_CMAA2_LocalContrastAdaptationAmount );
+
+//    // slightly bigger kernel that enhances edges in-line (not worth the cost)
+//  return ( max( max( neighbourhood[x + 1][y + 0].y, neighbourhood[x + 1][y + 1].y ), max( neighbourhood[x + 2][y + 0].y, neighbourhood[x + 2][y + 1].y ) ) 
+//        - ( neighbourhood[x + 1][y + 0].x + neighbourhood[x + 1][y + 2].x ) * 0.3 ) * lpfloat( g_CMAA2_LocalContrastAdaptationAmount );
+}
+//
+lpfloat ComputeLocalContrastH( int x, int y, in lpfloat2 neighbourhood[4][4] )
+{
+    // new, small kernel 4-connecting-edges-only local contrast adaptation
+    return max( max( neighbourhood[x + 0][y + 1].x, neighbourhood[x + 1][y + 1].x ), max( neighbourhood[x + 0][y + 2].x, neighbourhood[x + 1][y + 2].x ) ) * lpfloat( g_CMAA2_LocalContrastAdaptationAmount );
+
+//    // slightly bigger kernel that enhances edges in-line (not worth the cost)
+//    return ( max( max( neighbourhood[x + 0][y + 1].x, neighbourhood[x + 1][y + 1].x ), max( neighbourhood[x + 0][y + 2].x, neighbourhood[x + 1][y + 2].x ) ) 
+//        - ( neighbourhood[x + 0][y + 1].y + neighbourhood[x + 2][y + 1].y ) * 0.3 ) * lpfloat( g_CMAA2_LocalContrastAdaptationAmount );
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+lpfloat4 ComputeSimpleShapeBlendValues( lpfloat4 edges, lpfloat4 edgesLeft, lpfloat4 edgesRight, lpfloat4 edgesTop, lpfloat4 edgesBottom, uniform bool dontTestShapeValidity )
+{
+    // a 3x3 kernel for higher quality handling of L-based shapes (still rather basic and conservative)
+
+    lpfloat fromRight   = edges.r;
+    lpfloat fromBelow   = edges.g;
+    lpfloat fromLeft    = edges.b;
+    lpfloat fromAbove   = edges.a;
+
+    lpfloat blurCoeff = lpfloat( g_CMAA2_SimpleShapeBlurinessAmount );
+
+    lpfloat numberOfEdges = dot( edges, lpfloat4( 1, 1, 1, 1 ) );
+
+    lpfloat numberOfEdgesAllAround = dot(edgesLeft.bga + edgesRight.rga + edgesTop.rba + edgesBottom.rgb, lpfloat3( 1, 1, 1 ) );
+
+    // skip if already tested for before calling this function
+    if( !dontTestShapeValidity )
+    {
+        // No blur for straight edge
+        if( numberOfEdges == 1 )
+            blurCoeff = 0;
+
+        // L-like step shape ( only blur if it's a corner, not if it's two parallel edges)
+        if( numberOfEdges == 2 )
+            blurCoeff *= ( ( lpfloat(1.0) - fromBelow * fromAbove ) * ( lpfloat(1.0) - fromRight * fromLeft ) );
+    }
+
+    // L-like step shape
+    //[branch]
+    if( numberOfEdges == 2 )
+    {
+        blurCoeff *= 0.75;
+
+#if 1
+        float k = 0.9f;
+#if 0
+        fromRight   += k * (edges.g * edgesTop.r +      edges.a * edgesBottom.r );
+        fromBelow   += k * (edges.r * edgesLeft.g +     edges.b * edgesRight.g );
+        fromLeft    += k * (edges.g * edgesTop.b +      edges.a * edgesBottom.b );
+        fromAbove   += k * (edges.b * edgesRight.a +    edges.r * edgesLeft.a );
+#else
+        fromRight   += k * (edges.g * edgesTop.r     * (1.0-edgesLeft.g)   +     edges.a * edgesBottom.r   * (1.0-edgesLeft.a)      );
+        fromBelow   += k * (edges.b * edgesRight.g   * (1.0-edgesTop.b)    +     edges.r * edgesLeft.g     * (1.0-edgesTop.r)       );
+        fromLeft    += k * (edges.a * edgesBottom.b  * (1.0-edgesRight.a)  +     edges.g * edgesTop.b      * (1.0-edgesRight.g)     );
+        fromAbove   += k * (edges.r * edgesLeft.a    * (1.0-edgesBottom.r) +     edges.b * edgesRight.a   *  (1.0-edgesBottom.b)    );
+#endif
+#endif
+    }
+
+    // if( numberOfEdges == 3 )
+    //     blurCoeff *= 0.95;
+
+    // Dampen the blurring effect when lots of neighbouring edges - additionally preserves text and texture detail
+#if CMAA2_EXTRA_SHARPNESS
+    blurCoeff *= saturate( 1.15 - numberOfEdgesAllAround / 8.0 );
+#else
+    blurCoeff *= saturate( 1.30 - numberOfEdgesAllAround / 10.0 );
+#endif
+
+    return lpfloat4( fromLeft, fromAbove, fromRight, fromBelow ) * blurCoeff;
+}
+
+uint LoadEdge( int2 pixelPos, int2 offset, uint msaaSampleIndex )
+{
+#if CMAA_PACK_SINGLE_SAMPLE_EDGE_TO_HALF_WIDTH
+    uint a      = uint(pixelPos.x+offset.x) % 2;
+
+#if CMAA2_EDGE_UNORM
+    uint edge   = (uint)(g_workingEdges.Load( uint2( uint(pixelPos.x+offset.x)/2, pixelPos.y + offset.y ) ).x * 255.0 + 0.5);
+#else    
+    uint edge   = g_workingEdges.Load( uint2( uint(pixelPos.x+offset.x)/2, pixelPos.y + offset.y ) ).x;
+#endif
+    edge = (edge >> (a*4)) & 0xF;
+#else
+    uint edge   = g_workingEdges.Load( pixelPos + offset ).x;
+#endif
+    return edge;
+}

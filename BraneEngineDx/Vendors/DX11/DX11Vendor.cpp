@@ -132,7 +132,7 @@ IRenderContext* DX11Vendor::newRenderContext()
 
 void DX11Vendor::frameFence()
 {
-	dxContext.fence();
+	dxContext.frameFence();
 }
 
 ITexture2D * DX11Vendor::newTexture2D(Texture2DDesc& desc)

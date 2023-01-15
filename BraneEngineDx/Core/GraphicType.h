@@ -35,6 +35,8 @@ enum TexInternalType
 	TIT_Default,
 	TIT_R8_UF,
 	TIT_R8_F,
+	TIT_R8_UI,
+	TIT_R8_I,
 	TIT_RG8_UF,
 	TIT_RG8_F,
 	TIT_RGBA8_UF,
@@ -46,6 +48,8 @@ enum TexInternalType
 	TIT_RGBA16_FF,
 	TIT_D32_F,
 	TIT_R32_F,
+	TIT_R32_UI,
+	TIT_R32_I,
 	TIT_RGBA8_UI,
 	TIT_RGBA8_I
 };
@@ -102,6 +106,7 @@ enum GPUBufferType
 enum GPUBufferFormat
 {
 	GBF_Struct,
+	GBF_Raw,
 	GBF_Float,
 	GBF_Float2,
 	GBF_Float3,

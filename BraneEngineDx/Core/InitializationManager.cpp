@@ -1,6 +1,6 @@
 #include "InitializationManager.h"
 
-Initialization::Initialization(int priority) : priority(priority)
+Initialization::Initialization(InitializeStage stage, int priority) : stage(stage), priority(priority)
 {
     InitializationManager::instance().addInitialization(*this);
 }
@@ -16,13 +16,14 @@ InitializationManager& InitializationManager::instance()
     return self;
 }
 
-void InitializationManager::initialze()
+void InitializationManager::initialze(InitializeStage stage)
 {
-    for (auto b = initializations.begin(), e = initializations.end(); b != e; b++)
+    auto& range = initializations[stage];
+    for (auto b = range.begin(), e = range.end(); b != e; b++)
         b->second->initialze();
 }
 
 void InitializationManager::addInitialization(Initialization& initialization)
 {
-    initializations.insert(make_pair(initialization.priority, &initialization));
+    initializations[initialization.stage].insert(make_pair(initialization.priority, &initialization));
 }

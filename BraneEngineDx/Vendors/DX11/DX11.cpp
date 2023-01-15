@@ -24,8 +24,19 @@ bool DX11Context::createDevice(unsigned int width, unsigned int height)
 		createDeviceFlags, &featureLevel, 1, D3D11_SDK_VERSION, &device,
 		&FeatureLevelsSupported, &deviceContext)))
 		return false;
+
+	if (FAILED(device->QueryInterface<ID3D11Device5>(&device5)))
+		return false;
+
+	if (FAILED(deviceContext->QueryInterface<ID3D11DeviceContext4>(&deviceContext4)))
+		return false;
+
+	if (FAILED(device5->CreateFence(fenceValue, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence))))
+		return false;
+
 	if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory))))
 		return false;
+
 	createRenderState();
 	createInputLayout();
 
@@ -44,11 +55,20 @@ void DX11Context::cleanupDevice()
 	if (dxgiFactory) {
 		dxgiFactory.Reset();
 	}
-	if (device) {
-		device.Reset();
+	if (deviceContext4) {
+		deviceContext4.Reset();
 	}
 	if (deviceContext) {
 		deviceContext.Reset();
+	}
+	if (fence) {
+		fence.Reset();
+	}
+	if (device5) {
+		device5.Reset();
+	}
+	if (device) {
+		device.Reset();
 	}
 }
 
@@ -95,7 +115,7 @@ void DX11Context::createSwapChain(unsigned int width, unsigned int height, unsig
 	else {
 		swapChain->Present(0, 0);
 
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < backBufferCount; i++) {
 			if (i < 1) {
 				backBuffer[i].Reset();
 				backBufferRTV[i].Reset();
@@ -108,7 +128,7 @@ void DX11Context::createSwapChain(unsigned int width, unsigned int height, unsig
 		//frameLatencyWaitableObject = swapChain->GetFrameLatencyWaitableObject();
 	}
 
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < backBufferCount; i++) {
 		if (i < 1) {
 			swapChain->GetBuffer(i, IID_PPV_ARGS(backBuffer[i].GetAddressOf()));
 			ComPtr<ID3D11RenderTargetView>& rtv = backBufferRTV[i];
@@ -380,6 +400,10 @@ void DX11Context::swap(bool vsync, unsigned int maxFPS)
 {
 	this->maxFPS = maxFPS;
 
+	fenceValue++;
+
+	deviceContext4->Signal(fence.Get(), fenceValue);
+
 	swapChain->Present(vsync ? 1 : 0, 0);
 
 	//DWORD result = WaitForSingleObjectEx(
@@ -411,8 +435,15 @@ void DX11Context::swap(bool vsync, unsigned int maxFPS)
 	}
 }
 
-void DX11Context::fence()
+void DX11Context::frameFence()
 {
+	if (fence->GetCompletedValue() < fenceValue)
+	{
+		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+		fence->SetEventOnCompletion(fenceValue, eventHandle);
+		WaitForSingleObject(eventHandle, INFINITE);
+		CloseHandle(eventHandle);
+	}
 }
 
 void DX11Context::clearSRV()

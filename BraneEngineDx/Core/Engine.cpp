@@ -1,4 +1,4 @@
-#define ENABLE_MEMTRACER 1
+#define ENABLE_MEMTRACER 0
 #define _AFXDLL
 #include <filesystem>
 #include <tchar.h>
@@ -12,6 +12,7 @@
 #include "InitializationManager.h"
 #include "../resource.h"
 #include "Console.h"
+#include "Profile/ProfileCore.h"
 #include "Importer.h"
 #include "WUI/LoadingUI.h"
 #include "WUI/WUIViewPort.h"
@@ -400,6 +401,7 @@ void Engine::toggleFullscreen()
 
 void Engine::config()
 {
+	InitializationManager::instance().initialze(InitializeStage::BeforeEngineConfig);
 	if (configPath.empty())
 		configPath = "Config.ini";
 	ifstream f = ifstream(configPath);
@@ -577,6 +579,8 @@ void imGuiClean()
 
 void Engine::setup()
 {
+	InitializationManager::instance().initialze(InitializeStage::BeforeEngineSetup);
+
 	if (enableMemTracer) {
 #if ENABLE_MEMTRACER
 		mtracer::install_hook(true);
@@ -602,6 +606,9 @@ void Engine::setup()
 	if (!PhysicalWorld::init())
 		throw runtime_error("Physics Engine init failed");
 #endif
+
+	InitializationManager::instance().initialze(InitializeStage::BeforeWindowSetup);
+
 	RECT rect;
 	GetWindowRect(GetDesktopWindow(), &rect);
 	windowContext.fullscreenSize = { rect.right - rect.left, rect.bottom - rect.top };
@@ -622,6 +629,8 @@ void Engine::setup()
 	viewport.setText("BraneEngine v" + string(ENGINE_VERSION) + " | Vendor Api: " + vendor.getName());
 	windowContext.hwnd = viewport.create();
 	input.setHWND(windowContext.hwnd);
+
+	InitializationManager::instance().initialze(InitializeStage::BeforeRenderVendorSetup);
 
 	LoadingUI loadingUI("Engine/Banner/Banner.bmp", windowContext.hinstance);
 
@@ -646,7 +655,7 @@ void Engine::setup()
 			throw runtime_error("Vendor ImGui init failed");
 	}
 
-	InitializationManager::instance().initialze();
+	InitializationManager::instance().initialze(InitializeStage::BeforeAssetLoading);
 
 	currentWorld = new World();
 
@@ -735,6 +744,7 @@ void Engine::mainLoop(float deltaTime)
 	}
 	Time::update();
 	input.update();
+	ProfilorManager::instance().tick();
 	currentWorld->tick(deltaTime);
 	currentWorld->afterTick();
 	timer.record("CPU");

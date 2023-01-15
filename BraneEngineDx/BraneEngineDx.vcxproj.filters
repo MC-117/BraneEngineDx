@@ -1281,6 +1281,18 @@
     <ClInclude Include="Core\Test\GPUBufferTest.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Profile\ProfileCore.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Profile\RenderDocProfilor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Profile\renderdoc_app.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\PostProcess\CMAA2Pass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -2388,6 +2400,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\Test\GPUBufferTest.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Profile\RenderDocProfilor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Profile\ProfileCore.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\PostProcess\CMAA2Pass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -6,6 +6,7 @@
 
 #include <dxgi1_6.h>
 #include <d3d11.h>
+#include <d3d11_4.h>
 
 struct DX11Context
 {
@@ -13,13 +14,20 @@ struct DX11Context
 	HWND hWnd = NULL;
 	ComPtr<IDXGIFactory4> dxgiFactory = NULL;
 	ComPtr<ID3D11DeviceContext> deviceContext = NULL;
+	ComPtr<ID3D11DeviceContext4> deviceContext4 = NULL;
 	ComPtr<ID3D11Device> device = NULL;
+	ComPtr<ID3D11Device5> device5 = NULL;
 	ComPtr<IDXGISwapChain1> swapChain = NULL;
+
+	ComPtr<ID3D11Fence> fence = NULL;
 	HANDLE frameLatencyWaitableObject = NULL;
 
 	unsigned int maxFPS = 0;
 	Time lastTime;
 	Time duration;
+
+	UINT64 fenceValue = 0;
+	HANDLE fenceEvent;
 
 	int backBufferCount = 3;
 	int activeBackBufferIndex = 0;
@@ -60,7 +68,7 @@ struct DX11Context
 	void cleanupInputLayout();
 
 	void swap(bool vsync, unsigned int maxFPS);
-	void fence();
+	void frameFence();
 
 	void clearSRV();
 	void clearUAV();

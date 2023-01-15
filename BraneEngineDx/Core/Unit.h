@@ -447,7 +447,7 @@ protected:
 	static Time startTime;
 	static Time lastTime;
 	static Time deltaTime;
-	static unsigned long long frameCount;
+	static atomic_ullong frameCount;
 };
 
 class Timer

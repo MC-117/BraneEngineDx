@@ -1,4 +1,5 @@
 #include "PostProcessGraph.h"
+#include "CMAA2Pass.h"
 #include "SSAOPass.h"
 #include "BloomPass.h"
 #include "ToneMapPass.h"
@@ -40,6 +41,7 @@ void PostProcessGraph::removePostProcessPass(const string& name)
 
 void PostProcessGraph::addDefaultPasses()
 {
+	addPostProcessPass(*new CMAA2Pass());
 	addPostProcessPass(*new SSAOPass());
 	addPostProcessPass(*new DOFPass());
 	addPostProcessPass(*new BloomPass());

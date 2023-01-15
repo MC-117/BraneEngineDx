@@ -5,6 +5,7 @@
 #include "Console.h"
 #include "IVendor.h"
 #include "Engine.h"
+#include "Profile/ProfileCore.h"
 #include "RenderGraph/ForwardRenderGraph.h"
 #include "RenderGraph/DeferredRenderGraph.h"
 
@@ -97,6 +98,8 @@ void RenderPool::beginRender()
 	gameFence();
 
 	renderGraph->reset();
+
+	ProfilorManager::instance().beginFrame();
 }
 
 void RenderPool::render(bool guiOnly)
@@ -160,14 +163,20 @@ RenderPool & RenderPool::operator-=(Render & render)
 
 void RenderPool::gameFence()
 {
-	while (Time::frames() > 0 && Time::frames() > renderFrame) { this_thread::sleep_for(0ms); }
-	/*if (!destory)
-		VendorManager::getInstance().getVendor().frameFence();*/
+	unsigned long long gameFrames = Time::frames();
+	while (gameFrames > 0 && gameFrames > renderFrame) {
+		this_thread::sleep_for(0ms);
+		gameFrames = Time::frames();
+	}
+	if (!destory)
+		VendorManager::getInstance().getVendor().frameFence();
 }
 
 void RenderPool::renderFence()
 {
-	while (Time::frames() <= renderFrame) { this_thread::sleep_for(0ms); }
+	while (Time::frames() <= renderFrame) {
+		this_thread::sleep_for(0ms);
+	}
 }
 
 void RenderPool::renderThreadMain()
@@ -175,7 +184,8 @@ void RenderPool::renderThreadMain()
 	renderFence();
 	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
 	renderGraph->execute(context);
-	renderFrame++;
+	ProfilorManager::instance().endFrame();
+	renderFrame = Time::frames();
 }
 
 void RenderPool::renderThreadLoop(RenderPool* pool)

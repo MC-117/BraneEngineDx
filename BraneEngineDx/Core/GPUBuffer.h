@@ -18,7 +18,7 @@ public:
 	unsigned int bindBase(unsigned int index);
 	unsigned int resize(unsigned int size);
 	unsigned int uploadSubData(unsigned int first, unsigned int size, void* data);
-	unsigned int uploadData(unsigned int size, void* data);
+	unsigned int uploadData(unsigned int size, void* data, bool discard = false);
 	bool readData(void* data);
 	bool readSubData(unsigned int first, unsigned int size, void* data);
 

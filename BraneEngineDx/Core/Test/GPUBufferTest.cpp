@@ -88,9 +88,15 @@ void ColorBufferTestMeshActor::setMesh(Mesh* mesh)
 
 void ColorBufferTestMeshActor::prerender(SceneRenderData& sceneData)
 {
-	objectID = sceneData.setMeshTransform(transformMat);
-	colorBufferTestMeshRender.instanceID = objectID;
-	colorBufferTestMeshRender.instanceCount = 1;
+	if (objectID == -1) {
+		objectID = sceneData.setMeshTransform(transformMat);
+		colorBufferTestMeshRender.instanceID = objectID;
+		colorBufferTestMeshRender.instanceCount = 1;
+	}
+	else {
+		objectID = -1;
+		colorBufferTestMeshRender.instanceCount = 0;
+	}
 	colorBufferTestMeshRender.transformMat = transformMat;
 }
 

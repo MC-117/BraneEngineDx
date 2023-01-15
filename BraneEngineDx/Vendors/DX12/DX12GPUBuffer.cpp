@@ -125,7 +125,7 @@ unsigned int DX12GPUBuffer::bindBase(unsigned int index, BufferOption bufferOpti
 	return desc.id;
 }
 
-unsigned int DX12GPUBuffer::uploadData(unsigned int size, void* data)
+unsigned int DX12GPUBuffer::uploadData(unsigned int size, void* data, bool discard)
 {
 	resize(size);
 	if (size == 0)   

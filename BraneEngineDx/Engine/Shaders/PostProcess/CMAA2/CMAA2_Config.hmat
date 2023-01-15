@@ -1,0 +1,11 @@
+#pragma debug
+#define CMAA2_EDGE_UNORM 0
+#define CMAA2_UAV_STORE_TYPED 1
+#define CMAA2_UAV_STORE_TYPED_UNORM_FLOAT 0
+#define CMAA2_UAV_STORE_CONVERT_TO_SRGB 0
+#define CMAA_PACK_SINGLE_SAMPLE_EDGE_TO_HALF_WIDTH 0
+
+#define EdgesColor2x2CS main
+#define ProcessCandidatesCS main
+#define ComputeDispatchArgsCS main
+#define DeferredColorApply2x2CS main

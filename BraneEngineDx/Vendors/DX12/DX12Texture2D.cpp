@@ -132,6 +132,10 @@ DXGI_FORMAT DX12Texture2DInfo::toDX12InternalType(const TexInternalType& type)
 		return DXGI_FORMAT_R8_UNORM;
 	case TIT_R8_F:
 		return DXGI_FORMAT_R8_SNORM;
+	case TIT_R8_UI:
+		return DXGI_FORMAT_R8_UINT;
+	case TIT_R8_I:
+		return DXGI_FORMAT_R8_SINT;
 	case TIT_RG8_UF:
 		return DXGI_FORMAT_R8G8_UNORM;
 	case TIT_RG8_F:
@@ -148,6 +152,10 @@ DXGI_FORMAT DX12Texture2DInfo::toDX12InternalType(const TexInternalType& type)
 		return DXGI_FORMAT_R32_TYPELESS;
 	case TIT_R32_F:
 		return DXGI_FORMAT_R32_FLOAT;
+	case TIT_R32_UI:
+		return DXGI_FORMAT_R32_UINT;
+	case TIT_R32_I:
+		return DXGI_FORMAT_R32_SINT;
 	case TIT_RGBA8_UI:
 		return DXGI_FORMAT_R8G8B8A8_UINT;
 	case TIT_RGBA8_I:
@@ -166,6 +174,10 @@ DXGI_FORMAT DX12Texture2DInfo::toDX12ColorType(const TexInternalType& type)
 		return DXGI_FORMAT_R8_UNORM;
 	case TIT_R8_F:
 		return DXGI_FORMAT_R8_SNORM;
+	case TIT_R8_UI:
+		return DXGI_FORMAT_R8_UINT;
+	case TIT_R8_I:
+		return DXGI_FORMAT_R8_SINT;
 	case TIT_RG8_UF:
 		return DXGI_FORMAT_R8G8_UNORM;
 	case TIT_RG8_F:
@@ -182,6 +194,10 @@ DXGI_FORMAT DX12Texture2DInfo::toDX12ColorType(const TexInternalType& type)
 		return DXGI_FORMAT_R32_FLOAT;
 	case TIT_R32_F:
 		return DXGI_FORMAT_R32_FLOAT;
+	case TIT_R32_UI:
+		return DXGI_FORMAT_R32_UINT;
+	case TIT_R32_I:
+		return DXGI_FORMAT_R32_SINT;
 	case TIT_RGBA8_UI:
 		return DXGI_FORMAT_R8G8B8A8_UINT;
 	case TIT_RGBA8_I:

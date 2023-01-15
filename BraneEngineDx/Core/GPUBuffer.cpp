@@ -5,7 +5,7 @@ GPUBuffer::GPUBuffer(GPUBufferType type, GPUBufferFormat format, unsigned int st
 {
 	desc.type = type;
 	desc.format = format;
-	if (format == GBF_Struct)
+	if (format == GBF_Struct || format == GBF_Raw)
 		desc.cellSize = structSize;
 	else
 		desc.cellSize = getGPUBufferFormatCellSize(format);
@@ -58,7 +58,7 @@ unsigned int GPUBuffer::uploadSubData(unsigned int first, unsigned int size, voi
 	return vendorGPUBuffer->uploadSubData(first, size, data);
 }
 
-unsigned int GPUBuffer::uploadData(unsigned int size, void* data)
+unsigned int GPUBuffer::uploadData(unsigned int size, void* data, bool discard)
 {
 	newVendorGPUBuffer();
 	return vendorGPUBuffer->uploadData(size, data);

@@ -53,7 +53,7 @@ FragmentOut DEFAULT_SCREEN_MAIN
         }
         color *= rcp(weightSum);
         //color /= 1 - luminance(color);
-        color = max(1e-5, color) * 0.2f * smoothstep(0.0f, 0.2f, 1 - roughness);
+        color = max(1e-5, color) * 0.2f * smoothstep(0.4f, 0.7f, 1 - roughness);
     }
 
     fout.FragColor = float4(color, 1);

@@ -10,7 +10,7 @@ spine::SpineExtension* spine::getDefaultExtension()
 
 Spine2DInitialization Spine2DInitialization::instance;
 
-Spine2DInitialization::Spine2DInitialization() : Initialization(0)
+Spine2DInitialization::Spine2DInitialization() : Initialization(InitializeStage::BeforeAssetLoading, 0)
 {
 }
 

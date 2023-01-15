@@ -39,7 +39,7 @@ protected:
 	set<Render*> pool;
 	thread renderThread;
 
-	unsigned int renderFrame = 0;
+	atomic_ullong renderFrame = 0;
 	bool destory = false;
 
 	void gameFence();

@@ -3,7 +3,7 @@
 Time Time::startTime = Time::now();
 Time Time::lastTime;
 Time Time::deltaTime;
-unsigned long long Time::frameCount = 0;
+atomic_ullong Time::frameCount = 0;
 
 Time::Time(const __int64& nanosecond)
 	: chrono::steady_clock::time_point(chrono::nanoseconds(nanosecond))

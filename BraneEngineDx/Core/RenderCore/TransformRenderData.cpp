@@ -1,6 +1,8 @@
 #include "TransformRenderData.h"
 #include "RenderCommandList.h"
 #include "../Asset.h"
+#include "../Console.h"
+#include "../Engine.h"
 
 MeshTransformData::MeshTransformData()
 {
@@ -94,8 +96,10 @@ bool MeshTransformData::clean(unsigned int base, unsigned int count)
 	return true;
 }
 
-Material* MeshTransformRenderData::uploadMaterial = NULL;
-ShaderProgram* MeshTransformRenderData::uploadProgram = NULL;
+Material* MeshTransformRenderData::uploadTransformMaterial = NULL;
+ShaderProgram* MeshTransformRenderData::uploadTransformProgram = NULL;
+Material* MeshTransformRenderData::uploadInstanceDataMaterial = NULL;
+ShaderProgram* MeshTransformRenderData::uploadInstanceDataProgram = NULL;
 
 void MeshTransformRenderData::setFrequentUpdate(bool value)
 {
@@ -200,15 +204,25 @@ MeshTransformIndex* MeshTransformRenderData::setMeshPartTransform(MeshPart* mesh
 
 void MeshTransformRenderData::loadDefaultResource()
 {
-	if (uploadProgram == NULL) {
-		uploadMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/UploadTransform.mat");
-		if (uploadMaterial == NULL)
+	if (uploadTransformProgram == NULL) {
+		uploadTransformMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/UploadTransform.mat");
+		if (uploadTransformMaterial == NULL)
 			return;
-		uploadProgram = uploadMaterial->getShader()->getProgram(Shader_Default);
+		uploadTransformProgram = uploadTransformMaterial->getShader()->getProgram(Shader_Default);
 	}
-	if (uploadProgram == NULL)
+	if (uploadTransformProgram == NULL)
 		throw runtime_error("UploadTransform shader program is invalid");
-	uploadProgram->init();
+	uploadTransformProgram->init();
+
+	if (uploadInstanceDataProgram == NULL) {
+		uploadInstanceDataMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/UploadInstanceData.mat");
+		if (uploadInstanceDataMaterial == NULL)
+			return;
+		uploadInstanceDataProgram = uploadInstanceDataMaterial->getShader()->getProgram(Shader_Default);
+	}
+	if (uploadInstanceDataProgram == NULL)
+		throw runtime_error("UploadInstanceData shader program is invalid");
+	uploadInstanceDataProgram->init();
 }
 
 void MeshTransformRenderData::create()
@@ -218,16 +232,9 @@ void MeshTransformRenderData::create()
 	if (!needUpdate)
 		return;
 
-	unsigned int dataSize = meshTransformData.batchCount;
-	unsigned int indexSize = totalTransformIndexCount;
-	transformBuffer.resize(dataSize);
-	transformIndexBuffer.resize(indexSize);
-	unsigned int transformBase = 0, transformIndexBase = 0;
+	unsigned int transformIndexBase = 0;
 	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
 		b->second.indexBase = transformIndexBase;
-		for (int i = 0; i < b->second.batchCount; i++) {
-			b->second.indices[i].instanceID += transformBase;
-		}
 		transformIndexBase += b->second.batchCount;
 	}
 }
@@ -240,10 +247,11 @@ void MeshTransformRenderData::upload()
 {
 	if (!needUpdate)
 		return;
+	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
 	unsigned int dataSize = meshTransformData.batchCount;
 	unsigned int indexSize = totalTransformIndexCount;
+	transformInstanceBuffer.resize(indexSize);
 	transformBuffer.resize(dataSize);
-	transformIndexBuffer.resize(indexSize);
 	if (meshTransformData.updateAll) {
 		transformBuffer.uploadData(meshTransformData.batchCount, meshTransformData.transforms.data()->data());
 		meshTransformData.updateAll = false;
@@ -254,8 +262,7 @@ void MeshTransformRenderData::upload()
 			meshTransformData.uploadIndices[0] = uploadSize;
 			transformUploadBuffer.uploadData(uploadSize, meshTransformData.uploadTransforms.data());
 			transformUploadIndexBuffer.uploadData(uploadSize + 1, meshTransformData.uploadIndices.data());
-			IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
-			context.bindShaderProgram(uploadProgram);
+			context.bindShaderProgram(uploadTransformProgram);
 			context.bindBufferBase(transformUploadIndexBuffer.getVendorGPUBuffer(), "indexBuf");
 			context.bindBufferBase(transformUploadBuffer.getVendorGPUBuffer(), "srcBuf");
 			context.bindTexture(NULL, Vertex_Shader_Stage, TRANS_BIND_INDEX, -1);
@@ -265,7 +272,7 @@ void MeshTransformRenderData::upload()
 			context.bindTexture(NULL, Fragment_Shader_Stage, TRANS_BIND_INDEX, -1);
 			context.bindTexture(NULL, Compute_Shader_Stage, TRANS_BIND_INDEX, -1);
 			context.bindBufferBase(transformBuffer.getVendorGPUBuffer(), "dstBuf", { true });
-			Vector3u dim = uploadMaterial->getLocalSize();
+			Vector3u dim = uploadTransformMaterial->getLocalSize();
 			context.dispatchCompute(ceilf(uploadSize / (float)dim.x()), 1, 1);
 			context.clearOutputBufferBindings();
 		}
@@ -274,17 +281,48 @@ void MeshTransformRenderData::upload()
 			transformUploadIndexBuffer.resize(0);
 		}
 	}
-	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
-		transformIndexBuffer.uploadSubData(b->second.indexBase, b->second.batchCount,
-			b->second.indices.data());
+	vector<InstanceDrawData> instanceData;
+	instanceData.resize(indexSize);
+	int index = 0;
+	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++, index++) {
+		if (b->second.batchCount)
+			memcpy(&instanceData[b->second.indexBase], b->second.indices.data(), sizeof(InstanceDrawData) * b->second.batchCount);
+			/*transformInstanceBuffer.uploadSubData(b->second.indexBase, b->second.batchCount,
+				b->second.indices.data());*/
 	}
+
+	transformInstanceBuffer.uploadData(indexSize, instanceData.data());
+
+	/*if (indexSize) {
+		transformUploadInstanceBuffer.uploadData(indexSize, instanceData.data(), true);
+		context.bindShaderProgram(uploadInstanceDataProgram);
+		context.bindBufferBase(transformUploadInstanceBuffer.getVendorGPUBuffer(), "srcBuf");
+		context.clearVertexBindings();
+		context.bindBufferBase(transformInstanceBuffer.getVendorGPUBuffer(), "dstBuf", { true });
+		Vector3u dim = uploadTransformMaterial->getLocalSize();
+		context.dispatchCompute(ceilf(indexSize / (float)dim.x()), 1, 1);
+		context.clearOutputBufferBindings();
+	}*/
+
 	needUpdate = false;
+
+	/*if (Engine::input.getMouseButtonPress(MouseButtonEnum::Right) ||
+		Engine::input.getMouseButtonPress(MouseButtonEnum::Left) ||
+		Engine::input.getMouseButtonRelease(MouseButtonEnum::Left)) {
+		Console::log("Frame %lld:", Time::frames());
+		for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
+			string indices = to_string(b->second.indexBase) + " " + to_string(b->second.batchCount) + ":";
+			for (int i = 0; i < b->second.batchCount; i++)
+				indices += to_string(b->second.indices[i].instanceID) + " ";
+			Console::log(indices);
+		}
+	}*/
 }
 
 void MeshTransformRenderData::bind(IRenderContext& context)
 {
 	context.bindBufferBase(transformBuffer.getVendorGPUBuffer(), "Transforms"); // TRANS_BIND_INDEX
-	context.bindBufferBase(transformIndexBuffer.getVendorGPUBuffer(), TRANS_INDEX_BIND_INDEX);
+	context.bindBufferBase(transformInstanceBuffer.getVendorGPUBuffer(), TRANS_INDEX_BIND_INDEX);
 }
 
 void MeshTransformRenderData::clean()

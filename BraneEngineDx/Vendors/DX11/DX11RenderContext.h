@@ -35,6 +35,9 @@ public:
 	virtual void reset();
 	virtual void release();
 
+	virtual void* getDeviceHandle() const;
+
+	virtual void clearVertexBindings();
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, const string& name, BufferOption bufferOption = BufferOption());
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, unsigned int index, BufferOption bufferOption = BufferOption());
 	virtual unsigned int uploadBufferData(IGPUBuffer* buffer, unsigned int size, void* data);
@@ -56,6 +59,7 @@ public:
 
 	virtual unsigned int bindShaderProgram(ShaderProgram* program);
 	virtual unsigned int dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ);
+	virtual unsigned int dispatchComputeIndirect(IGPUBuffer* buffer, unsigned int byteOffset);
 
 	virtual void bindMaterialTextures(IMaterial* material);
 	virtual void bindMaterialImages(IMaterial* material);

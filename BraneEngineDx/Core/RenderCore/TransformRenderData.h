@@ -32,8 +32,11 @@ struct MeshTransformIndex
 
 struct MeshTransformRenderData : public IRenderData
 {
-	static Material* uploadMaterial;
-	static ShaderProgram* uploadProgram;
+	static Material* uploadTransformMaterial;
+	static ShaderProgram* uploadTransformProgram;
+	static Material* uploadInstanceDataMaterial;
+	static ShaderProgram* uploadInstanceDataProgram;
+
 	unsigned int totalTransformIndexCount = 0;
 	bool frequentUpdate = true;
 	bool delayUpdate = false;
@@ -45,7 +48,8 @@ struct MeshTransformRenderData : public IRenderData
 	GPUBuffer transformUploadBuffer = GPUBuffer(GB_Storage, GBF_Struct, 16 * sizeof(float));
 	GPUBuffer transformUploadIndexBuffer = GPUBuffer(GB_Storage, GBF_UInt);
 	GPUBuffer transformBuffer = GPUBuffer(GB_Storage, GBF_Struct, 16 * sizeof(float), GAF_ReadWrite, CAF_None);
-	GPUBuffer transformIndexBuffer = GPUBuffer(GB_Vertex, GBF_UInt2);
+	//GPUBuffer transformUploadInstanceBuffer = GPUBuffer(GB_Storage, GBF_UInt2);
+	GPUBuffer transformInstanceBuffer = GPUBuffer(GB_Vertex, GBF_UInt2);
 
 	void setFrequentUpdate(bool value);
 	void setDelayUpdate();
