@@ -352,6 +352,8 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 	timer.record("ImGui");
 
+	context.setGPUSignal();
+
 	/*----- Vendor swap -----*/
 	{
 		if (!VendorManager::getInstance().getVendor().swap(Engine::engineConfig, Engine::windowContext))
@@ -405,10 +407,6 @@ void DeferredRenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)
 	passes.push_back(make_pair("HiZ", &hizPass));
 	passes.push_back(make_pair("SSR", &ssrPass));
 	passes.push_back(make_pair("Forward", &forwardPass));
-	int i = 0;
-	for (auto& pass : this->passes) {
-		passes.push_back(make_pair("Pass_" + to_string(i), pass));
-	}
 	passes.push_back(make_pair("Blit", &blitPass));
 	passes.push_back(make_pair("ImGui", &imGuiPass));
 }

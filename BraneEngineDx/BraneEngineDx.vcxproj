@@ -496,6 +496,7 @@
     <ClInclude Include="Core\Physics\ClothMeshData.h" />
     <ClInclude Include="Core\Physics\ContactInfo.h" />
     <ClInclude Include="Core\PostProcess\BlurPass.h" />
+    <ClInclude Include="Core\PostProcess\ImagePass.h" />
     <ClInclude Include="Core\Profile\ProfileCore.h" />
     <ClInclude Include="Core\Profile\RenderDocProfilor.h" />
     <ClInclude Include="Core\Profile\renderdoc_app.h" />
@@ -835,6 +836,7 @@
     <ClCompile Include="Core\Editor\ReflectionProbeEditor.cpp" />
     <ClCompile Include="Core\Editor\RenderCore\DeferredRenderGraphEditor.cpp" />
     <ClCompile Include="Core\PostProcess\CMAA2Pass.cpp" />
+    <ClCompile Include="Core\PostProcess\ImagePass.cpp" />
     <ClCompile Include="Core\Profile\ProfileCore.cpp" />
     <ClCompile Include="Core\Profile\RenderDocProfilor.cpp" />
     <ClCompile Include="Core\ReflectionCapture.cpp" />

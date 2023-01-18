@@ -400,10 +400,6 @@ void DX11Context::swap(bool vsync, unsigned int maxFPS)
 {
 	this->maxFPS = maxFPS;
 
-	fenceValue++;
-
-	deviceContext4->Signal(fence.Get(), fenceValue);
-
 	swapChain->Present(vsync ? 1 : 0, 0);
 
 	//DWORD result = WaitForSingleObjectEx(
@@ -433,6 +429,13 @@ void DX11Context::swap(bool vsync, unsigned int maxFPS)
 		}
 		lastTime = Time::now();
 	}
+}
+
+void DX11Context::setGPUSignal()
+{
+	fenceValue++;
+
+	deviceContext4->Signal(fence.Get(), fenceValue);
 }
 
 void DX11Context::frameFence()

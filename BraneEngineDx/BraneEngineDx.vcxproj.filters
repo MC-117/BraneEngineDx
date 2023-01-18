@@ -1293,6 +1293,9 @@
     <ClInclude Include="Core\PostProcess\CMAA2Pass.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\PostProcess\ImagePass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -2409,6 +2412,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\PostProcess\CMAA2Pass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\PostProcess\ImagePass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

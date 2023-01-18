@@ -68,6 +68,7 @@ struct DX11Context
 	void cleanupInputLayout();
 
 	void swap(bool vsync, unsigned int maxFPS);
+	void setGPUSignal();
 	void frameFence();
 
 	void clearSRV();

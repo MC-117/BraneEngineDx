@@ -58,8 +58,7 @@ void CMAA2Pass::execute(IRenderContext& context)
 
 	context.dispatchComputeIndirect(workingExecuteIndirectBuffer.getVendorGPUBuffer(), 0);
 
-	image.texture = NULL;
-	context.bindImage(image, 0);
+	context.clearOutputBufferBindings();
 }
 
 bool CMAA2Pass::mapMaterialParameter(RenderInfo& info)
@@ -123,13 +122,14 @@ void CMAA2Pass::resize(const Unit2Di& size)
 	const int requiredDeferredColorApplyBuffer = size.x * size.y / 2 * m_textureSampleCount;
 	const int requiredListHeadsPixels = (size.x * size.y + 3) / 6;
 
-	workingEdgesTexture.resize(size.x, size.y);
+	workingEdgesTexture.resize((size.x + 1) / 2, size.y);
 	workingDeferredBlendItemListHeadsTexture.resize((size.x + 1) / 2, (size.y + 1) / 2);
 
 	workingShapeCandidatesBuffer.resize(requiredCandidatePixels);
 	workingDeferredBlendItemListBuffer.resize(requiredDeferredColorApplyBuffer);
 	workingDeferredBlendLocationListBuffer.resize(requiredListHeadsPixels);
 
-	workingControlBuffer.resize(16);
+	unsigned int initData[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	workingControlBuffer.uploadData(16, initData);
 	workingExecuteIndirectBuffer.resize(4);
 }

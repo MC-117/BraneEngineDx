@@ -25,6 +25,7 @@ public:
 	virtual void release() = 0;
 
 	virtual void* getDeviceHandle() const = 0;
+	virtual void setGPUSignal() = 0;
 
 	virtual void clearVertexBindings() = 0;
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, const string& name, BufferOption bufferOption = BufferOption()) = 0;

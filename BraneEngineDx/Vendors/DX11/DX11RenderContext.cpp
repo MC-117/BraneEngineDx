@@ -29,6 +29,11 @@ void* DX11RenderContext::getDeviceHandle() const
 	return dxContext.device.Get();
 }
 
+void DX11RenderContext::setGPUSignal()
+{
+	dxContext.setGPUSignal();
+}
+
 void DX11RenderContext::clearVertexBindings()
 {
 	ID3D11Buffer* buffers[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT] = { NULL };
