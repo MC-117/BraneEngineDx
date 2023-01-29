@@ -19,11 +19,11 @@ void LightRenderData::setLight(Light* light)
 	}
 	DirectLight* directLight = dynamic_cast<DirectLight*>(light);
 	if (directLight != NULL) {
-		directLightData.direction = directLight->getForward(WORLD);
-		directLightData.intensity = directLight->intensity;
-		directLightData.lightSpaceMat = MATRIX_UPLOAD_OP(directLight->getLightSpaceMatrix());
-		directLightData.shadowBias = directLight->getShadowBias();
-		directLightData.color = toLinearColor(directLight->color);
+		mainLightData.direction = directLight->getForward(WORLD);
+		mainLightData.intensity = directLight->intensity;
+		mainLightData.lightSpaceMat = MATRIX_UPLOAD_OP(directLight->getLightSpaceMatrix());
+		mainLightData.shadowBias = directLight->getShadowBias();
+		mainLightData.color = toLinearColor(directLight->color);
 		shadowCameraRenderData.data = directLight->shadowData.cameraData;
 		shadowCameraRenderData.surface.clearFlags = Clear_Depth;
 		shadowCameraRenderData.surface.renderTarget = shadowTarget;
@@ -33,7 +33,7 @@ void LightRenderData::setLight(Light* light)
 	}
 	PointLight* pointLight = dynamic_cast<PointLight*>(light);
 	if (pointLight != NULL) {
-		PointLightData data;
+		LocalLightData data;
 		data.position = pointLight->getPosition(WORLD);
 		data.intensity = pointLight->intensity;
 		data.color = toLinearColor(pointLight->color);
@@ -44,7 +44,7 @@ void LightRenderData::setLight(Light* light)
 
 void LightRenderData::create()
 {
-	directLightData.pointLightCount = pointLightDatas.size();
+	mainLightData.pointLightCount = pointLightDatas.size();
 }
 
 void LightRenderData::release()
@@ -53,21 +53,21 @@ void LightRenderData::release()
 
 void LightRenderData::upload()
 {
-	directLightBuffer.uploadData(1, &directLightData);
-	if (directLightData.pointLightCount > 0)
-		pointLightBuffer.uploadData(directLightData.pointLightCount, pointLightDatas.data());
+	mainLightBuffer.uploadData(1, &mainLightData);
+	if (mainLightData.pointLightCount > 0)
+		localLightBuffer.uploadData(mainLightData.pointLightCount, pointLightDatas.data());
 }
 
 void LightRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(directLightBuffer.getVendorGPUBuffer(), "DirectLightBuffer"); // DIRECT_LIGHT_BIND_INDEX
-	if (directLightData.pointLightCount > 0)
-		context.bindBufferBase(pointLightBuffer.getVendorGPUBuffer(), "pointLights"); // POINT_LIGHT_BIND_INDEX
+	context.bindBufferBase(mainLightBuffer.getVendorGPUBuffer(), "DirectLightBuffer"); // DIRECT_LIGHT_BIND_INDEX
+	if (mainLightData.pointLightCount > 0)
+		context.bindBufferBase(localLightBuffer.getVendorGPUBuffer(), "pointLights"); // POINT_LIGHT_BIND_INDEX
 }
 
 void LightRenderData::clean()
 {
 	shadowTarget = NULL;
-	directLightData.pointLightCount = 0;
+	mainLightData.pointLightCount = 0;
 	pointLightDatas.clear();
 }

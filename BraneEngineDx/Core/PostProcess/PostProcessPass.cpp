@@ -132,9 +132,8 @@ void PostProcessPass::resize(const Unit2Di & size)
 	this->size = size;
 }
 
-void PostProcessPass::onGUI(GUIRenderInfo& info)
+void PostProcessPass::onGUI(EditorInfo& info)
 {
-	ImGui::Checkbox("Enable", &enable);
 }
 
 void PostProcessPass::reset()
@@ -161,7 +160,7 @@ bool PostProcessPass::deserialize(const SerializationInfo & from)
 
 bool PostProcessPass::serialize(SerializationInfo & to)
 {
-	Serializable::serialize(to);
+	serializeInit(this, to);
 	to.set("name", name);
 	to.set("enable", enable ? "true" : "false");
 	if (material == NULL)

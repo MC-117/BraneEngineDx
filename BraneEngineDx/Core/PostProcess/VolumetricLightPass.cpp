@@ -138,7 +138,7 @@ void VolumetricLightPass::resize(const Unit2Di& size)
 	passBRenderTarget.resize(size.x * screenScale, size.y * screenScale);
 }
 
-void VolumetricLightPass::onGUI(GUIRenderInfo& info)
+void VolumetricLightPass::onGUI(EditorInfo& info)
 {
 	PostProcessPass::onGUI(info);
 	float scale = screenScale;

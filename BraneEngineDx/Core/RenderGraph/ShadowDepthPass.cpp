@@ -21,7 +21,7 @@ bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	command.transformData = cmd.transformData;
 	command.material = material;
 	command.mesh = meshRenderCommand->mesh;
-	command.directLightData = &cmd.sceneData->lightDataPack.directLightData;
+	command.mainLightData = &cmd.sceneData->lightDataPack.mainLightData;
 	command.transformIndex = transformIndex;
 	command.bindings = cmd.bindings;
 

@@ -162,7 +162,7 @@ bool ShaderCompiler::compile()
 					localSize.y() = y < 1 ? 1 : y;
 				}
 				if (command.size() > 3) {
-					int z = atoi(command[2].c_str());
+					int z = atoi(command[3].c_str());
 					localSize.z() = z < 1 ? 1 : z;
 				}
 				break;

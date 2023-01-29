@@ -14,7 +14,8 @@ enum ShapeComplexType
 	SIMPLE, COMPLEX, NONESHAPE
 };
 
-class Shape : public Serializable {
+class Shape : public Serializable
+{
 public:
 	Serialize(Shape,);
 

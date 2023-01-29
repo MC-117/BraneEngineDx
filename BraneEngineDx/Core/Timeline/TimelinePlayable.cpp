@@ -26,5 +26,6 @@ bool TimelinePlayable::deserialize(const SerializationInfo& from)
 
 bool TimelinePlayable::serialize(SerializationInfo& to)
 {
-	return Serializable::serialize(to);
+	serializeInit(this, to);
+	return true;
 }

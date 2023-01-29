@@ -15,6 +15,7 @@ public:
 	Texture2D(const Texture2DInfo& info, bool isStandard = false);
 	Texture2D(const string& file, bool isStandard = false);
 	Texture2D(Color color, unsigned int width, unsigned int height, unsigned int channel, bool isStandard = false);
+	Texture2D(unsigned char* bytes, unsigned int width, unsigned int height, unsigned int channel, bool isStandard = false, const Texture2DInfo& info = Texture2DInfo(), bool externalBytes = false);
 	Texture2D(unsigned int width, unsigned int height, unsigned int channel, bool isStandard = false, const Texture2DInfo& info = Texture2DInfo());
 	virtual ~Texture2D();
 
@@ -28,7 +29,7 @@ public:
 	Texture2DInfo getTextureInfo() const;
 
 	virtual unsigned long long getTextureID();
-	virtual void* getVendorTexture() const;
+	virtual ITexture* getVendorTexture() const;
 
 	void setAutoGenMip(bool value);
 	void setViewAsArray(bool value);

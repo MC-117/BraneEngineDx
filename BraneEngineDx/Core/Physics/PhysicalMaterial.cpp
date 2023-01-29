@@ -57,6 +57,7 @@ bool PhysicalMaterial::deserialize(const SerializationInfo& from)
 
 bool PhysicalMaterial::serialize(SerializationInfo& to)
 {
+	serializeInit(this, to);
 	to.set("mass", mass);
 	to.set("type", (int)physicalType);
 	to.set("angularDamping", angularDamping);

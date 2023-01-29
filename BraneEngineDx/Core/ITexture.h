@@ -95,6 +95,7 @@ struct Texture2DDesc : public TextureDesc
 	unsigned char* data = NULL;
 	unsigned int mipLevel = 1;
 	bool autoGenMip = true;
+	bool externalData = false;
 	unsigned int bindType = 0;
 };
 

@@ -91,4 +91,6 @@ public:
 	virtual void getPasses(vector<pair<string, RenderPass*>>& passes);
 
 	static Serializable* instantiate(const SerializationInfo& from);
+	virtual bool deserialize(const SerializationInfo& from) { return true; }
+	virtual bool serialize(SerializationInfo& to) { serializeInit(this, to); return true; }
 };

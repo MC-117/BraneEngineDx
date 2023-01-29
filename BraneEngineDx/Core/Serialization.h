@@ -430,11 +430,12 @@ inline bool SerializationInfo::get(const size_t i, T & object)
 class Serializable
 {
 public:
-	static Serializable* instantiate(const SerializationInfo& from) { return NULL; }
-	virtual ~Serializable() {}
-	virtual bool deserialize(const SerializationInfo& from) { return false; }
-	virtual bool serialize(SerializationInfo& to);
+	static Serializable* instantiate(const SerializationInfo& from);
+	virtual bool deserialize(const SerializationInfo& from) = 0;
+	virtual bool serialize(SerializationInfo& to) = 0;
 	virtual Serialization& getSerialization() const = 0;
+protected:
+	static void serializeInit(const Serializable* serializable, SerializationInfo& to);
 };
 
 class Attribute

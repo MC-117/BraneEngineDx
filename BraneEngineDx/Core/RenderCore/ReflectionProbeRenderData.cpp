@@ -1,9 +1,9 @@
 #include "ReflectionProbeRenderData.h"
-#include "../ReflectionCapture.h"
+#include "../ProbeSystem/ReflectionCaptureProbeRender.h"
 
-int ReflectionProbeRenderData::setProbe(ReflectionCapture* capture)
+int ReflectionProbeRenderData::setProbe(ReflectionCaptureProbeRender* capture)
 {
-	TextureCube* cubeMap = capture->getReflectionCubeMap();
+	TextureCube* cubeMap = capture->getProbeCubeMap();
 	ReflectionProbeData& data = probeDatas.emplace_back();
 	data.position = capture->getWorldPosition();
 	data.radius = capture->getRadius();

@@ -6,7 +6,7 @@
 
 class Light;
 
-struct DirectLightData
+struct MainLightData
 {
 	Vector3f direction;
 	float intensity = 0;
@@ -16,7 +16,7 @@ struct DirectLightData
 	unsigned int pointLightCount = 0;
 };
 
-struct PointLightData
+struct LocalLightData
 {
 	Vector3f position;
 	float intensity = 0;
@@ -26,10 +26,10 @@ struct PointLightData
 
 struct LightRenderData : public IRenderData
 {
-	DirectLightData directLightData;
-	vector<PointLightData> pointLightDatas;
-	GPUBuffer directLightBuffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(DirectLightData));
-	GPUBuffer pointLightBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(PointLightData));
+	MainLightData mainLightData;
+	vector<LocalLightData> pointLightDatas;
+	GPUBuffer mainLightBuffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(MainLightData));
+	GPUBuffer localLightBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(LocalLightData));
 
 	RenderTarget* shadowTarget = NULL;
 	CameraRenderData shadowCameraRenderData;

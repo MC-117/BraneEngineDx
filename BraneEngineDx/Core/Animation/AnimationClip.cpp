@@ -1070,7 +1070,7 @@ bool BlendSpaceAnimation::deserialize(const SerializationInfo & from)
 
 bool BlendSpaceAnimation::serialize(SerializationInfo & to)
 {
-	Serializable::serialize(to);
+	AnimationBase::serialize(to);
 	to.set("name", name);
 	SerializationInfo* clipWrapInfo = to.add("clipWrap");
 	clipWrapInfo->type = "Array";

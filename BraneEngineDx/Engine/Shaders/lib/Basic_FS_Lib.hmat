@@ -43,6 +43,15 @@ float3 fresnelSchlick(float cosTheta, float3 F0, float roughness)
     return F0 + (max(float3(r, r, r), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+float3 AOMultiBounce(float AO,float3 albedo)
+{
+	float3 a = 2.0404 * albedo - 0.3324;
+	float3 b = -4.7951 * albedo + 0.6417;
+	float3 c = 2.7552 * albedo + 0.6903;
+
+	return max(AO, ((AO * a + b) * AO + c) * AO);
+}
+
 float2 getTexureSize(in Texture2D tex) {
     float2 size;
     tex.GetDimensions(size.x, size.y);

@@ -69,6 +69,27 @@ Texture2D::Texture2D(Color color, unsigned int width, unsigned int height, unsig
 	desc.data = data;
 }
 
+Texture2D::Texture2D(unsigned char* bytes, unsigned int width, unsigned int height, unsigned int channel, bool isStandard, const Texture2DInfo& info, bool externalBytes)
+{
+	desc.width = width;
+	desc.height = height;
+	desc.channel = channel;
+	desc.info = info;
+	desc.data = bytes;
+	desc.externalData = externalBytes;
+	this->isStandard = isStandard;
+	if (isStandard) {
+		switch (desc.info.internalType)
+		{
+		case TIT_RGBA8_UF:
+			desc.info.internalType = TIT_SRGBA8_UF;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 Texture2D::Texture2D(unsigned int width, unsigned int height, unsigned int channel, bool isStandard, const Texture2DInfo& info)
 {
 	desc.width = width;
@@ -92,7 +113,7 @@ Texture2D::~Texture2D()
 {
 	if (!readOnly && vendorTexture != NULL)
 		delete vendorTexture;
-	if (desc.data != NULL)
+	if (!desc.externalData && desc.data != NULL)
 		delete[] desc.data;
 }
 
@@ -137,7 +158,7 @@ unsigned long long Texture2D::getTextureID()
 	return vendorTexture->getTextureID();
 }
 
-void* Texture2D::getVendorTexture() const
+ITexture* Texture2D::getVendorTexture() const
 {
 	return vendorTexture;
 }

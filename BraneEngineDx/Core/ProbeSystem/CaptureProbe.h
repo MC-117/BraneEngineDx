@@ -1,16 +1,19 @@
 #pragma once
 
-#include "ReflectionCapture.h"
-#include "Transform.h"
+#include "ReflectionCaptureProbeRender.h"
+#include "../Transform.h"
 
-class ReflectionProbe : public Transform
+class CaptureProbe : public Transform
 {
 public:
-	Serialize(ReflectionProbe, Transform);
+	Serialize(CaptureProbe, Transform);
 
-	ReflectionCapture capture;
+	CaptureProbeRender* captureProbeRender = NULL;
 
-	ReflectionProbe(const string& name = "ReflectionProbe");
+	CaptureProbe(const string& name = "CaptureProbe");
+
+	virtual CaptureProbeRender* createCaptureProbeRender(Serialization& serialization);
+	virtual CaptureProbeRender* getCaptureProbeRender();
 
 	virtual void prerender(SceneRenderData& sceneData);
 	virtual Render* getRender();

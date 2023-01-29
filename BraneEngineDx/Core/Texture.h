@@ -25,7 +25,7 @@ public:
 	virtual unsigned int bind();
 	virtual unsigned int bindBase(unsigned int index);
 	virtual unsigned long long getTextureID();
-	virtual void* getVendorTexture() const;
+	virtual ITexture* getVendorTexture() const;
 	virtual unsigned int resize(unsigned int width, unsigned int height);
 };
 

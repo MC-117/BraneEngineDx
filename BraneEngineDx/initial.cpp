@@ -185,7 +185,7 @@ void InitialWorld()
 	world += debugCamera;
 	world.switchCamera(debugCamera);
 
-	world += loadTestActor();
+	//world += loadTestActor();
 
 	static VehicleActor* vehicles = loadVehicle();
 	static VehicleActor* cubeVehicles = loadCubeVehicle();

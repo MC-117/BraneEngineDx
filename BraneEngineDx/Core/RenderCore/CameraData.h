@@ -20,7 +20,8 @@ struct CameraData
 	Vector3f cameraLeft;
 	float aspect;
 	Vector2f viewSize;
-	Vector2f user;
+	float distance;
+	float user;
 };
 
 struct ScreenHitInfo

@@ -200,6 +200,16 @@ SerializationInfo * SerializationInfo::get(const size_t i)
 	return NULL;
 }
 
+Serializable* Serializable::instantiate(const SerializationInfo& from)
+{
+	return NULL;
+}
+
+void Serializable::serializeInit(const Serializable* serializable, SerializationInfo& to)
+{
+	to.type = serializable->getSerialization().type;
+}
+
 map<filesystem::path, SerializationInfo*> Serialization::serializationInfoByPath;
 
 Serialization* Serialization::getBaseSerialization()
@@ -910,7 +920,7 @@ bool SVector2f::deserialize(const SerializationInfo & from)
 
 bool SVector2f::serialize(SerializationInfo & to)
 {
-	to.type = "SVector2f";
+	serializeInit(this, to);
 	to.set("x", x);
 	to.set("y", y);
 	return true;
@@ -958,7 +968,7 @@ bool SVector3f::deserialize(const SerializationInfo & from)
 
 bool SVector3f::serialize(SerializationInfo & to)
 {
-	to.type = "SVector3f";
+	serializeInit(this, to);
 	to.set("x", x);
 	to.set("y", y);
 	to.set("z", z);
@@ -1010,7 +1020,7 @@ bool SQuaternionf::deserialize(const SerializationInfo & from)
 
 bool SQuaternionf::serialize(SerializationInfo & to)
 {
-	to.type = "SQuaternionf";
+	serializeInit(this, to);
 	to.set("x", x);
 	to.set("y", y);
 	to.set("z", z);
@@ -1035,11 +1045,6 @@ SQuaternionf::operator Quaternionf()
 SQuaternionf::operator Quaternionf() const
 {
 	return Quaternionf(w, x, y, z);
-}
-
-bool Serializable::serialize(SerializationInfo & to)
-{
-	to.type = getSerialization().type; return true;
 }
 
 SerializeInstance(SColor);
@@ -1069,7 +1074,7 @@ bool SColor::deserialize(const SerializationInfo& from)
 
 bool SColor::serialize(SerializationInfo& to)
 {
-	to.type = "SColor";
+	serializeInit(this, to);
 	to.set("r", r);
 	to.set("g", g);
 	to.set("b", b);

@@ -85,7 +85,9 @@ Texture2D<uint4> tex : TEX_BINDING(id);\
 
 // Only work for pattern [tex] and [tex]Sampler.
 #define SAMPLE_TEX(tex, uv) (tex.Sample(tex##Sampler, (uv)))
+#define SAMPLE_TEX_OFFSET(tex, uv, off) (tex.Sample(tex##Sampler, (uv), (off)))
 #define SAMPLE_TEX_LOD(tex, uv, lod) (tex.SampleLevel(tex##Sampler, (uv), (lod)))
+#define SAMPLE_TEX_LOD_OFFSET(tex, uv, lod, off) (tex.SampleLevel(tex##Sampler, (uv), (lod), (off)))
 #define GATHER_TEX(tex, uv, off) (tex.Gather(tex##Sampler, (uv), (off)))
 #define LOAD_TEX(tex, pos) (tex.Load((pos)))
 

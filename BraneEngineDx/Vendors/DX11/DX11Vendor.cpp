@@ -31,6 +31,7 @@ bool DX11Vendor::setup(const EngineConfig & config, const WindowContext & contex
 	if (!dxContext.createDevice(context.screenSize.x, context.screenSize.y))
 		return false;
 	defaultRenderContext.deviceContext = dxContext.deviceContext;
+	defaultRenderContext.init();
 	DX11RenderTarget::initDepthBlit(dxContext);
 	return true;
 }

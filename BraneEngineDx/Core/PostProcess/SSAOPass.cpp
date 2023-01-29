@@ -126,7 +126,7 @@ void SSAOPass::resize(const Unit2Di& size)
 	screenRenderTarget.resize(size.x, size.y);
 }
 
-void SSAOPass::onGUI(GUIRenderInfo& info)
+void SSAOPass::onGUI(EditorInfo& info)
 {
 	PostProcessPass::onGUI(info);
 	float scale = screenScale;

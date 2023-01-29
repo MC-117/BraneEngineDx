@@ -214,6 +214,7 @@ void Camera::tick(float deltaTime)
 void Camera::afterTick()
 {
 	Transform::afterTick();
+	cameraRender.cameraData.distance = distance;
 	cameraRender.cameraData.cameraDir = getForward(WORLD);
 	cameraRender.cameraData.cameraUp = getUpward(WORLD);
 	cameraRender.cameraData.cameraLeft = getLeftward(WORLD);

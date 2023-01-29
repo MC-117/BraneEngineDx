@@ -37,7 +37,7 @@ bool BoneConstraint::deserialize(const SerializationInfo& from)
 
 bool BoneConstraint::serialize(SerializationInfo& to)
 {
-    Serializable::serialize(to);
+    serializeInit(this, to);
     to.set("enable", enable ? "true" : "false");
     return true;
 }

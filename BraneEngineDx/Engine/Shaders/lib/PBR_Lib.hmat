@@ -1,5 +1,6 @@
 #include "Light_Def.hmat"
 #include "Basic_FS_Lib.hmat"
+#include "EnvLight_Def.hmat"
 
 float D_GGX_TR(float3 N, float3 H, float a)
 {
@@ -119,7 +120,13 @@ float3 PBR_Lo_PointLight(in PointLight pointLight, float3 worldPos, float3 N, fl
 
 float3 PBR_Ambient(float3 albedo, float ao)
 {
-    return Float3(0.03) * albedo * ao;
+    return AOMultiBounce(ao, albedo);
+}
+
+float3 PBR_Ambient(float3 worldPos, float3 worldNorm, float3 albedo, float ao)
+{
+    float3 envLight = getEnvLight(worldPos, worldNorm);
+    return envLight * albedo * PBR_Ambient(albedo, ao);
 }
 
 float3 PBR_ColorCorrection(float3 color)

@@ -9,7 +9,7 @@ RegistProfilor(RenderDocProfilor);
 
 RenderDocProfilor::RenderDocProfilor()
 {
-    enable = false;
+    enable = true;
 }
 
 bool RenderDocProfilor::init()

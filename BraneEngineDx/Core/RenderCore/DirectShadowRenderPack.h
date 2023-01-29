@@ -6,7 +6,7 @@ struct DirectShadowRenderCommand : public IRenderCommand
 {
 	bool isStatic = false;
 	MeshTransformIndex* transformIndex = NULL;
-	DirectLightData* directLightData = NULL;
+	MainLightData* mainLightData = NULL;
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
 	virtual RenderMode getRenderMode() const;

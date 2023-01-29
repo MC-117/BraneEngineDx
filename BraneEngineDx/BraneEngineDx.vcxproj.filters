@@ -1242,10 +1242,10 @@
     <ClInclude Include="Core\RenderGraph\ShadowDepthPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\ReflectionCapture.h">
+    <ClInclude Include="Core\ProbeSystem\ReflectionCaptureProbeRender.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\ReflectionProbe.h">
+    <ClInclude Include="Core\ProbeSystem\CaptureProbe.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\RenderCore\ReflectionProbeRenderData.h">
@@ -1257,7 +1257,7 @@
     <ClInclude Include="Core\Editor\RenderCore\DeferredRenderGraphEditor.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Editor\ReflectionProbeEditor.h">
+    <ClInclude Include="Core\Editor\ProbeSystem\CaptureProbeEditor.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\RenderCore\RenderCore.h">
@@ -1294,6 +1294,42 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\PostProcess\ImagePass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\PostProcess\SMAAPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\PostProcess\SMAA_AreaTex.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\PostProcess\SMAA_SearchTex.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\EnvLightData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderGraph\SkyLightCapturePass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\SceneRenderData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ProbeSystem\EnvLightCaptureProbeRender.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Utility\SHMath.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ProbeSystem\CaptureProbeRender.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Editor\ProbeSystem\CaptureProbeRenderEditor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Editor\ProbeSystem\ReflectionCaptureProbeRenderEditor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Editor\ProbeSystem\EnvLightCaptureProbeRenderEditor.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -2375,10 +2411,10 @@
     <ClCompile Include="Core\RenderGraph\ShadowDepthPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\ReflectionProbe.cpp">
+    <ClCompile Include="Core\ProbeSystem\CaptureProbe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\ReflectionCapture.cpp">
+    <ClCompile Include="Core\ProbeSystem\ReflectionCaptureProbeRender.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderCore\ReflectionProbeRenderData.cpp">
@@ -2390,7 +2426,7 @@
     <ClCompile Include="Core\Editor\RenderCore\DeferredRenderGraphEditor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Editor\ReflectionProbeEditor.cpp">
+    <ClCompile Include="Core\Editor\ProbeSystem\CaptureProbeEditor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderGraph\ScreenHitPass.cpp">
@@ -2415,6 +2451,33 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\PostProcess\ImagePass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\PostProcess\SMAAPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\EnvLightData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\SceneRenderData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ProbeSystem\EnvLightCaptureProbeRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Utility\SHMath.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ProbeSystem\CaptureProbeRender.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Editor\ProbeSystem\CaptureProbeRenderEditor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Editor\ProbeSystem\ReflectionCaptureProbeRenderEditor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Editor\ProbeSystem\EnvLightCaptureProbeRenderEditor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

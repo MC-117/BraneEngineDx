@@ -18,7 +18,8 @@ struct CameraData
     float3 camLeft;
     float aspect;
     float2 viewSize;
-    float2 user;
+	float distance;
+    float user;
 };
 
 cbuffer CameraDataBuf : register(CAM_BIND_INDEX)

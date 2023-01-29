@@ -358,7 +358,7 @@ unsigned int DX11Texture2D::bind()
 		if (initData != NULL)
 			delete[] initData;
 	}
-	if (desc.data) {
+	if (desc.data && !desc.externalData) {
 		free(desc.data);
 		desc.data = NULL;
 	}

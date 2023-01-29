@@ -58,6 +58,15 @@ void CMAA2Pass::execute(IRenderContext& context)
 
 	context.dispatchComputeIndirect(workingExecuteIndirectBuffer.getVendorGPUBuffer(), 0);
 
+	if (enableDebugEdges) {
+		// DEBUGGING
+		int tgcX = (size.x + 16 - 1) / 16;
+		int tgcY = (size.y + 16 - 1) / 16;
+
+		context.bindShaderProgram(debugDrawEdgesProgram);
+		context.dispatchCompute(tgcX, tgcY, 1);
+	}
+
 	context.clearOutputBufferBindings();
 }
 
@@ -71,10 +80,12 @@ bool CMAA2Pass::mapMaterialParameter(RenderInfo& info)
 		computeDispatchArgsMaterial = getAssetByPath<Material>("Engine/Shaders/PostProcess/CMAA2/CMAA2_ComputeDispatchArgs.mat");
 	if (deferredColorApply2x2Material == NULL)
 		deferredColorApply2x2Material = getAssetByPath<Material>("Engine/Shaders/PostProcess/CMAA2/CMAA2_DeferredColorApply2x2.mat");
+	if (debugDrawEdgesMaterial == NULL)
+		debugDrawEdgesMaterial = getAssetByPath<Material>("Engine/Shaders/PostProcess/CMAA2/CMAA2_DebugDrawEdges.mat");
 
 	if (edgesColor2x2Material == NULL || processCandidatesMaterial == NULL ||
 		computeDispatchArgsMaterial == NULL || deferredColorApply2x2Material == NULL ||
-		resource == NULL || resource->screenTexture == NULL)
+		debugDrawEdgesMaterial == NULL || resource == NULL || resource->screenTexture == NULL)
 		return false;
 	return true;
 }
@@ -92,9 +103,11 @@ void CMAA2Pass::render(RenderInfo& info)
 	processCandidatesProgram = processCandidatesMaterial->getShader()->getProgram(Shader_Default);
 	computeDispatchArgsProgram = computeDispatchArgsMaterial->getShader()->getProgram(Shader_Default);
 	deferredColorApply2x2Program = deferredColorApply2x2Material->getShader()->getProgram(Shader_Default);
+	debugDrawEdgesProgram = debugDrawEdgesMaterial->getShader()->getProgram(Shader_Default);
 
 	if (edgesColor2x2Program == NULL || processCandidatesProgram == NULL ||
-		computeDispatchArgsProgram == NULL || deferredColorApply2x2Program == NULL) {
+		computeDispatchArgsProgram == NULL || deferredColorApply2x2Program == NULL ||
+		debugDrawEdgesProgram == NULL) {
 		Console::error("PostProcessPass: Shader_Default not found in CMAA2 shaders");
 		return;
 	}
@@ -102,15 +115,22 @@ void CMAA2Pass::render(RenderInfo& info)
 	if (edgesColor2x2Program->isComputable() &&
 		processCandidatesProgram->isComputable() &&
 		computeDispatchArgsProgram->isComputable() &&
-		deferredColorApply2x2Program->isComputable()) {
+		deferredColorApply2x2Program->isComputable() &&
+		debugDrawEdgesProgram->isComputable()) {
 
 		edgesColor2x2Program->init();
 		processCandidatesProgram->init();
 		computeDispatchArgsProgram->init();
 		deferredColorApply2x2Program->init();
+		debugDrawEdgesProgram->init();
 
 		info.renderGraph->addPass(*this);
 	}
+}
+
+void CMAA2Pass::onGUI(EditorInfo& info)
+{
+	ImGui::Checkbox("EnableDebugEdges", &enableDebugEdges);
 }
 
 void CMAA2Pass::resize(const Unit2Di& size)

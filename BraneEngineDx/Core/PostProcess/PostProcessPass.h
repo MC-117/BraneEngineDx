@@ -4,7 +4,7 @@
 
 #include "../Render.h"
 
-struct GUIRenderInfo;
+struct EditorInfo;
 
 struct PostProcessResource
 {
@@ -39,7 +39,7 @@ struct PostProcessResource
 	void reset();
 };
 
-class PostProcessPass : public Serializable, public RenderPass
+class PostProcessPass : public RenderPass, public Serializable
 {
 public:
 	Serialize(PostProcessPass,);
@@ -60,7 +60,7 @@ public:
 	virtual void render(RenderInfo& info);
 	virtual void resize(const Unit2Di& size);
 
-	virtual void onGUI(GUIRenderInfo& info);
+	virtual void onGUI(EditorInfo& info);
 	virtual void reset();
 
 	static Serializable* instantiate(const SerializationInfo& from);

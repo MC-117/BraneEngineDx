@@ -98,6 +98,8 @@ public:
 	virtual void reset() = 0;
 
 	static Serializable* instantiate(const SerializationInfo& from) { return NULL; }
+	virtual bool deserialize(const SerializationInfo& from) { return true; }
+	virtual bool serialize(SerializationInfo& to) { serializeInit(this, to); return true; }
 };
 
 class AnimationClip : public AnimationBase
@@ -140,7 +142,7 @@ public:
 };
 
 class Skeleton;
-class BlendSpaceAnimation : public AnimationBase, public Serializable
+class BlendSpaceAnimation : public AnimationBase
 {
 public:
 	Serialize(BlendSpaceAnimation, AnimationBase);

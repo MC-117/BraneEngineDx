@@ -11,7 +11,6 @@ Count bloomIter: 6
 Texture sampleMap
 #vertex use postprocess
 #fragment postprocess
-#pragma debug
 #include "../lib/Basic_FS_Lib.hmat"
 #include "../lib/ScreenPass_Def.hmat"
 

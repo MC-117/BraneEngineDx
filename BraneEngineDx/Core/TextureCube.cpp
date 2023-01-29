@@ -89,7 +89,7 @@ unsigned long long TextureCube::getTextureID()
 	return vendorTexture->getTextureID();
 }
 
-void* TextureCube::getVendorTexture() const
+ITexture* TextureCube::getVendorTexture() const
 {
 	return vendorTexture;
 }

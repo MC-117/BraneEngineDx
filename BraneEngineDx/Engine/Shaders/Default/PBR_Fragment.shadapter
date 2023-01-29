@@ -95,7 +95,7 @@ FragmentOut SURFACE_MAIN
     }
 
     // Combination
-    float3 ambient = PBR_Ambient(surf.albedo.xyz, surf.ao);
+    float3 ambient = PBR_Ambient(surf.WorldPos, surf.Normal, surf.albedo.xyz, surf.ao);
     float3 emissionColor = SAMPLE_TEX(emissionMap, surf.TexCoords).rgb;
     float3 color = ambient + Lo;
 

@@ -90,6 +90,7 @@ void DeferredColorApply2x2CS( uint3 dispatchThreadID : SV_DispatchThreadID, uint
         lpfloat4 outColor = outColors;
         outColor.rgb /= outColor.a;
 #endif
+        outColor.rgb = float3(1, 0, 0);
         FinalUAVStore( pixelPos, lpfloat3(outColor.rgb) );
     }
 }

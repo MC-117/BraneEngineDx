@@ -9,6 +9,14 @@ DX11RenderContext::DX11RenderContext(DX11Context& context, RenderContextDesc& de
 {
 }
 
+void DX11RenderContext::init()
+{
+	if (FAILED(deviceContext->QueryInterface<ID3D11DeviceContext4>(&deviceContext4)))
+		throw runtime_error("ID3D11DeviceContext4 not support");
+	if (FAILED(dxContext.device5->CreateFence(fenceValue, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence))))
+		throw runtime_error("Fence create failed");
+}
+
 void DX11RenderContext::reset()
 {
 	clearSRV();
@@ -20,6 +28,10 @@ void DX11RenderContext::release()
 {
 	if (drawInfoBuf)
 		drawInfoBuf.Reset();
+	if (fence)
+		fence.Reset();
+	if (deviceContext4)
+		deviceContext4.Reset();
     if (deviceContext)
         deviceContext.Reset();
 }
@@ -31,7 +43,25 @@ void* DX11RenderContext::getDeviceHandle() const
 
 void DX11RenderContext::setGPUSignal()
 {
-	dxContext.setGPUSignal();
+	fenceValue++;
+
+	deviceContext4->Signal(fence.Get(), fenceValue);
+}
+
+void DX11RenderContext::waitSignalGPU()
+{
+	deviceContext4->Wait(fence.Get(), fenceValue);
+}
+
+void DX11RenderContext::waitSignalCPU()
+{
+	if (fence->GetCompletedValue() < fenceValue)
+	{
+		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+		fence->SetEventOnCompletion(fenceValue, eventHandle);
+		WaitForSingleObject(eventHandle, INFINITE);
+		CloseHandle(eventHandle);
+	}
 }
 
 void DX11RenderContext::clearVertexBindings()
@@ -53,6 +83,60 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, const string&
 	return bindBufferBase(dxBuffer, desc.offset, bufferOption);
 }
 
+void bindCBToStage(ComPtr<ID3D11DeviceContext> deviceContext, ShaderProgram* program, ComPtr<ID3D11Buffer> buffer, unsigned int index)
+{
+	for (auto b = program->shaderStages.begin(), e = program->shaderStages.end(); b != e; b++) {
+		switch (b->first)
+		{
+		case Vertex_Shader_Stage:
+			deviceContext->VSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			break;
+		case Fragment_Shader_Stage:
+			deviceContext->PSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			break;
+		case Geometry_Shader_Stage:
+			deviceContext->GSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			break;
+		case Compute_Shader_Stage:
+			deviceContext->CSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			break;
+		case Tessellation_Control_Shader_Stage:
+			deviceContext->HSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			break;
+		case Tessellation_Evalution_Shader_Stage:
+			deviceContext->DSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			break;
+		}
+	}
+}
+
+void bindSRToStage(ComPtr<ID3D11DeviceContext> deviceContext, ShaderProgram* program, ComPtr<ID3D11ShaderResourceView> srv, unsigned int index)
+{
+	for (auto b = program->shaderStages.begin(), e = program->shaderStages.end(); b != e; b++) {
+		switch (b->first)
+		{
+		case Vertex_Shader_Stage:
+			deviceContext->VSSetShaderResources(index, 1, srv.GetAddressOf());
+			break;
+		case Fragment_Shader_Stage:
+			deviceContext->PSSetShaderResources(index, 1, srv.GetAddressOf());
+			break;
+		case Geometry_Shader_Stage:
+			deviceContext->GSSetShaderResources(index, 1, srv.GetAddressOf());
+			break;
+		case Compute_Shader_Stage:
+			deviceContext->CSSetShaderResources(index, 1, srv.GetAddressOf());
+			break;
+		case Tessellation_Control_Shader_Stage:
+			deviceContext->HSSetShaderResources(index, 1, srv.GetAddressOf());
+			break;
+		case Tessellation_Evalution_Shader_Stage:
+			deviceContext->DSSetShaderResources(index, 1, srv.GetAddressOf());
+			break;
+		}
+	}
+}
+
 unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int index, BufferOption bufferOption)
 {
 	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(buffer);
@@ -71,12 +155,13 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 		switch (dxBuffer->desc.type)
 		{
 		case GB_Constant:
-			deviceContext->VSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
+			bindCBToStage(deviceContext, currentProgram, dxBuffer->dx11Buffer, index);
+			/*deviceContext->VSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
 			deviceContext->PSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
 			deviceContext->CSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
 			deviceContext->GSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
 			deviceContext->HSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-			deviceContext->DSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
+			deviceContext->DSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());*/
 			break;
 		case GB_Vertex:
 		{
@@ -93,12 +178,13 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 			break;
 		}
 		case GB_Storage:
-			dxContext.deviceContext->VSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
-			dxContext.deviceContext->PSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
-			dxContext.deviceContext->GSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
-			dxContext.deviceContext->HSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
-			dxContext.deviceContext->DSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
-			dxContext.deviceContext->CSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			bindSRToStage(deviceContext, currentProgram, dxBuffer->dx11BufferSRV, index);
+			/*deviceContext->VSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			deviceContext->PSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			deviceContext->GSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			deviceContext->HSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			deviceContext->DSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
+			deviceContext->CSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());*/
 			break;
 		default:
 			throw runtime_error("Unknown Error");
@@ -454,33 +540,6 @@ void DX11RenderContext::bindMaterialImages(IMaterial* material)
 	}
 }
 
-void bindCBToStage(ComPtr<ID3D11DeviceContext> deviceContext, ShaderProgram* program, ComPtr<ID3D11Buffer> buffer, unsigned int index)
-{
-	for (auto b = program->shaderStages.begin(), e = program->shaderStages.end(); b != e; b++) {
-		switch (b->first)
-		{
-		case Vertex_Shader_Stage:
-			deviceContext->VSSetConstantBuffers(index, 1, buffer.GetAddressOf());
-			break;
-		case Fragment_Shader_Stage:
-			deviceContext->PSSetConstantBuffers(index, 1, buffer.GetAddressOf());
-			break;
-		case Geometry_Shader_Stage:
-			deviceContext->GSSetConstantBuffers(index, 1, buffer.GetAddressOf());
-			break;
-		case Compute_Shader_Stage:
-			deviceContext->CSSetConstantBuffers(index, 1, buffer.GetAddressOf());
-			break;
-		case Tessellation_Control_Shader_Stage:
-			deviceContext->HSSetConstantBuffers(index, 1, buffer.GetAddressOf());
-			break;
-		case Tessellation_Evalution_Shader_Stage:
-			deviceContext->DSSetConstantBuffers(index, 1, buffer.GetAddressOf());
-			break;
-		}
-	}
-}
-
 void DX11RenderContext::bindMaterialBuffer(IMaterial* material)
 {
 	if (currentProgram == NULL)
@@ -780,6 +839,12 @@ void DX11RenderContext::setRenderPostMultiplyState()
 void DX11RenderContext::setRenderPostMaskState()
 {
 	deviceContext->OMSetBlendState(dxContext.blendMaskWriteOn.Get(), NULL, 0xFFFFFFFF);
+	deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+}
+
+void DX11RenderContext::setRenderPostReplaceState()
+{
+	deviceContext->OMSetBlendState(dxContext.blendOffWriteOn.Get(), NULL, 0xFFFFFFFF);
 	deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
 }
 

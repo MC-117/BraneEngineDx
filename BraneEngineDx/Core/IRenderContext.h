@@ -21,11 +21,15 @@ public:
 
 	IRenderContext(RenderContextDesc& desc);
 
+	virtual void init() = 0;
+
 	virtual void reset() = 0;
 	virtual void release() = 0;
 
 	virtual void* getDeviceHandle() const = 0;
 	virtual void setGPUSignal() = 0;
+	virtual void waitSignalGPU() = 0;
+	virtual void waitSignalCPU() = 0;
 
 	virtual void clearVertexBindings() = 0;
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, const string& name, BufferOption bufferOption = BufferOption()) = 0;
@@ -74,6 +78,7 @@ public:
 	virtual void setRenderPostPremultiplyAlphaState() = 0;
 	virtual void setRenderPostMultiplyState() = 0;
 	virtual void setRenderPostMaskState() = 0;
+	virtual void setRenderPostReplaceState() = 0;
 	virtual void setCullState(CullType type) = 0;
 	virtual void setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h) = 0;
 

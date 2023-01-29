@@ -7,6 +7,7 @@
 #include "BlurPass.h"
 #include "DOFPass.h"
 #include "VolumetricLightPass.h"
+#include "SMAAPass.h"
 
 SerializeInstance(PostProcessGraph);
 
@@ -42,13 +43,14 @@ void PostProcessGraph::removePostProcessPass(const string& name)
 
 void PostProcessGraph::addDefaultPasses()
 {
-	addPostProcessPass(*new ImagePass());
-	addPostProcessPass(*new CMAA2Pass());
+	//addPostProcessPass(*new ImagePass());
+	//addPostProcessPass(*new CMAA2Pass());
 	addPostProcessPass(*new SSAOPass());
 	addPostProcessPass(*new DOFPass());
 	addPostProcessPass(*new BloomPass());
 	addPostProcessPass(*new VolumetricLightPass());
 	addPostProcessPass(*new ToneMapPass());
+	addPostProcessPass(*new SMAAPass());
 	//addPostProcessPass(*new BlurPass());
 }
 
@@ -93,7 +95,7 @@ bool PostProcessGraph::deserialize(const SerializationInfo & from)
 
 bool PostProcessGraph::serialize(SerializationInfo & to)
 {
-	Serializable::serialize(to);
+	serializeInit(this, to);
 	for (auto b = passes.begin(), e = passes.end(); b != e; b++) {
 		to.set((*b)->getName(), **b);
 	}

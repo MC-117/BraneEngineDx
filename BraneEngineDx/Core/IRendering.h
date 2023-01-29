@@ -18,7 +18,7 @@ public:
 
 	virtual ~IRendering() {}
 	virtual Matrix4f getTransformMatrix() const = 0;
-	virtual vector<Matrix4f>& getTransformMatrixs() { return vector<Matrix4f>(); }
+	virtual vector<Matrix4f>& getTransformMatrixs() = 0;
 	virtual Matrix4f getLightSpaceMatrix() const = 0;
 	virtual RenderType getRenderType() const = 0;
 	virtual Shader* getShader() const = 0;

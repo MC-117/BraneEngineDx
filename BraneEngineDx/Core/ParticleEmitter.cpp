@@ -328,7 +328,7 @@ void serializeRange(const Range<float>& range, SerializationInfo * to)
 
 bool ParticleEmitter::serialize(SerializationInfo & to)
 {
-	Serializable::serialize(to);
+	serializeInit(this, to);
 	to.add("screenAlignmentType", (float)(int)screenAlignmentType);
 	SerializationInfo* minfo = to.add("material");
 	if (minfo != NULL) {

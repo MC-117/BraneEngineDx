@@ -10,7 +10,6 @@ Texture temp2Map
 #vertex use postprocess
 #fragment postprocess
 
-#pragma debug
 #include "../lib/Basic_FS_Lib.hmat"
 #include "../lib/ScreenPass_Def.hmat"
 #include "../lib/Light_Def.hmat"

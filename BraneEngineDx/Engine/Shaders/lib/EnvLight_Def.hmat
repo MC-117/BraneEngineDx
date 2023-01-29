@@ -1,0 +1,61 @@
+#include "SH_Lib.hmat"
+
+struct EnvLightData
+{
+    float3 tintColor;
+    int reverseIndex;
+	float3 position;
+	float radius;
+	float falloff;
+	float cutoff;
+    float2 pad;
+	float4 v[7];
+};
+
+StructuredBuffer<EnvLightData> envLightDatas;
+
+float3 calEnvLightFromSH(in EnvLightData data, float3 worldNorm)
+{
+    float4 NormalVector = float4(worldNorm, 1.0f); 
+
+    float3 Intermediate0, Intermediate1, Intermediate2;
+    Intermediate0.x = dot(data.v[0], NormalVector);
+    Intermediate0.y = dot(data.v[1], NormalVector);
+    Intermediate0.z = dot(data.v[2], NormalVector);
+
+    float4 vB = NormalVector.xyzz * NormalVector.yzzx;
+    Intermediate1.x = dot(data.v[3], vB);
+    Intermediate1.y = dot(data.v[4], vB);
+    Intermediate1.z = dot(data.v[5], vB);
+
+    float vC = NormalVector.x * NormalVector.x - NormalVector.y * NormalVector.y;
+    Intermediate2 = data.v[6].xyz * vC;
+
+    return max(0, Intermediate0 + Intermediate1 + Intermediate2);
+}
+
+float3 getEnvLight(float3 worldPos, float3 worldNorm)
+{
+    uint count, stride;
+	envLightDatas.GetDimensions(count, stride);
+	float3 color = float3(0, 0, 0);
+	float weightSum = 0;
+
+    for (int i = 0; i < count; i++) {
+		EnvLightData data = envLightDatas[i];
+        float dis = distance(data.position, worldPos);
+        float weight = 1 - dis / data.radius;
+
+        if (weight > 0.0001) {
+            color += weight * smoothstep(data.cutoff, data.falloff, data.radius - dis) *
+                data.tintColor * calEnvLightFromSH(data, worldNorm);
+            weightSum += weight;
+        }
+
+		if (data.reverseIndex == 0)
+			break;
+    }
+    
+	color *= rcp(weightSum);
+    return max(0, color);
+}

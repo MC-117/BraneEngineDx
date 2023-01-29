@@ -52,10 +52,15 @@ bool DOFPass::mapMaterialParameter(RenderInfo & info)
 {
 	if (material == NULL)
 		material = getAssetByPath<Material>("Engine/Shaders/PostProcess/DOFPassFS.mat");
-	if (material == NULL || resource == NULL ||
+	cameraRenderData = resource->cameraRenderData;
+	if (material == NULL || resource == NULL || cameraRenderData == NULL ||
 		resource->screenTexture == NULL || resource->depthTexture == NULL)
 		return false;
 	materialRenderData = material->getRenderData();
+	if (autoFocus) {
+		CameraRenderData* data = dynamic_cast<CameraRenderData*>(cameraRenderData);
+		material->setScalar("focusDistance", data->data.distance + focusLengthOffset);
+	}
 	return materialRenderData;
 }
 
@@ -80,13 +85,18 @@ void DOFPass::render(RenderInfo & info)
 		screenMapSamplerSlot = program->getAttributeOffset("screenMapSampler").offset;
 		depthMapSlot = program->getAttributeOffset("depthMap").offset;
 		depthMapSamplerSlot = program->getAttributeOffset("depthMapSampler").offset;
-		cameraRenderData = resource->cameraRenderData;
 
-		if (screenMapSlot == -1 || depthMapSlot == -1 || cameraRenderData == NULL)
+		if (screenMapSlot == -1 || depthMapSlot == -1)
 			return;
 
 		info.renderGraph->addPass(*this);
 	}
+}
+
+void DOFPass::onGUI(EditorInfo& info)
+{
+	ImGui::Checkbox("AutoFocus", &autoFocus);
+	ImGui::DragFloat("FocusLengthOffset", &focusLengthOffset);
 }
 
 void DOFPass::resize(const Unit2Di & size)

@@ -25,7 +25,7 @@ public:
 	virtual int getMipLevels() const;
 
 	virtual unsigned long long getTextureID();
-	virtual void* getVendorTexture() const;
+	virtual ITexture* getVendorTexture() const;
 
 	void setAutoGenMip(bool value);
 	void setViewAsArray(bool value);

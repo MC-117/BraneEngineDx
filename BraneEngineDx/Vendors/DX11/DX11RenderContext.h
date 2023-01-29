@@ -18,6 +18,9 @@ public:
 	DrawInfo uploadedDrawInfo;
 	ComPtr<ID3D11Buffer> drawInfoBuf = NULL;
 	ComPtr<ID3D11DeviceContext> deviceContext = NULL;
+	ComPtr<ID3D11DeviceContext4> deviceContext4 = NULL;
+	ComPtr<ID3D11Fence> fence = NULL;
+	UINT64 fenceValue = 0;
 	
 	unordered_set<ITexture*> srvBindings;
 	unordered_set<ITexture*> uavBindings;
@@ -32,11 +35,15 @@ public:
 
 	DX11RenderContext(DX11Context& context, RenderContextDesc& desc);
 
+	virtual void init();
+
 	virtual void reset();
 	virtual void release();
 
 	virtual void* getDeviceHandle() const;
 	virtual void setGPUSignal();
+	virtual void waitSignalGPU();
+	virtual void waitSignalCPU();
 
 	virtual void clearVertexBindings();
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, const string& name, BufferOption bufferOption = BufferOption());
@@ -91,6 +98,7 @@ public:
 	virtual void setRenderPostPremultiplyAlphaState();
 	virtual void setRenderPostMultiplyState();
 	virtual void setRenderPostMaskState();
+	virtual void setRenderPostReplaceState();
 	virtual void setCullState(CullType type);
 	virtual void setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 

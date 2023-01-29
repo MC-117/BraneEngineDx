@@ -115,7 +115,7 @@ bool Base::deserialize(const SerializationInfo& from)
 
 bool Base::serialize(SerializationInfo& to)
 {
-    Serializable::serialize(to);
+    serializeInit(this, to);
     string path = to.path;
     if (!to.path.empty()) {
         if (!createAssetFromPath(path, false)) {

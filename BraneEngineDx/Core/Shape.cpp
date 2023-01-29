@@ -99,7 +99,7 @@ bool Shape::deserialize(const SerializationInfo & from)
 
 bool Shape::serialize(SerializationInfo & to)
 {
-	Serializable::serialize(to);
+	serializeInit(this, to);
 	to.set("minPoint", SVector3f(bound.minVal));
 	to.set("maxPoint", SVector3f(bound.maxVal));
 	return true;

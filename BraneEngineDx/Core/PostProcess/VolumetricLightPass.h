@@ -25,7 +25,7 @@ public:
 	virtual bool mapMaterialParameter(RenderInfo& info);
 	virtual void render(RenderInfo& info);
 	virtual void resize(const Unit2Di& size);
-	virtual void onGUI(GUIRenderInfo& info);
+	virtual void onGUI(EditorInfo& info);
 
 	void setScreenScale(float scale);
 	float getScreenScale();

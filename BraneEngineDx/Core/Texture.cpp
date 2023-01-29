@@ -66,7 +66,7 @@ unsigned long long Texture::getTextureID()
 	return 0;
 }
 
-void* Texture::getVendorTexture() const
+ITexture* Texture::getVendorTexture() const
 {
 	return NULL;
 }

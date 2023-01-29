@@ -24,16 +24,17 @@ float4 getReflectionColor(float3 L, float3 worldPos)
 	float weightSum = 0;
 	for (int i = 0; i < count; i++) {
 		ReflectionProbeData data = reflectionProbes[i];
-		if (data.cubeMapIndex < 0)
-			continue;
-		float dis = distance(data.position, worldPos);
-		float diff = data.radius - dis;
-		if (diff > 0) {
+		if (data.cubeMapIndex >= 0) {
+			float dis = distance(data.position, worldPos);
 			float weight = 1 - dis / data.radius;
-			float4 sampleColor = SAMPLE_TEX_LOD(reflectionCubeMap, float4(L, data.cubeMapIndex), 0);
-			color += sampleColor * weight * smoothstep(data.cutoff, data.falloff, diff) * data.tintColor;
-			weightSum += weight;
+			if (weight > 0.0001) {
+				float4 sampleColor = SAMPLE_TEX_LOD(reflectionCubeMap, float4(L, data.cubeMapIndex), 0);
+				color += sampleColor * weight * smoothstep(data.cutoff, data.falloff, data.radius - dis) * data.tintColor;
+				weightSum += weight;
+			}
 		}
+		if (data.reverseIndex == 0)
+			break;
 	}
 	color *= rcp(weightSum);
 	return max(0, color);

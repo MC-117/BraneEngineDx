@@ -7,7 +7,7 @@
 #include "CameraRenderData.h"
 #include "TextureCubePool.h"
 
-class ReflectionCapture;
+class ReflectionCaptureProbeRender;
 
 struct ReflectionProbeData
 {
@@ -27,7 +27,7 @@ struct ReflectionProbeRenderData : public IRenderData
 	GPUBuffer probeDataBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(ReflectionProbeData));
 	TextureCubePool cubeMapPool;
 
-	int setProbe(ReflectionCapture* capture);
+	int setProbe(ReflectionCaptureProbeRender* capture);
 	virtual void create();
 	virtual void release();
 	virtual void upload();

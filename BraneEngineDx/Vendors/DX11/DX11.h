@@ -57,6 +57,8 @@ struct DX11Context
 	ComPtr<ID3D11InputLayout> skeletonMeshInputLayout = NULL;
 	ComPtr<ID3D11InputLayout> terrainInputLayout = NULL;
 
+	bool needFrameFence = false;
+
 	void setHWnd(HWND hWnd);
 
 	bool createDevice(unsigned int width, unsigned int height);

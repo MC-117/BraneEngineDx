@@ -270,6 +270,9 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 	clearTexFrameBindings();
 
+	context.waitSignalCPU();
+	timer.record("WaitGPU");
+
 	for (auto sceneData : sceneDatas)
 		sceneData->upload();
 	timer.record("SceneDataUpload");
@@ -328,19 +331,21 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 	clearTexFrameBindings();
 
-	for (auto sceneData : sceneDatas)
-		sceneData->reflectionProbeDataPack.cubeMapPool.refreshCubePool(context);
-
-	timer.record("UpdateProbe");
-
 	forwardPass.execute(context);
+
+	context.setGPUSignal();
 	context.clearFrameBindings();
 
 	timer.record("Transparent");
 
-	for (auto sceneData : sceneDatas)
+	for (auto sceneData : sceneDatas) {
 		for (auto& cameraRenderData : sceneData->cameraRenderDatas)
 			context.resolveMultisampleFrame(cameraRenderData->surface.renderTarget->getVendorRenderTarget());
+		sceneData->reflectionProbeDataPack.cubeMapPool.refreshCubePool(context);
+		sceneData->envLightProbeDataPack.computeEnvLights(context);
+	}
+
+	timer.record("SceneFetch");
 
 	for (auto pass : passes)
 		pass->execute(context);
@@ -351,8 +356,6 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	imGuiPass.execute(context);
 
 	timer.record("ImGui");
-
-	context.setGPUSignal();
 
 	/*----- Vendor swap -----*/
 	{

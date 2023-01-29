@@ -23,15 +23,19 @@ public:
 
 	virtual bool mapMaterialParameter(RenderInfo& info);
 	virtual void render(RenderInfo& info);
+	virtual void onGUI(EditorInfo& info);
 	virtual void resize(const Unit2Di& size);
 protected:
+	bool enableDebugEdges = false;
 	Material* edgesColor2x2Material = NULL;
 	Material* processCandidatesMaterial = NULL;
 	Material* computeDispatchArgsMaterial = NULL;
 	Material* deferredColorApply2x2Material = NULL;
+	Material* debugDrawEdgesMaterial = NULL;
 
 	ShaderProgram* edgesColor2x2Program = NULL;
 	ShaderProgram* processCandidatesProgram = NULL;
 	ShaderProgram* computeDispatchArgsProgram = NULL;
 	ShaderProgram* deferredColorApply2x2Program = NULL;
+	ShaderProgram* debugDrawEdgesProgram = NULL;
 };

@@ -400,6 +400,8 @@ void DX11Context::swap(bool vsync, unsigned int maxFPS)
 {
 	this->maxFPS = maxFPS;
 
+	setGPUSignal();
+
 	swapChain->Present(vsync ? 1 : 0, 0);
 
 	//DWORD result = WaitForSingleObjectEx(
@@ -440,6 +442,8 @@ void DX11Context::setGPUSignal()
 
 void DX11Context::frameFence()
 {
+	if (!needFrameFence)
+		return;
 	if (fence->GetCompletedValue() < fenceValue)
 	{
 		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
@@ -447,6 +451,7 @@ void DX11Context::frameFence()
 		WaitForSingleObject(eventHandle, INFINITE);
 		CloseHandle(eventHandle);
 	}
+	needFrameFence = false;
 }
 
 void DX11Context::clearSRV()

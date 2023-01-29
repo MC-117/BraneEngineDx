@@ -16,7 +16,7 @@
 #include "../Character.h"
 #include "../SkeletonMesh.h"
 #include "../Terrain/TerrainActor.h"
-#include "../ReflectionProbe.h"
+#include "../ProbeSystem/CaptureProbe.h"
 
 EditorWindow::EditorWindow(Object & object, Material& baseMat, string name, bool defaultShow) : UIWindow(object, name, defaultShow), baseMat(baseMat)
 {
@@ -529,14 +529,11 @@ void EditorWindow::objectContextMenu(Object * obj)
 			ImGui::EndMenu();
 		}
 
-		if (ImGui::BeginMenu("ReflectionProbe")) {
+		if (ImGui::BeginMenu("CaptureProbe")) {
 			ImGui::InputText("Name", &newObjectName);
 			if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
-				if (ImGui::DragFloat("Radius", &reflectionProbeRadius)) {
-					terrainUnit = max(0, reflectionProbeRadius);
-				}
 				if (ImGui::Button("Create", { -1, 36 })) {
-					ReflectionProbe* t = new ReflectionProbe(newObjectName);
+					CaptureProbe* t = new CaptureProbe(newObjectName);
 					target.addChild(*t);
 				}
 			}
