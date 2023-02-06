@@ -28,6 +28,7 @@ public:
 	DirectLight(const string& name, Color color = { 255, 255, 255, 255 }, float intensity = 1);
 
 	void resizeShadowMap(Unit2Di size);
+	float getShadowResolutionScale() const;
 	void scaleShadowResolution(float scalar);
 
 	void setShadowBiasDepthScale(float scale);

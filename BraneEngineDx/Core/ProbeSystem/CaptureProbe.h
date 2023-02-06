@@ -15,6 +15,8 @@ public:
 	virtual CaptureProbeRender* createCaptureProbeRender(Serialization& serialization);
 	virtual CaptureProbeRender* getCaptureProbeRender();
 
+	virtual void begin();
+
 	virtual void prerender(SceneRenderData& sceneData);
 	virtual Render* getRender();
 	virtual unsigned int getRenders(vector<Render*>& renders);

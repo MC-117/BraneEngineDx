@@ -1,6 +1,7 @@
 #include "EnvLightData.h"
 #include "../ProbeSystem/EnvLightCaptureProbeRender.h"
 #include "../Asset.h"
+#include "../Profile/ProfileCore.h"
 
 void EnvLightData::set(const SHCoeff3RGB& sh)
 {
@@ -113,8 +114,8 @@ void EnvLightProbeRenderData::computeEnvLight(IRenderContext& context, EnvLightC
 
 	SHCoeff3RGB& shCoeff3RGB = capture.shCoeff3RGB;
 	for (int c = 0; c < SHCoeff3::CoeffCount; c++) {
-		Vector4f rgbaCoeff = envSHdata[0].coeffs[c];
-		for (int f = 1; f < CF_Faces; f++) {
+		Vector4f rgbaCoeff = Vector4f(0, 0, 0, 0);
+		for (int f = 0; f < CF_Faces; f++) {
 			rgbaCoeff += envSHdata[f].coeffs[c];
 		}
 		Vector3f rgbCoeff = rgbaCoeff.block(0, 0, 3, 1);

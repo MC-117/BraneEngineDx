@@ -41,7 +41,7 @@ void SMAAPass::execute(IRenderContext& context)
 	if (sceneMap) {
 		screenTexture.setTextureInfo(sceneMap->getTextureInfo());
 		screenTexture.bind();
-		context.copyTexture2D(sceneMap->getVendorTexture(), screenTexture.getVendorTexture());
+		context.copySubTexture2D(sceneMap->getVendorTexture(), 0, screenTexture.getVendorTexture(), 0);
 	}
 	// Edge detection
 	context.bindShaderProgram(edgeDetectionProgram);

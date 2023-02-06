@@ -25,7 +25,7 @@ void MeshActorEditor::onPersistentGizmo(GizmoInfo& info)
 			}
 		}
 	}
-	if (Engine::input.getMouseButtonRelease(MouseButtonEnum::Left)) {
+	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
 		for (auto& meshPart : meshActor->meshRender.mesh->meshParts) {
 			info.gizmo->doScreenHit(meshActor->getInstanceID(), meshPart, meshActor->meshRender.instanceID, meshActor->meshRender.instanceCount);
 		}

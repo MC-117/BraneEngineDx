@@ -774,10 +774,6 @@ void Gizmo::reset()
 {
 	isUsing = false;
 	picked = false;
-	points.clear();
-	lines.clear();
-	texts.clear();
-	icons.clear();
 	camera = NULL;
 }
 
@@ -799,11 +795,6 @@ void Gizmo::beginFrame(ImDrawList* drawList)
 		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)) {
 			ImGui::SetWindowFocus();
 		}
-		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-			ImVec2 pos = ImGui::GetMousePos();
-			if (pos.x >= 0 && pos.y >= 0)
-				camera->cameraRender.triggerScreenHit({ (unsigned int)pos.x, (unsigned int)pos.y });
-		}
 	}
 
 	isFocused = ImGui::IsWindowFocused();
@@ -811,9 +802,14 @@ void Gizmo::beginFrame(ImDrawList* drawList)
 
 void Gizmo::endFrame()
 {
-	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left) &&
-		(!ImGuizmo::IsOver() && !picked && !isUsing && !isLastUsing))
-		EditorManager::selectObject(NULL);
+	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+		if ((!ImGuizmo::IsOver() && !picked && !isUsing && !isLastUsing)) {
+			EditorManager::selectObject(NULL);
+			ImVec2 pos = ImGui::GetMousePos();
+			if (pos.x >= 0 && pos.y >= 0)
+				camera->cameraRender.triggerScreenHit({ (unsigned int)pos.x, (unsigned int)pos.y });
+		}
+	}
 	isLastUsing = isUsing;
 }
 
@@ -865,11 +861,6 @@ void Gizmo::begineWindow()
 		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)) {
 			ImGui::SetWindowFocus();
 		}
-		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-			ImVec2 pos = ImGui::GetMousePos();
-			if (pos.x >= 0 && pos.y >= 0)
-				camera->cameraRender.triggerScreenHit({ (unsigned int)pos.x, (unsigned int)pos.y });
-		}
 	}
 
 	isFocused = ImGui::IsWindowFocused();
@@ -877,9 +868,14 @@ void Gizmo::begineWindow()
 
 void Gizmo::endWindow()
 {
-	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left) &&
-		(!ImGuizmo::IsOver() && !picked && !isUsing && !isLastUsing))
-		EditorManager::selectObject(NULL);
+	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+		if ((!ImGuizmo::IsOver() && !picked && !isUsing && !isLastUsing)) {
+			EditorManager::selectObject(NULL);
+			ImVec2 pos = ImGui::GetMousePos();
+			if (pos.x >= 0 && pos.y >= 0)
+				camera->cameraRender.triggerScreenHit({ (unsigned int)pos.x, (unsigned int)pos.y });
+		}
+	}
 	isLastUsing = isUsing;
 	ImGui::End();
 	ImGui::PopStyleVar();
@@ -1122,6 +1118,10 @@ void Gizmo::onRender2D()
 			ImColor(icon.color.r, icon.color.g, icon.color.b, icon.color.a));
 	}
 	list->PopClipRect();
+	points.clear();
+	lines.clear();
+	texts.clear();
+	icons.clear();
 }
 
 void Gizmo::onRender3D(RenderInfo& info)

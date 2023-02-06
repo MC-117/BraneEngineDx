@@ -38,14 +38,11 @@ DefaultVertexOut VERTEX_MAIN
 #endif
 
     float sca = 1;
-    if (refenceDistance != 0) {
-        float3 vec = mul(float4(pos, 1.0), fm).xyz - camData.camPos;
-        float dist = dot(vec, camData.camDir);
-        sca = dist / refenceDistance;
-    }
+    float dist = distance(mul(float4(_pos, 1.0), fm).xyz, camData.camPos);
+    sca = dist / camData.viewSize.x;
     DefaultVertexOut vout;
     vout.TransMat = fm;
-    vout.LocalPos = _pos + borderWidth * sca * normalize(_norm);
+    vout.LocalPos = _pos + borderWidth * 200 * sca * normalize(_norm);
     float4 _WorldPos = mul(float4(vout.LocalPos, 1.0), fm);
     vout.LocalNormal = _norm;
     vout.Normal = normalize(mul(float4(_norm, 0.0), fm).xyz);

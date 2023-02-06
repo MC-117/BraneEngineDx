@@ -31,6 +31,14 @@ CaptureProbeRender* CaptureProbe::getCaptureProbeRender()
 	return captureProbeRender;
 }
 
+void CaptureProbe::begin()
+{
+	Transform::begin();
+	if (captureProbeRender) {
+		captureProbeRender->updateCapture();
+	}
+}
+
 void CaptureProbe::prerender(SceneRenderData& sceneData)
 {
 	if (captureProbeRender == NULL)

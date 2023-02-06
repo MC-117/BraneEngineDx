@@ -113,7 +113,7 @@ FragmentOut SURFACE_MAIN
 
     Lo *= 0.1f;
 
-    float4 ambient = Toon_Ambient(surf.albedo, surf.ao);
+    float4 ambient = Toon_Ambient(surf.WorldPos, surf.Normal, surf.albedo, surf.ao);
 
     fout.FragColor = surf.albedo * Lo + ambient;
     fout.FragColor.a = surf.albedo.a;

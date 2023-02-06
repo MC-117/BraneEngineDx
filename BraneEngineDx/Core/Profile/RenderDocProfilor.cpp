@@ -81,10 +81,19 @@ void RenderDocProfilor::endFrame()
 
 void RenderDocProfilor::beginScope(const string& name)
 {
+    if (doCapture)
+        return;
+    deviceHandle = VendorManager::getInstance().getVendor().getDefaultRenderContext()->getDeviceHandle();
+    windowHandle = Engine::windowContext.hwnd;
+    rdoc_api->StartFrameCapture(deviceHandle, windowHandle);
 }
 
 void RenderDocProfilor::endScope()
 {
+    if (doCapture)
+        return;
+    rdoc_api->EndFrameCapture(deviceHandle, windowHandle);
+    startRenderDoc(getNewestCapture());
 }
 
 string RenderDocProfilor::getNewestCapture()

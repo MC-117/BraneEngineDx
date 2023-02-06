@@ -28,8 +28,10 @@ void ReflectionCaptureProbeRender::setWorldPosition(const Vector3f& position)
 void ReflectionCaptureProbeRender::updateCapture()
 {
 	update = true;
-	if (reflectionCubeMap == NULL)
+	if (reflectionCubeMap == NULL) {
 		reflectionCubeMap = new TextureCube(resolution, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_UF });
+		reflectionCubeMap->setAutoGenMip(false);
+	}
 }
 
 int ReflectionCaptureProbeRender::getProbeIndex() const

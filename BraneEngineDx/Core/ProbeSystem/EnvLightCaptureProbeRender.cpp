@@ -28,8 +28,10 @@ void EnvLightCaptureProbeRender::setWorldPosition(const Vector3f& position)
 void EnvLightCaptureProbeRender::updateCapture()
 {
 	update = true;
-	if (lightCubeMap == NULL)
-		lightCubeMap = new TextureCube(resolution, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_UF });
+	if (lightCubeMap == NULL) {
+		lightCubeMap = new TextureCube(resolution, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA16_FF });
+		lightCubeMap->setAutoGenMip(false);
+	}
 }
 
 int EnvLightCaptureProbeRender::getProbeIndex() const

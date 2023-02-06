@@ -27,6 +27,7 @@ void PointLightEditor::onPersistentGizmo(GizmoInfo& info)
 
 void PointLightEditor::onHandleGizmo(GizmoInfo& info)
 {
+	LightEditor::onHandleGizmo(info);
 	info.gizmo->drawSphere(Vector3f::Zero(), pointLight->getRadius(), pointLight->getTransformMat(), pointLight->color);
 }
 

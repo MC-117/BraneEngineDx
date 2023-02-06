@@ -1,4 +1,5 @@
 #include "Basic_FS_Lib.hmat"
+#include "EnvLight_Def.hmat"
 
 float4 smoothToon(float4 base, float4 over, float value, float cut, float smoothValue)
 {
@@ -47,4 +48,10 @@ float4 Toon_Lo_PointLight(in PointLight pointLight, float3 worldPos, float3 N, f
 float4 Toon_Ambient(float4 albedo, float ao)
 {
     return Float4(0.03) * albedo * ao;
+}
+
+float4 Toon_Ambient(float3 worldPos, float3 worldNorm, float4 albedo, float ao)
+{
+    float3 envLight = getEnvLight(worldPos, worldNorm);
+    return float4(envLight, 1.0f) * albedo * Toon_Ambient(albedo, ao);
 }

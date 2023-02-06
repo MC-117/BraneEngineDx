@@ -25,6 +25,11 @@ void DirectLight::resizeShadowMap(Unit2Di size)
 	shadowData.cameraData.viewSize = { (float)size.x, (float)size.y };
 }
 
+float DirectLight::getShadowResolutionScale() const
+{
+	return shadowData.cameraData.viewSize.x() / shadowData.right;
+}
+
 void DirectLight::scaleShadowResolution(float scalar)
 {
 	shadowData.left = -shadowData.cameraData.viewSize.x() / scalar;

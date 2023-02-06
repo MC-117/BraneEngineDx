@@ -30,6 +30,10 @@ void DirectLightEditor::onPersistentGizmo(GizmoInfo& info)
 void DirectLightEditor::onLightGUI(EditorInfo& info)
 {
 	LightEditor::onLightGUI(info);
+	float resScale = directLight->getShadowResolutionScale();
+	if (ImGui::DragFloat("ShadowResolutionScale", &resScale, 0.01)) {
+		directLight->scaleShadowResolution(resScale);
+	}
 	float bias = directLight->getShadowBiasDepthScale();
 	if (ImGui::DragFloat("ShadowBiasDepthScale", &bias, 0.01)) {
 		directLight->setShadowBiasDepthScale(bias);
