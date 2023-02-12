@@ -126,7 +126,7 @@ bool SceneRenderData::willUpdateStatic()
 
 bool SceneRenderData::frustumCulling(const Range<Vector3f>& bound, const Matrix4f& mat) const
 {
-	for (const auto& data : cameraRenderDatas) {
+	for (CameraRenderData* data : cameraRenderDatas) {
 		if (::frustumCulling(data->data, bound, mat))
 			return true;
 	}

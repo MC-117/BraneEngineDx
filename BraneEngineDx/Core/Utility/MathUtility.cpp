@@ -64,7 +64,7 @@ bool IntersectAABB8Plane(const Vector3f& center, const Vector3f& extent, const V
 	// Check for completely outside
 	if (_mm_movemask_ps(_mm_cmpgt_ps(Distance_1, PushOut_1)))
 	{
-		return false;
+		return true;
 	}
-	return true;
+	return false;
 }

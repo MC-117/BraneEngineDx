@@ -1,9 +1,226 @@
 #include "RenderCommandList.h"
 #include "../Console.h"
+#include "../Engine.h"
 #include "../Utility/RenderUtility.h"
 
 RenderCommandExecutionInfo::RenderCommandExecutionInfo(IRenderContext& context) : context(context)
 {
+}
+
+void ImmediateRenderCommandWorker::start()
+{
+}
+
+void ImmediateRenderCommandWorker::stop()
+{
+}
+
+void ImmediateRenderCommandWorker::setup(IRenderContext* context)
+{
+	if (context)
+		renderContext = context;
+	else
+		renderContext = VendorManager::getInstance().getVendor().getDefaultRenderContext();
+	taskParameter.renderContext = renderContext;
+	taskContext = { 0 };
+	taskParameter.taskContext = &taskContext;
+}
+
+int ImmediateRenderCommandWorker::getQueuedTaskCount() const
+{
+	return 0;
+}
+
+void ImmediateRenderCommandWorker::submitTask(RenderTask& task)
+{
+	task.execute(taskParameter);
+}
+
+void ImmediateRenderCommandWorker::submitContext()
+{
+}
+
+void ImmediateRenderCommandWorker::waitForComplete()
+{
+	taskContext = { 0 };
+}
+
+ParallelRenderCommandWorker::~ParallelRenderCommandWorker()
+{
+	stop();
+}
+
+void ParallelRenderCommandWorker::start()
+{
+	stop();
+	workThread = new std::thread(threadEntry, this);
+	state = Running;
+	workThread->detach();
+}
+
+void ParallelRenderCommandWorker::stop()
+{
+	if (state != Running)
+		return;
+	state = Pending;
+	while (state == Pending)
+		std::this_thread::yield();
+	if (workThread) {
+		delete workThread;
+		workThread = NULL;
+	}
+}
+
+void ParallelRenderCommandWorker::setup(IRenderContext* context)
+{
+	if (context)
+		renderContext = context;
+	else
+		renderContext = VendorManager::getInstance().getVendor().newRenderContext();
+	taskParameter.renderContext = renderContext;
+	taskContext = { 0 };
+	taskParameter.taskContext = &taskContext;
+}
+
+int ParallelRenderCommandWorker::getQueuedTaskCount() const
+{
+	return unfinishedTaskCount;
+}
+
+void ParallelRenderCommandWorker::submitTask(RenderTask& task)
+{
+	std::lock_guard<std::mutex> lock(workMutex);
+	taskQueue.push(&task);
+	unfinishedTaskCount++;
+}
+
+void ParallelRenderCommandWorker::executeTask()
+{
+	{
+		std::lock_guard<std::mutex> lock(workMutex);
+		while (!taskQueue.empty()) {
+			workingQueue.push(taskQueue.front());
+			taskQueue.pop();
+		}
+	}
+
+	if (workingQueue.empty()) {
+		std::this_thread::yield();
+	}
+	else {
+		RenderTask* task = workingQueue.front();
+		task->execute(taskParameter);
+		workingQueue.pop();
+		hasFinishedTask = true;
+		unfinishedTaskCount--;
+	}
+}
+
+void ParallelRenderCommandWorker::submitContext()
+{
+	if (hasFinishedTask) {
+		renderContext->submit();
+		hasFinishedTask = false;
+	}
+}
+
+void ParallelRenderCommandWorker::waitForComplete()
+{
+	while (unfinishedTaskCount > 0)
+		this_thread::yield();
+	taskContext = { 0 };
+}
+
+void ParallelRenderCommandWorker::threadEntry(ParallelRenderCommandWorker* worker)
+{
+	while (worker->state == Running) {
+		worker->executeTask();
+	}
+	std::lock_guard<std::mutex> lock(worker->workMutex);
+	while (!worker->taskQueue.empty())
+		worker->taskQueue.pop();
+	while (!worker->workingQueue.empty())
+		worker->workingQueue.pop();
+	worker->unfinishedTaskCount = 0;
+	worker->state = Stopped;
+}
+
+RenderCommandWorkerPool::RenderCommandWorkerPool(const Parameter& parameter) : parameter(parameter)
+{
+	if (parameter.parallelWorker) {
+		workers.resize(parameter.workerCount);
+		for (auto& worker : workers) {
+			worker = new ParallelRenderCommandWorker();
+		}
+	}
+	else {
+		workers.resize(1);
+		workers[0] = new ImmediateRenderCommandWorker();
+	}
+}
+
+RenderCommandWorkerPool::~RenderCommandWorkerPool()
+{
+	for (auto& worker : workers) {
+		delete worker;
+	}
+	workers.clear();
+}
+
+void RenderCommandWorkerPool::init()
+{
+	for (auto& worker : workers) {
+		worker->setup(NULL);
+		worker->start();
+	}
+}
+
+void RenderCommandWorkerPool::submitContext()
+{
+	for (auto& worker : workers) {
+		worker->submitContext();
+	}
+}
+
+void RenderCommandWorkerPool::dispatchTask(RenderTask& task, int maxTaskNumPerWorker)
+{
+	for (auto& worker : workers) {
+		if (worker->getQueuedTaskCount() < maxTaskNumPerWorker) {
+			worker->submitTask(task);
+			break;
+		}
+	}
+}
+
+void RenderCommandWorkerPool::waitForComplete()
+{
+	for (auto& worker : workers) {
+		worker->waitForComplete();
+	}
+}
+
+RenderCommandWorkerPool& RenderCommandWorkerPool::instance()
+{
+	static bool init = false;
+	static int parallelRenderCommandExec = 0;
+	static RenderCommandWorkerPool::Parameter parallelParameter = { true, 4, 0 };
+	static RenderCommandWorkerPool parallelRenderCommandWorkerPool(parallelParameter);
+	static RenderCommandWorkerPool::Parameter immediateParameter = { false, 1, 0 };
+	static RenderCommandWorkerPool immediateRenderCommandWorkerPool(immediateParameter);
+	if (!init) {
+		Engine::engineConfig.configInfo.get("parallelRenderCommandExec", parallelRenderCommandExec);
+		init = true;
+	}
+	return parallelRenderCommandExec ? parallelRenderCommandWorkerPool : immediateRenderCommandWorkerPool;
+}
+
+int RenderCommandWorkerPool::calMaxTaskNumPerWorker(int taskCount) const
+{
+	if (!parameter.parallelWorker ||
+		taskCount < parameter.workerCount)
+		return taskCount;
+	int avgTaskPerWorker = ceilf(taskCount / (float)parameter.workerCount);
+	return max(parameter.minTaskNumPerWorker, avgTaskPerWorker);
 }
 
 bool RenderCommandList::addRenderTask(const IRenderCommand& cmd, RenderTask& task)
@@ -31,6 +248,7 @@ bool RenderCommandList::addRenderTask(const IRenderCommand& cmd, RenderTask& tas
 		return false;
 
 	pTask->age = 0;
+	frameTaskCount++;
 	return true;
 }
 
@@ -168,121 +386,38 @@ Deferred | Light | Depth Pre-Pass | Geomtry | Alpha Geomtry | Pixel  |          
 
 void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 {
+	RenderCommandWorkerPool& workerPool = RenderCommandWorkerPool::instance();
 	IRenderContext& context = executionInfo.context;
-	RenderTaskContext taskContext = { 0 };
+
+	int maxTaskNumPerWorker = workerPool.calMaxTaskNumPerWorker(frameTaskCount);
+
+	RenderTarget* renderTarget = NULL;
 	//Time setupTime, uploadInsTime, execTime;
 	for (auto item : taskSet) {
 		RenderTask& task = *item;
 		task.age++;
 		if (task.age > 1)
 			continue;
-		//Time t = Time::now();
-
-		bool shaderSwitch = false;
-
-		if (taskContext.renderTarget != task.surface.renderTarget) {
-			taskContext.renderTarget = task.surface.renderTarget;
+		if (renderTarget != task.surface.renderTarget) {
+			renderTarget = task.surface.renderTarget;
 
 			task.surface.bind(context, executionInfo.plusClearFlags, executionInfo.minusClearFlags);
-			IRenderTarget* renderTarget = task.surface.renderTarget->getVendorRenderTarget();
+
 			if (executionInfo.outputTextures) {
-				for (auto& tex : renderTarget->desc.textureList) {
+				IRenderTarget* renderTargetVendor = renderTarget->getVendorRenderTarget();
+				for (auto& tex : renderTargetVendor->desc.textureList) {
 					executionInfo.outputTextures->push_back(make_pair(tex.name, tex.texture));
 				}
-				if (renderTarget->desc.depthTexure) {
-					executionInfo.outputTextures->push_back(make_pair("depthMap", renderTarget->desc.depthTexure));
+				if (renderTargetVendor->desc.depthTexure) {
+					executionInfo.outputTextures->push_back(make_pair("depthMap", renderTargetVendor->desc.depthTexure));
 				}
 			}
 		}
-
-		if (taskContext.cameraData != task.cameraData) {
-			taskContext.cameraData = task.cameraData;
-
-			context.setViewport(0, 0, task.cameraData->data.viewSize.x(), task.cameraData->data.viewSize.y());
-			task.cameraData->bind(context);
-		}
-
-		if (taskContext.shaderProgram != task.shaderProgram) {
-			taskContext.shaderProgram = task.shaderProgram;
-			context.bindShaderProgram(task.shaderProgram);
-
-			shaderSwitch = true;
-			task.sceneData->bind(context);
-		}
-
-		if (taskContext.cameraData != task.cameraData || shaderSwitch) {
-			taskContext.cameraData = task.cameraData;
-
-			context.setViewport(0, 0, task.cameraData->data.viewSize.x(), task.cameraData->data.viewSize.y());
-			task.cameraData->bind(context);
-
-		}
-
-		if (taskContext.sceneData != task.sceneData || shaderSwitch) {
-			taskContext.sceneData = task.sceneData;
-
-			task.sceneData->bind(context);
-		}
-
-		if (taskContext.transformData != task.transformData || shaderSwitch) {
-			taskContext.transformData = task.transformData;
-
-			if (task.transformData)
-				task.transformData->bind(context);
-		}
-
-		if (taskContext.renderMode != task.renderMode) {
-			uint16_t stage = task.renderMode.getRenderStage();
-			if (stage < RenderStage::RS_Opaque)
-				context.setRenderPreState();
-			else if (stage < RenderStage::RS_Aplha)
-				context.setRenderOpaqueState();
-			else if (stage < RenderStage::RS_Transparent)
-				context.setRenderAlphaState();
-			else if (stage < RenderStage::RS_Post)
-				context.setRenderTransparentState();
-			else {
-				BlendMode blendMode = task.renderMode.getBlendMode();
-				switch (blendMode)
-				{
-				case BM_Default:
-					context.setRenderPostState();
-					break;
-				case BM_Additive:
-					context.setRenderPostAddState();
-					break;
-				case BM_Multipy:
-					context.setRenderPostMultiplyState();
-					break;
-				case BM_PremultiplyAlpha:
-					context.setRenderPostPremultiplyAlphaState();
-					break;
-				case BM_Mask:
-					context.setRenderPostMaskState();
-					break;
-				default:
-					throw runtime_error("Invalid blend mode");
-					break;
-				}
-			}
-		}
-
-		for (auto data : task.extraData) {
-			data->bind(context);
-		}
-		//setupTime = setupTime + Time::now() - t;
-
-		//t = Time::now();
-		if (taskContext.meshData != task.meshData) {
-			taskContext.meshData = task.meshData;
-			if (task.meshData)
-				context.bindMeshData(task.meshData);
-		}
-
-		task.renderPack->excute(context, taskContext);
-
-		//execTime = execTime + Time::now() - t;
+		workerPool.dispatchTask(task, maxTaskNumPerWorker);
 	}
+
+	workerPool.waitForComplete();
+	workerPool.submitContext();
 
 	context.setCullState(CullType::Cull_Back);
 
@@ -297,6 +432,7 @@ void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 
 void RenderCommandList::resetCommand()
 {
+	frameTaskCount = 0;
 	//for (auto b = taskSet.begin(); b != taskSet.end();) {
 	//	RenderTask* task = *b;
 	//	if (task->age > 2) {

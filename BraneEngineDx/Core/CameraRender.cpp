@@ -121,8 +121,7 @@ void CameraRender::preRender()
 
 void CameraRender::render(RenderInfo& info)
 {
-	DrawElementsIndirectCommand cmd = { 4, 1, 0, 0 };
-	if (isValid() && !hidden) {
+	if (isValid() && !hidden && isMainCameraRender()) {
 		info.sceneData->setCamera(this);
 		if (graph) {
 			graph->resource.reset();

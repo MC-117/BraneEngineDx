@@ -14,6 +14,7 @@ class DX11RenderContext : public IRenderContext
 {
 public:
 	DX11Context& dxContext;
+	bool isDefaultContext = false;
 	DrawInfo drawInfo;
 	DrawInfo uploadedDrawInfo;
 	ComPtr<ID3D11Buffer> drawInfoBuf = NULL;
@@ -115,4 +116,6 @@ public:
 	virtual void execteParticleDraw(IRenderExecution* execution, const vector<DrawArraysIndirectCommand>& cmds);
 	virtual void execteMeshDraw(IRenderExecution* execution, const vector<DrawElementsIndirectCommand>& cmds);
 	virtual void execteImGuiDraw(ImDrawData* drawData);
+
+	virtual void submit();
 };

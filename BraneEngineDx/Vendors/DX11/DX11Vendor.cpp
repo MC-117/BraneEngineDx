@@ -30,6 +30,7 @@ bool DX11Vendor::setup(const EngineConfig & config, const WindowContext & contex
 	dxContext.setHWnd(context.hwnd);
 	if (!dxContext.createDevice(context.screenSize.x, context.screenSize.y))
 		return false;
+	defaultRenderContext.isDefaultContext = true;
 	defaultRenderContext.deviceContext = dxContext.deviceContext;
 	defaultRenderContext.init();
 	DX11RenderTarget::initDepthBlit(dxContext);
@@ -127,8 +128,14 @@ IRenderContext* DX11Vendor::getDefaultRenderContext()
 
 IRenderContext* DX11Vendor::newRenderContext()
 {
-	throw runtime_error("Not Implemented");
-	return nullptr;
+	ComPtr<ID3D11DeviceContext> deferredContext;
+	if (FAILED(dxContext.device->CreateDeferredContext(0, deferredContext.GetAddressOf())))
+		throw runtime_error("CreateDeferredContext failed");
+	RenderContextDesc desc;
+	DX11RenderContext* context = new DX11RenderContext(dxContext, desc);
+	context->deviceContext = deferredContext;
+	context->init();
+	return context;
 }
 
 void DX11Vendor::frameFence()

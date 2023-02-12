@@ -19,6 +19,7 @@ struct EngineConfig
 	unsigned int maxFPS = 0;
 	unsigned int msaa = 1;
 	unsigned int screenWidth = 960, screenHeight = 640;
+	SerializationInfo configInfo;
 };
 
 struct WindowContext

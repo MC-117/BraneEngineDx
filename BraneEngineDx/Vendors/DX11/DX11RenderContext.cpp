@@ -762,13 +762,13 @@ void DX11RenderContext::bindMeshData(MeshData* meshData)
 		};
 		UINT offsets[] = { 0, 0, 0, 0, 0 };
 
-		dxContext.deviceContext->IASetVertexBuffers(1, 5, buffers, strides, offsets);
-		dxContext.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		dxContext.deviceContext->IASetIndexBuffer(dxSkeletonMeshData->dx11ElementBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-		dxContext.deviceContext->IASetInputLayout(dxContext.skeletonMeshInputLayout.Get());
+		deviceContext->IASetVertexBuffers(1, 5, buffers, strides, offsets);
+		deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		deviceContext->IASetIndexBuffer(dxSkeletonMeshData->dx11ElementBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		deviceContext->IASetInputLayout(dxContext.skeletonMeshInputLayout.Get());
 
 		if (dxSkeletonMeshData->dx11MorphVNView != NULL)
-			dxContext.deviceContext->VSSetShaderResources(MORPHDATA_BIND_INDEX, 1, dxSkeletonMeshData->dx11MorphVNView.GetAddressOf());
+			deviceContext->VSSetShaderResources(MORPHDATA_BIND_INDEX, 1, dxSkeletonMeshData->dx11MorphVNView.GetAddressOf());
 		currentMeshData = meshData;
 	}
 	else {
@@ -1014,4 +1014,15 @@ void DX11RenderContext::execteImGuiDraw(ImDrawData* drawData)
 	if (drawData == NULL || !drawData->Valid)
 		return;
 	ImGui_ImplDX11_RenderDrawData(drawData, deviceContext.Get());
+}
+
+void DX11RenderContext::submit()
+{
+	if (isDefaultContext)
+		return;
+	ComPtr<ID3D11CommandList> commandList;
+	if (FAILED(deviceContext->FinishCommandList(false, commandList.GetAddressOf())))
+		throw runtime_error("FinishCommandList failed");
+	if (commandList)
+		dxContext.deviceContext->ExecuteCommandList(commandList.Get(), true);
 }

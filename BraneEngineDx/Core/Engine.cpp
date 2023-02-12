@@ -422,6 +422,7 @@ void Engine::config()
 	}
 	f.close();
 	SerializationInfo& conf = sip.infos[0];
+	engineConfig.configInfo = conf;
 	string vendorName;
 	conf.get(".vendorName", vendorName);
 	if (!vendorName.empty())
@@ -744,7 +745,7 @@ void Engine::mainLoop(float deltaTime)
 	}
 	Time::update();
 	input.update();
-	ProfilorManager::instance().tick();
+	ProfilerManager::instance().tick();
 	currentWorld->tick(deltaTime);
 	currentWorld->afterTick();
 	timer.record("CPU");

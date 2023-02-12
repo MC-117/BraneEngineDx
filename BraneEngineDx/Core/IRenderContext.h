@@ -94,4 +94,6 @@ public:
 	virtual void execteParticleDraw(IRenderExecution* execution, const vector<DrawArraysIndirectCommand>& cmds) = 0;
 	virtual void execteMeshDraw(IRenderExecution* execution, const vector<DrawElementsIndirectCommand>& cmds) = 0;
 	virtual void execteImGuiDraw(ImDrawData* drawData) = 0;
+
+	virtual void submit() = 0;
 };

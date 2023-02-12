@@ -57,6 +57,8 @@ void CMAA2Pass::execute(IRenderContext& context)
 	context.bindImage(image, 0);
 
 	context.dispatchComputeIndirect(workingExecuteIndirectBuffer.getVendorGPUBuffer(), 0);
+	context.setGPUSignal();
+	context.waitSignalGPU();
 
 	if (enableDebugEdges) {
 		// DEBUGGING

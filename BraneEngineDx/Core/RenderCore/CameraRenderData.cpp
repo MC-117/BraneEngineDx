@@ -1,6 +1,16 @@
 #include "CameraRenderData.h"
 #include "../CameraRender.h"
 
+size_t SurfaceData::Hasher::operator()(const SurfaceData& s) const
+{
+	return (size_t)s.renderTarget;
+}
+
+size_t SurfaceData::Hasher::operator()(const SurfaceData* s) const
+{
+	return (size_t)s->renderTarget;
+}
+
 void SurfaceData::bind(IRenderContext& context, Enum<ClearFlags> plusClearFlags, Enum<ClearFlags> minusClearFlags)
 {
 	context.bindFrame(renderTarget->getVendorRenderTarget());

@@ -6,6 +6,11 @@ class CameraRender;
 
 struct SurfaceData
 {
+	struct Hasher
+	{
+		size_t operator()(const SurfaceData& s) const;
+		size_t operator()(const SurfaceData* s) const;
+	};
 	Enum<ClearFlags> clearFlags = Clear_None;
 	RenderTarget* renderTarget = NULL;
 	vector<Color> clearColors;

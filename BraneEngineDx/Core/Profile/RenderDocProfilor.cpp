@@ -5,15 +5,17 @@
 
 RENDERDOC_API_1_1_2* rdoc_api = NULL;
 
-RegistProfilor(RenderDocProfilor);
+RegistProfiler(RenderDocProfiler);
 
-RenderDocProfilor::RenderDocProfilor()
+RenderDocProfiler::RenderDocProfiler()
 {
-    enable = true;
 }
 
-bool RenderDocProfilor::init()
+bool RenderDocProfiler::init()
 {
+    int enableFlag = 0;
+    Engine::engineConfig.configInfo.get("frameProfilerFlag", enableFlag);
+    enable = enableFlag;
     if (!enable)
         return false;
     if (HMODULE mod = LoadLibraryA("renderdoc.dll"))
@@ -35,25 +37,25 @@ bool RenderDocProfilor::init()
 	return false;
 }
 
-bool RenderDocProfilor::release()
+bool RenderDocProfiler::release()
 {
     rdoc_api = NULL;
 	return true;
 }
 
-bool RenderDocProfilor::isValid() const
+bool RenderDocProfiler::isValid() const
 {
     return rdoc_api;
 }
 
-void RenderDocProfilor::tick()
+void RenderDocProfiler::tick()
 {
     if (isValid() &&
         Engine::input.getKeyPress(VK_F11))
         setCapture();
 }
 
-bool RenderDocProfilor::setCapture()
+bool RenderDocProfiler::setCapture()
 {
     if (!isValid())
         return false;
@@ -61,7 +63,7 @@ bool RenderDocProfilor::setCapture()
     return true;
 }
 
-void RenderDocProfilor::beginFrame()
+void RenderDocProfiler::beginFrame()
 {
     if (!isValid() || !doCapture)
         return;
@@ -70,7 +72,7 @@ void RenderDocProfilor::beginFrame()
     rdoc_api->StartFrameCapture(deviceHandle, windowHandle);
 }
 
-void RenderDocProfilor::endFrame()
+void RenderDocProfiler::endFrame()
 {
     if (!isValid() || !doCapture)
         return;
@@ -79,7 +81,7 @@ void RenderDocProfilor::endFrame()
     doCapture = false;
 }
 
-void RenderDocProfilor::beginScope(const string& name)
+void RenderDocProfiler::beginScope(const string& name)
 {
     if (doCapture)
         return;
@@ -88,7 +90,7 @@ void RenderDocProfilor::beginScope(const string& name)
     rdoc_api->StartFrameCapture(deviceHandle, windowHandle);
 }
 
-void RenderDocProfilor::endScope()
+void RenderDocProfiler::endScope()
 {
     if (doCapture)
         return;
@@ -96,7 +98,7 @@ void RenderDocProfilor::endScope()
     startRenderDoc(getNewestCapture());
 }
 
-string RenderDocProfilor::getNewestCapture()
+string RenderDocProfiler::getNewestCapture()
 {
     if (!isValid())
         return string();
@@ -115,7 +117,7 @@ string RenderDocProfilor::getNewestCapture()
     return outString;
 }
 
-void RenderDocProfilor::startRenderDoc(string capturePath)
+void RenderDocProfiler::startRenderDoc(string capturePath)
 {
     if (!isValid() || capturePath.empty())
         return;

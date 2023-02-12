@@ -27,7 +27,6 @@ struct MeshDataRenderPack : public IRenderPack
 
 	MaterialRenderData* materialData;
 	map<MeshPart*, MeshTransformIndex*> meshParts;
-	vector<DrawElementsIndirectCommand> cmds;
 
 	MeshDataRenderPack(LightRenderData& lightDataPack);
 

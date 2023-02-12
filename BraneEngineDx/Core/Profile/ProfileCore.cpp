@@ -1,70 +1,70 @@
 #include "ProfileCore.h"
 
-IProfilor::IProfilor()
+IProfiler::IProfiler()
 {
-    ProfilorManager::instance().registProfilor(*this);
+    ProfilerManager::instance().registProfilor(*this);
 }
 
-ProfilorManager& ProfilorManager::instance()
+ProfilerManager& ProfilerManager::instance()
 {
-    static ProfilorManager manager;
+    static ProfilerManager manager;
     return manager;
 }
 
-void ProfilorManager::tick()
+void ProfilerManager::tick()
 {
     for (auto profilor : profilors)
         profilor->tick();
 }
 
-ProfilorManager::ProfilorManager() : Initialization(InitializeStage::BeforeEngineSetup, 0)
+ProfilerManager::ProfilerManager() : Initialization(InitializeStage::BeforeEngineSetup, 0)
 {
 }
 
-ProfilorManager::~ProfilorManager()
+ProfilerManager::~ProfilerManager()
 {
     for (auto profilor : profilors)
         profilor->release();
     profilors.clear();
 }
 
-bool ProfilorManager::initialze()
+bool ProfilerManager::initialze()
 {
     for (auto profilor : profilors)
         profilor->init();
     return true;
 }
 
-void ProfilorManager::registProfilor(IProfilor& profilor)
+void ProfilerManager::registProfilor(IProfiler& profilor)
 {
     profilors.insert(&profilor);
 }
 
-void ProfilorManager::setCapture()
+void ProfilerManager::setCapture()
 {
     for (auto profilor : profilors)
         profilor->setCapture();
 }
 
-void ProfilorManager::beginScope(const string& name)
+void ProfilerManager::beginScope(const string& name)
 {
     for (auto profilor : profilors)
         profilor->beginScope(name);
 }
 
-void ProfilorManager::endScope()
+void ProfilerManager::endScope()
 {
     for (auto profilor : profilors)
         profilor->endScope();
 }
 
-void ProfilorManager::beginFrame()
+void ProfilerManager::beginFrame()
 {
     for (auto profilor : profilors)
         profilor->beginFrame();
 }
 
-void ProfilorManager::endFrame()
+void ProfilerManager::endFrame()
 {
     for (auto profilor : profilors)
         profilor->endFrame();

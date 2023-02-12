@@ -1,4 +1,7 @@
 #include "RenderTask.h"
+#include "CameraRenderData.h"
+#include "SceneRenderData.h"
+#include "../RenderTarget.h"
 
 size_t RenderTask::Hasher::operator()(const RenderTask* t) const
 {
@@ -61,4 +64,108 @@ bool RenderTask::ExecutionOrder::operator()(const RenderTask& t0, const RenderTa
 		}
 	}
 	return false;
+}
+
+void RenderTask::execute(RenderTaskParameter& parameter)
+{
+	IRenderContext& context = *parameter.renderContext;
+	RenderTaskContext& taskContext = *parameter.taskContext;
+	//Time t = Time::now();
+
+	bool shaderSwitch = false;
+
+	if (taskContext.renderTarget != surface.renderTarget) {
+		taskContext.renderTarget = surface.renderTarget;
+
+		IRenderTarget* renderTarget = surface.renderTarget->getVendorRenderTarget();
+		context.bindFrame(renderTarget);
+	}
+
+	if (taskContext.cameraData != cameraData) {
+		taskContext.cameraData = cameraData;
+
+		context.setViewport(0, 0, cameraData->data.viewSize.x(), cameraData->data.viewSize.y());
+		cameraData->bind(context);
+	}
+
+	if (taskContext.shaderProgram != shaderProgram) {
+		taskContext.shaderProgram = shaderProgram;
+		context.bindShaderProgram(shaderProgram);
+
+		shaderSwitch = true;
+		sceneData->bind(context);
+	}
+
+	if (taskContext.cameraData != cameraData || shaderSwitch) {
+		taskContext.cameraData = cameraData;
+
+		context.setViewport(0, 0, cameraData->data.viewSize.x(), cameraData->data.viewSize.y());
+		cameraData->bind(context);
+
+	}
+
+	if (taskContext.sceneData != sceneData || shaderSwitch) {
+		taskContext.sceneData = sceneData;
+
+		sceneData->bind(context);
+	}
+
+	if (taskContext.transformData != transformData || shaderSwitch) {
+		taskContext.transformData = transformData;
+
+		if (transformData)
+			transformData->bind(context);
+	}
+
+	if (taskContext.renderMode != renderMode) {
+		uint16_t stage = renderMode.getRenderStage();
+		if (stage < RenderStage::RS_Opaque)
+			context.setRenderPreState();
+		else if (stage < RenderStage::RS_Aplha)
+			context.setRenderOpaqueState();
+		else if (stage < RenderStage::RS_Transparent)
+			context.setRenderAlphaState();
+		else if (stage < RenderStage::RS_Post)
+			context.setRenderTransparentState();
+		else {
+			BlendMode blendMode = renderMode.getBlendMode();
+			switch (blendMode)
+			{
+			case BM_Default:
+				context.setRenderPostState();
+				break;
+			case BM_Additive:
+				context.setRenderPostAddState();
+				break;
+			case BM_Multipy:
+				context.setRenderPostMultiplyState();
+				break;
+			case BM_PremultiplyAlpha:
+				context.setRenderPostPremultiplyAlphaState();
+				break;
+			case BM_Mask:
+				context.setRenderPostMaskState();
+				break;
+			default:
+				throw runtime_error("Invalid blend mode");
+				break;
+			}
+		}
+	}
+
+	for (auto data : extraData) {
+		data->bind(context);
+	}
+	//setupTime = setupTime + Time::now() - t;
+
+	//t = Time::now();
+	if (taskContext.meshData != meshData) {
+		taskContext.meshData = meshData;
+		if (meshData)
+			context.bindMeshData(meshData);
+	}
+
+	renderPack->excute(context, taskContext);
+
+	//execTime = execTime + Time::now() - t;
 }

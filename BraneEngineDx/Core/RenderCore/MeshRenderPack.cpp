@@ -80,7 +80,7 @@ void MeshDataRenderPack::excute(IRenderContext& context, RenderTaskContext& task
 			context.bindTexture((ITexture*)lightDataPack.shadowTarget->getDepthTexture()->getVendorTexture(), "depthMap");
 	}
 
-	cmds.resize(meshParts.size());
+	vector<DrawElementsIndirectCommand> cmds(meshParts.size());
 	int index = 0;
 	for (auto b = meshParts.begin(), e = meshParts.end(); b != e; b++, index++) {
 		DrawElementsIndirectCommand& c = cmds[index];

@@ -2,10 +2,10 @@
 #include "../Unit.h"
 #include "../InitializationManager.h"
 
-class IProfilor
+class IProfiler
 {
 public:
-	IProfilor();
+	IProfiler();
 
 	virtual bool init() = 0;
 	virtual bool release() = 0;
@@ -24,11 +24,11 @@ public:
 };
 
 
-class ProfilorManager : public Initialization
+class ProfilerManager : public Initialization
 {
-	friend class IProfilor;
+	friend class IProfiler;
 public:
-	static ProfilorManager& instance();
+	static ProfilerManager& instance();
 
 	virtual void tick();
 
@@ -40,14 +40,14 @@ public:
 	virtual void beginFrame();
 	virtual void endFrame();
 protected:
-	unordered_set<IProfilor*> profilors;
+	unordered_set<IProfiler*> profilors;
 
-	ProfilorManager();
-	virtual ~ProfilorManager();
+	ProfilerManager();
+	virtual ~ProfilerManager();
 
 	virtual bool initialze();
 
-	void registProfilor(IProfilor& profilor);
+	void registProfilor(IProfiler& profilor);
 };
 
-#define RegistProfilor(ProfilorClass) ProfilorClass ProfilorClass##Instance
+#define RegistProfiler(ProfilerClass) ProfilerClass ProfilerClass##Instance

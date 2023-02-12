@@ -16,6 +16,7 @@ RenderPool::RenderPool(Camera & defaultCamera)
 	renderFrame = Time::frames();
 	sceneData = new SceneRenderData();
 	renderGraph = Engine::engineConfig.guiOnly ? (RenderGraph*)new ForwardRenderGraph() : (RenderGraph*)new DeferredRenderGraph();
+	RenderCommandWorkerPool::instance().init();
 }
 
 RenderPool::~RenderPool()
@@ -99,7 +100,7 @@ void RenderPool::beginRender()
 
 	renderGraph->reset();
 
-	ProfilorManager::instance().beginFrame();
+	ProfilerManager::instance().beginFrame();
 }
 
 void RenderPool::render(bool guiOnly)
@@ -165,8 +166,8 @@ void RenderPool::gameFence()
 {
 	unsigned long long gameFrames = Time::frames();
 	while (gameFrames > 0 && gameFrames > renderFrame) {
-		this_thread::sleep_for(0ms);
 		gameFrames = Time::frames();
+		this_thread::yield();
 	}
 	if (!destory)
 		VendorManager::getInstance().getVendor().frameFence();
@@ -175,7 +176,7 @@ void RenderPool::gameFence()
 void RenderPool::renderFence()
 {
 	while (Time::frames() <= renderFrame) {
-		this_thread::sleep_for(0ms);
+		this_thread::yield();
 	}
 }
 
@@ -184,7 +185,7 @@ void RenderPool::renderThreadMain()
 	renderFence();
 	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
 	renderGraph->execute(context);
-	ProfilorManager::instance().endFrame();
+	ProfilerManager::instance().endFrame();
 	renderFrame = Time::frames();
 }
 

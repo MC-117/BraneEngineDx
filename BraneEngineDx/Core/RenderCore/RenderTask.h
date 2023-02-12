@@ -8,6 +8,13 @@
 #include "MaterialRenderData.h"
 #include "CameraRenderData.h"
 
+struct RenderTaskParameter
+{
+	IRenderContext* renderContext = NULL;
+	RenderTaskContext* taskContext = NULL;
+	Timer* timer = NULL;
+};
+
 struct RenderTask
 {
 	struct Hasher
@@ -33,4 +40,6 @@ struct RenderTask
 	MeshData* meshData = NULL;
 	list<IRenderData*> extraData;
 	IRenderPack* renderPack = NULL;
+
+	void execute(RenderTaskParameter& parameter);
 };

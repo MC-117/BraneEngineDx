@@ -2,10 +2,10 @@
 
 #include "ProfileCore.h"
 
-class RenderDocProfilor : public IProfilor
+class RenderDocProfiler : public IProfiler
 {
 public:
-	RenderDocProfilor();
+	RenderDocProfiler();
 
 	virtual bool init();
 	virtual bool release();
