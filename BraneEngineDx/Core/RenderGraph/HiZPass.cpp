@@ -8,6 +8,7 @@ void HiZPass::prepare()
 	}
 	if (material) {
 		program = material->getShader()->getProgram(Shader_Default);
+		program->init();
 	}
 }
 
@@ -30,23 +31,23 @@ void HiZPass::execute(IRenderContext& context)
 	mipOption.detailMip = 0;
 	mipOption.mipCount = 1;
 
-	const char* srcDepth = "srcDepth";
-	const char* dstDepth = "dstDepth";
+	static const ShaderPropertyName srcDepthName = "srcDepth";
+	static const ShaderPropertyName dstDepthName = "dstDepth";
 
-	context.bindImage(image, dstDepth);
-	context.bindTexture((ITexture*)depthTexture->getVendorTexture(), srcDepth);
+	context.bindImage(image, dstDepthName);
+	context.bindTexture((ITexture*)depthTexture->getVendorTexture(), srcDepthName);
 	context.dispatchCompute(width / localSize.x(), height / localSize.y(), 1);
 
 	for (; mipOption.detailMip < miplevel - 1; mipOption.detailMip++) {
 		width /= 2;
 		height /= 2;
 		image.level = mipOption.detailMip + 1;
-		context.bindImage(image, dstDepth);
-		context.bindTexture((ITexture*)hizTexture->getVendorTexture(), srcDepth, mipOption);
+		context.bindImage(image, dstDepthName);
+		context.bindTexture((ITexture*)hizTexture->getVendorTexture(), srcDepthName, mipOption);
 		context.dispatchCompute(width / localSize.x(), height / localSize.y(), 1);
 	}
 	image.texture = NULL;
-	context.bindImage(image, dstDepth);
+	context.bindImage(image, dstDepthName);
 }
 
 void HiZPass::reset()

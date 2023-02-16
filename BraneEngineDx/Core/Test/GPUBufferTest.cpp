@@ -24,7 +24,8 @@ void ColorBufferTestRenderData::upload()
 
 void ColorBufferTestRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(colorBuffer.getVendorGPUBuffer(), "colors");
+	static const ShaderPropertyName colorsName = "colors";
+	context.bindBufferBase(colorBuffer.getVendorGPUBuffer(), colorsName);
 }
 
 void ColorBufferTestMeshRender::setColor(const Color& color)

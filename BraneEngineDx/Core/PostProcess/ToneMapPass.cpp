@@ -28,10 +28,12 @@ void ToneMapPass::execute(IRenderContext& context)
 	context.bindMaterialTextures(((MaterialRenderData*)materialRenderData)->vendorMaterial);
 
 	if (program->isComputable()) {
+		static const ShaderPropertyName imageMapName = "imageMap";
+
 		Image image;
 		image.texture = resource->screenTexture;
 
-		context.bindImage(image, imageMapSlot);
+		context.bindImage(image, imageMapName);
 
 		Vector3u localSize = material->getLocalSize();
 		localSize.x() = ceilf(size.x / (float)localSize.x());
@@ -41,7 +43,9 @@ void ToneMapPass::execute(IRenderContext& context)
 		context.dispatchCompute(localSize.x(), localSize.y(), 1);
 	}
 	else {
-		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, imageMapSlot, imageMapSamplerSlot);
+		static const ShaderPropertyName screenMapName = "screenMap";
+
+		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), screenMapName);
 		
 		context.bindFrame(screenRenderTarget.getVendorRenderTarget());
 
@@ -80,18 +84,7 @@ void ToneMapPass::render(RenderInfo & info)
 		return;
 	}
 	program->init();
-	if (program->isComputable()) {
-		imageMapSlot = program->getAttributeOffset("imageMap").offset;
-		imageMapSamplerSlot = program->getAttributeOffset("imageMapSampler").offset;
-		if (imageMapSlot >= 0)
-			info.renderGraph->addPass(*this);
-	}
-	else {
-		imageMapSlot = program->getAttributeOffset("screenMap").offset;
-		imageMapSamplerSlot = program->getAttributeOffset("screenMapSampler").offset;
-		if (imageMapSlot >= 0)
-			info.renderGraph->addPass(*this);
-	}
+	info.renderGraph->addPass(*this);
 }
 
 void ToneMapPass::resize(const Unit2Di& size)

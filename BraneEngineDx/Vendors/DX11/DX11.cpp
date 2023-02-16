@@ -1,6 +1,7 @@
 #include "DX11.h"
 #include <iostream>
 #include "../../Core/Console.h"
+#include "../../Core/Engine.h"
 
 #define DEPTH_BIAS_D32_FLOAT(d) (d/(1/pow(2,23)))
 
@@ -13,7 +14,9 @@ bool DX11Context::createDevice(unsigned int width, unsigned int height)
 {
 	D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
 	UINT createDeviceFlags = 0;
-	enableDebugLayer = true;
+	int dxDebugLayerFlag = 0;
+	Engine::engineConfig.configInfo.get("dxDebugLayerFlag", dxDebugLayerFlag);
+	enableDebugLayer = dxDebugLayerFlag;
 	if (enableDebugLayer)
 		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 	D3D_FEATURE_LEVEL FeatureLevelsRequested = D3D_FEATURE_LEVEL_11_0;

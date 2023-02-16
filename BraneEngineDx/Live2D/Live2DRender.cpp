@@ -786,6 +786,7 @@ void Live2DRender::drawMesh(RenderInfo& info, int drawableIndex, CubismBlendMode
     if (_clippingContextBufferForMask != NULL) // マスク生成時
     {
         ShaderProgram* program = material->getShader()->getProgram(SetupMask);
+        program->init();
         program->bind();
 
         // チャンネル
@@ -856,6 +857,7 @@ void Live2DRender::drawMesh(RenderInfo& info, int drawableIndex, CubismBlendMode
                 shaderFeature |= PremultipliedAlpha;
 
             ShaderProgram* program = material->getShader()->getProgram(shaderFeature);
+            program->init();
             program->bind();
 
             material->setTexture("mainTexture", *textureView);

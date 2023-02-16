@@ -93,6 +93,10 @@ void TextureCubePool::refreshCubePool(IRenderContext& context)
 {
 	if (refreshMapes.empty())
 		return;
+
+	static const ShaderPropertyName srcTexName = "srcTex";
+	static const ShaderPropertyName dstTexName = "dstTex";
+
 	context.bindShaderProgram(program);
 	Image image;
 	image.texture = &cubeMapArray;
@@ -109,13 +113,13 @@ void TextureCubePool::refreshCubePool(IRenderContext& context)
 		if (index < 0)
 			continue;
 		image.arrayBase = index * 6;
-		context.bindTexture((ITexture*)cubeMap->getVendorTexture(), "srcTex", mipOption);
-		context.bindImage(image, "dstTex");
+		context.bindTexture((ITexture*)cubeMap->getVendorTexture(), srcTexName, mipOption);
+		context.bindImage(image, dstTexName);
 		context.dispatchCompute(localSize.x(), localSize.y(), localSize.z());
 	}
-	context.bindTexture(NULL, "srcTex");
+	context.bindTexture(NULL, srcTexName);
 	image.texture = NULL;
-	context.bindImage(image, "dstTex");
+	context.bindImage(image, dstTexName);
 	refreshMapes.clear();
 }
 

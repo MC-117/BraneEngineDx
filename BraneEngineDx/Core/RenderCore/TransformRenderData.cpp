@@ -259,19 +259,23 @@ void MeshTransformRenderData::upload()
 	else {
 		unsigned int uploadSize = meshTransformData.uploadTransforms.size();
 		if (uploadSize) {
+			static const ShaderPropertyName indexBufName = "indexBuf";
+			static const ShaderPropertyName srcBufName = "srcBuf";
+			static const ShaderPropertyName dstBufName = "dstBuf";
+
 			meshTransformData.uploadIndices[0] = uploadSize;
 			transformUploadBuffer.uploadData(uploadSize, meshTransformData.uploadTransforms.data());
 			transformUploadIndexBuffer.uploadData(uploadSize + 1, meshTransformData.uploadIndices.data());
 			context.bindShaderProgram(uploadTransformProgram);
-			context.bindBufferBase(transformUploadIndexBuffer.getVendorGPUBuffer(), "indexBuf");
-			context.bindBufferBase(transformUploadBuffer.getVendorGPUBuffer(), "srcBuf");
+			context.bindBufferBase(transformUploadIndexBuffer.getVendorGPUBuffer(), indexBufName);
+			context.bindBufferBase(transformUploadBuffer.getVendorGPUBuffer(), srcBufName);
 			context.bindTexture(NULL, Vertex_Shader_Stage, TRANS_BIND_INDEX, -1);
 			context.bindTexture(NULL, Tessellation_Control_Shader_Stage, TRANS_BIND_INDEX, -1);
 			context.bindTexture(NULL, Tessellation_Evalution_Shader_Stage, TRANS_BIND_INDEX, -1);
 			context.bindTexture(NULL, Geometry_Shader_Stage, TRANS_BIND_INDEX, -1);
 			context.bindTexture(NULL, Fragment_Shader_Stage, TRANS_BIND_INDEX, -1);
 			context.bindTexture(NULL, Compute_Shader_Stage, TRANS_BIND_INDEX, -1);
-			context.bindBufferBase(transformBuffer.getVendorGPUBuffer(), "dstBuf", { true });
+			context.bindBufferBase(transformBuffer.getVendorGPUBuffer(), dstBufName, { true });
 			Vector3u dim = uploadTransformMaterial->getLocalSize();
 			context.dispatchCompute(ceilf(uploadSize / (float)dim.x()), 1, 1);
 			context.clearOutputBufferBindings();
@@ -321,7 +325,8 @@ void MeshTransformRenderData::upload()
 
 void MeshTransformRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(transformBuffer.getVendorGPUBuffer(), "Transforms"); // TRANS_BIND_INDEX
+	static const ShaderPropertyName TransformsName = "Transforms";
+	context.bindBufferBase(transformBuffer.getVendorGPUBuffer(), TransformsName); // TRANS_BIND_INDEX
 	context.bindBufferBase(transformInstanceBuffer.getVendorGPUBuffer(), TRANS_INDEX_BIND_INDEX);
 }
 

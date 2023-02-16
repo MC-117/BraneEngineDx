@@ -43,11 +43,13 @@ void ReflectionProbeRenderData::bind(IRenderContext& context)
 {
 	if (probeDataBuffer.empty())
 		return;
-	context.bindBufferBase(probeDataBuffer.getVendorGPUBuffer(), "reflectionProbes");
+	static const ShaderPropertyName reflectionProbesName = "reflectionProbes";
+	static const ShaderPropertyName reflectionCubeMapName = "reflectionCubeMap";
+	context.bindBufferBase(probeDataBuffer.getVendorGPUBuffer(), reflectionProbesName);
 	MipOption mipOption;
 	mipOption.arrayBase = 0;
 	mipOption.arrayCount = 6 * cubeMapPool.slots.size();
-	context.bindTexture((ITexture*)cubeMapPool.cubeMapArray.getVendorTexture(), "reflectionCubeMap", mipOption);
+	context.bindTexture((ITexture*)cubeMapPool.cubeMapArray.getVendorTexture(), reflectionCubeMapName, mipOption);
 }
 
 void ReflectionProbeRenderData::clean()

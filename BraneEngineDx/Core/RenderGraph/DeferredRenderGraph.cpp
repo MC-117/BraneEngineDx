@@ -126,6 +126,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		if (hasPreDepth) {
 			preProgram = preDepthMaterial->getShader()->getProgram(cmd.getShaderFeature());
 			hasPreDepth &= preProgram != NULL;
+			hasPreDepth = preProgram->init();
 		}
 
 		RenderTask preTask;

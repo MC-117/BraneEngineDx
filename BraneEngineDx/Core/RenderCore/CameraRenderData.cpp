@@ -69,5 +69,6 @@ void CameraRenderData::upload()
 
 void CameraRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(buffer.getVendorGPUBuffer(), "CameraDataBuf"); // CAM_BIND_INDEX
+	static const ShaderPropertyName CameraDataBufName = "CameraDataBuf";
+	context.bindBufferBase(buffer.getVendorGPUBuffer(), CameraDataBufName); // CAM_BIND_INDEX
 }

@@ -30,7 +30,8 @@ void ScreenHitData::upload()
 
 void ScreenHitData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(hitInfoBuffer.getVendorGPUBuffer(), "hitData", { true });
+	static const ShaderPropertyName hitDataName = "hitData";
+	context.bindBufferBase(hitInfoBuffer.getVendorGPUBuffer(), hitDataName, { true });
 }
 
 void ScreenHitData::readBack(IRenderContext& context)

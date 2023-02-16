@@ -1,5 +1,10 @@
 #include "DX12Shader.h"
 
+const char* DX12ShaderStage::MatInsBufName = "MatInsBuf";
+const char* DX12ShaderStage::DrawInfoBufName = "DrawInfoBuf";
+ShaderPropertyName DX12ShaderStage::materialParameterBufferName(DX12ShaderStage::MatInsBufName);
+ShaderPropertyName DX12ShaderStage::drawInfoBufferName(DX12ShaderStage::DrawInfoBufName);
+
 DX12ShaderStage::DX12ShaderStage(DX12Context& context, const ShaderStageDesc& desc)
     : dxContext(context), ShaderStage(desc)
 {
@@ -33,49 +38,79 @@ unsigned int DX12ShaderStage::compile(const string& code, string& errorString)
 		errorString += "D3DReflect: reflection error";
 	}
 
-	dx12MatInsBufReflector = dx12ShaderReflector->GetConstantBufferByName(MatInsBufName.c_str());
-	if (dx12MatInsBufReflector != NULL) {
-		D3D12_SHADER_BUFFER_DESC bufDesc;
-		ZeroMemory(&bufDesc, sizeof(D3D12_SHADER_BUFFER_DESC));
-		if (FAILED(dx12MatInsBufReflector->GetDesc(&bufDesc)))
-			dx12MatInsBufReflector = NULL;
-		else if (bufDesc.Name != MatInsBufName)
-			dx12MatInsBufReflector = NULL;
-	}
+	properties.clear();
 
-	bBindings.clear();
-	tBindings.clear();
-	sBindings.clear();
-	ubBindings.clear();
-	
-	D3D12_SHADER_DESC shaderDesc = {};
+	D3D12_SHADER_DESC shaderDesc = { 0 };
 	dx12ShaderReflector->GetDesc(&shaderDesc);
 
-	int bindingCount = shaderDesc.BoundResources;
-	for (int i = 0; i < bindingCount; i++) {
-		D3D12_SHADER_INPUT_BIND_DESC bdesc = {};
-		dx12ShaderReflector->GetResourceBindingDesc(i, &bdesc);
-		if (bdesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_CBUFFER) {
-			bBindings.push_back(bdesc.BindPoint);
+	for (int i = 0; i < shaderDesc.BoundResources; i++) {
+		D3D12_SHADER_INPUT_BIND_DESC desc = { 0 };
+		dx12ShaderReflector->GetResourceBindingDesc(i, &desc);
+		size_t nameHash = ShaderPropertyName::calHash(desc.Name);
+		ShaderProperty& shaderProperty = properties.insert(make_pair(
+			nameHash, ShaderProperty())).first->second;
+		shaderProperty.name = desc.Name;
+		switch (desc.Type)
+		{
+		case D3D_SIT_CBUFFER:
+			shaderProperty.type = ShaderProperty::ConstantBuffer;
+			break;
+		case D3D_SIT_TEXTURE:
+			shaderProperty.type = desc.Dimension == D3D_SRV_DIMENSION_BUFFER ?
+				ShaderProperty::TextureBuffer : ShaderProperty::Texture;
+			break;
+		case D3D_SIT_TBUFFER:
+		case D3D_SIT_STRUCTURED:
+		case D3D_SIT_BYTEADDRESS:
+			shaderProperty.type = ShaderProperty::TextureBuffer;
+			break;
+		case D3D_SIT_SAMPLER:
+			shaderProperty.type = ShaderProperty::Sampler;
+			break;
+		case D3D_SIT_UAV_RWTYPED:
+		case D3D_SIT_UAV_RWSTRUCTURED:
+		case D3D_SIT_UAV_RWBYTEADDRESS:
+		case D3D_SIT_UAV_APPEND_STRUCTURED:
+		case D3D_SIT_UAV_CONSUME_STRUCTURED:
+		case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+			shaderProperty.type = ShaderProperty::Image;
+			break;
+		default:
+			break;
 		}
-		else if (bdesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_TBUFFER) {
-			tBindings.push_back(bdesc.BindPoint);
+		shaderProperty.offset = desc.BindPoint;
+		if (shaderProperty.type == ShaderProperty::ConstantBuffer) {
+			ID3D12ShaderReflectionConstantBuffer* constantBuffer = dx12ShaderReflector->GetConstantBufferByName(desc.Name);
+			D3D12_SHADER_BUFFER_DESC bufDesc = { 0 };
+			if (SUCCEEDED(constantBuffer->GetDesc(&bufDesc))) {
+				shaderProperty.size = bufDesc.Size;
+				if (nameHash == materialParameterBufferName.getHash()) {
+					for (int i = 0; i < bufDesc.Variables; i++) {
+						ID3D12ShaderReflectionVariable* variable = constantBuffer->GetVariableByIndex(i);
+						D3D12_SHADER_VARIABLE_DESC desc = { 0 };
+						variable->GetDesc(&desc);
+						ShaderProperty& shaderProperty = properties.insert(make_pair(
+							ShaderPropertyName::calHash(desc.Name), ShaderProperty())).first->second;
+						shaderProperty.name = desc.Name;
+						shaderProperty.type = ShaderProperty::Parameter;
+						shaderProperty.offset = desc.StartOffset;
+						shaderProperty.size = desc.Size;
+						shaderProperty.meta = 0;
+					}
+				}
+			}
 		}
-		else if (bdesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_TEXTURE) {
-			tBindings.push_back(bdesc.BindPoint);
-		}
-		else if (bdesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_STRUCTURED) {
-			tBindings.push_back(bdesc.BindPoint);
-		}
-		else if (bdesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_SAMPLER) {
-			sBindings.push_back(bdesc.BindPoint);
-		}
-		else if (bdesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWSTRUCTURED) {
-			ubBindings.push_back(bdesc.BindPoint);
-		}
-		else if (bdesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWTYPED) {
-			ubBindings.push_back(bdesc.BindPoint);
-		}
+		else
+			shaderProperty.size = desc.BindCount;
+		shaderProperty.meta = -1;
+	}
+
+	for (auto& prop : properties) {
+		if (prop.second.type != ShaderProperty::Texture)
+			continue;
+		const ShaderProperty* samplerProp = getProperty(prop.second.name + "Sampler");
+		if (samplerProp && samplerProp->type == ShaderProperty::Sampler)
+			prop.second.meta = samplerProp->offset;
 	}
 
 	return shaderId;
@@ -83,14 +118,28 @@ unsigned int DX12ShaderStage::compile(const string& code, string& errorString)
 
 void DX12ShaderStage::resolveRootSignature(DX12RootSignatureDesc& desc)
 {
-	for (int i = 0; i < bBindings.size(); i++)
-		desc.addBuffer(bBindings[i]);
-	for (int i = 0; i < tBindings.size(); i++)
-		desc.addTexture(tBindings[i]);
-	for (int i = 0; i < sBindings.size(); i++)
-		desc.addSampler(sBindings[i]);
-	for (int i = 0; i < ubBindings.size(); i++)
-		desc.addImage(ubBindings[i]);
+	for (auto& prop : properties)
+	{
+		switch (prop.second.type)
+		{
+		case ShaderProperty::ConstantBuffer:
+			desc.addBuffer(prop.second.offset);
+			break;
+		case ShaderProperty::TextureBuffer:
+		case ShaderProperty::Texture:
+			desc.addTexture(prop.second.offset);
+			break;
+		case ShaderProperty::Sampler:
+			desc.addSampler(prop.second.offset);
+			break;
+		case ShaderProperty::Image:
+			desc.addImage(prop.second.offset);
+			break;
+		default:
+			break;
+		}
+		
+	}
 }
 
 void DX12ShaderStage::release()
@@ -136,8 +185,30 @@ DX12ShaderProgram::~DX12ShaderProgram()
 		currentDx12Program = NULL;
 }
 
+bool DX12ShaderProgram::init()
+{
+	if (!isValid())
+		return false;
+	if (!dirty)
+		return true;
+	ShaderProgram::init();
+	if (const AttributeDesc* desc = getAttributeOffset(DX12ShaderStage::materialParameterBufferName))
+		if (const ShaderProperty* prop = desc->getConstantBuffer())
+			matInsBufSize = prop->size;
+	dirty = false;
+	return true;
+}
+
 unsigned int DX12ShaderProgram::bind()
 {
+	if (dirty) {
+		if (currentProgram == programId)
+			currentProgram = 0;
+		drawInfoBuf.Reset();
+		matInsBuf.Reset();
+		attributes.clear();
+		matInsBufSize = 0;
+	}
 	if (currentProgram == programId)
 		return programId;
 
@@ -167,15 +238,7 @@ unsigned int DX12ShaderProgram::bind()
 			programData.DS = stage->dx12ShaderBlob;
 			break;
 		}
-		if (stage->dx12MatInsBufReflector != NULL) {
-			D3D12_SHADER_BUFFER_DESC bufDesc;
-			ZeroMemory(&bufDesc, sizeof(D3D12_SHADER_BUFFER_DESC));
-			if (SUCCEEDED(stage->dx12MatInsBufReflector->GetDesc(&bufDesc))) {
-				if (bufDesc.Size > cbSize) {
-					dx12MatInsBufReflector = stage->dx12MatInsBufReflector;
-				}
-			}
-		}
+
 		stage->resolveRootSignature(rootSignatureDesc);
 	}
 
@@ -191,50 +254,6 @@ unsigned int DX12ShaderProgram::bind()
 	currentDx12Program = this;
 	currentProgram = programId;
 	return programId;
-}
-
-DX12ShaderProgram::AttributeDesc DX12ShaderProgram::getAttributeOffset(const string& name)
-{
-	auto iter = attributes.find(name);
-	if (iter != attributes.end())
-		return iter->second;
-	AttributeDesc desc = { name, false, -1, 0, -1 };
-	if (dx12MatInsBufReflector != NULL) {
-		D3D12_SHADER_VARIABLE_DESC vdesc;
-		ZeroMemory(&vdesc, sizeof(D3D12_SHADER_VARIABLE_DESC));
-		auto var = dx12MatInsBufReflector->GetVariableByName(name.c_str());
-		if (var != NULL) {
-			if (SUCCEEDED(var->GetDesc(&vdesc))) {
-				if (vdesc.Name == name) {
-					desc.offset = vdesc.StartOffset;
-					desc.size = vdesc.Size;
-				}
-			}
-		}
-	}
-	if (desc.offset == -1)
-		for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e; b++) {
-			DX12ShaderStage* dss = (DX12ShaderStage*)b->second;
-			if (dss->dx12ShaderReflector == NULL)
-				continue;
-			if (desc.offset == -1) {
-				desc.isTex = true;
-				D3D12_SHADER_INPUT_BIND_DESC bdesc;
-				ZeroMemory(&bdesc, sizeof(D3D12_SHADER_INPUT_BIND_DESC));
-				if (SUCCEEDED(dss->dx12ShaderReflector->GetResourceBindingDescByName(name.c_str(), &bdesc))) {
-					if (bdesc.Name == name) {
-						desc.offset = bdesc.BindPoint;
-						desc.size = 1;
-						desc.meta = b->first;
-					}
-				}
-			}
-			if (desc.offset != -1) {
-				attributes.emplace(make_pair(name, desc));
-				break;
-			}
-		}
-	return desc;
 }
 
 bool DX12ShaderProgram::dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ)
@@ -277,16 +296,11 @@ void DX12ShaderProgram::bindCBToStage(unsigned int index, ComPtr<ID3D12Resource>
 
 DX12SubBuffer* DX12ShaderProgram::allocateMatInsBuf()
 {
-	if (dx12MatInsBufReflector != NULL) {
-		DX12SubBuffer* buffer = NULL;
-		D3D12_SHADER_BUFFER_DESC bufDesc;
-		ZeroMemory(&bufDesc, sizeof(D3D12_SHADER_BUFFER_DESC));
-		if (SUCCEEDED(dx12MatInsBufReflector->GetDesc(&bufDesc))) {
-			int alignedSize = GRS_UPPER(bufDesc.Size, 256);
-			buffer = dxContext.constantBufferPool.suballocate(alignedSize, 256);
-			if (buffer == NULL) {
-				throw runtime_error("MatInsBuf CreateResource failed");
-			}
+	if (matInsBufSize != 0) {
+		int alignedSize = GRS_UPPER(matInsBufSize, 256);
+		DX12SubBuffer* buffer = dxContext.constantBufferPool.suballocate(alignedSize, 256);
+		if (buffer == NULL) {
+			throw runtime_error("MatInsBuf CreateResource failed");
 		}
 		return buffer;
 	}

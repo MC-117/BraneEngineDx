@@ -48,18 +48,27 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 			gBufferC == NULL || hiZMap == NULL || hitDataMap == NULL || hitColorMap == NULL)
 			return;
 
-		const char* gBufferASlot = "inTexture0";
-		const char* gBufferBSlot = "inTexture1";
-		const char* gBufferCSlot = "inTexture2";
-		const char* gBufferESlot = "inTexture3";
-		const char* hiZMapSlot = "inTexture4";
+		static const ShaderPropertyName inTexture0Name = "inTexture0";
+		static const ShaderPropertyName inTexture1Name = "inTexture1";
+		static const ShaderPropertyName inTexture2Name = "inTexture2";
+		static const ShaderPropertyName inTexture3Name = "inTexture3";
+		static const ShaderPropertyName inTexture4Name = "inTexture4";
 
-		const char* inHitColorMapSlot = "inTexture0";
+		static const ShaderPropertyName rwTexture0Name = "rwTexture0";
+		static const ShaderPropertyName rwTexture1Name = "rwTexture1";
 
-		const char* hitDataMapSlot = "rwTexture0";
-		const char* hitColorMapSlot = "rwTexture1";
+		const ShaderPropertyName& gBufferASlot = inTexture0Name;
+		const ShaderPropertyName& gBufferBSlot = inTexture1Name;
+		const ShaderPropertyName& gBufferCSlot = inTexture2Name;
+		const ShaderPropertyName& gBufferESlot = inTexture3Name;
+		const ShaderPropertyName& hiZMapSlot = inTexture4Name;
 
-		const char* outGBufferASlot = "rwTexture1";
+		const ShaderPropertyName& inHitColorMapSlot = inTexture0Name;
+
+		const ShaderPropertyName& hitDataMapSlot = rwTexture0Name;
+		const ShaderPropertyName& hitColorMapSlot = rwTexture1Name;
+
+		const ShaderPropertyName& outGBufferASlot = rwTexture1Name;
 
 		int width = gBufferA->getWidth();
 		int height = gBufferA->getHeight();
@@ -115,6 +124,14 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 			traceRenderTarget == NULL || resolveRenderTarget == NULL)
 			return;
 
+		static const ShaderPropertyName gBufferAName = "gBufferA";
+		static const ShaderPropertyName gBufferBName = "gBufferB";
+		static const ShaderPropertyName gBufferCName = "gBufferC";
+		static const ShaderPropertyName gBufferEName = "gBufferE";
+		static const ShaderPropertyName hiZMapName = "hiZMap";
+		static const ShaderPropertyName hitDataMapName = "hitDataMap";
+		static const ShaderPropertyName hitColorMapName = "hitColorMap";
+
 		int width = gBufferA->getWidth();
 		int height = gBufferA->getHeight();
 		int hiZWidth = hiZMap->getWidth();
@@ -131,11 +148,11 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 		traceMaterialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val = hiZUVScale;
 		traceMaterialRenderData.upload();
 		context.bindMaterialBuffer(traceMaterialRenderData.vendorMaterial);
-		context.bindTexture((ITexture*)gBufferA->getVendorTexture(), "gBufferA");
-		context.bindTexture((ITexture*)gBufferB->getVendorTexture(), "gBufferB");
-		context.bindTexture((ITexture*)gBufferC->getVendorTexture(), "gBufferC");
-		context.bindTexture((ITexture*)gBufferE->getVendorTexture(), "gBufferE");
-		context.bindTexture((ITexture*)hiZMap->getVendorTexture(), "hiZMap");
+		context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
+		context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
+		context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCName);
+		context.bindTexture((ITexture*)gBufferE->getVendorTexture(), gBufferEName);
+		context.bindTexture((ITexture*)hiZMap->getVendorTexture(), hiZMapName);
 
 		context.bindFrame(traceRenderTarget->getVendorRenderTarget());
 		context.clearFrameColors({ Color(), Color() });
@@ -155,10 +172,10 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 		resolveMaterialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val = hiZUVScale;
 		resolveMaterialRenderData.upload();
 		context.bindMaterialBuffer(resolveMaterialRenderData.vendorMaterial);
-		context.bindTexture((ITexture*)gBufferB->getVendorTexture(), "gBufferB");
-		context.bindTexture((ITexture*)gBufferC->getVendorTexture(), "gBufferC");
-		context.bindTexture((ITexture*)hitDataMap->getVendorTexture(), "hitDataMap");
-		context.bindTexture((ITexture*)hitColorMap->getVendorTexture(), "hitColorMap");
+		context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
+		context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCName);
+		context.bindTexture((ITexture*)hitDataMap->getVendorTexture(), hitDataMapName);
+		context.bindTexture((ITexture*)hitColorMap->getVendorTexture(), hitColorMapName);
 
 		context.bindFrame(resolveRenderTarget->getVendorRenderTarget());
 

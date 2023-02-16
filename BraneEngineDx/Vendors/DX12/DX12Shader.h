@@ -8,15 +8,13 @@
 class DX12ShaderStage : public ShaderStage
 {
 public:
-	const string MatInsBufName = "MatInsBuf";
+	static const char* MatInsBufName;
+	static const char* DrawInfoBufName;
+	static ShaderPropertyName materialParameterBufferName;
+	static ShaderPropertyName drawInfoBufferName;
 	DX12Context& dxContext;
 	ComPtr<ID3DBlob> dx12ShaderBlob = NULL;
 	ComPtr<ID3D12ShaderReflection> dx12ShaderReflector = NULL;
-	vector<int> bBindings;
-	vector<int> tBindings;
-	vector<int> sBindings;
-	vector<int> ubBindings;
-	ID3D12ShaderReflectionConstantBuffer* dx12MatInsBufReflector = NULL;
 
 	DX12ShaderStage(DX12Context& context, const ShaderStageDesc& desc);
 	virtual ~DX12ShaderStage();
@@ -43,7 +41,6 @@ public:
 	static unsigned int nextProgramID;
 	static DX12ShaderProgram* currentDx12Program;
 	DX12Context& dxContext;
-	ID3D12ShaderReflectionConstantBuffer* dx12MatInsBufReflector = NULL;
 	ComPtr<ID3D12Resource> matInsBuf;
 	unsigned char* matInsBufHost = NULL;
 	unsigned char* matInsBufGPUHost = NULL;
@@ -56,9 +53,9 @@ public:
 	DX12ShaderProgram(DX12Context& context);
 	virtual ~DX12ShaderProgram();
 
+	virtual bool init();
+
 	virtual unsigned int bind();
-	// AttributeDesc::meta represent shader stage type
-	virtual AttributeDesc getAttributeOffset(const string& name);
 	virtual bool dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ);
 	virtual void memoryBarrier(unsigned int bitEnum);
 	virtual void uploadDrawInfo();

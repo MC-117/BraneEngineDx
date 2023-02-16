@@ -16,9 +16,6 @@ void BlitPass::prepare()
 		return;
 	RenderTarget::defaultRenderTarget.resize(cameraRender->size.x, cameraRender->size.y);
 	program->init();
-	
-	screenMapSlot = program->getAttributeOffset("screenMap").offset;
-	screenMapSamplerSlot = program->getAttributeOffset("screenMapSampler").offset;
 
 	materialRenderData = (MaterialRenderData*)material->getRenderData();
 	materialRenderData->program = program;
@@ -33,6 +30,9 @@ void BlitPass::execute(IRenderContext& context)
 	Texture* sceneTexture = cameraRender->getSceneMap();
 	if (sceneTexture == NULL)
 		return;
+
+	static const ShaderPropertyName screenMapName = "screenMap";
+
 	materialRenderData->upload();
 
 	context.clearFrameBindings();
@@ -42,7 +42,7 @@ void BlitPass::execute(IRenderContext& context)
 	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
 
 	context.bindFrame(IRenderTarget::defaultRenderTarget);
-	context.bindTexture((ITexture*)sceneTexture->getVendorTexture(), Fragment_Shader_Stage, screenMapSlot, screenMapSamplerSlot);
+	context.bindTexture((ITexture*)sceneTexture->getVendorTexture(), screenMapName);
 
 	context.setDrawInfo(0, 1, 0);
 	context.clearFrameColor({ 0, 0, 0, 0 });

@@ -70,7 +70,8 @@ void ParticleRenderData::upload()
 
 void ParticleRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(particleBuffer.getVendorGPUBuffer(), "Particles"); // PARTICLE_BIND_INDEX
+	static const ShaderPropertyName ParticlesName = "Particles";
+	context.bindBufferBase(particleBuffer.getVendorGPUBuffer(), ParticlesName); // PARTICLE_BIND_INDEX
 }
 
 void ParticleRenderData::clean()

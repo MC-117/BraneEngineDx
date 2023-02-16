@@ -29,6 +29,10 @@ void SSAOPass::prepare()
 
 void SSAOPass::execute(IRenderContext& context)
 {
+	static const ShaderPropertyName depthMapName = "depthMap";
+	static const ShaderPropertyName ssaoMapName = "ssaoMap";
+	static const ShaderPropertyName screenMapName = "screenMap";
+
 	Unit2Di ssaoSize = { size.x * screenScale, size.y * screenScale };
 
 	materialRenderData->upload();
@@ -38,13 +42,11 @@ void SSAOPass::execute(IRenderContext& context)
 
 	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
 
-	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, depthMapSlot, depthMapSamplerSlot);
+	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), depthMapName);
 
 	// Pass 0 GTAO
-	context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(),
-		Fragment_Shader_Stage, ssaoMapSlot, ssaoMapSamplerSlot);
-	context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(),
-		Fragment_Shader_Stage, screenMapSlot, screenMapSamplerSlot);
+	context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), ssaoMapName);
+	context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), screenMapName);
 	context.bindFrame(gtaoRenderTarget.getVendorRenderTarget());
 
 	context.setDrawInfo(0, 2, 0);
@@ -56,8 +58,8 @@ void SSAOPass::execute(IRenderContext& context)
 	context.clearFrameBindings();
 
 	// Pass 1 Add
-	context.bindTexture((ITexture*)gtaoMap.getVendorTexture(), Fragment_Shader_Stage, ssaoMapSlot, ssaoMapSamplerSlot);
-	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, screenMapSlot, screenMapSamplerSlot);
+	context.bindTexture((ITexture*)gtaoMap.getVendorTexture(), ssaoMapName);
+	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), screenMapName);
 
 	context.bindFrame(screenRenderTarget.getVendorRenderTarget());
 
@@ -100,16 +102,6 @@ void SSAOPass::render(RenderInfo & info)
 	}
 	if (!program->isComputable()) {
 		program->init();
-
-		depthMapSlot = program->getAttributeOffset("depthMap").offset;
-		depthMapSamplerSlot = program->getAttributeOffset("depthMapSampler").offset;
-		ssaoMapSlot = program->getAttributeOffset("ssaoMap").offset;
-		ssaoMapSamplerSlot = program->getAttributeOffset("ssaoMapSampler").offset;
-		screenMapSlot = program->getAttributeOffset("screenMap").offset;
-		screenMapSamplerSlot = program->getAttributeOffset("screenMapSampler").offset;
-
-		if (depthMapSlot == -1 || ssaoMapSlot == -1 || screenMapSlot == -1)
-			return;
 
 		cameraRenderData = resource->cameraRenderData;
 		if (cameraRenderData == NULL)

@@ -5,6 +5,53 @@
 #include "Utility/Utility.h"
 #include "GraphicType.h"
 
+struct ShaderPropertyName
+{
+	size_t hash;
+
+	ShaderPropertyName(const char* name);
+	ShaderPropertyName(const string& name);
+
+	static size_t calHash(const char* name);
+
+	size_t getHash() const;
+
+	size_t operator()() const;
+};
+
+struct ShaderInput
+{
+	enum Type
+	{
+		None,
+		Position,
+		ConstantBuffer,
+		TextureBuffer,
+		Texture,
+		Sampler,
+		Image
+	};
+};
+
+struct ShaderProperty
+{
+	enum Type
+	{
+		None,
+		Parameter,
+		ConstantBuffer,
+		TextureBuffer,
+		Texture,
+		Sampler,
+		Image
+	};
+	Type type = None;
+	string name;
+	int offset;
+	int size;
+	int meta;
+};
+
 struct ShaderStageDesc
 {
 	ShaderStageType stageType;
@@ -16,6 +63,7 @@ class ShaderManager;
 
 class ShaderStage
 {
+	friend class ShaderProgram;
 public:
 	ShaderStage(ShaderStageType stageType, const Enum<ShaderFeature>& feature, const string& name);
 	ShaderStage(const ShaderStageDesc& desc);
@@ -28,12 +76,15 @@ public:
 	ShaderStageType getShaderStageType() const;
 	Enum<ShaderFeature> getShaderFeature() const;
 
+	const ShaderProperty* getProperty(const ShaderPropertyName& name) const;
+
 	static const char* enumShaderStageType(ShaderStageType stageType);
 	static ShaderStageType enumShaderStageType(const string& type);
 protected:
 	string name;
 	ShaderStageType stageType;
 	Enum<ShaderFeature> shaderFeature = Shader_Default;
+	unordered_map<size_t, ShaderProperty> properties;
 	string code;
 	unsigned long long shaderId = 0;
 };
@@ -45,17 +96,18 @@ class ShaderProgram
 public:
 	struct AttributeDesc
 	{
-		string name;
-		bool isTex;
-		int offset;
-		int size;
-		int meta;
+		vector<pair<ShaderStageType, const ShaderProperty*>> properties;
+
+		string getName() const;
+		const ShaderProperty* getParameter() const;
+		const ShaderProperty* getConstantBuffer() const;
 	};
 	string name;
 	unsigned int renderOrder = 0;
 
 	Enum<ShaderFeature> shaderType;
 	map<ShaderStageType, ShaderStage*> shaderStages;
+	unordered_map<size_t, AttributeDesc> attributes;
 
 	ShaderProgram();
 	ShaderProgram(ShaderStage& meshStage);
@@ -80,7 +132,7 @@ public:
 	virtual unsigned int bind();
 	// Get byte offset or index of shader attribute by name, which
 	// is specified by vendor implementation.
-	virtual AttributeDesc getAttributeOffset(const string& name);
+	virtual const AttributeDesc* getAttributeOffset(const ShaderPropertyName& name) const;
 	virtual int getMaterialBufferSize();
 	virtual bool dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ);
 	virtual void memoryBarrier(unsigned int bitEnum);
@@ -94,7 +146,7 @@ public:
 protected:
 	ShaderStageType meshStageType = None_Shader_Stage;
 	unsigned int programId = 0;
-	bool dirty = false;
+	bool dirty = true;
 	static unsigned int currentProgram;
 };
 

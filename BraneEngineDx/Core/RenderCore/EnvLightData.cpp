@@ -98,14 +98,17 @@ void EnvLightProbeRenderData::computeEnvLight(IRenderContext& context, EnvLightC
 	if (cubeMap == NULL)
 		return;
 
+	static const ShaderPropertyName lightCubeMapName = "lightCubeMap";
+	static const ShaderPropertyName outSHCoeffsName = "outSHCoeffs";
+
 	context.bindShaderProgram(program);
 	MipOption mipOption;
 	mipOption.dimension = TD_Array;
 	mipOption.arrayCount = CF_Faces;
-	context.bindTexture((ITexture*)cubeMap->getVendorTexture(), "lightCubeMap", mipOption);
-	context.bindBufferBase(envSHDataBuffer.getVendorGPUBuffer(), "outSHCoeffs", { true });
+	context.bindTexture((ITexture*)cubeMap->getVendorTexture(), lightCubeMapName, mipOption);
+	context.bindBufferBase(envSHDataBuffer.getVendorGPUBuffer(), outSHCoeffsName, { true });
 	context.dispatchCompute(1, 1, CF_Faces);
-	context.bindTexture(NULL, "lightCubeMap");
+	context.bindTexture(NULL, lightCubeMapName);
 	context.clearOutputBufferBindings();
 
 	RGBASHCoeff3Data envSHdata[CF_Faces];
@@ -182,7 +185,8 @@ void EnvLightRenderData::upload()
 
 void EnvLightRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(envLightDataBuffer.getVendorGPUBuffer(), "envLightDatas");
+	static const ShaderPropertyName envLightDatasName = "envLightDatas";
+	context.bindBufferBase(envLightDataBuffer.getVendorGPUBuffer(), envLightDatasName);
 }
 
 void EnvLightRenderData::clean()

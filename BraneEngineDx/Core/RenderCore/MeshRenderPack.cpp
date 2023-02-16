@@ -71,13 +71,15 @@ void MeshDataRenderPack::excute(IRenderContext& context, RenderTaskContext& task
 
 	newVendorRenderExecution();
 
+	static const ShaderPropertyName depthMapName = "depthMap";
+
 	if (taskContext.materialData != materialData) {
 		taskContext.materialData = materialData;
 		materialData->bind(context);
 		if (lightDataPack.shadowTarget == NULL)
-			context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), "depthMap");
+			context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), depthMapName);
 		else
-			context.bindTexture((ITexture*)lightDataPack.shadowTarget->getDepthTexture()->getVendorTexture(), "depthMap");
+			context.bindTexture((ITexture*)lightDataPack.shadowTarget->getDepthTexture()->getVendorTexture(), depthMapName);
 	}
 
 	vector<DrawElementsIndirectCommand> cmds(meshParts.size());

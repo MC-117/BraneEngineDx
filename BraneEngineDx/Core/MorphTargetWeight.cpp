@@ -86,7 +86,8 @@ void MorphTargetWeightRenderData::upload()
 
 void MorphTargetWeightRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(weightGPUBuffer.getVendorGPUBuffer(), "morphWeight"); // MORPHWEIGHT_BIND_INDEX
+	static const ShaderPropertyName morphWeightName = "morphWeight";
+	context.bindBufferBase(weightGPUBuffer.getVendorGPUBuffer(), morphWeightName); // MORPHWEIGHT_BIND_INDEX
 }
 
 void MorphTargetRemapper::addMorphTargetWeight(MorphTargetWeight& weights)

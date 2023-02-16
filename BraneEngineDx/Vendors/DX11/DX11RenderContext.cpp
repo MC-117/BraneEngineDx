@@ -72,17 +72,6 @@ void DX11RenderContext::clearVertexBindings()
 	deviceContext->IASetVertexBuffers(0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT, buffers, strides, offsets);
 }
 
-unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, const string& name, BufferOption bufferOption)
-{
-	if (currentProgram == NULL)
-		return 0;
-	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(buffer);
-	DX11ShaderProgram::AttributeDesc desc = currentProgram->getAttributeOffset(name);
-	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
-		return 0;
-	return bindBufferBase(dxBuffer, desc.offset, bufferOption);
-}
-
 void bindCBToStage(ComPtr<ID3D11DeviceContext> deviceContext, ShaderProgram* program, ComPtr<ID3D11Buffer> buffer, unsigned int index)
 {
 	for (auto b = program->shaderStages.begin(), e = program->shaderStages.end(); b != e; b++) {
@@ -137,6 +126,44 @@ void bindSRToStage(ComPtr<ID3D11DeviceContext> deviceContext, ShaderProgram* pro
 	}
 }
 
+void bindUAToStage(ComPtr<ID3D11DeviceContext> deviceContext, ShaderProgram* program, ComPtr<ID3D11UnorderedAccessView> uav, unsigned int index)
+{
+	if (program->isComputable())
+		deviceContext->CSSetUnorderedAccessViews(index, 1, uav.GetAddressOf(), NULL);
+	else
+		deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
+			NULL, NULL, index, 1, uav.GetAddressOf(), NULL);
+}
+
+unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, const ShaderPropertyName& name, BufferOption bufferOption)
+{
+	if (currentProgram == NULL)
+		return 0;
+	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(buffer);
+	if (dxBuffer == NULL || dxBuffer->dx11Buffer == NULL)
+		return 0;
+	if (bufferOption.output && dxBuffer->desc.gpuAccess != GAF_ReadWrite)
+		throw runtime_error("Buffer with GAF_Read cannot be binded on output");
+	if (bufferOption.output) {
+		currentProgram->bindUAV(deviceContext, name, dxBuffer->dx11BufferUAV);
+	}
+	else {
+		switch (dxBuffer->desc.type)
+		{
+		case GB_Constant:
+			currentProgram->bindCBV(deviceContext, name, dxBuffer->dx11Buffer);
+			break;
+		case GB_Storage:
+			currentProgram->bindSRV(deviceContext, name, dxBuffer->dx11BufferSRV);
+			break;
+		default:
+			throw runtime_error("Unknown Error");
+			break;
+		}
+	}
+	return dxBuffer->desc.id;
+}
+
 unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int index, BufferOption bufferOption)
 {
 	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(buffer);
@@ -145,23 +172,13 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 	if (bufferOption.output && dxBuffer->desc.gpuAccess != GAF_ReadWrite)
 		throw runtime_error("Buffer with GAF_Read cannot be binded on output");
 	if (bufferOption.output) {
-		if (currentProgram->isComputable())
-			dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
-		else
-			dxContext.deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
-				NULL, NULL, index, 1, dxBuffer->dx11BufferUAV.GetAddressOf(), NULL);
+		bindUAToStage(deviceContext, currentProgram, dxBuffer->dx11BufferUAV, index);
 	}
 	else {
 		switch (dxBuffer->desc.type)
 		{
 		case GB_Constant:
 			bindCBToStage(deviceContext, currentProgram, dxBuffer->dx11Buffer, index);
-			/*deviceContext->VSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-			deviceContext->PSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-			deviceContext->CSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-			deviceContext->GSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-			deviceContext->HSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());
-			deviceContext->DSSetConstantBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf());*/
 			break;
 		case GB_Vertex:
 		{
@@ -179,12 +196,6 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 		}
 		case GB_Storage:
 			bindSRToStage(deviceContext, currentProgram, dxBuffer->dx11BufferSRV, index);
-			/*deviceContext->VSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
-			deviceContext->PSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
-			deviceContext->GSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
-			deviceContext->HSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
-			deviceContext->DSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());
-			deviceContext->CSSetShaderResources(index, 1, dxBuffer->dx11BufferSRV.GetAddressOf());*/
 			break;
 		default:
 			throw runtime_error("Unknown Error");
@@ -550,9 +561,7 @@ void DX11RenderContext::bindMaterialBuffer(IMaterial* material)
 		deviceContext->Map(dxMaterial->matInsBuf.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mpd);
 		memcpy_s(mpd.pData, dxMaterial->matInsBufSize, dxMaterial->matInsBufHost, dxMaterial->matInsBufSize);
 		deviceContext->Unmap(dxMaterial->matInsBuf.Get(), 0);
-		int index = currentProgram->getAttributeOffset("MatInsBuf").offset;
-		if (index >= 0)
-			bindCBToStage(deviceContext, currentProgram, dxMaterial->matInsBuf, index); // MAT_INS_BIND_INDEX
+		currentProgram->bindCBV(deviceContext, DX11ShaderStage::materialParameterBufferName, dxMaterial->matInsBuf);
 	}
 }
 
@@ -666,26 +675,78 @@ void DX11RenderContext::bindImage(const Image& image, unsigned int index)
 #endif
 }
 
-void DX11RenderContext::bindTexture(ITexture* texture, const string& name, const MipOption& mipOption)
+void DX11RenderContext::bindTexture(ITexture* texture, const ShaderPropertyName& name, const MipOption& mipOption)
 {
 	if (currentProgram == NULL)
 		return;
 	DX11Texture2D* dxTex = dynamic_cast<DX11Texture2D*>(texture);
-	DX11ShaderProgram::AttributeDesc desc = currentProgram->getAttributeOffset(name);
-	DX11ShaderProgram::AttributeDesc sampleDesc = currentProgram->getAttributeOffset(name + "Sampler");
-	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
-		return;
-	bindTexture(dxTex, (ShaderStageType)desc.meta, desc.offset, sampleDesc.offset, mipOption);
+	ComPtr<ID3D11ShaderResourceView> tex = NULL;
+	ComPtr<ID3D11SamplerState> sample = NULL;
+
+#if TEX_BINGING_REC
+	auto preTexIter = srvSlots.find(index);
+	if (dxTex != NULL) {
+		tex = dxTex->getSRV();
+		sample = dxTex->getSampler();
+		if (preTexIter != srvSlots.end()) {
+			srvBindings.erase(preTexIter->second);
+			preTexIter->second = dxTex;
+		}
+		else
+			srvSlots.insert(make_pair(index, dxTex));
+		srvBindings.insert(dxTex);
+	}
+	else {
+		if (preTexIter != srvSlots.end()) {
+			srvBindings.erase(preTexIter->second);
+			srvSlots.erase(preTexIter);
+		}
+	}
+#else
+	if (dxTex != NULL) {
+		tex = dxTex->getSRV(mipOption);
+		sample = dxTex->getSampler();
+	}
+#endif
+	currentProgram->bindSRVWithSampler(deviceContext, name, tex, sample);
 }
 
-void DX11RenderContext::bindImage(const Image& image, const string& name)
+void DX11RenderContext::bindImage(const Image& image, const ShaderPropertyName& name)
 {
 	if (currentProgram == NULL)
 		return;
-	DX11ShaderProgram::AttributeDesc desc = currentProgram->getAttributeOffset(name);
-	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
-		return;
-	bindImage(image, desc.offset);
+	DX11Texture2D* dxTex = NULL;
+	ComPtr<ID3D11UnorderedAccessView> tex = NULL;
+	if (image.texture) {
+		dxTex = dynamic_cast<DX11Texture2D*>((ITexture*)image.texture->getVendorTexture());
+		if (dxTex) {
+			RWOption rwOption;
+			rwOption.mipLevel = image.level;
+			rwOption.arrayBase = image.arrayBase;
+			rwOption.arrayCount = image.arrayCount;
+			tex = dxTex->getUAV(rwOption);
+		}
+	}
+	currentProgram->bindUAV(deviceContext, name, tex);
+
+#if TEX_BINGING_REC
+	auto preTexIter = uavSlots.find(index);
+	if (dxTex != NULL) {
+		if (preTexIter != uavSlots.end()) {
+			uavBindings.erase(preTexIter->second);
+			preTexIter->second = dxTex;
+		}
+		else
+			uavSlots.insert(make_pair(index, dxTex));
+		uavBindings.insert(dxTex);
+	}
+	else {
+		if (preTexIter != srvSlots.end()) {
+			uavBindings.erase(preTexIter->second);
+			uavSlots.erase(preTexIter);
+		}
+	}
+#endif
 }
 
 void DX11RenderContext::clearSRV()
@@ -913,9 +974,7 @@ void DX11RenderContext::bindDrawInfo()
 		memcpy_s(mpd.pData, sizeof(DrawInfo), &uploadedDrawInfo, sizeof(DrawInfo));
 		deviceContext->Unmap(drawInfoBuf.Get(), 0);
 	}
-	int index = currentProgram->getAttributeOffset("DrawInfoBuf").offset;
-	if (index >= 0)
-		bindCBToStage(deviceContext, currentProgram, drawInfoBuf, index); // DRAW_INFO_BIND_INDEX
+	currentProgram->bindCBV(deviceContext, DX11ShaderStage::drawInfoBufferName, drawInfoBuf);
 }
 
 void DX11RenderContext::meshDrawCall(const MeshPartDesc& mesh)
@@ -1021,7 +1080,7 @@ void DX11RenderContext::submit()
 	if (isDefaultContext)
 		return;
 	ComPtr<ID3D11CommandList> commandList;
-	if (FAILED(deviceContext->FinishCommandList(false, commandList.GetAddressOf())))
+	if (FAILED(deviceContext->FinishCommandList(true, commandList.GetAddressOf())))
 		throw runtime_error("FinishCommandList failed");
 	if (commandList)
 		dxContext.deviceContext->ExecuteCommandList(commandList.Get(), true);

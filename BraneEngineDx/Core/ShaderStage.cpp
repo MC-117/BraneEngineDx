@@ -6,6 +6,50 @@
 #include "Utility/EngineUtility.h"
 #include "ShaderCode/ShaderAdapterCompiler.h"
 
+ShaderPropertyName::ShaderPropertyName(const char* name)
+{
+	if (name == NULL)
+		throw runtime_error("Empty string is invalid");
+	hash = calHash(name);
+}
+
+ShaderPropertyName::ShaderPropertyName(const string& name)
+{
+	if (name.empty())
+		throw runtime_error("Empty string is invalid");
+	hash = calHash(name.c_str());
+}
+
+size_t ShaderPropertyName::calHash(const char* name)
+{
+	const char* ptr = name;
+	size_t hash = 0;
+	while (true) {
+		size_t data = 0;
+		int len = 0;
+		for (; len < sizeof(size_t); len++) {
+			if (ptr[len] == '\0')
+				break;
+		}
+		memcpy(&data, ptr, len);
+		hash ^= data + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+		if (len < sizeof(size_t))
+			break;
+		ptr += sizeof(size_t);
+	}
+	return hash;
+}
+
+size_t ShaderPropertyName::getHash() const
+{
+	return hash;
+}
+
+size_t ShaderPropertyName::operator()() const
+{
+	return hash;
+}
+
 ShaderStage::ShaderStage(ShaderStageType stageType, const Enum<ShaderFeature>& feature, const string & name)
 	: stageType(stageType), shaderFeature(feature), name(name)
 {
@@ -46,6 +90,12 @@ Enum<ShaderFeature> ShaderStage::getShaderFeature() const
 	return shaderFeature;
 }
 
+const ShaderProperty* ShaderStage::getProperty(const ShaderPropertyName& name) const
+{
+	auto iter = properties.find(name.getHash());
+	return iter == properties.end() ? NULL : &iter->second;
+}
+
 const char * ShaderStage::enumShaderStageType(ShaderStageType stageType)
 {
 	switch (stageType)
@@ -83,6 +133,27 @@ ShaderStageType ShaderStage::enumShaderStageType(const string & type)
 		return Tessellation_Evalution_Shader_Stage;
 	else
 		return None_Shader_Stage;
+}
+
+string ShaderProgram::AttributeDesc::getName() const
+{
+	return properties.front().second->name;
+}
+
+const ShaderProperty* ShaderProgram::AttributeDesc::getParameter() const
+{
+	for (auto& prop : properties)
+		if (prop.second->type == ShaderProperty::Parameter)
+			return prop.second;
+	return NULL;
+}
+
+const ShaderProperty* ShaderProgram::AttributeDesc::getConstantBuffer() const
+{
+	for (auto& prop : properties)
+		if (prop.second->type == ShaderProperty::ConstantBuffer)
+			return prop.second;
+	return NULL;
 }
 
 unsigned int ShaderProgram::currentProgram = 0;
@@ -144,7 +215,18 @@ bool ShaderProgram::addShaderStage(ShaderStage & stage)
 
 bool ShaderProgram::init()
 {
-	return false;
+	for (const auto& stage : shaderStages) {
+		for (const auto& prop : stage.second->properties) {
+			auto iter = attributes.find(prop.first);
+			AttributeDesc* desc;
+			if (iter == attributes.end())
+				desc = &attributes.insert(make_pair(prop.first, AttributeDesc())).first->second;
+			else
+				desc = &iter->second;
+			desc->properties.push_back(make_pair(stage.first, &prop.second));
+		}
+	}
+	return true;
 }
 
 unsigned int ShaderProgram::bind()
@@ -166,9 +248,12 @@ unsigned int ShaderProgram::getProgramID()
 	return programId;
 }
 
-ShaderProgram::AttributeDesc ShaderProgram::getAttributeOffset(const string& name)
+const ShaderProgram::AttributeDesc* ShaderProgram::getAttributeOffset(const ShaderPropertyName& name) const
 {
-	return { "", false, -1, 0, -1 };
+	auto iter = attributes.find(name.getHash());
+	if (iter == attributes.end())
+		return NULL;
+	return &iter->second;
 }
 
 int ShaderProgram::getMaterialBufferSize()

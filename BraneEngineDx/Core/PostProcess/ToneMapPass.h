@@ -18,9 +18,6 @@ public:
 	virtual bool mapMaterialParameter(RenderInfo& info);
 	virtual void render(RenderInfo & info);
 	virtual void resize(const Unit2Di& size);
-protected:
-	int imageMapSlot = -1;
-	int imageMapSamplerSlot = -1;
 };
 
 #endif // !_TONEMAPPASS_H_

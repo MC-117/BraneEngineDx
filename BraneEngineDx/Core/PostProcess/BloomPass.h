@@ -21,11 +21,6 @@ public:
 	virtual void render(RenderInfo& info);
 	virtual void resize(const Unit2Di& size);
 protected:
-	int sampleMapSlot = -1;
-	int sampleMapSamplerSlot = -1;
-	int imageMapSlot = -1;
-	int imageMapSamplerSlot = -1;
-
 	void resizeBloomLevel(int levels);
 };
 

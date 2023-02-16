@@ -60,9 +60,11 @@ void LightRenderData::upload()
 
 void LightRenderData::bind(IRenderContext& context)
 {
-	context.bindBufferBase(mainLightBuffer.getVendorGPUBuffer(), "DirectLightBuffer"); // DIRECT_LIGHT_BIND_INDEX
+	static const ShaderPropertyName DirectLightBufferName = "DirectLightBuffer";
+	static const ShaderPropertyName pointLightsName = "pointLights";
+	context.bindBufferBase(mainLightBuffer.getVendorGPUBuffer(), DirectLightBufferName); // DIRECT_LIGHT_BIND_INDEX
 	if (mainLightData.pointLightCount > 0)
-		context.bindBufferBase(localLightBuffer.getVendorGPUBuffer(), "pointLights"); // POINT_LIGHT_BIND_INDEX
+		context.bindBufferBase(localLightBuffer.getVendorGPUBuffer(), pointLightsName); // POINT_LIGHT_BIND_INDEX
 }
 
 void LightRenderData::clean()

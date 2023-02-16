@@ -160,12 +160,15 @@ void TerrainPatchMeshData::bindShapeWithContext(IRenderContext& context)
 		return;
 	if (currentMeshData == this)
 		return;
+	static const ShaderPropertyName TerrainDataName = "TerrainData";
+	static const ShaderPropertyName terrainMapName = "terrainMap";
+
 	context.setTerrainDrawContext();
 	context.bindBufferBase(vertexBuffer.getVendorGPUBuffer(), 1);
 	context.bindBufferBase(uvBuffer.getVendorGPUBuffer(), 2);
 	context.bindBufferBase(elementBuffer.getVendorGPUBuffer(), 0);
-	context.bindBufferBase(terrainBuffer.getVendorGPUBuffer(), "TerrainData"); // MAT_BASE_BIND_INDEX
-	context.bindTexture((ITexture*)heightMap.getVendorTexture(), "terrainMap");// TERRAIN_MAP_BIND_INDEX, TERRAIN_MAP_BIND_INDEX);
+	context.bindBufferBase(terrainBuffer.getVendorGPUBuffer(), TerrainDataName); // MAT_BASE_BIND_INDEX
+	context.bindTexture((ITexture*)heightMap.getVendorTexture(), terrainMapName);// TERRAIN_MAP_BIND_INDEX, TERRAIN_MAP_BIND_INDEX);
 	context.currentMeshData = this;
 }
 

@@ -24,6 +24,9 @@ void DOFPass::prepare()
 
 void DOFPass::execute(IRenderContext& context)
 {
+	static const ShaderPropertyName screenMapName = "screenMap";
+	static const ShaderPropertyName depthMapName = "depthMap";
+
 	materialRenderData->upload();
 
 	context.bindShaderProgram(program);
@@ -33,8 +36,8 @@ void DOFPass::execute(IRenderContext& context)
 
 	context.bindFrame(dofRenderTarget.getVendorRenderTarget());
 
-	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, screenMapSlot, screenMapSamplerSlot);
-	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), Fragment_Shader_Stage, depthMapSlot, depthMapSamplerSlot);
+	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), screenMapName);
+	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), depthMapName);
 
 	context.setDrawInfo(0, 1, 0);
 
@@ -80,14 +83,6 @@ void DOFPass::render(RenderInfo & info)
 
 	if (!program->isComputable()) {
 		program->init();
-
-		screenMapSlot = program->getAttributeOffset("screenMap").offset;
-		screenMapSamplerSlot = program->getAttributeOffset("screenMapSampler").offset;
-		depthMapSlot = program->getAttributeOffset("depthMap").offset;
-		depthMapSamplerSlot = program->getAttributeOffset("depthMapSampler").offset;
-
-		if (screenMapSlot == -1 || depthMapSlot == -1)
-			return;
 
 		info.renderGraph->addPass(*this);
 	}

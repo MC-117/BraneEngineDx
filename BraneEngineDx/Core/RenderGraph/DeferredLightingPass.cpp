@@ -109,12 +109,19 @@ void DeferredLightingPass::execute(IRenderContext& context)
 		}
 		
 		if (taskContext.materialRenderData != task.materialRenderData) {
+			static const ShaderPropertyName depthMapName = "depthMap";
+			static const ShaderPropertyName gBufferAName = "gBufferA";
+			static const ShaderPropertyName gBufferBName = "gBufferB";
+			static const ShaderPropertyName gBufferCName = "gBufferC";
+			static const ShaderPropertyName gBufferDName = "gBufferD";
+			static const ShaderPropertyName gBufferEName = "gBufferE";
+
 			taskContext.materialRenderData = task.materialRenderData;
 			task.materialRenderData->bind(context);
 			if (task.sceneData->lightDataPack.shadowTarget == NULL)
-				context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), "depthMap");
+				context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), depthMapName);
 			else
-				context.bindTexture((ITexture*)task.sceneData->lightDataPack.shadowTarget->getDepthTexture()->getVendorTexture(), "depthMap");
+				context.bindTexture((ITexture*)task.sceneData->lightDataPack.shadowTarget->getDepthTexture()->getVendorTexture(), depthMapName);
 
 			Texture* gBufferA = task.gBufferRT->getTexture(0);
 			Texture* gBufferB = task.gBufferRT->getTexture(1);
@@ -122,11 +129,11 @@ void DeferredLightingPass::execute(IRenderContext& context)
 			Texture* gBufferD = task.gBufferRT->getTexture(3);
 			Texture* gBufferE = task.gBufferRT->getTexture(4);
 
-			context.bindTexture((ITexture*)gBufferA->getVendorTexture(), "gBufferA");
-			context.bindTexture((ITexture*)gBufferB->getVendorTexture(), "gBufferB");
-			context.bindTexture((ITexture*)gBufferC->getVendorTexture(), "gBufferC");
-			context.bindTexture((ITexture*)gBufferD->getVendorTexture(), "gBufferD");
-			context.bindTexture((ITexture*)gBufferE->getVendorTexture(), "gBufferE");
+			context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
+			context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
+			context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCName);
+			context.bindTexture((ITexture*)gBufferD->getVendorTexture(), gBufferDName);
+			context.bindTexture((ITexture*)gBufferE->getVendorTexture(), gBufferEName);
 		}
 
 		/*if (taskContext.gBufferRT != task.gBufferRT) {
@@ -189,16 +196,20 @@ void DeferredLightingPass::LoadDefaultShader()
 		Console::error("Compile Blit shader error: %s", error.c_str());
 		throw runtime_error(error);
 	}
-	blitProgram->addShaderStage(*ShaderManager::getScreenVertexShader());
+	blitProgram->setMeshStage(*ShaderManager::getScreenVertexShader());
 	blitProgram->addShaderStage(*blitFragmentShader);
 	isInit = true;
 }
 
 void DeferredLightingPass::blitSceneColor(IRenderContext& context, Texture* gBufferA, Texture* gBufferB)
 {
+	static const ShaderPropertyName gBufferAName = "gBufferA";
+	static const ShaderPropertyName gBufferBName = "gBufferB";
+
+	blitProgram->init();
 	context.bindShaderProgram(blitProgram);
-	context.bindTexture((ITexture*)gBufferA->getVendorTexture(), "gBufferA");
-	context.bindTexture((ITexture*)gBufferB->getVendorTexture(), "gBufferB");
+	context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
+	context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
 	context.setRenderOpaqueState();
 	context.postProcessCall();
 }

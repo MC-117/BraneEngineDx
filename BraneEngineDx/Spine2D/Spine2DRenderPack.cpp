@@ -61,7 +61,10 @@ void Spine2DRenderPack::excute(IRenderContext& context, RenderTaskContext& taskC
 		if (iter != materialData->desc.colorField.end()) {
 			iter->second.val = draw.resource.color;
 		}
-		context.bindTexture((ITexture*)draw.resource.texture->getVendorTexture(), "mainTexture");
+
+		static const ShaderPropertyName mainTextureName = "mainTexture";
+
+		context.bindTexture((ITexture*)draw.resource.texture->getVendorTexture(), mainTextureName);
 		context.bindMaterialBuffer(materialData->vendorMaterial);
 
 		context.meshDrawCall(draw.meshPartDesc);

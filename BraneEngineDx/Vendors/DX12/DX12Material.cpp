@@ -15,12 +15,15 @@ DX12Material::~DX12Material()
 
 void DX12Material::uploadAttribute(DX12ShaderProgram* program, const string& name, unsigned int size, void* data)
 {
-	if (matInsBufHost == NULL)
+	if (matInsBufHost == NULL || program == NULL)
 		return;
-	DX12ShaderProgram::AttributeDesc desc = program->getAttributeOffset(name);
-	if (desc.isTex || desc.offset == -1 || desc.size < size)
+	const DX12ShaderProgram::AttributeDesc* desc = program->getAttributeOffset(name);
+	if (desc == NULL)
 		return;
-	memcpy_s((char*)matInsBufHost + desc.offset, desc.size, data, size);
+	const ShaderProperty* prop = desc->getParameter();
+	if (prop == NULL)
+		return;
+	memcpy_s((char*)matInsBufHost + prop->offset, prop->size, data, size);
 }
 
 void DX12Material::preprocess()
@@ -103,13 +106,18 @@ void DX12Material::processTextureData()
 		if (b->second.val == NULL || b->second.val->bind() == 0)
 			continue;
 		DX12Texture2D* tex = (DX12Texture2D*)b->second.val->getVendorTexture();
-		DX12ShaderProgram::AttributeDesc desc = program->getAttributeOffset(b->first);
-		if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
+		const DX12ShaderProgram::AttributeDesc* desc = program->getAttributeOffset(b->first);
+		if (desc == NULL)
 			continue;
-		rootSignature.setTexture(desc.offset, tex->getSRV());
-		DX12ResourceView sampler = tex->getSampler();
-		if (sampler.isValid() && desc.offset < 16)
-			rootSignature.setSampler(desc.offset, sampler);
+		for (auto& prop : desc->properties) {
+			if (prop.second->type != ShaderProperty::Texture)
+				continue;
+			rootSignature.setTexture(prop.second->offset, tex->getSRV());
+			DX12ResourceView sampler = tex->getSampler();
+			if (sampler.isValid() && prop.second->meta >= 0)
+				rootSignature.setSampler(prop.second->meta, sampler);
+			return;
+		}
 	}
 }
 
@@ -124,10 +132,15 @@ void DX12Material::processImageData()
 		if (b->second.val.texture->bind() == 0)
 			continue;
 		DX12Texture2D* tex = (DX12Texture2D*)b->second.val.texture->getVendorTexture();
-		DX12ShaderProgram::AttributeDesc desc = program->getAttributeOffset(b->first);
-		if (!desc.isTex || desc.offset == -1 || desc.meta != Compute_Shader_Stage)
+		const DX12ShaderProgram::AttributeDesc* desc = program->getAttributeOffset(b->first);
+		if (desc == NULL)
 			continue;
-		rootSignature.setImage(desc.offset, tex->getUAV(b->second.val.level));
+		for (auto& prop : desc->properties) {
+			if (prop.second->type != ShaderProperty::Image)
+				continue;
+			rootSignature.setImage(prop.second->offset, tex->getUAV(b->second.val.level));
+			return;
+		}
 	}
 }
 

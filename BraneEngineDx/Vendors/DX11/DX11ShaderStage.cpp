@@ -6,6 +6,11 @@
 
 #ifdef VENDOR_USE_DX11
 
+const char* DX11ShaderStage::MatInsBufName = "MatInsBuf";
+const char* DX11ShaderStage::DrawInfoBufName = "DrawInfoBuf";
+ShaderPropertyName DX11ShaderStage::materialParameterBufferName(DX11ShaderStage::MatInsBufName);
+ShaderPropertyName DX11ShaderStage::drawInfoBufferName(DX11ShaderStage::DrawInfoBufName);
+
 DX11ShaderStage::DX11ShaderStage(DX11Context& context, const ShaderStageDesc& desc)
     : dxContext(context), ShaderStage(desc)
 {
@@ -80,16 +85,82 @@ unsigned int DX11ShaderStage::compile(const string& code, string& errorString)
 		if (!errorString.empty())
 			errorString += '\n';
 		errorString += "D3DReflect: reflection error";
+		return 0;
 	}
 
-	dx11MatInsBufReflector = dx11ShaderReflector->GetConstantBufferByName(MatInsBufName.c_str());
-	if (dx11MatInsBufReflector != NULL) {
-		D3D11_SHADER_BUFFER_DESC bufDesc;
-		ZeroMemory(&bufDesc, sizeof(D3D11_SHADER_BUFFER_DESC));
-		if (FAILED(dx11MatInsBufReflector->GetDesc(&bufDesc)))
-			dx11MatInsBufReflector = NULL;
-		else if (bufDesc.Name != MatInsBufName)
-			dx11MatInsBufReflector = NULL;
+	properties.clear();
+
+	D3D11_SHADER_DESC shaderDesc = { 0 };
+	dx11ShaderReflector->GetDesc(&shaderDesc);
+
+	for (int i = 0; i < shaderDesc.BoundResources; i++) {
+		D3D11_SHADER_INPUT_BIND_DESC desc = { 0 };
+		dx11ShaderReflector->GetResourceBindingDesc(i, &desc);
+		size_t nameHash = ShaderPropertyName::calHash(desc.Name);
+		ShaderProperty& shaderProperty = properties.insert(make_pair(
+			nameHash, ShaderProperty())).first->second;
+		shaderProperty.name = desc.Name;
+		switch (desc.Type)
+		{
+		case D3D_SIT_CBUFFER:
+			shaderProperty.type = ShaderProperty::ConstantBuffer;
+			break;
+		case D3D_SIT_TEXTURE:
+			shaderProperty.type = desc.Dimension == D3D_SRV_DIMENSION_BUFFER ?
+				ShaderProperty::TextureBuffer : ShaderProperty::Texture;
+			break;
+		case D3D_SIT_TBUFFER:
+		case D3D_SIT_STRUCTURED:
+		case D3D_SIT_BYTEADDRESS:
+			shaderProperty.type = ShaderProperty::TextureBuffer;
+			break;
+		case D3D_SIT_SAMPLER:
+			shaderProperty.type = ShaderProperty::Sampler;
+			break;
+		case D3D_SIT_UAV_RWTYPED:
+		case D3D_SIT_UAV_RWSTRUCTURED:
+		case D3D_SIT_UAV_RWBYTEADDRESS:
+		case D3D_SIT_UAV_APPEND_STRUCTURED:
+		case D3D_SIT_UAV_CONSUME_STRUCTURED:
+		case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+			shaderProperty.type = ShaderProperty::Image;
+			break;
+		default:
+			break;
+		}
+		shaderProperty.offset = desc.BindPoint;
+		if (shaderProperty.type == ShaderProperty::ConstantBuffer) {
+			ID3D11ShaderReflectionConstantBuffer* constantBuffer = dx11ShaderReflector->GetConstantBufferByName(desc.Name);
+			D3D11_SHADER_BUFFER_DESC bufDesc = { 0 };
+			if (SUCCEEDED(constantBuffer->GetDesc(&bufDesc))) {
+				shaderProperty.size = bufDesc.Size;
+				if (nameHash == materialParameterBufferName.getHash()) {
+					for (int i = 0; i < bufDesc.Variables; i++) {
+						ID3D11ShaderReflectionVariable* variable = constantBuffer->GetVariableByIndex(i);
+						D3D11_SHADER_VARIABLE_DESC desc = { 0 };
+						variable->GetDesc(&desc);
+						ShaderProperty& shaderProperty = properties.insert(make_pair(
+							ShaderPropertyName::calHash(desc.Name), ShaderProperty())).first->second;
+						shaderProperty.name = desc.Name;
+						shaderProperty.type = ShaderProperty::Parameter;
+						shaderProperty.offset = desc.StartOffset;
+						shaderProperty.size = desc.Size;
+						shaderProperty.meta = 0;
+					}
+				}
+			}
+		}
+		else
+			shaderProperty.size = desc.BindCount;
+		shaderProperty.meta = -1;
+	}
+
+	for (auto& prop : properties) {
+		if (prop.second.type != ShaderProperty::Texture)
+			continue;
+		const ShaderProperty* samplerProp = getProperty(prop.second.name + "Sampler");
+		if (samplerProp && samplerProp->type == ShaderProperty::Sampler)
+			prop.second.meta = samplerProp->offset;
 	}
 
     return shaderId;
@@ -106,6 +177,7 @@ void DX11ShaderStage::release()
 	if (dx11ShaderReflector != NULL) {
 		dx11ShaderReflector.Reset();
 	}
+	properties.clear();
 	shaderId = 0;
 }
 
@@ -195,25 +267,12 @@ bool DX11ShaderProgram::init()
 {
 	if (!isValid())
 		return false;
-	if (!dirty && dx11MatInsBufReflector != NULL)
+	if (!dirty)
 		return true;
-	int cbSize = 0;
-	for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e; b++) {
-		if (matInsBuf == NULL) {
-			DX11ShaderStage* dss = (DX11ShaderStage*)b->second;
-			if (dss->dx11MatInsBufReflector != NULL) {
-				D3D11_SHADER_BUFFER_DESC bufDesc;
-				ZeroMemory(&bufDesc, sizeof(D3D11_SHADER_BUFFER_DESC));
-				if (SUCCEEDED(dss->dx11MatInsBufReflector->GetDesc(&bufDesc))) {
-					if (bufDesc.Size > cbSize) {
-						dx11MatInsBufReflector = dss->dx11MatInsBufReflector;
-						cbSize = bufDesc.Size;
-					}
-				}
-			}
-		}
-	}
-	matInsBufSize = cbSize;
+	ShaderProgram::init();
+	if (const AttributeDesc* desc = getAttributeOffset(DX11ShaderStage::materialParameterBufferName))
+		if (const ShaderProperty* prop = desc->getConstantBuffer())
+			matInsBufSize = prop->size;
 	dirty = false;
 	return true;
 }
@@ -225,7 +284,8 @@ unsigned int DX11ShaderProgram::bind()
 			currentProgram = 0;
 		drawInfoBuf.Reset();
 		matInsBuf.Reset();
-		dx11MatInsBufReflector = NULL;
+		attributes.clear();
+		matInsBufSize = 0;
 	}
 	if (currentProgram == programId)
 		return programId;
@@ -277,47 +337,6 @@ bool DX11ShaderProgram::dispatchCompute(unsigned int dimX, unsigned int dimY, un
 	return true;
 }
 
-DX11ShaderProgram::AttributeDesc DX11ShaderProgram::getAttributeOffset(const string& name)
-{
-	auto iter = attributes.find(name);
-	if (iter != attributes.end())
-		return iter->second;
-	AttributeDesc desc = { name, false, -1, 0, -1 };
-	if (dx11MatInsBufReflector != NULL) {
-		D3D11_SHADER_VARIABLE_DESC vdesc;
-		ZeroMemory(&vdesc, sizeof(D3D11_SHADER_VARIABLE_DESC));
-		auto var = dx11MatInsBufReflector->GetVariableByName(name.c_str());
-		if (var != NULL) {
-			if (SUCCEEDED(var->GetDesc(&vdesc))) {
-				if (vdesc.Name == name) {
-					desc.offset = vdesc.StartOffset;
-					desc.size = vdesc.Size;
-				}
-			}
-		}
-	}
-	if (desc.offset == -1)
-		for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e && desc.offset == -1; b++) {
-			DX11ShaderStage* dss = (DX11ShaderStage*)b->second;
-			if (dss->dx11ShaderReflector == NULL)
-				continue;
-			if (desc.offset == -1) {
-				desc.isTex = true;
-				D3D11_SHADER_INPUT_BIND_DESC bdesc;
-				ZeroMemory(&bdesc, sizeof(D3D11_SHADER_INPUT_BIND_DESC));
-				if (SUCCEEDED(dss->dx11ShaderReflector->GetResourceBindingDescByName(name.c_str(), &bdesc))) {
-					if (bdesc.Name == name) {
-						desc.offset = bdesc.BindPoint;
-						desc.size = 1;
-						desc.meta = b->first;
-					}
-				}
-			}
-		}
-	attributes.emplace(make_pair(name, desc));
-	return desc;
-}
-
 int DX11ShaderProgram::getMaterialBufferSize()
 {
 	return matInsBufSize;
@@ -351,39 +370,149 @@ void DX11ShaderProgram::uploadAttribute(const string& name, unsigned int size, v
 {
 	if (matInsBufHost == NULL)
 		return;
-	AttributeDesc desc = getAttributeOffset(name);
-	if (desc.isTex || desc.offset == -1 || desc.size < size)
+	const AttributeDesc* desc = getAttributeOffset(name);
+	if (desc == NULL)
 		return;
-	memcpy_s(matInsBufHost + desc.offset, desc.size, data, size);
+	const ShaderProperty* prop = desc->getParameter();
+	if (prop == NULL)
+		return;
+	memcpy_s(matInsBufHost + prop->offset, prop->size, data, size);
 }
 
-void DX11ShaderProgram::bindCBToStage(unsigned int index, ComPtr<ID3D11Buffer> buffer)
+bool DX11ShaderProgram::bindCBV(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11Buffer> buffer) const
 {
-	if (buffer == NULL)
-		return;
-	for (auto b = shaderStages.begin(), e = shaderStages.end(); b != e; b++) {
-		switch (b->first)
+	const AttributeDesc* desc = getAttributeOffset(name);
+	if (desc == NULL)
+		return false;
+	for (auto& prop : desc->properties) {
+		switch (prop.first)
 		{
 		case Vertex_Shader_Stage:
-			dxContext.deviceContext->VSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			deviceContext->VSSetConstantBuffers(prop.second->offset, 1, buffer.GetAddressOf());
 			break;
 		case Fragment_Shader_Stage:
-			dxContext.deviceContext->PSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			deviceContext->PSSetConstantBuffers(prop.second->offset, 1, buffer.GetAddressOf());
 			break;
 		case Geometry_Shader_Stage:
-			dxContext.deviceContext->GSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			deviceContext->GSSetConstantBuffers(prop.second->offset, 1, buffer.GetAddressOf());
 			break;
 		case Compute_Shader_Stage:
-			dxContext.deviceContext->CSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			deviceContext->CSSetConstantBuffers(prop.second->offset, 1, buffer.GetAddressOf());
 			break;
 		case Tessellation_Control_Shader_Stage:
-			dxContext.deviceContext->HSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			deviceContext->HSSetConstantBuffers(prop.second->offset, 1, buffer.GetAddressOf());
 			break;
 		case Tessellation_Evalution_Shader_Stage:
-			dxContext.deviceContext->DSSetConstantBuffers(index, 1, buffer.GetAddressOf());
+			deviceContext->DSSetConstantBuffers(prop.second->offset, 1, buffer.GetAddressOf());
 			break;
 		}
 	}
+	return true;
+}
+
+bool DX11ShaderProgram::bindSRV(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11ShaderResourceView> srv) const
+{
+	const AttributeDesc* desc = getAttributeOffset(name);
+	if (desc == NULL)
+		return false;
+	for (auto& prop : desc->properties) {
+		if (prop.second->type != ShaderProperty::Texture &&
+			prop.second->type != ShaderProperty::TextureBuffer)
+			continue;
+		switch (prop.first)
+		{
+		case Vertex_Shader_Stage:
+			deviceContext->VSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			break;
+		case Fragment_Shader_Stage:
+			deviceContext->PSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			break;
+		case Geometry_Shader_Stage:
+			deviceContext->GSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			break;
+		case Compute_Shader_Stage:
+			deviceContext->CSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			break;
+		case Tessellation_Control_Shader_Stage:
+			deviceContext->HSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			break;
+		case Tessellation_Evalution_Shader_Stage:
+			deviceContext->DSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			break;
+		}
+	}
+	return true;
+}
+
+bool DX11ShaderProgram::bindSRVWithSampler(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11ShaderResourceView> srv, ComPtr<ID3D11SamplerState> sampler) const
+{
+	const AttributeDesc* desc = getAttributeOffset(name);
+	if (desc == NULL)
+		return false;
+	for (auto& prop : desc->properties) {
+		if (prop.second->type != ShaderProperty::Texture)
+			continue;
+		switch (prop.first)
+		{
+		case Vertex_Shader_Stage:
+			deviceContext->VSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			if (sampler != NULL && prop.second->meta >= 0)
+				deviceContext->VSSetSamplers(prop.second->meta, 1, sampler.GetAddressOf());
+			break;
+		case Fragment_Shader_Stage:
+			deviceContext->PSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			if (sampler != NULL && prop.second->meta >= 0)
+				deviceContext->PSSetSamplers(prop.second->meta, 1, sampler.GetAddressOf());
+			break;
+		case Geometry_Shader_Stage:
+			deviceContext->GSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			if (sampler != NULL && prop.second->meta >= 0)
+				deviceContext->GSSetSamplers(prop.second->meta, 1, sampler.GetAddressOf());
+			break;
+		case Compute_Shader_Stage:
+			deviceContext->CSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			if (sampler != NULL && prop.second->meta >= 0)
+				deviceContext->CSSetSamplers(prop.second->meta, 1, sampler.GetAddressOf());
+			break;
+		case Tessellation_Control_Shader_Stage:
+			deviceContext->HSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			if (sampler != NULL && prop.second->meta >= 0)
+				deviceContext->HSSetSamplers(prop.second->meta, 1, sampler.GetAddressOf());
+			break;
+		case Tessellation_Evalution_Shader_Stage:
+			deviceContext->DSSetShaderResources(prop.second->offset, 1, srv.GetAddressOf());
+			if (sampler != NULL && prop.second->meta >= 0)
+				deviceContext->DSSetSamplers(prop.second->meta, 1, sampler.GetAddressOf());
+			break;
+		default:
+			break;
+		}
+	}
+	return true;
+}
+
+bool DX11ShaderProgram::bindUAV(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11UnorderedAccessView> uav) const
+{
+	const AttributeDesc* desc = getAttributeOffset(name);
+	if (desc == NULL)
+		return false;
+	for (auto& prop : desc->properties) {
+		if (prop.second->type != ShaderProperty::Image)
+			continue;
+		switch (prop.first)
+		{
+		case Compute_Shader_Stage:
+			deviceContext->CSSetUnorderedAccessViews(prop.second->offset, 1, uav.GetAddressOf(), NULL);
+			break;
+		case Fragment_Shader_Stage:
+			deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
+				NULL, NULL, prop.second->offset, 1, uav.GetAddressOf(), NULL);
+			break;
+		default:
+			break;
+		}
+	}
+	return true;
 }
 
 #endif // VENDOR_USE_DX11

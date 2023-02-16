@@ -26,6 +26,9 @@ void BloomPass::prepare()
 
 void BloomPass::execute(IRenderContext& context)
 {
+	static const ShaderPropertyName sampleMapName = "sampleMap";
+	static const ShaderPropertyName imageMapName = "imageMap";
+
 	materialRenderData->upload();
 	context.bindShaderProgram(program);
 	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
@@ -34,38 +37,38 @@ void BloomPass::execute(IRenderContext& context)
 		Vector3u localSize = material->getLocalSize();
 
 		context.setDrawInfo(0, 4, 0);
-		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
+		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), sampleMapName);
 		Image image;
 		image.texture = &bloomMap;
 		for (int i = 0; i < bloomLevel; i++) {
 			image.level = i;
-			context.bindImage(image, imageMapSlot);
+			context.bindImage(image, imageMapName);
 			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x()), ceilf(size.y / pow(2, i) / (float)localSize.y()), 1);
 		}
 
 		context.setDrawInfo(1, 4, 0);
 		for (int i = 0; i < bloomLevel; i++) {
 			image.level = i;
-			context.bindImage(image, imageMapSlot);
+			context.bindImage(image, imageMapName);
 			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x()), ceilf(size.y / pow(2, i) / (float)localSize.y()), 1);
 		}
 
 		context.setDrawInfo(2, 4, 0);
 		for (int i = 0; i < bloomLevel; i++) {
 			image.level = i;
-			context.bindImage(image, imageMapSlot);
+			context.bindImage(image, imageMapName);
 			context.dispatchCompute(ceilf(size.x / pow(2, i) / (float)localSize.x()), ceilf(size.y / pow(2, i) / (float)localSize.y()), 1);
 		}
 
 		context.setDrawInfo(3, 4, 0);
-		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
+		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), sampleMapName);
 		image.texture = resource->screenTexture;
 		image.level = 0;
 		context.dispatchCompute(ceilf(size.x / (float)localSize.x()), ceilf(size.y / (float)localSize.y()), 1);
 	}
 	else {
 		context.clearFrameBindings();
-		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
+		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), sampleMapName);
 
 		context.setDrawInfo(0, 1, 0);
 		context.setRenderPostState();
@@ -80,7 +83,7 @@ void BloomPass::execute(IRenderContext& context)
 		}
 
 		context.clearFrameBindings();
-		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
+		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), sampleMapName);
 
 		for (int i = 0; i < bloomLevel; i++) {
 			int scalar = pow(2, i);
@@ -94,7 +97,7 @@ void BloomPass::execute(IRenderContext& context)
 		}
 
 		context.clearFrameBindings();
-		context.bindTexture((ITexture*)screenMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
+		context.bindTexture((ITexture*)screenMap.getVendorTexture(), sampleMapName);
 
 		for (int i = 0; i < bloomLevel; i++) {
 			int scalar = pow(2, i);
@@ -109,10 +112,10 @@ void BloomPass::execute(IRenderContext& context)
 
 		context.setDrawInfo(3, 1, 0);
 
-		context.bindTexture(NULL, Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
+		context.bindTexture(NULL, sampleMapName);
 		context.bindFrame(resource->screenRenderTarget->getVendorRenderTarget());
 
-		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), Fragment_Shader_Stage, sampleMapSlot, sampleMapSamplerSlot);
+		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), sampleMapName);
 
 		context.setViewport(0, 0, size.x, size.y);
 		context.setRenderPostAddState();
@@ -150,20 +153,6 @@ void BloomPass::render(RenderInfo& info)
 	}
 
 	program->init();
-
-	sampleMapSlot = program->getAttributeOffset("sampleMap").offset;
-	sampleMapSamplerSlot = program->getAttributeOffset("sampleMapSampler").offset;
-
-	if (program->isComputable()) {
-		imageMapSlot = program->getAttributeOffset("imageMap").offset;
-		imageMapSamplerSlot = program->getAttributeOffset("imageMapSampler").offset;
-
-		if (sampleMapSlot == -1 || imageMapSlot == -1)
-			return;
-	}
-
-	if (sampleMapSlot == -1)
-		return;
 
 	info.renderGraph->addPass(*this);
 }

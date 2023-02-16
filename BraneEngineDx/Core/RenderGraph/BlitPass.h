@@ -17,8 +17,6 @@ protected:
 	static ShaderProgram* program;
 	static bool isInited;
 	MaterialRenderData* materialRenderData = NULL;
-	int screenMapSlot = -1;
-	int screenMapSamplerSlot = -1;
 
 	static void loadDefaultResource();
 };

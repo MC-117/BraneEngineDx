@@ -47,7 +47,7 @@ public:
 	virtual void waitSignalCPU();
 
 	virtual void clearVertexBindings();
-	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, const string& name, BufferOption bufferOption = BufferOption());
+	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, const ShaderPropertyName& name, BufferOption bufferOption = BufferOption());
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, unsigned int index, BufferOption bufferOption = BufferOption());
 	virtual unsigned int uploadBufferData(IGPUBuffer* buffer, unsigned int size, void* data);
 	virtual unsigned int uploadBufferSubData(IGPUBuffer* buffer, unsigned int first, unsigned int size, void* data);
@@ -79,8 +79,8 @@ public:
 	virtual void bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index, unsigned int sampleIndex, const MipOption& mipOption = MipOption());
 	virtual void bindImage(const Image& image, unsigned int index);
 
-	virtual void bindTexture(ITexture* texture, const string& name, const MipOption& mipOption = MipOption());
-	virtual void bindImage(const Image& image, const string& name);
+	virtual void bindTexture(ITexture* texture, const ShaderPropertyName& name, const MipOption& mipOption = MipOption());
+	virtual void bindImage(const Image& image, const ShaderPropertyName& name);
 
 	virtual void clearSRV();
 	virtual void clearUAV();

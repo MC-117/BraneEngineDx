@@ -25,7 +25,7 @@ bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 	command.bindings = cmd.bindings;
 
 	ShaderProgram* program = material->getShader()->getProgram(cmd.getShaderFeature());
-	if (program == NULL)
+	if (program == NULL || !program->init())
 		return false;
 
 	MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(material->getRenderData());

@@ -43,12 +43,20 @@ void SMAAPass::execute(IRenderContext& context)
 		screenTexture.bind();
 		context.copySubTexture2D(sceneMap->getVendorTexture(), 0, screenTexture.getVendorTexture(), 0);
 	}
+
+	static const ShaderPropertyName colorTexGammaName = "colorTexGamma";
+	static const ShaderPropertyName areaTexName = "areaTex";
+	static const ShaderPropertyName searchTexName = "searchTex";
+	static const ShaderPropertyName edgesTexName = "edgesTex";
+	static const ShaderPropertyName colorTexName = "colorTex";
+	static const ShaderPropertyName blendTexName = "blendTex";
+
 	// Edge detection
 	context.bindShaderProgram(edgeDetectionProgram);
 	cameraRenderData->bind(context);
 	context.bindFrame(edgesRenderTarget.getVendorRenderTarget());
 	context.clearFrameColor({ 0, 0, 0, 0 });
-	context.bindTexture(screenTexture.getVendorTexture(), "colorTexGamma");
+	context.bindTexture(screenTexture.getVendorTexture(), colorTexGammaName);
 	context.setRenderPostReplaceState();
 	context.setViewport(0, 0, size.x, size.y);
 	context.postProcessCall();
@@ -57,16 +65,16 @@ void SMAAPass::execute(IRenderContext& context)
 	context.bindShaderProgram(blendingWeightCalculationProgram);
 	context.bindFrame(blendRenderTarget.getVendorRenderTarget());
 	context.clearFrameColor({ 0, 0, 0, 0 });
-	context.bindTexture(areaTexture.getVendorTexture(), "areaTex");
-	context.bindTexture(searchTexture.getVendorTexture(), "searchTex");
-	context.bindTexture(edgesTexture.getVendorTexture(), "edgesTex");
+	context.bindTexture(areaTexture.getVendorTexture(), areaTexName);
+	context.bindTexture(searchTexture.getVendorTexture(), searchTexName);
+	context.bindTexture(edgesTexture.getVendorTexture(), edgesTexName);
 	context.postProcessCall();
 
 	// Neighborhood blending
 	context.bindShaderProgram(neighborhoodBlendingProgram);
 	context.bindFrame(resource->screenRenderTarget->getVendorRenderTarget());
-	context.bindTexture(screenTexture.getVendorTexture(), "colorTex");
-	context.bindTexture(blendTexture.getVendorTexture(), "blendTex");
+	context.bindTexture(screenTexture.getVendorTexture(), colorTexName);
+	context.bindTexture(blendTexture.getVendorTexture(), blendTexName);
 	context.postProcessCall();
 
 	context.clearFrameBindings();

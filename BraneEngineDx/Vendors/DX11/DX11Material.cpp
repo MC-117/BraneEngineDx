@@ -16,67 +16,27 @@ void DX11Material::uploadAttribute(const string& name, unsigned int size, void* 
 {
 	if (matInsBufHost == NULL || program == NULL)
 		return;
-	DX11ShaderProgram::AttributeDesc desc = program->getAttributeOffset(name);
-	if (desc.isTex || desc.offset == -1 || desc.size < size)
+	const DX11ShaderProgram::AttributeDesc* desc = program->getAttributeOffset(name);
+	if (desc == NULL)
 		return;
-	memcpy_s((char*)matInsBufHost + desc.offset, desc.size, data, size);
+	const ShaderProperty* prop = desc->getParameter();
+	if (prop == NULL)
+		return;
+	memcpy_s(matInsBufHost + prop->offset, prop->size, data, size);
 }
 
 void DX11Material::uploadTexture(const string& name, ComPtr<ID3D11ShaderResourceView> tex, ComPtr<ID3D11SamplerState> sample)
 {
 	if (program == NULL || tex == NULL)
 		return;
-	DX11ShaderProgram::AttributeDesc desc = program->getAttributeOffset(name);
-	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
-		return;
-	switch (desc.meta)
-	{
-	case Vertex_Shader_Stage:
-		dxContext.deviceContext->VSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->VSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	case Fragment_Shader_Stage:
-		dxContext.deviceContext->PSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->PSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	case Geometry_Shader_Stage:
-		dxContext.deviceContext->GSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->GSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	case Compute_Shader_Stage:
-		dxContext.deviceContext->CSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->CSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	case Tessellation_Control_Shader_Stage:
-		dxContext.deviceContext->HSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->HSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	case Tessellation_Evalution_Shader_Stage:
-		dxContext.deviceContext->DSSetShaderResources(desc.offset, 1, tex.GetAddressOf());
-		if (sample != NULL && desc.offset < 16)
-			dxContext.deviceContext->DSSetSamplers(desc.offset, 1, sample.GetAddressOf());
-		break;
-	default:
-		return;
-	}
+	((DX11ShaderProgram*)program)->bindSRVWithSampler(dxContext.deviceContext, name, tex, sample);
 }
 
 void DX11Material::uploadImage(const string& name, ComPtr<ID3D11UnorderedAccessView> tex)
 {
 	if (program == NULL || tex == NULL)
 		return;
-	DX11ShaderProgram::AttributeDesc desc = program->getAttributeOffset(name);
-	if (!desc.isTex || desc.offset == -1 || desc.meta == -1)
-		return;
-	if (desc.meta == Compute_Shader_Stage) {
-		unsigned int c = 0;
-		dxContext.deviceContext->CSSetUnorderedAccessViews(desc.offset, 1, tex.GetAddressOf(), NULL);
-	}
+	((DX11ShaderProgram*)program)->bindUAV(dxContext.deviceContext, name, tex);
 }
 
 void DX11Material::preprocess()
@@ -179,7 +139,7 @@ void DX11Material::postprocess()
 		dxContext.deviceContext->Map(matInsBuf.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mpd);
 		memcpy_s(mpd.pData, matInsBufSize, matInsBufHost, matInsBufSize);
 		dxContext.deviceContext->Unmap(matInsBuf.Get(), 0);
-		((DX11ShaderProgram*)program)->bindCBToStage(MAT_INS_BIND_INDEX, matInsBuf);
+		((DX11ShaderProgram*)program)->bindCBV(dxContext.deviceContext, DX11ShaderStage::materialParameterBufferName, matInsBuf);
 	}
 }
 
