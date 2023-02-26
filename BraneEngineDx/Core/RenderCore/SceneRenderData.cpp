@@ -46,14 +46,14 @@ int SceneRenderData::setEnvLightData(Render* captureRender)
 	return envLightDataPack.setLightData(dynamic_cast<EnvLightCaptureProbeRender*>(captureRender));
 }
 
-unsigned int SceneRenderData::setMeshTransform(const Matrix4f& transformMat)
+unsigned int SceneRenderData::setMeshTransform(const MeshTransformData& data)
 {
-	return meshTransformDataPack.setMeshTransform(transformMat);
+	return meshTransformDataPack.setMeshTransform(data);
 }
 
-unsigned int SceneRenderData::setMeshTransform(const vector<Matrix4f>& transformMats)
+unsigned int SceneRenderData::setMeshTransform(const vector<MeshTransformData>& datas)
 {
-	return meshTransformDataPack.setMeshTransform(transformMats);
+	return meshTransformDataPack.setMeshTransform(datas);
 }
 
 inline Guid makeGuid(void* ptr0, void* ptr1)
@@ -79,14 +79,14 @@ MeshTransformIndex* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Ma
 	return meshTransformDataPack.setMeshPartTransform(meshPart, material, (MeshTransformIndex*)transformIndex);
 }
 
-unsigned int SceneRenderData::setStaticMeshTransform(const Matrix4f& transformMat)
+unsigned int SceneRenderData::setStaticMeshTransform(const MeshTransformData& data)
 {
-	return staticMeshTransformDataPack.setMeshTransform(transformMat);
+	return staticMeshTransformDataPack.setMeshTransform(data);
 }
 
-unsigned int SceneRenderData::setStaticMeshTransform(const vector<Matrix4f>& transformMats)
+unsigned int SceneRenderData::setStaticMeshTransform(const vector<MeshTransformData>& datas)
 {
-	return staticMeshTransformDataPack.setMeshTransform(transformMats);
+	return staticMeshTransformDataPack.setMeshTransform(datas);
 }
 
 MeshTransformIndex* SceneRenderData::getStaticMeshPartTransform(MeshPart* meshPart, Material* material)
@@ -124,7 +124,7 @@ bool SceneRenderData::willUpdateStatic()
 	return staticMeshTransformDataPack.getNeedUpdate();
 }
 
-bool SceneRenderData::frustumCulling(const Range<Vector3f>& bound, const Matrix4f& mat) const
+bool SceneRenderData::frustumCulling(const BoundBox& bound, const Matrix4f& mat) const
 {
 	for (CameraRenderData* data : cameraRenderDatas) {
 		if (::frustumCulling(data->data, bound, mat))

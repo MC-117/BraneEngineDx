@@ -985,6 +985,10 @@ Vector4f::Vector4f(float x, float y, float z, float w) : XMFLOAT4(x, y, z, w)
 {
 }
 
+Vector4f::Vector4f(const Vector3f& v, float w) : XMFLOAT4(v.x(), v.y(), v.z(), w)
+{
+}
+
 Vector4f::Vector4f(const Vector4f& v) : XMFLOAT4(v)
 {
 }

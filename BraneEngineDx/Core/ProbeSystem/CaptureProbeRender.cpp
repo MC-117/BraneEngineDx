@@ -11,35 +11,35 @@ void CaptureProbeRender::setProbeCubeMap(TextureCube* probeCubeMap)
 {
 }
 
-Range<Vector3f> CaptureProbeRender::getWorldBound() const
+BoundBox CaptureProbeRender::getWorldBound() const
 {
 	return bound;
 }
 
 Vector3f CaptureProbeRender::getWorldPosition() const
 {
-	return (bound.maxVal + bound.minVal) * 0.5f;
+	return bound.getCenter();
 }
 
 void CaptureProbeRender::setWorldPosition(const Vector3f& position)
 {
 	float radius = getRadius();
 	Vector3f radiusVector = { radius, radius, radius };
-	bound.minVal = position - radiusVector;
-	bound.maxVal = position + radiusVector;
+	bound.minPoint = position - radiusVector;
+	bound.maxPoint = position + radiusVector;
 }
 
 float CaptureProbeRender::getRadius() const
 {
-	return (bound.maxVal - bound.minVal).x() * 0.5f;
+	return (bound.maxPoint.x() - bound.minPoint.x()) * 0.5f;
 }
 
 void CaptureProbeRender::setRadius(float radius)
 {
-	Vector3f position = (bound.minVal + bound.maxVal) * 0.5f;
+	Vector3f position = bound.getCenter();
 	Vector3f radiusVector = { radius, radius, radius };
-	bound.minVal = position - radiusVector;
-	bound.maxVal = position + radiusVector;
+	bound.minPoint = position - radiusVector;
+	bound.maxPoint = position + radiusVector;
 }
 
 int CaptureProbeRender::getResolution() const

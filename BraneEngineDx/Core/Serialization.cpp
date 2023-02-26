@@ -574,9 +574,9 @@ void SerializationInfoParser::findError(string msg, bool scannerError)
 	if (parseError.empty())
 	{
 		if (scannerError)
-			parseError = "scanner error, " + msg + " is a problem";
+			parseError = "scanner error, " + msg + " is a problem at pos " + to_string(stream.tellg());
 		else
-			parseError = "syntax error, " + msg + " is a problem";
+			parseError = "syntax error, " + msg + " is a problem at pos " + to_string(stream.tellg());
 	}
 	Error = true;
 }

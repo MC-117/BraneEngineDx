@@ -68,3 +68,103 @@ bool IntersectAABB8Plane(const Vector3f& center, const Vector3f& extent, const V
 	}
 	return false;
 }
+
+#define VecOp1Imp(Dim, Op, a) \
+Vector##Dim##f out; \
+DirectX::XMStoreFloat##Dim((DirectX::XMFLOAT##Dim*)&out, DirectX::XMVector##Op(DirectX::XMLoadFloat##Dim((DirectX::XMFLOAT##Dim*)&a))); \
+return out;
+
+#define VecOp2Imp(Dim, Op, a, b) \
+Vector##Dim##f out; \
+DirectX::XMStoreFloat##Dim((DirectX::XMFLOAT##Dim*)&out, DirectX::XMVector##Op(DirectX::XMLoadFloat##Dim((DirectX::XMFLOAT##Dim*)&a), DirectX::XMLoadFloat##Dim((DirectX::XMFLOAT##Dim*)&b))); \
+return out;
+
+Vector2f Math::abs(const Vector2f& a)
+{
+	VecOp1Imp(2, Abs, a)
+}
+
+Vector2f Math::min(const Vector2f& a, const Vector2f& b)
+{
+	VecOp2Imp(2, Min, a, b)
+}
+
+Vector2f Math::max(const Vector2f& a, const Vector2f& b)
+{
+	VecOp2Imp(2, Max, a, b)
+}
+
+float Math::distance(const Vector2f& a, const Vector2f& b)
+{
+	return (a - b).norm();
+}
+
+Vector3f Math::abs(const Vector3f& a)
+{
+	VecOp1Imp(3, Abs, a)
+}
+
+Vector3f Math::min(const Vector3f& a, const Vector3f& b)
+{
+	VecOp2Imp(3, Min, a, b)
+}
+
+Vector3f Math::max(const Vector3f& a, const Vector3f& b)
+{
+	VecOp2Imp(3, Max, a, b)
+}
+
+float Math::distance(const Vector3f& a, const Vector3f& b)
+{
+	return (a - b).norm();
+}
+
+Vector4f Math::abs(const Vector4f& a)
+{
+	VecOp1Imp(4, Abs, a)
+}
+
+Vector4f Math::min(const Vector4f& a, const Vector4f& b)
+{
+	VecOp2Imp(4, Min, a, b)
+}
+
+Vector4f Math::max(const Vector4f& a, const Vector4f& b)
+{
+	VecOp2Imp(4, Max, a, b)
+}
+
+float Math::distance(const Vector4f& a, const Vector4f& b)
+{
+	return (a - b).norm();
+}
+
+Matrix4f Math::getTransitionMatrix(const Vector3f& position)
+{
+	Matrix4f T = Matrix4f::Identity();
+	T(0, 3) = position.x();
+	T(1, 3) = position.y();
+	T(2, 3) = position.z();
+	return T;
+}
+
+Matrix4f Math::getRotationMatrix(const Quaternionf& rotation)
+{
+	Matrix4f R = Matrix4f::Identity();
+	R.block(0, 0, 3, 3) = rotation.toRotationMatrix();
+	return R;
+}
+
+Matrix4f Math::getScaleMatrix(const Vector3f& scale)
+{
+	Matrix4f S = Matrix4f::Identity();
+	S(0, 0) = scale.x();
+	S(1, 1) = scale.y();
+	S(2, 2) = scale.z();
+	return S;
+}
+
+Matrix4f Math::getTransformMatrix(const Vector3f& position, const Quaternionf& rotation, const Vector3f& scale)
+{
+	return getTransitionMatrix(position) * getRotationMatrix(rotation) * getScaleMatrix(scale);
+}

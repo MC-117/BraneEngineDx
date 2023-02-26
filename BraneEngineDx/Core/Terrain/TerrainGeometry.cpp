@@ -191,8 +191,8 @@ TerrainData TerrainGeometry::getTerrainData() const
 
 void TerrainGeometry::setTerrainData(const TerrainData& data)
 {
-	bound.minVal = Vector3f::Zero();
-	bound.maxVal = Vector3f(data.unit * data.grid.x(), data.unit * data.grid.y(), data.height);
+	bound.minPoint = Vector3f::Zero();
+	bound.maxPoint = Vector3f(data.unit * data.grid.x(), data.unit * data.grid.y(), data.height);
 
 	meshData.setTerrainData(data);
 

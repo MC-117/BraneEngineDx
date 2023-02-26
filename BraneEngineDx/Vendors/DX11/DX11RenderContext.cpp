@@ -828,8 +828,11 @@ void DX11RenderContext::bindMeshData(MeshData* meshData)
 		deviceContext->IASetIndexBuffer(dxSkeletonMeshData->dx11ElementBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 		deviceContext->IASetInputLayout(dxContext.skeletonMeshInputLayout.Get());
 
-		if (dxSkeletonMeshData->dx11MorphVNView != NULL)
-			deviceContext->VSSetShaderResources(MORPHDATA_BIND_INDEX, 1, dxSkeletonMeshData->dx11MorphVNView.GetAddressOf());
+		if (dxSkeletonMeshData->dx11MorphVNView != NULL) {
+			static const ShaderPropertyName morphDataName = "morphData";
+			currentProgram->bindSRV(deviceContext, morphDataName, dxSkeletonMeshData->dx11MorphVNView);
+			//deviceContext->VSSetShaderResources(MORPHDATA_BIND_INDEX, 1, dxSkeletonMeshData->dx11MorphVNView.GetAddressOf());
+		}
 		currentMeshData = meshData;
 	}
 	else {

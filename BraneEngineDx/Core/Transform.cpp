@@ -1,5 +1,7 @@
 #include "Transform.h"
 #include "Utility/Utility.h"
+#include "Utility/MathUtility.h"
+#include "RenderCore/RenderCore.h"
 #if ENABLE_PHYSICS
 #include "Physics/RigidBody.h"
 #include "Physics/PhysicalWorld.h"
@@ -768,6 +770,12 @@ bool Transform::serialize(SerializationInfo & to)
 	return true;
 }
 
+void Transform::getMeshTransformData(MeshTransformData* data)
+{
+	data->localToWorld = getMatrix(WORLD);
+	data->worldScale = getScale(WORLD);
+}
+
 Transform* Transform::getParentTransform()
 {
 	Object* obj = parent;
@@ -785,17 +793,12 @@ void Transform::updateTransform()
 {
 	if (updateState == None)
 		return;
-	Matrix4f T = Matrix4f::Identity();
-	T(0, 3) = position.x();
-	T(1, 3) = position.y();
-	T(2, 3) = position.z();
-	Matrix4f S = Matrix4f::Identity();
-	S(0, 0) = scale.x();
-	S(1, 1) = scale.y();
-	S(2, 2) = scale.z();
-	Matrix4f R = Matrix4f::Identity();
-	R.block(0, 0, 3, 3) = rotation.toRotationMatrix();
-	transformMat = T * R * S;
+	if (transformFrame != Time::frames()) {
+		transformFrame = Time::frames();
+		cachedUpdateState = None;
+		lastFrameransformMat = transformMat;
+	}
+	transformMat = Math::getTransformMatrix(position, rotation, scale);
 	if (parent != NULL) {
 		Transform* p = dynamic_cast<Transform*>(parent);
 		if (p != NULL) {
@@ -811,9 +814,11 @@ void Transform::updateTransform()
 			upward.normalize();
 			}*/
 		}
-		else
-			cout << parent->name << " is not Transform\n";
+		else {
+			// cout << parent->name << " is not Transform\n";
+		}
 	}
+	cachedUpdateState = (UpdateState)(cachedUpdateState | updateState);
 	updateState = None;
 }
 

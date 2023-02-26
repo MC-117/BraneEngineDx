@@ -32,7 +32,7 @@ void Spine2DRender::setModel(Spine2DModel* model, spine::Skeleton* skeleton)
 
     initBounds = meshData.bounds;
 
-    Vector3f size = initBounds.maxVal - initBounds.minVal;
+    Vector3f size = initBounds.getSize();
     setSize({ size.x(), size.y() });
 }
 
@@ -48,7 +48,7 @@ void Spine2DRender::setRefSize(float refLength, bool byWidth)
     if (modelAsset == NULL)
         return;
 
-    Vector3f size = initBounds.maxVal - initBounds.minVal;
+    Vector3f size = initBounds.getSize();
     if (size.x() * size.y() == 0)
         return;
     float aspect = size.x() / size.y();

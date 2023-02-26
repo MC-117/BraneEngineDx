@@ -510,6 +510,7 @@
     <ClInclude Include="Core\Profile\renderdoc_app.h" />
     <ClInclude Include="Core\ProbeSystem\ReflectionCaptureProbeRender.h" />
     <ClInclude Include="Core\ProbeSystem\CaptureProbe.h" />
+    <ClInclude Include="Core\RenderCore\MeshTransformData.h" />
     <ClInclude Include="Core\RenderCore\ReflectionProbeRenderData.h" />
     <ClInclude Include="Core\RenderCore\RenderCore.h" />
     <ClInclude Include="Core\RenderCore\SceneRenderData.h" />
@@ -518,6 +519,7 @@
     <ClInclude Include="Core\RenderCore\TextureCubePool.h" />
     <ClInclude Include="Core\RenderCore\TransformRenderData.h" />
     <ClInclude Include="Core\PostProcess\CMAA2Pass.h" />
+    <ClInclude Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMap.h" />
     <ClInclude Include="Core\RenderGraph\ReflectionProbeArrayPass.h" />
     <ClInclude Include="Core\RenderGraph\ScreenHitPass.h" />
     <ClInclude Include="Core\RenderGraph\ShadowDepthPass.h" />
@@ -589,6 +591,7 @@
     <ClInclude Include="Core\Timeline\TimelineTrack.h" />
     <ClInclude Include="Core\Timeline\TimelineTrackEditor.h" />
     <ClInclude Include="Core\Timeline\TimelineWindow.h" />
+    <ClInclude Include="Core\Utility\Boundings.h" />
     <ClInclude Include="Core\Utility\Curve.h" />
     <ClInclude Include="Core\Delegate.h" />
     <ClInclude Include="Core\DirectLight.h" />
@@ -850,6 +853,7 @@
     <ClCompile Include="Core\Editor\ProbeSystem\EnvLightCaptureProbeRenderEditor.cpp" />
     <ClCompile Include="Core\Editor\ProbeSystem\ReflectionCaptureProbeRenderEditor.cpp" />
     <ClCompile Include="Core\Editor\RenderCore\DeferredRenderGraphEditor.cpp" />
+    <ClCompile Include="Core\GraphicType.cpp" />
     <ClCompile Include="Core\ProbeSystem\CaptureProbeRender.cpp" />
     <ClCompile Include="Core\ProbeSystem\EnvLightCaptureProbeRender.cpp" />
     <ClCompile Include="Core\PostProcess\CMAA2Pass.cpp" />
@@ -859,12 +863,14 @@
     <ClCompile Include="Core\Profile\RenderDocProfilor.cpp" />
     <ClCompile Include="Core\ProbeSystem\ReflectionCaptureProbeRender.cpp" />
     <ClCompile Include="Core\ProbeSystem\CaptureProbe.cpp" />
+    <ClCompile Include="Core\RenderCore\MeshTransformData.cpp" />
     <ClCompile Include="Core\RenderCore\ReflectionProbeRenderData.cpp" />
     <ClCompile Include="Core\RenderCore\SceneRenderData.cpp" />
     <ClCompile Include="Core\RenderCore\ScreenHitData.cpp" />
     <ClCompile Include="Core\RenderCore\EnvLightData.cpp" />
     <ClCompile Include="Core\RenderCore\TextureCubePool.cpp" />
     <ClCompile Include="Core\RenderCore\TransformRenderData.cpp" />
+    <ClCompile Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMap.cpp" />
     <ClCompile Include="Core\RenderGraph\ReflectionProbeArrayPass.cpp" />
     <ClCompile Include="Core\RenderGraph\ScreenHitPass.cpp" />
     <ClCompile Include="Core\RenderGraph\ShadowDepthPass.cpp" />
@@ -1076,6 +1082,7 @@
     <ClCompile Include="Core\Transform.cpp" />
     <ClCompile Include="Core\Unit.cpp" />
     <ClCompile Include="Core\Brane.cpp" />
+    <ClCompile Include="Core\Utility\Boundings.cpp" />
     <ClCompile Include="Core\Utility\Decimal.cpp" />
     <ClCompile Include="Core\Utility\EngineUtility.cpp" />
     <ClCompile Include="Core\Utility\Guid.cpp" />

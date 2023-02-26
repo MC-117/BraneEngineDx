@@ -1,0 +1,69 @@
+#material
+#localsize 1 1 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+#include "../../lib/TransformData_Def.hmat"
+
+Buffer<uint2> invalidationData;
+RWStructuredBuffer<VSMPhysPageMetaData> outPrevPhysPageMetaData;
+
+float calcClipRadius(in TransformData data, float4x4 viewToClip)
+{
+    return data.localRadius * data.worldScale * viewToClip[0][0];
+}
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint tid : SV_DispatchThreadID)
+{
+    uint2 data = invalidationData[tid];
+    uint insID = data[0];
+    uint vsmStartID = data[1] >> 16;
+    uint vsmEndID = data[1] & 0xffff;
+
+    TransformData insData = getTransformData(insID);
+
+    for (int vsmID = vsmStartID; vsmID <= vsmEndID; vsmID++) {
+        VSMProjData projData = getVSMProjData(vsmID);
+
+        uint invalidationFlags = VSM_DYNAMIC_UNCACHED_FLAG << VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT;
+
+        FrustumCullData cullData = frustumCullBoxOrtho(
+            insData.localCenter, insData.localExtent,
+            insData.localToWorld, projData.worldToClip);
+        if (cullData.visiable) {
+            float clipRadius = calcClipRadius(insData, projData.viewToClip) * VSM_MAX_SIZE;
+            int mipCount = (projData.clipmapCount <= 0) ? VSM_MAX_MIPS : 1;
+            for (int mipLevel = 0; mipLevel < mipCount; mipLevel++) {
+				int viewDim = int(uint(VSM_MAX_SIZE) >> mipLevel);
+                ScreenRect rect = getScreenRect(int4(0, 0, viewDim, viewDim), cullData, 4);
+                rect.depth += 1e-8f;
+                clipRadius *= 0.5f;
+                uint flagMask = VSM_ALLOCATED_FLAG;
+                if (overlapsAnyValidPage(projData.vsmID, mipLevel, float2(0.0f, 0.0f), rect, flagMask)) {
+					uint4 rectPages = uint4(rect.pixels) >> VSM_LOG2_PAGE_SIZE;
+
+#if USE_HZB_OCCLUSION
+					FPageTestScreenRect HZBTestRect = SetupPageHZBRect(rect, projData.vsmID, mipLevel);
+#endif // USE_HZB_OCCLUSION
+                    uint pageTableLevelOffset = calcPageTableLevelOffset(projData.vsmID, mipLevel);
+					for (uint y = rectPages.y; y <= rectPages.w; y++) {
+						for (uint x = rectPages.x; x <= rectPages.z; x++) {
+							uint pageFlagOffset = pageTableLevelOffset + calcPageOffsetInLevel(mipLevel, uint2(x, y));
+							uint pageFlag = pageFlags[pageFlagOffset];
+
+							if ((pageFlag & flagMask) == flagMask) {
+#if USE_HZB_OCCLUSION
+								if (!IsPageVisibleHZB(uint2(x, y), pageFlagOffset, HZBTestRect))
+									continue;
+#endif // USE_HZB_OCCLUSION
+								uint2 physAddress = vsmGetPhysicalPage(pageFlagOffset).physAddress;
+								uint physPageIndex = physPageAddressToIndex(physAddress);
+								InterlockedOr(outPrevPhysPageMetaData[physPageIndex].flags, invalidationFlags);
+							}
+						}
+					}
+                }
+            }
+        }
+    }
+}

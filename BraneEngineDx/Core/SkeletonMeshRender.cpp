@@ -22,9 +22,26 @@ void SkeletonMeshRender::setMesh(Mesh* mesh)
 	mesh = skeletonMesh;
 	MeshRender::setMesh(mesh);
 	if (skeletonMesh != NULL) {
-		transformMats.resize(skeletonMesh->skeletonData.boneList.size());
+		getRenderData()->setBoneCount(skeletonMesh->skeletonData.getBoneCount());
 		morphWeights.setMesh(*mesh);
 	}
+}
+
+unsigned int SkeletonMeshRender::getBoneCount() const
+{
+	return skeletonMesh ? skeletonMesh->skeletonData.getBoneCount() : 0;
+}
+
+void SkeletonMeshRender::resetBoneTransform()
+{
+	SkeletonRenderData* renderData = getRenderData();
+	renderData->clean();
+	renderData->setBoneCount(skeletonMesh->skeletonData.getBoneCount());
+}
+
+void SkeletonMeshRender::setBoneTransform(unsigned int index, const Matrix4f& mat)
+{
+	getRenderData()->updateBoneTransform(mat, index);
 }
 
 void SkeletonMeshRender::fillMaterialsByDefault()
@@ -69,6 +86,7 @@ void SkeletonMeshRender::render(RenderInfo & info)
 		MeshTransformRenderData* transformData = isStatic ? &info.sceneData->staticMeshTransformDataPack : &info.sceneData->meshTransformDataPack;
 		command.transformData = transformData;
 		command.transformIndex = transformData->setMeshPartTransform(part, material, instanceID, instanceCount);
+		command.bindings.push_back(getRenderData());
 		if (morphWeights.getMorphCount() > 0)
 			command.bindings.push_back(morphWeights.getRenderData());
 
@@ -86,7 +104,14 @@ void SkeletonMeshRender::render(RenderInfo & info)
 
 vector<Matrix4f> & SkeletonMeshRender::getTransformMatrixs()
 {
-	return transformMats;
+	return getRenderData()->skeletonTransformArray.transformDatas;
+}
+
+SkeletonRenderData* SkeletonMeshRender::getRenderData()
+{
+	if (renderData == NULL)
+		renderData = new SkeletonRenderData();
+	return renderData;
 }
 
 bool SkeletonMeshRender::deserialize(const SerializationInfo& from)

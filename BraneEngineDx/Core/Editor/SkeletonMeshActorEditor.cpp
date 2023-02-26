@@ -3,6 +3,7 @@
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 #include "../Skeleton/BoneConstraintEditor.h"
 #include "../GUI/BlendSpaceWindow.h"
+#include "../Utility/MathUtility.h"
 
 RegistEditor(SkeletonMeshActor);
 
@@ -14,12 +15,6 @@ void SkeletonMeshActorEditor::setInspectedObject(void* object)
 
 void SkeletonMeshActorEditor::onSkeletonGUI(EditorInfo& info)
 {
-	if (skeletonMeshActor->getBoneHidden()) {
-		if (ImGui::Button("Show All Bones", { -1, 36 }))
-			skeletonMeshActor->setBoneHidden(false);
-	}
-	else if (ImGui::Button("Hide All Bones", { -1, 36 }))
-		skeletonMeshActor->setBoneHidden(true);
 	if (ImGui::Button("Set Reference Pose", { -1, 36 }))
 		skeletonMeshActor->setReferencePose();
 	editingBoneConstraint = ImGui::CollapsingHeader("BoneConstraint");
@@ -217,7 +212,7 @@ void SkeletonMeshActorEditor::onSkeletonPhysicsGUI(EditorInfo& info)
 				ImGui::EndCombo();
 			}
 			if (ImGui::DragFloat("Mass", &selectedRigidBodyInfo->material.mass))
-				selectedRigidBodyInfo->material.mass = max(0, selectedRigidBodyInfo->material.mass);
+				selectedRigidBodyInfo->material.mass = std::max(0.0f, selectedRigidBodyInfo->material.mass);
 			if (ImGui::BeginCombo("PhysicsLayer", to_string(selectedRigidBodyInfo->layer.layer).c_str()))
 			{
 				for (int i = 0; i < 32; i++) {
@@ -259,44 +254,43 @@ void SkeletonMeshActorEditor::onSkeletonPhysicsGUI(EditorInfo& info)
 			{
 			case SkeletonPhysics::ShapeInfo::BoxShape:
 			{
-				Vector3f extend = shapeInfo.bound.maxVal - shapeInfo.bound.minVal;
-				extend.x() = abs(extend.x());
-				extend.y() = abs(extend.y());
-				extend.z() = abs(extend.z());
-				if (ImGui::DragFloat3("Extend", extend.data(), 0.01)) {
-					extend.x() = max(0, extend.x());
-					extend.y() = max(0, extend.y());
-					extend.z() = max(0, extend.z());
+				Vector3f size = shapeInfo.bound.getSize();
+				size = Math::abs(size);
+				size.x() = abs(size.x());
+				size.y() = abs(size.y());
+				size.z() = abs(size.z());
+				if (ImGui::DragFloat3("Extend", size.data(), 0.01)) {
+					size = Math::max(size, Vector3f::Zero());
 
-					shapeInfo.bound.maxVal = extend * 0.5f;
-					shapeInfo.bound.minVal = -shapeInfo.bound.maxVal;
+					shapeInfo.bound.maxPoint = size * 0.5f;
+					shapeInfo.bound.minPoint = -shapeInfo.bound.maxPoint;
 				}
 				break;
 			}
 			case SkeletonPhysics::ShapeInfo::SphereShape:
 			{
-				float radius = abs(shapeInfo.bound.maxVal.x() - shapeInfo.bound.minVal.x()) * 0.5f;
+				float radius = abs(shapeInfo.bound.maxPoint.x() - shapeInfo.bound.minPoint.x()) * 0.5f;
 				if (ImGui::DragFloat("Radius", &radius, 0.01)) {
-					radius = max(0, radius);
+					radius = std::max(0.0f, radius);
 
-					shapeInfo.bound.maxVal = Vector3f(radius, radius, radius);
-					shapeInfo.bound.minVal = -shapeInfo.bound.maxVal;
+					shapeInfo.bound.maxPoint = Vector3f(radius, radius, radius);
+					shapeInfo.bound.minPoint = -shapeInfo.bound.maxPoint;
 				}
 				break;
 			}
 			case SkeletonPhysics::ShapeInfo::CapsuleShape:
 			{
-				float radius = abs(shapeInfo.bound.maxVal.x() - shapeInfo.bound.minVal.x()) * 0.5f;
-				float halfLength = (abs(shapeInfo.bound.maxVal.z() - shapeInfo.bound.minVal.z()) -
-					abs(shapeInfo.bound.maxVal.x() - shapeInfo.bound.minVal.x())) * 0.5f;
+				float radius = abs(shapeInfo.bound.maxPoint.x() - shapeInfo.bound.minPoint.x()) * 0.5f;
+				float halfLength = (abs(shapeInfo.bound.maxPoint.z() - shapeInfo.bound.minPoint.z()) -
+					abs(shapeInfo.bound.maxPoint.x() - shapeInfo.bound.minPoint.x())) * 0.5f;
 				bool modify = ImGui::DragFloat("Radius", &radius, 0.01);
 				modify |= ImGui::DragFloat("HalfLength", &halfLength, 0.01);
 				if (modify) {
-					radius = max(0, radius);
-					halfLength = max(0, halfLength);
+					radius = std::max(0.0f, radius);
+					halfLength = std::max(0.0f, halfLength);
 
-					shapeInfo.bound.maxVal = Vector3f(radius, radius, radius + halfLength);
-					shapeInfo.bound.minVal = -shapeInfo.bound.maxVal;
+					shapeInfo.bound.maxPoint = Vector3f(radius, radius, radius + halfLength);
+					shapeInfo.bound.minPoint = -shapeInfo.bound.maxPoint;
 				}
 				break;
 			}
@@ -310,6 +304,9 @@ void SkeletonMeshActorEditor::onSkeletonPhysicsGUI(EditorInfo& info)
 void SkeletonMeshActorEditor::onHandleGizmo(GizmoInfo& info)
 {
 	ActorEditor::onHandleGizmo(info);
+
+	BoundBox bound = skeletonMeshActor->calLocalBound();
+	info.gizmo->drawAABB(bound, skeletonMeshActor->getMatrix(WORLD), Color(0.0f, 0.0f, 1.0f));
 
 	if (editingBoneConstraint) {
 		if (selectedBoneConstraint != NULL) {
@@ -336,7 +333,7 @@ void SkeletonMeshActorEditor::onHandleGizmo(GizmoInfo& info)
 			Matrix4f R = Matrix4f::Identity();
 			R.block(0, 0, 3, 3) = rbInfo.rotationOffset.toRotationMatrix();
 			Matrix4f mat = boneMat * T * R;
-			Range<Vector3f> bound = rbInfo.shape.bound;
+			BoundBox bound = rbInfo.shape.bound;
 
 			if (selectedRigidBodyInfo == &rbInfo) {
 				if (info.gizmo->drawHandle(selectedRigidBodyInfo,
@@ -355,7 +352,7 @@ void SkeletonMeshActorEditor::onHandleGizmo(GizmoInfo& info)
 				break;
 			case SkeletonPhysics::ShapeInfo::SphereShape:
 			{
-				float radius = abs(bound.maxVal.x() - bound.minVal.x()) * 0.5f;
+				float radius = abs(bound.maxPoint.x() - bound.minPoint.x()) * 0.5f;
 				info.gizmo->drawSphere(Vector3f::Zero(), radius, mat, color);
 				if (info.gizmo->pickSphere(Vector3f::Zero(), radius, Vector2f::Zero(), mat))
 					selectRigidBodyInfo(i);
@@ -363,8 +360,8 @@ void SkeletonMeshActorEditor::onHandleGizmo(GizmoInfo& info)
 			}
 			case SkeletonPhysics::ShapeInfo::CapsuleShape:
 			{
-				float radius = abs(bound.maxVal.x() - bound.minVal.x()) * 0.5f;
-				float halfLength = (abs(bound.maxVal.z() - bound.minVal.z()) - abs(bound.maxVal.x() - bound.minVal.x())) * 0.5f;
+				float radius = abs(bound.maxPoint.x() - bound.minPoint.x()) * 0.5f;
+				float halfLength = (abs(bound.maxPoint.z() - bound.minPoint.z()) - abs(bound.maxPoint.x() - bound.minPoint.x())) * 0.5f;
 				info.gizmo->drawCapsuleX(Vector3f::Zero(), radius, halfLength, mat, color);
 				if (info.gizmo->pickCapsuleX(Vector3f::Zero(), radius, halfLength, Vector2f::Zero(), mat))
 					selectRigidBodyInfo(i);

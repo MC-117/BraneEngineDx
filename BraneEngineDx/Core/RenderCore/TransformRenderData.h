@@ -1,27 +1,177 @@
 #pragma once
 
 #include "RenderInterface.h"
+#include "MeshTransformData.h"
 #include "../GPUBuffer.h"
 
-struct MeshTransformData
+template<class T, class P>
+struct TMeshTransformDataArray
 {
-	vector<Matrix4f> transforms;
-	vector<Matrix4f> uploadTransforms;
+	using DataType = T;
+
+	vector<T> transformDatas;
+	vector<T> uploadTransformDatas;
 	vector<unsigned int> uploadIndices;
 	bool updateAll = false;
 	unsigned int batchCount = 0;
 
-	MeshTransformData();
+	TMeshTransformDataArray();
 
 	void resetUpload();
 
-	unsigned int setMeshTransform(const Matrix4f& transformMat);
-	unsigned int setMeshTransform(const vector<Matrix4f>& transformMats);
-	bool updataMeshTransform(const Matrix4f& transformMat, unsigned int base);
-	bool updataMeshTransform(const vector<Matrix4f>& transformMats, unsigned int base);
+	void resize(unsigned int size, bool onlyResizeBatch);
+	unsigned int setMeshTransform(const T& transformData);
+	unsigned int setMeshTransform(const vector<T>& transformDatas);
+	bool updataMeshTransform(const T& transformData, unsigned int base);
+	bool updataMeshTransform(const vector<T>& transformDatas, unsigned int base);
 	void clean();
 	bool clean(unsigned int base, unsigned int count);
 };
+
+template<class T, class P>
+inline TMeshTransformDataArray<T, P>::TMeshTransformDataArray()
+{
+	uploadIndices.resize(1);
+}
+
+template<class T, class P>
+inline void TMeshTransformDataArray<T, P>::resetUpload()
+{
+	uploadTransformDatas.clear();
+	uploadIndices.resize(1);
+}
+
+template<class T, class P>
+inline void TMeshTransformDataArray<T, P>::resize(unsigned int size, bool onlyResizeBatch)
+{
+	bool resizeRealBuffer = (onlyResizeBatch && size > transformDatas.size()) ||
+		(!onlyResizeBatch && size != transformDatas.size());
+	batchCount = size;
+	if (resizeRealBuffer) {
+		resetUpload();
+		transformDatas.resize(size);
+		updateAll = true;
+	}
+}
+
+template<class T, class P>
+inline unsigned int TMeshTransformDataArray<T, P>::setMeshTransform(const T& data)
+{
+	if (batchCount >= transformDatas.size()) {
+		transformDatas.emplace_back(P()(data));
+		resetUpload();
+		updateAll = true;
+	}
+	else {
+		T& mat = transformDatas[batchCount];
+		T newMat = P()(data);
+		if (updateAll) {
+			mat = newMat;
+		}
+		else if (mat != newMat) {
+			mat = newMat;
+			uploadTransformDatas.push_back(newMat);
+			uploadIndices.push_back(batchCount);
+		}
+	}
+	batchCount++;
+	return batchCount - 1;
+}
+
+template<class T, class P>
+inline unsigned int TMeshTransformDataArray<T, P>::setMeshTransform(const vector<T>& datas)
+{
+	unsigned int size = batchCount + datas.size();
+	if (size > transformDatas.size()) {
+		transformDatas.resize(size);
+		resetUpload();
+		updateAll = true;
+	}
+	for (int i = batchCount; i < size; i++) {
+		T& mat = transformDatas[i];
+		T newMat = P()(datas[i - batchCount]);
+		if (updateAll) {
+			mat = newMat;
+		}
+		else if (mat != newMat) {
+			mat = newMat;
+			uploadTransformDatas.push_back(newMat);
+			uploadIndices.push_back(i);
+		}
+	}
+	unsigned int id = batchCount;
+	batchCount = size;
+	return id;
+}
+
+template<class T, class P>
+inline bool TMeshTransformDataArray<T, P>::updataMeshTransform(const T& data, unsigned int base)
+{
+	if (base >= batchCount)
+		return false;
+	T& mat = transformDatas[base];
+	T newMat = P()(data);
+	if (updateAll) {
+		mat = newMat;
+	}
+	else if (mat != newMat) {
+		mat = newMat;
+		uploadTransformDatas.push_back(newMat);
+		uploadIndices.push_back(base);
+	}
+	return true;
+}
+
+template<class T, class P>
+inline bool TMeshTransformDataArray<T, P>::updataMeshTransform(const vector<T>& datas, unsigned int base)
+{
+	if (base + datas.size() >= batchCount)
+		return false;
+	for (int i = base; i < datas.size(); i++) {
+		T& mat = transformDatas[i];
+		T newMat = P()(datas[i - base]);
+		if (updateAll) {
+			mat = newMat;
+		}
+		else if (mat != newMat) {
+			mat = newMat;
+			uploadTransformDatas.push_back(newMat);
+			uploadIndices.push_back(i);
+		}
+	}
+	return true;
+}
+
+template<class T, class P>
+inline void TMeshTransformDataArray<T, P>::clean()
+{
+	batchCount = 0;
+	resetUpload();
+}
+
+template<class T, class P>
+inline bool TMeshTransformDataArray<T, P>::clean(unsigned int base, unsigned int count)
+{
+	if (base + count >= batchCount)
+		return false;
+	transformDatas.erase(transformDatas.begin() + base, transformDatas.begin() + (base + count));
+	resetUpload();
+	updateAll = true;
+	return true;
+}
+
+struct MeshTransformDataUploadOp
+{
+	MeshTransformData operator()(const MeshTransformData& data);
+};
+
+struct MatrixUploadOp
+{
+	Matrix4f operator()(const Matrix4f& mat);
+};
+
+typedef TMeshTransformDataArray<MeshTransformData, MeshTransformDataUploadOp> MeshTransformDataArray;
+typedef TMeshTransformDataArray<Matrix4f, MatrixUploadOp> SkeletonTransformArray;
 
 struct MeshTransformIndex
 {
@@ -42,12 +192,12 @@ struct MeshTransformRenderData : public IRenderData
 	bool delayUpdate = false;
 	bool needUpdate = true;
 
-	MeshTransformData meshTransformData;
+	MeshTransformDataArray meshTransformDataArray;
 	map<Guid, MeshTransformIndex> meshTransformIndex;
 
-	GPUBuffer transformUploadBuffer = GPUBuffer(GB_Storage, GBF_Struct, 16 * sizeof(float));
+	GPUBuffer transformUploadBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(MeshTransformDataArray::DataType));
 	GPUBuffer transformUploadIndexBuffer = GPUBuffer(GB_Storage, GBF_UInt);
-	GPUBuffer transformBuffer = GPUBuffer(GB_Storage, GBF_Struct, 16 * sizeof(float), GAF_ReadWrite, CAF_None);
+	GPUBuffer transformBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(MeshTransformDataArray::DataType), GAF_ReadWrite, CAF_None);
 	//GPUBuffer transformUploadInstanceBuffer = GPUBuffer(GB_Storage, GBF_UInt2);
 	GPUBuffer transformInstanceBuffer = GPUBuffer(GB_Vertex, GBF_UInt2);
 
@@ -55,8 +205,8 @@ struct MeshTransformRenderData : public IRenderData
 	void setDelayUpdate();
 	bool getNeedUpdate() const;
 
-	unsigned int setMeshTransform(const Matrix4f& transformMat);
-	unsigned int setMeshTransform(const vector<Matrix4f>& transformMats);
+	unsigned int setMeshTransform(const MeshTransformDataArray::DataType& data);
+	unsigned int setMeshTransform(const vector<MeshTransformDataArray::DataType>& datas);
 	MeshTransformIndex* getMeshPartTransform(MeshPart* meshPart, Material* material);
 	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount = 1);
 	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, MeshTransformIndex* transformIndex);
@@ -70,4 +220,28 @@ struct MeshTransformRenderData : public IRenderData
 	void clean();
 	void cleanTransform(unsigned int base, unsigned int count);
 	void cleanPart(MeshPart* meshPart, Material* material);
+};
+
+struct SkeletonRenderData : public IRenderData
+{
+	static Material* uploadTransformMaterial;
+	static ShaderProgram* uploadTransformProgram;
+
+	SkeletonTransformArray skeletonTransformArray;
+
+	GPUBuffer transformUploadBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(SkeletonTransformArray::DataType));
+	GPUBuffer transformUploadIndexBuffer = GPUBuffer(GB_Storage, GBF_UInt);
+	GPUBuffer transformBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(SkeletonTransformArray::DataType), GAF_ReadWrite, CAF_None);
+
+	void setBoneCount(unsigned int count);
+
+	void updateBoneTransform(const SkeletonTransformArray::DataType& data, unsigned int index);
+
+	static void loadDefaultResource();
+
+	virtual void create();
+	virtual void release();
+	virtual void upload();
+	virtual void bind(IRenderContext& context);
+	void clean();
 };

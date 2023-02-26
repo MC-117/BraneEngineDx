@@ -122,32 +122,17 @@ void ClothMeshData::updateElement()
 
 void ClothMeshData::updateVertex()
 {
-    totalPart.bound.minVal = Vector3f(FLT_MAX, FLT_MAX, FLT_MAX);
-    totalPart.bound.maxVal = Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+    totalPart.bound = BoundBox::none;
     for (int i = 0; i < clothParts.size(); i++) {
         MeshPart& part = clothParts[i];
-        part.bound.minVal = Vector3f(FLT_MAX, FLT_MAX, FLT_MAX);
-        part.bound.maxVal = Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+        part.bound = BoundBox::none;
         for (int v = 0; v < part.vertexCount; v++) {
             Vector3f& p = part.vertex(v);
-            part.bound.minVal[0] = min(part.bound.minVal[0], p.x());
-            part.bound.minVal[1] = min(part.bound.minVal[1], p.y());
-            part.bound.minVal[2] = min(part.bound.minVal[2], p.z());
-
-            part.bound.maxVal[0] = max(part.bound.maxVal[0], p.x());
-            part.bound.maxVal[1] = max(part.bound.maxVal[1], p.y());
-            part.bound.maxVal[2] = max(part.bound.maxVal[2], p.z());
+            part.bound.encapsulate(p);
         }
 
         mesh.meshParts[i].bound = part.bound;
-
-        totalPart.bound.minVal[0] = min(totalPart.bound.minVal[0], part.bound.minVal.x());
-        totalPart.bound.minVal[1] = min(totalPart.bound.minVal[1], part.bound.minVal.y());
-        totalPart.bound.minVal[2] = min(totalPart.bound.minVal[2], part.bound.minVal.z());
-
-        totalPart.bound.maxVal[0] = max(totalPart.bound.maxVal[0], part.bound.maxVal.x());
-        totalPart.bound.maxVal[1] = max(totalPart.bound.maxVal[1], part.bound.maxVal.y());
-        totalPart.bound.maxVal[2] = max(totalPart.bound.maxVal[2], part.bound.maxVal.z());
+        totalPart.bound.encapsulate(part.bound);
     }
     mesh.bound = totalPart.bound;
     mesh.totalMeshPart.bound = totalPart.bound;

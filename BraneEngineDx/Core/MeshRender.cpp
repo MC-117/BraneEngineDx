@@ -132,6 +132,16 @@ bool MeshRender::setPartEnable(int index, bool enable)
 	return true;
 }
 
+void MeshRender::getMeshTransformData(MeshTransformData* data) const
+{
+	if (mesh == NULL)
+		return;
+	data->localCenter = mesh->getCenter();
+	data->localExtent = mesh->getExtent();
+	data->localRadius = data->localExtent.norm();
+	data->flag = 0;
+}
+
 void MeshRender::fillMaterialsByDefault()
 {
 	/*if (outlineMaterial == NULL) {

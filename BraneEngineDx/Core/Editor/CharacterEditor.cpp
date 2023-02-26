@@ -13,9 +13,9 @@ void CharacterEditor::onPersistentGizmo(GizmoInfo& info)
 	ActorEditor::onPersistentGizmo(info);
 
 	Color color = Color::HSV({ 12.0f, 0.64f, 0.94f });
-	Range<Vector3f> bound = character->physicalController.capsule.bound;
-	float radius = abs(bound.maxVal.x() - bound.minVal.x()) * 0.5f;
-	float halfLength = (abs(bound.maxVal.z() - bound.minVal.z()) - abs(bound.maxVal.x() - bound.minVal.x())) * 0.5f;
+	BoundBox bound = character->physicalController.capsule.bound;
+	float radius = abs(bound.maxPoint.x() - bound.minPoint.x()) * 0.5f;
+	float halfLength = (abs(bound.maxPoint.z() - bound.minPoint.z()) - abs(bound.maxPoint.x() - bound.minPoint.x())) * 0.5f;
 	Matrix4f mat = character->getTransformMat();
 	info.gizmo->drawCapsuleZ(Vector3f::Zero(), radius, halfLength, mat, color);
 	if (info.gizmo->pickCapsuleZ(Vector3f::Zero(), radius, halfLength, Vector2f::Zero(), mat))

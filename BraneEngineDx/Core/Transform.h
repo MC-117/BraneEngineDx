@@ -9,6 +9,7 @@
 
 #if ENABLE_PHYSICS
 class RigidBody;
+struct MeshTransformData;
 #endif
 
 class Transform : public Object
@@ -96,17 +97,25 @@ public:
 protected:
 	enum UpdateState {
 		None = 0, Pos = 1, Sca = 2, Rot = 4
-	} updateState = None;
+	};
+	UpdateState updateState = None;
+	UpdateState cachedUpdateState = None;
 
 	enum struct SetupFlags {
 		None = 0, Transform = 1, Physics = 2, All = 3
 	};
 	Enum<SetupFlags> setupFlags = SetupFlags::All;
 	Matrix4f transformMat = Matrix4f::Identity();
+	Matrix4f lastFrameransformMat = Matrix4f::Identity();
+	unsigned long long transformFrame = 0;
+
+	virtual void getMeshTransformData(MeshTransformData* data);
 
 	Transform* getParentTransform();
 	void updateTransform();
 	void invalidate(UpdateState state);
+private:
+	Matrix4f cachedTransformMat = Matrix4f::Identity();
 };
 
 #endif // !_TRANSFORM_H_

@@ -1332,6 +1332,15 @@
     <ClInclude Include="Core\Editor\ProbeSystem\EnvLightCaptureProbeRenderEditor.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\MeshTransformData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Utility\Boundings.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -2478,6 +2487,18 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\Editor\ProbeSystem\EnvLightCaptureProbeRenderEditor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\GraphicType.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\MeshTransformData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Utility\Boundings.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

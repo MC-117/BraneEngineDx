@@ -1,5 +1,6 @@
 #include "ShaderManagerWindow.h"
 #include "../Engine.h"
+#include "../Utility/RenderUtility.h"
 
 ShaderManagerWindow::ShaderManagerWindow(string name, bool defaultShow)
 	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
@@ -31,41 +32,6 @@ void ShaderManagerWindow::onRenderWindow(GUIRenderInfo& info)
 			}
 		}
 	}
-}
-
-string ShaderManagerWindow::getShaderFeatureName(Enum<ShaderFeature> feature)
-{
-	if ((int)feature == 0) {
-		return "Default";
-	}
-	else if ((int)feature == 1) {
-		return "Custom";
-	}
-	string featureName;
-	const int numDefault = 6;
-	static const char* featureDefaultName[numDefault] = {
-		"Deferred", "Postprocess", "Skeleton", "Morph", "Particle", "Modifier"
-	};
-	const int numCustom = 7;
-	static const char* featureCustomName[numCustom] = {
-		"Custom_1", "Custom_2", "Custom_3", "Custom_4", "Custom_5", "Custom_6", "Custom_7"
-	};
-	bool custom = feature.has(ShaderFeature::Shader_Custom);
-	if (custom) {
-		for (int i = 0; i < numCustom; i++) {
-			if (feature.has(1 << (i + 1)))
-				featureName += featureCustomName[i] + string(" | ");
-		}
-	}
-	else {
-		for (int i = 0; i < numDefault; i++) {
-			if (feature.has(1 << (i + 1)))
-				featureName += featureDefaultName[i] + string(" | ");
-		}
-	}
-	if (!featureName.empty())
-		featureName = featureName.substr(0, featureName.size() - 3);
-	return featureName;
 }
 
 void ShaderManagerWindow::onShaderFileGUI(const ShaderFile& file)
@@ -109,7 +75,7 @@ void ShaderManagerWindow::onShaderAdapterGUI(const ShaderAdapter& adapter)
 		for (auto b = adapter.shaderStageVersions.begin(),
 			e = adapter.shaderStageVersions.end(); b != e; b++, i++) {
 			ImGui::PushID(i);
-			string featureName = getShaderFeatureName(b->first);
+			string featureName = getShaderFeatureNames(b->first);
 			if (ImGui::TreeNode(featureName.c_str())) {
 				onShaderStageGUI(*b->second);
 				ImGui::TreePop();
@@ -122,8 +88,33 @@ void ShaderManagerWindow::onShaderAdapterGUI(const ShaderAdapter& adapter)
 
 void ShaderManagerWindow::onShaderStageGUI(const ShaderStage& stage)
 {
-	string featureName = getShaderFeatureName(stage.getShaderFeature());
+	string featureName = getShaderFeatureNames(stage.getShaderFeature());
 	ImGui::Text("Stage: %s", ShaderStage::enumShaderStageType(stage.getShaderStageType()));
 	ImGui::Text("Feature: %s", featureName.c_str());
 	ImGui::Text("ShaderID: %lld", stage.getShaderID());
+	const unordered_map<size_t, ShaderProperty>& properties = stage.getProperties();
+	if (properties.empty())
+		return;
+	ImGui::Columns(5, "Properties");
+	ImGui::Separator();
+	ImGui::Text("Name"); ImGui::NextColumn();
+	ImGui::Text("Type"); ImGui::NextColumn();
+	ImGui::Text("Offset"); ImGui::NextColumn();
+	ImGui::Text("Size"); ImGui::NextColumn();
+	ImGui::Text("Meta"); ImGui::NextColumn();
+	for (auto& item : properties) {
+		onShaderPropertyGUI(item.second);
+	}
+	ImGui::Columns(1);
+	ImGui::Separator();
+}
+
+void ShaderManagerWindow::onShaderPropertyGUI(const ShaderProperty& prop)
+{
+	ImGui::Separator();
+	ImGui::Text(prop.name.c_str()); ImGui::NextColumn();
+	ImGui::Text(getShaderPropertyTypeName(prop.type)); ImGui::NextColumn();
+	ImGui::Text("%d", prop.offset); ImGui::NextColumn();
+	ImGui::Text("%d", prop.size); ImGui::NextColumn();
+	ImGui::Text("%d", prop.meta); ImGui::NextColumn();
 }

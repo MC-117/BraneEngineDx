@@ -11,6 +11,7 @@
 #include "TextureCube.h"
 #include "AudioSource.h"
 #include "Geometry.h"
+#include "Console.h"
 
 StaticVar<map<string, AssetInfo*>> AssetManager::assetInfoList;
 
@@ -704,7 +705,7 @@ void * AssetFileAssetInfo::load(const string & name, const string & path, const 
 	ifstream wf = ifstream(path);
 	SerializationInfoParser sip = SerializationInfoParser(wf, path);
 	if (!sip.parse()) {
-		cout << path << ": load failed '" << sip.errorString << "'\n";
+		Console::error("%s: load failed '%s'", path.c_str(), sip.parseError.c_str());
 		wf.close();
 		return NULL;
 	}

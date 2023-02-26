@@ -30,14 +30,13 @@ public:
 
 	virtual bool addSkeletonMesh(SkeletonMesh& mesh);
 	virtual bool removeSkeletonMesh(int index);
-	
-	virtual bool getBoneHidden();
-	virtual void setBoneHidden(bool hidden);
 
 	virtual Bone* getBone(const string& name);
 	virtual Bone* getBone(size_t index);
 
 	virtual void setReferencePose();
+
+	virtual BoundBox calLocalBound();
 
 	virtual AnimationClip* addAnimationClip(AnimationClipData& data);
 	virtual BlendSpaceAnimation* addBlendSpaceAnimation(const string& name);

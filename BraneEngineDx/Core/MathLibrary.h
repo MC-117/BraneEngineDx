@@ -303,6 +303,7 @@ public:
 struct Vector4f : protected DirectX::XMFLOAT4
 {
 	Vector4f(float x = 0, float y = 0, float z = 0, float w = 0);
+	Vector4f(const Vector3f& v, float w);
 	Vector4f(const Vector4f& v);
 	Vector4f(const Block& b);
 	Vector4f(const DirectX::XMFLOAT4& xmf4);

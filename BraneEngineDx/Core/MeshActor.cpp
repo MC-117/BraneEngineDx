@@ -50,10 +50,13 @@ bool MeshActor::isHidden()
 
 void MeshActor::prerender(SceneRenderData& sceneData)
 {
-	objectID = sceneData.setMeshTransform(transformMat);
+	meshRender.transformMat = transformMat;
+	MeshTransformData data;
+	getMeshTransformData(&data);
+	meshRender.getMeshTransformData(&data);
+	objectID = sceneData.setMeshTransform(data);
 	meshRender.instanceID = objectID;
 	meshRender.instanceCount = 1;
-	meshRender.transformMat = transformMat;
 
 }
 

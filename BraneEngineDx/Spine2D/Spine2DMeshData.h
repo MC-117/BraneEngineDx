@@ -16,7 +16,7 @@ public:
 
 	vector<MeshPart> meshParts;
 
-	Range<Vector3f> bounds;
+	BoundBox bounds;
 
 	Spine2DMeshData();
 	virtual ~Spine2DMeshData();

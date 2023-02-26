@@ -58,7 +58,7 @@ Vector3f Camera::getFinalWorldPosition()
 	return getPosition(WORLD) + offset;
 }
 
-bool Camera::culling(const Range<Vector3f>& bound, const Matrix4f& mat)
+bool Camera::culling(const BoundBox& bound, const Matrix4f& mat)
 {
 	return frustumCulling(cameraRender.cameraData, bound, mat);
 }

@@ -44,7 +44,7 @@ public:
 
 	Vector3f getFinalWorldPosition();
 
-	bool culling(const Range<Vector3f>& bound, const Matrix4f& mat);
+	bool culling(const BoundBox& bound, const Matrix4f& mat);
 
 	virtual void tick(float deltaTime);
 	virtual void afterTick();

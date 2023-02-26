@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Texture2D.h"
+#include "../Utility/Boundings.h"
 
 struct RenderInfo;
 class MeshPart;
@@ -92,7 +93,7 @@ public:
 	void setEnableGUI(bool enable);
 	bool getEnableGUI() const;
 
-	void drawAABB(const Range<Vector3f>& bound, const Matrix4f& transformMat, Color color);
+	void drawAABB(const BoundBox& bound, const Matrix4f& transformMat, Color color);
 	void drawPoint(const Vector3f& p, float size, Color color);
 	void drawLine(const Vector3f& p0, const Vector3f& p1, Color color);
 	void drawCircleX(const Vector3f& p, float radius, const Matrix4f& transformMat, Color color, float segment = 12);

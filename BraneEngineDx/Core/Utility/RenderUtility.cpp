@@ -1,5 +1,6 @@
 #include "RenderUtility.h"
 #include "MathUtility.h"
+#include "../ShaderStage.h"
 
 string getShaderFeatureNames(Enum<ShaderFeature> feature)
 {
@@ -43,6 +44,29 @@ string getShaderFeatureNames(Enum<ShaderFeature> feature)
 			name += "[terrain]";
 	}
 	return name;
+}
+
+const char* getShaderPropertyTypeName(ShaderProperty::Type type)
+{
+	switch (type)
+	{
+	case ShaderProperty::None:
+		return "None";
+	case ShaderProperty::Parameter:
+		return "Parameter";
+	case ShaderProperty::ConstantBuffer:
+		return "ConstantBuffer";
+	case ShaderProperty::TextureBuffer:
+		return "TextureBuffer";
+	case ShaderProperty::Texture:
+		return "Texture";
+	case ShaderProperty::Sampler:
+		return "Sampler";
+	case ShaderProperty::Image:
+		return "Image";
+	default:
+		return "Unknown";
+	}
 }
 
 int getGPUBufferFormatCellSize(GPUBufferFormat format)
@@ -111,7 +135,7 @@ bool isFloatPixel(TexInternalType type)
 	}
 }
 
-bool frustumCulling(const CameraData& camData, const Range<Vector3f>& bound, const Matrix4f& mat)
+bool frustumCulling(const CameraData& camData, const BoundBox& bound, const Matrix4f& mat)
 {
 	{
 		float vLen = camData.zFar * tan(camData.fovy * (0.5f * PI / 180.0f));
@@ -120,16 +144,10 @@ bool frustumCulling(const CameraData& camData, const Range<Vector3f>& bound, con
 		Vector3f pos, sca;
 		Quaternionf rot;
 		mat.decompose(pos, rot, sca);
-		Vector3f _maxVal = bound.maxVal.cwiseProduct(sca);
-		Vector3f _minVal = bound.maxVal.cwiseProduct(sca);
-		Vector3f maxVal = Vector3f(
-			max(_maxVal.x(), _minVal.x()),
-			max(_maxVal.y(), _minVal.y()),
-			max(_maxVal.z(), _minVal.z()));
-		Vector3f minVal = Vector3f(
-			min(maxVal.x(), minVal.x()),
-			min(maxVal.y(), minVal.y()),
-			min(maxVal.z(), minVal.z()));
+		Vector3f _maxVal = bound.maxPoint.cwiseProduct(sca);
+		Vector3f _minVal = bound.minPoint.cwiseProduct(sca);
+		Vector3f maxVal = Math::max(_maxVal, _minVal);
+		Vector3f minVal = Math::min(_maxVal, _minVal);
 
 		Matrix4f T = Matrix4f::Identity();
 		T(0, 3) = pos.x();
@@ -141,21 +159,13 @@ bool frustumCulling(const CameraData& camData, const Range<Vector3f>& bound, con
 		Matrix4f worldToLocal = (T * R).inverse();
 
 		Vector3f worldPos = worldToLocal *
-			Vector4f(camData.cameraLoc.x(),
-				camData.cameraLoc.y(),
-				camData.cameraLoc.z(), 1);
+			Vector4f(camData.cameraLoc, 1);
 		Vector3f upVec = worldToLocal *
-			Vector4f(camData.cameraUp.x(),
-				camData.cameraUp.y(),
-				camData.cameraUp.z(), 0);
+			Vector4f(camData.cameraUp, 0);
 		Vector3f rightVec = worldToLocal *
-			Vector4f(camData.cameraLeft.x(),
-				camData.cameraLeft.y(),
-				camData.cameraLeft.z(), 0);
+			Vector4f(camData.cameraLeft, 0);
 		Vector3f forVec = worldToLocal *
-			Vector4f(camData.cameraDir.x(),
-				camData.cameraDir.y(),
-				camData.cameraDir.z(), 0);
+			Vector4f(camData.cameraDir, 0);
 
 		Vector3f vVec = upVec * vLen;
 		Vector3f hVec = rightVec * hLen;
@@ -193,15 +203,15 @@ bool frustumCulling(const CameraData& camData, const Range<Vector3f>& bound, con
 	Matrix4f MVP = camData.projectionViewMat * mat;
 
 	Vector4f corners[8] = {
-		{bound.minVal.x(), bound.minVal.y(), bound.minVal.z(), 1.0}, // x y z
-		{bound.maxVal.x(), bound.minVal.y(), bound.minVal.z(), 1.0}, // X y z
-		{bound.minVal.x(), bound.maxVal.y(), bound.minVal.z(), 1.0}, // x Y z
-		{bound.maxVal.x(), bound.maxVal.y(), bound.minVal.z(), 1.0}, // X Y z
+		{bound.minPoint.x(), bound.minPoint.y(), bound.minPoint.z(), 1.0}, // x y z
+		{bound.maxPoint.x(), bound.minPoint.y(), bound.minPoint.z(), 1.0}, // X y z
+		{bound.minPoint.x(), bound.maxPoint.y(), bound.minPoint.z(), 1.0}, // x Y z
+		{bound.maxPoint.x(), bound.maxPoint.y(), bound.minPoint.z(), 1.0}, // X Y z
 
-		{bound.minVal.x(), bound.minVal.y(), bound.maxVal.z(), 1.0}, // x y Z
-		{bound.maxVal.x(), bound.minVal.y(), bound.maxVal.z(), 1.0}, // X y Z
-		{bound.minVal.x(), bound.maxVal.y(), bound.maxVal.z(), 1.0}, // x Y Z
-		{bound.maxVal.x(), bound.maxVal.y(), bound.maxVal.z(), 1.0}, // X Y Z
+		{bound.minPoint.x(), bound.minPoint.y(), bound.maxPoint.z(), 1.0}, // x y Z
+		{bound.maxPoint.x(), bound.minPoint.y(), bound.maxPoint.z(), 1.0}, // X y Z
+		{bound.minPoint.x(), bound.maxPoint.y(), bound.maxPoint.z(), 1.0}, // x Y Z
+		{bound.maxPoint.x(), bound.maxPoint.y(), bound.maxPoint.z(), 1.0}, // X Y Z
 	};
 
 	bool inside = false;

@@ -38,6 +38,8 @@ public:
 
 	void setRadius(float radius);
 
+	virtual BoundBox getCustomSpaceBound(const Matrix4f& localToCustom);
+
 #if ENABLE_PHYSICS
 	virtual CollisionShape* generateCollisionShape(const Vector3f& scale = Vector3f(1, 1, 1)) const;
 #endif
@@ -55,6 +57,8 @@ public:
 	virtual Mesh* toMesh(unsigned int segment, const Vector3f& axis = Vector3f::UnitZ());
 	virtual Mesh* toMesh();
 
+	virtual BoundBox getCustomSpaceBound(const Matrix4f& localToCustom);
+
 #if ENABLE_PHYSICS
 	virtual CollisionShape* generateCollisionShape(const Vector3f& scale = Vector3f(1, 1, 1)) const;
 #endif
@@ -68,6 +72,8 @@ public:
 
 	Cone(Vector3f controlPointA, Vector3f controlPointB);
 	Cone(float radius = 1, float height = 1, Vector3f center = Vector3f(0, 0, 0));
+
+	virtual BoundBox getCustomSpaceBound(const Matrix4f& localToCustom);
 
 #if ENABLE_PHYSICS
 	virtual CollisionShape* generateCollisionShape(const Vector3f& scale = Vector3f(1, 1, 1)) const;
@@ -85,6 +91,8 @@ public:
 
 	void setRadius(float radius);
 	void setHalfLength(float halfLength);
+
+	virtual BoundBox getCustomSpaceBound(const Matrix4f& localToCustom);
 
 #if ENABLE_PHYSICS
 	virtual CollisionShape* generateCollisionShape(const Vector3f& scale = Vector3f(1, 1, 1)) const;

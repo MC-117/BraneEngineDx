@@ -1,5 +1,6 @@
 #include "PhysicalBody.h"
 #include "PhysicalWorld.h"
+#include "../Utility/MathUtility.h"
 
 #ifdef PHYSICS_USE_BULLET
 PhysicalBodyMotionState::PhysicalBodyMotionState(::Transform & targetTransform, const PTransform& centerOfMassOffset)
@@ -50,6 +51,20 @@ void PhysicalCollider::setRotationOffset(const Quaternionf& offset)
 Quaternionf PhysicalCollider::getRotationOffset()
 {
 	return rotationOffset;
+}
+
+BoundBox PhysicalCollider::getLocalBound() const
+{
+	return shape ? shape->getCustomSpaceBound(
+		Math::getTransformMatrix(positionOffset, rotationOffset, Vector3f::Ones())) :
+		BoundBox::none;
+}
+
+BoundBox PhysicalCollider::getCustomSpaceBound(const Matrix4f& localToCustom) const
+{
+	return shape ? shape->getCustomSpaceBound(
+		localToCustom * Math::getTransformMatrix(positionOffset, rotationOffset, Vector3f::Ones())) :
+		BoundBox::none;
 }
 
 PhysicalLayer PhysicalCollider::getLayer() const
@@ -115,6 +130,35 @@ void PhysicalBody::removeFromWorld()
 {
 	if (physicalWorld != NULL)
 		physicalWorld->dirty = true;
+}
+
+BoundBox PhysicalBody::getLocalBound() const
+{
+	if (colliders.empty())
+		return BoundBox::none;
+	BoundBox outBound = BoundBox::none;
+	for (auto& collider : colliders) {
+		BoundBox bound = collider->getLocalBound();
+		outBound.encapsulate(bound);
+	}
+	return outBound;
+}
+
+BoundBox PhysicalBody::getWorldBound() const
+{
+	return getCustomSpaceBound(targetTransform.getMatrix(WORLD));
+}
+
+BoundBox PhysicalBody::getCustomSpaceBound(const Matrix4f& localToCustom) const
+{
+	if (colliders.empty())
+		return BoundBox::none;
+	BoundBox outBound = BoundBox::none;
+	for (auto& collider : colliders) {
+		BoundBox bound = collider->getCustomSpaceBound(localToCustom);
+		outBound.encapsulate(bound);
+	}
+	return outBound;
 }
 
 int PhysicalBody::getColliderCount() const

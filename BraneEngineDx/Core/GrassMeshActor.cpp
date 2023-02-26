@@ -70,13 +70,17 @@ void GrassMeshActor::prerender(SceneRenderData& sceneData)
 		float hx = bound.x() * 0.5, hy = bound.y() * 0.5;
 		transCount = (yd + 1) * (density + 1);
 		srand(1234);
+		MeshTransformData data;
+		getMeshTransformData(&data);
+		meshRender.getMeshTransformData(&data);
 		for (int i = 0; i <= density; i++) {
 			for (int j = 0; j <= yd; j++) {
 				Matrix4f m = Matrix4f::Identity();
 				m(0, 3) = i * w - hx + ((rand() / (double)RAND_MAX) - 0.5) * 2 * w;
 				m(1, 3) = j * w - hy + yo + ((rand() / (double)RAND_MAX) - 0.5) * 2 * w;
 				m.block(0, 0, 3, 3) = Quaternionf::FromAngleAxis((rand() / (double)RAND_MAX) * 2 * PI, Vector3f(0, 0, 1)).toRotationMatrix();
-				unsigned int transID = sceneData.setStaticMeshTransform(transformMat * m);
+				data.localToWorld = transformMat * m;
+				unsigned int transID = sceneData.setStaticMeshTransform(data);
 				if (i == 0 && j == 0) {
 					meshRender.instanceID = transID;
 					meshRender.instanceCount = transCount;

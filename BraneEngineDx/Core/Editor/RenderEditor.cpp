@@ -21,12 +21,12 @@ void RenderEditor::onShapeGUI(EditorInfo& info)
 	if (shp == NULL)
 		return;
 	ImGui::Text("Bound: (%.4f, %.4f, %.4f)-(%.4f, %.4f, %.4f)",
-		shp->bound.minVal[0],
-		shp->bound.minVal[1],
-		shp->bound.minVal[2],
-		shp->bound.maxVal[0],
-		shp->bound.maxVal[1],
-		shp->bound.maxVal[2]);
+		shp->bound.minPoint[0],
+		shp->bound.minPoint[1],
+		shp->bound.minPoint[2],
+		shp->bound.maxPoint[0],
+		shp->bound.maxPoint[1],
+		shp->bound.maxPoint[2]);
 	Vector3f center = shp->getCenter();
 	ImGui::Text("Center: (%.4f, %.4f, %.4f)",
 		center.x(),

@@ -28,21 +28,21 @@ bool Gizmo::getEnableGUI() const
 	return enableGUI;
 }
 
-void Gizmo::drawAABB(const Range<Vector3f>& bound, const Matrix4f& transformMat, Color color)
+void Gizmo::drawAABB(const BoundBox& bound, const Matrix4f& transformMat, Color color)
 {
-	Vector3f extend = (bound.maxVal - bound.minVal) * 0.5f;
-	Vector3f center = (bound.maxVal + bound.minVal) * 0.5f;
+	Vector3f extent = bound.getExtent();
+	Vector3f center = bound.getCenter();
 	Vector3f points[8] =
 	{
-		center + extend,
-		center + Vector3f(-extend.x(), extend.y(), extend.z()),
-		center + Vector3f(-extend.x(), -extend.y(), extend.z()),
-		center + Vector3f(extend.x(), -extend.y(), extend.z()),
+		center + extent,
+		center + Vector3f(-extent.x(), extent.y(), extent.z()),
+		center + Vector3f(-extent.x(), -extent.y(), extent.z()),
+		center + Vector3f(extent.x(), -extent.y(), extent.z()),
 
-		center + Vector3f(extend.x(), extend.y(), -extend.z()),
-		center + Vector3f(-extend.x(), extend.y(), -extend.z()),
-		center - extend,
-		center + Vector3f(extend.x(), -extend.y(), -extend.z())
+		center + Vector3f(extent.x(), extent.y(), -extent.z()),
+		center + Vector3f(-extent.x(), extent.y(), -extent.z()),
+		center - extent,
+		center + Vector3f(extent.x(), -extent.y(), -extent.z())
 	};
 
 	for (int i = 0; i < 8; i++) {
@@ -1128,7 +1128,18 @@ void Gizmo::onRender3D(RenderInfo& info)
 {
 	for (auto& draw : meshes) {
 		if (draw.instanceID < 0) {
-			draw.instanceID = info.sceneData->setMeshTransform(draw.transformMat);
+			MeshTransformData data;
+			data.localToWorld = draw.transformMat;
+			Vector3f pos, sca;
+			Quaternionf rot;
+			draw.transformMat.decompose(pos, rot, sca);
+			data.worldScale = sca;
+			const BoundBox& bound = draw.meshPart->bound;
+			data.localCenter = bound.getCenter();
+			data.localExtent = bound.getExtent();
+			data.localRadius = data.localExtent.norm();
+			data.flag = 0;
+			draw.instanceID = info.sceneData->setMeshTransform(data);
 			draw.instanceCount = 1;
 		}
 		MeshRenderCommand cmd;

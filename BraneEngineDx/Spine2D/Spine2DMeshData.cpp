@@ -142,16 +142,9 @@ void Spine2DMeshData::updateVertex(int index)
 
 void Spine2DMeshData::updateBounds()
 {
-    bounds.minVal = Vector3f(FLT_MAX, FLT_MAX, FLT_MAX);
-    bounds.maxVal = Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+    bounds = BoundBox::none;
     for each (const auto & pos in vertices) {
-        bounds.minVal[0] = min(bounds.minVal[0], pos.x());
-        bounds.minVal[1] = min(bounds.minVal[1], pos.y());
-        bounds.minVal[2] = min(bounds.minVal[2], pos.z());
-
-        bounds.maxVal[0] = max(bounds.maxVal[0], pos.x());
-        bounds.maxVal[1] = max(bounds.maxVal[1], pos.y());
-        bounds.maxVal[2] = max(bounds.maxVal[2], pos.z());
+        bounds.encapsulate(pos);
     }
 }
 

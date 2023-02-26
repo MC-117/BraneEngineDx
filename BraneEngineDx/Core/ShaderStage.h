@@ -5,53 +5,6 @@
 #include "Utility/Utility.h"
 #include "GraphicType.h"
 
-struct ShaderPropertyName
-{
-	size_t hash;
-
-	ShaderPropertyName(const char* name);
-	ShaderPropertyName(const string& name);
-
-	static size_t calHash(const char* name);
-
-	size_t getHash() const;
-
-	size_t operator()() const;
-};
-
-struct ShaderInput
-{
-	enum Type
-	{
-		None,
-		Position,
-		ConstantBuffer,
-		TextureBuffer,
-		Texture,
-		Sampler,
-		Image
-	};
-};
-
-struct ShaderProperty
-{
-	enum Type
-	{
-		None,
-		Parameter,
-		ConstantBuffer,
-		TextureBuffer,
-		Texture,
-		Sampler,
-		Image
-	};
-	Type type = None;
-	string name;
-	int offset;
-	int size;
-	int meta;
-};
-
 struct ShaderStageDesc
 {
 	ShaderStageType stageType;
@@ -77,6 +30,7 @@ public:
 	Enum<ShaderFeature> getShaderFeature() const;
 
 	const ShaderProperty* getProperty(const ShaderPropertyName& name) const;
+	const unordered_map<size_t, ShaderProperty>& getProperties() const;
 
 	static const char* enumShaderStageType(ShaderStageType stageType);
 	static ShaderStageType enumShaderStageType(const string& type);

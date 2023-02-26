@@ -56,6 +56,7 @@ public:
 		void setTexture(const string& name, const Texture& tex);
 
 		void setToonParameter(const ToonParameter& toon);
+		void setPBRParameter(const ToonParameter& toon);
 		void setOutlineParameter(const OutlineParameter& outline);
 
 		ostream& write(ostream& os);
@@ -85,13 +86,14 @@ public:
 		float motionScale, float fovScale);
 	static bool getToonParameter(const string& toonFile, ToonParameter& toonParameter);
 protected:
-	Material* baseMaterial = NULL;
+	Material* baseToonMaterial = NULL;
+	Material* basePBRMaterial = NULL;
 	Material* outlineMaterial = NULL;
 	const string pmx2fbxPath = "Tool/AnimationConverter/PMX2FBX/pmx2fbx.exe";
 	const string tempPath = "Tool/AnimationConverter/Temp/";
 	PROCESS_INFORMATION processInfo;
 	char execCmdChars[200];
-	bool encoding = true, enablePhysics = false, enableIK = false;
+	bool encoding = true, enablePhysics = false, enableIK = false, enablePBRMat = false;
 	int stage = 0, subStage = -1;
 	float camMotionScale = 1, camFovScale = 1, boneScale = 1;
 

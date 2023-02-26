@@ -92,6 +92,11 @@ BoneData * BoneData::getNext(BoneData* limitBone)
 	return b;
 }
 
+unsigned int SkeletonData::getBoneCount() const
+{
+	return boneList.size();
+}
+
 BoneData * SkeletonData::getBoneData(const string & name)
 {
 	auto iter = boneName.find(name);

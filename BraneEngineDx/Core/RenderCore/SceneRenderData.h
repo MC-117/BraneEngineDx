@@ -27,14 +27,14 @@ public:
 	int setReflectionCapture(Render* captureRender);
 	int setEnvLightCapture(Render* captureRender);
 	int setEnvLightData(Render* captureRender);
-	unsigned int setMeshTransform(const Matrix4f& transformMat);
-	unsigned int setMeshTransform(const vector<Matrix4f>& transformMats);
+	unsigned int setMeshTransform(const MeshTransformData& data);
+	unsigned int setMeshTransform(const vector<MeshTransformData>& datas);
 	MeshTransformIndex* getMeshPartTransform(MeshPart* meshPart, Material* material);
 	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount = 1);
 	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex);
 
-	unsigned int setStaticMeshTransform(const Matrix4f& transformMat);
-	unsigned int setStaticMeshTransform(const vector<Matrix4f>& transformMats);
+	unsigned int setStaticMeshTransform(const MeshTransformData& data);
+	unsigned int setStaticMeshTransform(const vector<MeshTransformData>& datas);
 	MeshTransformIndex* getStaticMeshPartTransform(MeshPart* meshPart, Material* material);
 	MeshTransformIndex* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex);
 	MeshTransformIndex* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex);
@@ -44,7 +44,7 @@ public:
 	void setUpdateStatic();
 	bool willUpdateStatic();
 
-	bool frustumCulling(const Range<Vector3f>& bound, const Matrix4f& mat) const;
+	bool frustumCulling(const BoundBox& bound, const Matrix4f& mat) const;
 
 	virtual void create();
 	virtual void reset();

@@ -6,8 +6,8 @@ void SkeletonPhysics::ShapeInfo::serialize(SerializationInfo& info)
 {
 	info.type = "ShapeInfo";
 	info.set("type", (int)type);
-	info.set("minPoint", SVector3f(bound.minVal));
-	info.set("maxPoint", SVector3f(bound.maxVal));
+	info.set("minPoint", SVector3f(bound.minPoint));
+	info.set("maxPoint", SVector3f(bound.maxPoint));
 }
 
 void SkeletonPhysics::ShapeInfo::deserialize(const SerializationInfo& info)
@@ -15,10 +15,10 @@ void SkeletonPhysics::ShapeInfo::deserialize(const SerializationInfo& info)
 	info.get("type", SEnum(&type));
 	SVector3f minPoint;
 	if (info.get("minPoint", minPoint))
-		bound.minVal = minPoint;
+		bound.minPoint = minPoint;
 	SVector3f maxPoint;
 	if (info.get("maxPoint", maxPoint))
-		bound.maxVal = maxPoint;
+		bound.maxPoint = maxPoint;
 }
 
 void SkeletonPhysics::ShapeInfo::fromShape(Shape* shape)
@@ -51,13 +51,13 @@ Shape* SkeletonPhysics::ShapeInfo::createShape() const
 	switch (type)
 	{
 	case SkeletonPhysics::ShapeInfo::BoxShape:
-		shape = new Box(bound.minVal, bound.maxVal);
+		shape = new Box(bound.minPoint, bound.maxPoint);
 		break;
 	case SkeletonPhysics::ShapeInfo::SphereShape:
-		shape = new Sphere(bound.minVal, bound.maxVal);
+		shape = new Sphere(bound.minPoint, bound.maxPoint);
 		break;
 	case SkeletonPhysics::ShapeInfo::CapsuleShape:
-		shape = new Capsule(bound.minVal, bound.maxVal);
+		shape = new Capsule(bound.minPoint, bound.maxPoint);
 		break;
 	default:
 		break;

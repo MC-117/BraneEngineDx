@@ -8,14 +8,14 @@ class CaptureProbeRender : public Serializable, public Render
 public:
 	Serialize(CaptureProbeRender,);
 
-	Range<Vector3f> bound;
+	BoundBox bound;
 	int resolution = 128;
 
 	CaptureProbeRender() = default;
 
 	virtual TextureCube* getProbeCubeMap() const;
 	virtual void setProbeCubeMap(TextureCube* probeCubeMap);
-	virtual Range<Vector3f> getWorldBound() const;
+	virtual BoundBox getWorldBound() const;
 	virtual Vector3f getWorldPosition() const;
 	virtual void setWorldPosition(const Vector3f& position);
 	virtual float getRadius() const;

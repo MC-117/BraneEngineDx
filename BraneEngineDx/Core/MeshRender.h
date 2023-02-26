@@ -5,6 +5,8 @@
 #include "Mesh.h"
 #include "Render.h"
 
+struct MeshTransformData;
+
 class MeshRender : public Render
 {
 public:
@@ -31,6 +33,8 @@ public:
 	virtual bool setMaterial(int index, Material& material);
 	virtual bool setPartEnable(const string& name, bool enable, bool all = false);
 	virtual bool setPartEnable(int index, bool enable);
+
+	virtual void getMeshTransformData(MeshTransformData* data) const;
 
 	virtual void fillMaterialsByDefault();
 

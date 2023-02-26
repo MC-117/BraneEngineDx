@@ -203,7 +203,7 @@ RenderCommandWorkerPool& RenderCommandWorkerPool::instance()
 {
 	static bool init = false;
 	static int parallelRenderCommandExec = 0;
-	static RenderCommandWorkerPool::Parameter parallelParameter = { true, 4, 0 };
+	static RenderCommandWorkerPool::Parameter parallelParameter = { true, 8, 0 };
 	static RenderCommandWorkerPool parallelRenderCommandWorkerPool(parallelParameter);
 	static RenderCommandWorkerPool::Parameter immediateParameter = { false, 1, 0 };
 	static RenderCommandWorkerPool immediateRenderCommandWorkerPool(immediateParameter);

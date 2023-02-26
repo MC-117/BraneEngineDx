@@ -86,7 +86,7 @@ bool CaptureProbe::deserialize(const SerializationInfo& from)
 	if (renderInfo && renderInfo->serialization) {
 		CaptureProbeRender* render = createCaptureProbeRender(*renderInfo->serialization);
 		if (render)
-			render->deserialize(from);
+			render->deserialize(*renderInfo);
 	}
 	return true;
 }

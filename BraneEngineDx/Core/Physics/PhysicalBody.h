@@ -44,6 +44,9 @@ public:
 	virtual void setRotationOffset(const Quaternionf& offset);
 	virtual Quaternionf getRotationOffset();
 
+	BoundBox getLocalBound() const;
+	BoundBox getCustomSpaceBound(const Matrix4f& localToCustom) const;
+
 	virtual PhysicalLayer getLayer() const;
 	virtual void setLayer(const PhysicalLayer& layer);
 
@@ -87,6 +90,10 @@ public:
 	virtual void handleCollision(const ContactInfo& info);
 	virtual void addToWorld(PhysicalWorld& physicalWorld);
 	virtual void removeFromWorld();
+
+	virtual BoundBox getLocalBound() const;
+	virtual BoundBox getWorldBound() const;
+	virtual BoundBox getCustomSpaceBound(const Matrix4f& localToCustom) const;
 
 	virtual int getColliderCount() const;
 	virtual PhysicalCollider* getCollider(int index = 0);

@@ -72,20 +72,6 @@ bool SkeletonMeshActor::removeSkeletonMesh(int index)
 	return true;
 }
 
-bool SkeletonMeshActor::getBoneHidden()
-{
-	for (auto b = skeleton.bones.begin(), e = skeleton.bones.end(); b != e; b++)
-		if (!(*b)->bone->isHidden())
-			return false;
-	return true;
-}
-
-void SkeletonMeshActor::setBoneHidden(bool hidden)
-{
-	for (auto b = skeleton.bones.begin(), e = skeleton.bones.end(); b != e; b++)
-		(*b)->bone->setHidden(hidden);
-}
-
 Bone * SkeletonMeshActor::getBone(const string & name)
 {
 	Skeleton::BoneInfo* info = skeleton.getBone(name);
@@ -101,6 +87,19 @@ Bone * SkeletonMeshActor::getBone(size_t index)
 void SkeletonMeshActor::setReferencePose()
 {
 	skeleton.setReferencePose();
+}
+
+BoundBox SkeletonMeshActor::calLocalBound()
+{
+	BoundBox outBound = BoundBox::none;
+	Matrix4f worldMat = getMatrix(WORLD);
+	for (auto& info : skeleton.bones) {
+		if (PhysicalBody* body = info->bone->getPhysicalBody()) {
+			BoundBox bound = body->getCustomSpaceBound(worldMat.inverse() * info->bone->getMatrix(WORLD));
+			outBound.encapsulate(bound);
+		}
+	}
+	return outBound;
 }
 
 AnimationClip * SkeletonMeshActor::addAnimationClip(AnimationClipData& data)
@@ -197,24 +196,31 @@ void SkeletonMeshActor::destroy(bool applyToChild)
 
 void SkeletonMeshActor::prerender(SceneRenderData& sceneData)
 {
+	MeshTransformData data;
+	getMeshTransformData(&data);
+	BoundBox bound = calLocalBound();
+	data.localCenter = bound.getCenter();
+	data.localExtent = bound.getExtent();
+	data.localRadius = data.localExtent.norm();
+	objectID = sceneData.setMeshTransform(data);
 	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
 		Skeleton::SkeletonInfo& skeletonInfo = *skeleton.getSkeleton(i);
 		SkeletonMeshRender& render = *skeletonMeshRenders[i];
 		render.transformMat = transformMat;
-		for (int j = 0; j < render.transformMats.size(); j++) {
+		render.instanceID = objectID;
+		render.instanceCount = 1;
+		render.resetBoneTransform();
+		for (int j = 0; j < render.getBoneCount(); j++) {
 			int index = skeletonInfo.boneRemapIndex[j];
 			if (index < 0) {
-				render.transformMats[j] = skeletonInfo.data->getBoneData(j)->transformMatrix;
+				render.setBoneTransform(j, skeletonInfo.data->getBoneData(j)->transformMatrix);
 			}
 			else {
 				Skeleton::BoneInfo& boneInfo = *skeleton.getBone(index);
 				Matrix4f t = boneInfo.bone->getTransformMat();
-				render.transformMats[j] = t * boneInfo.data->offsetMatrix;
+				render.setBoneTransform(j, t * boneInfo.data->offsetMatrix);
 			}
 		}
-		objectID = sceneData.setMeshTransform(render.transformMats);
-		render.instanceID = objectID;
-		render.instanceCount = 1;
 	}
 }
 

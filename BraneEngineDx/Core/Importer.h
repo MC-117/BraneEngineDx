@@ -31,7 +31,7 @@ protected:
 	const aiScene* scene = NULL;
 	vector<pair<string, MeshPart>> meshParts;
 	MeshPart totalMesh;
-	Range<Vector3f> bound;
+	BoundBox bound;
 
 	struct VertexData {
 

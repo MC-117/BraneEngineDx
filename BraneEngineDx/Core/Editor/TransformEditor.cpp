@@ -129,8 +129,8 @@ void TransformEditor::onPhysicsGUI(EditorInfo& info)
 
 					if (collider->shape != NULL) {
 						if (ImGui::TreeNode((collider->shape->getSerialization().type + " Shape").c_str())) {
-							ImGui::InputFloat3("MinPoint", collider->shape->bound.minVal.data(), "%.3f", ImGuiInputTextFlags_ReadOnly);
-							ImGui::InputFloat3("MaxPoint", collider->shape->bound.maxVal.data(), "%.3f", ImGuiInputTextFlags_ReadOnly);
+							ImGui::InputFloat3("MinPoint", collider->shape->bound.minPoint.data(), "%.3f", ImGuiInputTextFlags_ReadOnly);
+							ImGui::InputFloat3("MaxPoint", collider->shape->bound.maxPoint.data(), "%.3f", ImGuiInputTextFlags_ReadOnly);
 							ImGui::TreePop();
 						}
 					}

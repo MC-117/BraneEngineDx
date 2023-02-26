@@ -21,6 +21,9 @@
 #include "../ThirdParty/ImGui/ImGuiIconHelp.h"
 #include "../ThirdParty/ImGui/ImPlot/implot.h"
 
+static bool enableMemTracer = false;
+static int testCompilingShaders = false;
+
 void SetTopWindow(HWND hWnd)
 {
 	HWND hForeWnd = GetForegroundWindow();
@@ -277,7 +280,7 @@ void loadAssets(LoadingUI& log, bool loadDefaultAsset, bool loadEngineAsset, boo
 
 	if (loadEngineAsset)
 		loadAssets(log, "Engine", delayLoadAsset);
-	if (loadContentAsset) {
+	if (loadContentAsset && !testCompilingShaders) {
 		if (FS::exists("Content")) {
 			loadAssets(log, "Content", delayLoadAsset);
 		}
@@ -374,8 +377,6 @@ WindowContext Engine::windowContext =
 EngineConfig Engine::engineConfig;
 WUIViewport Engine::viewport;
 
-static bool enableMemTracer = false;
-
 World * Engine::getCurrentWorld()
 {
 	return currentWorld;
@@ -468,6 +469,8 @@ void Engine::config()
 
 	if (conf.get(".enableMemTracer", boolStr))
 		enableMemTracer = boolStr == "true";
+
+	conf.get("testCompilingShaders", testCompilingShaders);
 
 	SerializationInfo* layers = conf.get("layers");
 	if (layers != NULL) {
@@ -662,19 +665,26 @@ void Engine::setup()
 
 	loadingUI.setText("Start BraneEngine");
 	loadingUI.doModelAsync([](WUIControl& control, void* ptr)
-		{
-			LoadingUI& ui = dynamic_cast<LoadingUI&>(control);
-			loadAssets(ui, engineConfig.loadDefaultAsset, engineConfig.loadEngineAsset, engineConfig.loadContentAsset);
+	{
+		LoadingUI& ui = dynamic_cast<LoadingUI&>(control);
+		loadAssets(ui, engineConfig.loadDefaultAsset, engineConfig.loadEngineAsset, engineConfig.loadContentAsset);
 
-			ui.setText("Initial...");
-			if (engineConfig.guiOnly) {
-				if (currentWorld)
-					currentWorld->setGUIOnly(true);
-				InitialTool();
-			}
-			else
-				InitialWorld();
-		});
+
+		if (testCompilingShaders)
+			return;
+
+		ui.setText("Initial...");
+		if (engineConfig.guiOnly) {
+			if (currentWorld)
+				currentWorld->setGUIOnly(true);
+			InitialTool();
+		}
+		else
+			InitialWorld();
+	});
+
+	if (testCompilingShaders)
+		return;
 
 	if (engineConfig.fullscreen)
 		toggleFullscreen();
@@ -684,6 +694,8 @@ void Engine::setup()
 
 void Engine::start()
 {
+	if (testCompilingShaders)
+		return;
 	currentWorld->begin();
 	viewport.doModel(false);
 }
@@ -749,8 +761,6 @@ void Engine::mainLoop(float deltaTime)
 	currentWorld->tick(deltaTime);
 	currentWorld->afterTick();
 	timer.record("CPU");
-
-	timer.record("GPU Wait");
 	Console::getTimer("Engine") = timer;
 	Console::resetNewLogCount();
 	Console::resetNewPyLogCount();

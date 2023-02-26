@@ -44,7 +44,7 @@ protected:
     Vector2f viewSize = { 512, 512 };
     Color overColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-    Range<Vector3f> initBounds;
+    BoundBox initBounds;
 
     Material* material = NULL;
 

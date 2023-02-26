@@ -213,18 +213,47 @@ struct RenderMode
 	const uint32_t SubOrder_BitMask = 0xFFFF;
 	uint32_t value = 0;
 	RenderMode() = default;
-	RenderMode(uint16_t renderStage, uint8_t blendMode, uint16_t subOrder)
-		: value(subOrder
-			| ((blendMode << BM_Order_BitOffset) & BM_Order_BitMask)
-			| ((renderStage << RS_Order_BitOffset) & RS_Order_BitMask)
-		) {}
-	RenderMode(const RenderMode& mode) { value = mode.value; }
-	RenderMode& operator=(const RenderMode& mode) { value = mode.value; return *this; }
+	RenderMode(uint16_t renderStage, uint8_t blendMode, uint16_t subOrder);
+	RenderMode(const RenderMode& mode);
+	RenderMode& operator=(const RenderMode& mode);
 
-	uint16_t getRenderStage() const { return (value & RS_Order_BitMask) >> RS_Order_BitOffset; }
-	BlendMode getBlendMode() const { return (BlendMode)((value & BM_Order_BitMask) >> BM_Order_BitOffset); }
-	uint32_t getOrder() const { return value & Order_BitMask; }
-	uint16_t getSubOrder() const { return value & SubOrder_BitMask; }
+	uint16_t getRenderStage() const;
+	BlendMode getBlendMode() const;
+	uint32_t getOrder() const;
+	uint16_t getSubOrder() const;
 
-	operator uint32_t() const { return value; }
+	operator uint32_t() const;
+};
+
+struct ShaderPropertyName
+{
+	size_t hash;
+
+	ShaderPropertyName(const char* name);
+	ShaderPropertyName(const std::string& name);
+
+	static size_t calHash(const char* name);
+
+	size_t getHash() const;
+
+	size_t operator()() const;
+};
+
+struct ShaderProperty
+{
+	enum Type
+	{
+		None,
+		Parameter,
+		ConstantBuffer,
+		TextureBuffer,
+		Texture,
+		Sampler,
+		Image
+	};
+	Type type = None;
+	std::string name;
+	int offset;
+	int size;
+	int meta;
 };

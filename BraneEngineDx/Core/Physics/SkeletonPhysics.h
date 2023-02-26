@@ -13,7 +13,7 @@ public:
 		};
 
 		ShapeType type = ShapeType::NoneShape;
-		Range<Vector3f> bound;
+		BoundBox bound;
 
 		void serialize(SerializationInfo& info);
 		void deserialize(const SerializationInfo& info);

@@ -72,6 +72,7 @@ public:
 
 	BoneData* rootBone = NULL;
 
+	unsigned int getBoneCount() const;
 	BoneData* getBoneData(const string& name);
 	BoneData* getBoneData(unsigned int index);
 };

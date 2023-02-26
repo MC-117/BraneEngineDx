@@ -3,6 +3,7 @@
 #define _SHAPE_H_
 
 #include "Serialization.h"
+#include "Utility/Boundings.h"
 
 enum ShapeTopologyType
 {
@@ -20,7 +21,7 @@ public:
 	Serialize(Shape,);
 
 	ShapeTopologyType renderMode = STT_Triangle;
-	Range<Vector3f> bound;
+	BoundBox bound;
 
 	Shape();
 	Shape(const Shape& shape);
@@ -34,10 +35,14 @@ public:
 	virtual void drawCall();
 
 	virtual Vector3f getCenter() const;
+	virtual Vector3f getExtent() const;
+	virtual Vector3f getSize() const;
 	virtual float getWidth() const;
 	virtual float getHeight() const;
 	virtual float getDepth() const;
 	virtual float getRadius() const;
+
+	virtual BoundBox getCustomSpaceBound(const Matrix4f& localToCustom);
 
 #if ENABLE_PHYSICS
 	virtual CollisionShape* generateCollisionShape(const Vector3f& scale = Vector3f(1, 1, 1)) const;

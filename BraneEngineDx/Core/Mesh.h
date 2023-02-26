@@ -18,7 +18,7 @@ struct MeshPart
 	unsigned int vertexPerFace = 3;
 	Mesh* mesh = NULL;
 	unsigned int partIndex = -1;
-	Range<Vector3f> bound;
+	BoundBox bound;
 
 	MeshPart();
 	MeshPart(const MeshPart& part);

@@ -6,50 +6,6 @@
 #include "Utility/EngineUtility.h"
 #include "ShaderCode/ShaderAdapterCompiler.h"
 
-ShaderPropertyName::ShaderPropertyName(const char* name)
-{
-	if (name == NULL)
-		throw runtime_error("Empty string is invalid");
-	hash = calHash(name);
-}
-
-ShaderPropertyName::ShaderPropertyName(const string& name)
-{
-	if (name.empty())
-		throw runtime_error("Empty string is invalid");
-	hash = calHash(name.c_str());
-}
-
-size_t ShaderPropertyName::calHash(const char* name)
-{
-	const char* ptr = name;
-	size_t hash = 0;
-	while (true) {
-		size_t data = 0;
-		int len = 0;
-		for (; len < sizeof(size_t); len++) {
-			if (ptr[len] == '\0')
-				break;
-		}
-		memcpy(&data, ptr, len);
-		hash ^= data + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-		if (len < sizeof(size_t))
-			break;
-		ptr += sizeof(size_t);
-	}
-	return hash;
-}
-
-size_t ShaderPropertyName::getHash() const
-{
-	return hash;
-}
-
-size_t ShaderPropertyName::operator()() const
-{
-	return hash;
-}
-
 ShaderStage::ShaderStage(ShaderStageType stageType, const Enum<ShaderFeature>& feature, const string & name)
 	: stageType(stageType), shaderFeature(feature), name(name)
 {
@@ -94,6 +50,11 @@ const ShaderProperty* ShaderStage::getProperty(const ShaderPropertyName& name) c
 {
 	auto iter = properties.find(name.getHash());
 	return iter == properties.end() ? NULL : &iter->second;
+}
+
+const unordered_map<size_t, ShaderProperty>& ShaderStage::getProperties() const
+{
+	return properties;
 }
 
 const char * ShaderStage::enumShaderStageType(ShaderStageType stageType)

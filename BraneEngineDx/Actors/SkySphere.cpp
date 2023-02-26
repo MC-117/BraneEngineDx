@@ -84,10 +84,13 @@ void SkySphere::tick(float deltaTime)
 
 void SkySphere::prerender(SceneRenderData& sceneData)
 {
-	objectID = sceneData.setMeshTransform(transformMat);
+	MeshTransformData data;
+	getMeshTransformData(&data);
+	meshRender.getMeshTransformData(&data);
+	objectID = sceneData.setMeshTransform(data);
+	meshRender.transformMat = transformMat;
 	meshRender.instanceID = objectID;
 	meshRender.instanceCount = 1;
-	meshRender.transformMat = transformMat;
 	Material* mat = meshRender.getMaterial();
 	if (mat != NULL) {
 		mat->setScalar("time", time);

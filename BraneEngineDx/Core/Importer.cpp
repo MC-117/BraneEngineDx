@@ -1,6 +1,7 @@
 #include "Importer.h"
 #include "IVendor.h"
 #include "Console.h"
+#include "Utility/MathUtility.h"
 
 Importer::Importer()
 {
@@ -364,16 +365,14 @@ bool Importer::preprocess()
 
 bool Importer::toMeshParts()
 {
-	bound.minVal = Vector3f(FLT_MAX, FLT_MAX, FLT_MAX);
-	bound.maxVal = Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	bound = BoundBox::none;
 	meshParts.resize(nMesh);
 	totalMesh = VendorManager::getInstance().getVendor().newMeshPart(nVert, nFace * 3);
 	unsigned int baseVertex = totalMesh.vertexFirst, baseElement = totalMesh.elementFirst;
 	for (int i = 0; i < meshSortedList.size(); i++) {
 		aiMesh* mesh = meshSortedList[i];
 		MeshPart part = MeshPart { totalMesh.meshData, baseVertex, mesh->mNumVertices, baseElement, mesh->mNumFaces * 3 };
-		part.bound.minVal = Vector3f(FLT_MAX, FLT_MAX, FLT_MAX);
-		part.bound.maxVal = Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+		part.bound = BoundBox::none;
 		for (int v = 0; v < mesh->mNumVertices; v++) {
 			part.vertex(v) = Vector3f(
 				mesh->mVertices[v].x,
@@ -392,29 +391,15 @@ bool Importer::toMeshParts()
 					mesh->mTextureCoords[0][v].x,
 					mesh->mTextureCoords[0][v].y
 				);
-			Vector3f& tmp = part.vertex(v);
 
-			bound.minVal[0] = min(bound.minVal[0], tmp.x());
-			bound.minVal[1] = min(bound.minVal[1], tmp.y());
-			bound.minVal[2] = min(bound.minVal[2], tmp.z());
-
-			bound.maxVal[0] = max(bound.maxVal[0], tmp.x());
-			bound.maxVal[1] = max(bound.maxVal[1], tmp.y());
-			bound.maxVal[2] = max(bound.maxVal[2], tmp.z());
-
-			part.bound.minVal[0] = min(part.bound.minVal[0], tmp.x());
-			part.bound.minVal[1] = min(part.bound.minVal[1], tmp.y());
-			part.bound.minVal[2] = min(part.bound.minVal[2], tmp.z());
-
-			part.bound.maxVal[0] = max(part.bound.maxVal[0], tmp.x());
-			part.bound.maxVal[1] = max(part.bound.maxVal[1], tmp.y());
-			part.bound.maxVal[2] = max(part.bound.maxVal[2], tmp.z());
+			part.bound.encapsulate(part.vertex(v));
 		}
 		for (int f = 0; f < mesh->mNumFaces; f++) {
 			part.element(f * 3) = mesh->mFaces[f].mIndices[0];
 			part.element(f * 3 + 1) = mesh->mFaces[f].mIndices[1];
 			part.element(f * 3 + 2) = mesh->mFaces[f].mIndices[2];
 		}
+		bound.encapsulate(part.bound);
 		meshParts[i].first = scene->mMaterials[mesh->mMaterialIndex]->GetName().C_Str();
 		meshParts[i].second = part;
 		baseVertex += part.vertexCount;
@@ -425,8 +410,7 @@ bool Importer::toMeshParts()
 
 bool Importer::toSkeletonMeshParts()
 {
-	bound.minVal = Vector3f(FLT_MAX, FLT_MAX, FLT_MAX);
-	bound.maxVal = Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	bound = BoundBox::none;
 	meshParts.resize(nMesh);
 	SkeletonMeshPart _totalMesh = VendorManager::getInstance().getVendor().newSkeletonMeshPart(nVert, nFace * 3, boneList.size(), nMorphVert, nMorph);
 	totalMesh = _totalMesh;
@@ -434,8 +418,7 @@ bool Importer::toSkeletonMeshParts()
 	for (int i = 0; i < meshSortedList.size(); i++) {
 		aiMesh* mesh = meshSortedList[i];
 		SkeletonMeshPart part = { (SkeletonMeshData*)_totalMesh.meshData, baseVertex, mesh->mNumVertices, baseElement, mesh->mNumFaces * 3 };
-		part.bound.minVal = Vector3f(FLT_MAX, FLT_MAX, FLT_MAX);
-		part.bound.maxVal = Vector3f(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+		part.bound = BoundBox::none;
 		if (mesh->mNumAnimMeshes > 0)
 			part.morphMeshData = _totalMesh.morphMeshData;
 		for (int v = 0; v < mesh->mNumVertices; v++) {
@@ -472,29 +455,14 @@ bool Importer::toSkeletonMeshParts()
 				);
 			}
 
-			Vector3f& tmp = part.vertex(v);
-
-			bound.minVal[0] = min(bound.minVal[0], tmp.x());
-			bound.minVal[1] = min(bound.minVal[1], tmp.y());
-			bound.minVal[2] = min(bound.minVal[2], tmp.z());
-
-			bound.maxVal[0] = max(bound.maxVal[0], tmp.x());
-			bound.maxVal[1] = max(bound.maxVal[1], tmp.y());
-			bound.maxVal[2] = max(bound.maxVal[2], tmp.z());
-
-			part.bound.minVal[0] = min(part.bound.minVal[0], tmp.x());
-			part.bound.minVal[1] = min(part.bound.minVal[1], tmp.y());
-			part.bound.minVal[2] = min(part.bound.minVal[2], tmp.z());
-
-			part.bound.maxVal[0] = max(part.bound.maxVal[0], tmp.x());
-			part.bound.maxVal[1] = max(part.bound.maxVal[1], tmp.y());
-			part.bound.maxVal[2] = max(part.bound.maxVal[2], tmp.z());
+			part.bound.encapsulate(part.vertex(v));
 		}
 		for (int f = 0; f < mesh->mNumFaces; f++) {
 			part.element(f * 3) = mesh->mFaces[f].mIndices[0];
 			part.element(f * 3 + 1) = mesh->mFaces[f].mIndices[1];
 			part.element(f * 3 + 2) = mesh->mFaces[f].mIndices[2];
 		}
+		bound.encapsulate(part.bound);
 		meshParts[i].first = scene->mMaterials[mesh->mMaterialIndex]->GetName().C_Str();
 		meshParts[i].second = part;
 		baseVertex += part.vertexCount;

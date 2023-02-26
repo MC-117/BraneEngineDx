@@ -1,0 +1,294 @@
+#include "Light_Def.hmat"
+
+// Used in the PageFlags
+// NOTE: These flags are combined hierarchically using bitwise *OR*, so plan/negate them appropriately
+// Marks pages that are allocated
+#define VSM_ALLOCATED_FLAG			(1U << 0)
+// Marks pages whose dynamic pages are uncached
+#define VSM_DYNAMIC_UNCACHED_FLAG	(1U << 1)
+// Marks pages whose static pages are uncached
+#define VSM_STATIC_UNCACHED_FLAG	(1U << 2)
+// Marks pages that are _not_ coarse (i.e., "normal" pages) that should include all geometry and conversely to mark geometry that is 
+// "detail geometry" and which can skip rendering to coarse pages
+#define VSM_DETAIL_GEOMETRY_FLAG	(1U << 3)
+
+// Stored in the physical meta data flags and must be higher than the  VSM_*_FLAG
+// The light was marked to not be cached (even though caching is enabled)
+#define VSM_PHYSICAL_FLAG_VIEW_UNCACHED		(1U << 4) 
+#define VSM_PHYSICAL_FLAG_DIRTY				(1U << 5) 
+
+
+// bit-offset for storing another set of page flags used to track invalidation in the physical page metadata flags.
+#define VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT 8U
+
+// NOTE: Bits for the hierarchical page flags are stored in the same uints as the regular mip tail,
+// offset based on the Hmip level. For instance, at the 1x1 level the first 4 bits store the page
+// flags for the coarsest mip, the next 4 bits store the hierarchical page flags for the second
+// coarsest mip and so on.
+// If the total bit count needs to change be sure it doesn't overlow the page flags for all Hmips
+#define VSM_PAGE_FLAGS_BITS_PER_HMIP (4U)
+#define VSM_PAGE_FLAGS_BITS_MASK     ((1U<<VSM_PAGE_FLAGS_BITS_PER_HMIP)-1U)
+
+#define VSM_PAGE_SIZE 128U
+#define VSM_LOG2_PAGE_SIZE ((uint)log2(VSM_PAGE_SIZE))
+#define VSM_L0_PAGES 128U
+#define VSM_LOG2_L0_PAGES  ((uint)log2(VSM_L0_PAGES))
+#define VSM_MAX_MIPS (VSM_LOG2_L0_PAGES + 1)
+#define VSM_MAX_SIZE (VSM_PAGE_SIZE * VSM_L0_PAGES)
+
+#define VSM_PHYS_PAGES
+
+uint calcLevelOffsets(uint Level)
+{
+	// VSM_LOG2_L0_PAGES is a power of two, so the footprint of each mip level MipSize_i=(VSM_LOG2_L0_PAGES>>i)^2 is also a power of two.
+	// The binary representation of a mip size is just a single bit: 1 << log2(MipSize_i) = (1 << (2 * (VSM_LOG2_L0_PAGES - i))).
+	
+	// To calculate the offset we need to calculate a sum of consecutive mip sizes, which is equivalent to producing a bit pattern with one bit per level starting out at 
+	// bitposition 2*VSM_LOG2_L0_PAGES and going down by 2 for every level.
+	// E.g. VSM_LOG2_L0_PAGES=3
+	//   Level 0: 0000000
+	//   Level 1: 1000000
+	//   Level 2: 1010000
+	//   Level 3: 1010100
+	//   Level 4: 1010101
+
+	// To quickly produce a variable number of bits we just select a range of bits from the alternating bit sequence 0x55=0b01010101.
+	uint NumBits = Level << 1;
+	uint StartBit = (2 * VSM_LOG2_L0_PAGES + 2) - NumBits;
+	uint Mask = ((1u << NumBits) - 1u) << StartBit;
+
+	return 0x55555555u & Mask;
+}
+
+#define VSM_PAGE_TABLE_SIZE (calcLevelOffsets(VSM_LOG2_L0_PAGES))
+
+uint calcLog2LevelPages(uint level)
+{
+	return VSM_LOG2_L0_PAGES - level;	// log2( VSM_LOG2_L0_PAGES >> level )
+}
+
+uint calcPageTableLevelOffset(uint vsmID, uint level)
+{
+	return vsmID * VSM_PAGE_TABLE_SIZE + calcLevelOffsets(level);
+}
+
+uint calcPageOffsetInLevel(uint level, uint2 pageAddress)
+{
+	return pageAddress.x + ( pageAddress.y << calcLog2LevelPages(level) );
+}
+
+uint calcPageOffset(uint vsmID, uint level, uint2 pageAddress)
+{
+	return calcPageTableLevelOffset(vsmID, level) + calcPageOffsetInLevel(level, pageAddress);
+}
+
+int calcMipLevel(int4 rect, int coveredPixels)
+{
+    const int maxPixelOffset = coveredPixels - 1;
+	const int mipOffset = (int)log2((float)coveredPixels) - 1;
+
+    int2 mipLevelXY = firstbithigh(rect.zw - rect.xy);
+
+	int mipLevel = max(max(mipLevelXY.x, mipLevelXY.y) - mipOffset, 0);
+
+	mipLevel += any((rect.zw >> mipLevel) - (rect.xy >> mipLevel) > maxPixelOffset) ? 1 : 0;
+
+	return mipLevel;
+}
+
+struct VSMProjData
+{
+	float4x4 worldToView;
+	float4x4 viewToClip;
+	float4x4 worldToClip;
+	
+	uint2 clipmapOffset;
+	int clipmapIndex;
+	int clipmapLevel;
+
+	int clipmapCount;
+
+	int vsmID;
+
+	int lightType;
+
+	uint flags;
+
+};
+
+struct VSMInfo
+{
+	uint physPageRowMask;
+	uint physPageRowShift;
+	uint maxPhysPages;
+	uint numShadowMapSlots;
+	uint2 physPoolSize;
+	uint2 physPoolPages;
+};
+
+cbuffer VSMInfoBuff
+{
+	VSMInfo vsmInfo;
+};
+
+struct ScreenRect
+{
+    int4 pixels;
+    int4 hzbTexels;
+    int hzbLevel;
+    int depth;
+};
+
+struct FrustumCullData
+{
+    float3 rectMin;
+    bool visiable;
+    float3 rectMax;
+};
+
+FrustumCullData frustumCullBoxOrtho(float3 center, float3 extent, float4x4 localToWorld, float4x4 worldToClip)
+{
+    FrustumCullData data;
+    float3 centerClip = mul( mul( float4( center, 1 ), localToWorld ), worldToClip ).xyz;
+
+	float3 clipDelta =
+        abs( extent.x * mul(localToWorld[0], worldToClip).xyz ) +
+        abs( extent.y * mul(localToWorld[1], worldToClip).xyz ) +
+        abs( extent.z * mul(localToWorld[2], worldToClip).xyz );
+
+	data.rectMin = centerClip - clipDelta;
+	data.rectMax = centerClip + clipDelta;
+
+    data.visiable = data.rectMax.z > 0.0f && !any(
+        (data.rectMax.xy < -1.0f) || (data.rectMin.xy > 1.0f));
+    return data;
+}
+
+ScreenRect getScreenRect(int4 viewRect, FrustumCullData cullData, int coveredPixels)
+{
+    ScreenRect rect;
+    rect.depth = cullData.rectMax.z;
+    float4 rectUV = saturate(float4(cullData.rectMin.xy, cullData.rectMax.xy) *
+        float2(0.5, -0.5).xyxy + 0.5).xwzy;
+    float2 viewSize = viewRect.zw - viewRect.xy;
+	rect.pixels = int4( rectUV * viewSize.xyxy + viewRect.xyxy +
+        float4(0.5f, 0.5f, -0.5f, -0.5f));
+	rect.pixels.xy = max(rect.pixels.xy, viewRect.xy);
+	rect.pixels.zw = min(rect.pixels.zw, viewRect.zw - 1);
+
+    rect.hzbTexels = int4(rect.pixels.xy, max(rect.pixels.xy, rect.pixels.zw));	
+    rect.hzbTexels = rect.hzbTexels >> 1;
+
+    rect.hzbLevel = calcMipLevel(rect.hzbTexels, coveredPixels);
+
+	rect.hzbTexels >>= rect.hzbLevel;
+
+	return rect;
+}
+
+struct VSMPhysPageMetaData
+{
+	uint flags;
+	uint age;
+};
+
+// Current page table format:
+// NOTE: Some redundancy in flags and encoding, but we have spare bits for now
+//   [0:9] PageAddress.x
+//   [10:19] PageAddress.y
+//   [20:25] LODOffset
+//   [26:30] (currently unused)
+//   [31] bAnyLODValid
+struct VSMPhysPage
+{
+	uint2 physAddress;	// Physical page address X, Y
+	uint lodOffset;			// 0 if page is mapped at this mip/clipmap level; 1 if mapped at next courser level, etc. [0..64)
+	bool isAnyLODValid;		// Valid physical page mapped at some LOD level
+	bool isThisLODValid;		// Valid page mapped at this specific level (equivalent to bAnyMipValid && LODOffset == 0)
+};
+
+#define VSM_PHYSICAL_PAGE_ANY_MIP_VALID_FLAG 0x8000000
+#define VSM_PHYSICAL_PAGE_INVALID 0x00000000
+
+VSMPhysPage vsmDecodePageTable(uint value)
+{
+	VSMPhysPage res;
+	res.physAddress = uint2(value & 0x3FF, (value >> 10) & 0x3FF);
+	res.lodOffset = (value >> 20) & 0x3F;
+	res.isAnyLODValid = (value & VSM_PHYSICAL_PAGE_ANY_MIP_VALID_FLAG) != 0;
+	res.isThisLODValid = res.isAnyLODValid && res.lodOffset == 0;
+	return res;
+}
+
+uint physPageAddressToIndex(uint2 physPageAddress)
+{
+	return (physPageAddress.y << vsmInfo.physPageRowShift) + physPageAddress.x;
+}
+
+uint2 physIndexToPageAddress(uint pageIndex)
+{
+	uint2 pageAddress;
+	pageAddress.x = pageIndex  & vsmInfo.physPageRowMask;
+	pageAddress.y = pageIndex >> vsmInfo.physPageRowShift;
+	return pageAddress;
+}
+
+Buffer<uint> pageTable;
+Buffer<uint> pageFlags;
+StructuredBuffer<VSMProjData> projData;
+Buffer<uint4> pageRect;
+StructuredBuffer<VSMPhysPageMetaData> physPageMetaData;
+
+RWBuffer<uint> outPageTable;
+RWBuffer<uint> outPageFlags;
+RWStructuredBuffer<VSMProjData> outProjData;
+RWBuffer<uint4> outPageRect;
+RWStructuredBuffer<VSMPhysPageMetaData> outPhysPageMetaData;
+
+VSMProjData getVSMProjData(uint vsmID)
+{
+    return projData[vsmID];
+}
+
+VSMPhysPage vsmGetPhysicalPage(uint pageOffset)
+{
+	return vsmDecodePageTable(pageTable[pageOffset]);
+}
+
+uint vsmGetPageFlags(uint vsmID, uint mipLevel, uint hMipLevel, uint2 pageAddress)
+{
+	uint mipToSample = mipLevel + hMipLevel;
+	//uint hPageLevelOffset = CalcPageTableLevelOffset(vsmID, mipToSample);
+	uint rawFlags = pageFlags[calcPageOffset(vsmID, mipToSample, pageAddress)];
+
+	// Extract the flags for the given HMip
+	uint hMipBitShift = VSM_PAGE_FLAGS_BITS_PER_HMIP * hMipLevel;
+	return (rawFlags >> hMipBitShift) & VSM_PAGE_FLAGS_BITS_MASK;
+}
+
+bool overlapsAnyValidPage(
+	uint vsmID,
+	uint mipLevel, 
+	int2 viewPortRectMin, 
+	ScreenRect rect,
+	uint flagMask = VSM_ALLOCATED_FLAG)
+{
+	uint4 rectPages = uint4(rect.pixels + viewPortRectMin.xyxy) >> VSM_MAX_MIPS;
+
+	uint hMipLevel = calcMipLevel(rectPages, 2);
+
+	rectPages >>= hMipLevel;
+	for( uint y = rectPages.y; y <= rectPages.w; y++ )
+	{
+		for( uint x = rectPages.x; x <= rectPages.z; x++ )
+		{
+			uint pageFlags = vsmGetPageFlags(vsmID, mipLevel, hMipLevel, uint2(x, y));
+			if ((pageFlags & flagMask) == flagMask)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}

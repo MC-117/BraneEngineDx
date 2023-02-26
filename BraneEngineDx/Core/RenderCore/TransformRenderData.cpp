@@ -4,96 +4,16 @@
 #include "../Console.h"
 #include "../Engine.h"
 
-MeshTransformData::MeshTransformData()
+MeshTransformData MeshTransformDataUploadOp::operator()(const MeshTransformData& data)
 {
-	uploadIndices.resize(1);
+	MeshTransformData outData(data);
+	outData.localToWorld = MATRIX_UPLOAD_OP(data.localToWorld);
+	return outData;
 }
 
-void MeshTransformData::resetUpload()
+Matrix4f MatrixUploadOp::operator()(const Matrix4f& mat)
 {
-	uploadTransforms.clear();
-	uploadIndices.resize(1);
-}
-
-unsigned int MeshTransformData::setMeshTransform(const Matrix4f& transformMat)
-{
-	if (batchCount >= transforms.size()) {
-		transforms.emplace_back(MATRIX_UPLOAD_OP(transformMat));
-		resetUpload();
-		updateAll = true;
-	}
-	else {
-		Matrix4f& mat = transforms[batchCount];
-		Matrix4f newMat = MATRIX_UPLOAD_OP(transformMat);
-		if (updateAll) {
-			mat = newMat;
-		}
-		else if (mat != newMat) {
-			mat = newMat;
-			uploadTransforms.push_back(newMat);
-			uploadIndices.push_back(batchCount);
-		}
-	}
-	batchCount++;
-	return batchCount - 1;
-}
-
-unsigned int MeshTransformData::setMeshTransform(const vector<Matrix4f>& transformMats)
-{
-	unsigned int size = batchCount + transformMats.size();
-	if (size > transforms.size()) {
-		transforms.resize(size);
-		resetUpload();
-		updateAll = true;
-	}
-	for (int i = batchCount; i < size; i++) {
-		Matrix4f& mat = transforms[i];
-		Matrix4f newMat = MATRIX_UPLOAD_OP(transformMats[i - batchCount]);
-		if (updateAll) {
-			mat = newMat;
-		}
-		else if (mat != newMat) {
-			mat = newMat;
-			uploadTransforms.push_back(newMat);
-			uploadIndices.push_back(i);
-		}
-	}
-	unsigned int id = batchCount;
-	batchCount = size;
-	return id;
-}
-
-bool MeshTransformData::updataMeshTransform(const Matrix4f& transformMat, unsigned int base)
-{
-	if (base >= batchCount)
-		return false;
-	transforms[base] = MATRIX_UPLOAD_OP(transformMat);
-	return true;
-}
-
-bool MeshTransformData::updataMeshTransform(const vector<Matrix4f>& transformMats, unsigned int base)
-{
-	if (base + transformMats.size() >= batchCount)
-		return false;
-	for (int i = base; i < transformMats.size(); i++)
-		transforms[i] = MATRIX_UPLOAD_OP(transformMats[i]);
-	return true;
-}
-
-void MeshTransformData::clean()
-{
-	batchCount = 0;
-	resetUpload();
-}
-
-bool MeshTransformData::clean(unsigned int base, unsigned int count)
-{
-	if (base + count >= batchCount)
-		return false;
-	transforms.erase(transforms.begin() + base, transforms.begin() + (base + count));
-	resetUpload();
-	updateAll = true;
-	return true;
+	return MATRIX_UPLOAD_OP(mat);
 }
 
 Material* MeshTransformRenderData::uploadTransformMaterial = NULL;
@@ -116,18 +36,18 @@ bool MeshTransformRenderData::getNeedUpdate() const
 	return needUpdate;
 }
 
-unsigned int MeshTransformRenderData::setMeshTransform(const Matrix4f& transformMat)
+unsigned int MeshTransformRenderData::setMeshTransform(const MeshTransformDataArray::DataType& data)
 {
 	if (!needUpdate)
 		return -1;
-	return meshTransformData.setMeshTransform(transformMat);
+	return meshTransformDataArray.setMeshTransform(data);
 }
 
-unsigned int MeshTransformRenderData::setMeshTransform(const vector<Matrix4f>& transformMats)
+unsigned int MeshTransformRenderData::setMeshTransform(const vector<MeshTransformDataArray::DataType>& datas)
 {
 	if (!needUpdate)
 		return -1;
-	return meshTransformData.setMeshTransform(transformMats);
+	return meshTransformDataArray.setMeshTransform(datas);
 }
 
 inline Guid makeGuid(void* ptr0, void* ptr1)
@@ -248,24 +168,24 @@ void MeshTransformRenderData::upload()
 	if (!needUpdate)
 		return;
 	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
-	unsigned int dataSize = meshTransformData.batchCount;
+	unsigned int dataSize = meshTransformDataArray.batchCount;
 	unsigned int indexSize = totalTransformIndexCount;
 	transformInstanceBuffer.resize(indexSize);
 	transformBuffer.resize(dataSize);
-	if (meshTransformData.updateAll) {
-		transformBuffer.uploadData(meshTransformData.batchCount, meshTransformData.transforms.data()->data());
-		meshTransformData.updateAll = false;
+	if (meshTransformDataArray.updateAll) {
+		transformBuffer.uploadData(meshTransformDataArray.batchCount, meshTransformDataArray.transformDatas.data());
+		meshTransformDataArray.updateAll = false;
 	}
 	else {
-		unsigned int uploadSize = meshTransformData.uploadTransforms.size();
+		unsigned int uploadSize = meshTransformDataArray.uploadTransformDatas.size();
 		if (uploadSize) {
 			static const ShaderPropertyName indexBufName = "indexBuf";
 			static const ShaderPropertyName srcBufName = "srcBuf";
 			static const ShaderPropertyName dstBufName = "dstBuf";
 
-			meshTransformData.uploadIndices[0] = uploadSize;
-			transformUploadBuffer.uploadData(uploadSize, meshTransformData.uploadTransforms.data());
-			transformUploadIndexBuffer.uploadData(uploadSize + 1, meshTransformData.uploadIndices.data());
+			meshTransformDataArray.uploadIndices[0] = uploadSize;
+			transformUploadBuffer.uploadData(uploadSize, meshTransformDataArray.uploadTransformDatas.data());
+			transformUploadIndexBuffer.uploadData(uploadSize + 1, meshTransformDataArray.uploadIndices.data());
 			context.bindShaderProgram(uploadTransformProgram);
 			context.bindBufferBase(transformUploadIndexBuffer.getVendorGPUBuffer(), indexBufName);
 			context.bindBufferBase(transformUploadBuffer.getVendorGPUBuffer(), srcBufName);
@@ -334,7 +254,7 @@ void MeshTransformRenderData::clean()
 {
 	if (!frequentUpdate && !delayUpdate)
 		return;
-	meshTransformData.clean();
+	meshTransformDataArray.clean();
 	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
 		b->second.batchCount = 0;
 	}
@@ -345,7 +265,7 @@ void MeshTransformRenderData::clean()
 
 void MeshTransformRenderData::cleanTransform(unsigned int base, unsigned int count)
 {
-	if (meshTransformData.clean(base, count))
+	if (meshTransformDataArray.clean(base, count))
 		needUpdate = true;
 }
 
@@ -357,4 +277,90 @@ void MeshTransformRenderData::cleanPart(MeshPart* meshPart, Material* material)
 		needUpdate = true;
 		iter->second.batchCount = 0;
 	}
+}
+
+Material* SkeletonRenderData::uploadTransformMaterial = NULL;
+ShaderProgram* SkeletonRenderData::uploadTransformProgram = NULL;
+
+void SkeletonRenderData::setBoneCount(unsigned int count)
+{
+	skeletonTransformArray.resize(count, false);
+}
+
+void SkeletonRenderData::updateBoneTransform(const SkeletonTransformArray::DataType& data, unsigned int index)
+{
+	skeletonTransformArray.updataMeshTransform(data, index);
+}
+
+void SkeletonRenderData::loadDefaultResource()
+{
+	if (uploadTransformProgram == NULL) {
+		uploadTransformMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/UploadMatrix.mat");
+		if (uploadTransformMaterial == NULL)
+			return;
+		uploadTransformProgram = uploadTransformMaterial->getShader()->getProgram(Shader_Default);
+	}
+	if (uploadTransformProgram == NULL)
+		throw runtime_error("UploadMatrix shader program is invalid");
+	uploadTransformProgram->init();
+}
+
+void SkeletonRenderData::create()
+{
+	loadDefaultResource();
+}
+
+void SkeletonRenderData::release()
+{
+}
+
+void SkeletonRenderData::upload()
+{
+	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
+	unsigned int dataSize = skeletonTransformArray.batchCount;
+	transformBuffer.resize(dataSize);
+	if (skeletonTransformArray.updateAll) {
+		transformBuffer.uploadData(skeletonTransformArray.batchCount, skeletonTransformArray.transformDatas.data());
+		skeletonTransformArray.updateAll = false;
+	}
+	else {
+		unsigned int uploadSize = skeletonTransformArray.uploadTransformDatas.size();
+		if (uploadSize) {
+			static const ShaderPropertyName indexBufName = "indexBuf";
+			static const ShaderPropertyName srcBufName = "srcBuf";
+			static const ShaderPropertyName dstBufName = "dstBuf";
+
+			skeletonTransformArray.uploadIndices[0] = uploadSize;
+			transformUploadBuffer.uploadData(uploadSize, skeletonTransformArray.uploadTransformDatas.data());
+			transformUploadIndexBuffer.uploadData(uploadSize + 1, skeletonTransformArray.uploadIndices.data());
+			context.bindShaderProgram(uploadTransformProgram);
+			context.bindBufferBase(transformUploadIndexBuffer.getVendorGPUBuffer(), indexBufName);
+			context.bindBufferBase(transformUploadBuffer.getVendorGPUBuffer(), srcBufName);
+			context.bindTexture(NULL, Vertex_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindTexture(NULL, Tessellation_Control_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindTexture(NULL, Tessellation_Evalution_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindTexture(NULL, Geometry_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindTexture(NULL, Fragment_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindTexture(NULL, Compute_Shader_Stage, TRANS_BIND_INDEX, -1);
+			context.bindBufferBase(transformBuffer.getVendorGPUBuffer(), dstBufName, { true });
+			Vector3u dim = uploadTransformMaterial->getLocalSize();
+			context.dispatchCompute(ceilf(uploadSize / (float)dim.x()), 1, 1);
+			context.clearOutputBufferBindings();
+		}
+		else {
+			transformUploadBuffer.resize(0);
+			transformUploadIndexBuffer.resize(0);
+		}
+	}
+}
+
+void SkeletonRenderData::bind(IRenderContext& context)
+{
+	static const ShaderPropertyName BoneTransformsName = "BoneTransforms";
+	context.bindBufferBase(transformBuffer.getVendorGPUBuffer(), BoneTransformsName);
+}
+
+void SkeletonRenderData::clean()
+{
+	skeletonTransformArray.clean();
 }

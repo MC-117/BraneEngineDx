@@ -99,7 +99,8 @@ namespace ImGui {
 AnimationConverter::AnimationConverter(string name, bool defaultShow)
 	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
 {
-	baseMaterial = getAssetByPath<Material>("Engine/Shaders/Toon.mat");
+	baseToonMaterial = getAssetByPath<Material>("Engine/Shaders/Toon.mat");
+	basePBRMaterial = getAssetByPath<Material>("Engine/Shaders/PBR.mat");
 	outlineMaterial = getAssetByPath<Material>("Engine/Shaders/Outline.mat");
 }
 
@@ -437,6 +438,8 @@ void AnimationConverter::showPmxLoad()
 	ImGui::Checkbox("Physics", &enablePhysics);
 	ImGui::SameLine();
 	ImGui::Checkbox("IK", &enableIK);
+	ImGui::Checkbox("PBR", &enablePBRMat);
+	
 	if (ImGui::Button("GenerateMaterial", { -1, 40 })) {
 		if (!pmxPath.empty()) {
 			if (pmxModel != NULL)
@@ -632,21 +635,38 @@ void AnimationConverter::generateAsset()
 		}
 		oi->set("material", imat);
 
-		MaterialInfo info = MaterialInfo(*baseMaterial);
-		info.baseMatPath = "Engine/Shaders/Toon.mat";
-		info.setToonParameter(tp);
+		FPath matPath;
 
-		FPath matPath = folderPath / FS::u8path(folderName + '_' + name + ".imat");
-		
+		if (enablePBRMat) {
+			MaterialInfo pbrInfo = MaterialInfo(*basePBRMaterial);
+			pbrInfo.baseMatPath = "Engine/Shaders/PBR.mat";
+			pbrInfo.setPBRParameter(tp);
+
+			matPath = folderPath / FS::u8path(folderName + '_' + name + ".imat");
+
+			ofstream pf = ofstream(matPath);
+			if (!pf.fail()) {
+				pbrInfo.write(pf);
+				pf.close();
+			}
+		}
+		else {
+			MaterialInfo toonInfo = MaterialInfo(*baseToonMaterial);
+			toonInfo.baseMatPath = "Engine/Shaders/Toon.mat";
+			toonInfo.setToonParameter(tp);
+
+			matPath = folderPath / FS::u8path(folderName + '_' + name + ".imat");
+
+			ofstream tf = ofstream(matPath);
+			if (!tf.fail()) {
+				toonInfo.write(tf);
+				tf.close();
+			}
+		}
+
 		mi->type = "AssetSearch";
 		mi->add("path", matPath.generic_u8string());
 		mi->add("pathType", "path");
-
-		ofstream f = ofstream(matPath);
-		if (!f.fail()) {
-			info.write(f);
-			f.close();
-		}
 
 		/*Console::log("Material: %s", path.c_str());
 		Console::log("BaseColor: %f, %f, %f, %f", tp.baseColor.r, tp.baseColor.g, tp.baseColor.b, tp.baseColor.a);
@@ -671,7 +691,7 @@ void AnimationConverter::generateAsset()
 	if (imp.isLoad()) {
 		SkeletonMesh skm = SkeletonMesh();
 		if (imp.getSkeletonMesh(skm)) {
-			SkeletonMeshActor skma = SkeletonMeshActor(skm, *baseMaterial);
+			SkeletonMeshActor skma = SkeletonMeshActor(skm, *baseToonMaterial);
 			vector<string> TranslatableBones;
 			if (enableIK) {
 				SerializationInfo& boneConstraintsInfo = *info.add("boneConstraints");
@@ -1538,6 +1558,13 @@ void AnimationConverter::MaterialInfo::setToonParameter(const ToonParameter & to
 	setColor("highlightColor", toon.highlistColor);
 	setColor("overColor", toon.overColor);
 	setColor("shadowColor", toon.shadowColor);
+	setTexture("colorMap", toon.texPath);
+	setTexture("normalMap", "Engine/Textures/Default_N.png");
+}
+
+void AnimationConverter::MaterialInfo::setPBRParameter(const ToonParameter& toon)
+{
+	setColor("baseColor", toon.baseColor);
 	setTexture("colorMap", toon.texPath);
 	setTexture("normalMap", "Engine/Textures/Default_N.png");
 }

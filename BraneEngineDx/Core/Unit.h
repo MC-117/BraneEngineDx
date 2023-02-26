@@ -499,6 +499,8 @@ struct Range
 	Range(const T& minVal, const T& maxVal);
 	Range(const T& v);
 
+	T diff();
+	T mid();
 	T uniform();
 };
 
@@ -520,6 +522,18 @@ inline Range<T>::Range(const T& v)
 {
 	seed = time(NULL);
 	minVal = maxVal = v;
+}
+
+template<class T>
+inline T Range<T>::diff()
+{
+	return maxVal - minVal;
+}
+
+template<class T>
+inline T Range<T>::mid()
+{
+	return (maxVal + minVal) * 0.5;
 }
 
 template<class T>

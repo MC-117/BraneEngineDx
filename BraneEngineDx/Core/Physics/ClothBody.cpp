@@ -83,7 +83,7 @@ void ClothBodyCollider::setBox(PCloth& cloth)
 
 	Vector3f center = (shape->getCenter() + positionOffset).cwiseProduct(localScale);
 
-	Vector3f size = (shape->bound.maxVal - shape->bound.minVal).cwiseProduct(localScale) * 0.5f;
+	Vector3f extent = shape->getExtent().cwiseProduct(localScale);
 
 	Vector3f xVec = rotationOffset * Vector3f::UnitX();
 	Vector3f yVec = rotationOffset * Vector3f::UnitY();
@@ -91,17 +91,17 @@ void ClothBodyCollider::setBox(PCloth& cloth)
 
 	Vector4f planes[6];
 	planes[0].block(0, 0, 3, 1) = zVec;
-	planes[0].w() = (center + zVec * size.z()).dot(zVec);
+	planes[0].w() = (center + zVec * extent.z()).dot(zVec);
 	planes[1].block(0, 0, 3, 1) = -zVec;
-	planes[1].w() = (center - zVec * size.z()).dot(-zVec);
+	planes[1].w() = (center - zVec * extent.z()).dot(-zVec);
 	planes[2].block(0, 0, 3, 1) = yVec;
-	planes[2].w() = (center + yVec * size.y()).dot(yVec);
+	planes[2].w() = (center + yVec * extent.y()).dot(yVec);
 	planes[3].block(0, 0, 3, 1) = -yVec;
-	planes[3].w() = (center - yVec * size.y()).dot(-yVec);
+	planes[3].w() = (center - yVec * extent.y()).dot(-yVec);
 	planes[4].block(0, 0, 3, 1) = xVec;
-	planes[4].w() = (center + xVec * size.x()).dot(xVec);
+	planes[4].w() = (center + xVec * extent.x()).dot(xVec);
 	planes[5].block(0, 0, 3, 1) = -xVec;
-	planes[5].w() = (center - xVec * size.x()).dot(-xVec);
+	planes[5].w() = (center - xVec * extent.x()).dot(-xVec);
 
 	unsigned int mask = 0;
 	for (int i = 0; i < 1; i++) {
