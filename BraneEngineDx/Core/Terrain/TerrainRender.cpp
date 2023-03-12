@@ -44,7 +44,7 @@ Matrix4f TerrainRender::getTransformMatrix() const
 
 IRendering::RenderType TerrainRender::getRenderType() const
 {
-    return IRendering::RenderType::Normal;
+    return IRendering::RenderType::Normal_Render;
 }
 
 Shape* TerrainRender::getShape() const

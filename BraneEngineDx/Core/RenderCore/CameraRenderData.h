@@ -22,6 +22,7 @@ struct SurfaceData
 
 struct CameraRenderData : public IRenderData
 {
+	int cameraRenderID = 0;
 	CameraRender* cameraRender;
 	CameraData data;
 	int renderOrder;

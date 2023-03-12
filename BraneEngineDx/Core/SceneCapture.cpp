@@ -10,5 +10,5 @@ void SceneCapture::setSize(Unit2Di size)
 
 IRendering::RenderType SceneCapture::getRenderType() const
 {
-	return IRendering::SceneCapture;
+	return IRendering::SceneCapture_Render;
 }

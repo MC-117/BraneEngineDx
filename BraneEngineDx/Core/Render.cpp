@@ -42,14 +42,9 @@ vector<Matrix4f>& Render::getTransformMatrixs()
 	return re;
 }
 
-Matrix4f Render::getLightSpaceMatrix() const
-{
-	return Matrix4f::Identity();
-}
-
 IRendering::RenderType Render::getRenderType() const
 {
-	return IRendering::RenderType::None;
+	return IRendering::RenderType::None_Render;
 }
 
 Shape * Render::getShape() const

@@ -62,6 +62,10 @@ public:
 	virtual void clearFrameColors(const vector<Color>& colors);
 	virtual void clearFrameDepth(float depth);
 	virtual void clearFrameStencil(unsigned int stencil);
+	virtual void clearImageFloat(const Image& image, const Vector4f& value);
+	virtual void clearImageUint(const Image& image, const Vector4u& value);
+	virtual void clearOutputBufferFloat(IGPUBuffer* buffer, const Vector4f& value);
+	virtual void clearOutputBufferUint(IGPUBuffer* buffer, const Vector4u& value);
 
 	virtual void copyTexture2D(ITexture* srcTex, ITexture* dstTex);
 	virtual void copySubTexture2D(ITexture* srcTex, unsigned int srcMip, ITexture* dstTex, unsigned int dstMip);

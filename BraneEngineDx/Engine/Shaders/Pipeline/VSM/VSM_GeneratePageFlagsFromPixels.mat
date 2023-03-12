@@ -1,0 +1,109 @@
+#material
+#localsize 8 8 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+cbuffer GenPageFlagInfo
+{
+    int directLightCount;
+    float pageDilationBorderSizeMain;
+    float pageDilationBorderSizeLocal;
+    int backFaceCull;
+}
+
+DEF_TEX2D_AUTO(sceneDepthMap)
+DEF_TEX2D_AUTO(sceneNormalMap)
+
+Buffer<uint> directLightVSMIDs;
+
+bool isBackFaceCulled(float3 worldNorm, float3 lightDir)
+{
+    float sinAlpha = 0.1;
+	return dot(worldNorm, lightDir) < -sinAlpha;
+}
+
+void markPageAddress(uint pageOffset, uint flags)
+{
+	outPageRequestFlags[pageOffset] = flags;
+}
+
+void markPage(uint vsmID, uint mipLevel, float3 worldPos, bool usePageDilation, float2 pageDilationOffset)
+{
+	VSMProjData projData = getVSMProjData(vsmID);
+
+	float4 shadowUVZ = mul(float4(worldPos, 1.0f), projData.worldToUV);
+	shadowUVZ.xyz /= shadowUVZ.w;
+
+	// Check overlap vs the shadow map space
+	// NOTE: XY test not really needed anymore with the precise cone test in the caller, but we'll leave it for the moment
+	bool inClip = shadowUVZ.w > 0.0f && 
+		all(shadowUVZ.xyz <= shadowUVZ.w) &&
+		all(shadowUVZ.xyz >= float3(-shadowUVZ.ww, 0.0f));
+	if (!inClip)
+		return;
+	// Normal pages marked through pixel processing are not "coarse" and should include "detail geometry" - i.e., all geometry
+	uint flags = VSM_ALLOCATED_FLAG | VSM_DETAIL_GEOMETRY_FLAG;
+
+	uint maxPageAddress = calcLevelPages(mipLevel) - 1U;
+	float2 pageAddressFloat = shadowUVZ.xy * calcLevelPages(mipLevel);
+	uint2 pageAddress = clamp(uint2(pageAddressFloat), 0U, maxPageAddress);
+	uint pageOffset = calcPageOffset(vsmID, mipLevel, pageAddress);
+	markPageAddress(pageOffset, flags);
+
+	if (usePageDilation)
+	{
+		uint2 pageAddress2 = clamp(uint2(pageAddressFloat + pageDilationOffset), 0U, maxPageAddress);
+		uint pageOffset2 = calcPageOffset(vsmID, mipLevel, pageAddress2);
+		if (pageOffset2 != pageOffset)
+		{
+			markPageAddress(pageOffset2, flags);
+		}
+		uint2 pageAddress3 = clamp(uint2(pageAddressFloat - pageDilationOffset), 0U, maxPageAddress);
+		uint pageOffset3 = calcPageOffset(vsmID, mipLevel, pageAddress3);
+		if (pageOffset3 != pageOffset)
+		{
+			markPageAddress(pageOffset3, flags);
+		}
+	}
+}
+
+void markPageClipmap(
+	VSMProjData baseProjData, 
+	int clipmapStartId,
+	bool usePageDilation, 
+	float2 pageDilationOffset, 
+	float3 worldPos)
+{
+	const int clipmapLevel = calcClipmapLevel(baseProjData, worldPos);
+	int clipmapIndex = max(0, clipmapLevel - baseProjData.clipmapLevel);
+	if (clipmapIndex < baseProjData.clipmapCount)
+		markPage(clipmapStartId + clipmapIndex, 0, worldPos, usePageDilation, pageDilationOffset);
+}
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 pixel : SV_DispatchThreadID, uint gidx : SV_GroupIndex)
+{
+	if (any(pixel >= camData.viewSize))
+        return;
+    float depth = SAMPLE_TEX_LOD(sceneDepthMap, pixel, 0);
+    float worldPos = uvzPosToWorld(float3(pixel, depth));
+    float3 worldNorm = SAMPLE_TEX_LOD(sceneNormalMap, pixel, 0);
+
+    const float2 pageDilationDither = float2(
+		(gidx & 1) ? 1.0f : -1.0f,
+		(gidx & 2) ? 1.0f : -1.0f);
+    
+    const bool usePageDilation = pageDilationBorderSizeMain > 0.0f;
+	const float2 pageDilationOffset = pageDilationBorderSizeMain * pageDilationDither;
+
+    for (int i = 0; i < directLightCount; i++) {
+        uint vsmID = directLightVSMIDs[i];
+        VSMProjData projData = getVSMProjData(vsmID);
+        float3 lightDir = mul(float4(1, 0, 0, 0), projData.worldToView).xyz;
+        bool backFaceCulled = false;
+        if (backFaceCull && isBackFaceCulled(worldNorm, lightDir))
+            backFaceCulled = true;
+        if (backFaceCulled)
+            markPageClipmap(projData, vsmID, usePageDilation, pageDilationOffset, worldPos);
+    }
+}

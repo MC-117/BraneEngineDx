@@ -204,7 +204,7 @@ Matrix4f MeshRender::getTransformMatrix() const
 
 IRendering::RenderType MeshRender::getRenderType() const
 {
-	return IRendering::RenderType::Normal;
+	return IRendering::RenderType::Normal_Render;
 }
 
 Shape * MeshRender::getShape() const

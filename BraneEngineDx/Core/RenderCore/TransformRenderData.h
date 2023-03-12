@@ -19,6 +19,8 @@ struct TMeshTransformDataArray
 
 	void resetUpload();
 
+	unsigned int getUpdateCount() const;
+
 	void resize(unsigned int size, bool onlyResizeBatch);
 	unsigned int setMeshTransform(const T& transformData);
 	unsigned int setMeshTransform(const vector<T>& transformDatas);
@@ -32,6 +34,7 @@ template<class T, class P>
 inline TMeshTransformDataArray<T, P>::TMeshTransformDataArray()
 {
 	uploadIndices.resize(1);
+	uploadIndices[0] = 0;
 }
 
 template<class T, class P>
@@ -39,6 +42,13 @@ inline void TMeshTransformDataArray<T, P>::resetUpload()
 {
 	uploadTransformDatas.clear();
 	uploadIndices.resize(1);
+	uploadIndices[0] = 0;
+}
+
+template<class T, class P>
+inline unsigned int TMeshTransformDataArray<T, P>::getUpdateCount() const
+{
+	return updateAll ? transformDatas.size() : uploadIndices[0];
 }
 
 template<class T, class P>

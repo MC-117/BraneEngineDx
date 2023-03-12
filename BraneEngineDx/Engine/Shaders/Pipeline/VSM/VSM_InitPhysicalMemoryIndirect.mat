@@ -1,0 +1,54 @@
+#material
+#localsize 4 4 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+StructuredBuffer<uint> physPagesToInit;
+
+uint2 getTileOffset(uint gidx, inout VSMPhysPageMetaData outMetaData)
+{
+	const uint pageInputIndex = gidx >> LOG2_TILES_PER_PAGE_1D;
+	uint pageIndex = physPagesToInit[pageInputIndex];
+
+	outMetaData = physPageMetaData[pageIndex];
+
+	// Each page has 1 << LOG2_TILES_PER_PAGE_XY groups (aka tiles) assigned to work on it.
+	const uint localTileIndex = gidx & TILES_PER_PAGE_1D_MASK;
+	// wrap to 2D tile coord
+	const uint2 localTile = uint2(localTileIndex & TILES_PER_PAGE_XY_MASK, localTileIndex >> LOG2_TILES_PER_PAGE_XY);
+
+	uint2 physPageAddress = physIndexToPageAddress(pageIndex);
+	// Pixel address of tile region for this thread group.
+	const uint2 tileOffset = (physPageAddress << uint2(VSM_LOG2_PAGE_SIZE, VSM_LOG2_PAGE_SIZE)) + (localTile << uint2(LOG2_TILE_SIZE_XY, LOG2_TILE_SIZE_XY));
+
+	return tileOffset;
+}
+
+uint2 getTileBasePos(uint2 tileID, uint gidx, inout VSMPhysPageMetaData outMetaData)
+{
+	// Pixel address of tile region for this thread group.
+	const uint2 tileOffset = getTileOffset(gidx, outMetaData);
+	// Pixel address of 2x2 region to sample for this thread.
+	const uint2 basePos = tileOffset + (tileID << 1u);
+
+	return basePos;
+}
+
+uint2 getTileBasePos(uint2 tileID, uint gidx)
+{
+	VSMPhysPageMetaData TmpMetaData;
+	return getTileBasePos(tileID, gidx, TmpMetaData);
+}
+
+[numthreads(TILE_THREAD_GROUP_SIZE_XY, TILE_THREAD_GROUP_SIZE_XY, LOCAL_SIZE_Z)]
+void main(uint2 tileID : SV_GroupThreadID, uint gidx : SV_GroupID)
+{
+	VSMPhysPageMetaData metaData;
+	uint2 basePos = getTileBasePos(tileID, gidx, metaData);
+	
+	// Clear the page to zero
+	outPhysPagePool[basePos + uint2(0U, 0U)] = 1.0f;
+	outPhysPagePool[basePos + uint2(1U, 0U)] = 1.0f;
+	outPhysPagePool[basePos + uint2(0U, 1U)] = 1.0f;
+	outPhysPagePool[basePos + uint2(1U, 1U)] = 1.0f;
+}

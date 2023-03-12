@@ -46,7 +46,9 @@ public:
 
 	static CameraRender* getMainCameraRender();
 protected:
+	static int cameraRenderNextID;
 	static CameraRender* mainCameraRender;
+	int cameraRenderID = 0;
 	CameraRenderData* renderData = NULL;
 	Texture2D* internalTexture = NULL;
 	RenderTarget* internalRenderTarget = NULL;

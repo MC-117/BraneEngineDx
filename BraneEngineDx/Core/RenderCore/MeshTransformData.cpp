@@ -8,6 +8,7 @@ MeshTransformData::MeshTransformData()
 	, localRadius(0)
 	, localExtent(Vector3f::Zero())
 	, flag(0)
+	, updateFrame(0)
 {
 }
 

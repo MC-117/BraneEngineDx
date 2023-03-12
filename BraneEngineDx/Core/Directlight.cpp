@@ -1,5 +1,5 @@
 #include "Directlight.h"
-#include "Engine.h"
+#include "World.h"
 #include "GUI/Gizmo.h"
 #include "RenderCore/RenderCore.h"
 
@@ -58,9 +58,19 @@ float DirectLight::getShadowBiasNormalScale() const
 	return shadowData.shadowBiasNormalScale;
 }
 
-Matrix4f DirectLight::getLightSpaceMatrix() const
+Matrix4f DirectLight::getWorldToLightViewMatrix() const
 {
-	return lightSpaceMatrix;
+	return worldToLightViewMatrix;
+}
+
+Matrix4f DirectLight::getViewToLightClipMatrix() const
+{
+	return viewToLightClipMatrix;
+}
+
+Matrix4f DirectLight::getWorldToLightClipMatrix() const
+{
+	return worldToLightClipMatrix;
 }
 
 Vector4f DirectLight::getShadowBias() const
@@ -77,53 +87,42 @@ RenderTarget* DirectLight::getShadowRenderTarget() const
 void DirectLight::afterTick()
 {
 	Transform::afterTick();
-	World* world = Engine::getCurrentWorld();
-	Vector3f dirPos = getPosition(WORLD);
-	Quaternionf dirRot = getRotation(WORLD);
-	Vector3f dirFW = getForward(WORLD);
-	Vector3f dirLW = getLeftward(WORLD);
-	Vector3f dirUW = getUpward(WORLD);
 
-	if (world != NULL) {
-		::Camera& cam = world->getCurrentCamera();
-		Vector3f camLW = cam.getLeftward(WORLD);
-		Vector3f camFW = cam.getForward(WORLD);
-		Vector3f dirFW = getForward(WORLD);
-		Vector3f projv = dirFW.cross(camLW.cross(dirFW));
-		projv.normalize();
-		Vector3f dirLW = getLeftward(WORLD);
-		Quaternionf quat = Quaternionf::FromTwoVectors(dirLW, projv);
+	Vector3f lightPos;
+	Vector3f lightFW = getForward(WORLD);
+	Quaternionf lightRot = Quaternionf::FromTwoVectors(Vector3f::UnitX(), lightFW);
+	Vector3f lightLW = lightRot * Vector3f::UnitY();
+	Vector3f lightUW = lightRot * Vector3f::UnitZ();
 
-		dirPos = cam.getPosition(WORLD);
-		dirRot = quat * dirRot;
-		dirLW = quat * dirLW;
-		dirUW = quat * dirUW;
-
-		Vector3f fw = Vector3f(camFW.x(), camFW.y(), 0).normalized();
-		dirPos += fw * (shadowData.bottom / dirUW.dot(fw) * 0.5);
-		Vector3f rw = Vector3f(camLW.x(), camLW.y(), 0).normalized();
-		float cosd = dirLW.dot(rw);
-		dirPos += rw * ((shadowData.left / cosd - shadowData.left * cosd) * 0.5);
+	if (World* world = dynamic_cast<World*>(getRoot())) {
+		Camera& cam = world->getCurrentCamera();
+		lightPos = cam.getPosition(WORLD);
 	}
+	else {
+		lightPos = getPosition(WORLD);
+	}
+
 	Matrix4f promat = Camera::orthotropic(shadowData.left, shadowData.right, shadowData.bottom,
 		shadowData.top, shadowData.cameraData.zNear, shadowData.cameraData.zFar);
-	Matrix4f vmat = Camera::lookAt(dirPos, dirPos + dirFW, dirUW);
-	lightSpaceMatrix = promat * vmat;
-	shadowData.cameraData.projectionViewMat = MATRIX_UPLOAD_OP(lightSpaceMatrix);
+	Matrix4f vmat = Camera::lookAt(lightPos, lightPos + lightFW, lightUW);
+	worldToLightViewMatrix = vmat;
+	viewToLightClipMatrix = promat;
+	worldToLightClipMatrix = promat * vmat;
+	shadowData.cameraData.projectionViewMat = MATRIX_UPLOAD_OP(worldToLightClipMatrix);
 	Matrix4f promatInv = promat.inverse();
 	shadowData.cameraData.projectionMat = MATRIX_UPLOAD_OP(promat);
 	shadowData.cameraData.projectionMatInv = MATRIX_UPLOAD_OP(promatInv);
 	Matrix4f vmatInv = vmat.inverse();
 	shadowData.cameraData.viewMat = MATRIX_UPLOAD_OP(vmat);
 	shadowData.cameraData.viewMatInv = MATRIX_UPLOAD_OP(vmatInv);
-	Matrix4f vomat = Camera::lookAt(Vector3f::Zero(), dirFW, dirUW);
+	Matrix4f vomat = Camera::lookAt(Vector3f::Zero(), lightFW, lightUW);
 	Matrix4f vomatInv = vomat.inverse();
 	shadowData.cameraData.viewOriginMat = MATRIX_UPLOAD_OP(vomat);
 	shadowData.cameraData.viewOriginMatInv = MATRIX_UPLOAD_OP(vomatInv);
-	shadowData.cameraData.cameraLoc = dirPos;
-	shadowData.cameraData.cameraDir = dirFW;
-	shadowData.cameraData.cameraUp = dirUW;
-	shadowData.cameraData.cameraLeft = dirLW;
+	shadowData.cameraData.cameraLoc = lightPos;
+	shadowData.cameraData.cameraDir = lightFW;
+	shadowData.cameraData.cameraUp = lightUW;
+	shadowData.cameraData.cameraLeft = lightLW;
 	shadowData.cameraData.fovy = 0;
 	shadowData.cameraData.aspect = 1;
 }

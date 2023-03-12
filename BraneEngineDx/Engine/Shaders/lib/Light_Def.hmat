@@ -10,9 +10,11 @@ struct PointLight
 
 struct DirectLight
 {
+    float4x4 worldToLightView;
+    float4x4 viewToLightClip;
+    float4x4 worldToLightClip;
     float3 direction;
     float intensity;
-    float4x4 lmat;
     float4 shadowBias;
     float3 color;
 };

@@ -11,6 +11,8 @@ struct MeshTransformData
 	float localRadius;
 	Vector3f localExtent;
 	unsigned int flag;
+	unsigned int updateFrame;
+	unsigned int pad[3];
 
 	MeshTransformData();
 

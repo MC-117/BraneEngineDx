@@ -520,10 +520,12 @@
     <ClInclude Include="Core\RenderCore\TransformRenderData.h" />
     <ClInclude Include="Core\PostProcess\CMAA2Pass.h" />
     <ClInclude Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMap.h" />
+    <ClInclude Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMapClipmap.h" />
     <ClInclude Include="Core\RenderGraph\ReflectionProbeArrayPass.h" />
     <ClInclude Include="Core\RenderGraph\ScreenHitPass.h" />
     <ClInclude Include="Core\RenderGraph\ShadowDepthPass.h" />
     <ClInclude Include="Core\RenderGraph\SkyLightCapturePass.h" />
+    <ClInclude Include="Core\RenderGraph\VirtualShadowMapDepthPass.h" />
     <ClInclude Include="Core\SceneCaptureCube.h" />
     <ClInclude Include="Core\RenderCore\CameraData.h" />
     <ClInclude Include="Core\RenderCore\CameraRenderData.h" />
@@ -871,9 +873,11 @@
     <ClCompile Include="Core\RenderCore\TextureCubePool.cpp" />
     <ClCompile Include="Core\RenderCore\TransformRenderData.cpp" />
     <ClCompile Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMap.cpp" />
+    <ClCompile Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMapClipmap.cpp" />
     <ClCompile Include="Core\RenderGraph\ReflectionProbeArrayPass.cpp" />
     <ClCompile Include="Core\RenderGraph\ScreenHitPass.cpp" />
     <ClCompile Include="Core\RenderGraph\ShadowDepthPass.cpp" />
+    <ClCompile Include="Core\RenderGraph\VirtualShadowMapDepthPass.cpp" />
     <ClCompile Include="Core\SceneCaptureCube.cpp" />
     <ClCompile Include="Core\Editor\ActorEditor.cpp" />
     <ClCompile Include="Core\Editor\AnimationBaseEditor.cpp" />

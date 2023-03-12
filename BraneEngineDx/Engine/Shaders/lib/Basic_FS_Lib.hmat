@@ -69,7 +69,7 @@ float ShadowCalculation(in Texture2D depthMap, in SamplerState depthMapSampler, 
     float3 posWS = worldPos;
     posWS += directLight.direction * depthScale * directLight.shadowBias.x;
     posWS += N * normalScale * directLight.shadowBias.y;
-    float4 posLS = mul(float4(posWS, 1.0f), directLight.lmat);
+    float4 posLS = mul(float4(posWS, 1.0f), directLight.worldToLightClip);
 
     float3 projCoords = posLS.xyz / posLS.w;
 

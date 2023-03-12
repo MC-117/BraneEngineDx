@@ -88,8 +88,8 @@ FragmentOut DEFAULT_SCREEN_MAIN
         float3 rayStartWS = camData.camPos;
         float3 rayEndWS = camData.camPos + rayDirWS * raylength;
 
-        float4 rayStartCS = mul(float4(rayStartWS, 1.0f), directLight.lmat);
-        float4 rayEndCS = mul(float4(rayEndWS, 1.0f), directLight.lmat);
+        float4 rayStartCS = mul(float4(rayStartWS, 1.0f), directLight.worldToLightClip);
+        float4 rayEndCS = mul(float4(rayEndWS, 1.0f), directLight.worldToLightClip);
 
         float3 rayStartSS = rayStartCS.xyz / rayStartCS.w;
         float3 rayEndSS = rayEndCS.xyz / rayEndCS.w;

@@ -70,6 +70,9 @@
 #define DEF_TEX2D(tex, id) \
 Texture2D tex : TEX_BINDING(id);\
 SamplerState tex##Sampler : SAMPLE_BINDING(id);
+#define DEF_TEX2D_AUTO(tex) \
+Texture2D tex;\
+SamplerState tex##Sampler;
 #define DEF_TEX2DARRAY(tex, id) \
 Texture2DArray tex : TEX_BINDING(id);\
 SamplerState tex##Sampler : SAMPLE_BINDING(id);

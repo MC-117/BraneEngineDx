@@ -461,7 +461,7 @@ void ParticleRender::render(RenderInfo & info)
 
 IRendering::RenderType ParticleRender::getRenderType() const
 {
-	return IRendering::Particles;
+	return IRendering::Particle_Render;
 }
 
 Shape * ParticleRender::getShape() const

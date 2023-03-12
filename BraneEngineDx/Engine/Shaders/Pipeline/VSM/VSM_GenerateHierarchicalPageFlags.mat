@@ -1,0 +1,51 @@
+#material
+#localsize 256 1 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint tid : SV_DispatchThreadID)
+{
+	if (tid >= vsmInfo.maxPhysPages)
+		return;
+
+    VSMPhysPageMetaData metaData = physPageMetaData[tid];
+    if (metaData.flags == 0U)
+        return;
+
+    const uint vsmID = metaData.vsmID;
+    const uint pageTableIndex = metaData.virtualPageOffset;
+
+    const uint pageOffset = pageTableIndex - calcPageTableLevelOffset(vsmID, 0U);
+    uint flag = outPageFlags[pageTableIndex] & VSM_PAGE_FLAGS_BITS_MASK;
+    if (flag != 0) {
+        uint mipLevel = VSM_MAX_MIPS - 1U;
+		uint2 pageAddress = uint2(0U, 0U);
+		calcPageAddressFromIndex(pageOffset, mipLevel, pageAddress);
+
+        uint pageRectIndex = vsmID * VSM_MAX_MIPS + mipLevel;
+		InterlockedMin(outPageRect[pageRectIndex].x, pageAddress.x);
+		InterlockedMin(outPageRect[pageRectIndex].y, pageAddress.y);
+		InterlockedMax(outPageRect[pageRectIndex].z, pageAddress.x);
+		InterlockedMax(outPageRect[pageRectIndex].w, pageAddress.y);
+
+        uint maxHLevel = VSM_MAX_MIPS - mipLevel;
+        
+		for (uint hMipLevel = 1U; hMipLevel < maxHLevel; ++hMipLevel) {
+			pageAddress.xy >>= 1U;
+
+			uint HMipBitShift = VSM_PAGE_FLAGS_BITS_PER_HMIP * hMipLevel;
+			uint hMipLevelFlagMask = VSM_PAGE_FLAGS_BITS_MASK << HMipBitShift;
+			uint hMipLevelFlag = flag << HMipBitShift;
+
+			uint prevValue = 0;
+			uint mipToSample = mipLevel + hMipLevel;
+			uint hPageFlagOffset = calcPageOffset(vsmID, mipToSample, pageAddress);
+			InterlockedOr(outPageFlags[hPageFlagOffset], hMipLevelFlag, prevValue);
+			// If this was already the value for this HMip, then whoever did that will continue up the hierarhcy.
+			// TODO: We could probably get fancier here and let a thread carry through HMip values from multiple
+			// source mips now that they are encoded in a single int, but keeping it simple for now.
+			if ((prevValue & hMipLevelFlagMask) == hMipLevelFlag) break;
+		}
+    }
+}

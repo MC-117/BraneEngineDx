@@ -63,7 +63,7 @@ int CaptureProbeRender::getProbeIndex() const
 
 IRendering::RenderType CaptureProbeRender::getRenderType() const
 {
-	return RenderType::SceneCapture;
+	return RenderType::SceneCapture_Render;
 }
 
 void CaptureProbeRender::render(RenderInfo& info)

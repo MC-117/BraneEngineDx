@@ -1,0 +1,42 @@
+#material
+#localsize 256 1 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint tid : SV_DispatchThreadID)
+{
+    uint requestCount = physPageAllocRequests[vsmInfo.maxPhysPages].globalPageOffset;
+	if (tid >= requestCount)
+		return;
+
+    VSMPhysPageRequest request = physPageAllocRequests[tid];
+
+    const uint vsmID = request.vsmID;
+    const uint globalPageOffset = request.globalPageOffset;
+
+    uint requestFlags = pageRequestFlags[globalPageOffset];
+    if (requestFlags != 0 && outPageFlags[globalPageOffset] == 0) {
+        int freeListOffset = 0;
+        InterlockedAdd(outFreePhysPages[vsmInfo.maxPhysPages], -1, freeListOffset);
+        --freeListOffset;
+
+        if (freeListOffset >= 0) {
+            uint physPageIndex = outFreePhysPages[freeListOffset];
+            uint2 physPageAddress = physIndexToPageAddress(physPageIndex);
+
+            uint requestDetailGeometryFlag = requestFlags & VSM_DETAIL_GEOMETRY_FLAG;
+			uint flags = VSM_ALLOCATED_FLAG | VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG | requestDetailGeometryFlag;
+
+            outPageTable[globalPageOffset] = vsmEncodePageTable(physPageAddress);
+			outPageFlags[globalPageOffset] = flags;
+
+			const VSMProjData projData = getVSMProjData(vsmID);
+			const uint physFlags = projData.uncached ? VSM_PHYSICAL_FLAG_VIEW_UNCACHED : 0U;
+
+			outPhysPageMetaData[physPageIndex].flags = flags | physFlags;
+			outPhysPageMetaData[physPageIndex].virtualPageOffset = globalPageOffset;
+			outPhysPageMetaData[physPageIndex].vsmID = vsmID;
+        }
+    }
+}

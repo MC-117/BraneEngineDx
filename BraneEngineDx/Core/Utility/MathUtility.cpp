@@ -168,3 +168,77 @@ Matrix4f Math::getTransformMatrix(const Vector3f& position, const Quaternionf& r
 {
 	return getTransitionMatrix(position) * getRotationMatrix(rotation) * getScaleMatrix(scale);
 }
+
+Matrix4f Math::perspective(float fovy, float aspect, float zNear, float zFar)
+{
+	DirectX::XMFLOAT4X4 xmf44;
+	DirectX::XMStoreFloat4x4(&xmf44, DirectX::XMMatrixPerspectiveFovRH(fovy * PI / 180.0, aspect, zNear, zFar));
+	return xmf44;
+	float tanHalfFovy = tan(fovy * PI / 360.0);
+
+	Matrix4f Result = Matrix4f::Zero();
+	Result(0, 0) = 1 / (aspect * tanHalfFovy);
+	Result(1, 1) = 1 / (tanHalfFovy);
+	Result(2, 2) = -(zFar + zNear) / (zFar - zNear);
+	Result(3, 2) = -1.0;
+	Result(2, 3) = -(2 * zFar * zNear) / (zFar - zNear);
+	return Result;
+}
+
+Matrix4f Math::orthotropic(float left, float right, float bottom, float top, float zNear, float zFar)
+{
+	DirectX::XMFLOAT4X4 xmf44;
+	DirectX::XMStoreFloat4x4(&xmf44, DirectX::XMMatrixOrthographicOffCenterRH(left, right, bottom, top, zNear, zFar));
+	return xmf44;
+	Matrix4f Result = Matrix4f::Identity();
+	Result(0, 0) = 2 / (right - left);
+	Result(1, 1) = 2 / (top - bottom);
+	Result(2, 2) = -2 / (zFar - zNear);
+	Result(0, 3) = -(right + left) / (right - left);
+	Result(1, 3) = -(top + bottom) / (top - bottom);
+	Result(2, 3) = -(zFar + zNear) / (zFar - zNear);
+	return Result;
+}
+
+Matrix4f Math::lookAt(Vector3f const& eye, Vector3f const& center, Vector3f const& up)
+{
+	DirectX::XMFLOAT4X4 xmf44;
+	DirectX::XMStoreFloat4x4(&xmf44, DirectX::XMMatrixLookAtRH(DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&eye),
+		DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&center), DirectX::XMLoadFloat3((DirectX::XMFLOAT3*)&up)));
+	return xmf44;
+	Vector3f W(center - eye);
+	Vector3f U(W.cross(up));
+	Vector3f V(U.cross(W));
+	W.normalize();
+	U.normalize();
+	V.normalize();
+
+
+	Matrix4f Result = Matrix4f::Identity();
+	Result(0, 0) = U.x();
+	Result(0, 1) = U.y();
+	Result(0, 2) = U.z();
+	Result(1, 0) = V.x();
+	Result(1, 1) = V.y();
+	Result(1, 2) = V.z();
+	Result(2, 0) = -W.x();
+	Result(2, 1) = -W.y();
+	Result(2, 2) = -W.z();
+	Result(0, 3) = -U.dot(eye);
+	Result(1, 3) = -V.dot(eye);
+	Result(2, 3) = W.dot(eye);
+	return Result;
+}
+
+Matrix4f Math::viewport(float x, float y, float width, float height, float zNear, float zFar)
+{
+	Matrix4f Result = Matrix4f::Zero();
+	Result(0, 0) = width / 2.0;
+	Result(0, 3) = x + width / 2.0;
+	Result(1, 1) = height / 2.0;
+	Result(1, 3) = y + height / 2.0;
+	Result(2, 2) = (zFar - zNear) / 2.0;
+	Result(2, 3) = (zFar + zNear) / 2.0;
+	Result(3, 3) = 1;
+	return Result;
+}

@@ -1,0 +1,18 @@
+#material
+#localsize 256 1 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint tid : SV_DispatchThreadID)
+{
+	if (tid >= vsmInfo.maxPhysPages)
+		return;
+
+    VSMPhysPageMetaData metaData = physPageMetaData[tid];
+    if (metaData.flags == 0) {
+        int freeListOffset = 0;
+        InterlockedAdd(outFreePhysPages[vsmInfo.maxPhysPages], 1, freeListOffset);
+        outFreePhysPages[freeListOffset] = tid;
+    }
+}

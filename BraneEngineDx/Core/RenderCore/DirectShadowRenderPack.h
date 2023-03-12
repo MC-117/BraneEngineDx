@@ -4,7 +4,8 @@
 
 struct DirectShadowRenderCommand : public IRenderCommand
 {
-	bool isStatic = false;
+	int instanceID = 0;
+	int instanceIDCount = 0;
 	MeshTransformIndex* transformIndex = NULL;
 	MainLightData* mainLightData = NULL;
 	virtual bool isValid() const;

@@ -1,0 +1,29 @@
+#material
+#localsize 64 1 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+cbuffer AllocCmdInfo
+{
+    uint indirectArgCount;
+};
+
+Buffer<uint> shadowDepthIndirectArgs;
+RWBuffer<uint> outOffsetBufferCount;
+RWStructuredBuffer<uint> outShadowDepthInstanceOffset;
+RWStructuredBuffer<uint> shadowDepthInstanceCounter;
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint argIdx : SV_DispatchThreadID)
+{
+	if (argIdx < indirectArgCount)
+	{
+		uint insCount = shadowDepthIndirectArgs[argIdx * DRAW_ELEMENT_INDIRECT_ARGS + DRAW_INDIRECT_INS_COUNT_IDX];
+        uint insOffset = 0U;
+        if (insCount > 0U) {
+            InterlockedAdd(outOffsetBufferCount[0], insCount, insOffset);
+        }
+        outShadowDepthInstanceOffset[argIdx] = insOffset;
+        shadowDepthInstanceCounter[argIdx] = insOffset;
+	}
+}

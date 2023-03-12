@@ -1,0 +1,24 @@
+#material
+#localsize 64 1 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+StructuredBuffer<VisiableInstanceInfo> visiableInstanceInfos;
+StructuredBuffer<uint> visiableInstanceCount;
+RWStructuredBuffer<uint> shadowDepthInstanceCounter;
+RWStructuredBuffer<VSMDrawInstanceInfo> outDrawInstanceInfos;
+RWStructuredBuffer<uint> outPageInfo;
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint visInsIdx : SV_DispatchThreadID)
+{
+    uint visInsCount = visiableInstanceCount[0];
+	if (visInsIdx < visInsCount)
+	{
+        VisiableInstanceInfo visInsInfo = visiableInstanceInfos[visInsIdx];
+        uint outOffset = 0U;
+        InterlockedAdd(shadowDepthInstanceCounter[visInsInfo.indirectArgIndex], 1U, outOffset);
+        outDrawInstanceInfos[outOffset] = visInsInfo.drawInfo;
+        outPageInfo[outOffset] = visInsInfo.viewIndex;
+	}
+}

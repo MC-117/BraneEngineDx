@@ -62,8 +62,9 @@ unsigned int Time::getNanosecond()
 
 string Time::toString()
 {
-	return to_string(getHour()) + ':' + to_string(getMinute()) + ':'
-		+ to_string(getSecond()) + ':' + to_string(getMillisecond());
+	char buffer[11];
+	sprintf(buffer, ":%2d:%2d:%3d", getMinute(), getSecond(), getMillisecond());
+	return to_string(getHour()) + buffer;
 }
 
 Time::operator __int64() const

@@ -1,10 +1,13 @@
 #include "CameraRender.h"
 #include "RenderCore/RenderCore.h"
 
+int CameraRender::cameraRenderNextID = 1;
 CameraRender* CameraRender::mainCameraRender = NULL;
 
 CameraRender::CameraRender()
 {
+	cameraRenderID = cameraRenderNextID;
+	cameraRenderNextID++;
 	createInternalRenderTarget();
 }
 
@@ -112,7 +115,7 @@ bool CameraRender::isValid()
 
 IRendering::RenderType CameraRender::getRenderType() const
 {
-	return IRendering::RenderType::Camera;
+	return IRendering::RenderType::Camera_Render;
 }
 
 void CameraRender::preRender()
@@ -141,6 +144,7 @@ CameraRenderData* CameraRender::getRenderData()
 	if (renderData)
 		return renderData;
 	CameraRenderData* cameraRenderData = new CameraRenderData();
+	cameraRenderData->cameraRenderID = cameraRenderID;
 	cameraRenderData->cameraRender = this;
 	renderData = cameraRenderData;
 	return renderData;

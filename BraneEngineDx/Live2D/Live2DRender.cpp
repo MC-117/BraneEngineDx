@@ -289,7 +289,7 @@ Matrix4f Live2DRender::getTransformMatrix() const
 
 IRendering::RenderType Live2DRender::getRenderType() const
 {
-	return IRendering::RenderType::Normal;
+	return IRendering::RenderType::Normal_Render;
 }
 
 Shape* Live2DRender::getShape() const

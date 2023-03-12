@@ -217,7 +217,7 @@ Matrix4f Spine2DRender::getTransformMatrix() const
 
 IRendering::RenderType Spine2DRender::getRenderType() const
 {
-    return IRendering::Normal;
+    return IRendering::Normal_Render;
 }
 
 Shape* Spine2DRender::getShape() const

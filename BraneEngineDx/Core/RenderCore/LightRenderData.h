@@ -5,12 +5,15 @@
 #include "CameraRenderData.h"
 
 class Light;
+class VirtualShadowMapClipmap;
 
 struct MainLightData
 {
+	Matrix4f worldToLightView;
+	Matrix4f viewToLightClip;
+	Matrix4f worldToLightClip;
 	Vector3f direction;
 	float intensity = 0;
-	Matrix4f lightSpaceMat;
 	Vector4f shadowBias;
 	Vector3f color;
 	unsigned int pointLightCount = 0;
@@ -27,6 +30,7 @@ struct LocalLightData
 struct LightRenderData : public IRenderData
 {
 	MainLightData mainLightData;
+	vector<VirtualShadowMapClipmap*> mainLightClipmaps;
 	vector<LocalLightData> pointLightDatas;
 	GPUBuffer mainLightBuffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(MainLightData));
 	GPUBuffer localLightBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(LocalLightData));

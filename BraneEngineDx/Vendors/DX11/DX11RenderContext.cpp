@@ -421,6 +421,60 @@ void DX11RenderContext::clearFrameStencil(unsigned int stencil)
 		dxContext.deviceContext->ClearDepthStencilView(dx11DSV.Get(), D3D11_CLEAR_STENCIL, 0, stencil);
 }
 
+void DX11RenderContext::clearImageFloat(const Image& image, const Vector4f& value)
+{
+	DX11Texture2D* dxTex = NULL;
+	ComPtr<ID3D11UnorderedAccessView> tex = NULL;
+	if (image.texture) {
+		dxTex = dynamic_cast<DX11Texture2D*>((ITexture*)image.texture->getVendorTexture());
+		if (dxTex) {
+			RWOption rwOption;
+			rwOption.mipLevel = image.level;
+			rwOption.arrayBase = image.arrayBase;
+			rwOption.arrayCount = image.arrayCount;
+			tex = dxTex->getUAV(rwOption);
+		}
+	}
+	deviceContext->ClearUnorderedAccessViewFloat(tex.Get(), value.data());
+}
+
+void DX11RenderContext::clearImageUint(const Image& image, const Vector4u& value)
+{
+	DX11Texture2D* dxTex = NULL;
+	ComPtr<ID3D11UnorderedAccessView> tex = NULL;
+	if (image.texture) {
+		dxTex = dynamic_cast<DX11Texture2D*>((ITexture*)image.texture->getVendorTexture());
+		if (dxTex) {
+			RWOption rwOption;
+			rwOption.mipLevel = image.level;
+			rwOption.arrayBase = image.arrayBase;
+			rwOption.arrayCount = image.arrayCount;
+			tex = dxTex->getUAV(rwOption);
+		}
+	}
+	deviceContext->ClearUnorderedAccessViewUint(tex.Get(), value.data());
+}
+
+void DX11RenderContext::clearOutputBufferFloat(IGPUBuffer* buffer, const Vector4f& value)
+{
+	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(buffer);
+	if (dxBuffer == NULL || dxBuffer->dx11Buffer == NULL)
+		return;
+	if (dxBuffer->desc.gpuAccess != GAF_ReadWrite)
+		throw runtime_error("Only Buffer with GAF_ReadWrite can be cleared");
+	deviceContext->ClearUnorderedAccessViewFloat(dxBuffer->dx11BufferUAV.Get(), value.data());
+}
+
+void DX11RenderContext::clearOutputBufferUint(IGPUBuffer* buffer, const Vector4u& value)
+{
+	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(buffer);
+	if (dxBuffer == NULL || dxBuffer->dx11Buffer == NULL)
+		return;
+	if (dxBuffer->desc.gpuAccess != GAF_ReadWrite)
+		throw runtime_error("Only Buffer with GAF_ReadWrite can be cleared");
+	deviceContext->ClearUnorderedAccessViewUint(dxBuffer->dx11BufferUAV.Get(), value.data());
+}
+
 void DX11RenderContext::copyTexture2D(ITexture* srcTex, ITexture* dstTex)
 {
 	DX11Texture2D* dxSrcTex = dynamic_cast<DX11Texture2D*>(srcTex);

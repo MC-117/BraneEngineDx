@@ -64,9 +64,9 @@ void RenderPool::add(Render & render)
 		IRendering::RenderType renderType = render.getRenderType();
 		switch (renderType)
 		{
-		case IRendering::Camera:
-		case IRendering::Light:
-		case IRendering::SceneCapture:
+		case IRendering::Camera_Render:
+		case IRendering::Light_Render:
+		case IRendering::SceneCapture_Render:
 			prePool.insert(&render);
 			break;
 		default:
@@ -82,9 +82,9 @@ void RenderPool::remove(Render & render)
 	IRendering::RenderType renderType = render.getRenderType();
 	switch (renderType)
 	{
-	case IRendering::Camera:
-	case IRendering::Light:
-	case IRendering::SceneCapture:
+	case IRendering::Camera_Render:
+	case IRendering::Light_Render:
+	case IRendering::SceneCapture_Render:
 		prePool.erase(&render);
 		break;
 	default:

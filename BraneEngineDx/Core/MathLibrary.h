@@ -14,11 +14,8 @@
 */
 
 struct Vector2f;
-struct Vector2u;
 struct Vector3f;
-struct Vector3u;
 struct Vector4f;
-struct Vector4u;
 struct Matrix3f;
 struct Matrix4f;
 struct Quaternionf;
@@ -119,60 +116,180 @@ struct Vector2f : protected DirectX::XMFLOAT2
 	operator Block() const;
 };
 
-struct Vector2u
+template<class T>
+struct Vector2T
 {
 protected:
-	unsigned int _x = 0, _y = 0;
+	T _x = 0, _y = 0;
 public:
-	Vector2u(unsigned int x = 0, unsigned int y = 0);
-	Vector2u(const Vector2u& v);
+	Vector2T(T x = 0, T y = 0)
+		: _x(x), _y(y)
+	{
+	}
+	Vector2T(const Vector2T& v)
+	{
+		_x = v._x;
+		_y = v._y;
+	}
 
-	unsigned int& x();
-	unsigned int x() const;
+	T& x()
+	{
+		return _x;
+	}
+	T x() const
+	{
+		return _x;
+	}
 
-	unsigned int& y();
-	unsigned int y() const;
+	T& y()
+	{
+		return _y;
+	}
+	T y() const
+	{
+		return _y;
+	}
 
-	static Vector2u Identity();
-	static Vector2u Zero();
-	static Vector2u Ones();
-	static Vector2u UnitX();
-	static Vector2u UnitY();
+	static Vector2T Identity()
+	{
+		return Vector2T(1, 0);
+	}
+	static Vector2T Zero()
+	{
+		return Vector2T();
+	}
+	static Vector2T Ones()
+	{
+		return Vector2T(1, 1);
+	}
+	static Vector2T UnitX()
+	{
+		return Vector2T(1, 0);
+	}
+	static Vector2T UnitY()
+	{
+		return Vector2T(0, 1);
+	}
 
-	void setZero();
+	void setZero()
+	{
+		_x = _y = 0;
+	}
 
-	unsigned int* data() const;
+	T* data() const
+	{
+		return (unsigned int*)this;
+	}
 
-	float dot(const Vector2u& v) const;
-	Vector2f cross(const Vector2u& v) const;
-	float squaredNorm() const;
-	float norm() const;
-	Vector2f normalized() const;
+	float dot(const Vector2T& v) const
+	{
+		return Vector2f(_x, _y).dot(Vector2f(v._x, v._y));
+	}
+	Vector2f cross(const Vector2T& v) const
+	{
+		return Vector2f(_x, _y).cross(Vector2f(v._x, v._y));
+	}
+	float squaredNorm() const
+	{
+		return Vector2f(_x, _y).squaredNorm();
+	}
+	float norm() const
+	{
+		return Vector2f(_x, _y).norm();
+	}
+	Vector2f normalized() const
+	{
+		return Vector2f(_x, _y).normalized();
+	}
 
-	Vector2u cwiseProduct(const Vector2u& v) const;
+	Vector2T cwiseProduct(const Vector2T& v) const
+	{
+		return Vector2T(_x * v._x, _y * v._y);
+	}
 
-	Vector2u& operator=(const Vector2u& v);
+	Vector2T& operator=(const Vector2T& v)
+	{
+		_x = v._x;
+		_y = v._y;
+		return *this;
+	}
 
-	Vector2f operator-();
+	Vector2T operator-()
+	{
+		return Vector2f(-_x, -_y);
+	}
 
-	Vector2u operator+(const Vector2u& v) const;
-	Vector2u& operator+=(const Vector2u& v);
+	Vector2T operator+(const Vector2T& v) const
+	{
+		return Vector2T(_x + v._x, _y + v._y);
+	}
+	Vector2T& operator+=(const Vector2T& v)
+	{
+		_x += v._x;
+		_y += v._y;
+		return *this;
+	}
 
-	Vector2u operator-(const Vector2u& v) const;
-	Vector2u& operator-=(const Vector2u& v);
+	Vector2T operator-(const Vector2T& v) const
+	{
+		return Vector2T(_x - v._x, _y - v._y);
+	}
+	Vector2T& operator-=(const Vector2T& v)
+	{
+		_x -= v._x;
+		_y -= v._y;
+		return *this;
+	}
 
-	Vector2u operator*(unsigned int s) const;
-	Vector2u& operator*=(unsigned int s);
+	Vector2T operator*(T s) const
+	{
+		return Vector2T(_x * s, _y * s);
+	}
+	Vector2T& operator*=(T s)
+	{
+		_x *= s;
+		_y *= s;
+		return *this;
+	}
 
-	Vector2u operator/(unsigned int s) const;
-	Vector2u& operator/=(unsigned int s);
+	Vector2T operator/(T s) const
+	{
+		return Vector2T(_x / s, _y / s);
+	}
+	Vector2T& operator/=(T s)
+	{
+		_x /= s;
+		_y /= s;
+		return *this;
+	}
 
-	bool operator==(const Vector2u& v) const;
-	bool operator!=(const Vector2u& v) const;
+	bool operator==(const Vector2T& v) const
+	{
+		return _x == v._x && _y == v._y;
+	}
+	bool operator!=(const Vector2T& v) const
+	{
+		return _x != v._x || _y != v._y;
+	}
 
-	unsigned int& operator[](unsigned int index);
-	unsigned int operator[](unsigned int index) const;
+	T& operator[](unsigned int index)
+	{
+		if (index > 1)
+			throw overflow_error("Vector2u only has 2 elements");
+		return ((unsigned int*)this)[index];
+	}
+	T operator[](unsigned int index) const
+	{
+		if (index > 1)
+			throw overflow_error("Vector2u only has 2 elements");
+		return ((unsigned int*)this)[index];
+	}
 };
+
+typedef Vector2T<int> Vector2i;
+typedef Vector2T<long long> Vector2l;
+typedef Vector2T<unsigned int> Vector2u;
+typedef Vector2T<unsigned long long> Vector2ul;
 
 struct Vector3f : protected DirectX::XMFLOAT3
 {
@@ -241,64 +358,199 @@ struct Vector3f : protected DirectX::XMFLOAT3
 	operator Block() const;
 };
 
-struct Vector3u
+template<class T>
+struct Vector3T
 {
 protected:
-	unsigned int _x = 0, _y = 0, _z = 0;
+	T _x = 0, _y = 0, _z = 0;
 public:
-	Vector3u(unsigned int x = 0, unsigned int y = 0, unsigned int z = 0);
-	Vector3u(const Vector3u& v);
+	Vector3T(T x = 0, T y = 0, T z = 0)
+		: _x(x), _y(y), _z(z)
+	{
+	}
+	Vector3T(const Vector3T& v)
+	{
+		_x = v._x;
+		_y = v._y;
+		_z = v._z;
+	}
 
-	unsigned int& x();
-	unsigned int x() const;
+	T& x()
+	{
+		return _x;
+	}
+	T x() const
+	{
+		return _x;
+	}
 
-	unsigned int& y();
-	unsigned int y() const;
+	T& y()
+	{
+		return _y;
+	}
+	T y() const
+	{
+		return _y;
+	}
 
-	unsigned int& z();
-	unsigned int z() const;
+	T& z()
+	{
+		return _z;
+	}
+	T z() const
+	{
+		return _z;
+	}
 
-	static Vector3u Identity();
-	static Vector3u Zero();
-	static Vector3u Ones();
-	static Vector3u UnitX();
-	static Vector3u UnitY();
-	static Vector3u UnitZ();
+	static Vector3T Identity()
+	{
+		return Vector3T(1, 0, 0);
+	}
+	static Vector3T Zero()
+	{
+		return Vector3T();
+	}
+	static Vector3T Ones()
+	{
+		return Vector3T(1, 1, 1);
+	}
+	static Vector3T UnitX()
+	{
+		return Vector3T(1, 0, 0);
+	}
+	static Vector3T UnitY()
+	{
+		return Vector3T(0, 1, 0);
+	}
+	static Vector3T UnitZ()
+	{
+		return Vector3T(0, 0, 1);
+	}
 
-	void setZero();
+	void setZero()
+	{
+		_x = _y = _z = 0;
+	}
 
-	unsigned int* data() const;
+	T* data() const
+	{
+		return (unsigned int*)this;
+	}
 
-	float dot(const Vector3u& v) const;
-	Vector3f cross(const Vector3u& v) const;
-	float squaredNorm() const;
-	float norm() const;
-	Vector3f normalized() const;
+	float dot(const Vector3T& v) const
+	{
+		return Vector3f(_x, _y, _z).dot(Vector3f(v._x, v._y, v._z));
+	}
+	Vector3f cross(const Vector3T& v) const
+	{
+		return Vector3f(_x, _y, _z).cross(Vector3f(v._x, v._y, v._z));
+	}
+	float squaredNorm() const
+	{
+		return Vector3f(_x, _y, _z).squaredNorm();
+	}
+	float norm() const
+	{
+		return Vector3f(_x, _y, _z).norm();
+	}
+	Vector3f normalized() const
+	{
+		return Vector3f(_x, _y, _z).normalized();
+	}
 
-	Vector3u cwiseProduct(const Vector3u& v) const;
+	Vector3T cwiseProduct(const Vector3T& v) const
+	{
+		return Vector3T(_x * v._x, _y * v._y, _z * v._z);
+	}
 
-	Vector3u& operator=(const Vector3u& v);
+	Vector3T& operator=(const Vector3T& v)
+	{
+		_x = v._x;
+		_y = v._y;
+		_z = v._z;
+		return *this;
+	}
 
-	Vector3f operator-();
+	Vector3T operator-()
+	{
+		return Vector3T(-_x, -_y, -_z);
+	}
 
-	Vector3u operator+(const Vector3u& v) const;
-	Vector3u& operator+=(const Vector3u& v);
+	Vector3T operator+(const Vector3T& v) const
+	{
+		return Vector3T(_x + v._x, _y + v._y, _z + v._z);
+	}
+	Vector3T& operator+=(const Vector3T& v)
+	{
+		_x += v._x;
+		_y += v._y;
+		_z += v._z;
+		return *this;
+	}
 
-	Vector3u operator-(const Vector3u& v) const;
-	Vector3u& operator-=(const Vector3u& v);
+	Vector3T operator-(const Vector3T& v) const
+	{
+		return Vector3T(_x - v._x, _y - v._y, _z - v._z);
+	}
+	Vector3T& operator-=(const Vector3T& v)
+	{
+		_x -= v._x;
+		_y -= v._y;
+		_z -= v._z;
+		return *this;
+	}
 
-	Vector3u operator*(unsigned int s) const;
-	Vector3u& operator*=(unsigned int s);
+	Vector3T operator*(T s) const
+	{
+		return Vector3T(_x * s, _y * s, _z * s);
+	}
+	Vector3T& operator*=(T s)
+	{
+		_x *= s;
+		_y *= s;
+		_z *= s;
+		return *this;
+	}
 
-	Vector3u operator/(unsigned int s) const;
-	Vector3u& operator/=(unsigned int s);
+	Vector3T operator/(T s) const
+	{
+		return Vector3T(_x / s, _y / s, _z / s);
+	}
+	Vector3T& operator/=(T s)
+	{
+		_x /= s;
+		_y /= s;
+		_z /= s;
+		return *this;
+	}
 
-	bool operator==(const Vector3u& v) const;
-	bool operator!=(const Vector3u& v) const;
+	bool operator==(const Vector3T& v) const
+	{
+		return _x == v._x && _y == v._y && _z == v._z;
+	}
+	bool operator!=(const Vector3T& v) const
+	{
+		return _x != v._x || _y != v._y || _z != v._z;
+	}
 
-	unsigned int& operator[](unsigned int index);
-	unsigned int operator[](unsigned int index) const;
+	T& operator[](unsigned int index)
+	{
+		if (index > 2)
+			throw overflow_error("Vector3u only has 3 elements");
+		return ((unsigned int*)this)[index];
+	}
+	T operator[](unsigned int index) const
+	{
+		if (index > 2)
+			throw overflow_error("Vector3u only has 3 elements");
+		return ((unsigned int*)this)[index];
+	}
 };
+
+typedef Vector3T<int> Vector3i;
+typedef Vector3T<long long> Vector3l;
+typedef Vector3T<unsigned int> Vector3u;
+typedef Vector3T<unsigned long long> Vector3ul;
 
 struct Vector4f : protected DirectX::XMFLOAT4
 {
@@ -375,67 +627,214 @@ struct Vector4f : protected DirectX::XMFLOAT4
 	operator Block() const;
 };
 
-struct Vector4u
+template<class T>
+struct Vector4T
 {
 protected:
-	unsigned int _x = 0, _y = 0, _z = 0, _w = 0;
+	T _x = 0, _y = 0, _z = 0, _w = 0;
 public:
-	Vector4u(unsigned int x = 0, unsigned int y = 0, unsigned int z = 0, unsigned int w = 0);
-	Vector4u(const Vector4u& v);
+	Vector4T(T x = 0, T y = 0, T z = 0, T w = 0)
+		: _x(x), _y(y), _z(z), _w(w)
+	{
+	}
+	Vector4T(const Vector4T& v)
+	{
+		_x = v._x;
+		_y = v._y;
+		_z = v._z;
+		_w = v._w;
+	}
 
-	unsigned int& x();
-	unsigned int x() const;
+	T& x()
+	{
+		return _x;
+	}
+	T x() const
+	{
+		return _x;
+	}
 
-	unsigned int& y();
-	unsigned int y() const;
+	T& y()
+	{
+		return _y;
+	}
+	T y() const
+	{
+		return _y;
+	}
 
-	unsigned int& z();
-	unsigned int z() const;
+	T& z()
+	{
+		return _z;
+	}
+	T z() const
+	{
+		return _z;
+	}
 
-	unsigned int& w();
-	unsigned int w() const;
+	T& w()
+	{
+		return _w;
+	}
+	T w() const
+	{
+		return _w;
+	}
 
-	static Vector4u Identity();
-	static Vector4u Zero();
-	static Vector4u Ones();
-	static Vector4u UnitX();
-	static Vector4u UnitY();
-	static Vector4u UnitZ();
-	static Vector4u UnitW();
+	static Vector4T Identity()
+	{
+		return Vector4T(1, 0, 0, 0);
+	}
+	static Vector4T Zero()
+	{
+		return Vector4T();
+	}
+	static Vector4T Ones()
+	{
+		return Vector4T(1, 1, 1, 1);
+	}
+	static Vector4T UnitX()
+	{
+		return Vector4T(1, 0, 0, 0);
+	}
+	static Vector4T UnitY()
+	{
+		return Vector4T(0, 1, 0, 0);
+	}
+	static Vector4T UnitZ()
+	{
+		return Vector4T(0, 0, 1, 0);
+	}
+	static Vector4T UnitW()
+	{
+		return Vector4T(0, 0, 0, 1);
+	}
 
-	void setZero();
+	void setZero()
+	{
+		_x = _y = _z = _w = 0;
+	}
 
-	unsigned int* data() const;
+	T* data() const
+	{
+		return (unsigned int*)this;
+	}
 
-	float dot(const Vector4u& v) const;
-	float squaredNorm() const;
-	float norm() const;
-	Vector4f normalized() const;
+	float dot(const Vector4T& v) const
+	{
+		return Vector4f(_x, _y, _z, _w).dot(Vector4f(v._x, v._y, v._z, _w));
+	}
+	float squaredNorm() const
+	{
+		return Vector4f(_x, _y, _z, _w).squaredNorm();
+	}
+	float norm() const
+	{
+		return Vector4f(_x, _y, _z, _w).norm();
+	}
+	Vector4f normalized() const
+	{
+		return Vector4f(_x, _y, _z, _w).normalized();
+	}
 
-	Vector4u cwiseProduct(const Vector4u& v) const;
+	Vector4T cwiseProduct(const Vector4T& v) const
+	{
+		return Vector4T(_x * v._x, _y * v._y, _z * v._z, _w * v._w);
+	}
 
-	Vector4u& operator=(const Vector4u& v);
+	Vector4T& operator=(const Vector4T& v)
+	{
+		_x = v._x;
+		_y = v._y;
+		_z = v._z;
+		_w = v._w;
+		return *this;
+	}
 
-	Vector4f operator-();
+	Vector4T operator-()
+	{
+		return Vector4T(-_x, -_y, -_z, -_w);
+	}
 
-	Vector4u operator+(const Vector4u& v) const;
-	Vector4u& operator+=(const Vector4u& v);
+	Vector4T operator+(const Vector4T& v) const
+	{
+		return Vector4T(_x + v._x, _y + v._y, _z + v._z, _w + v._w);
+	}
+	Vector4T& operator+=(const Vector4T& v)
+	{
+		_x += v._x;
+		_y += v._y;
+		_z += v._z;
+		_w += v._w;
+		return *this;
+	}
 
-	Vector4u operator-(const Vector4u& v) const;
-	Vector4u& operator-=(const Vector4u& v);
+	Vector4T operator-(const Vector4T& v) const
+	{
+		return Vector4T(_x - v._x, _y - v._y, _z - v._z, _w - v._w);
+	}
+	Vector4T& operator-=(const Vector4T& v)
+	{
+		_x -= v._x;
+		_y -= v._y;
+		_z -= v._z;
+		_w -= v._w;
+		return *this;
+	}
 
-	Vector4u operator*(unsigned int s) const;
-	Vector4u& operator*=(unsigned int s);
+	Vector4T operator*(T s) const
+	{
+		return Vector4T(_x * s, _y * s, _z * s, _w * s);
+	}
+	Vector4T& operator*=(T s)
+	{
+		_x *= s;
+		_y *= s;
+		_z *= s;
+		_w *= s;
+		return *this;
+	}
 
-	Vector4u operator/(unsigned int s) const;
-	Vector4u& operator/=(unsigned int s);
+	Vector4T operator/(T s) const
+	{
+		return Vector4T(_x / s, _y / s, _z / s, _w / s);
+	}
+	Vector4T& operator/=(T s)
+	{
+		_x /= s;
+		_y /= s;
+		_z /= s;
+		_w /= s;
+		return *this;
+	}
 
-	bool operator==(const Vector4u& v) const;
-	bool operator!=(const Vector4u& v) const;
+	bool operator==(const Vector4T& v) const
+	{
+		return _x == v._x && _y == v._y && _z == v._z && _w == v._w;
+	}
+	bool operator!=(const Vector4T& v) const
+	{
+		return _x != v._x || _y != v._y || _z != v._z || _w != v._w;
+	}
 
-	unsigned int& operator[](unsigned int index);
-	unsigned int operator[](unsigned int index) const;
+	T& operator[](unsigned int index)
+	{
+		if (index > 3)
+			throw overflow_error("Vector4u only has 4 elements");
+		return ((T*)this)[index];
+	}
+	T operator[](unsigned int index) const
+	{
+		if (index > 3)
+			throw overflow_error("Vector4u only has 4 elements");
+		return ((T*)this)[index];
+	}
 };
+
+typedef Vector4T<int> Vector4i;
+typedef Vector4T<long long> Vector4l;
+typedef Vector4T<unsigned int> Vector4u;
+typedef Vector4T<unsigned long long> Vector4ul;
 
 struct Matrix3f : protected DirectX::XMFLOAT3X3
 {

@@ -9,6 +9,8 @@ struct TransformData
     float localRadius;
     float3 localExtent;
     uint flag;
+    uint updateFrame;
+    uint3 pad;
 };
 
 StructuredBuffer<TransformData> Transforms : register(TRANS_BIND_INDEX);

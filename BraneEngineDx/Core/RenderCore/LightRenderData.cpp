@@ -21,7 +21,9 @@ void LightRenderData::setLight(Light* light)
 	if (directLight != NULL) {
 		mainLightData.direction = directLight->getForward(WORLD);
 		mainLightData.intensity = directLight->intensity;
-		mainLightData.lightSpaceMat = MATRIX_UPLOAD_OP(directLight->getLightSpaceMatrix());
+		mainLightData.worldToLightView = MATRIX_UPLOAD_OP(directLight->getWorldToLightViewMatrix());
+		mainLightData.viewToLightClip = MATRIX_UPLOAD_OP(directLight->getViewToLightClipMatrix());
+		mainLightData.worldToLightClip = MATRIX_UPLOAD_OP(directLight->getWorldToLightClipMatrix());
 		mainLightData.shadowBias = directLight->getShadowBias();
 		mainLightData.color = toLinearColor(directLight->color);
 		shadowCameraRenderData.data = directLight->shadowData.cameraData;

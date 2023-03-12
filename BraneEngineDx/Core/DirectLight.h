@@ -36,7 +36,10 @@ public:
 	float getShadowBiasDepthScale() const;
 	float getShadowBiasNormalScale() const;
 
-	virtual Matrix4f getLightSpaceMatrix() const;
+	virtual Matrix4f getWorldToLightViewMatrix() const;
+	virtual Matrix4f getViewToLightClipMatrix() const;
+	virtual Matrix4f getWorldToLightClipMatrix() const;
+
 	virtual Vector4f getShadowBias() const;
 	virtual RenderTarget* getShadowRenderTarget() const;
 
@@ -50,7 +53,9 @@ public:
 	virtual bool serialize(SerializationInfo& to);
 protected:
 	int directionIdx = -1;
-	Matrix4f lightSpaceMatrix = Matrix4f::Identity();
+	Matrix4f worldToLightViewMatrix = Matrix4f::Identity();
+	Matrix4f viewToLightClipMatrix = Matrix4f::Identity();
+	Matrix4f worldToLightClipMatrix = Matrix4f::Identity();
 };
 
 #endif // !_DIRECTLIGHT_H_

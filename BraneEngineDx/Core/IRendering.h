@@ -13,13 +13,12 @@ class IRendering
 public:
 	enum RenderType
 	{
-		None, Normal, Camera, Light, Particles, SceneCapture
+		None_Render, Normal_Render, Camera_Render, Light_Render, Particle_Render, SceneCapture_Render
 	};
 
 	virtual ~IRendering() {}
 	virtual Matrix4f getTransformMatrix() const = 0;
 	virtual vector<Matrix4f>& getTransformMatrixs() = 0;
-	virtual Matrix4f getLightSpaceMatrix() const = 0;
 	virtual RenderType getRenderType() const = 0;
 	virtual Shader* getShader() const = 0;
 	virtual RenderTarget* getShadowRenderTarget() const = 0;

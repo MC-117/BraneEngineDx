@@ -8,6 +8,7 @@ MeshTransformData MeshTransformDataUploadOp::operator()(const MeshTransformData&
 {
 	MeshTransformData outData(data);
 	outData.localToWorld = MATRIX_UPLOAD_OP(data.localToWorld);
+	outData.updateFrame = Time::frames();
 	return outData;
 }
 
@@ -174,7 +175,6 @@ void MeshTransformRenderData::upload()
 	transformBuffer.resize(dataSize);
 	if (meshTransformDataArray.updateAll) {
 		transformBuffer.uploadData(meshTransformDataArray.batchCount, meshTransformDataArray.transformDatas.data());
-		meshTransformDataArray.updateAll = false;
 	}
 	else {
 		unsigned int uploadSize = meshTransformDataArray.uploadTransformDatas.size();

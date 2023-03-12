@@ -17,6 +17,8 @@ bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 		meshRenderCommand->mesh, material, meshRenderCommand->instanceID, meshRenderCommand->instanceIDCount);
 
 	DirectShadowRenderCommand command;
+	command.instanceID = meshRenderCommand->instanceID;
+	command.instanceIDCount = meshRenderCommand->instanceIDCount;
 	command.sceneData = cmd.sceneData;
 	command.transformData = cmd.transformData;
 	command.material = material;

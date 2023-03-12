@@ -44,7 +44,6 @@ public:
 	virtual void postRender();
 	virtual Matrix4f getTransformMatrix() const;
 	virtual vector<Matrix4f>& getTransformMatrixs();
-	virtual Matrix4f getLightSpaceMatrix() const;
 	virtual IRendering::RenderType getRenderType() const;
 	virtual Shape* getShape() const;
 	virtual Material* getMaterial(unsigned int index = 0);

@@ -27,7 +27,7 @@ void SceneRenderData::setCamera(Render* cameraRender)
 
 void SceneRenderData::setLight(Render* lightRender)
 {
-	if (lightRender->getRenderType() == IRendering::Light)
+	if (lightRender->getRenderType() == IRendering::Light_Render)
 		lightDataPack.setLight((Light*)lightRender);
 }
 

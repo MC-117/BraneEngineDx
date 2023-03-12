@@ -44,7 +44,7 @@ void Light::render(RenderInfo & info)
 
 IRendering::RenderType Light::getRenderType() const
 {
-	return IRendering::RenderType::Light;
+	return IRendering::RenderType::Light_Render;
 }
 
 Shape * Light::getShape()
