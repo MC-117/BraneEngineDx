@@ -106,6 +106,7 @@ void DeferredLightingPass::execute(IRenderContext& context)
 			taskContext.sceneData = task.sceneData;
 
 			task.sceneData->bind(context);
+			task.sceneData->virtualShadowMapRenderData.bindForLighting(context);
 		}
 		
 		if (taskContext.materialRenderData != task.materialRenderData) {
@@ -211,5 +212,6 @@ void DeferredLightingPass::blitSceneColor(IRenderContext& context, Texture* gBuf
 	context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
 	context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
 	context.setRenderOpaqueState();
+	context.setViewport(0, 0, gBufferA->getWidth(), gBufferA->getHeight());
 	context.postProcessCall();
 }

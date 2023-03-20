@@ -240,23 +240,7 @@ ShaderAdapter* ShaderCompiler::getAdapterInternal(ShaderStageType type)
 
 ShaderFeature ShaderCompiler::getFeatureInternal(const string& feature) const
 {
-	if (feature == "custom1")
-		return Shader_Custom_1;
-	else if (feature == "custom2")
-		return Shader_Custom_2;
-	else if (feature == "custom3")
-		return Shader_Custom_3;
-	else if (feature == "custom4")
-		return Shader_Custom_4;
-	else if (feature == "custom5")
-		return Shader_Custom_5;
-	else if (feature == "custom6")
-		return Shader_Custom_6;
-	else if (feature == "custom7")
-		return Shader_Custom_7;
-	else if (feature == "custom8")
-		return Shader_Custom_8;
-	else if (feature == "deferred")
+	if (feature == "deferred")
 		return Shader_Deferred;
 	else if (feature == "lighting")
 		return Shader_Lighting;
@@ -272,6 +256,26 @@ ShaderFeature ShaderCompiler::getFeatureInternal(const string& feature) const
 		return Shader_Modifier;
 	else if (feature == "terrain")
 		return Shader_Terrain;
+	else if (feature == "vsm")
+		return Shader_VSM;
+	else if (feature == "custom1")
+		return Shader_Custom_1;
+	else if (feature == "custom2")
+		return Shader_Custom_2;
+	else if (feature == "custom3")
+		return Shader_Custom_3;
+	else if (feature == "custom4")
+		return Shader_Custom_4;
+	else if (feature == "custom5")
+		return Shader_Custom_5;
+	else if (feature == "custom6")
+		return Shader_Custom_6;
+	else if (feature == "custom7")
+		return Shader_Custom_7;
+	else if (feature == "custom8")
+		return Shader_Custom_8;
+	else if (feature == "custom9")
+		return Shader_Custom_9;
 	throw runtime_error("Unknown shader feature");
 }
 

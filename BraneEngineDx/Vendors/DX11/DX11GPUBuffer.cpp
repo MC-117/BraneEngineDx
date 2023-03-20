@@ -195,16 +195,17 @@ unsigned int DX11GPUBuffer::bindBase(unsigned int index, BufferOption bufferOpti
 		{
 			if (dx11Buffer == NULL)
 				return 0;
-			unsigned int strides = desc.cellSize;
-			unsigned int offset = 0;
-			dxContext.deviceContext->IASetVertexBuffers(index, 1, dx11Buffer.GetAddressOf(), &strides, &offset);
+
+			unsigned int stride = bufferOption.stride == -1 ? desc.cellSize : bufferOption.stride;
+			unsigned int offset = bufferOption.offset;
+			dxContext.deviceContext->IASetVertexBuffers(index, 1, dx11Buffer.GetAddressOf(), &stride, &offset);
 			break;
 		}
 		case GB_Index:
 		{
 			if (dx11Buffer == NULL)
 				return 0;
-			unsigned int strides = sizeof(unsigned int);
+			unsigned int stride = sizeof(unsigned int);
 			unsigned int offset = 0;
 			dxContext.deviceContext->IASetIndexBuffer(dx11Buffer.Get(), DXGI_FORMAT_R32_UINT, offset);
 			break;

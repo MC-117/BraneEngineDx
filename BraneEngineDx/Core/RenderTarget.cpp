@@ -76,15 +76,27 @@ void RenderTarget::addTexture(const string & name, Texture & texture, unsigned i
 		unsigned int index = desc.textureList.size();
 		desc.textures.insert(pair<string, int>(name, index));
 		desc.textureList.push_back({ index, name, mipLevel, arrayBase, arrayCount, &texture });
+		desc.inited = false;
 	}
 	else {
 		RTInfo& info = desc.textureList[iter->second];
-		info.texture = &texture;
-		info.mipLevel = mipLevel;
-		info.arrayBase = arrayBase;
-		info.arrayBase = arrayCount;
+		if (info.texture != &texture) {
+			info.texture = &texture;
+			desc.inited = false;
+		}
+		if (info.mipLevel != mipLevel) {
+			info.mipLevel = mipLevel;
+			desc.inited = false;
+		}
+		if (info.arrayBase != arrayBase) {
+			info.arrayBase = arrayBase;
+			desc.inited = false;
+		}
+		if (info.arrayCount != arrayCount) {
+			info.arrayCount = arrayCount;
+			desc.inited = false;
+		}
 	}
-	desc.inited = false;
 }
 
 Texture * RenderTarget::getTexture(const string & name)

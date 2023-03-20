@@ -7,7 +7,7 @@
 #include "../ProbeSystem/EnvLightCaptureProbeRender.h"
 #include "../Utility/RenderUtility.h"
 
-SceneRenderData::SceneRenderData()
+SceneRenderData::SceneRenderData() : virtualShadowMapRenderData(lightDataPack)
 {
 	staticMeshTransformDataPack.setFrequentUpdate(false);
 }
@@ -74,11 +74,6 @@ MeshTransformIndex* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Ma
 	return meshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex, transformCount);
 }
 
-MeshTransformIndex* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex)
-{
-	return meshTransformDataPack.setMeshPartTransform(meshPart, material, (MeshTransformIndex*)transformIndex);
-}
-
 unsigned int SceneRenderData::setStaticMeshTransform(const MeshTransformData& data)
 {
 	return staticMeshTransformDataPack.setMeshTransform(data);
@@ -94,14 +89,9 @@ MeshTransformIndex* SceneRenderData::getStaticMeshPartTransform(MeshPart* meshPa
 	return staticMeshTransformDataPack.getMeshPartTransform(meshPart, material);
 }
 
-MeshTransformIndex* SceneRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex)
+MeshTransformIndex* SceneRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount)
 {
-	return staticMeshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex);
-}
-
-MeshTransformIndex* SceneRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex)
-{
-	return staticMeshTransformDataPack.setMeshPartTransform(meshPart, material, (MeshTransformIndex*)transformIndex);
+	return staticMeshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex, transformCount);
 }
 
 void SceneRenderData::cleanStaticMeshTransform(unsigned int base, unsigned int count)
@@ -142,6 +132,7 @@ void SceneRenderData::create()
 	reflectionProbeDataPack.create();
 	envLightProbeDataPack.create();
 	envLightDataPack.create();
+	virtualShadowMapRenderData.create();
 }
 
 void SceneRenderData::reset()
@@ -153,6 +144,7 @@ void SceneRenderData::reset()
 	reflectionProbeDataPack.clean();
 	envLightProbeDataPack.clean();
 	envLightDataPack.clean();
+	virtualShadowMapRenderData.clean();
 	cameraRenderDatas.clear();
 }
 
@@ -165,6 +157,7 @@ void SceneRenderData::release()
 	reflectionProbeDataPack.release();
 	envLightProbeDataPack.release();
 	envLightDataPack.release();
+	virtualShadowMapRenderData.release();
 }
 
 void SceneRenderData::upload()
@@ -181,6 +174,7 @@ void SceneRenderData::upload()
 			cameraRenderData->usedFrame = Time::frames();
 		}
 	}
+	virtualShadowMapRenderData.upload();
 }
 
 void SceneRenderData::bind(IRenderContext& context)

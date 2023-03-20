@@ -182,14 +182,14 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 			break;
 		case GB_Vertex:
 		{
-			unsigned int strides = dxBuffer->desc.cellSize;
-			unsigned int offset = 0;
-			deviceContext->IASetVertexBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf(), &strides, &offset);
+			unsigned int stride = bufferOption.stride == -1 ? dxBuffer->desc.cellSize : bufferOption.stride;
+			unsigned int offset = bufferOption.offset;
+			deviceContext->IASetVertexBuffers(index, 1, dxBuffer->dx11Buffer.GetAddressOf(), &stride, &offset);
 			break;
 		}
 		case GB_Index:
 		{
-			unsigned int strides = sizeof(unsigned int);
+			unsigned int stride = sizeof(unsigned int);
 			unsigned int offset = 0;
 			deviceContext->IASetIndexBuffer(dxBuffer->dx11Buffer.Get(), DXGI_FORMAT_R32_UINT, offset);
 			break;
@@ -1130,6 +1130,23 @@ void DX11RenderContext::execteImGuiDraw(ImDrawData* drawData)
 	if (drawData == NULL || !drawData->Valid)
 		return;
 	ImGui_ImplDX11_RenderDrawData(drawData, deviceContext.Get());
+}
+
+bool DX11RenderContext::drawMeshIndirect(IGPUBuffer* argBuffer, unsigned int byteOffset)
+{
+	if (!currentProgram->isComputable())
+		return false;
+
+	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(argBuffer);
+	if (dxBuffer == NULL)
+		return false;
+
+	if (dxBuffer->desc.type != GB_Command)
+		throw runtime_error("drawMeshIndirect: GPUBuffer with GB_Command is required");
+
+	bindDrawInfo();
+	deviceContext->DrawIndexedInstancedIndirect(dxBuffer->dx11Buffer.Get(), byteOffset);
+	return true;
 }
 
 void DX11RenderContext::submit()

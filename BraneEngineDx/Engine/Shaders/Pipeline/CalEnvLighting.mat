@@ -67,7 +67,6 @@ void main(uint3 texel : SV_DispatchThreadID)
         
         float4 curSample = float4(lightColor * shCoeff * texelWeight, texelWeight);
 
-        [unroll]
         for (uint step = 1; step < LOCAL_SIZE_X; step<<=1) {
             if (all((texel.xy % step) == 0)) {
                 samples[texel.x][texel.y] = curSample;

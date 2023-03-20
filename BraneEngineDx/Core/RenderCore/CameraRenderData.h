@@ -27,6 +27,7 @@ struct CameraRenderData : public IRenderData
 	CameraData data;
 	int renderOrder;
 	ScreenHitData* hitData = NULL;
+	ISurfaceBuffer* surfaceBuffer = NULL;
 	SurfaceData surface;
 	GPUBuffer buffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(CameraData));
 

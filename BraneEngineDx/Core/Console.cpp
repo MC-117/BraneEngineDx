@@ -44,7 +44,7 @@ void Console::pushLog(list<_LOG>& buf, LogState state, const std::string fmt_str
 		buf.pop_front();
 	buf.push_back({ state, dur, string(formatted.get()) });
 	_LOG& l = buf.back();
-	string sstr = state == Log_Normal ? "[Log][" : (state == Log_Warning ? "[Warn][" : "[Error][");
+	string sstr = state == Log_Normal ? "[Log][" : (state == Log_Warning ? "[Wrn][" : "[Err][");
 	writeToFile(sstr + l.timeStamp.toString() + ']' + l.text);
 }
 

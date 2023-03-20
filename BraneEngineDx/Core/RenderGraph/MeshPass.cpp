@@ -22,6 +22,5 @@ void MeshPass::reset()
 
 void MeshPass::getOutputTextures(vector<pair<string, Texture*>>& textures)
 {
-	for (auto& tex : outputTextures)
-		textures.push_back(tex);
+	textures = outputTextures;
 }

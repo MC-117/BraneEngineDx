@@ -70,6 +70,10 @@ VirtualShadowMapClipmap::VirtualShadowMapClipmap(VirtualShadowMapArray& virtualS
 
 		level.virtualShadowMap = virtualShadowMapArray.allocate();
 
+		if (i == 0) {
+			lightData.vsmID = level.virtualShadowMap->vsmID;
+		}
+
 		const float rawLevelRadius = getLevelRadius(absLevel);
 
 		float halfLevelDim = 2.0 * rawLevelRadius;
@@ -152,10 +156,10 @@ CameraRenderData* VirtualShadowMapClipmap::getCameraRenderData() const
 	return cameraRenderData;
 }
 
-void VirtualShadowMapClipmap::addMeshCommand(const DirectShadowRenderCommand& command)
+void VirtualShadowMapClipmap::addMeshCommand(const VSMMeshTransformIndexArray::CallItem& callItem)
 {
 	if (lightEntry) {
-		lightEntry->addMeshCommand(command);
+		lightEntry->addMeshCommand(callItem);
 	}
 }
 

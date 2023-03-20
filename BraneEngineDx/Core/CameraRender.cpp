@@ -125,17 +125,22 @@ void CameraRender::preRender()
 void CameraRender::render(RenderInfo& info)
 {
 	if (isValid() && !hidden && isMainCameraRender()) {
-		info.sceneData->setCamera(this);
+		CameraRenderData* cameraRenderData = getRenderData();
 		if (graph) {
 			graph->resource.reset();
 			graph->resource.sceneRenderData = info.sceneData;
-			graph->resource.cameraRenderData = getRenderData();
+			graph->resource.cameraRenderData = cameraRenderData;
 			graph->resource.depthTexture = renderTarget->getInternalDepthTexture();
 			graph->resource.screenTexture = renderTarget->getTexture(0);
 			graph->resource.screenRenderTarget = renderTarget;
 			//graph->postRenderTarget.addTexture("screenMap", *graph->resource.screenTexture);
 			graph->render(info);
 		}
+		if (cameraRenderData->surfaceBuffer == NULL) {
+			cameraRenderData->surfaceBuffer = info.renderGraph->newSurfaceBuffer();
+			cameraRenderData->surfaceBuffer->resize(size.x, size.y);
+		}
+		info.sceneData->setCamera(this);
 	}
 }
 

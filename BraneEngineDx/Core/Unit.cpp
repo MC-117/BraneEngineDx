@@ -63,7 +63,7 @@ unsigned int Time::getNanosecond()
 string Time::toString()
 {
 	char buffer[11];
-	sprintf(buffer, ":%2d:%2d:%3d", getMinute(), getSecond(), getMillisecond());
+	sprintf_s(buffer, ":%2d:%2d:%3d", getMinute(), getSecond(), getMillisecond());
 	return to_string(getHour()) + buffer;
 }
 
@@ -380,4 +380,10 @@ void Particle::update(float deltaTime)
 {
 	position += (velocity + acceleration * (0.5 * deltaTime)) * deltaTime;
 	velocity += acceleration * deltaTime;
+}
+
+InstanceDrawData& InstanceDrawData::operator++()
+{
+	instanceID++;
+	return *this;
 }

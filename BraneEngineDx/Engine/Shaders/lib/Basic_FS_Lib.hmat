@@ -91,7 +91,7 @@ float ShadowCalculation(in Texture2D depthMap, in SamplerState depthMapSampler, 
             float2 uv = projCoords.xy;
             uv.y = 1 - uv.y;
             float pcfDepth = GATHER_TEX(depthMap, uv, float2(x, y)).r; 
-            shadow += currentDepth > pcfDepth ? 0.0 : 1.0;        
+            shadow += currentDepth > pcfDepth ? 0.0 : 1.0;
         }
     }
     shadow /= 9.0;

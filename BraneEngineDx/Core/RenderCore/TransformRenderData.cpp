@@ -17,6 +17,20 @@ Matrix4f MatrixUploadOp::operator()(const Matrix4f& mat)
 	return MATRIX_UPLOAD_OP(mat);
 }
 
+MeshMaterialGuid::MeshMaterialGuid(MeshPart* meshPart, Material* material)
+	: meshPart(meshPart), material(material)
+{
+}
+
+bool MeshMaterialGuid::operator<(const MeshMaterialGuid& guid) const
+{
+	if (meshPart < guid.meshPart)
+		return true;
+	else if (meshPart == guid.meshPart)
+		return material < guid.material;
+	return false;
+}
+
 Material* MeshTransformRenderData::uploadTransformMaterial = NULL;
 ShaderProgram* MeshTransformRenderData::uploadTransformProgram = NULL;
 Material* MeshTransformRenderData::uploadInstanceDataMaterial = NULL;
@@ -51,76 +65,24 @@ unsigned int MeshTransformRenderData::setMeshTransform(const vector<MeshTransfor
 	return meshTransformDataArray.setMeshTransform(datas);
 }
 
-inline Guid makeGuid(void* ptr0, void* ptr1)
+inline MeshMaterialGuid makeGuid(MeshPart* meshPart, Material* material)
 {
-	Guid guid;
-	guid.Word0 = (unsigned long long)ptr0;
-	guid.Word1 = (unsigned long long)ptr1;
-	return guid;
+	return MeshMaterialGuid(meshPart, material);
 }
 
 MeshTransformIndex* MeshTransformRenderData::getMeshPartTransform(MeshPart* meshPart, Material* material)
 {
 	if (meshPart == NULL || material == NULL)
 		return NULL;
-	Guid guid = makeGuid(meshPart, material);
-	auto meshIter = meshTransformIndex.find(guid);
-	if (meshIter != meshTransformIndex.end())
-		return &meshIter->second;
-	return NULL;
+	return meshTransformIndexArray.getTransformIndex(makeGuid(meshPart, material));
 }
 
 MeshTransformIndex* MeshTransformRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount)
 {
 	if (!needUpdate || meshPart == NULL || material == NULL || transformCount == 0)
 		return NULL;
-	Guid guid = makeGuid(meshPart, material);
-	auto meshIter = meshTransformIndex.find(guid);
-	MeshTransformIndex* trans;
-	if (meshIter == meshTransformIndex.end()) {
-		trans = &meshTransformIndex.insert(pair<Guid, MeshTransformIndex>(guid,
-			MeshTransformIndex())).first->second;
-	}
-	else {
-		trans = &meshIter->second;
-	}
 	InstanceDrawData data = { transformIndex, meshPart->vertexFirst };
-	int newBatchCount = trans->batchCount + transformCount;
-	if (newBatchCount > trans->indices.size())
-		trans->indices.resize(newBatchCount);
-
-	for (int index = 0; index < transformCount; index++, data.instanceID++)
-		trans->indices[trans->batchCount + index] = data;
-	trans->batchCount = newBatchCount;
-	totalTransformIndexCount += transformCount;
-	return trans;
-}
-
-MeshTransformIndex* MeshTransformRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, MeshTransformIndex* transformIndex)
-{
-	if (!needUpdate || meshPart == NULL || material == NULL || transformIndex == NULL)
-		return NULL;
-	Guid guid = makeGuid(meshPart, material);
-	auto meshIter = meshTransformIndex.find(guid);
-	MeshTransformIndex* trans;
-	if (meshIter == meshTransformIndex.end()) {
-		trans = &meshTransformIndex.insert(pair<Guid, MeshTransformIndex>(guid,
-			MeshTransformIndex())).first->second;
-	}
-	else {
-		trans = &meshIter->second;
-	}
-	unsigned int size = trans->batchCount + transformIndex->batchCount;
-	if (size > trans->indices.size())
-		trans->indices.resize(size);
-	for (int i = trans->batchCount; i < size; i++) {
-		InstanceDrawData data = transformIndex->indices[i - trans->batchCount];
-		data.baseVertex = meshPart->vertexFirst;
-		trans->indices[i] = data;
-	}
-	trans->batchCount = size;
-	totalTransformIndexCount += transformIndex->batchCount;
-	return trans;
+	return meshTransformIndexArray.setTransformIndex(makeGuid(meshPart, material), data, transformIndex, transformCount);
 }
 
 void MeshTransformRenderData::loadDefaultResource()
@@ -153,11 +115,7 @@ void MeshTransformRenderData::create()
 	if (!needUpdate)
 		return;
 
-	unsigned int transformIndexBase = 0;
-	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
-		b->second.indexBase = transformIndexBase;
-		transformIndexBase += b->second.batchCount;
-	}
+	meshTransformIndexArray.processIndices();
 }
 
 void MeshTransformRenderData::release()
@@ -170,7 +128,7 @@ void MeshTransformRenderData::upload()
 		return;
 	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
 	unsigned int dataSize = meshTransformDataArray.batchCount;
-	unsigned int indexSize = totalTransformIndexCount;
+	unsigned int indexSize = meshTransformIndexArray.transformIndexCount;
 	transformInstanceBuffer.resize(indexSize);
 	transformBuffer.resize(dataSize);
 	if (meshTransformDataArray.updateAll) {
@@ -205,16 +163,9 @@ void MeshTransformRenderData::upload()
 			transformUploadIndexBuffer.resize(0);
 		}
 	}
-	vector<InstanceDrawData> instanceData;
-	instanceData.resize(indexSize);
-	int index = 0;
-	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++, index++) {
-		if (b->second.batchCount)
-			memcpy(&instanceData[b->second.indexBase], b->second.indices.data(), sizeof(InstanceDrawData) * b->second.batchCount);
-			/*transformInstanceBuffer.uploadSubData(b->second.indexBase, b->second.batchCount,
-				b->second.indices.data());*/
-	}
 
+	vector<InstanceDrawData> instanceData;
+	meshTransformIndexArray.fetchInstanceIndexData(instanceData);
 	transformInstanceBuffer.uploadData(indexSize, instanceData.data());
 
 	/*if (indexSize) {
@@ -255,10 +206,7 @@ void MeshTransformRenderData::clean()
 	if (!frequentUpdate && !delayUpdate)
 		return;
 	meshTransformDataArray.clean();
-	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
-		b->second.batchCount = 0;
-	}
-	totalTransformIndexCount = 0;
+	meshTransformIndexArray.clean();
 	needUpdate = true;
 	delayUpdate = false;
 }
@@ -271,12 +219,8 @@ void MeshTransformRenderData::cleanTransform(unsigned int base, unsigned int cou
 
 void MeshTransformRenderData::cleanPart(MeshPart* meshPart, Material* material)
 {
-	Guid guid = makeGuid(meshPart, material);
-	auto iter = meshTransformIndex.find(guid);
-	if (iter != meshTransformIndex.end()) {
+	if (meshTransformIndexArray.cleanPart(makeGuid(meshPart, material)))
 		needUpdate = true;
-		iter->second.batchCount = 0;
-	}
 }
 
 Material* SkeletonRenderData::uploadTransformMaterial = NULL;

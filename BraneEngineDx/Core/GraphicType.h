@@ -68,6 +68,8 @@ enum CubeFace
 struct BufferOption
 {
 	bool output = false;
+	unsigned int offset = 0;
+	unsigned int stride = (unsigned int)-1;
 };
 
 struct MipOption
@@ -144,15 +146,27 @@ enum CullType
 
 enum ShaderFeature
 {
-	Shader_Default		= 0,	Shader_Custom		= 1,
-	Shader_Deferred		= 2,	Shader_Custom_1		= 2 + 1,
-	Shader_Lighting		= 4,	Shader_Custom_2		= 4 + 1,
-	Shader_Postprocess	= 8,	Shader_Custom_3		= 8 + 1,
-	Shader_Skeleton		= 16,	Shader_Custom_4		= 16 + 1,
-	Shader_Morph		= 32,	Shader_Custom_5		= 32 + 1,
-	Shader_Particle		= 64,	Shader_Custom_6		= 64 + 1,
-	Shader_Modifier		= 128,	Shader_Custom_7		= 128 + 1,
-	Shader_Terrain		= 256,	Shader_Custom_8		= 256 + 1
+	Shader_Default		 = 0,
+	Shader_Deferred		 = 1 << 0,
+	Shader_Lighting		 = 1 << 1,
+	Shader_Postprocess	 = 1 << 2,
+	Shader_Skeleton		 = 1 << 3,
+	Shader_Morph		 = 1 << 4,
+	Shader_Particle		 = 1 << 5,
+	Shader_Modifier		 = 1 << 6,
+	Shader_Terrain		 = 1 << 7,
+	Shader_VSM			 = 1 << 8,
+	Shader_Custom_1		 = 1 << 9,
+	Shader_Custom_2		 = 1 << 10,
+	Shader_Custom_3		 = 1 << 11,
+	Shader_Custom_4		 = 1 << 12,
+	Shader_Custom_5		 = 1 << 13,
+	Shader_Custom_6		 = 1 << 14,
+	Shader_Custom_7		 = 1 << 15,
+	Shader_Custom_8		 = 1 << 16,
+	Shader_Custom_9		 = 1 << 17,
+	Shader_Feature_Count = 18,
+	Shader_Feature_Mask  = (1 << Shader_Feature_Count) - 1,
 };
 
 enum ShaderStageType

@@ -1,6 +1,7 @@
 #material
 #localsize 256 1 1
 #compute
+#condition custom1 VSM_HAS_CACHE
 #include "../../lib/VirtualShadowMap_Def.hmat"
 
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
@@ -18,6 +19,7 @@ void main(uint2 tid : SV_DispatchThreadID)
 
     const uint requestFlags = pageRequestFlags[globalPageOffset];
     if (requestFlags != 0) {
+#if defined(VSM_HAS_CACHE)
         uint prevVSMID = vsmPrevData[vsmID].vsmID;
         const int offsetScale = (VSM_L0_PAGES >> 2);
 		const int2 clipmapCornerOffsetDelta = offsetScale * vsmPrevData[vsmID].clipmapCornerOffsetDelta;
@@ -67,6 +69,7 @@ void main(uint2 tid : SV_DispatchThreadID)
                 }
             }
         }
+#endif
 
         if (resultPageFlags == 0U) {
             int requestIndex = 0;

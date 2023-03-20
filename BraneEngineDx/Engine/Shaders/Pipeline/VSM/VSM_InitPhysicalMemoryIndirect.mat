@@ -46,9 +46,9 @@ void main(uint2 tileID : SV_GroupThreadID, uint gidx : SV_GroupID)
 	VSMPhysPageMetaData metaData;
 	uint2 basePos = getTileBasePos(tileID, gidx, metaData);
 	
-	// Clear the page to zero
-	outPhysPagePool[basePos + uint2(0U, 0U)] = 1.0f;
-	outPhysPagePool[basePos + uint2(1U, 0U)] = 1.0f;
-	outPhysPagePool[basePos + uint2(0U, 1U)] = 1.0f;
-	outPhysPagePool[basePos + uint2(1U, 1U)] = 1.0f;
+	// Clear the page to 1.0
+	outPhysPagePool[basePos + uint2(0U, 0U)] = asuint(1.0f);
+	outPhysPagePool[basePos + uint2(1U, 0U)] = asuint(1.0f);
+	outPhysPagePool[basePos + uint2(0U, 1U)] = asuint(1.0f);
+	outPhysPagePool[basePos + uint2(1U, 1U)] = asuint(1.0f);
 }

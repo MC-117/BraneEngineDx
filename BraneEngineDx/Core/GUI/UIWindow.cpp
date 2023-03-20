@@ -42,7 +42,6 @@ void UIWindow::render(GUIRenderInfo& info)
 	for (auto b = styleFVars.begin(), e = styleFVars.end(); b != e; b++)
 		ImGui::PushStyleVar(b->first, b->second);
 	if (!ImGui::Begin(name.c_str(), showCloseButton ? &show : NULL, (backgroundTex == NULL || blurBackground) ? style : (style | ImGuiWindowFlags_NoBackground))) {
-		show = false;
 		ImGui::End();
 		ImGui::PopStyleVar(styleCount);
 		return;

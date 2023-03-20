@@ -117,18 +117,17 @@ struct VirtualShadowMapPrevData
 
 struct VirtualShadowMapFrameData
 {
-	GPUBuffer* vsmInfo = NULL;
-	GPUBuffer* pageTable = NULL;
-	GPUBuffer* pageFlags = NULL;
-	GPUBuffer* projData = NULL;
-	GPUBuffer* pageRect = NULL;
-	GPUBuffer* physPageMetaData = NULL;
+	GPUBuffer vsmInfo;
+	GPUBuffer pageTable;
+	GPUBuffer pageFlags;
+	GPUBuffer projData;
+	GPUBuffer pageRect;
+	GPUBuffer physPageMetaData;
 
+	VirtualShadowMapFrameData();
 	~VirtualShadowMapFrameData();
 
-	void create();
 	void release();
-	void swap(VirtualShadowMapFrameData& data);
 };
 
 class VirtualShadowMapShaders
@@ -138,7 +137,8 @@ public:
 	static ShaderProgram* initPageRectsProgram;
 	static ShaderProgram* generatePageFlagsFromPixelsProgram;
 	static ShaderProgram* initPhysicalPageMetaDataProgram;
-	static ShaderProgram* createCachedPageMappingsProgram;
+	static ShaderProgram* createCachedPageMappingsHasCacheProgram;
+	static ShaderProgram* createCachedPageMappingsNoCacheProgram;
 	static ShaderProgram* packFreePagesProgram;
 	static ShaderProgram* allocateNewPageMappingsProgram;
 	static ShaderProgram* generateHierarchicalPageFlagsProgram;
@@ -212,7 +212,6 @@ public:
 
 	static const ShaderPropertyName shadowDepthInstanceCounterName;
 
-	static const ShaderPropertyName outDrawInstanceInfosName;
 	static const ShaderPropertyName outVisiableInstanceInfosName;
 	static const ShaderPropertyName outVisiableInstanceCountName;
 	static const ShaderPropertyName outOffsetBufferCountName;
@@ -221,6 +220,9 @@ public:
 	static const ShaderPropertyName outputCommandListsIndirectArgsName;
 	static const ShaderPropertyName outShadowDepthIndirectArgsName;
 
+	static const ShaderPropertyName instanceIDsName;
+	static const ShaderPropertyName outInstanceIDsName;
+
 	static const ShaderPropertyName pageInfoName;
 	static const ShaderPropertyName outPageInfoName;
 
@@ -228,11 +230,38 @@ public:
 };
 
 class VirtualShadowMap;
+class VirtualShadowMapArray;
 
 struct VSMDrawInstanceInfo
 {
 	unsigned int instanceID;
+	unsigned int indirectArgIndex;
 };
+
+struct VSMInstanceDrawResource
+{
+	struct ExecutionOrder
+	{
+		bool operator()(const VSMInstanceDrawResource& t0, const VSMInstanceDrawResource& t1) const;
+		bool operator()(const VSMInstanceDrawResource* t0, const VSMInstanceDrawResource* t1) const;
+	};
+
+	IRenderData* transformData = NULL;
+	MaterialRenderData* materialData = NULL;
+	ShaderProgram* shaderProgram = NULL;
+	MeshData* meshData = NULL;
+	list<IRenderData*> extraData;
+};
+
+struct VSMnstanceIndexPayload
+{
+	IRenderData* transformData;
+	ShaderProgram* shaderProgram;
+	list<IRenderData*> bindings;
+};
+
+typedef TMeshTransformIndex<InstanceDrawData, VSMnstanceIndexPayload> VSMMeshTransformIndex;
+typedef TMeshTransformIndexArray<MeshMaterialGuid, InstanceDrawData, VSMnstanceIndexPayload> VSMMeshTransformIndexArray;
 
 class VirtualShadowMapManager
 {
@@ -283,11 +312,12 @@ public:
 		vector<ShadowMap*> shadowMaps;
 		vector<VSMDrawInstanceInfo> drawInstanceInfos;
 		vector<DrawElementsIndirectCommand> indirectCommands;
+		vector<VSMInstanceDrawResource> resources;
 
 		ShadowMap* setShadowMap(int index);
 
 		void updateClipmap();
-		void addMeshCommand(const DirectShadowRenderCommand& command);
+		void addMeshCommand(const VSMMeshTransformIndexArray::CallItem& callItem);
 		void markRendered(unsigned int frame);
 
 		void invalidate();
@@ -300,13 +330,14 @@ public:
 	};
 	GPUBuffer invalidationInfoBuffer;
 
-	VirtualShadowMapFrameData prevFrameData;
-	VirtualShadowMapInfo prevShadowMapInfo;
-
 	Texture2D poolTexture;
 	vector<ShadowMap*> pages;
 
 	VirtualShadowMapManager();
+
+	bool isCacheValid() const;
+
+	VirtualShadowMapFrameData& getCurFrameData();
 
 	void invalidate();
 	void setPoolTextureSize(Vector2u size);
@@ -318,10 +349,16 @@ public:
 	void bindPrevFrameData(IRenderContext& context);
 
 	void processInvalidations(IRenderContext& context, MeshTransformRenderData& transformData);
+
+	void swapFrameData(VirtualShadowMapArray& virtualShadowMapArray);
 protected:
 	unsigned int maxPageCount;
 	unordered_map<unsigned long long, LightEntry*> preShadowMaps;
 	unordered_map<unsigned long long, LightEntry*> curShadowMaps;
+	VirtualShadowMapFrameData frameData[2];
+	VirtualShadowMapFrameData* curFrameData;
+	VirtualShadowMapFrameData* prevFrameData;
+	VirtualShadowMapInfo prevShadowMapInfo;
 };
 
 class VirtualShadowMap
@@ -351,19 +388,15 @@ public:
 	};
 	GPUBuffer genPageFlagInfoBuffer;
 
-	VirtualShadowMapInfo vsmInfoUpload;
+	VirtualShadowMapInfo curFrameVSMInfo;
+
+	VirtualShadowMapFrameData* frameData = NULL;
 
 	GPUBuffer vsmPrevData;
-	GPUBuffer vsmInfo;
-	GPUBuffer projData;
-	GPUBuffer pageRect;
 	GPUBuffer pageRequestFlags;
 	vector<GPUBuffer*> directLightVSMIDs;
-	GPUBuffer pageTable;
-	GPUBuffer pageFlags;
 	GPUBuffer freePhysPages;
 	GPUBuffer physPageAllocRequests;
-	GPUBuffer physPageMetaData;
 	GPUBuffer allocPageRect;
 
 	GPUBuffer initPhysPagesIndirectArgs;
@@ -382,7 +415,6 @@ public:
 	{
 		unsigned int viewIndex;
 		VSMDrawInstanceInfo drawInfo;
-		unsigned int indirectArgIndex;
 	};
 
 	struct AllocCmdInfo
@@ -392,8 +424,8 @@ public:
 
 	struct CullingBatchInfo
 	{
-		CullingData data;
 		VirtualShadowMapManager::LightEntry* lightEntry;
+		CullingData data;
 		GPUBuffer cullingData;
 		GPUBuffer allocCmdInfo;
 
@@ -409,6 +441,7 @@ public:
 		GPUBuffer shadowDepthInstanceCounter;
 
 		GPUBuffer drawInstanceInfos;
+		GPUBuffer instanceIDs;
 		GPUBuffer pageInfo;
 
 		CullingBatchInfo();
@@ -416,6 +449,7 @@ public:
 
 	struct ShadowViewInfo
 	{
+		Matrix4f worldToLightClip;
 		Vector4i viewRect;
 		unsigned int vsmID;
 		unsigned int mipLevel;
@@ -428,17 +462,19 @@ public:
 	VirtualShadowMapArray();
 	~VirtualShadowMapArray();
 
-	void init(IRenderContext& context, VirtualShadowMapManager* manager);
+	void init(VirtualShadowMapManager& manager);
+
+	bool isAllocated() const;
 
 	VirtualShadowMap* allocate();
 
 	void buildPageAllocations(
 		IRenderContext& context,
-		Texture2D& sceneDepthMap,
-		Texture2D& sceneNormalMap,
 		const vector<CameraRenderData*>& cameraDatas,
 		const LightRenderData& lightData
 	);
+
+	void render(IRenderContext& context, const LightRenderData& lightData);
 
 	void clean();
 protected:

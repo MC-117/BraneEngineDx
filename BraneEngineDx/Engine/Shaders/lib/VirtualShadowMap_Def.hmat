@@ -40,6 +40,8 @@
 #define VSM_MAX_MIPS (VSM_LOG2_L0_PAGES + 1)
 #define VSM_MAX_SIZE (VSM_PAGE_SIZE * VSM_L0_PAGES)
 
+#define VSM_PAGE_SIZE_MASK (VSM_PAGE_SIZE - 1)
+
 #define NONE_VSMID -1
 
 // Log2 2D dimension of thread group size, 2^4 == 16, 
@@ -91,6 +93,11 @@ uint calcLog2LevelPages(uint level)
 uint calcLevelPages(uint level)
 {
 	return 1u << calcLog2LevelPages(level);
+}
+
+uint calcLevelTexels(uint level)
+{
+	return uint(VSM_MAX_SIZE) >> level;
 }
 
 uint calcPageTableLevelOffset(uint vsmID, uint level)
@@ -344,8 +351,8 @@ RWStructuredBuffer<uint> outFreePhysPages;
 RWStructuredBuffer<VSMPhysPageRequest> outPhysPageAllocRequests;
 RWStructuredBuffer<uint4> outAllocPageRect;
 
-DEF_TEX2D_AUTO(physPagePool);
-RWTexture2D<float> outPhysPagePool;
+DEF_TEX2D_UINT_AUTO(physPagePool);
+RWTexture2D<uint> outPhysPagePool;
 
 VSMProjData getVSMProjData(uint vsmID)
 {
@@ -422,10 +429,12 @@ float calcClipRadius(in TransformData data, float4x4 viewToClip)
 struct VSMDrawInstanceInfo
 {
 	uint instanceID;
+	uint indirectArgIndex;
 };
 
 struct ShadowViewInfo
 {
+	float4x4 worldToLightClip;
 	int4 viewRect;
 	uint vsmID;
 	uint mipLevel;
@@ -437,5 +446,205 @@ struct VisiableInstanceInfo
 {
 	uint viewIndex;
 	VSMDrawInstanceInfo drawInfo;
-	uint indirectArgIndex;
 };
+
+struct DefaultVSMVertexOut
+{
+    float4x4 TransMat : TRANSMAT;
+    float4 clipPos : SV_POSITION;
+    float4 pageClipPos : PAGECLIP;
+    float2 TexCoords : TEXCOORD;
+    uint InstanceID : INSTANCEID;
+    nointerpolation uint viewIndex : PAGEINFO;
+};
+
+StructuredBuffer<ShadowViewInfo> shadowViewInfos;
+StructuredBuffer<uint> instanceIDs;
+StructuredBuffer<uint> pageInfo;
+
+void scaleBiasClipToPhysPage(ShadowViewInfo viewInfo, inout float4 clipPos, inout float4 pageClipPos)
+{
+	float2 vClip = clipPos.xy;
+	float2 vUV = vClip * float2(0.5, -0.5) + 0.5 * clipPos.w;
+	float2 vPixels = vUV * ( uint(VSM_MAX_SIZE) >> viewInfo.mipLevel );
+
+	{
+		float2 scale = exp2( -viewInfo.mipLevel );
+		clipPos.xy *= scale;
+		clipPos.xy += ( scale * float2(1,-1) + float2(-1,1) ) * clipPos.w;
+	}
+
+	{
+		// Clip to allocated page rect
+		uint4 rect = pageRect[ viewInfo.vsmID * VSM_MAX_MIPS + viewInfo.mipLevel ];
+
+		float2 minClip =  vPixels - ( rect.xy + 0 ) * VSM_PAGE_SIZE * clipPos.w;
+		float2 maxClip = -vPixels + ( rect.zw + 1 ) * VSM_PAGE_SIZE * clipPos.w;
+
+		pageClipPos.xy = minClip;
+		pageClipPos.zw = maxClip;
+	}
+}
+
+void transformToVirtualPage(inout float4 clipPos, inout float4 pageClipPos, uint viewIndex, float3 worldPos)
+{
+    ShadowViewInfo viewInfo = shadowViewInfos[viewIndex];
+
+	clipPos = mul( float4( worldPos, 1 ), viewInfo.worldToLightClip );
+
+	scaleBiasClipToPhysPage(viewInfo, clipPos, pageClipPos);
+}
+
+float vsmSamplePhysDepth(uint2 physTexelAddress)
+{
+	return asfloat(physPagePool.Load(uint4(physTexelAddress, 0, 0)));
+}
+
+struct VSMClipmapRelativeTransform
+{
+	float scale;
+	float3 bias;
+};
+
+VSMClipmapRelativeTransform calcClipmapRelativeTransform(int clipmapId, int levelOffset)
+{
+	const VSMProjData projDataA = getVSMProjData(clipmapId);
+	const VSMProjData projDataB = getVSMProjData(clipmapId + levelOffset);
+
+	float2 offsetA = float2(projDataA.clipmapOffset);
+	float2 offsetB = float2(projDataB.clipmapOffset);
+
+	VSMClipmapRelativeTransform result;
+	result.scale = levelOffset >= 0 ? rcp(float(1U << levelOffset)) : float(1U << (-levelOffset));
+	result.bias.xy = 0.25f * (offsetB - result.scale * offsetA);
+
+	// NOTE: relative Z bias can change when caching is enabled due to cached levels pinning the depth range
+	float offsetZA = projDataA.viewToClip[3][2];
+	float offsetZB = projDataB.viewToClip[3][2];
+	result.bias.z = offsetZB - result.scale * offsetZA;
+
+	return result;
+}
+
+// Transforms a virtual page in a given clipmap level to a page in the offset coarser level
+// This offset must be positive or else the page would not be guaranteed to exist in the target level
+// This is done entirely in integer math as well to avoid precision issues when looking up coarser fallback pages
+uint2 calcClipmapOffsetLevelPage(uint2 basePage, int clipmapId, uint levelOffset)
+{
+	const VSMProjData projDataA = getVSMProjData(clipmapId);
+	const VSMProjData projDataB = getVSMProjData(clipmapId + levelOffset);
+
+	const int offsetScale = (VSM_L0_PAGES >> 2);
+	int2 basePageOffset  = offsetScale * projDataA.clipmapOffset;
+	int2 levelPageOffset = offsetScale * projDataB.clipmapOffset;
+	return (basePage - basePageOffset + (levelPageOffset << levelOffset)) >> levelOffset;
+}
+
+struct VSMSample
+{
+	float depth;
+	uint vsmID;
+};
+
+bool vsmSampleClipmap(int vsmID, float2 shadowUV, out VSMSample vsmSample)
+{
+	uint2 basePage = uint2(shadowUV * VSM_L0_PAGES);
+	VSMPhysPage physPage = vsmGetPhysicalPage(calcPageOffset(vsmID, 0, basePage));
+	if (physPage.isAnyLODValid) {	
+		uint clipmapLevelOffset = physPage.lodOffset;
+		int clipmapLevelId = vsmID + clipmapLevelOffset;
+
+		uint2 virtualTexelAddress = uint2(shadowUV * float(calcLevelTexels(0)));
+		float depthLevelScale = 1.0f;
+		float depthLevelBias = 0.0f;
+
+		// Need to use a coarser clipmap to find a valid page
+		if (clipmapLevelOffset > 0)
+		{
+			// Compute the virtual page in the offset level by integer math and clamp to the edges to avoid any precision
+			// issues at borders that may cause us to miss the mapped page.
+			uint2 vPage = calcClipmapOffsetLevelPage(basePage, vsmID, clipmapLevelOffset);
+			uint2 virtualTexelAddressMin = vPage * VSM_PAGE_SIZE;
+			uint2 virtualTexelAddressMax = virtualTexelAddressMin + (VSM_PAGE_SIZE - 1);
+
+			VSMClipmapRelativeTransform transform = calcClipmapRelativeTransform(vsmID, clipmapLevelOffset);
+			float2 clipmapUV = shadowUV * transform.scale + transform.bias.xy;
+			depthLevelScale = transform.scale;
+			depthLevelBias = transform.bias.z;
+
+			// NOTE: Do not clamp the float address as it messes with optimal slope bias calculations
+			virtualTexelAddress = clamp(uint2(clipmapUV * float(calcLevelTexels(0))), virtualTexelAddressMin, virtualTexelAddressMax);
+
+			physPage = vsmGetPhysicalPage(calcPageOffset(clipmapLevelId, 0, vPage));
+			vsmSample.vsmID = clipmapLevelId;
+		}
+
+		// NOTE: This really should be valid if we got here
+		if (physPage.isAnyLODValid) {
+			uint2 physTexelAddress = 
+				physPage.physAddress * VSM_PAGE_SIZE +
+				(virtualTexelAddress & VSM_PAGE_SIZE_MASK);
+
+			// Convert depth into back into the original reference clipmap level range
+			vsmSample.depth = (vsmSamplePhysDepth(physTexelAddress) - depthLevelBias) / depthLevelScale;
+			return true;
+		}
+	}
+	return false;
+}
+
+// float computeVSMOptimalSlopeBias(
+// 	// Used to compare to the sampled SmSample.VirtualShadowMapId to adjust depth scale for clipmaps
+// 	int requestVSMID,
+// 	VSMSample vsmSample,
+// 	float3 worldPos,
+// 	float3 EstimatedGeoWorldNormal,
+// 	bool bClamp = true)
+// {
+// 	VSMProjData projData = getVSMProjData(vsmSample.vsmID);
+
+// 	// Transform geometry world-space plane eq to shadow 'UV' texture space [0-1] ranges
+// 	float4 NormalPlaneTranslatedWorld = float4(EstimatedGeoWorldNormal, -dot(EstimatedGeoWorldNormal, worldPos));
+// 	float4 NormalPlaneUV = mul(NormalPlaneTranslatedWorld, projData.worldToUV);
+
+// 	float2 DepthSlopeUV = -NormalPlaneUV.xy / NormalPlaneUV.z;
+// 	float MipLevelDim = float(calcLevelTexels(vsmSample.MipLevel));
+// 	float2 TexelCenter = float2(vsmSample.VirtualTexelAddress) + 0.5f;
+// 	float2 TexelCenterOffset = TexelCenter - vsmSample.VirtualTexelAddressFloat;
+// 	float2 TexelCenterOffsetUV = TexelCenterOffset / MipLevelDim;
+// 	// 2x factor due to lack of precision (probably)
+// 	float OptimalSlopeBias = 2.0f * max(0.0f, dot(DepthSlopeUV, TexelCenterOffsetUV));
+	
+// 	// Clamp to avoid excessive degenerate slope biases causing flickering lit pixels
+// 	OptimalSlopeBias = bClamp ? min(OptimalSlopeBias, abs(100.0f * projData.ShadowViewToClipMatrix._33)) : OptimalSlopeBias;
+
+// 	// Adjust depth scale if we sampled a different clipmap level
+// 	// NOTE: Sampled clipmap should always be >= the requested one (coarser)
+// 	// Do this after clamping to be consistent in world space
+// 	OptimalSlopeBias *= float(1u << (vsmSample.vsmID - requestVSMID));
+
+// 	return OptimalSlopeBias;
+// }
+
+float vsmSampleDirectShadow(int vsmID, float3 worldPos)
+{
+	if (vsmID != NONE_VSMID) {
+		VSMProjData baseProjData = getVSMProjData(vsmID);
+		const int firstClipmapLevel = baseProjData.clipmapLevel;
+		const int clipmapLevel = calcClipmapLevel(baseProjData, worldPos);
+		int clipmapIndex = max(0, clipmapLevel - firstClipmapLevel);
+
+		if (clipmapIndex < baseProjData.clipmapCount) {
+			int clipmapVSMID = vsmID + clipmapIndex;
+			VSMProjData projData = getVSMProjData(clipmapVSMID);
+
+			float4 shadowUVz = mul(float4(worldPos, 1.0f), projData.worldToUV);
+
+			VSMSample vsmSample;
+			if (vsmSampleClipmap(vsmID, shadowUVz.xy, vsmSample)) {
+				return shadowUVz.z > vsmSample.depth ? 0.0f : 1.0f;
+			}
+		}
+	}
+	return 1.0f;
+}

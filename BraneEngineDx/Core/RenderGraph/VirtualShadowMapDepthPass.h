@@ -1,6 +1,7 @@
 #pragma once
 
-#include "MeshPass.h"
+#include "../RenderCore/SurfaceBufferGetter.h"
+#include "../RenderCore/VirtualShadowMap/VirtualShadowMapRenderData.h"
 
 class VirtualShadowMapDepthPass: public RenderPass
 {
@@ -13,6 +14,8 @@ public:
 
 	virtual void getOutputTextures(vector<pair<string, Texture*>>& textures);
 protected:
+	static Material* vsmMaterial;
+	static void loadDefaultResource();
 	Timer timer;
 	vector<pair<string, Texture*>> outputTextures;
 };

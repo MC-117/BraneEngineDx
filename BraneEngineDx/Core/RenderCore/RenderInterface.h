@@ -10,6 +10,7 @@ class Texture;
 struct MeshPart;
 struct MeshData;
 struct ShaderProgram;
+class CameraRender;
 class RenderTask;
 class SceneRenderData;
 class RenderCommandList;
@@ -21,6 +22,19 @@ struct IRenderData
 	virtual void release() = 0;
 	virtual void upload() = 0;
 	virtual void bind(IRenderContext& context) = 0;
+};
+
+struct ISurfaceBuffer
+{
+	vector<bool> getterFlags;
+	long long usedFrame = -1;
+
+	virtual void create(CameraRender* cameraRender) = 0;
+	virtual void resize(unsigned int width, unsigned int height) = 0;
+	virtual void bind(IRenderContext& context) = 0;
+
+	virtual RenderTarget* getRenderTarget() = 0;
+	virtual Texture* getDepthTexture() = 0;
 };
 
 struct IRenderPack;
@@ -81,6 +95,7 @@ public:
 
 	unordered_set<SceneRenderData*> sceneDatas;
 
+	virtual ISurfaceBuffer* newSurfaceBuffer() = 0;
 	virtual bool setRenderCommand(const IRenderCommand& cmd) = 0;
 	virtual void setImGuiDrawData(ImDrawData* drawData) = 0;
 	virtual void addPass(RenderPass& pass) = 0;

@@ -3,6 +3,11 @@
 
 SerializeInstance(ForwardRenderGraph);
 
+ISurfaceBuffer* ForwardRenderGraph::newSurfaceBuffer()
+{
+	return nullptr;
+}
+
 bool ForwardRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 {
 	if (cmd.sceneData)

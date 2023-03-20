@@ -183,12 +183,126 @@ struct MatrixUploadOp
 typedef TMeshTransformDataArray<MeshTransformData, MeshTransformDataUploadOp> MeshTransformDataArray;
 typedef TMeshTransformDataArray<Matrix4f, MatrixUploadOp> SkeletonTransformArray;
 
-struct MeshTransformIndex
+struct MeshTransformVoidPayload
 {
-	vector<InstanceDrawData> indices;
+
+};
+
+template<class T, class P = MeshTransformVoidPayload>
+struct TMeshTransformIndex
+{
+	vector<T> indices;
 	unsigned int batchCount = 0;
 	unsigned int indexBase = 0;
+	P payload;
 };
+
+template<class K, class T, class P = MeshTransformVoidPayload>
+struct TMeshTransformIndexArray
+{
+	using CallMap = map<K, TMeshTransformIndex<T, P>>;
+	using CallItem = pair<const K, TMeshTransformIndex<T, P>>;
+
+	CallMap meshTransformIndex;
+	unsigned int transformIndexCount = 0;
+
+	TMeshTransformIndex<T, P>* getTransformIndex(const K& guid);
+	TMeshTransformIndex<T, P>* setTransformIndex(const K& guid, const T& data, unsigned int transformIndex, unsigned int transformCount = 1);
+	
+	void processIndices();
+
+	void fetchInstanceIndexData(vector<T>& data);
+
+	void clean();
+	bool cleanPart(const K& guid);
+};
+
+template<class K, class T, class P>
+inline TMeshTransformIndex<T, P>* TMeshTransformIndexArray<K, T, P>::getTransformIndex(const K& guid)
+{
+	auto meshIter = meshTransformIndex.find(guid);
+	if (meshIter != meshTransformIndex.end())
+		return &meshIter->second;
+	return NULL;
+}
+
+template<class K, class T, class P>
+inline TMeshTransformIndex<T, P>* TMeshTransformIndexArray<K, T, P>::setTransformIndex(const K& guid, const T& data, unsigned int transformIndex, unsigned int transformCount)
+{
+	auto meshIter = meshTransformIndex.find(guid);
+	TMeshTransformIndex<T, P>* trans;
+	if (meshIter == meshTransformIndex.end()) {
+		trans = &meshTransformIndex.insert(pair<K, TMeshTransformIndex<T, P>>(guid,
+			TMeshTransformIndex<T, P>())).first->second;
+	}
+	else {
+		trans = &meshIter->second;
+	}
+	int newBatchCount = trans->batchCount + transformCount;
+	if (newBatchCount > trans->indices.size())
+		trans->indices.resize(newBatchCount);
+
+	T _data = data;
+	for (int index = 0; index < transformCount; index++, ++_data) {
+		trans->indices[trans->batchCount + index] = _data;
+	}
+	trans->batchCount = newBatchCount;
+	transformIndexCount += transformCount;
+	return trans;
+}
+
+template<class K, class T, class P>
+inline void TMeshTransformIndexArray<K, T, P>::processIndices()
+{
+	unsigned int transformIndexBase = 0;
+	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
+		b->second.indexBase = transformIndexBase;
+		transformIndexBase += b->second.batchCount;
+	}
+}
+
+template<class K, class T, class P>
+inline void TMeshTransformIndexArray<K, T, P>::fetchInstanceIndexData(vector<T>& data)
+{
+	data.resize(transformIndexCount);
+	int index = 0;
+	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++, index++) {
+		if (b->second.batchCount)
+			memcpy(&data[b->second.indexBase], b->second.indices.data(), sizeof(T) * b->second.batchCount);
+	}
+}
+
+template<class K, class T, class P>
+inline void TMeshTransformIndexArray<K, T, P>::clean()
+{
+	for (auto b = meshTransformIndex.begin(), e = meshTransformIndex.end(); b != e; b++) {
+		b->second.batchCount = 0;
+	}
+	transformIndexCount = 0;
+}
+
+template<class K, class T, class P>
+inline bool TMeshTransformIndexArray<K, T, P>::cleanPart(const K& guid)
+{
+	auto iter = meshTransformIndex.find(guid);
+	if (iter != meshTransformIndex.end()) {
+		iter->second.batchCount = 0;
+		return true;
+	}
+	return false;
+}
+
+struct MeshMaterialGuid
+{
+	MeshPart* meshPart = NULL;
+	Material* material = NULL;
+
+	MeshMaterialGuid(MeshPart* meshPart, Material* material);
+	bool operator<(const MeshMaterialGuid& guid) const;
+};
+
+typedef TMeshTransformIndex<InstanceDrawData> MeshTransformIndex;
+typedef TMeshTransformIndexArray<MeshMaterialGuid, InstanceDrawData> MeshTransformIndexArray;
 
 struct MeshTransformRenderData : public IRenderData
 {
@@ -197,13 +311,12 @@ struct MeshTransformRenderData : public IRenderData
 	static Material* uploadInstanceDataMaterial;
 	static ShaderProgram* uploadInstanceDataProgram;
 
-	unsigned int totalTransformIndexCount = 0;
 	bool frequentUpdate = true;
 	bool delayUpdate = false;
 	bool needUpdate = true;
 
 	MeshTransformDataArray meshTransformDataArray;
-	map<Guid, MeshTransformIndex> meshTransformIndex;
+	MeshTransformIndexArray meshTransformIndexArray;
 
 	GPUBuffer transformUploadBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(MeshTransformDataArray::DataType));
 	GPUBuffer transformUploadIndexBuffer = GPUBuffer(GB_Storage, GBF_UInt);
@@ -219,7 +332,6 @@ struct MeshTransformRenderData : public IRenderData
 	unsigned int setMeshTransform(const vector<MeshTransformDataArray::DataType>& datas);
 	MeshTransformIndex* getMeshPartTransform(MeshPart* meshPart, Material* material);
 	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount = 1);
-	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, MeshTransformIndex* transformIndex);
 
 	static void loadDefaultResource();
 

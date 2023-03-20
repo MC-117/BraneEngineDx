@@ -121,5 +121,7 @@ public:
 	virtual void execteMeshDraw(IRenderExecution* execution, const vector<DrawElementsIndirectCommand>& cmds);
 	virtual void execteImGuiDraw(ImDrawData* drawData);
 
+	virtual bool drawMeshIndirect(IGPUBuffer* argBuffer, unsigned int byteOffset);
+
 	virtual void submit();
 };

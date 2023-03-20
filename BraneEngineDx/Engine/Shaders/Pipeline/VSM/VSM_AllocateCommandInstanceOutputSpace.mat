@@ -10,7 +10,7 @@ cbuffer AllocCmdInfo
 
 Buffer<uint> shadowDepthIndirectArgs;
 RWBuffer<uint> outOffsetBufferCount;
-RWStructuredBuffer<uint> outShadowDepthInstanceOffset;
+RWStructuredBuffer<uint2> outShadowDepthInstanceOffset;
 RWStructuredBuffer<uint> shadowDepthInstanceCounter;
 
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
@@ -18,12 +18,14 @@ void main(uint argIdx : SV_DispatchThreadID)
 {
 	if (argIdx < indirectArgCount)
 	{
-		uint insCount = shadowDepthIndirectArgs[argIdx * DRAW_ELEMENT_INDIRECT_ARGS + DRAW_INDIRECT_INS_COUNT_IDX];
+        const uint argsBase = argIdx * DRAW_ELEMENT_INDIRECT_ARGS;
+		uint insCount = shadowDepthIndirectArgs[argsBase + DRAW_INDIRECT_INS_COUNT_IDX];
+		uint vtxBase = shadowDepthIndirectArgs[argsBase + DRAW_ELEMENT_INDIRECT_BASE_VTX_IDX];
         uint insOffset = 0U;
         if (insCount > 0U) {
             InterlockedAdd(outOffsetBufferCount[0], insCount, insOffset);
         }
-        outShadowDepthInstanceOffset[argIdx] = insOffset;
+        outShadowDepthInstanceOffset[argIdx] = uint2(insOffset, vtxBase);
         shadowDepthInstanceCounter[argIdx] = insOffset;
 	}
 }

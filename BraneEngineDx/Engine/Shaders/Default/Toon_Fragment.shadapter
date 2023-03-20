@@ -2,6 +2,7 @@
 #fragment
 #condition deferred
 #condition lighting
+#condition lighting.vsm
 #include "../lib/Light_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 
@@ -48,11 +49,19 @@ FS_DEF_OUT_END
 
 #include "../lib/Surface_Def.hmat"
 
+#if defined(VSM_SHADER_FEATURE)
+#include "../lib/VirtualShadowMap_Def.hmat"
+#endif
+
 #ifndef DEFERRED_SHADER_FEATURE
 float getShadow(in DirectLight directLight, in Surface surf)
 {
+    #if defined(VSM_SHADER_FEATURE)
+    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos);
+    #else
     return ShadowCalculation(depthMap, depthMapSampler,
         surf.WorldPos, surf.Normal, directLight);
+    #endif
 }
 #endif
 

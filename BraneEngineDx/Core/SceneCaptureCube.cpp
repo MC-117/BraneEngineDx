@@ -87,6 +87,11 @@ void SceneCaptureCube::render(RenderInfo& info)
 		cameraRender->cameraData.fovy = 90;
 		cameraRender->cameraData.aspect = 1;
 		cameraRender->clearColor = clearColor;
+		CameraRenderData* cameraRenderData = cameraRender->getRenderData();
+		if (cameraRenderData->surfaceBuffer == NULL) {
+			cameraRenderData->surfaceBuffer = info.renderGraph->newSurfaceBuffer();
+			cameraRenderData->surfaceBuffer->resize(cameraRender->size.x, cameraRender->size.y);
+		}
 		info.sceneData->setCamera(cameraRender);
 	}
 }

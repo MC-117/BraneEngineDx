@@ -15,6 +15,8 @@ struct DirectLightShadowData
 	CameraData cameraData;
 };
 
+class VirtualShadowMapClipmap;
+
 class DirectLight : public Light
 {
 public:
@@ -53,6 +55,7 @@ public:
 	virtual bool serialize(SerializationInfo& to);
 protected:
 	int directionIdx = -1;
+	VirtualShadowMapClipmap* virtualShadowMapClipmap = NULL;
 	Matrix4f worldToLightViewMatrix = Matrix4f::Identity();
 	Matrix4f viewToLightClipMatrix = Matrix4f::Identity();
 	Matrix4f worldToLightClipMatrix = Matrix4f::Identity();

@@ -16,6 +16,8 @@ struct DirectLight
     float3 direction;
     float intensity;
     float4 shadowBias;
+    int vsmID;
+    float3 pad;
     float3 color;
 };
 

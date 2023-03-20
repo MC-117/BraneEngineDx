@@ -53,6 +53,10 @@ void CameraRenderData::create()
 		hitData->resize(data.viewSize.x(), data.viewSize.y());
 		hitData->create();
 	}
+
+	if (surfaceBuffer) {
+		surfaceBuffer->create(cameraRender);
+	}
 }
 
 void CameraRenderData::release()

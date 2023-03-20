@@ -15,6 +15,8 @@ struct MainLightData
 	Vector3f direction;
 	float intensity = 0;
 	Vector4f shadowBias;
+	int vsmID;
+	float pad[3];
 	Vector3f color;
 	unsigned int pointLightCount = 0;
 };
@@ -39,6 +41,7 @@ struct LightRenderData : public IRenderData
 	CameraRenderData shadowCameraRenderData;
 
 	void setLight(Light* light);
+	void addVirtualShadowMapClipmap(VirtualShadowMapClipmap& clipmap);
 	virtual void create();
 	virtual void release();
 	virtual void upload();

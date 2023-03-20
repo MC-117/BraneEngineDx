@@ -1,5 +1,5 @@
 #include "Basic_VS_Lib.hmat"
-#define SKELETON_MAIN main(uint2 ins : INS, float3 pos : POSITION, float2 uv : TEXCOORD, float3 norm : NORMAL, uint4 boneId : BONEINDEX, float4 weights : BONEWEIGHT, uint vertexID : SV_VertexID)
+#define SKELETON_MAIN main(uint2 ins : INS, float3 pos : POSITION, float2 uv : TEXCOORD, float3 norm : NORMAL, uint4 boneId : BONEINDEX, float4 weights : BONEWEIGHT, uint vertexID : SV_VertexID, uint localInsID : SV_InstanceID)
 
 StructuredBuffer<float4x4> BoneTransforms;
 

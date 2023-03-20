@@ -26,6 +26,7 @@ void LightRenderData::setLight(Light* light)
 		mainLightData.worldToLightClip = MATRIX_UPLOAD_OP(directLight->getWorldToLightClipMatrix());
 		mainLightData.shadowBias = directLight->getShadowBias();
 		mainLightData.color = toLinearColor(directLight->color);
+		mainLightData.vsmID = -1;
 		shadowCameraRenderData.data = directLight->shadowData.cameraData;
 		shadowCameraRenderData.surface.clearFlags = Clear_Depth;
 		shadowCameraRenderData.surface.renderTarget = shadowTarget;
@@ -47,6 +48,11 @@ void LightRenderData::setLight(Light* light)
 void LightRenderData::create()
 {
 	mainLightData.pointLightCount = pointLightDatas.size();
+}
+
+void LightRenderData::addVirtualShadowMapClipmap(VirtualShadowMapClipmap& clipmap)
+{
+	mainLightClipmaps.push_back(&clipmap);
 }
 
 void LightRenderData::release()
@@ -74,4 +80,5 @@ void LightRenderData::clean()
 	shadowTarget = NULL;
 	mainLightData.pointLightCount = 0;
 	pointLightDatas.clear();
+	mainLightClipmaps.clear();
 }

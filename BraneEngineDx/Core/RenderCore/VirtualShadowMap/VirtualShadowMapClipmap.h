@@ -15,7 +15,7 @@ public:
 	VirtualShadowMapManager::LightEntry* getLightEntry() const;
 	CameraRenderData* getCameraRenderData() const;
 
-	void addMeshCommand(const DirectShadowRenderCommand& command);
+	void addMeshCommand(const VSMMeshTransformIndexArray::CallItem& callItem);
 
 	void getProjectData(unsigned int clipmapIndex, VirtualShadowMapProjectionData& projData) const;
 protected:

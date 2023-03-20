@@ -5,6 +5,7 @@
 #include "MeshRenderPack.h"
 #include "ReflectionProbeRenderData.h"
 #include "EnvLightData.h"
+#include "VirtualShadowMap/VirtualShadowMapRenderData.h"
 
 class Render;
 
@@ -19,6 +20,7 @@ public:
 	ReflectionProbeRenderData reflectionProbeDataPack;
 	EnvLightProbeRenderData envLightProbeDataPack;
 	EnvLightRenderData envLightDataPack;
+	VirtualShadowMapRenderData virtualShadowMapRenderData;
 
 	SceneRenderData();
 
@@ -31,13 +33,11 @@ public:
 	unsigned int setMeshTransform(const vector<MeshTransformData>& datas);
 	MeshTransformIndex* getMeshPartTransform(MeshPart* meshPart, Material* material);
 	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount = 1);
-	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex);
 
 	unsigned int setStaticMeshTransform(const MeshTransformData& data);
 	unsigned int setStaticMeshTransform(const vector<MeshTransformData>& datas);
 	MeshTransformIndex* getStaticMeshPartTransform(MeshPart* meshPart, Material* material);
-	MeshTransformIndex* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex);
-	MeshTransformIndex* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, void* transformIndex);
+	MeshTransformIndex* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount = 1);
 	void cleanStaticMeshTransform(unsigned int base, unsigned int count);
 	void cleanStaticMeshPartTransform(MeshPart* meshPart, Material* material);
 

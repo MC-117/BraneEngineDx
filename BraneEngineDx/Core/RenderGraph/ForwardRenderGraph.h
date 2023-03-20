@@ -17,6 +17,7 @@ public:
 
 	list<RenderPass*> passes;
 
+	virtual ISurfaceBuffer* newSurfaceBuffer();
 	virtual bool setRenderCommand(const IRenderCommand& cmd);
 	virtual void setImGuiDrawData(ImDrawData* drawData);
 	virtual void addPass(RenderPass& pass);

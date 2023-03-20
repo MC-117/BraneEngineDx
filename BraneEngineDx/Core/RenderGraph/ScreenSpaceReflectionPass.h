@@ -1,25 +1,12 @@
 #pragma once
 
 #include "../RenderCore/RenderCommandList.h"
-#include "../RenderTarget.h"
+#include "../RenderCore/SurfaceBufferGetter.h"
 
 class ScreenSpaceReflectionPass : public RenderPass
 {
 public:
 	bool enable = true;
-	SceneRenderData* sceneData = NULL;
-	CameraRenderData* cameraData = NULL;
-
-	Texture* gBufferA = NULL;
-	Texture* gBufferB = NULL;
-	Texture* gBufferC = NULL;
-	Texture* gBufferE = NULL;
-	Texture* hiZMap = NULL;
-
-	Texture* hitDataMap = NULL;
-	Texture* hitColorMap = NULL;
-	RenderTarget* traceRenderTarget = NULL;
-	RenderTarget* resolveRenderTarget = NULL;
 
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);
@@ -27,6 +14,7 @@ public:
 
 	virtual void getOutputTextures(vector<pair<string, Texture*>>& textures);
 protected:
+	vector<pair<string, Texture*>> outputTextures;
 	Timer timer;
 
 	bool useComputeShader = false;

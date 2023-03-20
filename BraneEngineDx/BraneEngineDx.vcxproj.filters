@@ -1347,6 +1347,12 @@
     <ClInclude Include="Core\RenderGraph\VirtualShadowMapDepthPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMapRenderData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderCore\SurfaceBufferGetter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -2511,6 +2517,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderGraph\VirtualShadowMapDepthPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMapRenderData.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

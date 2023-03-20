@@ -3,7 +3,7 @@
 
 void ScreenSpaceReflectionPass::prepare()
 {
-	if (!enable || gBufferA == NULL)
+	if (!enable)
 		return;
 	if (useComputeShader) {
 		if (computeMaterial == NULL) {
@@ -43,9 +43,10 @@ void ScreenSpaceReflectionPass::prepare()
 
 void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 {
+	if (!enable)
+		return;
 	if (useComputeShader) {
-		if (!enable || computeProgram == NULL || cameraData == NULL || gBufferA == NULL || gBufferB == NULL ||
-			gBufferC == NULL || hiZMap == NULL || hitDataMap == NULL || hitColorMap == NULL)
+		if (computeProgram == NULL)
 			return;
 
 		static const ShaderPropertyName inTexture0Name = "inTexture0";
@@ -70,58 +71,88 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 
 		const ShaderPropertyName& outGBufferASlot = rwTexture1Name;
 
-		int width = gBufferA->getWidth();
-		int height = gBufferA->getHeight();
-		int hiZWidth = hiZMap->getWidth();
-		int hiZHeight = hiZMap->getHeight();
-		Color hiZUVScale = { width * 0.5f / hiZWidth, height * 0.5f / hiZHeight, 2.0f / width, 2.0f / height };
-		Vector3u localSize = computeMaterial->getLocalSize();
-		int dimX = ceilf(width / float(localSize.x())) * localSize.x();
-		int dimY = ceilf(height / float(localSize.y())) * localSize.y();
+		for (auto sceneData : renderGraph->sceneDatas) {
+			for (auto cameraData : sceneData->cameraRenderDatas) {
+				IGBufferGetter* gbufferGetter = dynamic_cast<IGBufferGetter*>(cameraData->surfaceBuffer);
+				IHiZBufferGetter* hiZGetter = dynamic_cast<IHiZBufferGetter*>(cameraData->surfaceBuffer);
+				IScreenSpaceReflectionBufferGetter* ssrGetter = dynamic_cast<IScreenSpaceReflectionBufferGetter*>(cameraData->surfaceBuffer);
+				if (gbufferGetter == NULL || ssrGetter == NULL)
+					continue;
 
-		context.bindShaderProgram(computeProgram);
+				Texture* gBufferA = gbufferGetter->getGBufferA();
+				Texture* gBufferB = gbufferGetter->getGBufferB();
+				Texture* gBufferC = gbufferGetter->getGBufferC();
+				Texture* gBufferE = gbufferGetter->getGBufferE();
 
-		sceneData->bind(context);
+				Texture* hiZMap = hiZGetter->getHiZTexture();
 
-		cameraData->bind(context);
+				Texture* hitDataMap = ssrGetter->getHitDataTexture();
+				Texture* hitColorMap = ssrGetter->getHitColorTexture();
+				RenderTarget* traceRenderTarget = ssrGetter->getTraceRenderTarget();
+				RenderTarget* resolveRenderTarget = ssrGetter->getResolveRenderTarget();
 
-		computeMaterialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val = hiZUVScale;
-		computeMaterialRenderData.upload();
-		context.bindMaterialBuffer(computeMaterialRenderData.vendorMaterial);
-		context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferASlot);
-		context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBSlot);
-		context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCSlot);
-		context.bindTexture((ITexture*)gBufferE->getVendorTexture(), gBufferESlot);
-		context.bindTexture((ITexture*)hiZMap->getVendorTexture(), hiZMapSlot);
+				if (gBufferA == NULL || gBufferB == NULL || gBufferC == NULL ||
+					hiZMap == NULL || hitDataMap == NULL || hitColorMap == NULL ||
+					traceRenderTarget == NULL || resolveRenderTarget == NULL)
+					continue;
 
-		Image image0, image1;
-		image0.level = 0;
-		image1.level = 0;
-		image0.texture = hitDataMap;
-		image1.texture = hitColorMap;
-		context.bindImage(image0, hitDataMapSlot);
-		context.bindImage(image1, hitColorMapSlot);
+				int width = gBufferA->getWidth();
+				int height = gBufferA->getHeight();
+				int hiZWidth = hiZMap->getWidth();
+				int hiZHeight = hiZMap->getHeight();
+				Color hiZUVScale = { width * 0.5f / hiZWidth, height * 0.5f / hiZHeight, 2.0f / width, 2.0f / height };
+				Vector3u localSize = computeMaterial->getLocalSize();
+				int dimX = ceilf(width / float(localSize.x())) * localSize.x();
+				int dimY = ceilf(height / float(localSize.y())) * localSize.y();
 
-		context.setDrawInfo(0, 2, 0);
-		context.dispatchCompute(dimX, dimY, 1);
+				context.bindShaderProgram(computeProgram);
 
-		context.bindTexture(NULL, gBufferASlot);
-		image1.texture = gBufferA;
-		context.bindImage(image1, outGBufferASlot);
-		context.bindTexture((ITexture*)hitColorMap->getVendorTexture(), inHitColorMapSlot);
+				sceneData->bind(context);
 
-		context.setDrawInfo(1, 2, 0);
-		context.dispatchCompute(dimX, dimY, 1);
+				cameraData->bind(context);
 
-		image0.texture = NULL;
-		image1.texture = NULL;
-		context.bindImage(image0, hitDataMapSlot);
-		context.bindImage(image1, outGBufferASlot);
+				computeMaterialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val = hiZUVScale;
+				computeMaterialRenderData.upload();
+				context.bindMaterialBuffer(computeMaterialRenderData.vendorMaterial);
+				context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferASlot);
+				context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBSlot);
+				context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCSlot);
+				context.bindTexture((ITexture*)gBufferE->getVendorTexture(), gBufferESlot);
+				context.bindTexture((ITexture*)hiZMap->getVendorTexture(), hiZMapSlot);
+
+				Image image0, image1;
+				image0.level = 0;
+				image1.level = 0;
+				image0.texture = hitDataMap;
+				image1.texture = hitColorMap;
+				context.bindImage(image0, hitDataMapSlot);
+				context.bindImage(image1, hitColorMapSlot);
+
+				context.setDrawInfo(0, 2, 0);
+				context.dispatchCompute(dimX, dimY, 1);
+
+				context.bindTexture(NULL, gBufferASlot);
+				image1.texture = gBufferA;
+				context.bindImage(image1, outGBufferASlot);
+				context.bindTexture((ITexture*)hitColorMap->getVendorTexture(), inHitColorMapSlot);
+
+				context.setDrawInfo(1, 2, 0);
+				context.dispatchCompute(dimX, dimY, 1);
+
+				image0.texture = NULL;
+				image1.texture = NULL;
+				context.bindImage(image0, hitDataMapSlot);
+				context.bindImage(image1, outGBufferASlot);
+
+				outputTextures.push_back(make_pair("SSR_HitDataMap", hitDataMap));
+				outputTextures.push_back(make_pair("SSR_HitColorMap", hitColorMap));
+			}
+		}
+
+		context.clearFrameBindings();
 	}
 	else {
-		if (!enable || traceProgram == NULL || resolveProgram == NULL || cameraData == NULL || gBufferA == NULL ||
-			gBufferB == NULL || gBufferC == NULL || hiZMap == NULL || hitDataMap == NULL || hitColorMap == NULL ||
-			traceRenderTarget == NULL || resolveRenderTarget == NULL)
+		if (traceProgram == NULL || resolveProgram == NULL)
 			return;
 
 		static const ShaderPropertyName gBufferAName = "gBufferA";
@@ -132,55 +163,85 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 		static const ShaderPropertyName hitDataMapName = "hitDataMap";
 		static const ShaderPropertyName hitColorMapName = "hitColorMap";
 
-		int width = gBufferA->getWidth();
-		int height = gBufferA->getHeight();
-		int hiZWidth = hiZMap->getWidth();
-		int hiZHeight = hiZMap->getHeight();
-		Color hiZUVScale = { width * 0.5f / hiZWidth, height * 0.5f / hiZHeight, 2.0f / width, 2.0f / height };
-		
-		// Trace
-		context.bindShaderProgram(traceProgram);
+		for (auto sceneData : renderGraph->sceneDatas) {
+			for (auto cameraData : sceneData->cameraRenderDatas) {
+				IGBufferGetter* gbufferGetter = dynamic_cast<IGBufferGetter*>(cameraData->surfaceBuffer);
+				IHiZBufferGetter* hiZGetter = dynamic_cast<IHiZBufferGetter*>(cameraData->surfaceBuffer);
+				IScreenSpaceReflectionBufferGetter* ssrGetter = dynamic_cast<IScreenSpaceReflectionBufferGetter*>(cameraData->surfaceBuffer);
+				if (gbufferGetter == NULL || ssrGetter == NULL)
+					continue;
 
-		sceneData->bind(context);
+				Texture* gBufferA = gbufferGetter->getGBufferA();
+				Texture* gBufferB = gbufferGetter->getGBufferB();
+				Texture* gBufferC = gbufferGetter->getGBufferC();
+				Texture* gBufferE = gbufferGetter->getGBufferE();
 
-		cameraData->bind(context);
+				Texture*  hiZMap = hiZGetter->getHiZTexture();
 
-		traceMaterialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val = hiZUVScale;
-		traceMaterialRenderData.upload();
-		context.bindMaterialBuffer(traceMaterialRenderData.vendorMaterial);
-		context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
-		context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
-		context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCName);
-		context.bindTexture((ITexture*)gBufferE->getVendorTexture(), gBufferEName);
-		context.bindTexture((ITexture*)hiZMap->getVendorTexture(), hiZMapName);
+				Texture* hitDataMap = ssrGetter->getHitDataTexture();
+				Texture* hitColorMap = ssrGetter->getHitColorTexture();
+				RenderTarget* traceRenderTarget = ssrGetter->getTraceRenderTarget();
+				RenderTarget* resolveRenderTarget = ssrGetter->getResolveRenderTarget();
 
-		context.bindFrame(traceRenderTarget->getVendorRenderTarget());
-		context.clearFrameColors({ Color(), Color() });
+				if (gBufferA == NULL || gBufferB == NULL || gBufferC == NULL ||
+					hiZMap == NULL || hitDataMap == NULL || hitColorMap == NULL ||
+					traceRenderTarget == NULL || resolveRenderTarget == NULL)
+					continue;
 
-		context.setRenderPostState();
-		context.postProcessCall();
+				int width = gBufferA->getWidth();
+				int height = gBufferA->getHeight();
+				int hiZWidth = hiZMap->getWidth();
+				int hiZHeight = hiZMap->getHeight();
+				Color hiZUVScale = { width * 0.5f / hiZWidth, height * 0.5f / hiZHeight, 2.0f / width, 2.0f / height };
 
-		context.clearFrameBindings();
+				// Trace
+				context.bindShaderProgram(traceProgram);
 
-		// Resolve
-		context.bindShaderProgram(resolveProgram);
+				sceneData->bind(context);
 
-		sceneData->bind(context);
+				cameraData->bind(context);
 
-		cameraData->bind(context);
+				traceMaterialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val = hiZUVScale;
+				traceMaterialRenderData.upload();
+				context.bindMaterialBuffer(traceMaterialRenderData.vendorMaterial);
+				context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
+				context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
+				context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCName);
+				context.bindTexture((ITexture*)gBufferE->getVendorTexture(), gBufferEName);
+				context.bindTexture((ITexture*)hiZMap->getVendorTexture(), hiZMapName);
 
-		resolveMaterialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val = hiZUVScale;
-		resolveMaterialRenderData.upload();
-		context.bindMaterialBuffer(resolveMaterialRenderData.vendorMaterial);
-		context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
-		context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCName);
-		context.bindTexture((ITexture*)hitDataMap->getVendorTexture(), hitDataMapName);
-		context.bindTexture((ITexture*)hitColorMap->getVendorTexture(), hitColorMapName);
+				context.bindFrame(traceRenderTarget->getVendorRenderTarget());
+				context.clearFrameColors({ Color(), Color() });
 
-		context.bindFrame(resolveRenderTarget->getVendorRenderTarget());
+				context.setRenderPostState();
+				context.postProcessCall();
 
-		context.setRenderPostAddState();
-		context.postProcessCall();
+				context.clearFrameBindings();
+
+				// Resolve
+				context.bindShaderProgram(resolveProgram);
+
+				sceneData->bind(context);
+
+				cameraData->bind(context);
+
+				resolveMaterialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val = hiZUVScale;
+				resolveMaterialRenderData.upload();
+				context.bindMaterialBuffer(resolveMaterialRenderData.vendorMaterial);
+				context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
+				context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCName);
+				context.bindTexture((ITexture*)hitDataMap->getVendorTexture(), hitDataMapName);
+				context.bindTexture((ITexture*)hitColorMap->getVendorTexture(), hitColorMapName);
+
+				context.bindFrame(resolveRenderTarget->getVendorRenderTarget());
+
+				context.setRenderPostAddState();
+				context.postProcessCall();
+
+				outputTextures.push_back(make_pair("SSR_HitDataMap", hitDataMap));
+				outputTextures.push_back(make_pair("SSR_HitColorMap", hitColorMap));
+			}
+		}
 
 		context.clearFrameBindings();
 	}
@@ -188,20 +249,11 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 
 void ScreenSpaceReflectionPass::reset()
 {
-	/*gBufferA = NULL;
-	gBufferB = NULL;
-	gBufferC = NULL;
-	hiZMap = NULL;
-	hitDataMap = NULL;
-	hitColorMap = NULL;*/
 }
 
 void ScreenSpaceReflectionPass::getOutputTextures(vector<pair<string, Texture*>>& textures)
 {
 	if (!enable)
 		return;
-	if (hitDataMap)
-		textures.push_back(make_pair("SSR_HitDataMap", hitDataMap));
-	if (hitColorMap)
-		textures.push_back(make_pair("SSR_HitColorMap", hitColorMap));
+	textures = outputTextures;
 }

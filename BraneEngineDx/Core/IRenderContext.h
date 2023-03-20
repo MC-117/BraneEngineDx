@@ -99,5 +99,7 @@ public:
 	virtual void execteMeshDraw(IRenderExecution* execution, const vector<DrawElementsIndirectCommand>& cmds) = 0;
 	virtual void execteImGuiDraw(ImDrawData* drawData) = 0;
 
+	virtual bool drawMeshIndirect(IGPUBuffer* argBuffer, unsigned int byteOffset) = 0;
+
 	virtual void submit() = 0;
 };

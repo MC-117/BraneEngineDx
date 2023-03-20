@@ -13,7 +13,6 @@ cbuffer CullingData
 };
 
 StructuredBuffer<VSMDrawInstanceInfo> drawInstanceInfos;
-StructuredBuffer<ShadowViewInfo> shadowViewInfos;
 RWStructuredBuffer<VisiableInstanceInfo> outVisiableInstanceInfos;
 RWStructuredBuffer<uint> outVisiableInstanceCount;
 RWBuffer<uint> outShadowDepthIndirectArgs;
@@ -28,12 +27,11 @@ bool hasMove(TransformData data)
     return data.updateFrame == frame;
 }
 
-void writeCmd(uint viewIndex, VSMDrawInstanceInfo drawInfo, uint indirectArgIndex)
+void writeCmd(uint viewIndex, VSMDrawInstanceInfo drawInfo)
 {
     VisiableInstanceInfo info;
     info.viewIndex = viewIndex;
     info.drawInfo = drawInfo;
-    info.indirectArgIndex = indirectArgIndex;
 
     uint visiableInstanceOutOffset = 0;
     InterlockedAdd(outVisiableInstanceCount[0], 1U, visiableInstanceOutOffset);
@@ -43,13 +41,14 @@ void writeCmd(uint viewIndex, VSMDrawInstanceInfo drawInfo, uint indirectArgInde
 }
 
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
-void main(uint argIdx : SV_DispatchThreadID)
+void main(uint tid : SV_DispatchThreadID)
 {
-	if (argIdx >= instanceCount)
+	if (tid >= instanceCount)
         return;
 
-    VSMDrawInstanceInfo drawInstanceInfo = drawInstanceInfos[argIdx];
+    VSMDrawInstanceInfo drawInstanceInfo = drawInstanceInfos[tid];
     const uint insID = drawInstanceInfo.instanceID;
+    const uint argIdx = drawInstanceInfo.indirectArgIndex;
     TransformData insData = getTransformData(insID);
 
     uint drawCountForAllViews = 0;
@@ -77,9 +76,11 @@ void main(uint argIdx : SV_DispatchThreadID)
 
                 if (overlapsAnyValidPage(vsmID, mipLevel, rectPages, flagMask)) {
                     drawCountForAllViews++;
-                    writeCmd(mipViewIndex, drawInstanceInfo, argIdx);
+                    writeCmd(mipViewIndex, drawInstanceInfo);
                 }
             }
         }
     }
+
+    InterlockedAdd(outShadowDepthIndirectArgs[argIdx * DRAW_ELEMENT_INDIRECT_ARGS + DRAW_INDIRECT_INS_COUNT_IDX], drawCountForAllViews);
 }

@@ -331,12 +331,15 @@ ShaderStage* ShaderAdapter::compileShaderStage(const Enum<ShaderFeature>& featur
 
 ShaderStage* ShaderAdapter::bestMacthShaderStage(const Enum<ShaderFeature>& feature, ShaderFeature excludeFeature)
 {
-	int bitCount = 0;
+	int maxScore = -Shader_Feature_Count;
 	ShaderStage* stage = NULL;
 	for (auto& item : shaderStageVersions) {
-		int count = bitset<32>((item.first.enumValue | excludeFeature) & feature).count();
-		if (count > bitCount) {
-			count = bitCount;
+		unsigned int thisFeature = item.first.enumValue | excludeFeature;
+		int posCount = bitset<32>(thisFeature & feature).count();
+		int negCount = bitset<32>(~thisFeature & Shader_Feature_Mask & feature).count();
+		int score = posCount - negCount;
+		if (posCount > 0 && score > maxScore) {
+			maxScore = score;
 			stage = item.second;
 		}
 	}

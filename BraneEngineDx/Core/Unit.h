@@ -245,6 +245,8 @@ struct InstanceDrawData
 {
 	unsigned int instanceID;
 	unsigned int baseVertex;
+
+	InstanceDrawData& operator++();
 };
 
 template<class T>
