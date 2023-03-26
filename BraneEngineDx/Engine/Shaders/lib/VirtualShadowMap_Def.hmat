@@ -143,14 +143,17 @@ struct VSMProjData
 	int clipmapIndex;
 	int clipmapLevel;
 
+	float3 worldCenter;
 	int clipmapCount;
 
+	float3 worldDirection;
 	int vsmID;
 
 	int lightType;
 
 	int uncached;
 
+	int2 pad;
 };
 
 struct VSMInfo
@@ -163,7 +166,7 @@ struct VSMInfo
 	uint2 physPoolPages;
 };
 
-tbuffer VSMInfoBuff
+cbuffer VSMInfoBuff
 {
 	VSMInfo vsmInfo;
 };
@@ -190,10 +193,11 @@ struct FrustumCullData
     float3 rectMax;
 };
 
-FrustumCullData frustumCullBoxOrtho(float3 center, float3 extent, float4x4 localToWorld, float4x4 worldToClip)
+FrustumCullData frustumCullBoxOrtho(float3 center, float3 extent, float3 preWorldTranslation, float4x4 localToWorld, float4x4 worldToClip)
 {
     FrustumCullData data;
-    float3 centerClip = mul( mul( float4( center, 1 ), localToWorld ), worldToClip ).xyz;
+	float3 centerWorld = mul( float4( center, 1 ), localToWorld ).xyz + preWorldTranslation;
+    float3 centerClip = mul( float4( centerWorld, 1 ), worldToClip ).xyz;
 
 	float3 clipDelta =
         abs( extent.x * mul(localToWorld[0], worldToClip).xyz ) +
@@ -353,6 +357,11 @@ RWStructuredBuffer<uint4> outAllocPageRect;
 
 DEF_TEX2D_UINT_AUTO(physPagePool);
 RWTexture2D<uint> outPhysPagePool;
+
+#if defined(DEBUG_SHADER_FEATURE)
+DEF_TEX2D_AUTO(debugBuffer);
+RWTexture2D<float4> outDebugBuffer;
+#endif
 
 VSMProjData getVSMProjData(uint vsmID)
 {
@@ -638,7 +647,7 @@ float vsmSampleDirectShadow(int vsmID, float3 worldPos)
 			int clipmapVSMID = vsmID + clipmapIndex;
 			VSMProjData projData = getVSMProjData(clipmapVSMID);
 
-			float4 shadowUVz = mul(float4(worldPos, 1.0f), projData.worldToUV);
+			float4 shadowUVz = mul(float4(worldPos - projData.worldCenter, 1.0f), projData.worldToUV);
 
 			VSMSample vsmSample;
 			if (vsmSampleClipmap(vsmID, shadowUVz.xy, vsmSample)) {
@@ -647,4 +656,28 @@ float vsmSampleDirectShadow(int vsmID, float3 worldPos)
 		}
 	}
 	return 1.0f;
+}
+
+uint MurmurMix(uint Hash)
+{
+	Hash ^= Hash >> 16;
+	Hash *= 0x85ebca6b;
+	Hash ^= Hash >> 13;
+	Hash *= 0xc2b2ae35;
+	Hash ^= Hash >> 16;
+	return Hash;
+}
+
+float3 IntToColor(uint Index)
+{
+	uint Hash = MurmurMix(Index);
+
+	float3 Color = float3
+	(
+		(Hash >>  0) & 255,
+		(Hash >>  8) & 255,
+		(Hash >> 16) & 255
+	);
+
+	return Color * (1.0f / 255.0f);
 }

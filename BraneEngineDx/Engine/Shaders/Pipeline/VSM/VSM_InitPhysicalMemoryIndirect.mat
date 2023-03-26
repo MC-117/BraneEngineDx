@@ -3,7 +3,7 @@
 #compute
 #include "../../lib/VirtualShadowMap_Def.hmat"
 
-StructuredBuffer<uint> physPagesToInit;
+Buffer<uint> physPagesToInit;
 
 uint2 getTileOffset(uint gidx, inout VSMPhysPageMetaData outMetaData)
 {

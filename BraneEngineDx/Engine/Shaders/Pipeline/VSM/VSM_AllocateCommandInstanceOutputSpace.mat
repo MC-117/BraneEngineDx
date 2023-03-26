@@ -6,11 +6,12 @@
 cbuffer AllocCmdInfo
 {
     uint indirectArgCount;
+    uint3 pad;
 };
 
 Buffer<uint> shadowDepthIndirectArgs;
 RWBuffer<uint> outOffsetBufferCount;
-RWStructuredBuffer<uint2> outShadowDepthInstanceOffset;
+RWBuffer<uint2> outShadowDepthInstanceOffset;
 RWStructuredBuffer<uint> shadowDepthInstanceCounter;
 
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]

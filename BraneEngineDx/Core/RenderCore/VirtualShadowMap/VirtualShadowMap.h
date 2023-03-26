@@ -24,6 +24,12 @@ enum VSM_LightType
 	VSM_LocalLight,
 };
 
+enum struct VSM_DebugViewFlag
+{
+	None,
+	GenPageFlagsFromPixels
+};
+
 class VirtualShadowMapConfig : public Serializable
 {
 public:
@@ -41,10 +47,11 @@ public:
 
 	static constexpr unsigned int maxPerInstanceCmdCount = 64;
 
+	bool enable = false;
 	unsigned int physPoolWidth = 128 * 128;
 	unsigned int maxPhysPages = 4096;
-	unsigned int firstClipmapLevel = 6;
-	unsigned int lastClipmapLevel = 16;
+	unsigned int firstClipmapLevel = 2;
+	unsigned int lastClipmapLevel = 12;
 
 	float clipmapRadiusZScale = 1000.0f;
 	float resolutionLodBiasClipmap = -0.5f;
@@ -52,9 +59,13 @@ public:
 	float pageDilationBorderSizeMain = 0.05f;
 	float pageDilationBorderSizeLocal = 0.05f;
 
+	bool debugView = false;
+
 	Vector2u getPhysPagesXY() const;
 
 	static VirtualShadowMapConfig& instance();
+	static void setEnable(bool enable);
+	static bool isEnable();
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
@@ -75,13 +86,17 @@ struct VirtualShadowMapProjectionData
 	int clipmapIndex;
 	int clipmapLevel;
 
+	Vector3f worldCenter;
 	int clipmapCount;
 
+	Vector3f worldDirection;
 	int vsmID;
 
 	int lightType;
 
 	int uncached;
+
+	int pad[2];
 };
 
 struct VirtualShadowMapInfo
@@ -133,40 +148,30 @@ struct VirtualShadowMapFrameData
 class VirtualShadowMapShaders
 {
 public:
-	static ShaderProgram* procInvalidationsProgram;
-	static ShaderProgram* initPageRectsProgram;
-	static ShaderProgram* generatePageFlagsFromPixelsProgram;
-	static ShaderProgram* initPhysicalPageMetaDataProgram;
-	static ShaderProgram* createCachedPageMappingsHasCacheProgram;
-	static ShaderProgram* createCachedPageMappingsNoCacheProgram;
-	static ShaderProgram* packFreePagesProgram;
-	static ShaderProgram* allocateNewPageMappingsProgram;
-	static ShaderProgram* generateHierarchicalPageFlagsProgram;
-	static ShaderProgram* clearInitPhysPagesIndirectArgsProgram;
-	static ShaderProgram* selectPagesToInitProgram;
-	static ShaderProgram* initPhysicalMemoryIndirectProgram;
-	static ShaderProgram* cullPerPageDrawCommandsProgram;
-	static ShaderProgram* allocateCommandInstanceOutputSpaceProgram;
-	static ShaderProgram* initOutputommandInstanceListsArgsProgram;
-	static ShaderProgram* outputCommandInstanceListsProgram;
+#define VSM_SHADER(name) \
+static ShaderProgram* name##Program; \
+static ShaderProgram* name##DebugProgram; \
+static Vector3u name##ProgramDim;
 
-	static Vector3u procInvalidationsProgramDim;
-	static Vector3u initPageRectsProgramDim;
-	static Vector3u generatePageFlagsFromPixelsProgramDim;
-	static Vector3u initPhysicalPageMetaDataProgramDim;
-	static Vector3u createCachedPageMappingsProgramDim;
-	static Vector3u packFreePagesProgramDim;
-	static Vector3u allocateNewPageMappingsProgramDim;
-	static Vector3u generateHierarchicalPageFlagsProgramDim;
-	static Vector3u clearInitPhysPagesIndirectArgsProgramDim;
-	static Vector3u selectPagesToInitProgramDim;
-	static Vector3u initPhysicalMemoryIndirectProgramDim;
-	static Vector3u cullPerPageDrawCommandsProgramDim;
-	static Vector3u allocateCommandInstanceOutputSpaceProgramDim;
-	static Vector3u initOutputommandInstanceListsArgsProgramDim;
-	static Vector3u outputCommandInstanceListsProgramDim;
+	VSM_SHADER(procInvalidations);
+	VSM_SHADER(initPageRects);
+	VSM_SHADER(generatePageFlagsFromPixels);
+	VSM_SHADER(initPhysicalPageMetaData);
+	VSM_SHADER(createCachedPageMappingsHasCache);
+	VSM_SHADER(createCachedPageMappingsNoCache);
+	VSM_SHADER(packFreePages);
+	VSM_SHADER(allocateNewPageMappings);
+	VSM_SHADER(generateHierarchicalPageFlags);
+	VSM_SHADER(clearInitPhysPagesIndirectArgs);
+	VSM_SHADER(selectPagesToInit);
+	VSM_SHADER(initPhysicalMemoryIndirect);
+	VSM_SHADER(cullPerPageDrawCommands);
+	VSM_SHADER(allocateCommandInstanceOutputSpace);
+	VSM_SHADER(initOutputommandInstanceListsArgs);
+	VSM_SHADER(outputCommandInstanceLists);
+	VSM_SHADER(debugBlit);
 
-	static const ShaderPropertyName VSMBuffInfoName;
+	static const ShaderPropertyName VSMInfoBuffName;
 	static const ShaderPropertyName vsmPrevDataName;
 	static const ShaderPropertyName pageTableName;
 	static const ShaderPropertyName pageFlagsName;
@@ -225,6 +230,9 @@ public:
 
 	static const ShaderPropertyName pageInfoName;
 	static const ShaderPropertyName outPageInfoName;
+
+	static const ShaderPropertyName debugBufferName;
+	static const ShaderPropertyName outDebugBufferName;
 
 	static void loadDefaultResource();
 };
@@ -306,13 +314,26 @@ public:
 
 	struct LightEntry
 	{
+		struct Batch
+		{
+			struct Hasher
+			{
+				size_t operator()(const Batch& t) const { return (size_t)t.transformData; }
+				size_t operator()(const Batch* t) const { return (size_t)t->transformData; }
+			};
+
+			IRenderData* transformData;
+			vector<VSMDrawInstanceInfo> drawInstanceInfos;
+			vector<DrawElementsIndirectCommand> indirectCommands;
+			vector<VSMInstanceDrawResource> resources;
+
+			bool operator==(const Batch& batch) const { return transformData == batch.transformData; }
+		};
 		int lightID = -1;
 		int preRenderFrame = -1;
 		int curRenderFrame = -1;
 		vector<ShadowMap*> shadowMaps;
-		vector<VSMDrawInstanceInfo> drawInstanceInfos;
-		vector<DrawElementsIndirectCommand> indirectCommands;
-		vector<VSMInstanceDrawResource> resources;
+		unordered_set<Batch, Batch::Hasher> batches;
 
 		ShadowMap* setShadowMap(int index);
 
@@ -409,6 +430,7 @@ public:
 		unsigned int viewCount;
 		unsigned int maxPerInstanceCmdCount;
 		unsigned int frame;
+		unsigned int pad[3];
 	};
 
 	struct VisiableInstanceInfo
@@ -420,11 +442,12 @@ public:
 	struct AllocCmdInfo
 	{
 		unsigned int indirectArgCount;
+		unsigned int pad[3];
 	};
 
 	struct CullingBatchInfo
 	{
-		VirtualShadowMapManager::LightEntry* lightEntry;
+		VirtualShadowMapManager::LightEntry::Batch* batch;
 		CullingData data;
 		GPUBuffer cullingData;
 		GPUBuffer allocCmdInfo;
@@ -475,9 +498,11 @@ public:
 	);
 
 	void render(IRenderContext& context, const LightRenderData& lightData);
+	void renderDebugView(IRenderContext& context, const CameraRenderData& mainCameraData);
 
 	void clean();
 protected:
+	vector<VirtualShadowMap*> cachedShadowMaps;
 	vector<VirtualShadowMap*> shadowMaps;
 	vector<CullingBatchInfo*> cachedCullingBatchInfos;
 	vector<CullingBatchInfo*> cullingBatchInfos;

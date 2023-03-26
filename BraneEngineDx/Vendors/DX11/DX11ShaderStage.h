@@ -71,6 +71,7 @@ public:
 
 	virtual void uploadAttribute(const string& name, unsigned int size, void* data);
 
+	bool unbindBuffer(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name) const;
 	bool bindCBV(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11Buffer> buffer) const;
 	bool bindSRV(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11ShaderResourceView> srv) const;
 	bool bindSRVWithSampler(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11ShaderResourceView> srv, ComPtr<ID3D11SamplerState> sampler) const;

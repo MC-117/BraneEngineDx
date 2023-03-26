@@ -10,6 +10,7 @@ cbuffer CullingData
 	uint viewCount;
     uint maxPerInstanceCmdCount;
     uint frame;
+    uint3 pad;
 };
 
 StructuredBuffer<VSMDrawInstanceInfo> drawInstanceInfos;
@@ -58,8 +59,11 @@ void main(uint tid : SV_DispatchThreadID)
         VSMProjData projData = getVSMProjData(viewInfo.vsmID);
 
         FrustumCullData cullData = frustumCullBoxOrtho(
-            insData.localCenter, insData.localExtent,
-            insData.localToWorld, projData.worldToClip);
+            insData.localCenter,
+            insData.localExtent,
+            -projData.worldCenter,
+            insData.localToWorld,
+            projData.worldToClip);
         
         if (cullData.visiable) {
             const int mipCount = viewInfo.mipCount;

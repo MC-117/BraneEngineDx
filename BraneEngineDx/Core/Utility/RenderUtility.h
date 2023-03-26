@@ -5,6 +5,8 @@
 #include "Utility.h"
 #include "Boundings.h"
 
+ShaderFeature getShaderFeatureFromName(const string& name);
+string getShaderFeatureName(ShaderFeature feature);
 string getShaderFeatureNames(Enum<ShaderFeature> feature);
 const char* getShaderPropertyTypeName(ShaderProperty::Type type);
 int getGPUBufferFormatCellSize(GPUBufferFormat format);

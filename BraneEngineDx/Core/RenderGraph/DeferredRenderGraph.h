@@ -15,6 +15,7 @@ struct DeferredSurfaceBuffer
 	, public IGBufferGetter
 	, public IHiZBufferGetter
 	, public IScreenSpaceReflectionBufferGetter
+	, public IDebugBufferGetter
 {
 	Texture2D gBufferA = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGB10A2_UF });
 	Texture2D gBufferB = Texture2D(1280, 720, 1, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_R32_F });
@@ -30,6 +31,9 @@ struct DeferredSurfaceBuffer
 
 	RenderTarget traceRenderTarget = RenderTarget(1280, 720, 4);
 	RenderTarget resolveRenderTarget = RenderTarget(1280, 720, 4);
+
+	Texture2D debugBuffer = Texture2D(1280, 720, 1, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F });
+	RenderTarget debugRenderTarget = RenderTarget(1280, 720, 1);
 
 	DeferredSurfaceBuffer();
 
@@ -52,6 +56,9 @@ struct DeferredSurfaceBuffer
 	virtual Texture* getHitColorTexture();
 	virtual RenderTarget* getTraceRenderTarget();
 	virtual RenderTarget* getResolveRenderTarget();
+
+	virtual Texture* getDebugBuffer();
+	virtual RenderTarget* getDebugRenderTarget();
 };
 
 class DeferredRenderGraph : public RenderGraph
@@ -62,7 +69,6 @@ public:
 	Timer timer;
 
 	bool enablePreDepthPass = false;
-	bool enableVSMDepthPass = false;
 
 	SurfaceData defaultPreDepthSurfaceData;
 	SurfaceData defaultGeometrySurfaceData;

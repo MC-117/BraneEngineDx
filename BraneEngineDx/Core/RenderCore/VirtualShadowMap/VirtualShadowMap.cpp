@@ -23,6 +23,16 @@ VirtualShadowMapConfig& VirtualShadowMapConfig::instance()
 	return config;
 }
 
+void VirtualShadowMapConfig::setEnable(bool enable)
+{
+	instance().enable = enable;
+}
+
+bool VirtualShadowMapConfig::isEnable()
+{
+	return instance().enable;
+}
+
 Serializable* VirtualShadowMapConfig::instantiate(const SerializationInfo& from)
 {
 	return new VirtualShadowMapConfig();
@@ -71,7 +81,7 @@ protected:
 VirtualShadowMapConfigInitializer VirtualShadowMapConfigInitializer::instance;
 
 VirtualShadowMapFrameData::VirtualShadowMapFrameData()
-	: vsmInfo(GB_Storage, GBF_Struct, sizeof(VirtualShadowMapInfo), GAF_Read, CAF_Write)
+	: vsmInfo(GB_Constant, GBF_Struct, sizeof(VirtualShadowMapInfo), GAF_Read, CAF_Write)
 	, pageTable(GB_Storage, GBF_Struct, sizeof(unsigned int), GAF_ReadWrite, CAF_None)
 	, pageFlags(GB_Storage, GBF_Struct, sizeof(unsigned int), GAF_ReadWrite, CAF_None)
 	, projData(GB_Storage, GBF_Struct, sizeof(VirtualShadowMapProjectionData), GAF_ReadWrite, CAF_None)
@@ -95,40 +105,30 @@ void VirtualShadowMapFrameData::release()
 	physPageMetaData.resize(0);
 }
 
-ShaderProgram* VirtualShadowMapShaders::procInvalidationsProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::initPageRectsProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::generatePageFlagsFromPixelsProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::initPhysicalPageMetaDataProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::createCachedPageMappingsHasCacheProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::createCachedPageMappingsNoCacheProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::packFreePagesProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::allocateNewPageMappingsProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::generateHierarchicalPageFlagsProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::clearInitPhysPagesIndirectArgsProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::selectPagesToInitProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::initPhysicalMemoryIndirectProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::cullPerPageDrawCommandsProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::allocateCommandInstanceOutputSpaceProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::initOutputommandInstanceListsArgsProgram = NULL;
-ShaderProgram* VirtualShadowMapShaders::outputCommandInstanceListsProgram = NULL;
+#define VSM_SHADER_IMP(name) \
+ShaderProgram* VirtualShadowMapShaders::name##Program = NULL; \
+ShaderProgram* VirtualShadowMapShaders::name##DebugProgram = NULL; \
+Vector3u VirtualShadowMapShaders::name##ProgramDim;
 
-Vector3u VirtualShadowMapShaders::procInvalidationsProgramDim;
-Vector3u VirtualShadowMapShaders::initPageRectsProgramDim;
-Vector3u VirtualShadowMapShaders::generatePageFlagsFromPixelsProgramDim;
-Vector3u VirtualShadowMapShaders::initPhysicalPageMetaDataProgramDim;
-Vector3u VirtualShadowMapShaders::createCachedPageMappingsProgramDim;
-Vector3u VirtualShadowMapShaders::packFreePagesProgramDim;
-Vector3u VirtualShadowMapShaders::allocateNewPageMappingsProgramDim;
-Vector3u VirtualShadowMapShaders::generateHierarchicalPageFlagsProgramDim;
-Vector3u VirtualShadowMapShaders::clearInitPhysPagesIndirectArgsProgramDim;
-Vector3u VirtualShadowMapShaders::selectPagesToInitProgramDim;
-Vector3u VirtualShadowMapShaders::initPhysicalMemoryIndirectProgramDim;
-Vector3u VirtualShadowMapShaders::cullPerPageDrawCommandsProgramDim;
-Vector3u VirtualShadowMapShaders::allocateCommandInstanceOutputSpaceProgramDim;
-Vector3u VirtualShadowMapShaders::initOutputommandInstanceListsArgsProgramDim;
-Vector3u VirtualShadowMapShaders::outputCommandInstanceListsProgramDim;
+VSM_SHADER_IMP(procInvalidations);
+VSM_SHADER_IMP(initPageRects);
+VSM_SHADER_IMP(generatePageFlagsFromPixels);
+VSM_SHADER_IMP(initPhysicalPageMetaData);
+VSM_SHADER_IMP(createCachedPageMappingsHasCache);
+VSM_SHADER_IMP(createCachedPageMappingsNoCache);
+VSM_SHADER_IMP(packFreePages);
+VSM_SHADER_IMP(allocateNewPageMappings);
+VSM_SHADER_IMP(generateHierarchicalPageFlags);
+VSM_SHADER_IMP(clearInitPhysPagesIndirectArgs);
+VSM_SHADER_IMP(selectPagesToInit);
+VSM_SHADER_IMP(initPhysicalMemoryIndirect);
+VSM_SHADER_IMP(cullPerPageDrawCommands);
+VSM_SHADER_IMP(allocateCommandInstanceOutputSpace);
+VSM_SHADER_IMP(initOutputommandInstanceListsArgs);
+VSM_SHADER_IMP(outputCommandInstanceLists);
+VSM_SHADER_IMP(debugBlit);
 
-const ShaderPropertyName VirtualShadowMapShaders::VSMBuffInfoName = "VSMBuffInfo";
+const ShaderPropertyName VirtualShadowMapShaders::VSMInfoBuffName = "VSMInfoBuff";
 const ShaderPropertyName VirtualShadowMapShaders::vsmPrevDataName = "vsmPrevData";
 const ShaderPropertyName VirtualShadowMapShaders::pageTableName = "pageTable";
 const ShaderPropertyName VirtualShadowMapShaders::pageFlagsName = "pageFlags";
@@ -188,43 +188,42 @@ const ShaderPropertyName VirtualShadowMapShaders::outInstanceIDsName = "outInsta
 const ShaderPropertyName VirtualShadowMapShaders::pageInfoName = "pageInfo";
 const ShaderPropertyName VirtualShadowMapShaders::outPageInfoName = "outPageInfo";
 
+const ShaderPropertyName VirtualShadowMapShaders::debugBufferName = "debugBuffer";
+const ShaderPropertyName VirtualShadowMapShaders::outDebugBufferName = "outDebugBuffer";
+
+#define VSM_SHADER_PATH_PREFIX "Engine/Shaders/Pipeline/VSM/"
+#define VSM_LOAD_SHADER(name, filename, feature)										\
+if (name##Program == NULL) {															\
+	Material* material = getAssetByPath<Material>(VSM_SHADER_PATH_PREFIX##filename);	\
+	if (!material)																		\
+		throw runtime_error(#name" load failed");										\
+	name##Program = material->getShader()->getProgram(feature);							\
+	name##ProgramDim = material->getLocalSize();										\
+}																						\
+name##Program->init();
+
+#define VSM_LOAD_SHADER_WITH_DEBUG(name, filename, feature)								\
+if (name##Program == NULL) {															\
+	Material* material = getAssetByPath<Material>(VSM_SHADER_PATH_PREFIX##filename);	\
+	if (!material)																		\
+		throw runtime_error(#name" load failed");										\
+	name##Program = material->getShader()->getProgram(feature);							\
+	name##DebugProgram = material->getShader()->getProgram(feature | Shader_Debug);		\
+	name##ProgramDim = material->getLocalSize();										\
+}																						\
+name##Program->init();																	\
+if (name##DebugProgram)																	\
+	name##DebugProgram->init();
+
+#define VSM_LOAD_SHADER_DEFAULT(name, filename) VSM_LOAD_SHADER(name, filename, Shader_Default)
+#define VSM_LOAD_SHADER_DEFAULT_WITH_DEBUG(name, filename) VSM_LOAD_SHADER_WITH_DEBUG(name, filename, Shader_Default)
+
 void VirtualShadowMapShaders::loadDefaultResource()
 {
-	if (procInvalidationsProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_ProcInvalidations.mat");
-		if (!material)
-			throw runtime_error("procInvalidationsProgram load failed");
-		procInvalidationsProgram = material->getShader()->getProgram(Shader_Default);
-		procInvalidationsProgramDim = material->getLocalSize();
-	}
-	procInvalidationsProgram->init();
-
-	if (initPageRectsProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_InitPageRects.mat");
-		if (!material)
-			throw runtime_error("initPageRectsProgram load failed");
-		initPageRectsProgram = material->getShader()->getProgram(Shader_Default);
-		initPageRectsProgramDim = material->getLocalSize();
-	}
-	initPageRectsProgram->init();
-
-	if (generatePageFlagsFromPixelsProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_GeneratePageFlagsFromPixels.mat");
-		if (!material)
-			throw runtime_error("generatePageFlagsFromPixels load failed");
-		generatePageFlagsFromPixelsProgram = material->getShader()->getProgram(Shader_Default);
-		generatePageFlagsFromPixelsProgramDim = material->getLocalSize();
-	}
-	generatePageFlagsFromPixelsProgram->init();
-
-	if (initPhysicalPageMetaDataProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_InitPhysicalPageMetaData.mat");
-		if (!material)
-			throw runtime_error("initPhysicalPageMetaData load failed");
-		initPhysicalPageMetaDataProgram = material->getShader()->getProgram(Shader_Default);
-		initPhysicalPageMetaDataProgramDim = material->getLocalSize();
-	}
-	initPhysicalPageMetaDataProgram->init();
+	VSM_LOAD_SHADER_DEFAULT(procInvalidations, "VSM_ProcInvalidations.mat");
+	VSM_LOAD_SHADER_DEFAULT(initPageRects, "VSM_InitPageRects.mat");
+	VSM_LOAD_SHADER_DEFAULT_WITH_DEBUG(generatePageFlagsFromPixels, "VSM_GeneratePageFlagsFromPixels.mat");
+	VSM_LOAD_SHADER_DEFAULT(initPhysicalPageMetaData, "VSM_InitPhysicalPageMetaData.mat");
 
 	enum
 	{
@@ -232,112 +231,20 @@ void VirtualShadowMapShaders::loadDefaultResource()
 		HasCache = Shader_Custom_1,
 	};
 
-	if (createCachedPageMappingsNoCacheProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_CreateCachedPageMappings.mat");
-		if (!material)
-			throw runtime_error("createCachedPageMappingsNoCache load failed");
-		createCachedPageMappingsNoCacheProgram = material->getShader()->getProgram(NoCache);
-		createCachedPageMappingsProgramDim = material->getLocalSize();
-	}
-	createCachedPageMappingsNoCacheProgram->init();
+	VSM_LOAD_SHADER(createCachedPageMappingsNoCache, "VSM_CreateCachedPageMappings.mat", NoCache);
+	VSM_LOAD_SHADER(createCachedPageMappingsHasCache, "VSM_CreateCachedPageMappings.mat", HasCache);
 
-	if (createCachedPageMappingsHasCacheProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_CreateCachedPageMappings.mat");
-		if (!material)
-			throw runtime_error("createCachedPageMappingsHasCache load failed");
-		createCachedPageMappingsHasCacheProgram = material->getShader()->getProgram(HasCache);
-	}
-	createCachedPageMappingsHasCacheProgram->init();
-
-	if (packFreePagesProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_PackFreePages.mat");
-		if (!material)
-			throw runtime_error("packFreePages load failed");
-		packFreePagesProgram = material->getShader()->getProgram(Shader_Default);
-		packFreePagesProgramDim = material->getLocalSize();
-	}
-	packFreePagesProgram->init();
-
-	if (allocateNewPageMappingsProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_AllocateNewPageMappings.mat");
-		if (!material)
-			throw runtime_error("allocateNewPageMappings load failed");
-		allocateNewPageMappingsProgram = material->getShader()->getProgram(Shader_Default);
-		allocateNewPageMappingsProgramDim = material->getLocalSize();
-	}
-	allocateNewPageMappingsProgram->init();
-
-	if (generateHierarchicalPageFlagsProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_GenerateHierarchicalPageFlags.mat");
-		if (!material)
-			throw runtime_error("generateHierarchicalPageFlags load failed");
-		generateHierarchicalPageFlagsProgram = material->getShader()->getProgram(Shader_Default);
-		generateHierarchicalPageFlagsProgramDim = material->getLocalSize();
-	}
-	generateHierarchicalPageFlagsProgram->init();
-
-	if (clearInitPhysPagesIndirectArgsProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_ClearInitPhysPagesIndirectArgs.mat");
-		if (!material)
-			throw runtime_error("clearInitPhysPagesIndirectArgs load failed");
-		clearInitPhysPagesIndirectArgsProgram = material->getShader()->getProgram(Shader_Default);
-		clearInitPhysPagesIndirectArgsProgramDim = material->getLocalSize();
-	}
-	clearInitPhysPagesIndirectArgsProgram->init();
-
-	if (selectPagesToInitProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_SelectPagesToInit.mat");
-		if (!material)
-			throw runtime_error("selectPagesToInit load failed");
-		selectPagesToInitProgram = material->getShader()->getProgram(Shader_Default);
-		selectPagesToInitProgramDim = material->getLocalSize();
-	}
-	selectPagesToInitProgram->init();
-
-	if (initPhysicalMemoryIndirectProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_InitPhysicalMemoryIndirect.mat");
-		if (!material)
-			throw runtime_error("initPhysicalMemoryIndirect load failed");
-		initPhysicalMemoryIndirectProgram = material->getShader()->getProgram(Shader_Default);
-		initPhysicalMemoryIndirectProgramDim = material->getLocalSize();
-	}
-	initPhysicalMemoryIndirectProgram->init();
-
-	if (cullPerPageDrawCommandsProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_CullPerPageDrawCommands.mat");
-		if (!material)
-			throw runtime_error("cullPerPageDrawCommands load failed");
-		cullPerPageDrawCommandsProgram = material->getShader()->getProgram(Shader_Default);
-		cullPerPageDrawCommandsProgramDim = material->getLocalSize();
-	}
-	cullPerPageDrawCommandsProgram->init();
-
-	if (allocateCommandInstanceOutputSpaceProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_AllocateCommandInstanceOutputSpace.mat");
-		if (!material)
-			throw runtime_error("allocateCommandInstanceOutputSpace load failed");
-		allocateCommandInstanceOutputSpaceProgram = material->getShader()->getProgram(Shader_Default);
-		allocateCommandInstanceOutputSpaceProgramDim = material->getLocalSize();
-	}
-	allocateCommandInstanceOutputSpaceProgram->init();
-
-	if (initOutputommandInstanceListsArgsProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_InitOutputCommandInstanceListsArgs.mat");
-		if (!material)
-			throw runtime_error("initOutputommandInstanceListsArgs load failed");
-		initOutputommandInstanceListsArgsProgram = material->getShader()->getProgram(Shader_Default);
-		initOutputommandInstanceListsArgsProgramDim = material->getLocalSize();
-	}
-	initOutputommandInstanceListsArgsProgram->init();
-
-	if (outputCommandInstanceListsProgram == NULL) {
-		Material* material = getAssetByPath<Material>("Engine/Shaders/Pipeline/VSM/VSM_OutputCommandInstanceLists.mat");
-		if (!material)
-			throw runtime_error("outputCommandInstanceLists load failed");
-		outputCommandInstanceListsProgram = material->getShader()->getProgram(Shader_Default);
-		outputCommandInstanceListsProgramDim = material->getLocalSize();
-	}
-	outputCommandInstanceListsProgram->init();
+	VSM_LOAD_SHADER_DEFAULT(packFreePages, "VSM_PackFreePages.mat");
+	VSM_LOAD_SHADER_DEFAULT(allocateNewPageMappings, "VSM_AllocateNewPageMappings.mat");
+	VSM_LOAD_SHADER_DEFAULT(generateHierarchicalPageFlags, "VSM_GenerateHierarchicalPageFlags.mat");
+	VSM_LOAD_SHADER_DEFAULT(clearInitPhysPagesIndirectArgs, "VSM_ClearInitPhysPagesIndirectArgs.mat");
+	VSM_LOAD_SHADER_DEFAULT(selectPagesToInit, "VSM_SelectPagesToInit.mat");
+	VSM_LOAD_SHADER_DEFAULT(initPhysicalMemoryIndirect, "VSM_InitPhysicalMemoryIndirect.mat");
+	VSM_LOAD_SHADER_DEFAULT(cullPerPageDrawCommands, "VSM_CullPerPageDrawCommands.mat");
+	VSM_LOAD_SHADER_DEFAULT(allocateCommandInstanceOutputSpace, "VSM_AllocateCommandInstanceOutputSpace.mat");
+	VSM_LOAD_SHADER_DEFAULT(initOutputommandInstanceListsArgs, "VSM_InitOutputCommandInstanceListsArgs.mat");
+	VSM_LOAD_SHADER_DEFAULT(outputCommandInstanceLists, "VSM_OutputCommandInstanceLists.mat");
+	VSM_LOAD_SHADER(debugBlit, "VSM_DebugBlit.mat", Shader_Debug);
 }
 
 bool VSMInstanceDrawResource::ExecutionOrder::operator()(const VSMInstanceDrawResource& t0, const VSMInstanceDrawResource& t1) const
@@ -418,7 +325,7 @@ VirtualShadowMapManager::ShadowMap* VirtualShadowMapManager::LightEntry::setShad
 {
 	shadowMaps.resize(std::max(index + 1, (int)shadowMaps.size()), NULL);
 	ShadowMap*& shadowMap = shadowMaps[index];
-	if (index == NULL)
+	if (shadowMap == NULL)
 		shadowMap = new ShadowMap();
 	return shadowMap;
 }
@@ -427,32 +334,39 @@ void VirtualShadowMapManager::LightEntry::updateClipmap()
 {
 	preRenderFrame = std::max(preRenderFrame, curRenderFrame);
 	curRenderFrame = -1;
-	drawInstanceInfos.clear();
-	indirectCommands.clear();
+	batches.clear();
 }
 
 void VirtualShadowMapManager::LightEntry::addMeshCommand(const VSMMeshTransformIndexArray::CallItem& callItem)
 {
-	if (callItem.first.meshPart == NULL || callItem.second.batchCount == 0)
+	IRenderData* transformData = callItem.second.payload.transformData;
+	MeshPart* mesh = callItem.first.meshPart;
+	if (transformData == NULL || mesh == NULL || callItem.second.batchCount == 0)
 		return;
-	const MeshPart& mesh = *callItem.first.meshPart;
+	Batch keyBatch = { transformData };
+	auto iter = batches.find(keyBatch);
+	Batch* batch;
+	if (iter == batches.end())
+		batch = (Batch*)&*batches.insert(keyBatch).first;
+	else
+		batch = (Batch*)&*iter;
 	const VSMMeshTransformIndex& index = callItem.second;
-	const unsigned int commandIndex = indirectCommands.size();
-	drawInstanceInfos.reserve(drawInstanceInfos.size() + index.batchCount);
+	const unsigned int commandIndex = batch->indirectCommands.size();
+	batch->drawInstanceInfos.reserve(batch->drawInstanceInfos.size() + index.batchCount);
 	for (int i = 0; i < index.batchCount; i++) {
-		VSMDrawInstanceInfo& info = drawInstanceInfos.emplace_back();
+		VSMDrawInstanceInfo& info = batch->drawInstanceInfos.emplace_back();
 		info.instanceID = index.indices[i].instanceID;
 		info.indirectArgIndex = commandIndex;
 	}
 
-	DrawElementsIndirectCommand& indirectCmd = indirectCommands.emplace_back();
-	indirectCmd.count = mesh.elementCount;
+	DrawElementsIndirectCommand& indirectCmd = batch->indirectCommands.emplace_back();
+	indirectCmd.count = mesh->elementCount;
 	indirectCmd.instanceCount = 0;
-	indirectCmd.firstIndex = mesh.elementFirst;
-	indirectCmd.baseVertex = mesh.vertexFirst;
+	indirectCmd.firstIndex = mesh->elementFirst;
+	indirectCmd.baseVertex = mesh->vertexFirst;
 	indirectCmd.baseInstance = 0;
 
-	VSMInstanceDrawResource& resource = resources.emplace_back();
+	VSMInstanceDrawResource& resource = batch->resources.emplace_back();
 	resource.materialData = dynamic_cast<MaterialRenderData*>(callItem.first.material->getRenderData());
 	resource.meshData = callItem.first.meshPart->meshData;
 	resource.transformData = callItem.second.payload.transformData;
@@ -471,7 +385,7 @@ void VirtualShadowMapManager::LightEntry::invalidate()
 		delete shadowMap;
 	}
 	shadowMaps.clear();
-	drawInstanceInfos.clear();
+	batches.clear();
 }
 
 VirtualShadowMapManager::VirtualShadowMapManager()
@@ -519,7 +433,7 @@ VirtualShadowMapManager::LightEntry* VirtualShadowMapManager::setLightEntry(int 
 {
 	unsigned long long cacheID = (unsigned long long(lightID) << 32) | unsigned long long(cameraID);
 	auto iter = curShadowMaps.find(cacheID);
-	if (iter == curShadowMaps.end())
+	if (iter != curShadowMaps.end())
 		return iter->second;
 
 	iter = preShadowMaps.find(cacheID);
@@ -549,14 +463,14 @@ void VirtualShadowMapManager::buildPrevData(const vector<VirtualShadowMap*>& sha
 		ShadowMap* shadowMap = virtualShadowMap ? virtualShadowMap->shadowMap : NULL;
 		VirtualShadowMapPrevData& data = prevData[i];
 		if (shadowMap == NULL || !shadowMap->isValid()) {
+			data.vsmID = VSM_None_ID;
+		}
+		else {
 			data.vsmID = shadowMap->preVirtualShadowMapID;
 
 			const Vector2i& curOffset = shadowMap->clipmap.curCornerOffset;
 			const Vector2i& prevOffset = shadowMap->clipmap.preCornerOffset;
 			data.ClipmapCornerOffsetDelta = prevOffset - curOffset;
-		}
-		else {
-			data.vsmID = VSM_None_ID;
 		}
 	}
 }
@@ -585,7 +499,7 @@ void VirtualShadowMapManager::processInvalidations(IRenderContext& context, Mesh
 	context.bindShaderProgram(VirtualShadowMapShaders::procInvalidationsProgram);
 
 	transformData.bind(context);
-	context.bindBufferBase(prevFrameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
+	context.bindBufferBase(prevFrameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
 	context.bindBufferBase(prevFrameData->pageTable.getVendorGPUBuffer(), VirtualShadowMapShaders::pageTableName);
 	context.bindBufferBase(prevFrameData->pageFlags.getVendorGPUBuffer(), VirtualShadowMapShaders::pageFlagsName);
 	context.bindBufferBase(prevFrameData->projData.getVendorGPUBuffer(), VirtualShadowMapShaders::projDataName);
@@ -633,12 +547,12 @@ VirtualShadowMapArray::VirtualShadowMapArray()
 	: manager(NULL), physPagePool(NULL)
 	, genPageFlagInfoBuffer(GB_Constant, GBF_Struct, sizeof(VirtualShadowMapInfo), GAF_Read, CAF_Write)
 	, vsmPrevData(GB_Storage, GBF_Struct, sizeof(VirtualShadowMapPrevData), GAF_Read, CAF_Write)
-	, pageRequestFlags(GB_Storage, GBF_Struct, sizeof(Vector4u), GAF_ReadWrite, CAF_None)
+	, pageRequestFlags(GB_Storage, GBF_Struct, sizeof(unsigned int), GAF_ReadWrite, CAF_None)
 	, freePhysPages(GB_Storage, GBF_Struct, sizeof(int), GAF_ReadWrite, CAF_None)
 	, physPageAllocRequests(GB_Storage, GBF_Struct, sizeof(VirtualShadowMapPhysicalPageRequest), GAF_ReadWrite, CAF_None)
 	, allocPageRect(GB_Storage, GBF_Struct, sizeof(Vector4u), GAF_ReadWrite, CAF_None)
 	, initPhysPagesIndirectArgs(GB_Command, GBF_UInt, 0, GAF_ReadWrite, CAF_None)
-	, physPagesToInit(GB_Storage, GBF_Struct, sizeof(int), GAF_ReadWrite, CAF_None)
+	, physPagesToInit(GB_Storage, GBF_UInt, 0, GAF_ReadWrite, CAF_None)
 	, shadowViewInfos(GB_Storage, GBF_Struct, sizeof(ShadowViewInfo), GAF_Read, CAF_Write)
 {
 }
@@ -650,15 +564,15 @@ VirtualShadowMapArray::CullingBatchInfo::CullingBatchInfo()
 	, visiableInstanceInfos(GB_Storage, GBF_Struct, sizeof(VisiableInstanceInfo), GAF_ReadWrite, CAF_None)
 	, visiableInstanceCount(GB_Storage, GBF_Struct, sizeof(unsigned int), GAF_ReadWrite, CAF_None)
 
-	, offsetBufferCount(GB_Storage, GBF_Struct, sizeof(unsigned int), GAF_ReadWrite, CAF_None)
+	, offsetBufferCount(GB_Storage, GBF_UInt, 0, GAF_ReadWrite, CAF_None)
 
 	, outputCommandListsIndirectArgs(GB_Command, GBF_UInt, 0, GAF_ReadWrite, CAF_None)
 	, shadowDepthIndirectArgs(GB_Command, GBF_UInt, 0, GAF_ReadWrite, CAF_None)
 
-	, shadowDepthInstanceOffset(GB_Storage, GBF_Struct, sizeof(unsigned int) * 2, GAF_ReadWrite, CAF_None)
+	, shadowDepthInstanceOffset(GB_Vertex, GBF_UInt2, 0, GAF_ReadWrite, CAF_None)
 	, shadowDepthInstanceCounter(GB_Storage, GBF_Struct, sizeof(unsigned int), GAF_ReadWrite, CAF_None)
 
-	, drawInstanceInfos(GB_Storage, GBF_Struct, sizeof(VSMDrawInstanceInfo), GAF_ReadWrite, CAF_Write)
+	, drawInstanceInfos(GB_Storage, GBF_Struct, sizeof(VSMDrawInstanceInfo), GAF_Read, CAF_Write)
 	, instanceIDs(GB_Storage, GBF_Struct, sizeof(unsigned int), GAF_ReadWrite, CAF_None)
 	, pageInfo(GB_Storage, GBF_Struct, sizeof(unsigned int), GAF_ReadWrite, CAF_None)
 {
@@ -692,7 +606,17 @@ bool VirtualShadowMapArray::isAllocated() const
 
 VirtualShadowMap* VirtualShadowMapArray::allocate()
 {
-	VirtualShadowMap* vsm = new VirtualShadowMap(shadowMaps.size());
+	VirtualShadowMap* vsm = NULL;
+	int vsmID = shadowMaps.size();
+	if (vsmID < cachedShadowMaps.size()) {
+		vsm = cachedShadowMaps[vsmID];
+		vsm->shadowMap = NULL;
+		vsm->vsmID = vsmID;
+	}
+	else {
+		vsm = new VirtualShadowMap(vsmID);
+		cachedShadowMaps.push_back(vsm);
+	}
 	shadowMaps.push_back(vsm);
 	return vsm;
 }
@@ -733,7 +657,7 @@ void VirtualShadowMapArray::buildPageAllocations(
 	manager->buildPrevData(shadowMaps, vsmPrevDataUpload);
 	vsmPrevData.uploadData(vsmPrevDataUpload.size(), vsmPrevDataUpload.data());
 
-	frameData->projData.uploadData(shadowMapCount, shadowMaps.data());
+	frameData->projData.uploadData(shadowMapCount, projDataUpload.data());
 
 	curFrameVSMInfo.numShadowMapSlots = shadowMapCount;
 	frameData->vsmInfo.uploadData(1, &curFrameVSMInfo);
@@ -749,8 +673,8 @@ void VirtualShadowMapArray::buildPageAllocations(
 	const int pageRectCount = shadowMaps.size() * VirtualShadowMapConfig::maxMips;
 	frameData->pageRect.resize(pageRectCount);
 	context.bindShaderProgram(VirtualShadowMapShaders::initPageRectsProgram);
-	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
-	context.bindBufferBase(frameData->pageRect.getVendorGPUBuffer(), VirtualShadowMapShaders::outPageRequestFlagsName, { true });
+	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
+	context.bindBufferBase(frameData->pageRect.getVendorGPUBuffer(), VirtualShadowMapShaders::outPageRectName, { true });
 	context.dispatchCompute(ceil(pageRectCount / (float)VirtualShadowMapShaders::initPageRectsProgramDim.x()), 1, 1);
 
 	GenPageFlagInfo genPageFlagInfo;
@@ -763,16 +687,35 @@ void VirtualShadowMapArray::buildPageAllocations(
 
 	resizeDirectLightVSMIDs(cameraDatas);
 
+	context.clearFrameBindings();
+
+	if (config.debugView)
+		context.bindShaderProgram(VirtualShadowMapShaders::generatePageFlagsFromPixelsDebugProgram);
+	else
+		context.bindShaderProgram(VirtualShadowMapShaders::generatePageFlagsFromPixelsProgram);
+
+	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
+	context.bindBufferBase(frameData->projData.getVendorGPUBuffer(), VirtualShadowMapShaders::projDataName);
+	context.bindBufferBase(genPageFlagInfoBuffer.getVendorGPUBuffer(), VirtualShadowMapShaders::GenPageFlagInfoName);
+	context.bindBufferBase(pageRequestFlags.getVendorGPUBuffer(), VirtualShadowMapShaders::outPageRequestFlagsName, { true });
+
+	Image debugImage;
+	IDebugBufferGetter* debugGetter = dynamic_cast<IDebugBufferGetter*>((*cameraDatas.begin())->surfaceBuffer);
+	debugImage.texture = debugGetter->getDebugBuffer();
+
+	auto bindDebugImage = [&] {
+		if (debugImage.texture)
+			context.bindImage(debugImage, VirtualShadowMapShaders::outDebugBufferName);
+	};
+
 	int camIndex = 0;
 	for (auto& cameraData : cameraDatas) {
 		IGBufferGetter* getter = dynamic_cast<IGBufferGetter*>(cameraData->surfaceBuffer);
 		Texture* sceneDepthMap = getter->getGBufferB();
 		Texture* sceneNormalMap = getter->getGBufferC();
 
-		if (sceneDepthMap == NULL || sceneDepthMap == NULL)
+		if (sceneDepthMap == NULL || sceneNormalMap == NULL)
 			throw runtime_error("SurfaceBuffer dose not have sceneDepthMap or sceneDepthMap");
-
-		context.bindShaderProgram(VirtualShadowMapShaders::generatePageFlagsFromPixelsProgram);
 
 		vector<unsigned int> directLightVSMIDsUpload;
 		for (VirtualShadowMapClipmap* clipmap : lightData.mainLightClipmaps) {
@@ -784,15 +727,15 @@ void VirtualShadowMapArray::buildPageAllocations(
 		if (directLightVSMIDsUpload.empty())
 			continue;
 
+		if (cameraData->cameraRender->isMainCameraRender() && config.debugView)
+			bindDebugImage();
+
 		GPUBuffer* curDirectLightVSMIDs = directLightVSMIDs[camIndex];
 
 		curDirectLightVSMIDs->uploadData(directLightVSMIDsUpload.size(), directLightVSMIDsUpload.data(), true);
 
 		cameraData->bind(context);
-		context.bindBufferBase(genPageFlagInfoBuffer.getVendorGPUBuffer(), VirtualShadowMapShaders::GenPageFlagInfoName);
-		context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
 		context.bindBufferBase(curDirectLightVSMIDs->getVendorGPUBuffer(), VirtualShadowMapShaders::directLightVSMIDsName);
-		context.bindBufferBase(pageRequestFlags.getVendorGPUBuffer(), VirtualShadowMapShaders::outPageRequestFlagsName, { true });
 		context.bindTexture(sceneDepthMap->getVendorTexture(), VirtualShadowMapShaders::sceneDepthMapName);
 		context.bindTexture(sceneNormalMap->getVendorTexture(), VirtualShadowMapShaders::sceneNormalMapName);
 		context.dispatchCompute(
@@ -800,6 +743,13 @@ void VirtualShadowMapArray::buildPageAllocations(
 			ceil(cameraData->data.viewSize.y() / (float)VirtualShadowMapShaders::generatePageFlagsFromPixelsProgramDim.y()),
 			1);
 		camIndex++;
+	}
+
+	context.unbindBufferBase(VirtualShadowMapShaders::outPageRequestFlagsName);
+
+	if (config.debugView) {
+		context.unbindBufferBase(VirtualShadowMapShaders::outDebugBufferName);
+		return;
 	}
 
 	frameData->pageTable.resize(pageFlagsCount);
@@ -813,7 +763,7 @@ void VirtualShadowMapArray::buildPageAllocations(
 	allocPageRect.resize(pageRectCount);
 
 	context.bindShaderProgram(VirtualShadowMapShaders::initPhysicalPageMetaDataProgram);
-	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
+	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
 	context.bindBufferBase(frameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::outPhysPageMetaDataName, { true });
 	context.bindBufferBase(freePhysPages.getVendorGPUBuffer(), VirtualShadowMapShaders::outFreePhysPagesName, { true });
 	context.bindBufferBase(physPageAllocRequests.getVendorGPUBuffer(), VirtualShadowMapShaders::outPhysPageAllocRequestsName, { true });
@@ -823,24 +773,33 @@ void VirtualShadowMapArray::buildPageAllocations(
 	context.bindShaderProgram(isCacheValid ?
 		VirtualShadowMapShaders::createCachedPageMappingsHasCacheProgram :
 		VirtualShadowMapShaders::createCachedPageMappingsNoCacheProgram);
-	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
+	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
 	context.bindBufferBase(frameData->projData.getVendorGPUBuffer(), VirtualShadowMapShaders::projDataName);
 	context.bindBufferBase(vsmPrevData.getVendorGPUBuffer(), VirtualShadowMapShaders::vsmPrevDataName);
+	context.bindBufferBase(pageRequestFlags.getVendorGPUBuffer(), VirtualShadowMapShaders::pageRequestFlagsName);
 	manager->bindPrevFrameData(context);
 	context.bindBufferBase(frameData->pageTable.getVendorGPUBuffer(), VirtualShadowMapShaders::outPageTableName, { true });
 	context.bindBufferBase(frameData->pageFlags.getVendorGPUBuffer(), VirtualShadowMapShaders::outPageFlagsName, { true });
 	context.bindBufferBase(frameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::outPhysPageMetaDataName, { true });
 	context.bindBufferBase(physPageAllocRequests.getVendorGPUBuffer(), VirtualShadowMapShaders::outPhysPageAllocRequestsName, { true });
-	context.dispatchCompute(ceil(config.pageTableSize / (float)VirtualShadowMapShaders::createCachedPageMappingsProgramDim.x()), 1, 1);
+	context.dispatchCompute(ceil(config.pageTableSize / (float)(isCacheValid ?
+			VirtualShadowMapShaders::createCachedPageMappingsHasCacheProgramDim.x() :
+			VirtualShadowMapShaders::createCachedPageMappingsNoCacheProgramDim.x())), 1, 1);
+
+	context.unbindBufferBase(VirtualShadowMapShaders::outPhysPageMetaDataName);
+	context.unbindBufferBase(VirtualShadowMapShaders::outPhysPageAllocRequestsName);
 
 	context.bindShaderProgram(VirtualShadowMapShaders::packFreePagesProgram);
-	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
+	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
 	context.bindBufferBase(frameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::physPageMetaDataName);
 	context.bindBufferBase(freePhysPages.getVendorGPUBuffer(), VirtualShadowMapShaders::outFreePhysPagesName, { true });
 	context.dispatchCompute(ceil(curFrameVSMInfo.maxPhysPages / (float)VirtualShadowMapShaders::packFreePagesProgramDim.x()), 1, 1);
 
+	context.unbindBufferBase(VirtualShadowMapShaders::physPageMetaDataName);
+
 	context.bindShaderProgram(VirtualShadowMapShaders::allocateNewPageMappingsProgram);
-	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
+	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
+	context.bindBufferBase(frameData->projData.getVendorGPUBuffer(), VirtualShadowMapShaders::projDataName);
 	context.bindBufferBase(pageRequestFlags.getVendorGPUBuffer(), VirtualShadowMapShaders::pageRequestFlagsName);
 	context.bindBufferBase(physPageAllocRequests.getVendorGPUBuffer(), VirtualShadowMapShaders::physPageAllocRequestsName);
 	context.bindBufferBase(frameData->pageTable.getVendorGPUBuffer(), VirtualShadowMapShaders::outPageTableName, { true });
@@ -849,9 +808,12 @@ void VirtualShadowMapArray::buildPageAllocations(
 	context.bindBufferBase(frameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::outPhysPageMetaDataName, { true });
 	context.dispatchCompute(ceil(curFrameVSMInfo.maxPhysPages / (float)VirtualShadowMapShaders::allocateNewPageMappingsProgramDim.x()), 1, 1);
 
+	context.unbindBufferBase(VirtualShadowMapShaders::outPageFlagsName);
+	context.unbindBufferBase(VirtualShadowMapShaders::outPhysPageMetaDataName);
+
 	context.bindShaderProgram(VirtualShadowMapShaders::generateHierarchicalPageFlagsProgram);
-	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
-	context.bindBufferBase(frameData->projData.getVendorGPUBuffer(), VirtualShadowMapShaders::projDataName);
+	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
+	context.bindBufferBase(frameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::physPageMetaDataName);
 	context.bindBufferBase(frameData->pageFlags.getVendorGPUBuffer(), VirtualShadowMapShaders::outPageFlagsName, { true });
 	context.bindBufferBase(frameData->pageRect.getVendorGPUBuffer(), VirtualShadowMapShaders::outPageRectName, { true });
 	context.dispatchCompute(ceil(curFrameVSMInfo.maxPhysPages / (float)VirtualShadowMapShaders::generateHierarchicalPageFlagsProgramDim.x()), 1, 1);
@@ -860,19 +822,25 @@ void VirtualShadowMapArray::buildPageAllocations(
 		// Skip PropagateMappedMips, for only having clipmaps
 	}
 
+	initPhysPagesIndirectArgs.resize(3);
+
 	context.bindShaderProgram(VirtualShadowMapShaders::clearInitPhysPagesIndirectArgsProgram);
 	context.bindBufferBase(initPhysPagesIndirectArgs.getVendorGPUBuffer(), VirtualShadowMapShaders::outInitPhysPagesIndirectArgsName, { true });
 	context.dispatchCompute(1, 1, 1);
 
+	physPagesToInit.resize(curFrameVSMInfo.maxPhysPages + 1);
+
 	context.bindShaderProgram(VirtualShadowMapShaders::selectPagesToInitProgram);
-	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
+	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
 	context.bindBufferBase(frameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::physPageMetaDataName);
 	context.bindBufferBase(initPhysPagesIndirectArgs.getVendorGPUBuffer(), VirtualShadowMapShaders::outInitPhysPagesIndirectArgsName, { true });
 	context.bindBufferBase(physPagesToInit.getVendorGPUBuffer(), VirtualShadowMapShaders::outPhysPagesToInitName, { true });
 	context.dispatchCompute(ceil(curFrameVSMInfo.maxPhysPages / (float)VirtualShadowMapShaders::selectPagesToInitProgramDim.x()), 1, 1);
 
+	context.unbindBufferBase(VirtualShadowMapShaders::outPhysPagesToInitName);
+
 	context.bindShaderProgram(VirtualShadowMapShaders::initPhysicalMemoryIndirectProgram);
-	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
+	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
 	context.bindBufferBase(frameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::physPageMetaDataName);
 	context.bindBufferBase(physPagesToInit.getVendorGPUBuffer(), VirtualShadowMapShaders::physPagesToInitName);
 	Image image;
@@ -885,13 +853,17 @@ void VirtualShadowMapArray::buildPageAllocations(
 
 void VirtualShadowMapArray::render(IRenderContext& context, const LightRenderData& lightData)
 {
+	VirtualShadowMapConfig& config = VirtualShadowMapConfig::instance();
+	if (config.debugView)
+		return;
 	cullingPasses(context, lightData);
 	VSMInstanceDrawResource resourceContext;
 	for (int i = 0; i < cullingBatchInfos.size(); i++) {
 		CullingBatchInfo* batchInfo = cullingBatchInfos[i];
-		int cmdCount = batchInfo->lightEntry->indirectCommands.size();
+		VirtualShadowMapManager::LightEntry::Batch* batch = batchInfo->batch;
+		int cmdCount = batch->indirectCommands.size();
 		for (int cmdIndex = 0; cmdIndex < cmdCount; cmdIndex++) {
-			VSMInstanceDrawResource& resource = batchInfo->lightEntry->resources[cmdIndex];
+			VSMInstanceDrawResource& resource = batch->resources[cmdIndex];
 			bool shaderSwitch = false;
 
 			if (resourceContext.shaderProgram != resource.shaderProgram) {
@@ -928,23 +900,58 @@ void VirtualShadowMapArray::render(IRenderContext& context, const LightRenderDat
 			if (shaderSwitch) {
 				context.bindBufferBase(batchInfo->instanceIDs.getVendorGPUBuffer(), VirtualShadowMapShaders::instanceIDsName);
 				context.bindBufferBase(batchInfo->pageInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::pageInfoName);
+				context.bindBufferBase(frameData->pageTable.getVendorGPUBuffer(), VirtualShadowMapShaders::pageTableName);
 				context.bindBufferBase(frameData->pageRect.getVendorGPUBuffer(), VirtualShadowMapShaders::pageRectName);
 				context.bindBufferBase(shadowViewInfos.getVendorGPUBuffer(), VirtualShadowMapShaders::shadowViewInfosName);
 			}
 
 			BufferOption option;
 			option.output = false;
-			option.offset = i * sizeof(unsigned int);
+			option.offset = cmdIndex * sizeof(unsigned int);
 			option.stride = 0;
 			context.bindBufferBase(batchInfo->shadowDepthInstanceOffset.getVendorGPUBuffer(), 0, option);
 
-			context.drawMeshIndirect(batchInfo->shadowDepthIndirectArgs.getVendorGPUBuffer(), i * sizeof(DrawElementsIndirectCommand));
+			Image image;
+			image.texture = physPagePool;
+			context.bindImage(image, VirtualShadowMapShaders::outPhysPagePoolName);
+
+			context.setViewport(0, 0, VirtualShadowMapConfig::virtualShadowMapSize, VirtualShadowMapConfig::virtualShadowMapSize);
+
+			context.drawMeshIndirect(batchInfo->shadowDepthIndirectArgs.getVendorGPUBuffer(), cmdIndex * sizeof(DrawElementsIndirectCommand));
 		}
 	}
+	context.clearOutputBufferBindings();
+}
+
+void VirtualShadowMapArray::renderDebugView(IRenderContext& context, const CameraRenderData& mainCameraData)
+{
+	VirtualShadowMapConfig& config = VirtualShadowMapConfig::instance();
+	if (!config.debugView)
+		return;
+	IGBufferGetter* gBufferGetter = dynamic_cast<IGBufferGetter*>(mainCameraData.surfaceBuffer);
+	IDebugBufferGetter* debugBufferGetter = dynamic_cast<IDebugBufferGetter*>(mainCameraData.surfaceBuffer);
+	Texture* sceneColor = gBufferGetter->getGBufferA();
+	Texture* debugBuffer = debugBufferGetter->getDebugBuffer();
+	if (sceneColor == NULL || debugBuffer == NULL)
+		return;
+
+	static ShaderPropertyName outBufferName = "outBuffer";
+
+	context.bindShaderProgram(VirtualShadowMapShaders::debugBlitProgram);
+	context.bindTexture(debugBuffer->getVendorTexture(), VirtualShadowMapShaders::debugBufferName);
+	Image image;
+	image.texture = sceneColor;
+	context.bindImage(image, outBufferName);
+	context.dispatchCompute(
+		ceil(mainCameraData.data.viewSize.x() / (float)VirtualShadowMapShaders::debugBlitProgramDim.x()),
+		ceil(mainCameraData.data.viewSize.y() / (float)VirtualShadowMapShaders::debugBlitProgramDim.y()),
+		1);
+	context.unbindBufferBase(outBufferName);
 }
 
 void VirtualShadowMapArray::clean()
 {
+	shadowMaps.clear();
 	cullingBatchInfos.clear();
 	shadowViewInfosUpload.clear();
 }
@@ -984,31 +991,8 @@ VirtualShadowMapArray::CullingBatchInfo* VirtualShadowMapArray::fetchCullingBatc
 void VirtualShadowMapArray::buildCullingBatchInfos(const LightRenderData& lightData)
 {
 	for (VirtualShadowMapClipmap* clipmap : lightData.mainLightClipmaps) {
-		CullingBatchInfo* cullingBatchInfo = fetchCullingBatchInfo();
-		cullingBatchInfo->data.firstView = shadowViewInfosUpload.size();
-		cullingBatchInfo->lightEntry = clipmap->getLightEntry();
-		if (cullingBatchInfo->lightEntry) {
-			int indirectDrawCount = cullingBatchInfo->lightEntry->drawInstanceInfos.size();
-			int maxInstanceDrawPerPass = indirectDrawCount * VirtualShadowMapConfig::maxPerInstanceCmdCount;
-			cullingBatchInfo->lightEntry->markRendered(Time::frames());
-			cullingBatchInfo->data.instanceCount = indirectDrawCount;
-			cullingBatchInfo->drawInstanceInfos.uploadData(cullingBatchInfo->data.instanceCount,
-				cullingBatchInfo->lightEntry->drawInstanceInfos.data());
-			cullingBatchInfo->shadowDepthIndirectArgs.uploadData(
-				cullingBatchInfo->lightEntry->indirectCommands.size() * (sizeof(DrawElementsIndirectCommand) / sizeof(unsigned int)),
-				cullingBatchInfo->lightEntry->indirectCommands.data());
-			AllocCmdInfo allocCmdInfoUpload;
-			allocCmdInfoUpload.indirectArgCount = indirectDrawCount;
-			cullingBatchInfo->allocCmdInfo.uploadData(1, &allocCmdInfoUpload);
-			cullingBatchInfo->visiableInstanceInfos.resize(maxInstanceDrawPerPass);
-			cullingBatchInfo->visiableInstanceCount.resize(1);
-			cullingBatchInfo->offsetBufferCount.resize(1);
-			cullingBatchInfo->outputCommandListsIndirectArgs.resize(3);
-			cullingBatchInfo->shadowDepthInstanceOffset.resize(indirectDrawCount);
-			cullingBatchInfo->shadowDepthInstanceCounter.resize(indirectDrawCount);
-			cullingBatchInfo->drawInstanceInfos.resize(indirectDrawCount);
-			cullingBatchInfo->pageInfo.resize(indirectDrawCount);
-		}
+		unsigned int firstView = shadowViewInfosUpload.size();
+		unsigned int viewCount = 0;
 		for (int levelIndex = 0; levelIndex < clipmap->getLevelCount(); levelIndex++) {
 			VirtualShadowMap* vsm = clipmap->getVirtualShadowMap(levelIndex);
 			if (vsm == NULL)
@@ -1020,9 +1004,40 @@ void VirtualShadowMapArray::buildCullingBatchInfos(const LightRenderData& lightD
 			view.flags = VSM_DirectLight;
 			view.mipLevel = 0;
 			view.mipCount = 1;
-			cullingBatchInfo->data.viewCount++;
+			viewCount++;
 		}
-		cullingBatchInfo->cullingData.uploadData(1, &cullingBatchInfo->data, true);
+
+		VirtualShadowMapManager::LightEntry* lightEntry = clipmap->getLightEntry();
+		if (lightEntry) {
+			lightEntry->markRendered(Time::frames());
+			for (const VirtualShadowMapManager::LightEntry::Batch& batch : lightEntry->batches) {
+				CullingBatchInfo* cullingBatchInfo = fetchCullingBatchInfo();
+				cullingBatchInfo->batch = (VirtualShadowMapManager::LightEntry::Batch*)&batch;
+				cullingBatchInfo->data.firstView = firstView;
+				cullingBatchInfo->data.viewCount = viewCount;
+				int indirectDrawCount = batch.drawInstanceInfos.size();
+				int maxInstanceDrawPerPass = indirectDrawCount * VirtualShadowMapConfig::maxPerInstanceCmdCount;
+				cullingBatchInfo->data.instanceCount = indirectDrawCount;
+				cullingBatchInfo->drawInstanceInfos.uploadData(cullingBatchInfo->data.instanceCount,
+					(void*)batch.drawInstanceInfos.data());
+				cullingBatchInfo->shadowDepthIndirectArgs.uploadData(
+					batch.indirectCommands.size() * (sizeof(DrawElementsIndirectCommand) / sizeof(unsigned int)),
+					(void*)batch.indirectCommands.data());
+				AllocCmdInfo allocCmdInfoUpload;
+				allocCmdInfoUpload.indirectArgCount = indirectDrawCount;
+				cullingBatchInfo->allocCmdInfo.uploadData(1, &allocCmdInfoUpload);
+				cullingBatchInfo->visiableInstanceInfos.resize(maxInstanceDrawPerPass);
+				cullingBatchInfo->visiableInstanceCount.resize(1);
+				cullingBatchInfo->offsetBufferCount.resize(1);
+				cullingBatchInfo->outputCommandListsIndirectArgs.resize(3);
+				cullingBatchInfo->shadowDepthInstanceOffset.resize(indirectDrawCount);
+				cullingBatchInfo->shadowDepthInstanceCounter.resize(indirectDrawCount);
+				cullingBatchInfo->drawInstanceInfos.resize(indirectDrawCount);
+				cullingBatchInfo->instanceIDs.resize(maxInstanceDrawPerPass);
+				cullingBatchInfo->pageInfo.resize(indirectDrawCount);
+				cullingBatchInfo->cullingData.uploadData(1, &cullingBatchInfo->data, true);
+			}
+		}
 	}
 }
 
@@ -1035,8 +1050,9 @@ void VirtualShadowMapArray::cullingPasses(IRenderContext& context, const LightRe
 
 		context.bindShaderProgram(VirtualShadowMapShaders::cullPerPageDrawCommandsProgram);
 		context.clearOutputBufferUint(cullingBatchInfo->visiableInstanceCount.getVendorGPUBuffer(), Vector4u::Zero());
-		context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
+		cullingBatchInfo->batch->transformData->bind(context);
 		context.bindBufferBase(frameData->projData.getVendorGPUBuffer(), VirtualShadowMapShaders::projDataName);
+		context.bindBufferBase(frameData->pageFlags.getVendorGPUBuffer(), VirtualShadowMapShaders::pageFlagsName);
 		context.bindBufferBase(frameData->pageRect.getVendorGPUBuffer(), VirtualShadowMapShaders::pageRectName);
 		context.bindBufferBase(shadowViewInfos.getVendorGPUBuffer(), VirtualShadowMapShaders::shadowViewInfosName);
 		context.bindBufferBase(cullingBatchInfo->cullingData.getVendorGPUBuffer(), VirtualShadowMapShaders::CullingDataName);
@@ -1046,19 +1062,28 @@ void VirtualShadowMapArray::cullingPasses(IRenderContext& context, const LightRe
 		context.bindBufferBase(cullingBatchInfo->shadowDepthIndirectArgs.getVendorGPUBuffer(), VirtualShadowMapShaders::outShadowDepthIndirectArgsName, { true });
 		context.dispatchCompute(ceil(indirectDrawCount / (float)VirtualShadowMapShaders::cullPerPageDrawCommandsProgramDim.x()), 1, 1);
 
+		context.unbindBufferBase(VirtualShadowMapShaders::outVisiableInstanceInfosName);
+		context.unbindBufferBase(VirtualShadowMapShaders::outVisiableInstanceCountName);
+		context.unbindBufferBase(VirtualShadowMapShaders::outShadowDepthIndirectArgsName);
+
 		context.bindShaderProgram(VirtualShadowMapShaders::allocateCommandInstanceOutputSpaceProgram);
 		context.clearOutputBufferUint(cullingBatchInfo->shadowDepthInstanceOffset.getVendorGPUBuffer(), Vector4u::Zero());
 		context.bindBufferBase(cullingBatchInfo->allocCmdInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::AllocCmdInfoName);
-		context.bindBufferBase(cullingBatchInfo->shadowDepthIndirectArgs.getVendorGPUBuffer(), VirtualShadowMapShaders::outShadowDepthIndirectArgsName);
+		context.bindBufferBase(cullingBatchInfo->shadowDepthIndirectArgs.getVendorGPUBuffer(), VirtualShadowMapShaders::shadowDepthIndirectArgsName);
 		context.bindBufferBase(cullingBatchInfo->offsetBufferCount.getVendorGPUBuffer(), VirtualShadowMapShaders::outOffsetBufferCountName, { true });
 		context.bindBufferBase(cullingBatchInfo->shadowDepthInstanceOffset.getVendorGPUBuffer(), VirtualShadowMapShaders::outShadowDepthInstanceOffsetName, { true });
 		context.bindBufferBase(cullingBatchInfo->shadowDepthInstanceCounter.getVendorGPUBuffer(), VirtualShadowMapShaders::shadowDepthInstanceCounterName, { true });
 		context.dispatchCompute(ceil(indirectDrawCount / (float)VirtualShadowMapShaders::allocateCommandInstanceOutputSpaceProgramDim.x()), 1, 1);
 
+		context.unbindBufferBase(VirtualShadowMapShaders::outOffsetBufferCountName);
+		context.unbindBufferBase(VirtualShadowMapShaders::shadowDepthInstanceCounterName);
+
 		context.bindShaderProgram(VirtualShadowMapShaders::initOutputommandInstanceListsArgsProgram);
 		context.bindBufferBase(cullingBatchInfo->offsetBufferCount.getVendorGPUBuffer(), VirtualShadowMapShaders::offsetBufferCountName);
 		context.bindBufferBase(cullingBatchInfo->outputCommandListsIndirectArgs.getVendorGPUBuffer(), VirtualShadowMapShaders::outShadowDepthInstanceOffsetName, { true });
 		context.dispatchCompute(1, 1, 1);
+
+		context.unbindBufferBase(VirtualShadowMapShaders::outShadowDepthInstanceOffsetName);
 
 		context.bindShaderProgram(VirtualShadowMapShaders::outputCommandInstanceListsProgram);
 		context.bindBufferBase(cullingBatchInfo->visiableInstanceInfos.getVendorGPUBuffer(), VirtualShadowMapShaders::visiableInstanceInfosName);
@@ -1068,4 +1093,5 @@ void VirtualShadowMapArray::cullingPasses(IRenderContext& context, const LightRe
 		context.bindBufferBase(cullingBatchInfo->pageInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::outPageInfoName, { true });
 		context.dispatchComputeIndirect(cullingBatchInfo->outputCommandListsIndirectArgs.getVendorGPUBuffer(), 0);
 	}
+	context.clearOutputBufferBindings();
 }

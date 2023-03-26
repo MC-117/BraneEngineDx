@@ -2,6 +2,12 @@
 
 #include "../RenderCore/RenderInterface.h"
 
+struct IDebugBufferGetter
+{
+	virtual Texture* getDebugBuffer() = 0;
+	virtual RenderTarget* getDebugRenderTarget() = 0;
+};
+
 struct IGBufferGetter
 {
 	virtual Texture* getGBufferA() = 0;

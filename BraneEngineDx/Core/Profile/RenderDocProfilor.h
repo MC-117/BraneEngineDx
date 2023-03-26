@@ -15,6 +15,7 @@ public:
 	virtual void tick();
 
 	virtual bool setCapture();
+	virtual bool setNextCapture();
 
 	virtual void beginFrame();
 	virtual void endFrame();
@@ -24,6 +25,7 @@ public:
 protected:
 	bool enable;
 	bool doCapture = false;
+	bool doNextCapture = false;
 	void* deviceHandle = NULL;
 	void* windowHandle = NULL;
 

@@ -63,13 +63,12 @@ protected:
 
 	void getTokenInternal(const string& str);
 	ShaderAdapter* getAdapterInternal(ShaderStageType type);
-	ShaderFeature getFeatureInternal(const string& feature) const;
 	Enum<ShaderFeature> getFeatureInternal(const vector<string>& command) const;
 	virtual bool readHeadFile(const string& envPath);
 	virtual ShaderAdapter* processAdapter();
 	virtual void compileAdapter();
 	virtual ShaderAdapter* useAdapter(ShaderStageType stageType, const vector<string>& command, bool forceExist = true);
 	virtual void addCondition(Enum<ShaderFeature> feature, const string& macro);
-	virtual void addCondition(const vector<string>& command);
+	virtual Enum<ShaderFeature> addCondition(const vector<string>& command);
 	virtual void finalize();
 };

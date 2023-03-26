@@ -1,0 +1,14 @@
+#material
+#localsize 8 8 1
+#compute debug
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+RWTexture2D<float4> outBuffer;
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 pixel : SV_DispatchThreadID)
+{
+	if (any(pixel >= camData.viewSize))
+        return;
+    outBuffer[pixel] = debugBuffer[pixel];
+}

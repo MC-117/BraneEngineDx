@@ -4,7 +4,7 @@
 #include "../../lib/VirtualShadowMap_Def.hmat"
 
 RWBuffer<uint> outInitPhysPagesIndirectArgs;
-RWStructuredBuffer<uint> outPhysPagesToInit;
+RWBuffer<uint> outPhysPagesToInit;
 
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
 void main(uint tid : SV_DispatchThreadID)
@@ -40,6 +40,6 @@ void main(uint tid : SV_DispatchThreadID)
         int groupCount = 0;
         // Each page needs TILES_PER_PAGE_1D groups launched
         InterlockedAdd(outInitPhysPagesIndirectArgs[0], TILES_PER_PAGE_1D, groupCount);
-        outInitPhysPagesIndirectArgs[groupCount >> LOG2_TILES_PER_PAGE_1D] = tid;
+        outPhysPagesToInit[groupCount >> LOG2_TILES_PER_PAGE_1D] = tid;
 	}
 }

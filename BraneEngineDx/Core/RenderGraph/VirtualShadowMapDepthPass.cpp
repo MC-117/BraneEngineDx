@@ -18,6 +18,28 @@ bool VirtualShadowMapDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	if (program == NULL || !program->init())
 		return false;
 
+	MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(vsmMaterial->getRenderData());
+	if (materialRenderData == NULL)
+		return false;
+	if (materialRenderData->usedFrame < (long long)Time::frames()) {
+		materialRenderData->program = program;
+		materialRenderData->create();
+		materialRenderData->upload();
+		materialRenderData->usedFrame = Time::frames();
+	}
+
+	for (auto binding : cmd.bindings) {
+		if (binding->usedFrame < (long long)Time::frames()) {
+			binding->create();
+			binding->upload();
+			binding->usedFrame = Time::frames();
+		}
+	}
+
+	MeshData* meshData = cmd.mesh == NULL ? NULL : cmd.mesh->meshData;
+	if (meshData)
+		meshData->init();
+
 	SceneRenderData& sceneData = *meshCmd->sceneData;
 
 	InstanceDrawData data;
@@ -53,6 +75,7 @@ void VirtualShadowMapDepthPass::execute(IRenderContext& context)
 		renderData.manager.processInvalidations(context, sceneData->meshTransformDataPack);
 		renderData.shadowMapArray.buildPageAllocations(context, sceneData->cameraRenderDatas, sceneData->lightDataPack);
 		renderData.shadowMapArray.render(context, sceneData->lightDataPack);
+		renderData.shadowMapArray.renderDebugView(context, *sceneData->cameraRenderDatas[0]);
 	}
 }
 

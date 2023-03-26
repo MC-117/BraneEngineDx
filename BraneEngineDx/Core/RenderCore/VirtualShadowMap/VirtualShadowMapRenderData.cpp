@@ -4,6 +4,7 @@
 VirtualShadowMapRenderData::VirtualShadowMapRenderData(LightRenderData& lightRenderData)
 	: lightRenderData(lightRenderData)
 {
+	shadowMapArray.init(manager);
 }
 
 VirtualShadowMapClipmap* VirtualShadowMapRenderData::newClipmap(CameraRender& cameraRender)
@@ -41,6 +42,6 @@ void VirtualShadowMapRenderData::bindForLighting(IRenderContext& context)
 		context.bindTexture(shadowMapArray.physPagePool->getVendorTexture(), VirtualShadowMapShaders::physPagePoolName);
 		context.bindBufferBase(shadowMapArray.frameData->projData.getVendorGPUBuffer(), VirtualShadowMapShaders::projDataName);
 		context.bindBufferBase(shadowMapArray.frameData->pageTable.getVendorGPUBuffer(), VirtualShadowMapShaders::pageTableName);
-		context.bindBufferBase(shadowMapArray.frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMBuffInfoName);
+		context.bindBufferBase(shadowMapArray.frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
 	}
 }

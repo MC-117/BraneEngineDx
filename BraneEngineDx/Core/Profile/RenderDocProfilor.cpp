@@ -63,9 +63,23 @@ bool RenderDocProfiler::setCapture()
     return true;
 }
 
+bool RenderDocProfiler::setNextCapture()
+{
+    if (!isValid())
+        return false;
+    doNextCapture = true;
+    return true;
+}
+
 void RenderDocProfiler::beginFrame()
 {
-    if (!isValid() || !doCapture)
+    if (!isValid())
+        return;
+    if (doNextCapture) {
+        doCapture = true;
+        doNextCapture = false;
+    }
+    if (!doCapture)
         return;
     deviceHandle = VendorManager::getInstance().getVendor().getDefaultRenderContext()->getDeviceHandle();
     windowHandle = Engine::windowContext.hwnd;

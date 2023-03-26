@@ -12,6 +12,7 @@ DeferredSurfaceBuffer::DeferredSurfaceBuffer()
 	gBufferE.setAutoGenMip(false);
 	hitDataMap.setAutoGenMip(false);
 	hitColorMap.setAutoGenMip(false);
+	debugBuffer.setAutoGenMip(false);
 	renderTarget.addTexture("gBufferA", gBufferA);
 	renderTarget.addTexture("gBufferB", gBufferB);
 	renderTarget.addTexture("gBufferC", gBufferC);
@@ -19,6 +20,7 @@ DeferredSurfaceBuffer::DeferredSurfaceBuffer()
 	renderTarget.addTexture("gBufferE", gBufferE);
 	traceRenderTarget.addTexture("hitDataMap", hitDataMap);
 	traceRenderTarget.addTexture("hitColorMap", hitColorMap);
+	debugRenderTarget.addTexture("debugBuffer", debugBuffer);
 }
 
 void DeferredSurfaceBuffer::create(CameraRender* cameraRender)
@@ -36,6 +38,7 @@ void DeferredSurfaceBuffer::resize(unsigned int width, unsigned int height)
 	hizTexture.resize(widthP2, heightP2);
 	traceRenderTarget.resize(width, height);
 	resolveRenderTarget.resize(width, height);
+	debugRenderTarget.resize(width, height);
 }
 
 void DeferredSurfaceBuffer::bind(IRenderContext& context)
@@ -102,6 +105,16 @@ RenderTarget* DeferredSurfaceBuffer::getResolveRenderTarget()
 	return &resolveRenderTarget;
 }
 
+Texture* DeferredSurfaceBuffer::getDebugBuffer()
+{
+	return &debugBuffer;
+}
+
+RenderTarget* DeferredSurfaceBuffer::getDebugRenderTarget()
+{
+	return &debugRenderTarget;
+}
+
 SerializeInstance(DeferredRenderGraph);
 
 DeferredRenderGraph::DeferredRenderGraph()
@@ -155,6 +168,8 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 	Enum<ShaderFeature> deferredShaderFeature = shaderFeature;
 	deferredShaderFeature |= Shader_Deferred;
 	ShaderProgram* deferredShader = cmd.material->getShader()->getProgram(deferredShaderFeature, matchRule);
+
+	const bool enableVSMDepthPass = VirtualShadowMapConfig::isEnable();
 
 	if (enableVSMDepthPass)
 		vsmDepthPass.setRenderCommand(cmd);
@@ -326,7 +341,7 @@ void DeferredRenderGraph::prepare()
 	screenHitPass.prepare();
 	preDepthPass.prepare();
 	geometryPass.prepare();
-	if (enableVSMDepthPass)
+	if (VirtualShadowMapConfig::isEnable())
 		vsmDepthPass.prepare();
 	else
 		shadowDepthPass.prepare();
@@ -373,7 +388,7 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 	timer.record("Base");
 
-	if (enableVSMDepthPass)
+	if (VirtualShadowMapConfig::isEnable())
 		vsmDepthPass.execute(context);
 	else
 		shadowDepthPass.execute(context);
@@ -444,7 +459,7 @@ void DeferredRenderGraph::reset()
 	screenHitPass.reset();
 	preDepthPass.reset();
 	geometryPass.reset();
-	if (enableVSMDepthPass)
+	if (VirtualShadowMapConfig::isEnable())
 		vsmDepthPass.reset();
 	else
 		shadowDepthPass.reset();
@@ -466,7 +481,7 @@ void DeferredRenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)
 	passes.push_back(make_pair("ScreenHit", &screenHitPass));
 	passes.push_back(make_pair("PreDepth", &preDepthPass));
 	passes.push_back(make_pair("Geometry", &geometryPass));
-	passes.push_back(make_pair("ShadowDepth", enableVSMDepthPass ?
+	passes.push_back(make_pair("ShadowDepth", VirtualShadowMapConfig::isEnable() ?
 		(RenderPass*)&vsmDepthPass : (RenderPass*)&shadowDepthPass));
 	passes.push_back(make_pair("Lighting", &lightingPass));
 	passes.push_back(make_pair("HiZ", &hizPass));

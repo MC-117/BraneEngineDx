@@ -46,6 +46,12 @@ void ProfilerManager::setCapture()
         profilor->setCapture();
 }
 
+void ProfilerManager::setNextCapture()
+{
+    for (auto profilor : profilors)
+        profilor->setNextCapture();
+}
+
 void ProfilerManager::beginScope(const string& name)
 {
     for (auto profilor : profilors)

@@ -169,6 +169,7 @@ ShaderProgram * Shader::getProgram(const Enum<ShaderFeature>& feature, const Sha
 	if (!isValid())
 		return NULL;
 	ShaderProgram* program = NULL;
+	Enum<ShaderFeature> shaderType;
 	auto iter = shaderPrograms.find(feature);
 	if (iter == shaderPrograms.end()) {
 		ShaderStage* meshStage = NULL;
@@ -183,6 +184,7 @@ ShaderProgram * Shader::getProgram(const Enum<ShaderFeature>& feature, const Sha
 		}
 		if (meshStage == NULL || !meshStage->isValid())
 			return NULL;
+		shaderType |= meshStage->getShaderFeature();
 		program = VendorManager::getInstance().getVendor().newShaderProgram();
 		if (program == NULL)
 			throw runtime_error("Invalid Vendor Implementation of ShaderProgram");
@@ -198,11 +200,13 @@ ShaderProgram * Shader::getProgram(const Enum<ShaderFeature>& feature, const Sha
 				if (!program->addShaderStage(*stage)) {
 					break;
 				}
+				shaderType |= stage->getShaderFeature();
 			}
 		}
 		if (program->isValid()) {
 			program->name = name;
 			program->renderOrder = renderOrder;
+			program->shaderType = shaderType;
 			shaderPrograms.insert(make_pair(feature, program));
 		}
 		else {

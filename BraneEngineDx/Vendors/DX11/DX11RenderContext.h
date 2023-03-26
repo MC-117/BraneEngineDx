@@ -48,6 +48,7 @@ public:
 
 	virtual void clearVertexBindings();
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, const ShaderPropertyName& name, BufferOption bufferOption = BufferOption());
+	virtual bool unbindBufferBase(const ShaderPropertyName& name);
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, unsigned int index, BufferOption bufferOption = BufferOption());
 	virtual unsigned int uploadBufferData(IGPUBuffer* buffer, unsigned int size, void* data);
 	virtual unsigned int uploadBufferSubData(IGPUBuffer* buffer, unsigned int first, unsigned int size, void* data);

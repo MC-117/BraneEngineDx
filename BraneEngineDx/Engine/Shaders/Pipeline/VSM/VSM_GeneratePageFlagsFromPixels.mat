@@ -1,6 +1,8 @@
 #material
 #localsize 8 8 1
 #compute
+#condition debug
+#pragma debug
 #include "../../lib/VirtualShadowMap_Def.hmat"
 
 cbuffer GenPageFlagInfo
@@ -27,20 +29,35 @@ void markPageAddress(uint pageOffset, uint flags)
 	outPageRequestFlags[pageOffset] = flags;
 }
 
-void markPage(uint vsmID, uint mipLevel, float3 worldPos, bool usePageDilation, float2 pageDilationOffset)
+void markPage(uint vsmID
+	, uint mipLevel
+	, float3 worldPos
+	, bool usePageDilation
+	, float2 pageDilationOffset
+	#if defined(DEBUG_SHADER_FEATURE)
+	, uint2 pixel
+	#endif
+	)
 {
 	VSMProjData projData = getVSMProjData(vsmID);
 
-	float4 shadowUVZ = mul(float4(worldPos, 1.0f), projData.worldToUV);
+	float4 shadowUVZ = mul(float4(worldPos - projData.worldCenter, 1.0f), projData.worldToUV);
 	shadowUVZ.xyz /= shadowUVZ.w;
+	//shadowUVZ.xy = clipToUV(shadowUVZ.xy);
 
 	// Check overlap vs the shadow map space
 	// NOTE: XY test not really needed anymore with the precise cone test in the caller, but we'll leave it for the moment
 	bool inClip = shadowUVZ.w > 0.0f && 
 		all(shadowUVZ.xyz <= shadowUVZ.w) &&
 		all(shadowUVZ.xyz >= float3(-shadowUVZ.ww, 0.0f));
+
+	#if defined(DEBUG_SHADER_FEATURE)
+	outDebugBuffer[pixel] = float4(0.5f, 0.5f, 0.5f, 1.0f);
+	#endif
+
 	if (!inClip)
 		return;
+
 	// Normal pages marked through pixel processing are not "coarse" and should include "detail geometry" - i.e., all geometry
 	uint flags = VSM_ALLOCATED_FLAG | VSM_DETAIL_GEOMETRY_FLAG;
 
@@ -49,6 +66,9 @@ void markPage(uint vsmID, uint mipLevel, float3 worldPos, bool usePageDilation, 
 	uint2 pageAddress = clamp(uint2(pageAddressFloat), 0U, maxPageAddress);
 	uint pageOffset = calcPageOffset(vsmID, mipLevel, pageAddress);
 	markPageAddress(pageOffset, flags);
+	#if defined(DEBUG_SHADER_FEATURE)
+	outDebugBuffer[pixel] = float4(IntToColor(pageOffset), 1.0f);
+	#endif
 
 	if (usePageDilation)
 	{
@@ -67,17 +87,27 @@ void markPage(uint vsmID, uint mipLevel, float3 worldPos, bool usePageDilation, 
 	}
 }
 
-void markPageClipmap(
-	VSMProjData baseProjData, 
-	int clipmapStartId,
-	bool usePageDilation, 
-	float2 pageDilationOffset, 
-	float3 worldPos)
+void markPageClipmap(VSMProjData baseProjData
+	, int clipmapStartId
+	, bool usePageDilation
+	, float2 pageDilationOffset
+	, float3 worldPos
+	#if defined(DEBUG_SHADER_FEATURE)
+	, uint2 pixel
+	#endif
+	)
 {
 	const int clipmapLevel = calcClipmapLevel(baseProjData, worldPos);
 	int clipmapIndex = max(0, clipmapLevel - baseProjData.clipmapLevel);
 	if (clipmapIndex < baseProjData.clipmapCount)
-		markPage(clipmapStartId + clipmapIndex, 0, worldPos, usePageDilation, pageDilationOffset);
+		markPage(clipmapStartId + clipmapIndex, 0
+		, worldPos
+		, usePageDilation
+		, pageDilationOffset
+		#if defined(DEBUG_SHADER_FEATURE)
+		, pixel
+		#endif
+		);
 }
 
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
@@ -85,9 +115,10 @@ void main(uint2 pixel : SV_DispatchThreadID, uint gidx : SV_GroupIndex)
 {
 	if (any(pixel >= camData.viewSize))
         return;
-    float depth = SAMPLE_TEX_LOD(sceneDepthMap, pixel, 0);
-    float worldPos = uvzPosToWorld(float3(pixel, depth));
-    float3 worldNorm = SAMPLE_TEX_LOD(sceneNormalMap, pixel, 0);
+	float2 uv = pixel / camData.viewSize;
+    float depth = sceneDepthMap[pixel];
+    float3 worldPos = uvzPosToWorld(float3(uv, depth));
+    float3 worldNorm = normalize(sceneNormalMap[pixel]);
 
     const float2 pageDilationDither = float2(
 		(gidx & 1) ? 1.0f : -1.0f,
@@ -96,14 +127,25 @@ void main(uint2 pixel : SV_DispatchThreadID, uint gidx : SV_GroupIndex)
     const bool usePageDilation = pageDilationBorderSizeMain > 0.0f;
 	const float2 pageDilationOffset = pageDilationBorderSizeMain * pageDilationDither;
 
+	#if defined(DEBUG_SHADER_FEATURE)
+	outDebugBuffer[pixel] = 0;
+	#endif
+
     for (int i = 0; i < directLightCount; i++) {
         uint vsmID = directLightVSMIDs[i];
         VSMProjData projData = getVSMProjData(vsmID);
-        float3 lightDir = mul(float4(1, 0, 0, 0), projData.worldToView).xyz;
         bool backFaceCulled = false;
-        if (backFaceCull && isBackFaceCulled(worldNorm, lightDir))
+        if (backFaceCull && isBackFaceCulled(worldNorm, projData.worldDirection))
             backFaceCulled = true;
-        if (backFaceCulled)
-            markPageClipmap(projData, vsmID, usePageDilation, pageDilationOffset, worldPos);
+        if (!backFaceCulled)
+            markPageClipmap(projData
+			, vsmID
+			, usePageDilation
+			, pageDilationOffset
+			, worldPos
+			#if defined(DEBUG_SHADER_FEATURE)
+			, pixel
+			#endif
+			);
     }
 }

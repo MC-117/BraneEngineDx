@@ -15,6 +15,7 @@ public:
 	virtual void tick() = 0;
 
 	virtual bool setCapture() = 0;
+	virtual bool setNextCapture() = 0;
 
 	virtual void beginScope(const string& name) = 0;
 	virtual void endScope() = 0;
@@ -33,6 +34,7 @@ public:
 	virtual void tick();
 
 	virtual void setCapture();
+	virtual void setNextCapture();
 
 	virtual void beginScope(const string& name);
 	virtual void endScope();

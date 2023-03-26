@@ -154,6 +154,7 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, const ShaderP
 			currentProgram->bindCBV(deviceContext, name, dxBuffer->dx11Buffer);
 			break;
 		case GB_Storage:
+		case GB_Command:
 			currentProgram->bindSRV(deviceContext, name, dxBuffer->dx11BufferSRV);
 			break;
 		default:
@@ -162,6 +163,13 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, const ShaderP
 		}
 	}
 	return dxBuffer->desc.id;
+}
+
+bool DX11RenderContext::unbindBufferBase(const ShaderPropertyName& name)
+{
+	if (currentProgram == NULL)
+		return 0;
+	return currentProgram->unbindBuffer(deviceContext, name);
 }
 
 unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int index, BufferOption bufferOption)
@@ -195,6 +203,7 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 			break;
 		}
 		case GB_Storage:
+		case GB_Command:
 			bindSRToStage(deviceContext, currentProgram, dxBuffer->dx11BufferSRV, index);
 			break;
 		default:
@@ -1134,7 +1143,7 @@ void DX11RenderContext::execteImGuiDraw(ImDrawData* drawData)
 
 bool DX11RenderContext::drawMeshIndirect(IGPUBuffer* argBuffer, unsigned int byteOffset)
 {
-	if (!currentProgram->isComputable())
+	if (currentProgram->isComputable())
 		return false;
 
 	DX11GPUBuffer* dxBuffer = dynamic_cast<DX11GPUBuffer*>(argBuffer);

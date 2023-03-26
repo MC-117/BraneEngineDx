@@ -379,6 +379,86 @@ void DX11ShaderProgram::uploadAttribute(const string& name, unsigned int size, v
 	memcpy_s(matInsBufHost + prop->offset, prop->size, data, size);
 }
 
+bool DX11ShaderProgram::unbindBuffer(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name) const
+{
+	const AttributeDesc* desc = getAttributeOffset(name);
+	if (desc == NULL)
+		return false;
+	for (auto& prop : desc->properties) {
+		switch (prop.second->type)
+		{
+		case ShaderProperty::ConstantBuffer: {
+			ID3D11Buffer* buffer = NULL;
+			switch (prop.first)
+			{
+			case Vertex_Shader_Stage:
+				deviceContext->VSSetConstantBuffers(prop.second->offset, 1, &buffer);
+				break;
+			case Fragment_Shader_Stage:
+				deviceContext->PSSetConstantBuffers(prop.second->offset, 1, &buffer);
+				break;
+			case Geometry_Shader_Stage:
+				deviceContext->GSSetConstantBuffers(prop.second->offset, 1, &buffer);
+				break;
+			case Compute_Shader_Stage:
+				deviceContext->CSSetConstantBuffers(prop.second->offset, 1, &buffer);
+				break;
+			case Tessellation_Control_Shader_Stage:
+				deviceContext->HSSetConstantBuffers(prop.second->offset, 1, &buffer);
+				break;
+			case Tessellation_Evalution_Shader_Stage:
+				deviceContext->DSSetConstantBuffers(prop.second->offset, 1, &buffer);
+				break;
+			}
+			break;
+		}
+		case ShaderProperty::TextureBuffer:
+		case ShaderProperty::Texture: {
+			ID3D11ShaderResourceView* srv = NULL;
+			switch (prop.first)
+			{
+			case Vertex_Shader_Stage:
+				deviceContext->VSSetShaderResources(prop.second->offset, 1, &srv);
+				break;
+			case Fragment_Shader_Stage:
+				deviceContext->PSSetShaderResources(prop.second->offset, 1, &srv);
+				break;
+			case Geometry_Shader_Stage:
+				deviceContext->GSSetShaderResources(prop.second->offset, 1, &srv);
+				break;
+			case Compute_Shader_Stage:
+				deviceContext->CSSetShaderResources(prop.second->offset, 1, &srv);
+				break;
+			case Tessellation_Control_Shader_Stage:
+				deviceContext->HSSetShaderResources(prop.second->offset, 1, &srv);
+				break;
+			case Tessellation_Evalution_Shader_Stage:
+				deviceContext->DSSetShaderResources(prop.second->offset, 1, &srv);
+				break;
+			}
+			break;
+		}
+		case ShaderProperty::Image: {
+			ID3D11UnorderedAccessView* uav = NULL;
+			switch (prop.first)
+			{
+			case Compute_Shader_Stage:
+				deviceContext->CSSetUnorderedAccessViews(prop.second->offset, 1, &uav, NULL);
+				break;
+			case Fragment_Shader_Stage:
+				deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL,
+					NULL, NULL, prop.second->offset, 1, &uav, NULL);
+				break;
+			default:
+				break;
+			}
+		}
+		default:
+			break;
+		}
+	}
+}
+
 bool DX11ShaderProgram::bindCBV(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11Buffer> buffer) const
 {
 	const AttributeDesc* desc = getAttributeOffset(name);

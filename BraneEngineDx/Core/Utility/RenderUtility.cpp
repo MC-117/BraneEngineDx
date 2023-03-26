@@ -2,6 +2,65 @@
 #include "MathUtility.h"
 #include "../ShaderStage.h"
 
+const char* shaderFeatureNames[] = {
+	"deferred",
+	"lighting",
+	"postprocess",
+	"skeleton",
+	"morph",
+	"particle",
+	"modifier",
+	"terrain",
+	"vsm",
+	"debug",
+	"custom1",
+	"custom2",
+	"custom3",
+	"custom4",
+	"custom5",
+	"custom6",
+	"custom7",
+	"custom8",
+	"custom9",
+	"custom10",
+};
+
+map<string, ShaderFeature> shaderFeatureNameMap = {
+	{ "deferred", Shader_Deferred },
+	{ "lighting", Shader_Lighting },
+	{ "postprocess", Shader_Postprocess },
+	{ "skeleton", Shader_Skeleton },
+	{ "morph", Shader_Morph },
+	{ "particle", Shader_Particle },
+	{ "modifier", Shader_Modifier },
+	{ "terrain", Shader_Terrain },
+	{ "vsm", Shader_VSM },
+	{ "debug", Shader_Debug },
+	{ "custom1", Shader_Custom_1 },
+	{ "custom2", Shader_Custom_2 },
+	{ "custom3", Shader_Custom_3 },
+	{ "custom4", Shader_Custom_4 },
+	{ "custom5", Shader_Custom_5 },
+	{ "custom6", Shader_Custom_6 },
+	{ "custom7", Shader_Custom_7 },
+	{ "custom8", Shader_Custom_8 },
+	{ "custom9", Shader_Custom_9 },
+	{ "custom10", Shader_Custom_10 },
+};
+
+ShaderFeature getShaderFeatureFromName(const string& name)
+{
+	auto iter = shaderFeatureNameMap.find(name);
+	if (iter == shaderFeatureNameMap.end())
+		throw runtime_error("Unknown shader feature");
+	return iter->second;
+}
+
+string getShaderFeatureName(ShaderFeature feature)
+{
+	return shaderFeatureNames[feature];
+}
+
 string getShaderFeatureNames(Enum<ShaderFeature> feature)
 {
 	if (feature.enumValue == Shader_Default)
@@ -25,6 +84,8 @@ string getShaderFeatureNames(Enum<ShaderFeature> feature)
 		name += "[terrain]";
 	if (feature.has(Shader_VSM))
 		name += "[vsm]";
+	if (feature.has(Shader_Debug))
+		name += "[debug]";
 	if (feature.has(Shader_Custom_1))
 		name += "[custom1]";
 	if (feature.has(Shader_Custom_2))
@@ -43,6 +104,8 @@ string getShaderFeatureNames(Enum<ShaderFeature> feature)
 		name += "[custom8]";
 	if (feature.has(Shader_Custom_9))
 		name += "[custom9]";
+	if (feature.has(Shader_Custom_10))
+		name += "[custom10]";
 	return name;
 }
 

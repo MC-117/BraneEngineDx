@@ -30,6 +30,7 @@ protected:
 	CameraRenderData* cameraRenderData = NULL;
 
 	Vector3f worldOrigin;
+	Vector3f worldDirection;
 
 	Matrix4f worldToLightViewMatrix;
 

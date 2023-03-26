@@ -28,8 +28,11 @@ void main(uint tid : SV_DispatchThreadID)
         uint invalidationFlags = VSM_DYNAMIC_UNCACHED_FLAG << VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT;
 
         FrustumCullData cullData = frustumCullBoxOrtho(
-            insData.localCenter, insData.localExtent,
-            insData.localToWorld, projData.worldToClip);
+            insData.localCenter,
+            insData.localExtent,
+            -projData.worldCenter,
+            insData.localToWorld,
+            projData.worldToClip);
         if (cullData.visiable) {
             int mipCount = (projData.clipmapCount <= 0) ? VSM_MAX_MIPS : 1;
             for (int mipLevel = 0; mipLevel < mipCount; mipLevel++) {
