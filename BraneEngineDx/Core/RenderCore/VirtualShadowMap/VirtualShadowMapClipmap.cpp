@@ -13,7 +13,7 @@ Matrix4f getOrthoMatrix(float width, float height, float zScale, float zOffset)
 	Result(0, 0) = 1 / width;
 	Result(1, 1) = 1 / height;
 	Result(2, 2) = zScale;
-	Result(3, 2) = zOffset * zScale;
+	Result(2, 3) = zOffset * zScale;
 	return Result;
 }
 
@@ -39,7 +39,7 @@ VirtualShadowMapClipmap::VirtualShadowMapClipmap(VirtualShadowMapArray& virtualS
 	worldToLightRotationView.block(0, 0, 3, 3) = lightData.worldToLightView.block(0, 0, 3, 3);
 
 	// ZY plane to XY plane
-	worldToLightViewMatrix = faceMat * worldToLightRotationView;
+	worldToLightViewMatrix = worldToLightRotationView * faceMat;
 	const Matrix4f viewToWorldMatrix = worldToLightViewMatrix.transpose();
 
 	float lodScale = 0.5f / cameraData.data.projectionMat(0, 0);
@@ -141,7 +141,7 @@ VirtualShadowMapClipmap::VirtualShadowMapClipmap(VirtualShadowMapArray& virtualS
 
 		const float zScale = 0.5 / viewRadiusZ;
 		const float zOffset = viewRadiusZ + viewCenterDeltaZ;
-		level.viewToClip = Math::orthotropic(-halfLevelDim, halfLevelDim, -halfLevelDim, halfLevelDim, zScale, zOffset);//getOrthoMatrix(halfLevelDim, halfLevelDim, zScale, zOffset);
+		level.viewToClip = /*Math::orthotropic(-halfLevelDim, halfLevelDim, -halfLevelDim, halfLevelDim, zScale, zOffset);*/getOrthoMatrix(halfLevelDim, halfLevelDim, zScale, zOffset);
 	}
 }
 
@@ -179,12 +179,13 @@ void VirtualShadowMapClipmap::getProjectData(unsigned int clipmapIndex, VirtualS
 	if (clipmapIndex < levelData.size()) {
 		const LevelData& level = levelData[clipmapIndex];
 
-		projData.worldToView = worldToLightViewMatrix;
-		projData.viewToClip = level.viewToClip;
-		projData.worldToClip = level.viewToClip * worldToLightViewMatrix;
+		projData.worldToView = MATRIX_UPLOAD_OP(worldToLightViewMatrix);
+		projData.viewToClip = MATRIX_UPLOAD_OP(level.viewToClip);
+		Matrix4f worldToClip = level.viewToClip * worldToLightViewMatrix;
+		projData.worldToClip = MATRIX_UPLOAD_OP(worldToClip);
 		Matrix4f uvMatrix = Math::getTransitionMatrix(Vector3f(0.5f, 0.5f, 0.0f)) * 
 			Math::getScaleMatrix(Vector3f(0.5f, -0.5f, 1.0f));
-		projData.worldToUV = uvMatrix * projData.worldToClip;
+		projData.worldToUV = MATRIX_UPLOAD_OP(uvMatrix * worldToClip);
 
 		projData.clipmapWorldOrigin = worldOrigin;
 		projData.resolutionLodBias = resolutionLodBias;

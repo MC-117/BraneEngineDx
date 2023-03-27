@@ -998,7 +998,7 @@ void VirtualShadowMapArray::buildCullingBatchInfos(const LightRenderData& lightD
 			if (vsm == NULL)
 				continue;
 			ShadowViewInfo& view = shadowViewInfosUpload.emplace_back();
-			view.worldToLightClip = lightData.mainLightData.worldToLightClip;
+			view.worldToLightClip = MATRIX_UPLOAD_OP(lightData.mainLightData.worldToLightClip);
 			view.viewRect = Vector4i(0, 0, VirtualShadowMapConfig::virtualShadowMapSize, VirtualShadowMapConfig::virtualShadowMapSize);
 			view.vsmID = vsm->vsmID;
 			view.flags = VSM_DirectLight;

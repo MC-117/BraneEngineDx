@@ -21,9 +21,9 @@ void LightRenderData::setLight(Light* light)
 	if (directLight != NULL) {
 		mainLightData.direction = directLight->getForward(WORLD);
 		mainLightData.intensity = directLight->intensity;
-		mainLightData.worldToLightView = MATRIX_UPLOAD_OP(directLight->getWorldToLightViewMatrix());
-		mainLightData.viewToLightClip = MATRIX_UPLOAD_OP(directLight->getViewToLightClipMatrix());
-		mainLightData.worldToLightClip = MATRIX_UPLOAD_OP(directLight->getWorldToLightClipMatrix());
+		mainLightData.worldToLightView = directLight->getWorldToLightViewMatrix();
+		mainLightData.viewToLightClip = directLight->getViewToLightClipMatrix();
+		mainLightData.worldToLightClip = directLight->getWorldToLightClipMatrix();
 		mainLightData.shadowBias = directLight->getShadowBias();
 		mainLightData.color = toLinearColor(directLight->color);
 		mainLightData.vsmID = -1;
@@ -61,9 +61,13 @@ void LightRenderData::release()
 
 void LightRenderData::upload()
 {
-	mainLightBuffer.uploadData(1, &mainLightData);
+	MainLightData mainLightDataUpload = mainLightData;
+	mainLightDataUpload.worldToLightView = MATRIX_UPLOAD_OP(mainLightDataUpload.worldToLightView);
+	mainLightDataUpload.viewToLightClip = MATRIX_UPLOAD_OP(mainLightDataUpload.viewToLightClip);
+	mainLightDataUpload.worldToLightClip = MATRIX_UPLOAD_OP(mainLightDataUpload.worldToLightClip);
+	mainLightBuffer.uploadData(1, &mainLightDataUpload);
 	if (mainLightData.pointLightCount > 0)
-		localLightBuffer.uploadData(mainLightData.pointLightCount, pointLightDatas.data());
+		localLightBuffer.uploadData(mainLightDataUpload.pointLightCount, pointLightDatas.data());
 }
 
 void LightRenderData::bind(IRenderContext& context)

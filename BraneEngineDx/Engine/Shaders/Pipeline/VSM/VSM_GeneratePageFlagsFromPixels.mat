@@ -43,7 +43,6 @@ void markPage(uint vsmID
 
 	float4 shadowUVZ = mul(float4(worldPos - projData.worldCenter, 1.0f), projData.worldToUV);
 	shadowUVZ.xyz /= shadowUVZ.w;
-	//shadowUVZ.xy = clipToUV(shadowUVZ.xy);
 
 	// Check overlap vs the shadow map space
 	// NOTE: XY test not really needed anymore with the precise cone test in the caller, but we'll leave it for the moment

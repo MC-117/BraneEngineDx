@@ -28,13 +28,6 @@ void CameraRenderData::create()
 	if (cameraRender == NULL)
 		return;
 	data = cameraRender->cameraData;
-	data.projectionViewMat = MATRIX_UPLOAD_OP(data.projectionViewMat);
-	data.projectionMat = MATRIX_UPLOAD_OP(data.projectionMat);
-	data.projectionMatInv = MATRIX_UPLOAD_OP(data.projectionMatInv);
-	data.viewMat = MATRIX_UPLOAD_OP(data.viewMat);
-	data.viewMatInv = MATRIX_UPLOAD_OP(data.viewMatInv);
-	data.viewOriginMat = MATRIX_UPLOAD_OP(data.viewOriginMat);
-	data.viewOriginMatInv = MATRIX_UPLOAD_OP(data.viewOriginMatInv);
 
 	hitData = cameraRender->getTriggeredScreenHitData();
 
@@ -66,7 +59,15 @@ void CameraRenderData::release()
 
 void CameraRenderData::upload()
 {
-	buffer.uploadData(1, &data);
+	CameraData dataUpload = data;
+	dataUpload.projectionViewMat = MATRIX_UPLOAD_OP(dataUpload.projectionViewMat);
+	dataUpload.projectionMat = MATRIX_UPLOAD_OP(dataUpload.projectionMat);
+	dataUpload.projectionMatInv = MATRIX_UPLOAD_OP(dataUpload.projectionMatInv);
+	dataUpload.viewMat = MATRIX_UPLOAD_OP(dataUpload.viewMat);
+	dataUpload.viewMatInv = MATRIX_UPLOAD_OP(dataUpload.viewMatInv);
+	dataUpload.viewOriginMat = MATRIX_UPLOAD_OP(dataUpload.viewOriginMat);
+	dataUpload.viewOriginMatInv = MATRIX_UPLOAD_OP(dataUpload.viewOriginMatInv);
+	buffer.uploadData(1, &dataUpload);
 	if (hitData)
 		hitData->upload();
 }
