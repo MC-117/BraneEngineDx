@@ -52,7 +52,7 @@ protected:
 	ShaderToken token = ST_None;
 	ShaderToken scopeToken = ST_None;
 	Enum<ShaderFeature> feature;
-	map<Enum<ShaderFeature>, string> conditions;
+	map<Enum<ShaderFeature>, ShaderMacroSet> conditions;
 	unordered_set<ShaderFile*> localHeadFiles;
 	unordered_set<ShaderFile*> globalHeadFiles;
 	map<ShaderStageType, ShaderAdapter*> adapters;

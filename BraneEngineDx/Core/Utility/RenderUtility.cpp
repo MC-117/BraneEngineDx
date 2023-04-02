@@ -3,6 +3,7 @@
 #include "../ShaderStage.h"
 
 const char* shaderFeatureNames[] = {
+	"default",
 	"deferred",
 	"lighting",
 	"postprocess",
@@ -26,6 +27,7 @@ const char* shaderFeatureNames[] = {
 };
 
 map<string, ShaderFeature> shaderFeatureNameMap = {
+	{ "default", Shader_Default },
 	{ "deferred", Shader_Deferred },
 	{ "lighting", Shader_Lighting },
 	{ "postprocess", Shader_Postprocess },
@@ -130,6 +132,26 @@ const char* getShaderPropertyTypeName(ShaderProperty::Type type)
 	default:
 		return "Unknown";
 	}
+}
+
+const char* getShaderExtension(ShaderStageType type)
+{
+	switch (type)
+	{
+	case Vertex_Shader_Stage:
+		return ".vs";
+	case Tessellation_Control_Shader_Stage:
+		return ".tcs";
+	case Tessellation_Evalution_Shader_Stage:
+		return ".tes";
+	case Geometry_Shader_Stage:
+		return ".gs";
+	case Fragment_Shader_Stage:
+		return ".fs";
+	case Compute_Shader_Stage:
+		return ".cs";
+	}
+	return "";
 }
 
 int getGPUBufferFormatCellSize(GPUBufferFormat format)

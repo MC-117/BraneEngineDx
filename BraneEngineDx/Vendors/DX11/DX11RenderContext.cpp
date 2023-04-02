@@ -1033,6 +1033,7 @@ void DX11RenderContext::bindDrawInfo()
 		cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 		dxContext.device->CreateBuffer(&cbDesc, NULL, &drawInfoBuf);
 	}
+	drawInfo.gameTime = Time::frameTime().toSecond();
 	if (drawInfo != uploadedDrawInfo) {
 		uploadedDrawInfo = drawInfo;
 		D3D11_MAPPED_SUBRESOURCE mpd;

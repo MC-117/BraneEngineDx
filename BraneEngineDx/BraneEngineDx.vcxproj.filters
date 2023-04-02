@@ -204,7 +204,7 @@
     <ClInclude Include="Core\Geometry.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Importer.h">
+    <ClInclude Include="Core\Importer\AssimpImporter.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Vendors\DX11\DX11MeshData.h">
@@ -1353,6 +1353,36 @@
     <ClInclude Include="Core\RenderCore\SurfaceBufferGetter.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Importer\Importer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Importer\AnimationClipDataImporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Importer\TextureImporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Importer\AudioImorpter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Importer\MaterialImporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Importer\PythonScriptImporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Importer\AssetFileImporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Importer\TimelineImporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Importer\IgnoreImporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RenderGraph\TranslucentPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -1484,7 +1514,7 @@
     <ClCompile Include="Core\Geometry.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Importer.cpp">
+    <ClCompile Include="Core\Importer\AssimpImporter.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Vendors\DX11\DX11MeshData.cpp">
@@ -2520,6 +2550,36 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMapRenderData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Importer\Importer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Importer\AnimationClipDataImporter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Importer\TextureImporter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Importer\AudioImorpter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Importer\MaterialImporter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Importer\PythonScriptImporter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Importer\AssetFileImporter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Importer\TimelineImporter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Importer\IgnoreImporter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderGraph\TranslucentPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

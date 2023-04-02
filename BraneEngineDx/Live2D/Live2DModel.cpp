@@ -287,16 +287,6 @@ Live2DModelAssetInfo::Live2DModelAssetInfo() : AssetInfo("Live2DModel")
 {
 }
 
-void* Live2DModelAssetInfo::load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const
-{
-    Live2DModel* model = new Live2DModel();
-    if (!model->load(path)) {
-        delete model;
-        return NULL;
-    }
-    return model;
-}
-
 AssetInfo& Live2DModelAssetInfo::getInstance()
 {
     return assetInfo;
@@ -310,4 +300,29 @@ Object* Live2DModelAssetInfo::createObject(Asset& asset) const
     Live2DActor* actor = new Live2DActor(asset.name);
     actor->setModel(model);
     return actor;
+}
+
+ImporterRegister<Live2DModelImporter> live2dImporter(".live2d", true);
+
+bool Live2DModelImporter::loadInternal(const ImportInfo& info, ImportResult& result)
+{
+    Live2DModel* model = new Live2DModel();
+    if (!model->load(info.path)) {
+        delete model;
+        result.status = ImportResult::LoadFailed;
+        return false;
+    }
+
+    Asset* asset = new Asset(&PythonScriptAssetInfo::assetInfo, info.filename, info.path);
+    asset->asset[0] = model;
+    if (AssetManager::registAsset(*asset)) {
+        result.assets.push_back(asset);
+        return true;
+    }
+    else {
+        delete model;
+        delete asset;
+        result.status = ImportResult::RegisterFailed;
+        return false;
+    }
 }

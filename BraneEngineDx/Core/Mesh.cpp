@@ -5,7 +5,7 @@
 #include "Physics/PhysicalWorld.h"
 #include <NvClothExt/ClothFabricCooker.h>
 #endif
-#include "Importer.h"
+#include "Importer/AssimpImporter.h"
 
 MeshPart::MeshPart()
 {

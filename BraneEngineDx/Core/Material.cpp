@@ -557,7 +557,7 @@ bool Material::MaterialLoader::loadMaterial(Material& material, const string& fi
 Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const string & matName)
 {
 	if (!is)
-		return false;
+		return NULL;
 	string clip, line;
 	unsigned int type = 0;
 	bool mat = false, success = false;
@@ -601,19 +601,19 @@ Material * Material::MaterialLoader::loadMaterialInstance(istream & is, const st
 				if (s.size() == 2)
 					twoSide = s[1] == "true";
 				else
-					return false;
+					return NULL;
 			}
 			else if (s[0] == "cullfront") {
 				if (s.size() == 2)
 					cullFront = s[1] == "true";
 				else
-					return false;
+					return NULL;
 			}
 			else if (s[0] == "castshadow") {
 				if (s.size() == 2)
 					castShadow = s[1] != "false";
 				else
-					return false;
+					return NULL;
 			}
 			else if (s[0] == "noearlyz") {
 				noearlyz = true;

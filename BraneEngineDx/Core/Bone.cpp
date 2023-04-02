@@ -1,5 +1,5 @@
 #include "Bone.h"
-#include "Importer.h"
+#include "Importer/AssimpImporter.h"
 #include "Camera.h"
 #include "Console.h"
 #include "RenderCore/RenderCommandList.h"

@@ -388,6 +388,12 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 		ImGui::NextColumn();
 	}
 	ImGui::EndColumns();
+	if (ImGui::BeginPopupContextWindow("FolderContext")) {
+		if (ImGui::Button("RefreshFolder", { 80, 36 })) {
+			refreshNewAsset(curFolder);
+		}
+		ImGui::EndPopup();
+	}
 	ImGui::EndChild();
 }
 
@@ -452,4 +458,26 @@ bool AssetBrowser::Item(const string & name, Texture2D & tex, float pad, bool is
 	dl->AddText(ImGui::GetFont(), ImGui::GetFontSize(), spos, ImColor(1.0f, 1.0f, 1.0f),
 		name.c_str(), name.c_str() + name.size(), 0, &clip);
 	return click;
+}
+
+bool AssetBrowser::refreshNewAsset(const string& path)
+{
+	if (!filesystem::is_directory(path) || !filesystem::exists(path))
+		return false;
+	for (auto& p : filesystem::directory_iterator(path)) {
+		filesystem::file_type type = p.status().type();
+		string assetPath = p.path().generic_u8string();
+		if (type == filesystem::file_type::regular) {
+			Asset* asset = AssetInfo::getAssetByPath(assetPath);
+			if (asset == NULL) {
+				ImportInfo info(assetPath);
+				ImportResult result;
+				if (IImporter::load(info, result)) {
+					for (Asset* asset : result.assets)
+						assets.push_back(asset);
+				}
+			}
+		}
+	}
+	return false;
 }

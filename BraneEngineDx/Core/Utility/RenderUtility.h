@@ -9,6 +9,7 @@ ShaderFeature getShaderFeatureFromName(const string& name);
 string getShaderFeatureName(ShaderFeature feature);
 string getShaderFeatureNames(Enum<ShaderFeature> feature);
 const char* getShaderPropertyTypeName(ShaderProperty::Type type);
+const char* getShaderExtension(ShaderStageType type);
 int getGPUBufferFormatCellSize(GPUBufferFormat format);
 int getPixelSize(TexInternalType type, int channels);
 bool isFloatPixel(TexInternalType type);

@@ -2,6 +2,7 @@
 
 #include "Live2DConsole.h"
 #include "../Core/Asset.h"
+#include "../Core/Importer/Importer.h"
 #include "../Core/Texture2D.h"
 
 class AssetInfo;
@@ -52,7 +53,14 @@ class Live2DModelAssetInfo : public AssetInfo {
 public:
 	static Live2DModelAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	virtual Object* createObject(Asset& asset) const;
 	static AssetInfo& getInstance();
+};
+
+class Live2DModelImporter : public IImporter
+{
+public:
+	Live2DModelImporter() = default;
+protected:
+	virtual bool loadInternal(const ImportInfo& info, ImportResult& result);
 };

@@ -48,6 +48,18 @@ void CaptureProbeRenderEditor::onCaptureProbeRenderGUI(EditorInfo& info)
 		radius = max(radius, 0);
 		captureProbeRender->setRadius(radius);
 	}
+	int curResolution = captureProbeRender->getResolution();
+	string resolutionStr = to_string(curResolution);
+	const int resolutions[] = { 64, 128, 256, 512, 1024, 2048, 4096 };
+	if (ImGui::BeginCombo("Resolution", resolutionStr.c_str())) {
+		for (int i = 0; i < 7; i++) {
+			curResolution = resolutions[i];
+			resolutionStr = to_string(curResolution);
+			if (ImGui::Selectable(resolutionStr.c_str()))
+				captureProbeRender->setResolution(curResolution);
+		}
+		ImGui::EndCombo();
+	}
 }
 
 void CaptureProbeRenderEditor::onGUI(EditorInfo& info)

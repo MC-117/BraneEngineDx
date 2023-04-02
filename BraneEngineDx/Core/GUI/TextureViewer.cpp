@@ -45,6 +45,16 @@ void TextureViewer::onRenderWindow(GUIRenderInfo & info)
 				}
 			}
 		}
+		string path = AssetInfo::getPath(texture);
+		if (!path.empty()) {
+			ImGui::SameLine();
+			if (ImGui::Button("ReloadFromSource")) {
+				Texture2D* texture2D = dynamic_cast<Texture2D*>(texture);
+				if (texture2D) {
+					texture2D->load(path);
+				}
+			}
+		}
 		ImGui::SliderFloat("MipLevel", &mipLevel, 0, texture->getMipLevels());
 
 		float padding = 10;

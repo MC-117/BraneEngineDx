@@ -12,11 +12,28 @@ struct ShaderStageDesc
 	const string& name;
 };
 
+struct ShaderMacroSet
+{
+	unordered_map<ShaderPropertyName, string> shaderMacros;
+	size_t hash = 0;
+
+	void add(const string& macro);
+	void append(const ShaderMacroSet& set);
+	void clear();
+	bool has(const ShaderPropertyName& macro) const;
+	size_t getHash() const;
+
+	string getDefineCode() const;
+
+	void recomputeHash();
+};
+
 class ShaderManager;
 
 class ShaderStage
 {
 	friend class ShaderProgram;
+	friend class ShaderAdapter;
 public:
 	ShaderStage(ShaderStageType stageType, const Enum<ShaderFeature>& feature, const string& name);
 	ShaderStage(const ShaderStageDesc& desc);
@@ -24,10 +41,12 @@ public:
 
 	virtual bool isValid();
 
-	virtual unsigned int compile(const string& code, string& errorString);
+	virtual unsigned int compile(const ShaderMacroSet& macroSet, const string& code, string& errorString);
 	virtual unsigned long long getShaderID() const;
 	ShaderStageType getShaderStageType() const;
 	Enum<ShaderFeature> getShaderFeature() const;
+
+	const ShaderMacroSet& getShaderMacroSet() const;
 
 	const ShaderProperty* getProperty(const ShaderPropertyName& name) const;
 	const unordered_map<size_t, ShaderProperty>& getProperties() const;
@@ -39,6 +58,7 @@ protected:
 	ShaderStageType stageType;
 	Enum<ShaderFeature> shaderFeature = Shader_Default;
 	unordered_map<size_t, ShaderProperty> properties;
+	ShaderMacroSet shaderMacroSet;
 	string code;
 	unsigned long long shaderId = 0;
 };
@@ -70,6 +90,8 @@ public:
 	bool isValid() const;
 	bool isDirty() const;
 
+	const ShaderMacroSet& getShaderMacroSet() const;
+
 	// Test if the program is for computer use, or it is for
 	// rasterization use
 	virtual bool isComputable() const;
@@ -98,6 +120,7 @@ public:
 	// avoid repeatlly pipeline switching.
 	static unsigned int getCurrentProgramID();
 protected:
+	ShaderMacroSet shaderMacroSet;
 	ShaderStageType meshStageType = None_Shader_Stage;
 	unsigned int programId = 0;
 	bool dirty = true;
@@ -127,7 +150,7 @@ public:
 
 	ShaderStage* getShaderStage(const Enum<ShaderFeature>& feature, const Enum<ShaderMatchFlag>& flag = ShaderMatchFlag::Auto);
 	ShaderStage* addShaderStage(const Enum<ShaderFeature>& feature);
-	ShaderStage* compileShaderStage(const Enum<ShaderFeature>& feature, const string& code);
+	ShaderStage* compileShaderStage(const Enum<ShaderFeature>& feature, const ShaderMacroSet& macroSet, const string& code);
 protected:
 	ShaderStage* bestMacthShaderStage(const Enum<ShaderFeature>& feature, ShaderFeature excludeFeature);
 };
@@ -183,7 +206,7 @@ public:
 	ShaderAdapter* getShaderAdapterByPath(const string& path, ShaderStageType stageType);
 	ShaderAdapter* getShaderAdapterByName(const string& name, ShaderStageType stageType);
 
-	ShaderStage* compileShaderStage(ShaderStageType stageType, const Enum<ShaderFeature>& feature, const string& name, const string& path, const string& code);
+	ShaderStage* compileShaderStage(ShaderStageType stageType, const Enum<ShaderFeature>& feature, const ShaderMacroSet& macroSet, const string& name, const string& path, const string& code);
 
 	bool registProgram(ShaderProgram* program);
 	bool removeProgram(ShaderProgram* program);

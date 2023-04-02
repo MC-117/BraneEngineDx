@@ -438,6 +438,7 @@ public:
 	static Time now();
 	static Time duration();
 	static Time delta();
+	static Time frameTime();
 	static unsigned long long frames();
 
 	static void update();

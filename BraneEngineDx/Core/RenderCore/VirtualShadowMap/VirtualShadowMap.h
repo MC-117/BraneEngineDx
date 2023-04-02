@@ -50,8 +50,8 @@ public:
 	bool enable = false;
 	unsigned int physPoolWidth = 128 * 128;
 	unsigned int maxPhysPages = 4096;
-	unsigned int firstClipmapLevel = 2;
-	unsigned int lastClipmapLevel = 12;
+	unsigned int firstClipmapLevel = 6;
+	unsigned int lastClipmapLevel = 16;
 
 	float clipmapRadiusZScale = 1000.0f;
 	float resolutionLodBiasClipmap = -0.5f;

@@ -87,6 +87,11 @@ Time Time::delta()
 	return deltaTime;
 }
 
+Time Time::frameTime()
+{
+	return lastTime == 0 ? Time() : (lastTime - startTime);
+}
+
 unsigned long long Time::frames()
 {
 	return frameCount;

@@ -7,6 +7,7 @@
 #include "DeferredLightingPass.h"
 #include "HiZPass.h"
 #include "ScreenSpaceReflectionPass.h"
+#include "TranslucentPass.h"
 #include "BlitPass.h"
 #include "ImGUIPass.h"
 
@@ -87,7 +88,7 @@ public:
 
 	ScreenSpaceReflectionPass ssrPass;
 
-	MeshPass forwardPass;
+	TranslucentPass translucentPass;
 
 	BlitPass blitPass;
 	ImGuiPass imGuiPass;

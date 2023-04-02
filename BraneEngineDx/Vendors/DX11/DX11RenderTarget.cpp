@@ -287,7 +287,7 @@ void DX11RenderTarget::initDepthBlit(DX11Context& dxContext)
 		}";
 	string error;
 	depthBlitCSStage = new DX11ShaderStage(dxContext, depthBlitDesc);
-	if (depthBlitCSStage->compile(code, error) == 0) {
+	if (depthBlitCSStage->compile(ShaderMacroSet(), code, error) == 0) {
 		cout << error;
 		throw runtime_error(error);
 	}

@@ -4,7 +4,57 @@
 #include <fstream>
 #include <bitset>
 #include "Utility/EngineUtility.h"
+#include "Utility/hash.h"
 #include "ShaderCode/ShaderAdapterCompiler.h"
+
+void ShaderMacroSet::add(const string& macro)
+{
+	if (macro.empty())
+		return;
+	shaderMacros.insert(make_pair(ShaderPropertyName(macro), macro));
+	recomputeHash();
+}
+
+void ShaderMacroSet::append(const ShaderMacroSet& set)
+{
+	for (auto& item : set.shaderMacros) {
+		shaderMacros.insert(item);
+	}
+	recomputeHash();
+}
+
+void ShaderMacroSet::clear()
+{
+	shaderMacros.clear();
+	hash = 0;
+}
+
+bool ShaderMacroSet::has(const ShaderPropertyName& macro) const
+{
+	return shaderMacros.find(macro) != shaderMacros.end();
+}
+
+size_t ShaderMacroSet::getHash() const
+{
+	return hash;
+}
+
+string ShaderMacroSet::getDefineCode() const
+{
+	string code;
+	for (auto& item : shaderMacros) {
+		code += "#define " + item.second + "\n";
+	}
+	return code;
+}
+
+void ShaderMacroSet::recomputeHash()
+{
+	hash = 0;
+	for (auto& item : shaderMacros) {
+		hash_combine(hash, item.first.getHash());
+	}
+}
 
 ShaderStage::ShaderStage(ShaderStageType stageType, const Enum<ShaderFeature>& feature, const string & name)
 	: stageType(stageType), shaderFeature(feature), name(name)
@@ -25,8 +75,9 @@ bool ShaderStage::isValid()
 	return shaderId != 0;
 }
 
-unsigned int ShaderStage::compile(const string & code, string & errorString)
+unsigned int ShaderStage::compile(const ShaderMacroSet& macroSet, const string & code, string & errorString)
 {
+	shaderMacroSet = macroSet;
 	this->code = code;
 	return shaderId;
 }
@@ -44,6 +95,11 @@ ShaderStageType ShaderStage::getShaderStageType() const
 Enum<ShaderFeature> ShaderStage::getShaderFeature() const
 {
 	return shaderFeature;
+}
+
+const ShaderMacroSet& ShaderStage::getShaderMacroSet() const
+{
+	return shaderMacroSet;
 }
 
 const ShaderProperty* ShaderStage::getProperty(const ShaderPropertyName& name) const
@@ -149,6 +205,11 @@ bool ShaderProgram::isDirty() const
 	return dirty;
 }
 
+const ShaderMacroSet& ShaderProgram::getShaderMacroSet() const
+{
+	return shaderMacroSet;
+}
+
 bool ShaderProgram::isComputable() const
 {
 	return meshStageType == Compute_Shader_Stage && shaderStages.size() == 1;
@@ -168,6 +229,7 @@ bool ShaderProgram::addShaderStage(ShaderStage & stage)
 	auto iter = shaderStages.find(stage.getShaderStageType());
 	if (iter == shaderStages.end()) {
 		shaderStages.insert(make_pair(stage.getShaderStageType(), &stage));
+		shaderMacroSet.append(stage.getShaderMacroSet());
 		ShaderManager::getInstance().linkProgram(&stage, this);
 		return true;
 	}
@@ -176,7 +238,9 @@ bool ShaderProgram::addShaderStage(ShaderStage & stage)
 
 bool ShaderProgram::init()
 {
+	shaderMacroSet.clear();
 	for (const auto& stage : shaderStages) {
+		shaderMacroSet.append(stage.second->getShaderMacroSet());
 		for (const auto& prop : stage.second->properties) {
 			auto iter = attributes.find(prop.first);
 			AttributeDesc* desc;
@@ -315,12 +379,12 @@ string addLineNum(const string& code)
 	return out;
 }
 
-ShaderStage* ShaderAdapter::compileShaderStage(const Enum<ShaderFeature>& feature, const string& code)
+ShaderStage* ShaderAdapter::compileShaderStage(const Enum<ShaderFeature>& feature, const ShaderMacroSet& macroSet, const string& code)
 {
 	ShaderStage* stage = addShaderStage(feature);
 	//if (!stage->isValid()) {
 		string errorStr;
-		if (stage->compile(code, errorStr) == 0) {
+		if (stage->compile(macroSet, code, errorStr) == 0) {
 			const char* shaderTypeName = ShaderStage::enumShaderStageType(stageType);
 			Console::log("%s Shader\n%s", shaderTypeName, addLineNum(code).c_str());
 			Console::error("%s (%s Shader) compile failed:\n%s", name.c_str(), shaderTypeName, errorStr.c_str());
@@ -434,12 +498,12 @@ ShaderAdapter * ShaderManager::getShaderAdapterByName(const string & name, Shade
 	return NULL;
 }
 
-ShaderStage * ShaderManager::compileShaderStage(ShaderStageType stageType, const Enum<ShaderFeature>& feature, const string & name, const string & path, const string & code)
+ShaderStage * ShaderManager::compileShaderStage(ShaderStageType stageType, const Enum<ShaderFeature>& feature, const ShaderMacroSet& macroSet, const string & name, const string & path, const string & code)
 {
 	ShaderAdapter* adapter = addShaderAdapter(name, path, stageType);
 	if (adapter == NULL)
 		return NULL;
-	return adapter->compileShaderStage(feature, code);
+	return adapter->compileShaderStage(feature, macroSet, code);
 }
 
 bool ShaderManager::registProgram(ShaderProgram* program)
@@ -571,7 +635,7 @@ void ShaderManager::loadDefaultAdapter(const string& folder)
 		static string name = "Screen";
 		screenShaderStage = vendor.newShaderStage({ Vertex_Shader_Stage, Shader_Default, name });
 		string error;
-		if (screenShaderStage->compile(screenShaderCode, error) == 0) {
+		if (screenShaderStage->compile(ShaderMacroSet(), screenShaderCode, error) == 0) {
 			cout << error;
 			throw runtime_error(error);
 		}

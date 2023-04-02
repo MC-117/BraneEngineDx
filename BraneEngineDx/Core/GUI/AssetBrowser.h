@@ -50,6 +50,7 @@ protected:
 
 	bool updatePath(const string& path, bool force = false);
 	bool Item(const string& name, Texture2D& tex, float pad, bool isSelected);
+	bool refreshNewAsset(const string& path);
 };
 
 #endif // !_ASSETBROWSER_H_

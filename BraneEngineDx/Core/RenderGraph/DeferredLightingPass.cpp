@@ -193,7 +193,7 @@ void DeferredLightingPass::LoadDefaultShader()
 			return fout;											\n\
 		}";
 	string error;
-	if (blitFragmentShader->compile(blitCode, error) == 0) {
+	if (blitFragmentShader->compile(ShaderMacroSet(), blitCode, error) == 0) {
 		Console::error("Compile Blit shader error: %s", error.c_str());
 		throw runtime_error(error);
 	}

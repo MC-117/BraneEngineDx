@@ -13,7 +13,7 @@
 #include "../resource.h"
 #include "Console.h"
 #include "Profile/ProfileCore.h"
-#include "Importer.h"
+#include "Importer/AssimpImporter.h"
 #include "WUI/LoadingUI.h"
 #include "WUI/WUIViewPort.h"
 #include "Script/PythonManager.h"
@@ -36,220 +36,6 @@ void SetTopWindow(HWND hWnd)
 	SetForegroundWindow(hWnd);
 	AttachThreadInput(dwCurID, dwForeID, FALSE);
  }
-
-void loadAssets(LoadingUI& log, const char* path, vector<filesystem::path>& delayLoadAsset)
-{
-	namespace FS = filesystem;
-	for (auto& p : FS::recursive_directory_iterator(path)) {
-		string path = p.path().generic_u8string();
-#ifdef UNICODE
-		USES_CONVERSION;
-		wchar_t* pathStr = A2W(path.c_str());
-#else
-		const char* pathStr = path.c_str();
-#endif // UNICODE
-		if (p.status().type() == filesystem::file_type::regular) {
-			string ext = p.path().extension().generic_u8string();
-			string name = p.path().filename().generic_u8string();
-			name = name.substr(0, name.size() - ext.size());
-			Asset* asset = NULL;
-			bool ignore = false;
-			bool delay = false;
-			SerializationInfo* ini = NULL;
-			string iniPath = path + ".ini";
-			try
-			{
-				if (FS::exists(iniPath.c_str())) {
-					ifstream f(iniPath);
-					if (!f.fail()) {
-						SerializationInfoParser iniParse(f);
-						if (iniParse.parse())
-							ini = new SerializationInfo(iniParse.infos[0]);
-						f.close();
-					}
-				}
-			}
-			catch (const std::exception&)
-			{
-
-			}
-			if (!_stricmp(ext.c_str(), ".obj") || !_stricmp(ext.c_str(), ".fbx") ||
-				!_stricmp(ext.c_str(), ".pmx")) {
-				Importer imp = Importer(path);
-				bool animationOnly = false;
-				if (ini != NULL) {
-					string b;
-					ini->get("animationOnly", b);
-					animationOnly = b == "true";
-				}
-				if (imp.isLoad()) {
-					if (!animationOnly) {
-						if (imp.isSkeletonMesh()) {
-							SkeletonMesh* mesh = new SkeletonMesh();
-							if (imp.getSkeletonMesh(*mesh)) {
-								Asset* ass = new Asset(&SkeletonMeshAssetInfo::assetInfo, name, path);
-								ass->asset[0] = mesh;
-								if (AssetManager::registAsset(*ass)) {
-									asset = ass;
-								}
-								else {
-									delete ass;
-									delete mesh;
-								}
-							}
-							else {
-								delete mesh;
-							}
-						}
-						else {
-							Mesh* mesh = new Mesh();
-							if (imp.getMesh(*mesh)) {
-								Asset* ass = new Asset(&MeshAssetInfo::assetInfo, name, path);
-								ass->asset[0] = mesh;
-								if (AssetManager::registAsset(*ass)) {
-									asset = ass;
-								}
-								else {
-									delete ass;
-									delete mesh;
-								}
-							}
-							else {
-								delete mesh;
-							}
-						}
-					}
-					if (imp.hasAnimation()) {
-						vector<AnimationClipData*> anims;
-						if (imp.getAnimation(anims, true)) {
-							for (int i = 0; i < anims.size(); i++) {
-								Asset* ass = new Asset(&AnimationClipDataAssetInfo::assetInfo, name + ":" + anims[i]->name, path + ":Animation" + to_string(i));
-								ass->asset[0] = anims[i];
-								if (AssetManager::registAsset(*ass))
-									asset = ass;
-							}
-						}
-					}
-				}
-			}
-			else if (!_stricmp(ext.c_str(), ".anim")) {
-				AnimationClipData* data = AnimationLoader::readAnimation(path);
-				if (data != NULL) {
-					Asset* ass = new Asset(&AnimationClipDataAssetInfo::assetInfo, data->name, path);
-					ass->asset[0] = data;
-					if (AssetManager::registAsset(*ass))
-						asset = ass;
-				}
-			}
-			else if (!_stricmp(ext.c_str(), ".camanim")) {
-				AnimationClipData* data = AnimationLoader::loadCameraAnimation(path);
-				if (data != NULL) {
-					Asset* ass = new Asset(&AnimationClipDataAssetInfo::assetInfo, data->name, path);
-					ass->asset[0] = data;
-					if (AssetManager::registAsset(*ass))
-						asset = ass;
-				}
-			}
-			else if (!_stricmp(ext.c_str(), ".charanim")) {
-				AnimationClipData* data = AnimationLoader::readAnimation(path);
-				if (data == NULL)
-					data = AnimationLoader::loadMotionAnimation(path);
-				if (data != NULL) {
-					Asset* ass = new Asset(&AnimationClipDataAssetInfo::assetInfo, data->name, path);
-					ass->asset[0] = data;
-					if (AssetManager::registAsset(*ass))
-						asset = ass;
-				}
-			}
-			else if (!_stricmp(ext.c_str(), ".mip")) {
-				const char* stdStr = "true";
-				const char* filterStr = "TF_Linear_Mip_Linear";
-				if (name.find("_N") != string::npos)
-					stdStr = "false";
-				if (name.find("_lut") != string::npos)
-					filterStr = "TF_Linear";
-
-				uint8_t dimension = peakMipDimension(path);
-
-				if (dimension == TD_Cube)
-					asset = AssetManager::loadAsset("TextureCube", name, path, { stdStr, "TW_Repeat", "TW_Repeat", filterStr, filterStr }, {});
-				else
-					asset = AssetManager::loadAsset("Texture2D", name, path, { stdStr, "TW_Repeat", "TW_Repeat", filterStr, filterStr }, {});
-			}
-			else if (!_stricmp(ext.c_str(), ".png") || !_stricmp(ext.c_str(), ".tga") ||
-				!_stricmp(ext.c_str(), ".jpg") || !_stricmp(ext.c_str(), ".bmp")) {
-				const char* stdStr = "true";
-				const char* filterStr = "TF_Linear_Mip_Linear";
-				if (name.find("_N") != string::npos)
-					stdStr = "false";
-				if (name.find("_lut") != string::npos) {
-					stdStr = "false";
-					filterStr = "TF_Linear";
-				}
-				asset = AssetManager::loadAsset("Texture2D", name, path, { stdStr, "TW_Repeat", "TW_Repeat", filterStr, filterStr }, {});
-			}
-			else if (!_stricmp(ext.c_str(), ".mat")) {
-				asset = AssetManager::loadAsset("Material", name, path, { "" }, {});
-			}
-#ifdef AUDIO_USE_OPENAL
-			else if (!_stricmp(ext.c_str(), ".wav")) {
-				asset = AssetManager::loadAsset("AudioData", name, path, {}, {});
-			}
-#endif // AUDIO_USE_OPENAL
-			else if (!_stricmp(ext.c_str(), ".py")) {
-				asset = AssetManager::loadAsset("PythonScript", name, path, {}, {});
-			}
-			else if (!_stricmp(ext.c_str(), ".asset")) {
-				asset = AssetManager::loadAsset("AssetFile", name, path, {}, {});
-			}
-			else if (!_stricmp(ext.c_str(), ".graph")) {
-				asset = AssetManager::loadAsset("Graph", name, path, {}, {});
-			}
-			else if (!_stricmp(ext.c_str(), ".timeline")) {
-				delayLoadAsset.push_back(p.path());
-				delay = true;
-			}
-			else if (!_stricmp(ext.c_str(), ".live2d")) {
-				delayLoadAsset.push_back(p.path());
-				delay = true;
-			}
-			else if (!_stricmp(ext.c_str(), ".spine2djson") ||
-				!_stricmp(ext.c_str(), ".spine2dbin")) {
-				delayLoadAsset.push_back(p.path());
-				delay = true;
-			}
-			else if (!_stricmp(ext.c_str(), ".imat")) {
-				delayLoadAsset.push_back(p.path());
-				delay = true;
-			}
-			else if (!_stricmp(ext.c_str(), ".ttf") || !_stricmp(ext.c_str(), ".ini") ||
-					 !_stricmp(ext.c_str(), ".hmat") || !_stricmp(ext.c_str(), ".shadapter") ||
-					 !_stricmp(ext.c_str(), ".json")) {
-				ignore = true;
-			}
-			else {
-				log.setText(path + " unknown file type");
-				Console::warn("%s unknown file type", path.c_str());
-			}
-			if (!delay && !ignore) {
-				if (asset == NULL) {
-					log.setText(path + ' ' + name + " load failed");
-					Console::error("%s %s load failed", path.c_str(), name.c_str());
-				}
-				else {
-					log.setText(path + " load");
-					Console::log("%s load", path.c_str());
-				}
-			}
-			if (ini != NULL)
-				delete ini;
-		}
-		else {
-			log.setText(path + " folder");
-			Console::log("%s folder", path.c_str());
-		}
-	}
-}
 
 void loadAssets(LoadingUI& log, bool loadDefaultAsset, bool loadEngineAsset, bool loadContentAsset)
 {
@@ -278,45 +64,18 @@ void loadAssets(LoadingUI& log, bool loadDefaultAsset, bool loadEngineAsset, boo
 		exit(-1);
 	}
 
+	LongProgressWork work;
+	work.data = &log;
+	work.callback += [](const LongProgressWork& work) {
+		LoadingUI& log = *(LoadingUI*)work.data;
+		log.setText(work.text);
+	};
+
 	if (loadEngineAsset)
-		loadAssets(log, "Engine", delayLoadAsset);
+		IImporter::loadFolder("Engine", &work);
 	if (loadContentAsset && !testCompilingShaders) {
 		if (FS::exists("Content")) {
-			loadAssets(log, "Content", delayLoadAsset);
-		}
-	}
-	for (int i = 0; i < delayLoadAsset.size(); i++) {
-		FS::path p = delayLoadAsset[i];
-		string path = p.generic_u8string();
-		string ext = p.extension().generic_u8string();
-		string name = p.filename().generic_u8string();
-		name = name.substr(0, name.size() - ext.size());
-		Asset* asset = NULL;
-		if (!_stricmp(ext.c_str(), ".imat")) {
-			asset = AssetManager::loadAsset("Material", name, path, { "" }, {});
-		}
-		else if (!_stricmp(ext.c_str(), ".live2d")) {
-			asset = AssetManager::loadAsset("Live2DModel", name, path, {}, {});
-		}
-		else if (!_stricmp(ext.c_str(), ".spine2djson") ||
-				!_stricmp(ext.c_str(), ".spine2dbin")) {
-			asset = AssetManager::loadAsset("Spine2DModel", name, path, {}, {});
-		}
-		else if (!_stricmp(ext.c_str(), ".timeline")) {
-			asset = AssetManager::loadAsset("Timeline", name, path, {}, {});
-		}
-		else {
-			log.setText(path + " unknown file type");
-			Console::warn("%s unknown file type", path.c_str());
-			continue;
-		}
-		if (asset == NULL) {
-			log.setText(path + ' ' + name + " load failed");
-			Console::error("%s %s load failed", path.c_str(), name.c_str());
-		}
-		else {
-			log.setText(path + " load");
-			Console::log("%s load", path.c_str());
+			IImporter::loadFolder("Content", &work);
 		}
 	}
 }

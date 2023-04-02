@@ -127,7 +127,7 @@ DeferredRenderGraph::DeferredRenderGraph()
 
 	defaultLightingSurfaceData.clearFlags = Clear_All;
 
-	forwardPass.minusClearFlags = Clear_All;
+	translucentPass.minusClearFlags = Clear_All;
 
 	screenHitPass.renderGraph = this;
 	shadowDepthPass.renderGraph = this;
@@ -137,7 +137,7 @@ DeferredRenderGraph::DeferredRenderGraph()
 	lightingPass.renderGraph = this;
 	hizPass.renderGraph = this;
 	ssrPass.renderGraph = this;
-	forwardPass.renderGraph = this;
+	translucentPass.renderGraph = this;
 	blitPass.renderGraph = this;
 	imGuiPass.renderGraph = this;
 }
@@ -177,7 +177,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		shadowDepthPass.setRenderCommand(cmd);
 
 	if (renderStage >= RS_Transparent || deferredShader == NULL) {
-		forwardPass.commandList.setRenderCommand(cmd);
+		translucentPass.setRenderCommand(cmd);
 	}
 	else {
 		for (auto binding : cmd.bindings) {
@@ -348,7 +348,7 @@ void DeferredRenderGraph::prepare()
 	lightingPass.prepare();
 	hizPass.prepare();
 	ssrPass.prepare();
-	forwardPass.prepare();
+	translucentPass.prepare();
 	for (auto pass : passes)
 		pass->prepare();
 	blitPass.prepare();
@@ -359,7 +359,7 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 {
 	auto clearTexFrameBindings = [&]() {
 		context.clearFrameBindings();
-		for (int i = 6; i < 16; i++) {
+		for (int i = 0; i < 16; i++) {
 			context.bindTexture(NULL, Fragment_Shader_Stage, i, -1);
 			context.bindTexture(NULL, Compute_Shader_Stage, i, -1);
 		}
@@ -413,7 +413,7 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 	clearTexFrameBindings();
 
-	forwardPass.execute(context);
+	translucentPass.execute(context);
 
 	context.setGPUSignal();
 	context.clearFrameBindings();
@@ -466,7 +466,7 @@ void DeferredRenderGraph::reset()
 	lightingPass.reset();
 	hizPass.reset();
 	ssrPass.reset();
-	forwardPass.reset();
+	translucentPass.reset();
 	for (auto pass : passes) {
 		pass->reset();
 		pass->renderGraph = NULL;
@@ -486,7 +486,7 @@ void DeferredRenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)
 	passes.push_back(make_pair("Lighting", &lightingPass));
 	passes.push_back(make_pair("HiZ", &hizPass));
 	passes.push_back(make_pair("SSR", &ssrPass));
-	passes.push_back(make_pair("Forward", &forwardPass));
+	passes.push_back(make_pair("Translucent", &translucentPass));
 	passes.push_back(make_pair("Blit", &blitPass));
 	passes.push_back(make_pair("ImGui", &imGuiPass));
 }

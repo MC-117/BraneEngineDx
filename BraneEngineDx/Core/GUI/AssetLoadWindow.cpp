@@ -1,7 +1,7 @@
 #include "AssetLoadWindow.h"
 #include <thread>
 #include "../Engine.h"
-#include "../Importer.h"
+#include "../Importer/AssimpImporter.h"
 #include "../MeshActor.h"
 #include "../SkeletonMeshActor.h"
 
@@ -87,7 +87,7 @@ void AssetLoadWindow::onRenderWindow(GUIRenderInfo & info)
 		}
 		else {
 			if (willLoad) {
-				Mesh* mesh = Importer::loadMesh(path, aiProcessPreset_TargetRealtime_MaxQuality);
+				Mesh* mesh = AssimpImporter::loadMesh(path, aiProcessPreset_TargetRealtime_MaxQuality);
 				if (mesh != NULL) {
 					Material &mat = *selectedMat;
 					mat.setTwoSide(twoSides);

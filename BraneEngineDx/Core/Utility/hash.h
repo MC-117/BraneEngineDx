@@ -113,6 +113,12 @@ inline void hash_combine(std::size_t& seed, T const& v)
     return hash_combine_impl(seed, hasher(v));
 }
 
+template <>
+inline void hash_combine<size_t>(std::size_t& seed, std::size_t const& v)
+{
+    return hash_combine_impl(seed, v);
+}
+
 template <class It>
 inline std::size_t hash_range(It first, It last)
 {

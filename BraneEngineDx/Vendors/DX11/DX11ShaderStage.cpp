@@ -21,28 +21,9 @@ DX11ShaderStage::~DX11ShaderStage()
 	release();
 }
 
-const char* getShaderExtension(ShaderStageType type)
+unsigned int DX11ShaderStage::compile(const ShaderMacroSet& macroSet, const string& code, string& errorString)
 {
-	switch (type)
-	{
-	case Vertex_Shader_Stage:
-		return ".vs";
-	case Tessellation_Control_Shader_Stage:
-		return ".tcs";
-	case Tessellation_Evalution_Shader_Stage:
-		return ".tes";
-	case Geometry_Shader_Stage:
-		return ".gs";
-	case Fragment_Shader_Stage:
-		return ".fs";
-	case Compute_Shader_Stage:
-		return ".cs";
-	}
-	return "";
-}
-
-unsigned int DX11ShaderStage::compile(const string& code, string& errorString)
-{
+	ShaderStage::compile(macroSet, code, errorString);
 	ComPtr<ID3DBlob> errorBlob = NULL;
 	unsigned int compileFlag = D3DCOMPILE_ENABLE_STRICTNESS;
 	if (code.find("#pragma debug") != string::npos) {
@@ -57,13 +38,15 @@ unsigned int DX11ShaderStage::compile(const string& code, string& errorString)
 	string shaderPath = rootPath + '/' + shdtmp + name + "_" + getShaderFeatureNames(this->shaderFeature) + getShaderExtension(stageType);
 	ofstream f = ofstream(shaderPath);
 	if (f.fail()) {
-		if (FAILED(D3DCompile(code.c_str(), code.size() * sizeof(char), name.c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		string processedCode = macroSet.getDefineCode() + code;
+		if (FAILED(D3DCompile(processedCode.c_str(), processedCode.size() * sizeof(char), name.c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
 			"main", getShaderVersion(stageType), compileFlag, 0, &dx11ShaderBlob, &errorBlob))) {
 			errorString = (const char*)errorBlob->GetBufferPointer();
 			return 0;
 		}
 	}
 	else {
+		f << macroSet.getDefineCode();
 		f << code;
 		f.close();
 		if (FAILED(D3DCompileFromFile(filesystem::path(shaderPath).c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
@@ -233,7 +216,8 @@ bool DrawInfo::operator==(const DrawInfo& i) const
 		baseInstance == i.baseInstance &&
 		passID == i.passID &&
 		passNum == i.passNum &&
-		materialID == i.materialID;
+		materialID == i.materialID &&
+		gameTime == i.gameTime;
 }
 
 bool DrawInfo::operator!=(const DrawInfo& i) const
@@ -242,7 +226,8 @@ bool DrawInfo::operator!=(const DrawInfo& i) const
 		baseInstance != i.baseInstance ||
 		passID != i.passID ||
 		passNum != i.passNum ||
-		materialID != i.materialID;
+		materialID != i.materialID ||
+		gameTime != i.gameTime;
 }
 
 unsigned int DX11ShaderProgram::nextProgramID = 1;

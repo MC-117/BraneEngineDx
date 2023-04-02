@@ -413,6 +413,11 @@
     <ClInclude Include="Core\Animation\AnimationStateEditor.h" />
     <ClInclude Include="Core\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Core\Animation\AnimationPoseNode.h" />
+    <ClInclude Include="Core\Importer\AnimationClipDataImporter.h" />
+    <ClInclude Include="Core\Importer\AssetFileImporter.h" />
+    <ClInclude Include="Core\Importer\AudioImorpter.h" />
+    <ClInclude Include="Core\Importer\IgnoreImporter.h" />
+    <ClInclude Include="Core\Importer\Importer.h" />
     <ClInclude Include="Core\Base.h" />
     <ClInclude Include="Core\Character.h" />
     <ClInclude Include="Core\Editor\ActorEditor.h" />
@@ -444,6 +449,10 @@
     <ClInclude Include="Core\Editor\SkeletonMeshRenderEditor.h" />
     <ClInclude Include="Core\Editor\TransformEditor.h" />
     <ClInclude Include="Core\Editor\WorldEditor.h" />
+    <ClInclude Include="Core\Importer\MaterialImporter.h" />
+    <ClInclude Include="Core\Importer\PythonScriptImporter.h" />
+    <ClInclude Include="Core\Importer\TextureImporter.h" />
+    <ClInclude Include="Core\Importer\TimelineImporter.h" />
     <ClInclude Include="Core\ProbeSystem\CaptureProbeRender.h" />
     <ClInclude Include="Core\ProbeSystem\EnvLightCaptureProbeRender.h" />
     <ClInclude Include="Core\GraphicType.h" />
@@ -527,6 +536,7 @@
     <ClInclude Include="Core\RenderGraph\ShadowDepthPass.h" />
     <ClInclude Include="Core\RenderGraph\SkyLightCapturePass.h" />
     <ClInclude Include="Core\RenderCore\SurfaceBufferGetter.h" />
+    <ClInclude Include="Core\RenderGraph\TranslucentPass.h" />
     <ClInclude Include="Core\RenderGraph\VirtualShadowMapDepthPass.h" />
     <ClInclude Include="Core\SceneCaptureCube.h" />
     <ClInclude Include="Core\RenderCore\CameraData.h" />
@@ -621,7 +631,7 @@
     <ClInclude Include="Core\GUI\TextureViewer.h" />
     <ClInclude Include="Core\GUI\UIControl.h" />
     <ClInclude Include="Core\GUI\UIWindow.h" />
-    <ClInclude Include="Core\Importer.h" />
+    <ClInclude Include="Core\Importer\AssimpImporter.h" />
     <ClInclude Include="Core\Input.h" />
     <ClInclude Include="Core\IRendering.h" />
     <ClInclude Include="Core\ITexture.h" />
@@ -858,6 +868,15 @@
     <ClCompile Include="Core\Editor\ProbeSystem\ReflectionCaptureProbeRenderEditor.cpp" />
     <ClCompile Include="Core\Editor\RenderCore\DeferredRenderGraphEditor.cpp" />
     <ClCompile Include="Core\GraphicType.cpp" />
+    <ClCompile Include="Core\Importer\AnimationClipDataImporter.cpp" />
+    <ClCompile Include="Core\Importer\AssetFileImporter.cpp" />
+    <ClCompile Include="Core\Importer\AudioImorpter.cpp" />
+    <ClCompile Include="Core\Importer\IgnoreImporter.cpp" />
+    <ClCompile Include="Core\Importer\Importer.cpp" />
+    <ClCompile Include="Core\Importer\MaterialImporter.cpp" />
+    <ClCompile Include="Core\Importer\PythonScriptImporter.cpp" />
+    <ClCompile Include="Core\Importer\TextureImporter.cpp" />
+    <ClCompile Include="Core\Importer\TimelineImporter.cpp" />
     <ClCompile Include="Core\ProbeSystem\CaptureProbeRender.cpp" />
     <ClCompile Include="Core\ProbeSystem\EnvLightCaptureProbeRender.cpp" />
     <ClCompile Include="Core\PostProcess\CMAA2Pass.cpp" />
@@ -880,6 +899,7 @@
     <ClCompile Include="Core\RenderGraph\ReflectionProbeArrayPass.cpp" />
     <ClCompile Include="Core\RenderGraph\ScreenHitPass.cpp" />
     <ClCompile Include="Core\RenderGraph\ShadowDepthPass.cpp" />
+    <ClCompile Include="Core\RenderGraph\TranslucentPass.cpp" />
     <ClCompile Include="Core\RenderGraph\VirtualShadowMapDepthPass.cpp" />
     <ClCompile Include="Core\SceneCaptureCube.cpp" />
     <ClCompile Include="Core\Editor\ActorEditor.cpp" />
@@ -978,7 +998,7 @@
     <ClCompile Include="Core\GUI\TextureViewer.cpp" />
     <ClCompile Include="Core\GUI\UIControl.cpp" />
     <ClCompile Include="Core\GUI\UIWindow.cpp" />
-    <ClCompile Include="Core\Importer.cpp" />
+    <ClCompile Include="Core\Importer\AssimpImporter.cpp" />
     <ClCompile Include="Core\Input.cpp" />
     <ClCompile Include="Core\IVendor.cpp" />
     <ClCompile Include="Core\Light.cpp" />

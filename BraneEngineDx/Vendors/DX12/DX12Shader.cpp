@@ -1,4 +1,8 @@
 #include "DX12Shader.h"
+#include "../../Core/Utility/RenderUtility.h"
+#include "../../Core/Utility/EngineUtility.h"
+#include "../../Core/Engine.h"
+#include <fstream>
 
 const char* DX12ShaderStage::MatInsBufName = "MatInsBuf";
 const char* DX12ShaderStage::DrawInfoBufName = "DrawInfoBuf";
@@ -15,8 +19,9 @@ DX12ShaderStage::~DX12ShaderStage()
     release();
 }
 
-unsigned int DX12ShaderStage::compile(const string& code, string& errorString)
+unsigned int DX12ShaderStage::compile(const ShaderMacroSet& macroSet, const string& code, string& errorString)
 {
+	ShaderStage::compile(macroSet, code, errorString);
 	ComPtr<ID3DBlob> errorBlob = NULL;
 	unsigned int compileFlag = D3DCOMPILE_ENABLE_STRICTNESS;
 	if (code.find("#pragma debug") != string::npos) {
@@ -24,10 +29,29 @@ unsigned int DX12ShaderStage::compile(const string& code, string& errorString)
 		compileFlag |= D3DCOMPILE_SKIP_OPTIMIZATION |
 			D3DCOMPILE_DEBUG | D3DCOMPILE_PREFER_FLOW_CONTROL;
 	}
-	if (FAILED(D3DCompile(code.c_str(), code.size() * sizeof(char), name.c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"main", getShaderVersion(stageType), compileFlag, 0, &dx12ShaderBlob, &errorBlob))) {
-		errorString = (const char*)errorBlob->GetBufferPointer();
-		return 0;
+	const char* shdtmp = ".shdtmp/";
+	if (!filesystem::exists(shdtmp))
+		filesystem::create_directory(shdtmp);
+	string rootPath = getFileRoot(Engine::windowContext.executionPath);
+	string shaderPath = rootPath + '/' + shdtmp + name + "_" + getShaderFeatureNames(this->shaderFeature) + getShaderExtension(stageType);
+	ofstream f = ofstream(shaderPath);
+	if (f.fail()) {
+		string processedCode = macroSet.getDefineCode() + code;
+		if (FAILED(D3DCompile(processedCode.c_str(), processedCode.size() * sizeof(char), name.c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+			"main", getShaderVersion(stageType), compileFlag, 0, &dx12ShaderBlob, &errorBlob))) {
+			errorString = (const char*)errorBlob->GetBufferPointer();
+			return 0;
+		}
+	}
+	else {
+		f << macroSet.getDefineCode();
+		f << code;
+		f.close();
+		if (FAILED(D3DCompileFromFile(filesystem::path(shaderPath).c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+			"main", getShaderVersion(stageType), compileFlag, 0, &dx12ShaderBlob, &errorBlob))) {
+			errorString = (const char*)errorBlob->GetBufferPointer();
+			return 0;
+		}
 	}
 	shaderId = (unsigned long long)dx12ShaderBlob->GetBufferPointer();
 

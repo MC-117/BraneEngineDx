@@ -5,7 +5,7 @@
 #include "../../Core/Skeleton/BoneParentConstraint.h"
 #include "../../Core/Engine.h"
 #include "../../Core/SkeletonMeshActor.h"
-#include "../../Core/Importer.h"
+#include "../../Core/Importer/AssimpImporter.h"
 #include "../../Core/WUI/ProgressUI.h"
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 #include "../../Core/GUI/SerializationEditor.h"
@@ -175,7 +175,7 @@ void AnimationConverter::onRenderWindow(GUIRenderInfo & info)
 				subStage = 4;*/
 				if (animationData != NULL)
 					delete animationData;
-				Importer imp(tempPath + "pmx.fbx");
+				AssimpImporter imp(tempPath + "pmx.fbx");
 				if (imp.isLoad()) {
 					vector<AnimationClipData*> anims;
 					subStage = 1;
@@ -687,7 +687,7 @@ void AnimationConverter::generateAsset()
 		"PhysicsAfterDeform", "ExternalParentDeform"
 	};
 
-	Importer imp = Importer(pmxPath);
+	AssimpImporter imp = AssimpImporter(pmxPath);
 	if (imp.isLoad()) {
 		SkeletonMesh skm = SkeletonMesh();
 		if (imp.getSkeletonMesh(skm)) {

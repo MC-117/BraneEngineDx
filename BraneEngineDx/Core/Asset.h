@@ -7,9 +7,7 @@
 class Object;
 
 class Asset;
-class Agent;
 class AssetInfo;
-class AgentInfo;
 class AssetManager;
 
 class Asset {
@@ -17,30 +15,13 @@ public:
 	const AssetInfo& assetInfo;
 	string name;
 	string path;
-	vector<string> dependenceNames;
-	vector<string> settings;
 	vector<void*> asset;
 
 	Asset(const AssetInfo* assetInfo, const string& name, const string& path);
 
-	bool setDependence(const string& type, const string& dependenceName);
-	bool setDependence(const map<string, string>& dependence);
-	bool setSetting(const string& name, const string& setting);
-	bool setSetting(const map<string, string>& setting);
-
-	const AgentInfo* toAgent() const;
 	void* reload();
 	void* load();
-	void* intance(vector<string> settings, const string& displayName = "");
-	vector<void*> intance(vector<string> settings, unsigned int num = 1, const string& displayName = "");
 	Object* createObject();
-};
-
-class Agent : public Asset {
-public:
-	const AgentInfo& agentInfo;
-	Agent(const AgentInfo* agentInfo, const string& name);
-	vector<void*> intance(vector<string> settings, unsigned int num = 1, const string& displayName = "");
 };
 
 class AssetInfo {
@@ -48,8 +29,6 @@ public:
 	static map<string, Asset*> assetsByPath;
 
 	const string type;
-	vector<AssetInfo*> dependences;
-	vector<string> properties;
 	map<string, Asset*> assets;
 
 	AssetInfo(const string& type);
@@ -60,25 +39,9 @@ public:
 	static Asset* getAssetByPath(const string& name);
 	static string getPath(void* asset);
 	Asset* getAsset(void* asset);
-	Asset* loadAsset(const string& name, const string& path, const vector<string>& settings, const vector<string>& dependenceNames);
+	Asset* loadAsset(const string& name, const string& path);
 	bool loadAsset(Asset& asset);
-	AssetInfo& depend(AssetInfo& dependence);
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const = 0;
 	virtual Object* createObject(Asset& asset) const;
-};
-
-class AgentInfo : public AssetInfo {
-public:
-	AgentInfo(const string& type);
-
-	virtual vector<void*> instanceAgent(const string& name, vector<string> settings, unsigned int num = 1, const string& displayName = "");
-	virtual void* instance(const void* src, vector<string> settings, const string& displayName) const = 0;
-};
-
-class IAssetable {
-public:
-	virtual AssetInfo* getAssetInfo() const = 0;
-	virtual ~IAssetable() {}
 };
 
 class Texture2DAssetInfo : public AssetInfo {
@@ -86,7 +49,6 @@ class Texture2DAssetInfo : public AssetInfo {
 public:
 	static Texture2DAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();
 };
 
@@ -95,7 +57,6 @@ class TextureCubeAssetInfo : public AssetInfo {
 public:
 	static TextureCubeAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();
 };
 
@@ -104,7 +65,6 @@ class MaterialAssetInfo : public AssetInfo {
 public:
 	static MaterialAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();
 };
 
@@ -114,7 +74,6 @@ class AudioDataAssetInfo : public AssetInfo {
 public:
 	static AudioDataAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();
 };
 #endif // AUDIO_USE_OPENAL
@@ -124,7 +83,6 @@ class MeshAssetInfo : public AssetInfo {
 public:
 	static MeshAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();
 };
 
@@ -133,7 +91,6 @@ class SkeletonMeshAssetInfo : public AssetInfo {
 public:
 	static SkeletonMeshAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();
 };
 
@@ -142,7 +99,6 @@ class AnimationClipDataAssetInfo : public AssetInfo {
 public:
 	static AnimationClipDataAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();
 };
 
@@ -151,7 +107,6 @@ class AssetFileAssetInfo : public AssetInfo {
 public:
 	static AssetFileAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();
 };
 
@@ -160,7 +115,6 @@ class PythonScriptAssetInfo : public AssetInfo {
 public:
 	static PythonScriptAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();
 };
 
@@ -169,7 +123,6 @@ class TimelineAssetInfo : public AssetInfo {
 public:
 	static TimelineAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	static AssetInfo& getInstance();
 };
 
@@ -179,16 +132,13 @@ public:
 
 	static void addAssetInfo(AssetInfo& info);
 	static bool registAsset(Asset& assets);
-	static Asset* registAsset(const string& type, const string& name, const string& path, const vector<string>& settings, const vector<string>& dependenceNames);
-	static Asset* registAsset(const string& type, const string& name, const string& path, const map<string, string>& settings, const map<string, string>& dependenceNames);
+	static Asset* registAsset(const string& type, const string& name, const string& path);
 	static Asset* getAsset(const string& type, const string& name);
 	static AssetInfo* getAssetInfo(const string& type);
 	static Asset* getAssetByPath(const string& path);
-	static Asset* loadAsset(const string& type, const string& name, const string& path, const vector<string>& settings, const vector<string>& dependenceNames);
+	static Asset* loadAsset(const string& type, const string& name, const string& path);
 
 	static Asset* saveAsset(Serializable& serializable, const string& path);
-
-	static bool loadAssetFile(const string& path);
 };
 
 template<class T>

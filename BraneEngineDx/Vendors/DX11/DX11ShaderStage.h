@@ -23,7 +23,7 @@ public:
 	DX11ShaderStage(DX11Context& context, const ShaderStageDesc& desc);
 	virtual ~DX11ShaderStage();
 
-	virtual unsigned int compile(const string& code, string& errorString);
+	virtual unsigned int compile(const ShaderMacroSet& macroSet, const string& code, string& errorString);
 	virtual void release();
 
 	static const char* getShaderVersion(ShaderStageType type);
@@ -37,7 +37,7 @@ struct DrawInfo
 	unsigned int passID;
 	unsigned int passNum;
 	unsigned int materialID;
-	unsigned int pad0;
+	float gameTime;
 	unsigned int pad1;
 	unsigned int pad2;
 

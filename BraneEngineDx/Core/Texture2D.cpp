@@ -258,6 +258,7 @@ bool Texture2D::load(const string & file)
 		if (desc.info.internalType == TIT_RGBA8_UF)
 			desc.info.internalType = TIT_SRGBA8_UF;
 	}
+	desc.needUpdate = true;
 	return desc.data;
 }
 

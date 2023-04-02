@@ -1,0 +1,96 @@
+#adapter name pbr_bsdf_fragment
+#fragment
+#condition default SSR
+#condition default.vsm SSR
+#include "../lib/Light_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+
+#include "../lib/PBR_Lib.hmat"
+
+#include "../lib/TranslucentSSR_Lib.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 baseColor;
+uniform float metallic;
+uniform float roughness;
+uniform float ao;
+uniform float normalScale;
+uniform float emission;
+DEF_MAT_END
+
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(metallicMap, 1);
+DEF_TEX2D(roughnessMap, 2);
+DEF_TEX2D(aoMap, 3);
+DEF_TEX2D(normalMap, 4);
+DEF_TEX2D(emissionMap, 5);
+#if !defined(VSM_SHADER_FEATURE)
+DEF_TEX2D(depthMap, 6);
+#endif
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+//FS_DEF_OUT_COLOR(ssnMask, 0);
+FS_DEF_OUT_END
+
+#include "../lib/Surface_Def.hmat"
+
+#if defined(VSM_SHADER_FEATURE)
+#include "../lib/VirtualShadowMap_Def.hmat"
+#endif
+
+float getShadow(in DirectLight directLight, in Surface surf)
+{
+    #if defined(VSM_SHADER_FEATURE)
+    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos);
+    #else
+    return ShadowCalculation(depthMap, depthMapSampler,
+        surf.WorldPos, surf.Normal, directLight);
+    #endif
+}
+
+//[earlydepthstencil]
+FragmentOut SURFACE_MAIN
+{
+    FragmentOut fout;
+    Surface surf = getSurface(fin);
+
+    float3x3 TBN = cotangent(surf.Normal, surf.WorldPos, surf.TexCoords);
+    float3 tN = normalize(SAMPLE_TEX(normalMap, surf.TexCoords).xyz * 2 - 1) * normalScale;
+    surf.Normal = normalize(mul(tN, TBN));
+    surf.albedo = baseColor * SAMPLE_TEX(colorMap, surf.TexCoords);
+    //surf.albedo.rgb = pow(surf.albedo.rgb, 2.2);
+    surf.roughness = roughness * SAMPLE_TEX(roughnessMap, surf.TexCoords).r;
+    surf.metallic = metallic * SAMPLE_TEX(metallicMap, surf.TexCoords).r;
+    surf.ao = ao * SAMPLE_TEX(aoMap, surf.TexCoords).r;
+    surf.mask |= REFLECTION_MASK;
+
+    float3 V = normalize(camData.camPos - surf.WorldPos);
+    // reflectance equation
+    float3 Lo = Float3(0.0);
+
+    if (directLight.intensity != 0) {
+        float shadowFactor = getShadow(directLight, surf);
+        Lo += PBR_Lo_DirectLight(directLight, surf.Normal, V, surf.albedo.xyz,
+            surf.metallic, surf.roughness) * shadowFactor;
+    }
+
+    for(int i = 0; i < pointLightCount; ++i) {
+        if (pointLights[i].intensity != 0) {
+            Lo += PBR_Lo_PointLight(pointLights[i], surf.WorldPos, surf.Normal, V, surf.albedo.xyz, surf.metallic, surf.roughness);
+        }
+    }
+
+    // SSR
+    float3 ssrColor = getSSRColor(float3(fin.svPos.xy / camData.viewSize, surf.depth), surf.Normal, surf.roughness);
+
+    // Combination
+    float3 ambient = PBR_Ambient(surf.WorldPos, surf.Normal, surf.albedo.xyz, surf.ao);
+    float3 emissionColor = SAMPLE_TEX(emissionMap, surf.TexCoords).rgb;
+    float3 color = ambient + Lo + ssrColor;
+
+    color = PBR_ColorCorrection(color) + (emission * baseColor).rgb * emissionColor;
+
+    fout.FragColor = float4(color, surf.albedo.a);
+    return fout;
+}

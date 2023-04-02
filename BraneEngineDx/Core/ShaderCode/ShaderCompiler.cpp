@@ -355,7 +355,7 @@ void ShaderCompiler::compileAdapter()
 			clip = localString + clip;
 		}
 		for (const auto& condition : conditions) {
-			adapter->compileShaderStage(condition.first, condition.second + clip);
+			adapter->compileShaderStage(condition.first, condition.second, clip);
 		}
 		clip.clear();
 		localHeadFiles.clear();
@@ -387,14 +387,13 @@ ShaderAdapter* ShaderCompiler::useAdapter(ShaderStageType stageType, const vecto
 
 void ShaderCompiler::addCondition(Enum<ShaderFeature> feature, const string& macro)
 {
-	string macroLine = macro.empty() ? "" : ("#define " + macro + '\n');
+	ShaderMacroSet* macroSet;
 	auto iter = conditions.find(feature);
-	if (iter == conditions.end()) {
-		conditions.insert(make_pair(feature, macroLine));
-	}
-	else {
-		iter->second += macroLine;
-	}
+	if (iter == conditions.end())
+		macroSet = &conditions.insert(make_pair(feature, ShaderMacroSet())).first->second;
+	else
+		macroSet = &iter->second;
+	macroSet->add(macro);
 }
 
 Enum<ShaderFeature> ShaderCompiler::addCondition(const vector<string>& command)

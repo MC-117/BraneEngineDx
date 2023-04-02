@@ -80,6 +80,9 @@ bool CaptureProbeRender::deserialize(const SerializationInfo& from)
 	float radius = 0;
 	if (from.get("radius", radius))
 		setRadius(radius);
+	int resolution = 128;
+	if (from.get("resolution", resolution))
+		setResolution(resolution);
 	return true;
 }
 
@@ -87,5 +90,6 @@ bool CaptureProbeRender::serialize(SerializationInfo& to)
 {
 	serializeInit(this, to);
 	to.set("radius", getRadius());
+	to.set("resolution", getResolution());
 	return true;
 }

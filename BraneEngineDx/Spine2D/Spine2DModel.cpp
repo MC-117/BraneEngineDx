@@ -142,16 +142,6 @@ Spine2DModelAssetInfo::Spine2DModelAssetInfo() : AssetInfo("Spine2DModel")
 {
 }
 
-void* Spine2DModelAssetInfo::load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const
-{
-    Spine2DModel* model = new Spine2DModel();
-    if (!model->load(path)) {
-        delete model;
-        return NULL;
-    }
-    return model;
-}
-
 Object* Spine2DModelAssetInfo::createObject(Asset& asset) const
 {
     Spine2DModel* model = (Spine2DModel*)asset.load();
@@ -194,4 +184,29 @@ void Spine2DModel::TextureLoader::load(spine::AtlasPage& page, const spine::Stri
 
 void Spine2DModel::TextureLoader::unload(void* texture)
 {
+}
+
+ImporterRegister<Spine2DModelImporter> spine2djsonImporter(".spine2djson", true);
+
+bool Spine2DModelImporter::loadInternal(const ImportInfo& info, ImportResult& result)
+{
+    Spine2DModel* model = new Spine2DModel();
+    if (!model->load(info.path)) {
+        delete model;
+        result.status = ImportResult::LoadFailed;
+        return false;
+    }
+
+    Asset* asset = new Asset(&PythonScriptAssetInfo::assetInfo, info.filename, info.path);
+    asset->asset[0] = model;
+    if (AssetManager::registAsset(*asset)) {
+        result.assets.push_back(asset);
+        return true;
+    }
+    else {
+        delete model;
+        delete asset;
+        result.status = ImportResult::RegisterFailed;
+        return false;
+    }
 }

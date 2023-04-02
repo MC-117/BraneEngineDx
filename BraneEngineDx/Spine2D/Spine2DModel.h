@@ -2,6 +2,7 @@
 
 #include "Spine2DConfig.h"
 #include "../Core/Asset.h"
+#include "../Core/Importer/Importer.h"
 #include "../Core/Texture2D.h"
 
 class AssetInfo;
@@ -70,7 +71,14 @@ class Spine2DModelAssetInfo : public AssetInfo {
 public:
 	static Spine2DModelAssetInfo assetInfo;
 
-	virtual void* load(const string& name, const string& path, const vector<string>& settings, const vector<void*>& dependences) const;
 	virtual Object* createObject(Asset& asset) const;
 	static AssetInfo& getInstance();
+};
+
+class Spine2DModelImporter : public IImporter
+{
+public:
+	Spine2DModelImporter() = default;
+protected:
+	virtual bool loadInternal(const ImportInfo& info, ImportResult& result);
 };

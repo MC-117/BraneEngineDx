@@ -112,7 +112,7 @@ cbuffer DrawInfoBuf : register(DRAW_INFO_BIND_INDEX)
     uniform uint passID;
     uniform uint passNum;
     uniform uint materialID;
-    uniform uint pad0;
+    uniform float gameTime;
     uniform uint pad1;
     uniform uint pad2;
 };

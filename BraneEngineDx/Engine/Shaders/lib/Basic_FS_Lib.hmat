@@ -183,9 +183,9 @@ float3 uvzPosToView(float3 UVZ)
 
 float3 uvzDirToView(float3 UVZ)
 {
-    float4 clipPos = float4(uvzToClip(UVZ), 0.0f);
+    float4 clipPos = float4(normalize(uvzToClip(UVZ)), 0.0f);
     float4 viewPos = mul(clipPos, camData.promatInv);
-    return viewPos.xyz / viewPos.w;
+    return normalize(viewPos.xyz / viewPos.w);
 }
 
 float3 viewPosToClip(float3 viewPos)

@@ -252,8 +252,20 @@ struct ShaderPropertyName
 
 	size_t getHash() const;
 
-	size_t operator()() const;
+	bool operator==(const ShaderPropertyName& name) const;
 };
+
+namespace std
+{
+	template<>
+	struct hash<ShaderPropertyName>
+	{
+		size_t operator()(const ShaderPropertyName& name) const
+		{
+			return name.getHash();
+		}
+	};
+}
 
 struct ShaderProperty
 {

@@ -1,5 +1,5 @@
 #include "GraphicType.h"
-
+#include "Utility/hash.h"
 
 ShaderPropertyName::ShaderPropertyName(const char* name)
 {
@@ -27,7 +27,7 @@ size_t ShaderPropertyName::calHash(const char* name)
 				break;
 		}
 		memcpy(&data, ptr, len);
-		hash ^= data + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+		hash_combine(hash, data);
 		if (len < sizeof(size_t))
 			break;
 		ptr += sizeof(size_t);
@@ -40,9 +40,9 @@ size_t ShaderPropertyName::getHash() const
 	return hash;
 }
 
-size_t ShaderPropertyName::operator()() const
+bool ShaderPropertyName::operator==(const ShaderPropertyName& name) const
 {
-	return hash;
+	return hash == name.hash;
 }
 
 RenderMode::RenderMode(uint16_t renderStage, uint8_t blendMode, uint16_t subOrder)

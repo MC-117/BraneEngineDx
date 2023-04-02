@@ -19,7 +19,7 @@ public:
 	DX12ShaderStage(DX12Context& context, const ShaderStageDesc& desc);
 	virtual ~DX12ShaderStage();
 
-	virtual unsigned int compile(const string& code, string& errorString);
+	virtual unsigned int compile(const ShaderMacroSet& macroSet, const string& code, string& errorString);
 	virtual void resolveRootSignature(DX12RootSignatureDesc& desc);
 	virtual void release();
 
