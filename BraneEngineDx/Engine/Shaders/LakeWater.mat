@@ -1,7 +1,9 @@
 #order 2500
 #material
+Scalar roughnessScale: 1
+Scalar metallicScale: 1
 Scalar waterOpacity: 0.6
-Scalar depthFadeDistance: 20
+Scalar waterOpacity: 0.6
 Color baseColor: 1.0, 1.0, 1.0, 1.0
 Color waterColor1: 0.007, 0.243, 0.273, 1.0
 Color waterColor2: 0.1, 0.227, 0.31, 1.0
@@ -11,6 +13,7 @@ Texture waterNormalMap: black
 #fragment
 #condition default SSR
 #condition vsm SSR
+#pragma debug
 #include "lib/Light_Def.hmat"
 #include "lib/CameraData_Def.hmat"
 
@@ -22,8 +25,9 @@ DEF_MAT_BEGIN
 uniform float4 baseColor;
 uniform float4 waterColor1;
 uniform float4 waterColor2;
+uniform float roughnessScale;
+uniform float metallicScale;
 uniform float waterOpacity;
-uniform float depthFadeDistance;
 DEF_MAT_END
 
 DEF_TEX2D_AUTO(waterDepthMap);
@@ -110,20 +114,26 @@ FragmentOut SURFACE_MAIN
     float2 screenUV = fin.svPos.xy / camData.viewSize;
     float opaqueViewDepth = depthFromNDCToView(SAMPLE_TEX(gBufferB, screenUV));
     float viewDepth = depthFromNDCToView(surf.depth);
-    float depthFade = saturate((opaqueViewDepth - viewDepth) / depthFadeDistance);
+    float depthDiff = opaqueViewDepth - viewDepth;
+    float depthFadeDistance1 = 200.0f;
+    float depthFadeDistance2 = 10.0f;
+    float depthFadeDistance3 = 1000.0f;
+    float depthFade1 = saturate(depthDiff / depthFadeDistance1);
+    float depthFade2 = saturate(depthDiff / depthFadeDistance2);
+    float depthFade3 = saturate(depthDiff / depthFadeDistance3);
 
-    float3 camVec = -uvzDirToView(float3(screenUV, surf.depth));
+    float3 camVec = uvzDirToView(float3(screenUV, surf.depth));
 
-    float lerpAlpha = (depth1 + depth2) * (depth2 + depth3);
-    float3 waterColor = lerp(0.0f, lerp(waterColor1.rgb, 1.0f, lerpAlpha), depthFade);
+    float lerpAlpha = pow((depth1 + depth2) * (depth2 + depth3), 3.0f);
+    float3 waterColor = lerp(0.0f, lerp(waterColor1.rgb, 1.0f, lerpAlpha), depthFade1);
     waterColor = lerp(waterColor, waterColor2.rgb, fresnelSchlick(dot(surf.Normal, camVec), 7.0f));
     surf.albedo = baseColor * float4(waterColor, 1.0f);
 
-    surf.albedo.a *= lerp(0, waterOpacity, depthFade) + depthFade;
+    surf.albedo.a *= lerp(0, waterOpacity, depthFade2) + depthFade3;
 
-    surf.roughness = lerp(lerp(0.6f, 0.1f, depthFade), 0.6f, lerpAlpha);
+    surf.roughness = saturate(lerp(lerp(0.6f, 0.1f, depthFade1), 0.6f, lerpAlpha)) * roughnessScale;
 
-    surf.metallic = lerp(0.2f, 1.0f, fresnelSchlick(dot(float3(0, 0, 1), camVec), 3.0f));
+    surf.metallic = saturate(lerp(0.2f, 1.0f, fresnelSchlick(dot(float3(0, 0, 1), camVec), 3.0f))) * metallicScale;
 
     surf.ao = 1;
     surf.mask |= REFLECTION_MASK;

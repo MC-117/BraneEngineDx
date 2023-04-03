@@ -16,6 +16,7 @@ cbuffer SSRInfo
 
 float3 getSSRColor(float3 startUVZ, float3 worldNorm, float roughness)
 {
+    roughness = saturate(roughness);
     float4 hitColor = 0.0f.rrrr;
     float3 viewN = normalize(worldDirToView(worldNorm));
 

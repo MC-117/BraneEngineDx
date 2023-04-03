@@ -78,7 +78,7 @@ bool ShaderStage::isValid()
 unsigned int ShaderStage::compile(const ShaderMacroSet& macroSet, const string & code, string & errorString)
 {
 	shaderMacroSet = macroSet;
-	this->code = code;
+	this->code = macroSet.getDefineCode() + code;
 	return shaderId;
 }
 

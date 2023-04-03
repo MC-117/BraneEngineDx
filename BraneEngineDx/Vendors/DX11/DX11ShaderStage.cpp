@@ -38,16 +38,14 @@ unsigned int DX11ShaderStage::compile(const ShaderMacroSet& macroSet, const stri
 	string shaderPath = rootPath + '/' + shdtmp + name + "_" + getShaderFeatureNames(this->shaderFeature) + getShaderExtension(stageType);
 	ofstream f = ofstream(shaderPath);
 	if (f.fail()) {
-		string processedCode = macroSet.getDefineCode() + code;
-		if (FAILED(D3DCompile(processedCode.c_str(), processedCode.size() * sizeof(char), name.c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		if (FAILED(D3DCompile(this->code.c_str(), this->code.size() * sizeof(char), name.c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
 			"main", getShaderVersion(stageType), compileFlag, 0, &dx11ShaderBlob, &errorBlob))) {
 			errorString = (const char*)errorBlob->GetBufferPointer();
 			return 0;
 		}
 	}
 	else {
-		f << macroSet.getDefineCode();
-		f << code;
+		f << this->code;
 		f.close();
 		if (FAILED(D3DCompileFromFile(filesystem::path(shaderPath).c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
 			"main", getShaderVersion(stageType), compileFlag, 0, &dx11ShaderBlob, &errorBlob))) {
