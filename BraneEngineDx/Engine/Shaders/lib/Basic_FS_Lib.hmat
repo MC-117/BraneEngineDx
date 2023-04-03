@@ -29,18 +29,23 @@ float3x3 cotangent(float3 N, float3 p, float2 uv)
 
 float fresnelSchlick(float cosTheta, float F0)
 {
-    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (1.0f - F0) * pow(max(abs(1.0f - max(cosTheta, 0.0f)), 0.0001f), 5.0f);
+}
+
+float fresnelSchlick(float cosTheta, float F0, float power)
+{
+    return F0 + (1.0f - F0) * pow(max(abs(1.0f - max(cosTheta, 0.0f)), 0.0001f), power);
 }
 
 float3 fresnelSchlick(float cosTheta, float3 F0)
 {
-    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (1.0 - F0) * pow(max(abs(1.0f - max(cosTheta, 0.0f)), 0.0001f), 5.0);
 }
 
 float3 fresnelSchlick(float cosTheta, float3 F0, float roughness)
 {
     float r = 1.0 - roughness;
-    return F0 + (max(float3(r, r, r), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (max(float3(r, r, r), F0) - F0) * pow(max(abs(1.0f - max(cosTheta, 0.0f)), 0.0001f), 5.0);
 }
 
 float3 AOMultiBounce(float AO,float3 albedo)
@@ -179,6 +184,15 @@ float3 uvzPosToView(float3 UVZ)
     float4 clipPos = float4(uvzToClip(UVZ), 1.0f);
     float4 viewPos = mul(clipPos, camData.promatInv);
     return viewPos.xyz / viewPos.w;
+}
+
+float3 uvzDirToWorld(float3 UVZ)
+{
+    float4 clipPos = float4(uvzToClip(UVZ), 0.0f);
+    float4 viewPos = mul(clipPos, camData.promatInv);
+    viewPos /= viewPos.w;
+    float4 worldPos = mul(viewPos, camData.vmatInv);
+    return worldPos.xyz / worldPos.w;
 }
 
 float3 uvzDirToView(float3 UVZ)
