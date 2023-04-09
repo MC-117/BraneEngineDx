@@ -818,15 +818,17 @@ void Gizmo::begineWindow()
 	const ImU32 flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
 		ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus |
-		ImGuiWindowFlags_NoDocking;
+		ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove;
 
 #ifdef IMGUI_HAS_VIEWPORT
-	ImGui::SetNextWindowSize(ImGui::GetMainViewport()->Size);
-	ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos);
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowSize(viewport->WorkSize);
+	ImGui::SetNextWindowPos(viewport->WorkPos);
+	ImGui::SetNextWindowViewport(viewport->ID);
 #else
 	ImGuiIO& io = ImGui::GetIO();
-	ImGui::SetNextWindowSize(io.DisplaySize);
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
+	ImGui::SetWindowSize(io.DisplaySize);
+	ImGui::SetWindowPos(ImVec2(0, 0));
 #endif
 
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
@@ -834,6 +836,7 @@ void Gizmo::begineWindow()
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 
 	ImGui::Begin("gizmo", NULL, flags);
+
 	drawList = ImGui::GetBackgroundDrawList();
 	windowPos = ImGui::GetWindowPos();
 
@@ -871,7 +874,9 @@ void Gizmo::endWindow()
 	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
 		if ((!ImGuizmo::IsOver() && !picked && !isUsing && !isLastUsing)) {
 			EditorManager::selectObject(NULL);
-			ImVec2 pos = ImGui::GetMousePos();
+			ImVec2 mousePos = ImGui::GetMousePos();
+			ImVec2 winPos = ImGui::GetWindowPos();
+			ImVec2 pos = { mousePos.x - winPos.x, mousePos.y - winPos.y };
 			if (pos.x >= 0 && pos.y >= 0)
 				camera->cameraRender.triggerScreenHit({ (unsigned int)pos.x, (unsigned int)pos.y });
 		}

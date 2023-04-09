@@ -1,15 +1,9 @@
 #include "RenderTarget.h"
 
-RenderTarget RenderTarget::defaultRenderTarget;
 unsigned int RenderTarget::currentFbo = 0;
 
 RenderTarget::RenderTarget()
 {
-	if (isDefault()) {
-		desc.channel = 4;
-		desc.withDepthStencil = true;
-		desc.multisampleLevel = 1;
-	}
 }
 
 RenderTarget::RenderTarget(int width, int height, int channel, bool withDepthStencil, int multisampleLevel)
@@ -41,11 +35,6 @@ bool RenderTarget::isValid()
 	return desc.frameID != 0;
 }
 
-bool RenderTarget::isDefault()
-{
-	return this == &defaultRenderTarget;
-}
-
 bool RenderTarget::isDepthOnly()
 {
 	return desc.depthOnly;
@@ -60,7 +49,7 @@ unsigned int RenderTarget::bindFrame()
 {
 	newVendorRenderTarget();
 	vendorRenderTarget->bindFrame();
-	return isDefault() ? 0 : desc.frameID;
+	return desc.frameID;
 }
 
 void RenderTarget::clearBind()
@@ -243,14 +232,7 @@ IRenderTarget* RenderTarget::getVendorRenderTarget()
 
 void RenderTarget::newVendorRenderTarget()
 {
-	if (isDefault()) {
-		if (IRenderTarget::defaultRenderTargetDesc == NULL)
-			IRenderTarget::defaultRenderTargetDesc = &desc;
-		if (IRenderTarget::defaultRenderTarget == NULL)
-			IRenderTarget::defaultRenderTarget = VendorManager::getInstance().getVendor().newRenderTarget(desc);
-		vendorRenderTarget = IRenderTarget::defaultRenderTarget;
-	}
-	else if (vendorRenderTarget == NULL) {
+	if (vendorRenderTarget == NULL) {
 		vendorRenderTarget = VendorManager::getInstance().getVendor().newRenderTarget(desc);
 		if (vendorRenderTarget == NULL) {
 			throw runtime_error("Vendor new RenderTarget failed");

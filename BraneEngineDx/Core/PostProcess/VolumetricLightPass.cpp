@@ -130,8 +130,10 @@ void VolumetricLightPass::render(RenderInfo& info)
 void VolumetricLightPass::resize(const Unit2Di& size)
 {
 	PostProcessPass::resize(size);
-	passARenderTarget.resize(size.x * screenScale, size.y * screenScale);
-	passBRenderTarget.resize(size.x * screenScale, size.y * screenScale);
+	Unit2Di safeSize = size * screenScale;
+	safeSize = { max(safeSize.x, 1), max(safeSize.y, 1) };
+	passARenderTarget.resize(safeSize.x, safeSize.y);
+	passBRenderTarget.resize(safeSize.x, safeSize.y);
 }
 
 void VolumetricLightPass::onGUI(EditorInfo& info)

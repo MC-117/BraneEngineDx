@@ -51,7 +51,7 @@ void AnimationDataWindow::onRenderWindow(GUIRenderInfo& info)
 	}
 
 	ImGui::BeginDisabled(data == NULL);
-	if (ImGui::ButtonEx(ICON_FA_SAVE, buttonSize)) {
+	if (ImGui::ButtonEx(ICON_FA_FLOPPY_DISK, buttonSize)) {
 		string path = AssetInfo::getPath(data);
 		thread td = thread([](AnimationClipData* tar, string path) {
 			if (path.empty()) {

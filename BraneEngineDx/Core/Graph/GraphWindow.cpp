@@ -65,7 +65,7 @@ void GraphWindow::onRenderWindow(GUIRenderInfo& info)
 		setGraph(pGraph);
 	}
 	ImGui::BeginDisabled(pGraph == NULL);
-	if (ImGui::ButtonEx(ICON_FA_SAVE, buttonSize)) {
+	if (ImGui::ButtonEx(ICON_FA_XMARK, buttonSize)) {
 		thread td = thread([](Graph* tar) {
 			FileDlgDesc desc;
 			desc.title = "Save Graph";

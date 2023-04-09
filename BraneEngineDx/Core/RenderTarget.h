@@ -7,16 +7,12 @@
 class RenderTarget
 {
 public:
-	static RenderTarget defaultRenderTarget;
-
-
 	RenderTarget();
 	RenderTarget(int width, int height, int channel, bool withDepthStencil = false, int multisampleLevel = 0);
 	RenderTarget(int width, int height, Texture& depthTexture);
 	virtual ~RenderTarget();
 
 	virtual bool isValid();
-	bool isDefault();
 	bool isDepthOnly();
 	void init();
 	virtual unsigned int bindFrame();

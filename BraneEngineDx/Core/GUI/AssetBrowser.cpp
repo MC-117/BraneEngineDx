@@ -169,6 +169,12 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 		ImGui::PopID();
 		ImGui::NextColumn();
 	}
+	if (ImGui::BeginPopupContextWindow("FolderContext")) {
+		if (ImGui::Button("RefreshFolder", { 120, 36 })) {
+			refreshNewAsset(curFolder);
+		}
+		ImGui::EndPopup();
+	}
 	for (int i = 0; i < assets.size(); i++, index++) {
 		auto iter = assetTypes.find(assets[i]->assetInfo.type);
 		if (iter == assetTypes.end())
@@ -388,12 +394,6 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 		ImGui::NextColumn();
 	}
 	ImGui::EndColumns();
-	if (ImGui::BeginPopupContextWindow("FolderContext")) {
-		if (ImGui::Button("RefreshFolder", { 80, 36 })) {
-			refreshNewAsset(curFolder);
-		}
-		ImGui::EndPopup();
-	}
 	ImGui::EndChild();
 }
 

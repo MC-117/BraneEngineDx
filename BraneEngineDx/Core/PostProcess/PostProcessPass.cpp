@@ -6,6 +6,24 @@
 
 SerializeInstance(PostProcessPass);
 
+PostProcessResource::PostProcessResource()
+	: sceneRenderData(NULL)
+	, cameraRenderData(NULL)
+	, screenTexture(NULL)
+	, screenRenderTarget(NULL)
+	, depthTexture(NULL)
+	, depthRenderTarget(NULL)
+	, bloomTexture(NULL)
+	, bloomRenderTarget(NULL)
+	, ssaoTexture(NULL)
+	, ssaoRenderTarget(NULL)
+	, volumetricFogTexture(NULL)
+	, volumetricFogRenderTarget(NULL)
+	, blurTexture(NULL)
+	, finalRenderTarget(NULL)
+{
+}
+
 bool PostProcessResource::setTexture(const string & passName, const string & name, Texture & texture, bool overwrite)
 {
 	auto iter = textures.find(name);

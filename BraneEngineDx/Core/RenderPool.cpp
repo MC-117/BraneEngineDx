@@ -136,8 +136,7 @@ void RenderPool::render(bool guiOnly)
 	}
 	else {
 		IRenderContext& context = *vendor.getDefaultRenderContext();
-		RenderTarget::defaultRenderTarget.resize(currentCamera.size.x, currentCamera.size.y);
-		context.bindFrame(RenderTarget::defaultRenderTarget.getVendorRenderTarget());
+		context.bindSurface(Engine::getMainDeviceSurface());
 		context.clearFrameColor(currentCamera.clearColor);
 	}
 
@@ -169,8 +168,9 @@ void RenderPool::gameFence()
 		gameFrames = Time::frames();
 		this_thread::yield();
 	}
-	if (!destory)
-		VendorManager::getInstance().getVendor().frameFence();
+	if (!destory) {
+		Engine::getMainDeviceSurface()->frameFence();
+	}
 }
 
 void RenderPool::renderFence()

@@ -4,6 +4,7 @@
 #include "DX11Material.h"
 #include "DX11ShaderStage.h"
 #include "DX11RenderTarget.h"
+#include "DX11DeviceSurface.h"
 #include "DX11GPUBuffer.h"
 #include "DX11MeshData.h"
 #include "DX11SkeletonMeshData.h"
@@ -33,6 +34,7 @@ public:
 
 	DX11ShaderProgram* currentProgram = NULL;
 	DX11RenderTarget* currentRenderTarget = NULL;
+	DX11DeviceSurface* currentDeviceSurface = NULL;
 
 	DX11RenderContext(DX11Context& context, RenderContextDesc& desc);
 
@@ -56,10 +58,12 @@ public:
 	virtual void copyBufferSubData(IGPUBuffer* srcBuffer, unsigned int srcFirst, IGPUBuffer* dstBuffer, unsigned int dstFirst, unsigned int size);
 
 	virtual unsigned int bindFrame(IRenderTarget* target);
+	virtual void bindSurface(IDeviceSurface* surface);
 	virtual void clearOutputBufferBindings();
 	virtual void clearFrameBindings();
 	virtual void resolveMultisampleFrame(IRenderTarget* target);
 	virtual void clearFrameColor(const Color& color);
+	virtual void clearSurfaceColor(const Color& color);
 	virtual void clearFrameColors(const vector<Color>& colors);
 	virtual void clearFrameDepth(float depth);
 	virtual void clearFrameStencil(unsigned int stencil);

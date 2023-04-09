@@ -276,14 +276,7 @@ unsigned int DX11RenderContext::bindFrame(IRenderTarget* target)
 	DX11RenderTarget* dxTarget = dynamic_cast<DX11RenderTarget*>(target);
 	if (dxTarget == NULL)
 		return 0;
-	if (dxTarget->isDefault()) {
-		deviceContext->OMSetRenderTargets(1, dxContext.backBufferRTV[0].GetAddressOf(), NULL);
-		currentRenderTarget = dxTarget;
-		dx11RTVs.resize(1);
-		dx11RTVs[0] = dxContext.backBufferRTV[0];
-		dx11DSV = nullptr;
-		return 0;
-	}
+
 	if (!dxTarget->desc.inited)
 		return 0;
 
@@ -345,7 +338,22 @@ unsigned int DX11RenderContext::bindFrame(IRenderTarget* target)
 	deviceContext->OMSetRenderTargets(dx11RTVs.size(),
 		(ID3D11RenderTargetView* const*)dx11RTVs.data(), dx11DSV.Get());
 	currentRenderTarget = dxTarget;
+	currentDeviceSurface = NULL;
 	return dxTarget->desc.frameID;
+}
+
+void DX11RenderContext::bindSurface(IDeviceSurface* surface)
+{
+	DX11DeviceSurface* dxSurface = dynamic_cast<DX11DeviceSurface*>(surface);
+	if (dxSurface == NULL)
+		return;
+	if (!dxSurface->desc.inited)
+		return;
+	if (currentDeviceSurface == dxSurface)
+		return;
+	dxContext.deviceContext->OMSetRenderTargets(1, dxSurface->backBufferRTV.GetAddressOf(), NULL);
+	currentDeviceSurface = dxSurface;
+	currentRenderTarget = NULL;
 }
 
 void DX11RenderContext::clearOutputBufferBindings()
@@ -384,7 +392,6 @@ void DX11RenderContext::resolveMultisampleFrame(IRenderTarget* target)
 			clearSRV();
 			clearUAV();
 			clearRTV();
-			currentRenderTarget = NULL;
 			deviceContext->CSSetShaderResources(7, 1, srv.GetAddressOf());
 			deviceContext->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL);
 			dispatchCompute(ceil(dxTarget->desc.width / 16.0f), ceil(dxTarget->desc.height / 16.0f), 1);
@@ -401,6 +408,13 @@ void DX11RenderContext::clearFrameColor(const Color& color)
 	auto rt = dx11RTVs.front();
 	if (rt != NULL)
 		deviceContext->ClearRenderTargetView(rt.Get(), (const float*)&color);
+}
+
+void DX11RenderContext::clearSurfaceColor(const Color& color)
+{
+	if (currentDeviceSurface == NULL || currentDeviceSurface->backBufferRTV == NULL)
+		return;
+	deviceContext->ClearRenderTargetView(currentDeviceSurface->backBufferRTV.Get(), (const float*)&color);
 }
 
 void DX11RenderContext::clearFrameColors(const vector<Color>& colors)
@@ -842,6 +856,7 @@ void DX11RenderContext::clearRTV()
 	deviceContext->OMSetRenderTargets(0, NULL, NULL);
 	DX11RenderTarget::currentRenderTarget = nullptr;
 	currentRenderTarget = nullptr;
+	currentDeviceSurface = nullptr;
 }
 
 void DX11RenderContext::bindMeshData(MeshData* meshData)
@@ -1140,6 +1155,11 @@ void DX11RenderContext::execteImGuiDraw(ImDrawData* drawData)
 	if (drawData == NULL || !drawData->Valid)
 		return;
 	ImGui_ImplDX11_RenderDrawData(drawData, deviceContext.Get());
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		ImGui::RenderPlatformWindowsDefault(NULL, this);
+	}
 }
 
 bool DX11RenderContext::drawMeshIndirect(IGPUBuffer* argBuffer, unsigned int byteOffset)

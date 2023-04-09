@@ -2,8 +2,8 @@
 #include "../Engine.h"
 #include "../Console.h"
 #include "EditorWindow.h"
-#include "../WUI/WUIViewPort.h"
 #include "../SkeletonMeshActor.h"
+#include "../WUI/WUIMainWindow.h"
 
 ESCMenu::ESCMenu(string name, bool defaultShow)
 	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
@@ -48,8 +48,9 @@ void TextCenter(std::string text) {
 void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 {
 	ImVec2 ws = { 200, 252 };
+	ImVec2 pos = ImGui::GetMainViewport()->WorkPos;
 	ImGui::SetWindowSize(ws, ImGuiCond_Always);
-	ImGui::SetWindowPos({ (info.viewSize.x - ws.x) * 0.5f, (info.viewSize.y - ws.y) * 0.5f }, ImGuiCond_Always);
+	ImGui::SetWindowPos({ pos.x + (info.viewSize.x - ws.x) * 0.5f, pos.y + (info.viewSize.y - ws.y) * 0.5f }, ImGuiCond_Always);
 	ImVec2 size = { ImGui::GetWindowContentRegionWidth(), 40 };
 
 	World* world = Engine::getCurrentWorld();
@@ -149,7 +150,7 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 		info.gui.gizmo.setEnableGUI(true);
 	}
 	if (ImGui::Button("Toggle Fullscreen", size)) {
-		Engine::viewport.toggleFullscreen();
+		Engine::mainWindow.toggleFullscreen();
 	}
 	if (ImGui::Button("Quit", size)) {
 		world->quit();

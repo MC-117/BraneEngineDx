@@ -34,9 +34,6 @@ bool DX11Context::createDevice(unsigned int width, unsigned int height)
 	if (FAILED(deviceContext->QueryInterface<ID3D11DeviceContext4>(&deviceContext4)))
 		return false;
 
-	if (FAILED(device5->CreateFence(fenceValue, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence))))
-		return false;
-
 	if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory))))
 		return false;
 
@@ -48,11 +45,6 @@ bool DX11Context::createDevice(unsigned int width, unsigned int height)
 
 void DX11Context::cleanupDevice()
 {
-	if (swapChain != NULL)
-		swapChain->SetFullscreenState(false, nullptr);
-	if (swapChain) {
-		swapChain.Reset();
-	}
 	cleanupRenderState();
 	cleanupInputLayout();
 	if (dxgiFactory) {
@@ -64,81 +56,11 @@ void DX11Context::cleanupDevice()
 	if (deviceContext) {
 		deviceContext.Reset();
 	}
-	if (fence) {
-		fence.Reset();
-	}
 	if (device5) {
 		device5.Reset();
 	}
 	if (device) {
 		device.Reset();
-	}
-}
-
-void DX11Context::createSwapChain(unsigned int width, unsigned int height, unsigned int multisampleLevels)
-{
-	/*if (swapChain != NULL) {
-		swapChain->Release();
-	}*/
-
-	if (swapChain == NULL) {
-		DXGI_SWAP_CHAIN_DESC1 sd;
-		ZeroMemory(&sd, sizeof(sd));
-		sd.BufferCount = backBufferCount;
-		sd.Width = width;
-		sd.Height = height;
-		sd.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-		sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		//sd.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-		sd.SampleDesc.Count = 1;
-		sd.SampleDesc.Quality = 0;
-		sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-		sd.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-		sd.Scaling = DXGI_SCALING_STRETCH;
-		sd.Stereo = FALSE;
-
-		if (multisampleLevels > 1) {
-			unsigned int q = 0;
-			device->CheckMultisampleQualityLevels(DXGI_FORMAT_B8G8R8A8_UNORM, multisampleLevels, &q);
-			if (q != 0)
-				--q;
-			sd.SampleDesc.Quality = q;
-		}
-
-		ComPtr<IDXGISwapChain1> baseSwapChain = NULL;
-
-		if (FAILED(dxgiFactory->CreateSwapChainForHwnd(device.Get(), hWnd, &sd, NULL, NULL, &baseSwapChain)))
-			throw std::runtime_error("DX11: Create swap chain failed");
-
-		baseSwapChain.As(&swapChain);
-
-		//activeBackBufferIndex = swapChain->GetCurrentBackBufferIndex();
-		//frameLatencyWaitableObject = swapChain->GetFrameLatencyWaitableObject();
-	}
-	else {
-		swapChain->Present(0, 0);
-
-		for (int i = 0; i < backBufferCount; i++) {
-			if (i < 1) {
-				backBuffer[i].Reset();
-				backBufferRTV[i].Reset();
-			}
-		}
-
-		if (FAILED(swapChain->ResizeBuffers(backBufferCount, width, height,
-			DXGI_FORMAT_B8G8R8A8_UNORM, 0)))
-			throw std::runtime_error("DX11: Resize swap chain failed");
-		//frameLatencyWaitableObject = swapChain->GetFrameLatencyWaitableObject();
-	}
-
-	for (int i = 0; i < backBufferCount; i++) {
-		if (i < 1) {
-			swapChain->GetBuffer(i, IID_PPV_ARGS(backBuffer[i].GetAddressOf()));
-			ComPtr<ID3D11RenderTargetView>& rtv = backBufferRTV[i];
-			if (FAILED(device->CreateRenderTargetView(backBuffer[i].Get(), NULL, &rtv)))
-				throw runtime_error("DX11: Create default render target view failed");
-		}
-		backBuffer[i].Reset();
 	}
 }
 
@@ -397,64 +319,6 @@ void DX11Context::cleanupInputLayout()
 	if (terrainInputLayout != NULL) {
 		terrainInputLayout.Reset();
 	}
-}
-
-void DX11Context::swap(bool vsync, unsigned int maxFPS)
-{
-	this->maxFPS = maxFPS;
-
-	setGPUSignal();
-
-	swapChain->Present(vsync ? 1 : 0, 0);
-
-	//DWORD result = WaitForSingleObjectEx(
-	//	frameLatencyWaitableObject,
-	//	1000, // 1 second timeout (shouldn't ever occur)
-	//	true
-	//);
-	//activeBackBufferIndex = swapChain->GetCurrentBackBufferIndex();
-
-	if (maxFPS == 0 || lastTime == 0) {
-		duration = Time::now() - lastTime;
-		lastTime = Time::now();
-	}
-	else {
-		duration = Time::now() - lastTime;
-		double milisec = 1000.0f / maxFPS;
-		bool flush = false;
-		/*double sleepTime = milisec - duration.toMillisecond();
-		if (sleepTime > 0)
-			Sleep(sleepTime);*/
-		while (duration.toMillisecond() < milisec) {
-			if (!flush) {
-				//deviceContext->Flush();
-				flush = true;
-			}
-			duration = Time::now() - lastTime;
-		}
-		lastTime = Time::now();
-	}
-}
-
-void DX11Context::setGPUSignal()
-{
-	fenceValue++;
-
-	deviceContext4->Signal(fence.Get(), fenceValue);
-}
-
-void DX11Context::frameFence()
-{
-	if (!needFrameFence)
-		return;
-	if (fence->GetCompletedValue() < fenceValue)
-	{
-		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
-		fence->SetEventOnCompletion(fenceValue, eventHandle);
-		WaitForSingleObject(eventHandle, INFINITE);
-		CloseHandle(eventHandle);
-	}
-	needFrameFence = false;
 }
 
 void DX11Context::clearSRV()

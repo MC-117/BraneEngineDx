@@ -1,19 +1,11 @@
 #include "IRenderTarget.h"
 
-RenderTargetDesc* IRenderTarget::defaultRenderTargetDesc = NULL;
-IRenderTarget* IRenderTarget::defaultRenderTarget = NULL;
-
 IRenderTarget::IRenderTarget(RenderTargetDesc& desc) : desc(desc)
 {
 }
 
 IRenderTarget::~IRenderTarget()
 {
-}
-
-bool IRenderTarget::isDefault() const
-{
-    return this == defaultRenderTarget;
 }
 
 void IRenderTarget::setDepthOnly(Texture* depthTex)
@@ -55,5 +47,33 @@ void IRenderTarget::clearDepth(float depth)
 }
 
 void IRenderTarget::clearStencil(unsigned int stencil)
+{
+}
+
+IDeviceSurface::IDeviceSurface(DeviceSurfaceDesc& desc) : desc(desc)
+{
+}
+
+IDeviceSurface::~IDeviceSurface()
+{
+}
+
+void IDeviceSurface::bindSurface()
+{
+}
+
+void IDeviceSurface::resize(unsigned int width, unsigned int height, unsigned int multisampleLevel)
+{
+}
+
+void IDeviceSurface::clearColor(const Color& color)
+{
+}
+
+void IDeviceSurface::swapBuffer(bool vsync, int maxFps)
+{
+}
+
+void IDeviceSurface::frameFence()
 {
 }

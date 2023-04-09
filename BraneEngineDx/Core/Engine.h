@@ -7,7 +7,7 @@
 #include "World.h"
 #include "Input.h"
 
-class WUIViewport;
+class WUIMainWindow;
 
 static class Engine
 {
@@ -17,8 +17,9 @@ public:
 	static World* currentWorld;
 	static WindowContext windowContext;
 	static EngineConfig engineConfig;
-	static WUIViewport viewport;
+	static WUIMainWindow mainWindow;
 
+	static IDeviceSurface* getMainDeviceSurface();
 	static World* getCurrentWorld();
 	static void setViewportSize(const Unit2Di& size);
 	static void toggleFullscreen();

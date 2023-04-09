@@ -16,6 +16,8 @@ public:
 
 	bool loadDefaultTexture();
 
+	void setMaterial(Material& material);
+
 	void setSunColor(Color color);
 	void setZenithColor(Color color);
 	void setHorizonColor(Color color);
@@ -36,6 +38,8 @@ public:
 	virtual bool isHidden();
 
 	static Serializable* instantiate(const SerializationInfo& from);
+	virtual bool deserialize(const SerializationInfo& from);
+	virtual bool serialize(SerializationInfo& to);
 protected:
 	float time = 0;
 

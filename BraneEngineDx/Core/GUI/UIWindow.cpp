@@ -41,29 +41,29 @@ void UIWindow::render(GUIRenderInfo& info)
 		ImGui::PushStyleVar(b->first, b->second);
 	for (auto b = styleFVars.begin(), e = styleFVars.end(); b != e; b++)
 		ImGui::PushStyleVar(b->first, b->second);
-	if (!ImGui::Begin(name.c_str(), showCloseButton ? &show : NULL, (backgroundTex == NULL || blurBackground) ? style : (style | ImGuiWindowFlags_NoBackground))) {
-		ImGui::End();
-		ImGui::PopStyleVar(styleCount);
-		return;
-	}
-	if (nextFocus) {
-		ImGui::SetWindowFocus();
-		nextFocus = false;
-	}
-	_isFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
-	if (blurBackground) {
-		if (info.sceneBlurTex != NULL) {
-			ImGuiStyle& style = ImGui::GetStyle();
-			ImVec2 pos = ImGui::GetWindowPos();
-			ImVec2 size = ImGui::GetWindowSize();
-			ImVec2 b = { pos.x + size.x, pos.y + size.y };
-			ImGui::GetBackgroundDrawList()->AddImageRounded((void*)info.sceneBlurTex->getTextureID(), pos, b,
-			{ pos.x / (float)info.viewSize.x, pos.y / (float)info.viewSize.y },
-			{ b.x / (float)info.viewSize.x, b.y / (float)info.viewSize.y }, (ImColor&)backgroundColor, style.WindowRounding);//, ImDrawCornerFlags_Top);
+	if (ImGui::Begin(name.c_str(), showCloseButton ? &show : NULL, (backgroundTex == NULL || blurBackground) ? style : (style | ImGuiWindowFlags_NoBackground))) {
+		if (nextFocus) {
+			ImGui::SetWindowFocus();
+			nextFocus = false;
 		}
+		_isFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+		if (blurBackground) {
+			if (info.sceneBlurTex != NULL) {
+				ImGuiStyle& style = ImGui::GetStyle();
+				ImVec2 pos = ImGui::GetWindowPos();
+				ImVec2 size = ImGui::GetWindowSize();
+				ImVec2 b = { pos.x + size.x, pos.y + size.y };
+				ImGui::GetBackgroundDrawList()->AddImageRounded((void*)info.sceneBlurTex->getTextureID(), pos, b,
+					{ pos.x / (float)info.viewSize.x, pos.y / (float)info.viewSize.y },
+					{ b.x / (float)info.viewSize.x, b.y / (float)info.viewSize.y }, (ImColor&)backgroundColor, style.WindowRounding);//, ImDrawCornerFlags_Top);
+			}
+		}
+		onRenderWindow(info);
+		ImGui::End();
 	}
-	onRenderWindow(info);
-	ImGui::End();
+	else {
+		_isFocus = false;
+	}
 	ImGui::PopStyleVar(styleCount);
 }
 

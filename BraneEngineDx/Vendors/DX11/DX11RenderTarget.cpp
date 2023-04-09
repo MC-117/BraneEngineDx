@@ -31,13 +31,6 @@ ITexture2D* DX11RenderTarget::getInternalDepthTexture()
 
 unsigned int DX11RenderTarget::bindFrame()
 {
-	if (isDefault()) {
-		desc.inited = true;
-		dxContext.clearSRV();
-		dxContext.deviceContext->OMSetRenderTargets(1, dxContext.backBufferRTV[0].GetAddressOf(), NULL);
-		currentRenderTarget = this;
-		return 0;
-	}
 	if (!desc.inited) {
 		resize(desc.width, desc.height);
 		currentRenderTarget = NULL;
@@ -94,11 +87,8 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 		return;
 	desc.width = width;
 	desc.height = height;
-	if (isDefault()) {
-		if (sizeChanged)
-			dxContext.createSwapChain(width, height, desc.multisampleLevel);
-	}
-	else if (desc.depthOnly) {
+	
+	if (desc.depthOnly) {
 		if (desc.depthTexure != NULL) {
 			if (desc.depthTexure->resize(width, height) == 0)
 				throw runtime_error("DX11: Resize depth texture failed");

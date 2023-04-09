@@ -14,8 +14,8 @@ PhysicsDebug::~PhysicsDebug()
 
 void PhysicsDebug::onRenderWindow(GUIRenderInfo& info)
 {
-	ImGui::SetWindowSize(ImVec2(info.viewSize.x, info.viewSize.y));
-	ImGui::SetWindowPos(ImVec2(0, 0));
+	ImGui::SetWindowSize(ImGui::GetWindowViewport()->WorkSize);
+	ImGui::SetWindowPos(ImGui::GetWindowViewport()->WorkPos);
 
 	World& world = *Engine::getCurrentWorld();
 	PhysicalWorld::drawDedug(ImGui::GetBackgroundDrawList(), world.physicalWorld.physicsScene->getRenderBuffer(), *info.camera);

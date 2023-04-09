@@ -31,15 +31,6 @@ ITexture2D* DX12RenderTarget::getInternalDepthTexture()
 
 unsigned int DX12RenderTarget::bindFrame()
 {
-	if (isDefault()) {
-		desc.inited = true;
-		dx12RTVs.resize(1);
-		dx12RTVs[0] = dxContext.backBufferRTVDescHeap[dxContext.activeBackBufferIndex];
-		dxContext.graphicContext.setRTVs(dx12RTVs.size(), dx12RTVs.data(), dx12DSV);
-		dxContext.graphicContext.setSampleCount(desc.multisampleLevel);
-		currentRenderTarget = this;
-		return 0;
-	}
 	if (!desc.inited) {
 		resize(desc.width, desc.height);
 		desc.frameID = dxFrameID;
@@ -87,12 +78,8 @@ void DX12RenderTarget::resize(unsigned int width, unsigned int height)
 		return;
 	desc.width = width;
 	desc.height = height;
-	if (isDefault()) {
-		dxContext.createSwapChain(width, height, desc.multisampleLevel);
-		/*dx12RTVs.resize(1);
-		dx12RTVs[0] = dxContext.backBufferRTVDescHeap[dxContext.activeBackBufferIndex];*/
-	}
-	else if (desc.depthOnly) {
+
+	if (desc.depthOnly) {
 		if (desc.depthTexure != NULL) {
 			if (desc.depthTexure->resize(width, height) == 0)
 				throw runtime_error("DX12: Resize depth texture failed");

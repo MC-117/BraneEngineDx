@@ -12,6 +12,19 @@ WUIControl::WUIControl(HINSTANCE hIns, HWND parent)
 
 WUIControl::~WUIControl()
 {
+	if (parent) {
+		for (auto b = parent->controls.begin(), e = parent->controls.end(); b != e; b++) {
+			if (*b == this) {
+				parent->controls.erase(b);
+				break;
+			}
+		}
+	}
+	parent = NULL;
+	if (hWnd) {
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, NULL);
+		DestroyWindow(hWnd);
+	}
 }
 
 LRESULT WUIControl::defaultWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -64,18 +77,25 @@ HINSTANCE WUIControl::getHInstance() const
 	return hIns;
 }
 
+HWND WUIControl::getHWnd() const
+{
+	return hWnd;
+}
+
 void WUIControl::setStyle(DWORD winStyle)
 {
-	this->winStyle = winStyle;
 	if (hWnd != NULL)
-		SetWindowLong(hWnd, GWL_STYLE, winStyle);
+		this->winStyle = SetWindowLong(hWnd, GWL_STYLE, winStyle);
+	else
+		this->winStyle = winStyle;
 }
 
 void WUIControl::setExStyle(DWORD winExStyle)
 {
-	this->winExStyle = winExStyle;
 	if (hWnd != NULL)
-		SetWindowLong(hWnd, GWL_EXSTYLE, winExStyle);
+		this->winExStyle = SetWindowLong(hWnd, GWL_EXSTYLE, winExStyle);
+	else
+		this->winExStyle = winExStyle;
 }
 
 DWORD WUIControl::getStyle()
@@ -105,30 +125,50 @@ void WUIControl::addControl(WUIControl& ctrl)
 void WUIControl::setText(const string& text)
 {
 	this->text = text;
-	if (hWnd != NULL)
-		SetWindowText(hWnd, text.c_str());
+	if (hWnd != NULL) {
+		int n = ::MultiByteToWideChar(CP_UTF8, 0, text.c_str(), -1, NULL, 0);
+		wstring text_w(n, '\0');
+		::MultiByteToWideChar(CP_UTF8, 0, text.c_str(), -1, text_w.data(), n);
+		::SetWindowTextW(hWnd, text_w.c_str());
+	}
 }
 
 void WUIControl::setPos(const Unit2Di& pos, bool active)
 {
 	this->pos = pos;
-	if (hWnd != NULL)
-		SetWindowPos(hWnd, 0, pos.x, pos.y, size.x, size.y, active ? SWP_NOOWNERZORDER : (SWP_NOOWNERZORDER | SWP_NOACTIVATE));
+	updateFromWindowRect(active);
 }
 
 void WUIControl::setSize(const Unit2Di& size, bool active)
 {
 	this->size = size;
-	if (hWnd != NULL)
-		SetWindowPos(hWnd, 0, pos.x, pos.y, size.x, size.y, active ? SWP_NOOWNERZORDER : (SWP_NOOWNERZORDER | SWP_NOACTIVATE));
+	updateFromWindowRect(active);
 }
 
 void WUIControl::setPosAndSize(const Unit2Di& pos, const Unit2Di& size, bool active)
 {
 	this->pos = pos;
 	this->size = size;
-	if (hWnd != NULL)
-		SetWindowPos(hWnd, 0, pos.x, pos.y, size.x, size.y, active ? SWP_NOOWNERZORDER : (SWP_NOOWNERZORDER | SWP_NOACTIVATE));
+	updateFromWindowRect(active);
+}
+
+void WUIControl::setClientPos(const Unit2Di& pos, bool active)
+{
+	this->clientPos = pos;
+	updateFromClientRect(active);
+}
+
+void WUIControl::setClientSize(const Unit2Di& size, bool active)
+{
+	this->clientSize = size;
+	updateFromClientRect(active);
+}
+
+void WUIControl::setClientPosAndSize(const Unit2Di& pos, const Unit2Di& size, bool active)
+{
+	this->clientPos = pos;
+	this->clientSize = size;
+	updateFromClientRect(active);
 }
 
 void WUIControl::setBackColor(const Color& bkColor)
@@ -189,13 +229,14 @@ bool WUIControl::doModel(bool showDefault)
 	if (showDefault) {
 		show();
 	}
-	while (!closing && WM_QUIT != msg.message) {
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+	while (!closing) {
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+			if (msg.message == WM_QUIT)
+				closing = true;
 		}
-		else
-			onLoop();
+		onLoop();
 	}
 	ShowWindow(hWnd, SW_HIDE);
 	DestroyWindow(hWnd);
@@ -212,13 +253,14 @@ bool WUIControl::doModelAsync(void(*workFunc)(WUIControl& control, void* ptr), v
 	asyncThread = new thread([&]() { workFunc(*this, ptr); closing = true; });
 	asyncThread->detach();
 	MSG msg = {};
-	while (!closing && WM_QUIT != msg.message) {
-		if (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
+	while (!closing) {
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+			if (msg.message == WM_QUIT)
+				closing = true;
 		}
-		else
-			onLoop();
+		onLoop();
 	}
 	close();
 	isAsync = false;
@@ -244,17 +286,27 @@ LRESULT WUIControl::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_MOVE:
 	{
-		pos.x = LOWORD(lParam);
-		pos.y = HIWORD(lParam);
-		onMove(pos, size);
+		RECT rc;
+		GetWindowRect(hWnd, &rc);
+		pos.x = rc.left;
+		pos.y = rc.top;
+		clientPos.x = LOWORD(lParam);
+		clientPos.y = HIWORD(lParam);
+		onMove(clientPos, clientSize);
 		break;
 	}
 	case WM_SIZE:
-		if (wParam == SIZE_MAXIMIZED)
+		if (wParam == SIZE_MAXIMIZED) {
 			pos = { 0, 0 };
-		size.x = LOWORD(lParam);
-		size.y = HIWORD(lParam);
-		onResize(wParam, size);
+			clientPos = { 0, 0 };
+		}
+		RECT rc;
+		GetWindowRect(hWnd, &rc);
+		size.x = rc.right - rc.left;
+		size.y = rc.bottom - rc.top;
+		clientSize.x = LOWORD(lParam);
+		clientSize.y = HIWORD(lParam);
+		onResize(wParam, clientSize);
 		break;
 	case WM_ENTERSIZEMOVE:
 		onResizeEnter();
@@ -306,7 +358,7 @@ LRESULT WUIControl::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		onLBTNDBLClick();
 		break;
 	case WM_CLOSE:
-		PostQuitMessage(0);
+		closing = true;
 		break;
 	case WM_COMMAND:
 		onCommand(wParam, lParam);
@@ -328,8 +380,13 @@ HWND WUIControl::create()
 		parentHwnd = parent->create();
 		hIns = parent->hIns;
 	}
-	hWnd = CreateWindowEx(winExStyle, "BraneEngineClass", text.c_str(), winStyle,
+	int n = ::MultiByteToWideChar(CP_UTF8, 0, text.c_str(), -1, NULL, 0);
+	wstring text_w(n, '\0');
+	::MultiByteToWideChar(CP_UTF8, 0, text.c_str(), -1, text_w.data(), n);
+	hWnd = CreateWindowExW(winExStyle, L"BraneEngineClass", text_w.c_str(), winStyle,
 		pos.x, pos.y, size.x, size.y, parentHwnd, NULL, hIns, this);
+	getStyle();
+	getExStyle();
 	if (hWnd == NULL) {
 		char error[100];
 		sprintf_s(error, "Create Window Failed(0x%x)", GetLastError());
@@ -358,6 +415,47 @@ HMENU WUIControl::getHMenuID()
 		nextHMenuID++;
 	}
 	return hMenu;
+}
+
+void WUIControl::updateFromWindowRect(bool active)
+{
+	RECT rc = { 0, 0, 0, 0 };
+	if (hWnd) {
+		SetWindowPos(hWnd, 0, pos.x, pos.y, size.x, size.y, active ? SWP_NOOWNERZORDER : (SWP_NOOWNERZORDER | SWP_NOACTIVATE));
+		GetClientRect(hWnd, &rc);
+		clientPos = { rc.left, rc.top };
+		clientSize = { rc.right - rc.left, rc.bottom - rc.top };
+	}
+	else {
+		DWORD styles = getStyle();
+		styles |= (!(styles & WS_CAPTION) && !(styles & WS_THICKFRAME)) ? 0 : WS_THICKFRAME;
+		::AdjustWindowRectEx(&rc, styles, FALSE, getExStyle());
+		clientPos = { pos.x - rc.left, pos.y - rc.top };
+		clientSize = { size.x - (rc.right - rc.left), size.y - (rc.bottom - rc.top) };
+	}
+}
+
+void WUIControl::updateFromClientRect(bool active)
+{
+	RECT rc = { 0, 0, 0, 0 };
+	if (hWnd) {
+		GetClientRect(hWnd, &rc);
+		pos += { rc.left - clientPos.x, rc.top - clientPos.y };
+		size += { rc.right - rc.left - clientSize.x, rc.bottom - rc.top - clientSize.y };
+		Unit2Di offset = { rc.right - rc.left, rc.bottom - rc.top };
+		SetWindowPos(hWnd, 0, pos.x, pos.y, size.x, size.y, active ? SWP_NOOWNERZORDER : (SWP_NOOWNERZORDER | SWP_NOACTIVATE));
+		GetClientRect(hWnd, &rc);
+		clientPos = { rc.left, rc.top };
+		clientSize = { rc.right - rc.left, rc.bottom - rc.top };
+	}
+	else {
+		DWORD styles = getStyle();
+		styles |= (!(styles & WS_CAPTION) && !(styles & WS_THICKFRAME)) ? 0 : WS_THICKFRAME;
+		rc = { clientPos.x, clientPos.y, clientPos.x + clientSize.x, clientPos.y + clientSize.y };
+		::AdjustWindowRectEx(&rc, styles, FALSE, getExStyle());
+		pos = { rc.left, rc.top };
+		size = { rc.right - rc.left, rc.bottom - rc.top };
+	}
 }
 
 BOOL WUIControl::onEraseBkgnd(HDC hdc)

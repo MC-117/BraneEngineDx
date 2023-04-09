@@ -41,10 +41,12 @@ public:
 	virtual void copyBufferSubData(IGPUBuffer* srcBuffer, unsigned int srcFirst, IGPUBuffer* dstBuffer, unsigned int dstFirst, unsigned int size) = 0;
 
 	virtual unsigned int bindFrame(IRenderTarget* target) = 0;
+	virtual void bindSurface(IDeviceSurface* surface) = 0;
 	virtual void clearOutputBufferBindings() = 0;
 	virtual void clearFrameBindings() = 0;
 	virtual void resolveMultisampleFrame(IRenderTarget* target) = 0;
 	virtual void clearFrameColor(const Color& color) = 0;
+	virtual void clearSurfaceColor(const Color& color) = 0;
 	virtual void clearFrameColors(const vector<Color>& colors) = 0;
 	virtual void clearFrameDepth(float depth) = 0;
 	virtual void clearFrameStencil(unsigned int stencil) = 0;

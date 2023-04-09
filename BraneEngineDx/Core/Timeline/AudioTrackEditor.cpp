@@ -21,7 +21,7 @@ void AudioTrackEditor::onTrackContentGUI(EditorInfo& info, TimelineEditorInfo& t
 
     float volume = audioTrack->getMaxVolume();
     bool mute = audioTrack->isMute();
-    const char* icon = mute ? ICON_FA_VOLUME_OFF : ICON_FA_VOLUME_UP;
+    const char* icon = mute ? ICON_FA_VOLUME_OFF : ICON_FA_VOLUME_HIGH;
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 2, 2 });
     if (ImGui::Button(icon, { timelineInfo.barHeight, timelineInfo.barHeight })) {
         audioTrack->setMute(!mute);

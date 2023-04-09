@@ -439,11 +439,7 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 	timer.record("ImGui");
 
-	/*----- Vendor swap -----*/
-	{
-		if (!VendorManager::getInstance().getVendor().swap(Engine::engineConfig, Engine::windowContext))
-			throw runtime_error("Vendor swap failed");
-	}
+	Engine::getMainDeviceSurface()->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
 
 	timer.record("Swap");
 

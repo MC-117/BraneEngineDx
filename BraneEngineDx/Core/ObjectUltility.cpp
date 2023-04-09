@@ -10,3 +10,15 @@ bool isSameBranch(const Object& child, const Object& other)
     }
     return false;
 }
+
+Object* findFirst(const Object& root, const Serialization& serialization)
+{
+    ObjectConstIterator iter(&root);
+    while (iter.next()) {
+        Object* obj = &iter.current();
+        const Serialization& objSerialization = obj->getSerialization();
+        if (&objSerialization == &serialization || objSerialization.isChildOf(serialization))
+            return obj;
+    }
+    return NULL;
+}

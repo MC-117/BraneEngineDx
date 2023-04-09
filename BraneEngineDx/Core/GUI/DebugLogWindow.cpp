@@ -18,7 +18,7 @@ DebugLogWindow::DebugLogWindow(string name, bool defaultShow)
 
 void DebugLogWindow::onRenderWindow(GUIRenderInfo & info)
 {
-	ImGui::SetWindowPos({ 0, 0 }, ImGuiCond_Always);
+	ImGui::SetWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_Always);
 	Time time = Time::duration() - Time(chrono::seconds(10));
 	for (auto b = Console::logs.rbegin(), e = Console::logs.rend(); b != e; b++) {
 		if (b->timeStamp < time || b->timeStamp < startTime)

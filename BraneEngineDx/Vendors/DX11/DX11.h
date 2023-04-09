@@ -17,22 +17,6 @@ struct DX11Context
 	ComPtr<ID3D11DeviceContext4> deviceContext4 = NULL;
 	ComPtr<ID3D11Device> device = NULL;
 	ComPtr<ID3D11Device5> device5 = NULL;
-	ComPtr<IDXGISwapChain1> swapChain = NULL;
-
-	ComPtr<ID3D11Fence> fence = NULL;
-	HANDLE frameLatencyWaitableObject = NULL;
-
-	unsigned int maxFPS = 0;
-	Time lastTime;
-	Time duration;
-
-	UINT64 fenceValue = 0;
-	HANDLE fenceEvent;
-
-	int backBufferCount = 3;
-	int activeBackBufferIndex = 0;
-	ComPtr<ID3D11Texture2D> backBuffer[3] = { 0 };
-	ComPtr<ID3D11RenderTargetView> backBufferRTV[3] = { 0 };
 
 	ComPtr<ID3D11RasterizerState> rasterizerCullOff = NULL;
 	ComPtr<ID3D11RasterizerState> rasterizerCullBack = NULL;
@@ -57,21 +41,14 @@ struct DX11Context
 	ComPtr<ID3D11InputLayout> skeletonMeshInputLayout = NULL;
 	ComPtr<ID3D11InputLayout> terrainInputLayout = NULL;
 
-	bool needFrameFence = false;
-
 	void setHWnd(HWND hWnd);
 
 	bool createDevice(unsigned int width, unsigned int height);
 	void cleanupDevice();
-	void createSwapChain(unsigned int width, unsigned int height, unsigned int multisampleLevels);
 	void createRenderState();
 	void createInputLayout();
 	void cleanupRenderState();
 	void cleanupInputLayout();
-
-	void swap(bool vsync, unsigned int maxFPS);
-	void setGPUSignal();
-	void frameFence();
 
 	void clearSRV();
 	void clearUAV();

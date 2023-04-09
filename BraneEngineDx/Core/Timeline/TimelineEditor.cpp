@@ -58,7 +58,7 @@ void TimelineEditor::onToolBarTopGUI(EditorInfo& info)
 	}
 	
 	ImGui::BeginDisabled(timeline == NULL);
-	if (ImGui::ButtonEx(ICON_FA_SAVE, buttonSize)) {
+	if (ImGui::ButtonEx(ICON_FA_XMARK, buttonSize)) {
 		thread td = thread([](Timeline* tar) {
 			FileDlgDesc desc;
 			desc.title = "Save Timeline";

@@ -53,11 +53,7 @@ void ForwardRenderGraph::execute(IRenderContext& context)
 	blitPass.execute(context);
 	imGuiPass.execute(context);
 
-	/*----- Vendor swap -----*/
-	{
-		if (!VendorManager::getInstance().getVendor().swap(Engine::engineConfig, Engine::windowContext))
-			throw runtime_error("Vendor swap failed");
-	}
+	Engine::getMainDeviceSurface()->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
 }
 
 void ForwardRenderGraph::reset()

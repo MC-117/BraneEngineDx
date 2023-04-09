@@ -3,6 +3,8 @@
 #include "Gizmo.h"
 #include "../Camera.h"
 #include "../Engine.h"
+#include "../WUI/WUIMainWindow.h"
+#include "GUIUtility.h"
 
 bool GUI::mouseOnUI = false;
 bool GUI::anyItemFocus = false;
@@ -47,14 +49,14 @@ void GUI::onGUI(RenderInfo& info)
 
 	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
 	// because it would be confusing to have two docking targets within each others.
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;// ImGuiWindowFlags_NoDocking;
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->WorkPos);
 	ImGui::SetNextWindowSize(viewport->WorkSize);
 	ImGui::SetNextWindowViewport(viewport->ID);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+	window_flags |= ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 	window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
 	// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background 
@@ -71,6 +73,36 @@ void GUI::onGUI(RenderInfo& info)
 	ImGui::Begin("DockSpace Demo", NULL, window_flags);
 	ImGui::PopStyleVar();
 	ImGui::PopStyleVar(2);
+
+	WUIImGuiWindow* wuiWindow = (WUIImGuiWindow*)viewport->PlatformUserData;
+
+	wuiWindow->setHitState(WUIWindow::Hit_Client);
+
+	ImVec2 bkCurPos = ImGui::GetCursorPos();
+	const ImGuiWindow* window = ImGui::GetCurrentWindow();
+	const ImRect titleBarRect = window->TitleBarRect();
+	if (ImGui::IsMouseHoveringRect(titleBarRect.Min, titleBarRect.Max, false))
+		wuiWindow->setHitState(WUIWindow::Hit_Caption);
+	ImGui::PushClipRect(titleBarRect.Min, titleBarRect.Max, false);
+	ImGui::SetCursorPos(ImVec2(0.0f, 0.0f));
+	ImGui::BeginHorizontal("MainTitleHor", titleBarRect.GetSize());
+	ImGui::Spring();
+	ImVec2 buttonSize = { titleBarRect.GetHeight() * 1.2f, titleBarRect.GetHeight() };
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+	/*ImGui::Button(ICON_FA_WINDOW_MINIMIZE, buttonSize);
+	if (ImGui::IsMouseHoveringRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), false))
+		wuiWindow->setHitState(WUIWindow::Hit_MinBox);*/
+	ImGui::Button(wuiWindow->isMaximize() ? ICON_FA_WINDOW_RESTORE : ICON_FA_WINDOW_MAXIMIZE, buttonSize);
+	if (ImGui::IsMouseHoveringRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), false))
+		wuiWindow->setHitState(WUIWindow::Hit_MaxBox);
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, 0xe81123ff);
+	ImGui::Button(ICON_FA_XMARK, buttonSize);
+	if (ImGui::IsMouseHoveringRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), false))
+		wuiWindow->setHitState(WUIWindow::Hit_Close);
+	ImGui::PopStyleColor(2);
+	ImGui::EndHorizontal();
+	ImGui::PopClipRect();
+	ImGui::SetCursorPos(bkCurPos);
 
 	// DockSpace
 	ImGuiIO& io = ImGui::GetIO();
@@ -121,6 +153,11 @@ void GUI::render(RenderInfo& info)
 {
 	gizmo.onRender3D(info);
 	ImGui::Render();
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		ImGui::UpdatePlatformWindows();
+	}
 	info.renderGraph->setImGuiDrawData(ImGui::GetDrawData());
 }
 

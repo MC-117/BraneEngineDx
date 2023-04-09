@@ -1,20 +1,18 @@
-#include "WUIViewPort.h"
+#include "WUIMainWindow.h"
 #include "../Engine.h"
 #include "../Console.h"
+#include <dwmapi.h>
 
-WUIViewport::WUIViewport(HINSTANCE hIns) : WUIControl(hIns)
+WUIMainWindow::WUIMainWindow() : WUIImGuiWindow()
 {
-	firstShow = false;
-	winStyle = normalScreenWinStyle;
-	winExStyle = WS_EX_ACCEPTFILES;
 }
 
-void WUIViewport::toggleFullscreen()
+void WUIMainWindow::toggleFullscreen()
 {
 	Engine::windowContext.fullscreen = !Engine::windowContext.fullscreen;
 	winStyle = Engine::windowContext.fullscreen ? fullScreenWinStyle : normalScreenWinStyle;
 	if (hWnd != NULL)
-		SetWindowLong(hWnd, GWL_STYLE, winStyle);
+		winStyle = SetWindowLong(hWnd, GWL_STYLE, winStyle);
 	if (Engine::windowContext.fullscreen) {
 		Engine::windowContext.screenPos = getPos();
 		setPosAndSize({ 0, 0 }, Engine::windowContext.fullscreenSize);
@@ -34,36 +32,67 @@ void WUIViewport::toggleFullscreen()
 	}
 }
 
-void WUIViewport::hideAllUI()
+void WUIMainWindow::hideAllUI()
 {
 	for (int i = 0; i < controls.size(); i++)
 		controls[i]->hide();
 }
 
-LRESULT WUIViewport::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT WUIMainWindow::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	/*----- Vendor envoke WndProc -----*/
-	{
-		VendorManager::getInstance().getVendor().wndProcFunc(hWnd, msg, wParam, lParam);
-	}
 
-	return WUIControl::WndProc(msg, wParam, lParam);
+	//switch (msg) {
+	//case WM_ACTIVATE:
+	//{
+	//	// Extend the frame into the client area.
+	//	MARGINS margins;
+
+	//	int height = (GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYCAPTION) +
+	//		GetSystemMetrics(SM_CXPADDEDBORDER));
+
+	//	margins.cxLeftWidth = 0;
+	//	margins.cxRightWidth = 0;
+	//	margins.cyBottomHeight = 0;
+	//	margins.cyTopHeight = height;
+
+	//	DwmExtendFrameIntoClientArea(hWnd, &margins);
+
+	//	return 0;
+	//}
+	//case WM_CREATE:
+	//{
+	//	RECT rcClient;
+	//	GetWindowRect(hWnd, &rcClient);
+
+	//	// Inform the application of the frame change.
+	//	SetWindowPos(hWnd,
+	//		NULL,
+	//		rcClient.left, rcClient.top,
+	//		rcClient.right - rcClient.left, rcClient.bottom - rcClient.top,
+	//		SWP_FRAMECHANGED);
+	//	break;
+	//}
+	//}
+
+	return WUIImGuiWindow::WndProc(msg, wParam, lParam);
 }
 
-void WUIViewport::onResize(WPARAM wParam, const Unit2Di& size)
+void WUIMainWindow::onResize(WPARAM wParam, const Unit2Di& size)
 {
-	if (wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED)
-		Engine::setViewportSize(size);
-	WUIControl::onResize(wParam, size);
+	Unit2Di safeSize = { max(1, size.x), max(1, size.y) };
+	Engine::setViewportSize(safeSize);
+	WUIImGuiWindow::onResize(wParam, safeSize);
 }
 
-void WUIViewport::onResizeExit()
+void WUIMainWindow::onResizeExit()
 {
 	Engine::setViewportSize(size);
 }
 
-void WUIViewport::onLoop()
+void WUIMainWindow::onLoop()
 {
+	if (closing)
+		return;
 	Time lastTime = time;
 	time = Time::now();
 	Time deltaTime = time - lastTime;
@@ -78,7 +107,7 @@ void WUIViewport::onLoop()
 		time = Time::now();
 	}
 
-	WUIControl::onLoop();
+	WUIImGuiWindow::onLoop();
 	if (title.empty())
 		title = text;
 	setText(title + " | FPS: " + to_string(1000 / deltaTime.toMillisecond()));
@@ -88,7 +117,7 @@ void WUIViewport::onLoop()
 	Console::getTimer("DeltaTime") = timer;
 }
 
-BOOL WUIViewport::onSysCommand(WPARAM wParam, LPARAM lParam)
+BOOL WUIMainWindow::onSysCommand(WPARAM wParam, LPARAM lParam)
 {
 	if (wParam == SC_KEYMENU)
 		return 1;

@@ -202,7 +202,7 @@ namespace ImGui {
 			window->DrawList->AddRectFilled(button_bb.Min, button_bb.Max, GetColorU32(ImGuiCol_ButtonActive),
 				rounding, ImDrawCornerFlags_BotLeft | ImDrawCornerFlags_BotRight);
 
-		AddTextCentered(window->DrawList, button_bb.Min, button_bb.Max, ICON_FA_TIMES, GetColorU32(ImGuiCol_Text));
+		AddTextCentered(window->DrawList, button_bb.Min, button_bb.Max, ICON_FA_XMARK, GetColorU32(ImGuiCol_Text));
 
 		return !clicked;
 	}
@@ -275,7 +275,7 @@ namespace ImGui {
 			window->DrawList->AddRectFilled(button_bb.Min, button_bb.Max, GetColorU32(ImGuiCol_ButtonActive),
 				HeaderBoxRounding, ImDrawCornerFlags_TopRight);
 
-		AddTextCentered(window->DrawList, button_bb.Min, button_bb.Max, ICON_FA_TIMES, GetColorU32(ImGuiCol_Text));
+		AddTextCentered(window->DrawList, button_bb.Min, button_bb.Max, ICON_FA_XMARK, GetColorU32(ImGuiCol_Text));
 
 		return !clicked;
 	}

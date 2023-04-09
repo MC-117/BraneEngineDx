@@ -86,7 +86,7 @@ Texture* CameraRender::getSceneMap()
 
 RenderTarget& CameraRender::getRenderTarget()
 {
-	return renderTarget ? *renderTarget : RenderTarget::defaultRenderTarget;
+	return *renderTarget;
 }
 
 Texture2D* CameraRender::getSceneBlurTex()
@@ -100,9 +100,7 @@ void CameraRender::setSize(Unit2Di size)
 		return;
 	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
 	context.clearFrameBindings();
-	if (!getRenderTarget().isDefault()) {
-		renderTarget->resize(size.x, size.y);
-	}
+	renderTarget->resize(size.x, size.y);
 	if (graph)
 		graph->resize(size);
 	this->size = size;

@@ -15,7 +15,7 @@
 #include "Profile/ProfileCore.h"
 #include "Importer/AssimpImporter.h"
 #include "WUI/LoadingUI.h"
-#include "WUI/WUIViewPort.h"
+#include "WUI/WUIMainWindow.h"
 #include "Script/PythonManager.h"
 #include "../ThirdParty/ImGui/imgui_internal.h"
 #include "../ThirdParty/ImGui/ImGuiIconHelp.h"
@@ -134,7 +134,12 @@ WindowContext Engine::windowContext =
 	false
 };
 EngineConfig Engine::engineConfig;
-WUIViewport Engine::viewport;
+WUIMainWindow Engine::mainWindow;
+
+IDeviceSurface* Engine::getMainDeviceSurface()
+{
+	return mainWindow.getDeviceSurface();
+}
 
 World * Engine::getCurrentWorld()
 {
@@ -156,7 +161,7 @@ void Engine::setViewportSize(const Unit2Di& size)
 
 void Engine::toggleFullscreen()
 {
-	viewport.toggleFullscreen();
+	mainWindow.toggleFullscreen();
 }
 
 void Engine::config()
@@ -318,6 +323,7 @@ void imGuiSetup()
 	ImPlot::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	io.ConfigWindowsMoveFromTitleBarOnly = true;
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
 
@@ -384,13 +390,16 @@ void Engine::setup()
 			throw runtime_error("Vendor window setup failed");
 	}
 
+	imGuiSetup();
+
 	/*----- WinAPI Viewport window setup -----*/
-	viewport.setHInstance(windowContext.hinstance);
-	RECT rc = { 0, 0, (int)engineConfig.screenWidth, (int)engineConfig.screenHeight };
-	AdjustWindowRect(&rc, viewport.getStyle(), FALSE);
-	viewport.setSize({ rc.right - rc.left, rc.bottom - rc.top });
-	viewport.setText("BraneEngine v" + string(ENGINE_VERSION) + " | Vendor Api: " + vendor.getName());
-	windowContext.hwnd = viewport.create();
+	mainWindow.setHInstance(windowContext.hinstance);
+	ImGuiViewport& mainViewport = *ImGui::GetMainViewport();
+	mainViewport.Flags |= ImGuiViewportFlags_NoDecoration;
+	mainWindow.initViewport(mainViewport);
+	mainWindow.setClientSize({ (int)engineConfig.screenWidth, (int)engineConfig.screenHeight });
+	mainWindow.setText("BraneEngine v" + string(ENGINE_VERSION) + " | Vendor Api: " + vendor.getName());
+	windowContext.hwnd = mainWindow.create();
 	input.setHWND(windowContext.hwnd);
 
 	InitializationManager::instance().initialze(InitializeStage::BeforeRenderVendorSetup);
@@ -411,7 +420,6 @@ void Engine::setup()
 	}
 #endif // AUDIO_USE_OPENAL
 
-	imGuiSetup();
 	/*----- Vendor ImGui init -----*/
 	{
 		if (!vendor.imGuiInit(engineConfig, windowContext))
@@ -456,7 +464,7 @@ void Engine::start()
 	if (testCompilingShaders)
 		return;
 	currentWorld->begin();
-	viewport.doModel(false);
+	mainWindow.doModel(false);
 }
 
 void Engine::clean()

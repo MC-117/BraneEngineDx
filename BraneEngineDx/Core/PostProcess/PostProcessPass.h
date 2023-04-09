@@ -8,30 +8,32 @@ struct EditorInfo;
 
 struct PostProcessResource
 {
-	SceneRenderData* sceneRenderData = NULL;
-	CameraRenderData* cameraRenderData = NULL;
+	SceneRenderData* sceneRenderData;
+	CameraRenderData* cameraRenderData;
 
-	Texture* screenTexture = NULL;
-	RenderTarget* screenRenderTarget = NULL;
+	Texture* screenTexture;
+	RenderTarget* screenRenderTarget;
 
-	Texture* depthTexture = NULL;
-	RenderTarget* depthRenderTarget = NULL;
+	Texture* depthTexture;
+	RenderTarget* depthRenderTarget;
 
-	Texture* bloomTexture = NULL;
-	RenderTarget* bloomRenderTarget = NULL;
+	Texture* bloomTexture;
+	RenderTarget* bloomRenderTarget;
 
-	Texture* ssaoTexture = NULL;
-	RenderTarget* ssaoRenderTarget = NULL;
+	Texture* ssaoTexture;
+	RenderTarget* ssaoRenderTarget;
 
-	Texture* volumetricFogTexture = NULL;
-	RenderTarget* volumetricFogRenderTarget = NULL;
+	Texture* volumetricFogTexture;
+	RenderTarget* volumetricFogRenderTarget;
 
-	Texture* blurTexture = NULL;
+	Texture* blurTexture;
 
-	RenderTarget* finalRenderTarget = &RenderTarget::defaultRenderTarget;
+	RenderTarget* finalRenderTarget;
 
 	unordered_map<string, Texture*> textures;
 	unordered_map<string, RenderTarget*> renderTargets;
+
+	PostProcessResource();
 	
 	bool setTexture(const string& passName, const string& name, Texture& texture, bool overwrite = false);
 	Texture* getTexture(const string& name);

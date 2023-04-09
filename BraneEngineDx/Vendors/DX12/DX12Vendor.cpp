@@ -67,12 +67,6 @@ bool DX12Vendor::imGuiShutdown(const EngineConfig& config, const WindowContext& 
 	return true;
 }
 
-bool DX12Vendor::swap(const EngineConfig& config, const WindowContext& context)
-{
-	dxContext.swap(config.vsnyc, config.maxFPS);
-	return true;
-}
-
 bool DX12Vendor::clean(const EngineConfig& config, const WindowContext& context)
 {
 	dxContext.cleanupDevice();
@@ -112,8 +106,10 @@ IRenderContext* DX12Vendor::newRenderContext()
 	return nullptr;
 }
 
-void DX12Vendor::frameFence()
+IDeviceSurface* DX12Vendor::newDeviceSurface(DeviceSurfaceDesc& desc)
 {
+	throw runtime_error("Not Implemented");
+	return nullptr;
 }
 
 ITexture2D* DX12Vendor::newTexture2D(Texture2DDesc& desc)

@@ -348,7 +348,7 @@
     <ClInclude Include="Core\ParticleEmitter.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\WUI\WUIViewPort.h">
+    <ClInclude Include="Core\WUI\WUIMainWindow.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\WUI\HelpUI.h">
@@ -1383,6 +1383,18 @@
     <ClInclude Include="Core\RenderGraph\TranslucentPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\GUI\UIViewport.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WUI\WUIWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\WUI\WUIImGuiWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendors\DX11\DX11DeviceSurface.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -1682,7 +1694,7 @@
     <ClCompile Include="Core\WUI\WUILabel.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\WUI\WUIViewPort.cpp">
+    <ClCompile Include="Core\WUI\WUIMainWindow.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Tool\AnimationConverter\AnimationConverter.cpp">
@@ -2580,6 +2592,18 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderGraph\TranslucentPass.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\GUI\UIViewport.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WUI\WUIWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\WUI\WUIImGuiWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Vendors\DX11\DX11DeviceSurface.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

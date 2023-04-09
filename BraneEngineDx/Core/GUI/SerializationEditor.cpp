@@ -53,7 +53,7 @@ bool SerializationEditor::drawInfo(SerializationInfo * info)
 		}
 	}
 	ImGui::SameLine();
-	if (ImGui::Button(ICON_FA_BACKSPACE)) {
+	if (ImGui::Button(ICON_FA_XMARK)) {
 		doDelete = true;
 	}
 	if (open) {

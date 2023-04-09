@@ -1,5 +1,6 @@
 #include "Core\Engine.h"
 #include "Core\Console.h"
+#include "Core\ObjectUltility.h"
 #include "Core\DirectLight.h"
 #include "Core\GUI\EditorWindow.h"
 #include "Core\GUI\ESCMenu.h"
@@ -158,10 +159,6 @@ void InitialWorld()
 	//world.physicalWorld.setPause(true);
 	world.physicalWorld.setGravity(Vector3f(0, 0, -10));
 
-	DirectLight& dirLight = *new DirectLight("DirLight");
-	dirLight.setRotation(0, -45, -45);
-	world += dirLight;
-
 	//Mesh* clothMesh = getAssetByPath<Mesh>("Content/Cloth/ClothPlane.fbx");
 	//Material* clothMaterial = getAssetByPath<Material>("Content/Cloth/ClothM.imat");
 	//ClothActor& cloth = *new ClothActor("Cloth");
@@ -254,4 +251,10 @@ void InitialWorld()
 
 	world.loadWorld(*info);
 	world.deserialize(*info);
+
+	if (findFirst(world, DirectLight::DirectLightSerialization::serialization) == NULL) {
+		DirectLight& dirLight = *new DirectLight("DirLight");
+		dirLight.setRotation(0, -45, -45);
+		world += dirLight;
+	}
 }

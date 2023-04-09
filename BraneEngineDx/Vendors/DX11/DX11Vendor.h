@@ -22,7 +22,6 @@ public:
 	virtual bool imGuiDrawFrame(const EngineConfig& config, const WindowContext& context);
 	virtual bool imGuiShutdown(const EngineConfig& config, const WindowContext& context);
 
-	virtual bool swap(const EngineConfig& config, const WindowContext& context);
 	virtual bool clean(const EngineConfig& config, const WindowContext& context);
 
 	virtual bool guiOnlyRender(const Color& clearColor);
@@ -34,8 +33,7 @@ public:
 	virtual IRenderContext* getDefaultRenderContext();
 	virtual IRenderContext* newRenderContext();
 
-	virtual void frameFence();
-
+	virtual IDeviceSurface* newDeviceSurface(DeviceSurfaceDesc& desc);
 	virtual ITexture2D* newTexture2D(Texture2DDesc& desc);
 	virtual ShaderStage* newShaderStage(const ShaderStageDesc& desc);
 	virtual ShaderProgram* newShaderProgram();

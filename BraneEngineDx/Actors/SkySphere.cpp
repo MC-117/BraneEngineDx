@@ -31,6 +31,12 @@ bool SkySphere::loadDefaultTexture()
 	return skyTex && starTex && cloudNoiseTex;
 }
 
+void SkySphere::setMaterial(Material& material)
+{
+	this->material = &material;
+	meshRender.setMaterial(0, material);
+}
+
 void SkySphere::setSunColor(Color color)
 {
 	material->setColor("sunColor", color);
@@ -121,4 +127,27 @@ bool SkySphere::isHidden()
 Serializable* SkySphere::instantiate(const SerializationInfo& from)
 {
 	return new SkySphere(from.name);
+}
+
+bool SkySphere::deserialize(const SerializationInfo& from)
+{
+	if (!Actor::deserialize(from))
+		return false;
+	string materialPath;
+	if (from.get("material", materialPath)) {
+		Material* material = getAssetByPath<Material>(materialPath);
+		if (material) {
+			setMaterial(*material);
+		}
+	}
+	return true;
+}
+
+bool SkySphere::serialize(SerializationInfo& to)
+{
+	if (!Actor::serialize(to))
+		return false;
+	string materialPath = AssetInfo::getPath(material);
+	to.set("material", materialPath);
+	return true;
 }

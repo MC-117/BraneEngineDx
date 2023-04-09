@@ -1,5 +1,6 @@
 #include "DX11Vendor.h"
 #include "DX11Texture2D.h"
+#include "DX11DeviceSurface.h"
 #include "../../Core/Utility/RenderUtility.h"
 #include "../imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
@@ -68,12 +69,6 @@ bool DX11Vendor::imGuiShutdown(const EngineConfig& config, const WindowContext& 
 	return true;
 }
 
-bool DX11Vendor::swap(const EngineConfig & config, const WindowContext & context)
-{
-	dxContext.swap(config.vsnyc, config.maxFPS);
-	return true;
-}
-
 bool DX11Vendor::clean(const EngineConfig & config, const WindowContext & context)
 {
 	dxContext.cleanupDevice();
@@ -138,9 +133,9 @@ IRenderContext* DX11Vendor::newRenderContext()
 	return context;
 }
 
-void DX11Vendor::frameFence()
+IDeviceSurface* DX11Vendor::newDeviceSurface(DeviceSurfaceDesc& desc)
 {
-	dxContext.frameFence();
+	return new DX11DeviceSurface(dxContext, desc);
 }
 
 ITexture2D * DX11Vendor::newTexture2D(Texture2DDesc& desc)

@@ -33,13 +33,9 @@ class IRenderTarget
 {
 public:
 	RenderTargetDesc& desc;
-	static RenderTargetDesc* defaultRenderTargetDesc;
-	static IRenderTarget* defaultRenderTarget;
 
 	IRenderTarget(RenderTargetDesc& desc);
 	virtual ~IRenderTarget();
-
-	virtual bool isDefault() const;
 
 	virtual void setDepthOnly(Texture* depthTex);
 	virtual ITexture2D* getInternalDepthTexture();
@@ -52,6 +48,29 @@ public:
 	virtual void clearColors(const vector<Color>& colors);
 	virtual void clearDepth(float depth);
 	virtual void clearStencil(unsigned int stencil);
+};
+
+struct DeviceSurfaceDesc
+{
+	int width = 0, height = 0, multisampleLevel = 1;
+	TexInternalType type = TIT_BGRA8_UF;
+	void* windowHandle = NULL;
+	bool inited = false;
+};
+
+class IDeviceSurface
+{
+public:
+	DeviceSurfaceDesc& desc;
+
+	IDeviceSurface(DeviceSurfaceDesc& desc);
+	virtual ~IDeviceSurface();
+
+	virtual void bindSurface();
+	virtual void resize(unsigned int width, unsigned int height, unsigned int multisampleLevel = 0);
+	virtual void clearColor(const Color& color);
+	virtual void swapBuffer(bool vsync, int maxFps);
+	virtual void frameFence();
 };
 
 #endif // !_IRENDERTARGET_H_

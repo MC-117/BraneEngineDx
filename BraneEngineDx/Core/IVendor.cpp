@@ -38,11 +38,6 @@ bool IVendor::imGuiDrawFrame(const EngineConfig & config, const WindowContext & 
 	return true;
 }
 
-bool IVendor::swap(const EngineConfig & config, const WindowContext & context)
-{
-	return true;
-}
-
 bool IVendor::imGuiShutdown(const EngineConfig & config, const WindowContext & context)
 {
 	return true;

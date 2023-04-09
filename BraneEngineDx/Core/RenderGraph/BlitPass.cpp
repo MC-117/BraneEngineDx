@@ -1,4 +1,5 @@
 #include "BlitPass.h"
+#include "../Engine.h"
 #include "../Asset.h"
 #include "../Console.h"
 #include "../CameraRender.h"
@@ -14,7 +15,6 @@ void BlitPass::prepare()
 	CameraRender* cameraRender = CameraRender::getMainCameraRender();
 	if (cameraRender == NULL)
 		return;
-	RenderTarget::defaultRenderTarget.resize(cameraRender->size.x, cameraRender->size.y);
 	program->init();
 
 	materialRenderData = (MaterialRenderData*)material->getRenderData();
@@ -41,12 +41,11 @@ void BlitPass::execute(IRenderContext& context)
 
 	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
 
-	context.bindFrame(IRenderTarget::defaultRenderTarget);
+	context.bindSurface(Engine::getMainDeviceSurface());
 	context.bindTexture((ITexture*)sceneTexture->getVendorTexture(), screenMapName);
 
 	context.setDrawInfo(0, 1, 0);
-	context.clearFrameColor({ 0, 0, 0, 0 });
-	context.clearFrameDepth(1);
+	context.clearSurfaceColor({ 0, 0, 0, 0 });
 	context.setViewport(0, 0, cameraRender->size.x, cameraRender->size.y);
 	context.postProcessCall();
 }

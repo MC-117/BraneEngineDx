@@ -22,6 +22,7 @@ public:
 
 	virtual void setHInstance(HINSTANCE hIns);
 	virtual HINSTANCE getHInstance() const;
+	virtual HWND getHWnd() const;
 	virtual void setStyle(DWORD winStyle);
 	virtual void setExStyle(DWORD winExStyle);
 	virtual DWORD getStyle();
@@ -31,6 +32,9 @@ public:
 	virtual void setPos(const Unit2Di& pos, bool active = false);
 	virtual void setSize(const Unit2Di& size, bool active = false);
 	virtual void setPosAndSize(const Unit2Di& pos, const Unit2Di& size, bool active = false);
+	virtual void setClientPos(const Unit2Di& pos, bool active = false);
+	virtual void setClientSize(const Unit2Di& size, bool active = false);
+	virtual void setClientPosAndSize(const Unit2Di& pos, const Unit2Di& size, bool active = false);
 	virtual void setBackColor(const Color& bkColor);
 	virtual string getText() const;
 	virtual Unit2Di getPos() const;
@@ -49,7 +53,7 @@ public:
 	virtual LRESULT WndProc(UINT msg, WPARAM wParam, LPARAM lParam);
 protected:
 	static unsigned int nextHMenuID;
-	DWORD winStyle = WS_POPUP | WS_SYSMENU | WS_BORDER;
+	DWORD winStyle = WS_POPUPWINDOW | WS_CLIPSIBLINGS;
 	DWORD winExStyle = 0;
 	HINSTANCE hIns = NULL;
 	HWND parentHwnd = NULL;
@@ -59,12 +63,17 @@ protected:
 	string text;
 	Unit2Di size = { 0, 0 };
 	Unit2Di pos = { 0, 0 };
+	Unit2Di clientSize = { 0, 0 };
+	Unit2Di clientPos = { 0, 0 };
 	Color backColor = { 0, 0, 0 };
 	bool firstShow = true, visible = false, closing = false, isAsync = false;
 	thread* asyncThread = NULL;
 	static bool isRegistClass;
 
 	virtual HMENU getHMenuID();
+
+	virtual void updateFromWindowRect(bool active);
+	virtual void updateFromClientRect(bool active);
 
 	virtual void onCreate();
 	virtual void onPaint(HDC hdc);
