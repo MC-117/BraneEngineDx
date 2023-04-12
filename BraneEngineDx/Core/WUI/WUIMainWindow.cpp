@@ -108,9 +108,9 @@ void WUIMainWindow::onLoop()
 	}
 
 	WUIImGuiWindow::onLoop();
-	if (title.empty())
+	/*if (title.empty())
 		title = text;
-	setText(title + " | FPS: " + to_string(1000 / deltaTime.toMillisecond()));
+	setText(title + " | FPS: " + to_string(1000 / deltaTime.toMillisecond()));*/
 	Timer timer;
 	timer.setIntervalMode(true);
 	timer.record("DeltaTime", time);

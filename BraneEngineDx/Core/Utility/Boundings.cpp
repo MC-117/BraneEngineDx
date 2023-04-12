@@ -52,6 +52,13 @@ void BoundBox::encapsulate(const Vector3f& point)
 	maxPoint = Math::max(maxPoint, point);
 }
 
+bool BoundBox::isInBox(const Vector3f& point) const
+{
+	return minPoint.x() <= point.x() && point.x() <= maxPoint.x()
+		&& minPoint.y() <= point.y() && point.y() <= maxPoint.y()
+		&& minPoint.z() <= point.z() && point.z() <= maxPoint.z();
+}
+
 Vector4f BoundBox::getBoundSphere() const
 {
 	return Vector4f(getCenter(), Math::distance(minPoint, maxPoint) * 0.5f);
@@ -95,6 +102,14 @@ Vector3f ExtentBox::getMinPoint() const
 Vector3f ExtentBox::getMaxPoint() const
 {
 	return center + extent;
+}
+
+bool ExtentBox::isInBox(const Vector3f& point) const
+{
+	Vector3f diff = Math::abs(point - center);
+	return diff.x() < extent.x()
+		&& diff.y() < extent.y()
+		&& diff.z() < extent.z();
 }
 
 Vector4f ExtentBox::getBoundSphere() const

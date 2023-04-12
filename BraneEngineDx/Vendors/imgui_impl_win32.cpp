@@ -579,7 +579,7 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
 
     switch (msg)
     {
-    case WM_MOUSEMOVE:
+    case WM_MOUSEMOVE: case WM_NCMOUSEMOVE:
     {
         // We need to call TrackMouseEvent in order to receive WM_MOUSELEAVE events
         bd->MouseHwnd = hwnd;
@@ -590,12 +590,12 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
             bd->MouseTracked = true;
         }
         POINT mouse_pos = { (LONG)GET_X_LPARAM(lParam), (LONG)GET_Y_LPARAM(lParam) };
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        if (msg != WM_NCMOUSEMOVE && io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
             ::ClientToScreen(hwnd, &mouse_pos);
         io.AddMousePosEvent((float)mouse_pos.x, (float)mouse_pos.y);
         break;
     }
-    case WM_MOUSELEAVE:
+    case WM_MOUSELEAVE: case WM_NCMOUSELEAVE:
         if (bd->MouseHwnd == hwnd)
             bd->MouseHwnd = NULL;
         bd->MouseTracked = false;
@@ -691,11 +691,11 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
         if (wParam > 0 && wParam < 0x10000)
             io.AddInputCharacterUTF16((unsigned short)wParam);
         return 0;
-    case WM_SETCURSOR:
-        // This is required to restore cursor when transitioning from e.g resize borders to client area.
-        if (LOWORD(lParam) == HTCLIENT && ImGui_ImplWin32_UpdateMouseCursor())
-            return 1;
-        return 0;
+    //case WM_SETCURSOR:
+    //    // This is required to restore cursor when transitioning from e.g resize borders to client area.
+    //    if (LOWORD(lParam) == HTCLIENT && ImGui_ImplWin32_UpdateMouseCursor())
+    //        return 1;
+    //    return 0;
     case WM_DEVICECHANGE:
         if ((UINT)wParam == DBT_DEVNODES_CHANGED)
             bd->WantUpdateHasGamepad = true;

@@ -8,14 +8,24 @@ WUIWindow::WUIWindow(HINSTANCE hIns, HWND parent) : WUIControl(hIns, parent)
 	winExStyle = WS_EX_ACCEPTFILES;
 }
 
-void WUIWindow::setHitState(HitState state)
+void WUIWindow::setHitRect(int layer, HitState state, const BoundBox& bound)
 {
-    hitState = state;
+    hitRects[layer] = HitRect{ layer, state, bound };
 }
 
-WUIWindow::HitState WUIWindow::getHitState() const
+WUIWindow::HitState WUIWindow::getHitStateInClientSpace(const Vector3f& position) const
 {
-    return hitState;
+    RECT windowRect;
+    GetWindowRect(hWnd, &windowRect);
+    if (position.x() < 0 || position.y() < 0 ||
+        position.x() >(windowRect.right - windowRect.left) ||
+        position.y() >(windowRect.bottom - windowRect.top))
+        return Hit_None;
+    for (const auto& rect : hitRects) {
+        if (rect.second.bound.isInBox(position))
+            return rect.second.state;
+    }
+    return Hit_Client;
 }
 
 bool WUIWindow::isMinimize() const
@@ -81,13 +91,7 @@ LRESULT WUIWindow::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
         POINT cursorPos;
         GetCursorPos(&cursorPos);
         ScreenToClient(hWnd, &cursorPos);
-        RECT windowRect;
-        GetWindowRect(hWnd, &windowRect);
-        if (cursorPos.x < 0 || cursorPos.y < 0 ||
-            cursorPos.x >(windowRect.right - windowRect.left) ||
-            cursorPos.y >(windowRect.bottom - windowRect.top))
-            return HTNOWHERE;
-        LRESULT lResult = hitStateToLRESULT(hitState);
+        LRESULT lResult = hitStateToLRESULT(getHitStateInClientSpace(Vector3f(cursorPos.x, cursorPos.y)));
         if (!isMaximize()) {
             // Get the mouse cursor position
 
@@ -158,6 +162,16 @@ LRESULT WUIWindow::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
     default:
         return WUIControl::WndProc(msg, wParam, lParam);
 	}
+}
+
+bool WUIWindow::HitRect::operator<(const HitRect& r) const
+{
+    return layer < r.layer;
+}
+
+bool WUIWindow::HitRect::operator>(const HitRect& r) const
+{
+    return layer > r.layer;
 }
 
 LRESULT WUIWindow::hitStateToLRESULT(HitState state)

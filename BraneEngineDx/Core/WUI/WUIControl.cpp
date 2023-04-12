@@ -309,13 +309,18 @@ LRESULT WUIControl::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		onResize(wParam, clientSize);
 		break;
 	case WM_ENTERSIZEMOVE:
+		isResizing = true;
 		onResizeEnter();
-		break;
+		return 0;
 	case WM_EXITSIZEMOVE:
+		isResizing = false;
 		onResizeExit();
-		break;
+		return 0;
 	case WM_PAINT:
 	{
+		if (isResizing)
+			onLoop();
+		onPrePaint();
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
 		onPaint(hdc);
@@ -329,6 +334,7 @@ LRESULT WUIControl::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			return 0;
 		break;
 	}
+	case WM_NCMOUSEHOVER:
 	case WM_MOUSEHOVER:
 	{
 		Unit2Di mpos;
@@ -337,6 +343,7 @@ LRESULT WUIControl::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		onMouseHover(wParam, mpos);
 		break;
 	}
+	case WM_NCMOUSEMOVE:
 	case WM_MOUSEMOVE:
 	{
 		Unit2Di mpos;
@@ -345,15 +352,19 @@ LRESULT WUIControl::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		onMouseMove(wParam, mpos);
 		break;
 	}
+	case WM_NCMOUSELEAVE:
 	case WM_MOUSELEAVE:
 		onMouseLeave();
 		break;
+	case WM_NCLBUTTONDOWN:
 	case WM_LBUTTONDOWN:
 		onLBTNDown();
 		break;
+	case WM_NCLBUTTONUP:
 	case WM_LBUTTONUP:
 		onLBTNUp();
 		break;
+	case WM_NCLBUTTONDBLCLK:
 	case WM_LBUTTONDBLCLK:
 		onLBTNDBLClick();
 		break;
@@ -402,6 +413,10 @@ void WUIControl::onCreate()
 {
 	for (int i = 0; i < controls.size(); i++)
 		controls[i]->create();
+}
+
+void WUIControl::onPrePaint()
+{
 }
 
 void WUIControl::onPaint(HDC hdc)

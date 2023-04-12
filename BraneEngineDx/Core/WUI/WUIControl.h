@@ -66,7 +66,7 @@ protected:
 	Unit2Di clientSize = { 0, 0 };
 	Unit2Di clientPos = { 0, 0 };
 	Color backColor = { 0, 0, 0 };
-	bool firstShow = true, visible = false, closing = false, isAsync = false;
+	bool firstShow = true, visible = false, closing = false, isAsync = false, isResizing = false;
 	thread* asyncThread = NULL;
 	static bool isRegistClass;
 
@@ -76,6 +76,7 @@ protected:
 	virtual void updateFromClientRect(bool active);
 
 	virtual void onCreate();
+	virtual void onPrePaint();
 	virtual void onPaint(HDC hdc);
 	virtual BOOL onEraseBkgnd(HDC hdc);
 	virtual BOOL onCommand(WPARAM wParam, LPARAM lParam);

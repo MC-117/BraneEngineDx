@@ -87,7 +87,7 @@ void DX11DeviceSurface::resize(unsigned int width, unsigned int height, unsigned
 		//frameLatencyWaitableObject = swapChain->GetFrameLatencyWaitableObject();
 	}
 	else if (desc.width != width || desc.height != height) {
-		swapChain->Present(0, 0);
+		//swapChain->Present(0, 0);
 
 		backBuffer.Reset();
 		backBufferRTV.Reset();

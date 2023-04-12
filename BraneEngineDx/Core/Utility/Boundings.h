@@ -23,6 +23,8 @@ struct BoundBox
 	void encapsulate(const BoundBox& box);
 	void encapsulate(const Vector3f& point);
 
+	bool isInBox(const Vector3f& point) const;
+
 	Vector4f getBoundSphere() const;
 
 	bool operator==(const BoundBox& box) const;
@@ -44,6 +46,8 @@ struct ExtentBox
 
 	Vector3f getMinPoint() const;
 	Vector3f getMaxPoint() const;
+
+	bool isInBox(const Vector3f& point) const;
 
 	Vector4f getBoundSphere() const;
 

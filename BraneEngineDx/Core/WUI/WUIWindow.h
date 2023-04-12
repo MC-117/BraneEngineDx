@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Unit.h"
+#include "../Utility/Boundings.h"
 #include "WUIControl.h"
 
 class WUIWindow : public WUIControl
@@ -13,15 +14,24 @@ public:
 
 	WUIWindow(HINSTANCE hIns = NULL, HWND parent = NULL);
 
-	void setHitState(HitState state);
-	HitState getHitState() const;
+	void setHitRect(int layer, HitState state, const BoundBox& bound);
+	HitState getHitStateInClientSpace(const Vector3f& position) const;
 
 	bool isMinimize() const;
 	bool isMaximize() const;
 
 	virtual LRESULT WndProc(UINT msg, WPARAM wParam, LPARAM lParam);
 protected:
-	HitState hitState = Hit_Client;
+	struct HitRect
+	{
+		int layer;
+		HitState state;
+		BoundBox bound;
+
+		bool operator< (const HitRect& r) const;
+		bool operator> (const HitRect& r) const;
+	};
+	map<int, HitRect, greater<int>> hitRects;
 	DWORD normalScreenWinStyle = WS_POPUP | WS_CLIPSIBLINGS;// | WS_THICKFRAME | WS_CLIPCHILDREN;
 	DWORD fullScreenWinStyle = WS_OVERLAPPED | WS_SYSMENU;
 

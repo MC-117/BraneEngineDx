@@ -70,35 +70,54 @@ void GUI::onGUI(RenderInfo& info)
 	// We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
 	// any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-	ImGui::Begin("DockSpace Demo", NULL, window_flags);
-	ImGui::PopStyleVar();
-	ImGui::PopStyleVar(2);
+	ImGui::Begin("##MainWindow", NULL, window_flags);
 
 	WUIImGuiWindow* wuiWindow = (WUIImGuiWindow*)viewport->PlatformUserData;
-
-	wuiWindow->setHitState(WUIWindow::Hit_Client);
 
 	ImVec2 bkCurPos = ImGui::GetCursorPos();
 	const ImGuiWindow* window = ImGui::GetCurrentWindow();
 	const ImRect titleBarRect = window->TitleBarRect();
-	if (ImGui::IsMouseHoveringRect(titleBarRect.Min, titleBarRect.Max, false))
-		wuiWindow->setHitState(WUIWindow::Hit_Caption);
+	const Vector3f windowPos(window->Pos.x, window->Pos.y);
+	wuiWindow->setHitRect(0, WUIWindow::Hit_Caption, BoundBox(
+		Vector3f(titleBarRect.Min.x, titleBarRect.Min.y) - windowPos,
+		Vector3f(titleBarRect.Max.x, titleBarRect.Max.y) - windowPos));
 	ImGui::PushClipRect(titleBarRect.Min, titleBarRect.Max, false);
-	ImGui::SetCursorPos(ImVec2(0.0f, 0.0f));
+	ImGui::SetCursorPos(ImVec2(0, 0));
 	ImGui::BeginHorizontal("MainTitleHor", titleBarRect.GetSize());
+	static Texture2D* logoIcon = getAssetByPath<Texture2D>("Engine/Icons/Logo_40x40.png");
+	if (logoIcon) {
+		const float padding = 4.0f;
+		ImGui::SetCursorPos(ImVec2(padding, padding));
+		ImGui::Image(logoIcon->getTextureID(),
+			{ titleBarRect.GetHeight() - padding * 2,
+			titleBarRect.GetHeight() - padding * 2 });
+		ImGui::SetCursorPos(ImVec2(titleBarRect.GetHeight(), 0));
+	}
+	ImGui::BeginVertical("TitleVer");
+	ImGui::Spring();
+	ImGui::Text("BraneEngine v%s | Vendor Api : %s", ENGINE_VERSION, vendor.getName().c_str());
+	ImGui::Spring();
+	ImGui::EndVertical();
 	ImGui::Spring();
 	ImVec2 buttonSize = { titleBarRect.GetHeight() * 1.2f, titleBarRect.GetHeight() };
+	ImVec2 rectMin, rectMax;
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 	/*ImGui::Button(ICON_FA_WINDOW_MINIMIZE, buttonSize);
-	if (ImGui::IsMouseHoveringRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), false))
+	if (ImGui::IsItemHovered())
 		wuiWindow->setHitState(WUIWindow::Hit_MinBox);*/
 	ImGui::Button(wuiWindow->isMaximize() ? ICON_FA_WINDOW_RESTORE : ICON_FA_WINDOW_MAXIMIZE, buttonSize);
-	if (ImGui::IsMouseHoveringRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), false))
-		wuiWindow->setHitState(WUIWindow::Hit_MaxBox);
+	rectMin = ImGui::GetItemRectMin();
+	rectMax = ImGui::GetItemRectMax();
+	wuiWindow->setHitRect(1, WUIWindow::Hit_MaxBox, BoundBox(
+		Vector3f(rectMin.x, rectMin.y) - windowPos,
+		Vector3f(rectMax.x, rectMax.y) - windowPos));
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, 0xe81123ff);
 	ImGui::Button(ICON_FA_XMARK, buttonSize);
-	if (ImGui::IsMouseHoveringRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), false))
-		wuiWindow->setHitState(WUIWindow::Hit_Close);
+	rectMin = ImGui::GetItemRectMin();
+	rectMax = ImGui::GetItemRectMax();
+	wuiWindow->setHitRect(2, WUIWindow::Hit_Close, BoundBox(
+		Vector3f(rectMin.x, rectMin.y) - windowPos,
+		Vector3f(rectMax.x, rectMax.y) - windowPos));
 	ImGui::PopStyleColor(2);
 	ImGui::EndHorizontal();
 	ImGui::PopClipRect();
@@ -108,11 +127,12 @@ void GUI::onGUI(RenderInfo& info)
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
 	{
-		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+		ImGuiID dockspace_id = ImGui::GetID("MainDockSpace");
 		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 	}
 
 	ImGui::End();
+	ImGui::PopStyleVar(3);
 	// ImGui Dock End
 
 	gizmo.begineWindow();
@@ -142,7 +162,7 @@ void GUI::onGUI(RenderInfo& info)
 	mouseOnUI = ImGui::IsWindowHovered();
 	anyItemFocus = ImGui::IsAnyItemFocused();
 
-	//ImGui::ShowDemoWindow();
+	ImGui::ShowDemoWindow();
 
 	gizmo.reset();
 
