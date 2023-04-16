@@ -66,7 +66,11 @@ protected:
 	Unit2Di clientSize = { 0, 0 };
 	Unit2Di clientPos = { 0, 0 };
 	Color backColor = { 0, 0, 0 };
-	bool firstShow = true, visible = false, closing = false, isAsync = false, isResizing = false;
+	bool firstShow = true;
+	bool visible = false;
+	bool closing = false;
+	bool isAsync = false;
+	bool isMovingOrResizing = false;
 	thread* asyncThread = NULL;
 	static bool isRegistClass;
 

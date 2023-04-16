@@ -181,32 +181,32 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>ThirdParty\Python37\include;ThirdParty\NvCloth\include;ThirdParty\physx-4.1\include;ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-4.1\lib\x64\Profile;ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>ThirdParty\libremidi\include;ThirdParty\Python37\include;ThirdParty\NvCloth\include;ThirdParty\physx-4.1\include;ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>ThirdParty\libremidi\lib\x64;ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-4.1\lib\x64\Profile;ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Debug;$(LibraryPath)</LibraryPath>
     <SourcePath>ThirdParty\NvCloth\src;$(VC_SourcePath);</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>ThirdParty\Python37\include;ThirdParty\NvCloth\include;ThirdParty\physx-4.1\include;ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-4.1\lib\x64\Profile;ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>ThirdParty\libremidi\include;ThirdParty\Python37\include;ThirdParty\NvCloth\include;ThirdParty\physx-4.1\include;ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>ThirdParty\libremidi\lib\x64;ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-4.1\lib\x64\Profile;ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
     <SourcePath>ThirdParty\NvCloth\src;$(VC_SourcePath);</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='AudioRelease|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>ThirdParty\spine\include;ThirdParty\Live2DCubism\include;ThirdParty\Python37\include;ThirdParty\NvCloth\include;ThirdParty\physx-4.1\include;ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;ThirdParty\MemTracer\include;$(IncludePath)</IncludePath>
-    <LibraryPath>ThirdParty\spine\lib\x64;ThirdParty\Live2DCubism\lib\windows\x86_64\142;ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-4.1\lib\x64\Release;ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Release;ThirdParty\MemTracer\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>ThirdParty\libremidi\include;ThirdParty\spine\include;ThirdParty\Live2DCubism\include;ThirdParty\Python37\include;ThirdParty\NvCloth\include;ThirdParty\physx-4.1\include;ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;ThirdParty\MemTracer\include;$(IncludePath)</IncludePath>
+    <LibraryPath>ThirdParty\libremidi\lib\x64;ThirdParty\spine\lib\x64;ThirdParty\Live2DCubism\lib\windows\x86_64\142;ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-4.1\lib\x64\Release;ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Release;ThirdParty\MemTracer\lib;$(LibraryPath)</LibraryPath>
     <SourcePath>ThirdParty\Live2DCubism\include;ThirdParty\NvCloth\src;$(VC_SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='PhysX5Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>ThirdParty\spine\include;ThirdParty\Live2DCubism\include;ThirdParty\Python37\include;ThirdParty\NvCloth\include;ThirdParty\physx-5.0\include;ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>ThirdParty\spine\lib\x64;ThirdParty\Live2DCubism\lib\windows\x86_64\142;ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-5.0\lib\x64\Release;ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>ThirdParty\libremidi\include;ThirdParty\spine\include;ThirdParty\Live2DCubism\include;ThirdParty\Python37\include;ThirdParty\NvCloth\include;ThirdParty\physx-5.0\include;ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>ThirdParty\libremidi\lib\x64;ThirdParty\spine\lib\x64;ThirdParty\Live2DCubism\lib\windows\x86_64\142;ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-5.0\lib\x64\Release;ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
     <SourcePath>ThirdParty\Live2DCubism\include;ThirdParty\NvCloth\src;$(VC_SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='AudioDebug|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>ThirdParty\spine\include;ThirdParty\Live2DCubism\include;ThirdParty\Python37\include;ThirdParty\NvCloth\include;ThirdParty\physx-4.1\include;ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>ThirdParty\spine\lib\x64;ThirdParty\Live2DCubism\lib\windows\x86_64\142;ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-4.1\lib\x64\Profile;ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>ThirdParty\libremidi\include;ThirdParty\spine\include;ThirdParty\Live2DCubism\include;ThirdParty\Python37\include;ThirdParty\NvCloth\include;ThirdParty\physx-4.1\include;ThirdParty\freealut-1.1\include;ThirdParty\OpenAL-1.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>ThirdParty\libremidi\lib\x64;ThirdParty\spine\lib\x64;ThirdParty\Live2DCubism\lib\windows\x86_64\142;ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-4.1\lib\x64\Profile;ThirdParty\freealut-1.1\libs\x64;ThirdParty\OpenAL-1.1\libs\Win64;ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
     <SourcePath>ThirdParty\Live2DCubism\include;ThirdParty\NvCloth\src;$(VC_SourcePath)</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -311,7 +311,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>python3.lib;python37.lib;NvCloth_x64.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;alut64.lib;OpenAL32.lib;zlibstaticd.lib;IrrXMLd.lib;assimp-vc142-mtd.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libremidi.lib;python3.lib;python37.lib;NvCloth_x64.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;alut64.lib;OpenAL32.lib;zlibstaticd.lib;IrrXMLd.lib;assimp-vc142-mtd.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
@@ -332,7 +332,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>python3.lib;python37.lib;NvCloth_x64.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;alut64.lib;OpenAL32.lib;IrrXML.lib;zlibstatic.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libremidi.lib;python3.lib;python37.lib;NvCloth_x64.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;alut64.lib;OpenAL32.lib;IrrXML.lib;zlibstatic.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
@@ -354,7 +354,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>spine-cpp.lib;Live2DCubismCore_MTd.lib;python37.lib;NvCloth_x64.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;alut64.lib;OpenAL32.lib;IrrXML.lib;zlibstatic.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libremidi.lib;spine-cpp.lib;Live2DCubismCore_MTd.lib;python37.lib;NvCloth_x64.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;alut64.lib;OpenAL32.lib;IrrXML.lib;zlibstatic.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
@@ -376,7 +376,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>spine-cpp.lib;Live2DCubismCore_MTd.lib;python37.lib;NvCloth_x64.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysXVehicle2_static_64.lib;PhysX_64.lib;PVDRuntime_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;alut64.lib;OpenAL32.lib;IrrXML.lib;zlibstatic.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libremidi.lib;spine-cpp.lib;Live2DCubismCore_MTd.lib;python37.lib;NvCloth_x64.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysXVehicle2_static_64.lib;PhysX_64.lib;PVDRuntime_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;alut64.lib;OpenAL32.lib;IrrXML.lib;zlibstatic.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
@@ -398,7 +398,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>spine-cpp.lib;Live2DCubismCore_MTd.lib;python37.lib;NvCloth_x64.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;alut64.lib;OpenAL32.lib;IrrXML.lib;zlibstatic.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libremidi.lib;spine-cpp.lib;Live2DCubismCore_MTd.lib;python37.lib;NvCloth_x64.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;alut64.lib;OpenAL32.lib;IrrXML.lib;zlibstatic.lib;assimp-vc142-mt.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;dwmapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableDpiAwareness>true</EnableDpiAwareness>
@@ -730,6 +730,8 @@
     <ClInclude Include="Live2D\Live2DMeshData.h" />
     <ClInclude Include="Live2D\Live2DModel.h" />
     <ClInclude Include="Live2D\Live2DRender.h" />
+    <ClInclude Include="Midi\MidiInstrument.h" />
+    <ClInclude Include="Midi\MidiDevice.h" />
     <ClInclude Include="Spine2D\Spine2DActor.h" />
     <ClInclude Include="Spine2D\Spine2DActorEditor.h" />
     <ClInclude Include="Spine2D\Spine2DConfig.h" />
@@ -1157,6 +1159,8 @@
     <ClCompile Include="Live2D\Live2DMeshData.cpp" />
     <ClCompile Include="Live2D\Live2DModel.cpp" />
     <ClCompile Include="Live2D\Live2DRender.cpp" />
+    <ClCompile Include="Midi\MidiDevice.cpp" />
+    <ClCompile Include="Midi\MidiInstrument.cpp" />
     <ClCompile Include="Spine2D\Spine2DActor.cpp" />
     <ClCompile Include="Spine2D\Spine2DActorEditor.cpp" />
     <ClCompile Include="Spine2D\Spine2DConfig.cpp" />

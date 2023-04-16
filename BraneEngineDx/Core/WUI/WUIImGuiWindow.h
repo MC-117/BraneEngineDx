@@ -26,4 +26,6 @@ protected:
 	IDeviceSurface* deviceSurface = NULL;
 	virtual void onResize(WPARAM wParam, const Unit2Di& size);
 	virtual void onResizeExit();
+	virtual void onImGuiRender();
+	virtual void onLoop();
 };

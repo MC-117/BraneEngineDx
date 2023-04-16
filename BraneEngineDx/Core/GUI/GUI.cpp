@@ -162,7 +162,7 @@ void GUI::onGUI(RenderInfo& info)
 	mouseOnUI = ImGui::IsWindowHovered();
 	anyItemFocus = ImGui::IsAnyItemFocused();
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 
 	gizmo.reset();
 

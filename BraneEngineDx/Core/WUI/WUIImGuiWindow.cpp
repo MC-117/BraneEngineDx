@@ -1,5 +1,6 @@
 #include "WUIImGuiWindow.h"
 #include "../Engine.h"
+#include "../GUI/GUIUtility.h"
 
 static void ImGui_ImplWin32_GetWin32StyleFromViewportFlags(ImGuiViewportFlags flags, DWORD* out_style, DWORD* out_ex_style)
 {
@@ -53,16 +54,16 @@ void WUIImGuiWindow::initViewport(ImGuiViewport& viewport)
 
 HWND WUIImGuiWindow::create()
 {
-    HWND outHWnd = WUIWindow::create();
+    WUIWindow::create();
     if (deviceSurface == NULL) {
-        viewport->PlatformHandle = viewport->PlatformHandleRaw = outHWnd;
+        viewport->PlatformHandle = viewport->PlatformHandleRaw = hWnd;
         deviceSurfaceDesc.width = size.x;
         deviceSurfaceDesc.height = size.y;
-        deviceSurfaceDesc.windowHandle = outHWnd;
+        deviceSurfaceDesc.windowHandle = hWnd;
         deviceSurface = VendorManager::getInstance().getVendor().newDeviceSurface(deviceSurfaceDesc);
         viewport->RendererUserData = deviceSurface;
     }
-    return outHWnd;
+    return hWnd;
 }
 
 void WUIImGuiWindow::updateWindow()
@@ -125,11 +126,24 @@ LRESULT WUIImGuiWindow::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
         viewport->PlatformRequestClose = true;
         break;
     case WM_MOVE:
+    {
         viewport->PlatformRequestMove = true;
+        ImGuiViewportP* viewportP = (ImGuiViewportP*)viewport;
+        RECT rc;
+        GetWindowRect(hWnd, &rc);
+        viewportP->Pos = viewportP->LastPlatformPos = { (float)rc.left, (float)rc.top };
         break;
+    }
     case WM_SIZE:
+    {
         viewport->PlatformRequestResize = true;
+        ImGuiViewportP* viewportP = (ImGuiViewportP*)viewport;
+        RECT rc;
+        GetWindowRect(hWnd, &rc);
+        viewportP->Size = viewportP->LastPlatformSize =
+        { (float)(rc.right - rc.left), (float)(rc.bottom - rc.top) };
         break;
+    }
     case WM_MOUSEACTIVATE:
         if (viewport->Flags & ImGuiViewportFlags_NoFocusOnClick)
             return MA_NOACTIVATE;
@@ -158,4 +172,21 @@ void WUIImGuiWindow::onResizeExit()
 {
     if (deviceSurface)
         deviceSurface->resize(clientSize.x, clientSize.y);
+}
+
+void WUIImGuiWindow::onImGuiRender()
+{
+    IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
+    context.execteImGuiDraw(viewport->DrawData);
+}
+
+void WUIImGuiWindow::onLoop()
+{
+    if (deviceSurface) {
+        IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
+        context.bindSurface(deviceSurface);
+        onImGuiRender();
+        deviceSurface->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
+    }
+    WUIWindow::onLoop();
 }

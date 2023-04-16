@@ -1,5 +1,7 @@
 #include "AudioSource.h"
 #include "Asset.h"
+#include <alc.h>
+#include <>
 
 #ifdef AUDIO_USE_OPENAL
 

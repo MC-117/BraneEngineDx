@@ -43,9 +43,18 @@ bool WUIWindow::isMaximize() const
     if (hWnd) {
         WINDOWPLACEMENT placement;
         if (GetWindowPlacement(hWnd, &placement))
-            return placement.showCmd == SW_SHOWMAXIMIZED;
+            return placement.showCmd == SW_MAXIMIZE;
     }
     return false;
+}
+
+HWND WUIWindow::create()
+{
+    WUIControl::create();
+    static const MARGINS margin{ 1, 1, 1, 1 };
+    ::DwmExtendFrameIntoClientArea(hWnd, &margin);
+    ::SetWindowPos(hWnd, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    return hWnd;
 }
 
 LRESULT WUIWindow::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
@@ -86,17 +95,24 @@ LRESULT WUIWindow::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 	//}
 
 	switch (msg) {
+    case WM_NCACTIVATE:
+    {
+        BOOL composition_enabled = FALSE;
+        bool success = ::DwmIsCompositionEnabled(&composition_enabled) == S_OK;
+        if (composition_enabled && success) {
+            return 1;
+        }
+        break;
+    }
     case WM_NCHITTEST:
     {
         POINT cursorPos;
         GetCursorPos(&cursorPos);
         ScreenToClient(hWnd, &cursorPos);
         LRESULT lResult = hitStateToLRESULT(getHitStateInClientSpace(Vector3f(cursorPos.x, cursorPos.y)));
-        if (!isMaximize()) {
-            // Get the mouse cursor position
-
+        if (resizeBorderWidth > 0 && !isMaximize()) {
             // Determine if the cursor is on the edge of the window
-            const int borderWidth = 8;
+            const int borderWidth = resizeBorderWidth;
             RECT windowRect;
             GetClientRect(hWnd, &windowRect);
             if (cursorPos.x < borderWidth && cursorPos.y < borderWidth)
@@ -159,9 +175,40 @@ LRESULT WUIWindow::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
             return 1;
         }
     }
-    default:
-        return WUIControl::WndProc(msg, wParam, lParam);
+    case WM_NCCALCSIZE:
+    {
+        if (wParam) {
+            auto& params = *reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam);
+            if (isMaximize()) {
+                auto monitor = ::MonitorFromWindow(hWnd, MONITOR_DEFAULTTONULL);
+                if (monitor) {
+                    MONITORINFO monitor_info{};
+                    monitor_info.cbSize = sizeof(monitor_info);
+                    if (::GetMonitorInfoW(monitor, &monitor_info)) {
+                        // when maximized, make the client area fill just the monitor (without task bar) rect,
+                        // not the whole window rect which extends beyond the monitor.
+                        params.rgrc[0] = monitor_info.rcWork;
+                    }
+                }
+            }
+            return 0;
+        }
+    }
+    //case WM_GETMINMAXINFO:
+    //    auto& params = *reinterpret_cast<MINMAXINFO*>(lParam);
+    //    auto monitor = ::MonitorFromWindow(hWnd, MONITOR_DEFAULTTONULL);
+    //    if (monitor) {
+    //        MONITORINFO monitor_info{};
+    //        monitor_info.cbSize = sizeof(monitor_info);
+    //        if (::GetMonitorInfoW(monitor, &monitor_info)) {
+    //            // when maximized, make the client area fill just the monitor (without task bar) rect,
+    //            // not the whole window rect which extends beyond the monitor.
+    //            params.ptMaxTrackSize = { monitor_info.rcWork.right - monitor_info.rcWork.left,
+    //                monitor_info.rcWork.bottom - monitor_info.rcWork.top };
+    //        }
+    //    }
 	}
+    return WUIControl::WndProc(msg, wParam, lParam);
 }
 
 bool WUIWindow::HitRect::operator<(const HitRect& r) const
@@ -194,6 +241,24 @@ LRESULT WUIWindow::hitStateToLRESULT(HitState state)
         return HTCLOSE;
     default:
         throw runtime_error("Unknown HitState");
+    }
+}
+
+void WUIWindow::updateFromWindowRect(bool active)
+{
+    clientPos = pos;
+    clientSize = size;
+    if (hWnd) {
+        SetWindowPos(hWnd, 0, pos.x, pos.y, size.x, size.y, active ? SWP_NOOWNERZORDER : (SWP_NOOWNERZORDER | SWP_NOACTIVATE));
+    }
+}
+
+void WUIWindow::updateFromClientRect(bool active)
+{
+    pos = clientPos;
+    size = clientSize;
+    if (hWnd) {
+        SetWindowPos(hWnd, 0, pos.x, pos.y, size.x, size.y, active ? SWP_NOOWNERZORDER : (SWP_NOOWNERZORDER | SWP_NOACTIVATE));
     }
 }
 

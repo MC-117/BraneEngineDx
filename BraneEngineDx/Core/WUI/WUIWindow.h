@@ -20,6 +20,8 @@ public:
 	bool isMinimize() const;
 	bool isMaximize() const;
 
+	virtual HWND create();
+
 	virtual LRESULT WndProc(UINT msg, WPARAM wParam, LPARAM lParam);
 protected:
 	struct HitRect
@@ -32,8 +34,12 @@ protected:
 		bool operator> (const HitRect& r) const;
 	};
 	map<int, HitRect, greater<int>> hitRects;
-	DWORD normalScreenWinStyle = WS_POPUP | WS_CLIPSIBLINGS;// | WS_THICKFRAME | WS_CLIPCHILDREN;
+	DWORD normalScreenWinStyle = WS_POPUP | WS_CAPTION | WS_THICKFRAME | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX;
 	DWORD fullScreenWinStyle = WS_OVERLAPPED | WS_SYSMENU;
+	int resizeBorderWidth = 0;
+
+	virtual void updateFromWindowRect(bool active);
+	virtual void updateFromClientRect(bool active);
 
 	static LRESULT hitStateToLRESULT(HitState state);
 	virtual void onLoop();

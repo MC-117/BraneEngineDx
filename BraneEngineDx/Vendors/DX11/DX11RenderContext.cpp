@@ -349,8 +349,8 @@ void DX11RenderContext::bindSurface(IDeviceSurface* surface)
 		return;
 	if (!dxSurface->desc.inited)
 		return;
-	if (currentDeviceSurface == dxSurface)
-		return;
+	/*if (currentDeviceSurface == dxSurface)
+		return;*/
 	dxContext.deviceContext->OMSetRenderTargets(1, dxSurface->backBufferRTV.GetAddressOf(), NULL);
 	currentDeviceSurface = dxSurface;
 	currentRenderTarget = NULL;
@@ -1155,11 +1155,6 @@ void DX11RenderContext::execteImGuiDraw(ImDrawData* drawData)
 	if (drawData == NULL || !drawData->Valid)
 		return;
 	ImGui_ImplDX11_RenderDrawData(drawData, deviceContext.Get());
-	ImGuiIO& io = ImGui::GetIO();
-	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		ImGui::RenderPlatformWindowsDefault(NULL, this);
-	}
 }
 
 bool DX11RenderContext::drawMeshIndirect(IGPUBuffer* argBuffer, unsigned int byteOffset)

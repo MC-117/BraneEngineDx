@@ -5,6 +5,7 @@
 
 WUIMainWindow::WUIMainWindow() : WUIImGuiWindow()
 {
+	resizeBorderWidth = 8;
 }
 
 void WUIMainWindow::toggleFullscreen()
@@ -107,7 +108,7 @@ void WUIMainWindow::onLoop()
 		time = Time::now();
 	}
 
-	WUIImGuiWindow::onLoop();
+	WUIWindow::onLoop();
 	/*if (title.empty())
 		title = text;
 	setText(title + " | FPS: " + to_string(1000 / deltaTime.toMillisecond()));*/

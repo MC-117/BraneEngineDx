@@ -309,16 +309,16 @@ LRESULT WUIControl::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		onResize(wParam, clientSize);
 		break;
 	case WM_ENTERSIZEMOVE:
-		isResizing = true;
+		isMovingOrResizing = true;
 		onResizeEnter();
 		return 0;
 	case WM_EXITSIZEMOVE:
-		isResizing = false;
+		isMovingOrResizing = false;
 		onResizeExit();
 		return 0;
 	case WM_PAINT:
 	{
-		if (isResizing)
+		if (isMovingOrResizing)
 			onLoop();
 		onPrePaint();
 		PAINTSTRUCT ps;
