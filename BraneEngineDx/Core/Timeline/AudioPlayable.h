@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TimelinePlayable.h"
-#include "../AudioSource.h"
+#include "../Audio/AudioSource.h"
 #include "../Transform.h"
 
 class AudioPlayable : public TimelinePlayable

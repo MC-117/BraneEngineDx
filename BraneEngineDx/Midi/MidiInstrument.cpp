@@ -1,5 +1,7 @@
 #include "MidiInstrument.h"
 
+SerializeInstance(MidiInstrument)
+
 MidiInstrument::MidiInstrument(const string& name) : name(name)
 {
 }

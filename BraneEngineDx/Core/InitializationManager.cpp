@@ -1,13 +1,16 @@
 #include "InitializationManager.h"
 
-Initialization::Initialization(InitializeStage stage, int priority) : stage(stage), priority(priority)
+Initialization::Initialization(
+    InitializeStage initializeStage,
+    int initializePriority,
+    FinalizeStage finalizeStage,
+    int finalizePriority) 
+    : initializeStage(initializeStage)
+    , initializePriority(initializePriority)
+    , finalizeStage(finalizeStage)
+    , finalizePriority(finalizePriority)
 {
     InitializationManager::instance().addInitialization(*this);
-}
-
-bool Initialization::initialze()
-{
-    return false;
 }
 
 InitializationManager& InitializationManager::instance()
@@ -16,14 +19,22 @@ InitializationManager& InitializationManager::instance()
     return self;
 }
 
-void InitializationManager::initialze(InitializeStage stage)
+void InitializationManager::initialize(InitializeStage stage)
 {
-    auto& range = initializations[stage];
+    auto& range = initializations[(int)stage];
     for (auto b = range.begin(), e = range.end(); b != e; b++)
-        b->second->initialze();
+        b->second->initialize();
+}
+
+void InitializationManager::finalize(FinalizeStage stage)
+{
+    auto& range = finalizations[(int)stage];
+    for (auto b = range.begin(), e = range.end(); b != e; b++)
+        b->second->finalize();
 }
 
 void InitializationManager::addInitialization(Initialization& initialization)
 {
-    initializations[initialization.stage].insert(make_pair(initialization.priority, &initialization));
+    initializations[(int)initialization.initializeStage].insert(make_pair(initialization.initializePriority, &initialization));
+    finalizations[(int)initialization.finalizeStage].insert(make_pair(initialization.finalizePriority, &initialization));
 }

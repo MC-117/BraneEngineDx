@@ -69,11 +69,18 @@ class VirtualShadowMapConfigInitializer : public Initialization
 {
 protected:
 	static VirtualShadowMapConfigInitializer instance;
-	VirtualShadowMapConfigInitializer() : Initialization(InitializeStage::BeforeEngineSetup, 0) { }
+	VirtualShadowMapConfigInitializer() : Initialization(
+		InitializeStage::BeforeEngineSetup, 0,
+		FinalizeStage::BeforeEngineRelease, 0) { }
 
-	virtual bool initialze()
+	virtual bool initialize()
 	{
 		Engine::engineConfig.configInfo.get("virtualShadowMap", VirtualShadowMapConfig::instance());
+		return true;
+	}
+
+	virtual bool finalize()
+	{
 		return true;
 	}
 };

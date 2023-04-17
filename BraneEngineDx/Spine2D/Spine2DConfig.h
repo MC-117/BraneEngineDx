@@ -21,5 +21,7 @@ class Spine2DInitialization : public Initialization
 protected:
 	static Spine2DInitialization instance;
 	Spine2DInitialization();
-	virtual bool initialze();
+
+	virtual bool initialize();
+	virtual bool finalize();
 };

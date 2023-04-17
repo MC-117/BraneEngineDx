@@ -166,7 +166,7 @@ void Engine::toggleFullscreen()
 
 void Engine::config()
 {
-	InitializationManager::instance().initialze(InitializeStage::BeforeEngineConfig);
+	InitializationManager::instance().initialize(InitializeStage::BeforeEngineConfig);
 	if (configPath.empty())
 		configPath = "Config.ini";
 	ifstream f = ifstream(configPath);
@@ -348,7 +348,7 @@ void imGuiClean()
 
 void Engine::setup()
 {
-	InitializationManager::instance().initialze(InitializeStage::BeforeEngineSetup);
+	InitializationManager::instance().initialize(InitializeStage::BeforeEngineSetup);
 
 	if (enableMemTracer) {
 #if ENABLE_MEMTRACER
@@ -370,13 +370,19 @@ void Engine::setup()
 	VendorManager::getInstance().instantiateVendor(engineConfig.vendorName);
 
 	IVendor& vendor = VendorManager::getInstance().getVendor();
+
+	InitializationManager::instance().initialize(InitializeStage::BeforeScriptSetup);
+
 	PythonManager::start();
+
+	InitializationManager::instance().initialize(InitializeStage::BeforePhysicsSetup);
+
 #if ENABLE_PHYSICS
 	if (!PhysicalWorld::init())
 		throw runtime_error("Physics Engine init failed");
 #endif
 
-	InitializationManager::instance().initialze(InitializeStage::BeforeWindowSetup);
+	InitializationManager::instance().initialize(InitializeStage::BeforeWindowSetup);
 
 	RECT rect;
 	GetWindowRect(GetDesktopWindow(), &rect);
@@ -402,7 +408,7 @@ void Engine::setup()
 	windowContext.hwnd = mainWindow.create();
 	input.setHWND(windowContext.hwnd);
 
-	InitializationManager::instance().initialze(InitializeStage::BeforeRenderVendorSetup);
+	InitializationManager::instance().initialize(InitializeStage::BeforeRenderVendorSetup);
 
 	LoadingUI loadingUI("Engine/Banner/Banner.bmp", windowContext.hinstance);
 
@@ -412,21 +418,13 @@ void Engine::setup()
 			throw runtime_error("Vendor setup failed");
 	}
 
-#ifdef AUDIO_USE_OPENAL
-	if (!alutInit(NULL, NULL)) {
-		Console::error("ALUT init failed");
-		alutInited = false;
-		//throw runtime_error("ALUT init failed");
-	}
-#endif // AUDIO_USE_OPENAL
-
 	/*----- Vendor ImGui init -----*/
 	{
 		if (!vendor.imGuiInit(engineConfig, windowContext))
 			throw runtime_error("Vendor ImGui init failed");
 	}
 
-	InitializationManager::instance().initialze(InitializeStage::BeforeAssetLoading);
+	InitializationManager::instance().initialize(InitializeStage::BeforeAssetLoading);
 
 	currentWorld = new World();
 
@@ -469,12 +467,20 @@ void Engine::start()
 
 void Engine::clean()
 {
+	InitializationManager::instance().finalize(FinalizeStage::BeforeEngineRelease);
+
 	input.release();
+
+	InitializationManager::instance().finalize(FinalizeStage::BeforeScriptRelease);
 	PythonManager::end();
+
+	InitializationManager::instance().finalize(FinalizeStage::BeforePhysicsRelease);
 #if ENABLE_PHYSICS
 	currentWorld->physicalWorld.physicsScene->release();
 	PhysicalWorld::release();
 #endif
+
+	InitializationManager::instance().finalize(FinalizeStage::BeforeRenderVenderRelease);
 
 	IVendor& vendor = VendorManager::getInstance().getVendor();
 
@@ -491,9 +497,12 @@ void Engine::clean()
 		if (!vendor.clean(engineConfig, windowContext))
 			throw runtime_error("Vendor clean failed");
 	}
-	if (alutInited)
-		alutExit();
+
+	InitializationManager::instance().finalize(FinalizeStage::AfterRenderVenderRelease);
+
 	CoUninitialize();
+
+	InitializationManager::instance().finalize(FinalizeStage::AfterEngineRelease);
 }
 
 #if ENABLE_MEMTRACER

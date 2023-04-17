@@ -1,7 +1,7 @@
 #pragma once
 #include "MidiDevice.h"
 #include "../Core/Base.h"
-#include "../Core/AudioSource.h"
+#include "../Core/Audio/AudioSource.h"
 
 struct MidiSampler
 {

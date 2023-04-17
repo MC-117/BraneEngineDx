@@ -5,7 +5,7 @@
 #include "Transform.h"
 
 #ifdef AUDIO_USE_OPENAL
-#include "AudioSource.h"
+#include "Audio/AudioSource.h"
 #endif // AUDIO_USE_OPENAL
 
 class Actor : public Transform

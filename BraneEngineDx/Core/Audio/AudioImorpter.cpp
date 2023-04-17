@@ -1,6 +1,8 @@
 #include "AudioImorpter.h"
-#include "../AudioSource.h"
+#include "AudioSource.h"
 #include "../Asset.h"
+#include <fstream>
+#include "../Utility/IOUtility.h"
 
 ImporterRegister<AudioImporter> wavImporter(".wav");
 

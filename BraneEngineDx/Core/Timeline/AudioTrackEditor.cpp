@@ -45,7 +45,7 @@ void AudioTrackEditor::onTrackContentGUI(EditorInfo& info, TimelineEditorInfo& t
         AudioPlayable* playable = new AudioPlayable();
         playable->setAudio(data);
         float startTime = track->startTime + track->duration;
-        TimelineClip* clip = audioTrack->addClip(ClipInfo{ startTime, data->duration, playable });
+        TimelineClip* clip = audioTrack->addClip(ClipInfo{ startTime, data->getDuration(), playable });
         clip->name = data->name;
         if (timelineInfo.timeline != NULL)
             timelineInfo.timeline->apply();

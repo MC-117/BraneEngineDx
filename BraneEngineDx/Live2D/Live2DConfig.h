@@ -40,5 +40,7 @@ class Live2DInitialization : public Initialization
 protected:
 	static Live2DInitialization instance;
 	Live2DInitialization();
-	virtual bool initialze();
+
+	virtual bool initialize();
+	virtual bool finalize();
 };

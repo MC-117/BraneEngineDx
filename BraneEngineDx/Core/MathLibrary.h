@@ -176,9 +176,14 @@ public:
 		_x = _y = 0;
 	}
 
-	T* data() const
+	T* data()
 	{
-		return (unsigned int*)this;
+		return (T*)this;
+	}
+
+	const T* data() const
+	{
+		return (const T*)this;
 	}
 
 	float dot(const Vector2T& v) const

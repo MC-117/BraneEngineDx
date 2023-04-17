@@ -1,29 +1,67 @@
 #pragma once
 
-#include "Base.h"
+#include "../Base.h"
+#include "AudioWave.h"
+#include "../InitializationManager.h"
 
 #ifdef AUDIO_USE_OPENAL
 
-#ifndef _AUDIOSOURCE_H_
-#define _AUDIOSOURCE_H_
+#include <AL\al.h>
+#include <AL\alc.h>
+#include <AL\alext.h>
 
-#include <AL\alut.h>
+class AudioDevice;
+class AudioDeviceManager : public Initialization
+{
+	friend class AudioDevice;
+public:
+	static AudioDeviceManager instance;
+
+	set<AudioDevice*> devices;
+
+	AudioDevice* getCurrentDevice();
+protected:
+	AudioDevice* currentDevice;
+	AudioDeviceManager();
+	virtual bool initialize();
+	virtual bool finalize();
+};
+
+class AudioDevice
+{
+public:
+	AudioDevice();
+	virtual ~AudioDevice();
+
+	bool create(const string& name);
+	bool release();
+
+	bool setCurrentDevice();
+protected:
+	string name;
+	ALCdevice* device;
+	ALCcontext* context;
+};
 
 class AudioData
 {
 public:
 	string name;
-	unsigned int bufferSize = 0;
-	int frequency;
-	int channels = 0;
-	int bitsPerSample = 0;
-	float duration = 0;
+	AudioWave wave;
 
 	AudioData(const string& name = "");
 	AudioData(const string& name, const string& file);
 	~AudioData();
 
 	bool isLoad();
+
+	unsigned int getRawBufferSize() const;
+	const char* getRawBuffer() const;
+	unsigned int getFrequency() const;
+	unsigned int getChannels() const;
+	unsigned int getBitsPerSample() const;
+	float getDuration() const;
+	bool getLoopPoint(Vector2i& point);
 
 	bool load(const string& file);
 	void unload();
@@ -91,7 +129,5 @@ public:
 	virtual void setPoseture(const Vector3f& position, const Vector3f& forward, const Vector3f& upward);
 	virtual void update();
 };
-
-#endif // !_AUDIOSOURCE_H_
 
 #endif // AUDIO_USE_OPENAL

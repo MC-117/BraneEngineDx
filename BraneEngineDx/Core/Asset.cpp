@@ -9,7 +9,7 @@
 #include "Transform.h"
 #include "Texture2D.h"
 #include "TextureCube.h"
-#include "AudioSource.h"
+#include "Audio/AudioSource.h"
 #include "Geometry.h"
 #include "Console.h"
 #include "Importer/Importer.h"

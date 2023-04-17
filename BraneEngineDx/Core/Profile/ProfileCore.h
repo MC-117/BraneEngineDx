@@ -47,7 +47,8 @@ protected:
 	ProfilerManager();
 	virtual ~ProfilerManager();
 
-	virtual bool initialze();
+	virtual bool initialize();
+	virtual bool finalize();
 
 	void registProfilor(IProfiler& profilor);
 };

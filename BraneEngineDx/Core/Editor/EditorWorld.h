@@ -2,7 +2,7 @@
 
 #include "../Input.h"
 #include "../IWorld.h"
-#include "../AudioSource.h"
+#include "../Audio/AudioSource.h"
 #include "../Camera.h"
 #include "../DirectLight.h"
 #include "../RenderPool.h"

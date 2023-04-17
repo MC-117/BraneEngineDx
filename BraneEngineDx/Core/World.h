@@ -4,7 +4,7 @@
 #include "Input.h"
 #include "IWorld.h"
 #include "Transform.h"
-#include "AudioSource.h"
+#include "Audio/AudioSource.h"
 #include "Camera.h"
 #include "RenderPool.h"
 

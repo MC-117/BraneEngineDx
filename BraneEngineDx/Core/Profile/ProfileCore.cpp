@@ -17,21 +17,28 @@ void ProfilerManager::tick()
         profilor->tick();
 }
 
-ProfilerManager::ProfilerManager() : Initialization(InitializeStage::BeforeEngineSetup, 0)
+ProfilerManager::ProfilerManager() : Initialization(
+    InitializeStage::BeforeEngineSetup, 0,
+    FinalizeStage::AfterEngineRelease, 0)
 {
 }
 
 ProfilerManager::~ProfilerManager()
 {
-    for (auto profilor : profilors)
-        profilor->release();
-    profilors.clear();
 }
 
-bool ProfilerManager::initialze()
+bool ProfilerManager::initialize()
 {
     for (auto profilor : profilors)
         profilor->init();
+    return true;
+}
+
+bool ProfilerManager::finalize()
+{
+    for (auto profilor : profilors)
+        profilor->release();
+    profilors.clear();
     return true;
 }
 

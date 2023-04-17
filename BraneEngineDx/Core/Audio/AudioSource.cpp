@@ -1,9 +1,75 @@
 #include "AudioSource.h"
-#include "Asset.h"
-#include <alc.h>
-#include <>
+#include "../Asset.h"
+#include <fstream>
 
 #ifdef AUDIO_USE_OPENAL
+
+AudioDeviceManager AudioDeviceManager::instance;
+
+AudioDevice* AudioDeviceManager::getCurrentDevice()
+{
+	return currentDevice;
+}
+
+AudioDeviceManager::AudioDeviceManager() : Initialization(
+	InitializeStage::BeforeAssetLoading, 0,
+	FinalizeStage::BeforeRenderVenderRelease, 0)
+{
+}
+
+bool AudioDeviceManager::initialize()
+{
+	AudioDevice* defaultDevice = new AudioDevice();
+	defaultDevice->create("");
+	return defaultDevice->setCurrentDevice();
+}
+
+bool AudioDeviceManager::finalize()
+{
+	set<AudioDevice*> tempDevices = devices;
+	for (auto device : tempDevices)
+		delete device;
+}
+
+AudioDevice::AudioDevice()
+{
+	AudioDeviceManager::instance.devices.insert(this);
+}
+
+AudioDevice::~AudioDevice()
+{
+	release();
+	AudioDeviceManager::instance.devices.erase(this);
+}
+
+bool AudioDevice::create(const string& name)
+{
+	device = alcOpenDevice(name.c_str());
+	context = alcCreateContext(device, nullptr);
+	return context;
+}
+
+bool AudioDevice::release()
+{
+	if (AudioDeviceManager::instance.currentDevice == this) {
+		alcMakeContextCurrent(NULL);
+		AudioDeviceManager::instance.currentDevice = NULL;
+	}
+	alcDestroyContext(context);
+	bool success = alcCloseDevice(device);
+	context = NULL;
+	device = NULL;
+	return success;
+}
+
+bool AudioDevice::setCurrentDevice()
+{
+	if (context && alcMakeContextCurrent(context)) {
+		AudioDeviceManager::instance.currentDevice = this;
+		return true;
+	}
+	return false;
+}
 
 AudioData::AudioData(const string & name) : name(name)
 {
@@ -24,16 +90,73 @@ bool AudioData::isLoad()
 	return abo != AL_NONE;
 }
 
+unsigned int AudioData::getRawBufferSize() const
+{
+	return wave.data.size();
+}
+
+const char* AudioData::getRawBuffer() const
+{
+	return wave.data.data();
+}
+
+unsigned int AudioData::getFrequency() const
+{
+	return wave.format.sampleRate;
+}
+
+unsigned int AudioData::getChannels() const
+{
+	return wave.format.channels;
+}
+
+unsigned int AudioData::getBitsPerSample() const
+{
+	return wave.format.bitsPerSample;
+}
+
+float AudioData::getDuration() const
+{
+	return ((float)getRawBufferSize()) / (getFrequency() * getChannels() * (getBitsPerSample() / 8));
+}
+
+bool AudioData::getLoopPoint(Vector2i& point)
+{
+	bool hasLoop = !wave.loops.empty();
+	if (hasLoop) {
+		AudioWave::SampleLoop& loop = wave.loops.front();
+		point = { loop.start, loop.end };
+	}
+	return hasLoop;
+}
+
 bool AudioData::load(const string & file)
 {
-	unload();
-	abo = alutCreateBufferFromFile(file.c_str());
-	alGetBufferi(abo, AL_SIZE, (ALint*)&bufferSize);
-	alGetBufferi(abo, AL_FREQUENCY, &frequency);
-	alGetBufferi(abo, AL_CHANNELS, &channels);
-	alGetBufferi(abo, AL_BITS, &bitsPerSample);
+	ifstream is(file, ios::binary);
+	if (is.fail())
+		return false;
 
-	duration = ((float)bufferSize) / (frequency * channels * (bitsPerSample / 8));
+	unload();
+
+	wave.loadFromStream(is);
+
+	alGenBuffers(1, &abo);
+	if (wave.format.channels == 1) {
+		if (wave.format.bitsPerSample == 8) {
+			alBufferData(abo, AL_FORMAT_MONO8, wave.data.data(), wave.data.size(), wave.format.sampleRate);
+		}
+		else {
+			alBufferData(abo, AL_FORMAT_MONO16, wave.data.data(), wave.data.size(), wave.format.sampleRate);
+		}
+	}
+	else {
+		if (wave.format.bitsPerSample == 8) {
+			alBufferData(abo, AL_FORMAT_STEREO8, wave.data.data(), wave.data.size(), wave.format.sampleRate);
+		}
+		else {
+			alBufferData(abo, AL_FORMAT_STEREO16, wave.data.data(), wave.data.size(), wave.format.sampleRate);
+		}
+	}
 
 	return abo != AL_NONE;
 }
@@ -42,6 +165,7 @@ void AudioData::unload()
 {
 	if (abo != AL_NONE)
 		alDeleteBuffers(1, &abo);
+	wave.reset();
 }
 
 unsigned int AudioData::getBuffer()
@@ -84,6 +208,12 @@ bool AudioSource::setAudioData(AudioData* audioData)
 		alGenSources(1, &sbo);
 	alSourcei(sbo, AL_BUFFER, audioData->getBuffer());
 	alSourcef(sbo, AL_ROLLOFF_FACTOR, 0.1);
+
+	Vector2i loopPoint;
+	if (audioData->getLoopPoint(loopPoint)) {
+		alSourcei(sbo, AL_LOOPING, 1);
+		alSourceiv(sbo, AL_LOOP_POINTS_SOFT, loopPoint.data());
+	}
 	return true;
 }
 

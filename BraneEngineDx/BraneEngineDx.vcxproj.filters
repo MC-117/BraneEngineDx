@@ -327,7 +327,7 @@
     <ClInclude Include="Core\PostProcess\ToneMapPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\AudioSource.h">
+    <ClInclude Include="Core\Audio\AudioSource.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\GUI\MatBranchModifier.h">
@@ -1362,7 +1362,7 @@
     <ClInclude Include="Core\Importer\TextureImporter.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Importer\AudioImorpter.h">
+    <ClInclude Include="Core\Audio\AudioImorpter.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Core\Importer\MaterialImporter.h">
@@ -1399,6 +1399,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Midi\MidiInstrument.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Utility\IOUtility.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Audio\AudioWave.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1658,7 +1664,7 @@
     <ClCompile Include="Core\PostProcess\ToneMapPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\AudioSource.cpp">
+    <ClCompile Include="Core\Audio\AudioSource.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\GUI\MatBranchModifier.cpp">
@@ -2579,7 +2585,7 @@
     <ClCompile Include="Core\Importer\TextureImporter.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Importer\AudioImorpter.cpp">
+    <ClCompile Include="Core\Audio\AudioImorpter.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\Importer\MaterialImporter.cpp">
@@ -2616,6 +2622,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Midi\MidiInstrument.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Utility\IOUtility.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Audio\AudioWave.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
