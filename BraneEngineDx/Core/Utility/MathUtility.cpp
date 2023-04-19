@@ -139,6 +139,26 @@ float Math::distance(const Vector4f& a, const Vector4f& b)
 	return (a - b).norm();
 }
 
+float Math::lerp(float a, float b, float s)
+{
+	return a + (b - a) * s;
+}
+
+Vector2f Math::lerp(const Vector2f& a, const Vector2f& b, float s)
+{
+	return a + (b - a) * s;
+}
+
+Vector3f Math::lerp(const Vector3f& a, const Vector3f& b, float s)
+{
+	return a + (b - a) * s;
+}
+
+Vector4f Math::lerp(const Vector4f& a, const Vector4f& b, float s)
+{
+	return a + (b - a) * s;
+}
+
 Matrix4f Math::getTransitionMatrix(const Vector3f& position)
 {
 	Matrix4f T = Matrix4f::Identity();

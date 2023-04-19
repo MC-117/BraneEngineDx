@@ -58,6 +58,7 @@ struct AudioWave
         uint8_t highNote;
         uint8_t lowVelocity;
         uint8_t highVelocity;
+        uint8_t pad;
     };
 
     FormatChunk format;

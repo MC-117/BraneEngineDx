@@ -140,6 +140,8 @@ bool AudioData::load(const string & file)
 
 	wave.loadFromStream(is);
 
+	is.close();
+
 	alGenBuffers(1, &abo);
 	if (wave.format.channels == 1) {
 		if (wave.format.bitsPerSample == 8) {

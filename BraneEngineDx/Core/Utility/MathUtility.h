@@ -25,6 +25,11 @@ namespace Math
 	Vector4f max(const Vector4f& a, const Vector4f& b);
 	float distance(const Vector4f& a, const Vector4f& b);
 
+	float lerp(float a, float b, float s);
+	Vector2f lerp(const Vector2f& a, const Vector2f& b, float s);
+	Vector3f lerp(const Vector3f& a, const Vector3f& b, float s);
+	Vector4f lerp(const Vector4f& a, const Vector4f& b, float s);
+
 	Matrix4f getTransitionMatrix(const Vector3f& position);
 	Matrix4f getRotationMatrix(const Quaternionf& rotation);
 	Matrix4f getScaleMatrix(const Vector3f& scale);

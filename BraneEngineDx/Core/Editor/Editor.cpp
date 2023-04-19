@@ -20,7 +20,7 @@ Serializable* Editor::instantiate(const SerializationInfo& from)
 	return nullptr;
 }
 
-Delegate<Base*> EditorManager::onSelectionChanged;
+Delegate<void(Base*)> EditorManager::onSelectionChanged;
 StaticVar<unordered_map<string, const EditorType*>> EditorManager::editorFactories;
 StaticVar<unordered_map<void*, Ref<Editor>>> EditorManager::editors;
 Ref<Base> EditorManager::selectedObject;

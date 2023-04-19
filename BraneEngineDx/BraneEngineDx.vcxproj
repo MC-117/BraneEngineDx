@@ -414,6 +414,7 @@
     <ClInclude Include="Core\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Core\Animation\AnimationPoseNode.h" />
     <ClInclude Include="Core\Audio\AudioWave.h" />
+    <ClInclude Include="Midi\MidiInstrumentEditor.h" />
     <ClInclude Include="Core\GUI\UIViewport.h" />
     <ClInclude Include="Core\Importer\AnimationClipDataImporter.h" />
     <ClInclude Include="Core\Importer\AssetFileImporter.h" />
@@ -734,6 +735,7 @@
     <ClInclude Include="Live2D\Live2DRender.h" />
     <ClInclude Include="Midi\MidiInstrument.h" />
     <ClInclude Include="Midi\MidiDevice.h" />
+    <ClInclude Include="Midi\MidiInstrumentWindow.h" />
     <ClInclude Include="Spine2D\Spine2DActor.h" />
     <ClInclude Include="Spine2D\Spine2DActorEditor.h" />
     <ClInclude Include="Spine2D\Spine2DConfig.h" />
@@ -1165,6 +1167,8 @@
     <ClCompile Include="Live2D\Live2DRender.cpp" />
     <ClCompile Include="Midi\MidiDevice.cpp" />
     <ClCompile Include="Midi\MidiInstrument.cpp" />
+    <ClCompile Include="Midi\MidiInstrumentEditor.cpp" />
+    <ClCompile Include="Midi\MidiInstrumentWindow.cpp" />
     <ClCompile Include="Spine2D\Spine2DActor.cpp" />
     <ClCompile Include="Spine2D\Spine2DActorEditor.cpp" />
     <ClCompile Include="Spine2D\Spine2DConfig.cpp" />

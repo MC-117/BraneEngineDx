@@ -332,7 +332,7 @@ struct LongProgressWork
 	string text;
 	float progress = 0;
 	void* data = NULL;
-	Delegate<const LongProgressWork&> callback;
+	Delegate<void(const LongProgressWork&)> callback;
 
 	void setProgress(float progress);
 	void setProgress(float progress, const string& text);

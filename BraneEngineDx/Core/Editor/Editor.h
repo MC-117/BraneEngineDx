@@ -42,7 +42,7 @@ public:
 class EditorManager
 {
 public:
-	static Delegate<Base*> onSelectionChanged;
+	static Delegate<void(Base*)> onSelectionChanged;
 	static StaticVar<unordered_map<string, const EditorType*>> editorFactories;
 	static StaticVar<unordered_map<void*, Ref<Editor>>> editors;
 

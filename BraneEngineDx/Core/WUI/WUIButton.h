@@ -9,9 +9,9 @@ class WUIButton : public WUIControl
 {
 public:
 	WUIFont font;
-	Delegate<WUIButton&> onHoverEvent;
-	Delegate<WUIButton&> onClickedEvent;
-	Delegate<WUIButton&> onDBLClickedEvent;
+	Delegate<void(WUIButton&)> onHoverEvent;
+	Delegate<void(WUIButton&)> onClickedEvent;
+	Delegate<void(WUIButton&)> onDBLClickedEvent;
 
 	WUIButton(const string& text = "");
 

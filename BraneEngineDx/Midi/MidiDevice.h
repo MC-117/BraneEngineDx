@@ -1,5 +1,7 @@
 #pragma once
 
+#undef min
+#undef max
 #include <libremidi/libremidi.hpp>
 #include "../Core/Config.h"
 #include "../Core/Delegate.h"
@@ -62,13 +64,13 @@ struct MidiState
 	enum { MaxChannels = 16 };
 	MidiChannelState channelStates[MaxChannels];
 
-	Delegate<MidiMessageType, const MidiMessage&> onFetchMessageDelegate;
-	Delegate<const MidiNoteState&> onNoteOnDelegate;
-	Delegate<const MidiNoteState&> onNoteOffDelegate;
-	Delegate<const MidiNoteState&> onNotePressureChangeDelegate;
-	Delegate<const MidiControlState&> onControlChangeDelegate;
-	Delegate<uint8_t, uint16_t> onPitchBendDelegate;
-	Delegate<uint8_t, uint8_t> onChannelPressureDelegate;
+	Delegate<void(MidiMessageType, const MidiMessage&)> onFetchMessageDelegate;
+	Delegate<void(const MidiNoteState&)> onNoteOnDelegate;
+	Delegate<void(const MidiNoteState&)> onNoteOffDelegate;
+	Delegate<void(const MidiNoteState&)> onNotePressureChangeDelegate;
+	Delegate<void(const MidiControlState&)> onControlChangeDelegate;
+	Delegate<void(uint8_t, uint16_t)> onPitchBendDelegate;
+	Delegate<void(uint8_t, uint8_t)> onChannelPressureDelegate;
 
 	MidiState() = default;
 	void onFetchMessage(const MidiMessage& msg);
@@ -77,16 +79,39 @@ struct MidiState
 
 class MidiDevice
 {
+	friend class MidiDeviceManager;
 public:
 	MidiState state;
 
 	MidiDevice() = default;
+	virtual ~MidiDevice();
 
 	bool isValid() const;
+
+	int getPort() const;
+	const string& getName() const;
 
 	void enumPorts(vector<string>& ports);
 	bool openPort(int port);
 	void closePort();
+
+	static MidiDevice& defaultDevice();
 protected:
 	libremidi::midi_in midiIn;
+	string name;
+	int port = -1;
 };
+
+//class MidiDeviceManager
+//{
+//public:
+//	static MidiDeviceManager& instance();
+//
+//	void enumPorts(vector<string>& ports);
+//	MidiDevice* openDevice(int port = -1);
+//	MidiDevice* getDevice(int port = -1);
+//protected:
+//	MidiDeviceManager() = default;
+//
+//	unordered_map<int, MidiDevice*> devices;
+//};

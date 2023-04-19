@@ -19,7 +19,7 @@
 #include "Actors\GunTowerActor.h"
 #include "Live2D\Live2DActor.h"
 #include "Actors\ClothActor.h"
-#include "Core/Test/GPUBufferTest.h"
+#include "Midi/MidiInstrumentWindow.h"
 
 VehicleActor* loadCubeVehicle(float unit = 2)
 {
@@ -142,15 +142,6 @@ VehicleActor* loadVehicle()
 	return &vehicle;
 }
 
-ColorBufferTestMeshActor* loadTestActor()
-{
-	Mesh* mesh = getAssetByPath<Mesh>("Engine/Shapes/UnitBox.obj");
-	ColorBufferTestMeshActor* colorBufferTestMeshActor = new ColorBufferTestMeshActor();
-	colorBufferTestMeshActor->setMesh(mesh);
-	colorBufferTestMeshActor->setScale(1000, 1000, 1);
-	return colorBufferTestMeshActor;
-}
-
 void InitialWorld()
 {
 	World& world = *Engine::getCurrentWorld();
@@ -181,8 +172,6 @@ void InitialWorld()
 	DebugCamera& debugCamera = *new DebugCamera();
 	world += debugCamera;
 	world.switchCamera(debugCamera);
-
-	//world += loadTestActor();
 
 	static VehicleActor* vehicles = loadVehicle();
 	static VehicleActor* cubeVehicles = loadCubeVehicle();
@@ -242,6 +231,9 @@ void InitialWorld()
 
 	UVViewer& uvViewer = *new UVViewer("UVViewer");
 	world += uvViewer;
+
+	MidiInstrumentWindow& midiInstrumentWindow = *new MidiInstrumentWindow("MidiInstrumentWindow");
+	world += midiInstrumentWindow;
 
 	SerializationInfo* info = getAssetByPath<SerializationInfo>(Engine::engineConfig.startMapPath);
 	if (info == NULL) {

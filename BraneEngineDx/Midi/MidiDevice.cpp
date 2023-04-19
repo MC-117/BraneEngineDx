@@ -69,9 +69,24 @@ void MidiState::clearDelegates()
     onChannelPressureDelegate.clear();
 }
 
+MidiDevice::~MidiDevice()
+{
+    closePort();
+}
+
 bool MidiDevice::isValid() const
 {
 	return midiIn.is_port_open();
+}
+
+int MidiDevice::getPort() const
+{
+    return port;
+}
+
+const string& MidiDevice::getName() const
+{
+    return name;
 }
 
 void MidiDevice::enumPorts(vector<string>& ports)
@@ -86,16 +101,30 @@ void MidiDevice::enumPorts(vector<string>& ports)
 
 bool MidiDevice::openPort(int port)
 {
+    closePort();
     midiIn.open_port(port);
     midiIn.set_callback([&](const libremidi::message& message)
         {
             state.onFetchMessage(message);
         });
-	return midiIn.is_port_open();
+    if (midiIn.is_port_open()) {
+        this->port = port;
+        name = midiIn.get_port_name(port);
+        return true;
+    }
+	return false;
 }
 
 void MidiDevice::closePort()
 {
     midiIn.close_port();
     midiIn.cancel_callback();
+    port = -1;
+    name.clear();
+}
+
+MidiDevice& MidiDevice::defaultDevice()
+{
+    static MidiDevice device;
+    return device;
 }

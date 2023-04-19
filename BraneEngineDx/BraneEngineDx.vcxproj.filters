@@ -1407,6 +1407,12 @@
     <ClInclude Include="Core\Audio\AudioWave.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Midi\MidiInstrumentEditor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Midi\MidiInstrumentWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -2628,6 +2634,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\Audio\AudioWave.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Midi\MidiInstrumentEditor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Midi\MidiInstrumentWindow.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
