@@ -8,6 +8,7 @@ MidiChannelState::MidiChannelState()
 void MidiChannelState::reset()
 {
     memset(this, 0, sizeof(MidiChannelState));
+    pitchBend = 0x2000;
 }
 
 void MidiState::onFetchMessage(const MidiMessage& msg)

@@ -19,6 +19,8 @@ bool AudioWave::loadFromStream(istream& is)
 		readStream(is, chunk);
 		swapBytes(chunk.id, sizeof(chunk.id));
 
+		size_t targetPos = is.tellg() + (long long)chunk.size;
+
 		switch (*(int*)chunk.id) {
 		case 'fmt ':
 			readStream(is, format);
@@ -36,9 +38,10 @@ bool AudioWave::loadFromStream(istream& is)
 			readArrayStream(is, loops.data(), sample.sampleLoops);
 			break;
 		default:
-			is.seekg(chunk.size, ios::cur);
 			break;
 		}
+		is.seekg(targetPos, ios::beg);
+		alignStream(is, 4);
 	}
 
 	return true;

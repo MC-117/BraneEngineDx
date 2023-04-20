@@ -1,6 +1,7 @@
 #include "MidiInstrument.h"
 #include "../Core/Utility/MathUtility.h"
 #include "../Core/Asset.h"
+#include "../Core/Console.h"
 
 SerializeInstance(MidiInstrument);
 
@@ -11,6 +12,7 @@ MidiInstrument::MidiInstrument(const string& name) : name(name)
 MidiInstrument::~MidiInstrument()
 {
 	unbindMidiState();
+	resetAudioSources();
 }
 
 MidiInstrument::Zone* MidiInstrument::addAudioData(AudioData& audioData)
@@ -33,21 +35,24 @@ MidiInstrument::Zone* MidiInstrument::addAudioData(AudioData& audioData)
 
 void MidiInstrument::build()
 {
-	activeNotes.clear();
+	resetAudioSources();
 	noteAudioSources.clear();
 	for (auto& zone : zones) {
 		for (int n = zone.lowNote; n <= zone.highNote; n++) {
 			NoteInfo& noteInfo = noteAudioSources.insert(make_pair(n, NoteInfo())).first->second;
+			noteInfo.note = n;
 			noteInfo.zone = &zone;
 			noteInfo.offsetPitch = 1 + (n - zone.rootNote + zone.fineTune / 100.0f) * (1.0f / 12.0f);
 			noteInfo.offsetGain = 1 + zone.gain / 6;
-			noteInfo.audioSource.setAudioData(zone.audioData);
 		}
 	}
 }
 
 void MidiInstrument::bindMidiState(MidiState& state)
 {
+	if (midiState == &state)
+		return;
+	unbindMidiState();
 	midiState = &state;
 	onNoteOnHandle = state.onNoteOnDelegate.add(*this, &MidiInstrument::onNoteOn, std::placeholders::_1);
 	onNoteOffHandle = state.onNoteOffDelegate.add(*this, &MidiInstrument::onNoteOff, std::placeholders::_1);
@@ -56,20 +61,28 @@ void MidiInstrument::bindMidiState(MidiState& state)
 
 void MidiInstrument::unbindMidiState()
 {
-	if (midiState = NULL)
+	if (midiState == NULL)
 		return;
 	midiState->onNoteOnDelegate -= onNoteOnHandle;
 	midiState->onNoteOffDelegate -= onNoteOffHandle;
 	midiState->onChannelPressureDelegate -= onChannelPressureHandle;
 	midiState->onChannelPressureDelegate -= onChannelPressureHandle;
+	midiState = NULL;
 }
 
-AudioSource* MidiInstrument::getNoteAudioSource(uint8_t note)
+void MidiInstrument::resetAudioSources()
 {
-	auto iter = noteAudioSources.find(note);
-	if (iter == noteAudioSources.end())
-		return NULL;
-	return &iter->second.audioSource;
+	for (auto& item : noteAudioSources) {
+		item.second.audioSource = NULL;
+	}
+	for (auto source : pendingSourceList) {
+		delete source;
+	}
+	pendingSourceList.clear();
+	while (!idleSourceQueue.empty()) {
+		delete idleSourceQueue.front();
+		idleSourceQueue.pop();
+	}
 }
 
 Serializable* MidiInstrument::instantiate(const SerializationInfo& from)
@@ -143,33 +156,66 @@ bool MidiInstrument::serialize(SerializationInfo& to)
 	return true;
 }
 
+AudioSource* MidiInstrument::activeNote(NoteInfo& noteInfo)
+{
+	AudioSource* source = NULL;
+	if (idleSourceQueue.empty())
+		source = new AudioSource();
+	else {
+		source = idleSourceQueue.front();
+		idleSourceQueue.pop();
+	}
+	noteInfo.audioSource = source;
+	source->setAudioData(noteInfo.zone->audioData);
+	return source;
+}
+
+void MidiInstrument::deactiveNote(NoteInfo& noteInfo)
+{
+	if (noteInfo.audioSource == NULL)
+		return;
+	noteInfo.audioSource->setLoop(false);
+	pendingSourceList.push_back(noteInfo.audioSource);
+	noteInfo.audioSource = NULL;
+}
+
+void MidiInstrument::processPendingAudioSources()
+{
+	for (auto b = pendingSourceList.begin(); b != pendingSourceList.end();) {
+		if ((*b)->getState() != AudioSource::Playing) {
+			idleSourceQueue.push(*b);
+			b = pendingSourceList.erase(b);
+		}
+		else b++;
+	}
+}
+
 void MidiInstrument::onNoteOn(const MidiNoteState& state)
 {
 	auto iter = noteAudioSources.find(state.note);
 	if (iter == noteAudioSources.end())
 		return;
+	processPendingAudioSources();
 	NoteInfo& noteInfo = iter->second;
-	AudioSource* source = &iter->second.audioSource;
+	AudioSource* source = activeNote(noteInfo);
 	Zone* zone = iter->second.zone;
 	MidiChannelState& channelState = midiState->channelStates[state.channel];
 	
 	float velocityScale = clamp(state.velocity, zone->lowVelocity, zone->highVelocity) / (float)0x7f;
-	float pitchBend = 0;// ((channelState.pitchBend / (float)USHRT_MAX) * 2 - 1)* (1.0f / 6.0f);
+	float pitchBend = ((channelState.pitchBend / (float)0x4000) * 2 - 1)* (1.0f / 6.0f);
 
 	source->setPitch(noteInfo.offsetPitch + pitchBend);
 	source->setVolume(noteInfo.offsetGain * velocityScale);
 	source->play();
-
-	activeNotes[state.note] = &iter->second;
 }
 
 void MidiInstrument::onNoteOff(const MidiNoteState& state)
 {
-	AudioSource* source = getNoteAudioSource(state.note);
-	if (source == NULL)
+	auto iter = noteAudioSources.find(state.note);
+	if (iter == noteAudioSources.end())
 		return;
-	source->stop();
-	activeNotes.erase(state.note);
+	NoteInfo& noteInfo = iter->second;
+	deactiveNote(noteInfo);
 }
 
 void MidiInstrument::onChannelPressure(uint8_t channel, uint8_t pressure)

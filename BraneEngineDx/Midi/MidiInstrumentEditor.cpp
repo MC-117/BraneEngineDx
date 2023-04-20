@@ -33,9 +33,11 @@ void MidiInstrumentEditor::onMidiDeviceGUI(EditorInfo& info)
 
 void MidiInstrumentEditor::onConfigGUI(EditorInfo& info)
 {
-	if (ImGui::BeginTable("Zones", 10, ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
+	if (ImGui::BeginTable("Zones", 12, ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
 		ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings)) {
 		ImGui::TableSetupColumn("Name");
+		ImGui::TableSetupColumn("Length");
+		ImGui::TableSetupColumn("SampleRate");
 		ImGui::TableSetupColumn("RootNote");
 		ImGui::TableSetupColumn("FineTune");
 		ImGui::TableSetupColumn("Gain");
@@ -51,6 +53,10 @@ void MidiInstrumentEditor::onConfigGUI(EditorInfo& info)
 			string name = getFileNameWithoutExt(AssetInfo::getPath(zone.audioData));
 			ImGui::TableNextColumn();
 			ImGui::Text(name.c_str());
+			ImGui::TableNextColumn();
+			ImGui::Text("%d", (int)zone.audioData->getRawBufferSize());
+			ImGui::TableNextColumn();
+			ImGui::Text("%d", (int)zone.audioData->getFrequency());
 			ImGui::TableNextColumn();
 			ImGui::Text("%d", (int)zone.rootNote);
 			ImGui::TableNextColumn();

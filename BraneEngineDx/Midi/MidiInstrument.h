@@ -36,7 +36,7 @@ public:
 	void bindMidiState(MidiState& state);
 	void unbindMidiState();
 
-	AudioSource* getNoteAudioSource(uint8_t note);
+	void resetAudioSources();
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
@@ -44,19 +44,26 @@ public:
 protected:
 	struct NoteInfo
 	{
-		Zone* zone;
-		float offsetPitch;
-		float offsetGain;
-		AudioSource audioSource;
+		Zone* zone = NULL;
+		uint8_t note = 0;
+		float offsetPitch = 0;
+		float offsetGain = 0;
+		AudioSource* audioSource = NULL;
 	};
 	MidiState* midiState = NULL;
 	map<uint8_t, NoteInfo> noteAudioSources;
-	map<uint8_t, NoteInfo*> activeNotes;
+
+	queue<AudioSource*> idleSourceQueue;
+	list<AudioSource*> pendingSourceList;
 
 	DelegateHandle onNoteOnHandle;
 	DelegateHandle onNoteOffHandle;
 	DelegateHandle onPitchBendHandle;
 	DelegateHandle onChannelPressureHandle;
+
+	AudioSource* activeNote(NoteInfo& noteInfo);
+	void deactiveNote(NoteInfo& noteInfo);
+	void processPendingAudioSources();
 
 	void onNoteOn(const MidiNoteState& state);
 	void onNoteOff(const MidiNoteState& state);
