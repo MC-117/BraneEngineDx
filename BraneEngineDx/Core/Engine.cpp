@@ -455,6 +455,8 @@ void Engine::setup()
 		toggleFullscreen();
 
 	input.init();
+
+	InitializationManager::instance().initialize(InitializeStage::AfterEngineSetup);
 }
 
 void Engine::start()

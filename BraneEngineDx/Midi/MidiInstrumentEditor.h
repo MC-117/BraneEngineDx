@@ -1,6 +1,7 @@
 #pragma once
 #include "../Core/Editor/BaseEditor.h"
 #include "MidiInstrument.h"
+#include "../VST2/Vst2Plugin.h"
 
 class MidiInstrumentEditor : public BaseEditor
 {
@@ -18,7 +19,13 @@ public:
 	virtual void onGUI(EditorInfo& info);
 protected:
 	MidiInstrument* instrument = NULL;
+	Vst2PluginPtr vst2Plugin;
 
 	bool refreshedDeviceList = false;
 	vector<string> deviceNameList;
+	int beginOctaveNote = 36, endOctaveNote = 97;
+	int keyboardOctave = 4, keyboardChannel = 0;
+	uint8_t prevMouseNote = 128;
+
+	void pianoCallback(int Msg, uint8_t Key, float Vel);
 };

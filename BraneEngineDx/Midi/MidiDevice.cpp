@@ -14,12 +14,11 @@ void MidiChannelState::reset()
 void MidiState::onFetchMessage(const MidiMessage& msg)
 {
     MidiMessageType msgType = msg.get_message_type();
-    int channel = msg.get_channel();
+    int channel = msg.get_channel() - 1;
     MidiChannelState& channelState = channelStates[channel];
+    onFetchMessageDelegate(msgType, msg);
     switch (msgType)
     {
-    default:
-        onFetchMessageDelegate(msgType, msg);
     case MidiMessageType::NOTE_ON:
     case MidiMessageType::NOTE_OFF:
     case MidiMessageType::POLY_PRESSURE:
@@ -68,6 +67,14 @@ void MidiState::clearDelegates()
     onControlChangeDelegate.clear();
     onPitchBendDelegate.clear();
     onChannelPressureDelegate.clear();
+}
+
+void MidiState::emitNoteMessage(uint8_t channel, uint8_t note, bool isOn, uint8_t velocity)
+{
+    onFetchMessage(isOn ?
+        MidiMessage::note_on(channel + 1, note, velocity) :
+        MidiMessage::note_off(channel + 1, note, velocity)
+    );
 }
 
 MidiDevice::~MidiDevice()

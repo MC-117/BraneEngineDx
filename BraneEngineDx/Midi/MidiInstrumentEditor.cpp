@@ -1,5 +1,6 @@
 #include "MidiInstrumentEditor.h"
 #include "../Core/Utility/EngineUtility.h"
+#include "../Core/GUI/GUIUtility.h"
 #include <filesystem>
 
 RegistEditor(MidiInstrument);
@@ -28,6 +29,29 @@ void MidiInstrumentEditor::onMidiDeviceGUI(EditorInfo& info)
 			}
 		}
 		ImGui::EndCombo();
+	}
+	if (vst2Plugin) {
+		if (ImGui::Button(("Open " + vst2Plugin->getName()).c_str())) {
+			vst2Plugin->openEditor();
+		}
+		ImGui::SameLine();
+		ImGui::Text("Time(%s) Path(%s)", vst2Plugin->getDuration().toString().c_str(), vst2Plugin->getPath().c_str());
+	}
+	else {
+		if (ImGui::Button("Load VST2 Plugin")) {
+			FileDlgDesc desc;
+			desc.save = false;
+			desc.initDir = "Content";
+			desc.title = "Choose VST2 Plugin";
+			desc.defFileExt = "dll";
+			desc.filter = "dll(*.dll)|*.dll|vst(*.vst)|*.vst";
+			if (openFileDlg(desc)) {
+				vst2Plugin = Vst2PluginManger::instance().loadPlugin(desc.filePath);
+				if (vst2Plugin) {
+					vst2Plugin->bindMidiState(device.state);
+				}
+			}
+		}
 	}
 }
 
@@ -106,8 +130,182 @@ void MidiInstrumentEditor::onConfigGUI(EditorInfo& info)
 	}
 }
 
+struct ImGuiPianoStyles
+{
+	ImU32 Colors[5]{
+		IM_COL32(255, 255, 255, 255),	// light note
+		IM_COL32(0, 0, 0, 255),			// dark note
+		IM_COL32(160, 189, 248, 255),	// active light note
+		IM_COL32(42, 72, 131, 255),	// active dark note
+		IM_COL32(75, 75, 75, 255),		// background
+	};
+	float NoteDarkHeight = 2.0f / 3.0f; // dark note scale h
+	float NoteDarkWidth = 2.0f / 3.0f;	// dark note scale w
+};
+
 void MidiInstrumentEditor::onInstrumentGUI(EditorInfo& info)
 {
+	static int NoteIsDark[12] = { 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0 };
+	static int NoteLightNumber[12] = { 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6, 7 };
+	static float NoteDarkOffset[12] = { 0.0f,  -2.0f / 3.0f, 0.0f, -1.0f / 3.0f, 0.0f, 0.0f, -2.0f / 3.0f, 0.0f, -0.5f, 0.0f, -1.0f / 3.0f, 0.0f };
+
+	ImGuiID IDName = ImGui::GetID("PianoKeyBoard");
+
+	// fix range dark keys
+	if (NoteIsDark[beginOctaveNote % 12] > 0) beginOctaveNote++;
+	if (NoteIsDark[endOctaveNote % 12] > 0) endOctaveNote--;
+
+	// bad range
+	if (!IDName || beginOctaveNote < 0 || endOctaveNote < 0 || endOctaveNote <= beginOctaveNote) return;
+
+	// style
+	static ImGuiPianoStyles ColorsBase;
+	ImGuiPianoStyles* Style = &ColorsBase;
+
+	ImGuiWindow* window = ImGui::GetCurrentWindow();
+	if (window->SkipItems) return;
+
+	const ImGuiID id = window->GetID(IDName);
+
+	ImDrawList* draw_list = window->DrawList;
+
+	ImVec2 Pos = window->DC.CursorPos;
+	ImVec2 MousePos = ImGui::GetIO().MousePos;
+
+	// sizes
+	int CountNotesAllign7 = (endOctaveNote / 12 - beginOctaveNote / 12) * 7 + NoteLightNumber[endOctaveNote % 12] - (NoteLightNumber[beginOctaveNote % 12] - 1);
+
+	ImVec2 Size = { ImGui::GetWindowContentRegionWidth(), 50 };
+
+	float NoteHeight = Size.y;
+	float NoteWidth = Size.x / (float)CountNotesAllign7;
+
+	float NoteHeight2 = NoteHeight * Style->NoteDarkHeight;
+	float NoteWidth2 = NoteWidth * Style->NoteDarkWidth;
+
+	// minimal size draw
+	if (NoteHeight < 5.0 || NoteWidth < 3.0) return;
+
+	// minimal size using mouse
+	bool isMouseInput = (NoteHeight >= 10.0 && NoteWidth >= 5.0);
+
+	// item
+	const ImRect bb(Pos.x, Pos.y, Pos.x + Size.x, Pos.y + Size.y);
+	ImGui::ItemSize(Size, 0);
+	if (!ImGui::ItemAdd(bb, id)) return;
+
+	// item input
+	bool held = false;
+	if (isMouseInput) {
+		ImGui::ButtonBehavior(bb, id, nullptr, &held, 0);
+	}
+
+	MidiDevice& device = MidiDevice::defaultDevice();
+	MidiState& midiState = device.state;
+
+	int		NoteMouseCollision = -1;
+	float	NoteMouseVel = 0.0f;
+
+	float OffsetX = bb.Min.x;
+	float OffsetY = bb.Min.y;
+	float OffsetY2 = OffsetY + NoteHeight;
+	for (int RealNum = beginOctaveNote; RealNum <= endOctaveNote; RealNum++) {
+		int Octave = RealNum / 12;
+		int i = RealNum % 12;
+
+		if (NoteIsDark[i] > 0) continue;
+
+		ImRect NoteRect(
+			round(OffsetX),
+			OffsetY,
+			round(OffsetX + NoteWidth),
+			OffsetY2
+		);
+
+		if (held && NoteRect.Contains(MousePos)) {
+			NoteMouseCollision = RealNum;
+			NoteMouseVel = (MousePos.y - NoteRect.Min.y) / NoteHeight;
+		}
+
+		MidiNoteState& noteState = midiState.channelStates[keyboardChannel].noteStates[RealNum];
+
+		draw_list->AddRectFilled(NoteRect.Min, NoteRect.Max, Style->Colors[noteState.isOn ? 2 : 0], 0.0f);
+
+		draw_list->AddRect(NoteRect.Min, NoteRect.Max, Style->Colors[4], 0.0f);
+
+		OffsetX += NoteWidth;
+	}
+
+	// draw dark notes
+	OffsetX = bb.Min.x;
+	OffsetY = bb.Min.y;
+	OffsetY2 = OffsetY + NoteHeight2;
+	for (int RealNum = beginOctaveNote; RealNum <= endOctaveNote; RealNum++) {
+		int Octave = RealNum / 12;
+		int i = RealNum % 12;
+
+		if (NoteIsDark[i] == 0) {
+			OffsetX += NoteWidth;
+			continue;
+		}
+
+		float OffsetDark = NoteDarkOffset[i] * NoteWidth2;
+		ImRect NoteRect(
+			round(OffsetX + OffsetDark),
+			OffsetY,
+			round(OffsetX + NoteWidth2 + OffsetDark),
+			OffsetY2
+		);
+
+		if (held && NoteRect.Contains(MousePos)) {
+			NoteMouseCollision = RealNum;
+			NoteMouseVel = (MousePos.y - NoteRect.Min.y) / NoteHeight2;
+		}
+
+		MidiNoteState& noteState = midiState.channelStates[keyboardChannel].noteStates[RealNum];
+
+		draw_list->AddRectFilled(NoteRect.Min, NoteRect.Max, Style->Colors[noteState.isOn ? 3 : 1], 0.0f);
+
+		draw_list->AddRect(NoteRect.Min, NoteRect.Max, Style->Colors[4], 0.0f);
+	}
+
+	// mouse input
+	if (prevMouseNote != NoteMouseCollision) {
+		pianoCallback(0, prevMouseNote, 0.0f);
+		prevMouseNote = 128;
+
+		if (held && NoteMouseCollision >= 0) {
+			pianoCallback(1, NoteMouseCollision, NoteMouseVel);
+			prevMouseNote = NoteMouseCollision;
+		}
+	}
+
+	// key input - octave control
+	if (ImGui::IsKeyPressed('=') && keyboardOctave < 8) {
+		keyboardOctave++;
+	}
+	else if (ImGui::IsKeyPressed('-') && keyboardOctave > 0) {
+		keyboardOctave--;
+	}
+}
+
+void MidiInstrumentEditor::pianoCallback(int Msg, uint8_t Key, float Vel)
+{
+	if ((Key > 108) || (Key < 21)) return; // midi max keys
+	MidiState& midiState = MidiDevice::defaultDevice().state;
+	MidiNoteState& noteState = midiState.channelStates[keyboardChannel].noteStates[Key];
+	if (Msg == 1) {
+		// if this key is not in the buffer
+		if (!noteState.isOn) {
+			midiState.emitNoteMessage(0, Key, true, Vel * 0x7f);
+		}
+	}
+	if (Msg == 0) {
+		// if the key is in the buffer
+		if (noteState.isOn) {
+			midiState.emitNoteMessage(0, Key, false, Vel * 0x7f);
+		}
+	}
 }
 
 void MidiInstrumentEditor::onGUI(EditorInfo& info)

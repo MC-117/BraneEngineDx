@@ -64,6 +64,7 @@ public:
 	bool getLoopPoint(Vector2i& point);
 
 	bool load(const string& file);
+	void reload();
 	void unload();
 
 	unsigned int getBuffer();
@@ -88,8 +89,8 @@ public:
 	AudioSource(AudioData& audioData);
 	virtual ~AudioSource();
 
-	bool isValid();
-	bool setAudioData(AudioData* audioData);
+	virtual bool isValid() const;
+	virtual bool setAudioData(AudioData* audioData);
 	void destroy();
 
 	void play();

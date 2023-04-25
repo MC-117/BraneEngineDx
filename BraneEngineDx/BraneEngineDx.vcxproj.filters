@@ -1413,6 +1413,30 @@
     <ClInclude Include="Midi\MidiInstrumentWindow.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="VST2\Vst2Plugin.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="VST2\Vst2SDK\audioeffectx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="VST2\Vst2SDK\aeffeditor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="VST2\Vst2SDK\audioeffect.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="VST2\Vst2SDK\pluginterfaces\vst2.x\aeffect.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="VST2\Vst2SDK\pluginterfaces\vst2.x\aeffectx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="VST2\Vst2SDK\pluginterfaces\vst2.x\vstfxstore.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Audio\AudioStreamSource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -2640,6 +2664,18 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Midi\MidiInstrumentWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="VST2\Vst2SDK\audioeffect.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="VST2\Vst2SDK\audioeffectx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="VST2\Vst2Plugin.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Audio\AudioStreamSource.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -413,6 +413,7 @@
     <ClInclude Include="Core\Animation\AnimationStateEditor.h" />
     <ClInclude Include="Core\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Core\Animation\AnimationPoseNode.h" />
+    <ClInclude Include="Core\Audio\AudioStreamSource.h" />
     <ClInclude Include="Core\Audio\AudioWave.h" />
     <ClInclude Include="Midi\MidiInstrumentEditor.h" />
     <ClInclude Include="Core\GUI\UIViewport.h" />
@@ -860,6 +861,13 @@
     <ClInclude Include="Vendors\DXGI_Helper.h" />
     <ClInclude Include="Vendors\DX_Helper.h" />
     <ClInclude Include="Vendors\imgui_impl_win32.h" />
+    <ClInclude Include="VST2\Vst2Plugin.h" />
+    <ClInclude Include="VST2\Vst2SDK\aeffeditor.h" />
+    <ClInclude Include="VST2\Vst2SDK\audioeffect.h" />
+    <ClInclude Include="VST2\Vst2SDK\audioeffectx.h" />
+    <ClInclude Include="VST2\Vst2SDK\pluginterfaces\vst2.x\aeffect.h" />
+    <ClInclude Include="VST2\Vst2SDK\pluginterfaces\vst2.x\aeffectx.h" />
+    <ClInclude Include="VST2\Vst2SDK\pluginterfaces\vst2.x\vstfxstore.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Actors\ClothActor.cpp" />
@@ -870,6 +878,7 @@
     <ClCompile Include="Core\Animation\AnimationState.cpp" />
     <ClCompile Include="Core\Animation\AnimationStateEditor.cpp" />
     <ClCompile Include="Core\Animation\AnimationStateMachine.cpp" />
+    <ClCompile Include="Core\Audio\AudioStreamSource.cpp" />
     <ClCompile Include="Core\Audio\AudioWave.cpp" />
     <ClCompile Include="Core\Base.cpp" />
     <ClCompile Include="Core\Character.cpp" />
@@ -1271,6 +1280,9 @@
     <ClCompile Include="Vendors\DX12\imgui_impl_dx12.cpp" />
     <ClCompile Include="Vendors\DXGI_Helper.cpp" />
     <ClCompile Include="Vendors\imgui_impl_win32.cpp" />
+    <ClCompile Include="VST2\Vst2Plugin.cpp" />
+    <ClCompile Include="VST2\Vst2SDK\audioeffect.cpp" />
+    <ClCompile Include="VST2\Vst2SDK\audioeffectx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BraneEngineDx.rc" />

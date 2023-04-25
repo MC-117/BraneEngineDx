@@ -29,6 +29,7 @@ bool AudioDeviceManager::finalize()
 	set<AudioDevice*> tempDevices = devices;
 	for (auto device : tempDevices)
 		delete device;
+	return true;
 }
 
 AudioDevice::AudioDevice()
@@ -142,7 +143,22 @@ bool AudioData::load(const string & file)
 
 	is.close();
 
-	alGenBuffers(1, &abo);
+	if (abo == AL_NONE)
+		alGenBuffers(1, &abo);
+	reload();
+
+	Vector2i loopPoint;
+	if (getLoopPoint(loopPoint)) {
+		alBufferiv(abo, AL_LOOP_POINTS_SOFT, loopPoint.data());
+	}
+
+	return abo != AL_NONE;
+}
+
+void AudioData::reload()
+{
+	if (wave.data.empty() || abo == AL_NONE)
+		return;
 	if (wave.format.channels == 1) {
 		if (wave.format.bitsPerSample == 8) {
 			alBufferData(abo, AL_FORMAT_MONO8, wave.data.data(), wave.data.size(), wave.format.sampleRate);
@@ -159,8 +175,6 @@ bool AudioData::load(const string & file)
 			alBufferData(abo, AL_FORMAT_STEREO16, wave.data.data(), wave.data.size(), wave.format.sampleRate);
 		}
 	}
-
-	return abo != AL_NONE;
 }
 
 void AudioData::unload()
@@ -191,7 +205,7 @@ AudioSource::~AudioSource()
 	destroy();
 }
 
-bool AudioSource::isValid()
+bool AudioSource::isValid() const
 {
 	return audioData != NULL && audioData->isLoad();
 }
@@ -214,7 +228,6 @@ bool AudioSource::setAudioData(AudioData* audioData)
 	Vector2i loopPoint;
 	if (audioData->getLoopPoint(loopPoint)) {
 		alSourcei(sbo, AL_LOOPING, 1);
-		alSourceiv(sbo, AL_LOOP_POINTS_SOFT, loopPoint.data());
 	}
 	return true;
 }

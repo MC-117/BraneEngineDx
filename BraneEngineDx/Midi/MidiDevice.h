@@ -73,8 +73,16 @@ struct MidiState
 	Delegate<void(uint8_t, uint8_t)> onChannelPressureDelegate;
 
 	MidiState() = default;
+	void emitNoteMessage(uint8_t channel, uint8_t note, bool isOn, uint8_t velocity);
 	void onFetchMessage(const MidiMessage& msg);
 	void clearDelegates();
+};
+
+class IMidiStateReceivable
+{
+public:
+	virtual void bindMidiState(MidiState& state) = 0;
+	virtual void unbindMidiState() = 0;
 };
 
 class MidiDevice

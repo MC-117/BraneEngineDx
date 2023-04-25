@@ -3,7 +3,7 @@
 #include "../Core/Base.h"
 #include "../Core/Audio/AudioSource.h"
 
-class MidiInstrument : public Base
+class MidiInstrument : public Base, public IMidiStateReceivable
 {
 public:
 	Serialize(MidiInstrument, Base);
@@ -33,8 +33,8 @@ public:
 
 	void build();
 
-	void bindMidiState(MidiState& state);
-	void unbindMidiState();
+	virtual void bindMidiState(MidiState& state);
+	virtual void unbindMidiState();
 
 	void resetAudioSources();
 
