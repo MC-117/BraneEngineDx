@@ -1,4 +1,4 @@
-# BraneEngineDx
+# ![Logo_40x40](https://user-images.githubusercontent.com/28572690/234605591-85c0c7d9-f570-4a92-a029-e5ca1c68eb6e.png) BraneEngineDx
 >by Luo Yizhou
 
 ![BraneEngine_Temple](https://user-images.githubusercontent.com/28572690/234598251-b7085760-c252-4eba-947b-098ae16915b8.jpg)
