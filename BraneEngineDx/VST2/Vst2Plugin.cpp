@@ -74,7 +74,7 @@ void VstSampleBuffer::release()
     }
 }
 
-void VstSampleBuffer::toPCM(void* data, int BPS)
+void VstSampleBuffer::toPCM(void* data, int BPS, float scale)
 {
     enum Method : uint16_t
     {
@@ -91,44 +91,44 @@ void VstSampleBuffer::toPCM(void* data, int BPS)
 
     switch (method) {
     case C1_1B:
-        C1To8Bit(data);
+        C1To8Bit(data, scale);
         break;
     case C1_2B:
-        C1To16Bit(data);
+        C1To16Bit(data, scale);
         break;
     case C2_1B:
-        C2To8Bit(data);
+        C2To8Bit(data, scale);
         break;
     case C2_2B:
-        C2To16Bit(data);
+        C2To16Bit(data, scale);
         break;
     default:
         if (BPS == 8)
-            to8Bit(data);
+            to8Bit(data, scale);
         else
-            to16Bit(data);
+            to16Bit(data, scale);
     }
 }
 
-void VstSampleBuffer::to8Bit(void* data)
+void VstSampleBuffer::to8Bit(void* data, float scale)
 {
     uint8_t* outData = (uint8_t*)data;
     int i = 0;
     for (int s = 0; s < blockSize; s++) {
         for (int c = 0; c < channels; c++) {
-            outData[i] = (uint8_t)((channelData[c][s] + 1.0f) * 0x7f);
+            outData[i] = (uint8_t)((channelData[c][s] * scale + 1.0f) * 0x7f);
             i++;
         }
     }
 }
 
-void VstSampleBuffer::to16Bit(void* data)
+void VstSampleBuffer::to16Bit(void* data, float scale)
 {
     uint16_t* outData = (uint16_t*)data;
     int i = 0;
     for (int s = 0; s < blockSize; s++) {
         for (int c = 0; c < channels; c++) {
-            outData[i] = (uint16_t)((channelData[c][s] + 1.0f) * 0x7fff);
+            outData[i] = (uint16_t)((channelData[c][s] * scale + 1.0f) * 0x7fff);
             i++;
         }
     }
@@ -138,12 +138,12 @@ static const __m128 _m0x1 = _mm_set_ps(1, 1, 1, 1);
 static const __m128 _m0x7f = _mm_set_ps(0x7f, 0x7f, 0x7f, 0x7f);
 static const __m128 _m0x7fff = _mm_set_ps(0x7fff, 0x7fff, 0x7fff, 0x7fff);
 
-void VstSampleBuffer::C1To8Bit(void* data)
+void VstSampleBuffer::C1To8Bit(void* data, float scale)
 {
     uint8_t* outData = (uint8_t*)data;
     for (int i = 0; i < blockSize; i += 4) {
         __m128 p = _mm_set_ps(channelData[0][i + 3], channelData[0][i + 2], channelData[0][i + 1], channelData[0][i]);
-        p = _mm_mul_ps(_mm_add_ps(p, _m0x1), _m0x7f);
+        p = _mm_mul_ps(_mm_add_ps(_mm_mul_ps(p, _mm_set_ps(scale, scale, scale, scale)), _m0x1), _m0x7f);
         __m128i ep = _mm_cvtps_epi32(p);
         ep = _mm_packus_epi32(ep, ep);
         ep = _mm_packus_epi16(ep, ep);
@@ -151,12 +151,12 @@ void VstSampleBuffer::C1To8Bit(void* data)
     }
 }
 
-void VstSampleBuffer::C2To8Bit(void* data)
+void VstSampleBuffer::C2To8Bit(void* data, float scale)
 {
     uint8_t* outData = (uint8_t*)data;
     for (int i = 0; i < blockSize; i += 2) {
         __m128 p = _mm_set_ps(channelData[1][i + 1], channelData[0][i + 1], channelData[1][i], channelData[0][i]);
-        p = _mm_mul_ps(_mm_add_ps(p, _m0x1), _m0x7f);
+        p = _mm_mul_ps(_mm_add_ps(_mm_mul_ps(p, _mm_set_ps(scale, scale, scale, scale)), _m0x1), _m0x7f);
         __m128i ep = _mm_cvtps_epi32(p);
         ep = _mm_packus_epi32(ep, ep);
         ep = _mm_packus_epi16(ep, ep);
@@ -164,24 +164,24 @@ void VstSampleBuffer::C2To8Bit(void* data)
     }
 }
 
-void VstSampleBuffer::C1To16Bit(void* data)
+void VstSampleBuffer::C1To16Bit(void* data, float scale)
 {
     uint16_t* outData = (uint16_t*)data;
     for (int i = 0; i < blockSize; i += 4) {
         __m128 p = _mm_set_ps(channelData[0][i + 3], channelData[0][i + 2], channelData[0][i + 1], channelData[0][i]);
-        p = _mm_mul_ps(_mm_add_ps(p, _m0x1), _m0x7fff);
+        p = _mm_mul_ps(_mm_add_ps(_mm_mul_ps(p, _mm_set_ps(scale, scale, scale, scale)), _m0x1), _m0x7fff);
         __m128i ep = _mm_cvtps_epi32(p);
         ep = _mm_packus_epi32(ep, ep);
         *(int64_t*)(outData + i) = _mm_cvtsi128_si64(ep);
     }
 }
 
-void VstSampleBuffer::C2To16Bit(void* data)
+void VstSampleBuffer::C2To16Bit(void* data, float scale)
 {
     uint16_t* outData = (uint16_t*)data;
     for (int i = 0; i < blockSize; i += 2) {
         __m128 p = _mm_set_ps(channelData[1][i + 1], channelData[0][i + 1], channelData[1][i], channelData[0][i]);
-        p = _mm_mul_ps(_mm_add_ps(p, _m0x1), _m0x7f);
+        p = _mm_mul_ps(_mm_add_ps(_mm_mul_ps(p, _mm_set_ps(scale, scale, scale, scale)), _m0x1), _m0x7fff);
         __m128i ep = _mm_cvtps_epi32(p);
         ep = _mm_packus_epi32(ep, ep);
         *(int64_t*)(outData + i * 2) = _mm_cvtsi128_si64(ep);
@@ -336,10 +336,15 @@ bool Vst2Plugin::init()
     streamInData.wave.format.channels = inChannels;
     streamInData.wave.data.resize(inChannels * config.blockSize * config.bitsPerSample / 8);
 
-    streamOutData.wave.format.bitsPerSample = 8;
-    streamOutData.wave.format.blockAlign = 2;
-    streamOutData.wave.format.channels = outChannels;
-    streamOutData.wave.data.resize(outChannels * config.blockSize * config.bitsPerSample / 8);
+    streamOutData0.wave.format.bitsPerSample = 8;
+    streamOutData0.wave.format.blockAlign = 2;
+    streamOutData0.wave.format.channels = outChannels;
+    streamOutData0.wave.data.resize(outChannels * config.blockSize * config.bitsPerSample / 8);
+
+    streamOutData1.wave.format.bitsPerSample = 8;
+    streamOutData1.wave.format.blockAlign = 2;
+    streamOutData1.wave.format.channels = outChannels;
+    streamOutData1.wave.data.resize(outChannels * config.blockSize * config.bitsPerSample / 8);
 
     state = Idle;
 
@@ -442,14 +447,19 @@ void Vst2Plugin::onThreadLoop(Time loopTime)
         dispatcher(plugin, effProcessEvents, 0, 0, events, 0.0f);
     }
     if (plugin->flags & effFlagsCanReplacing) {
-        processReplacing(plugin, inSampleBuffer.channelData.data(), outSampleBuffer.channelData.data(), outSampleBuffer.blockSize);
+        plugin->processReplacing(plugin, inSampleBuffer.channelData.data(), outSampleBuffer.channelData.data(), outSampleBuffer.blockSize);
     }
     else {
         plugin->__processDeprecated(plugin, inSampleBuffer.channelData.data(), outSampleBuffer.channelData.data(), outSampleBuffer.blockSize);
     }
-    outSampleBuffer.toPCM(streamOutData.wave.data.data(), streamOutData.getBitsPerSample());
-    streamSource.stream(&streamOutData);
-    streamSource.play();
+    if (streamOutData == &streamOutData1 || streamOutData == NULL)
+        streamOutData = &streamOutData0;
+    else
+        streamOutData = &streamOutData1;
+    outSampleBuffer.toPCM(streamOutData->wave.data.data(), streamOutData->getBitsPerSample(), 1);
+    streamSource.stream(streamOutData);
+    if (streamSource.getState() != AudioSource::Playing)
+        streamSource.play();
     if (events)
         free(events);
 }

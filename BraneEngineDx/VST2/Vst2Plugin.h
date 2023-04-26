@@ -41,14 +41,14 @@ public:
     void setSlient();
     void release();
 
-    void toPCM(void* data, int BPS);
+    void toPCM(void* data, int BPS, float scale = 1);
 protected:
-    void to8Bit(void* data);
-    void to16Bit(void* data);
-    void C1To8Bit(void* data);
-    void C2To8Bit(void* data);
-    void C1To16Bit(void* data);
-    void C2To16Bit(void* data);
+    void to8Bit(void* data, float scale);
+    void to16Bit(void* data, float scale);
+    void C1To8Bit(void* data, float scale);
+    void C2To8Bit(void* data, float scale);
+    void C1To16Bit(void* data, float scale);
+    void C2To16Bit(void* data, float scale);
 };
 
 class Vst2Plugin : public IMidiStateReceivable
@@ -113,7 +113,9 @@ protected:
     VstSampleBuffer outSampleBuffer;
     float* rawInData;
     AudioData streamInData;
-    AudioData streamOutData;
+    AudioData streamOutData0;
+    AudioData streamOutData1;
+    AudioData* streamOutData;
     AudioStreamSource streamSource;
 
     void onFetchMidiMessage(MidiMessageType type, const MidiMessage& msg);

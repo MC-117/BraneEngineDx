@@ -41,7 +41,6 @@ bool AudioWave::loadFromStream(istream& is)
 			break;
 		}
 		is.seekg(targetPos, ios::beg);
-		alignStream(is, 4);
 	}
 
 	return true;
