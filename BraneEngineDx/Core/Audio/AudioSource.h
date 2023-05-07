@@ -53,7 +53,7 @@ public:
 	AudioData(const string& name, const string& file);
 	~AudioData();
 
-	bool isLoad();
+	bool isLoad() const;
 
 	unsigned int getRawBufferSize() const;
 	const char* getRawBuffer() const;
@@ -67,7 +67,7 @@ public:
 	void reload();
 	void unload();
 
-	unsigned int getBuffer();
+	unsigned int getBuffer() const;
 protected:
 	unsigned int abo = AL_NONE;
 };

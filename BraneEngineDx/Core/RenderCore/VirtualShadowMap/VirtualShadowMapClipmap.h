@@ -14,8 +14,11 @@ public:
 	VirtualShadowMap* getVirtualShadowMap(unsigned int clipmapIndex) const;
 	VirtualShadowMapManager::LightEntry* getLightEntry() const;
 	CameraRenderData* getCameraRenderData() const;
+	Vector3f getLevelWorldCenter(unsigned int clipmapIndex) const;
+	bool getLevelShadowViewInfo(unsigned int clipmapIndex, VirtualShadowMapArray::ShadowViewInfo& shadowViewInfo) const;
 
 	void addMeshCommand(const VSMMeshTransformIndexArray::CallItem& callItem);
+	void clean();
 
 	void getProjectData(unsigned int clipmapIndex, VirtualShadowMapProjectionData& projData) const;
 protected:

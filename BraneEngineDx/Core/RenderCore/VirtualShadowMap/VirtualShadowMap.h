@@ -59,7 +59,16 @@ public:
 	float pageDilationBorderSizeMain = 0.05f;
 	float pageDilationBorderSizeLocal = 0.05f;
 
-	bool debugView = false;
+	enum DebugViewMode
+	{
+		None,
+		ClipmapLevel,
+		Clipmap,
+		Num
+	};
+
+	int debugViewMode = DebugViewMode::None;
+	int debugVSMID = -1;
 
 	Vector2u getPhysPagesXY() const;
 
@@ -74,10 +83,10 @@ public:
 
 struct VirtualShadowMapProjectionData
 {
-	Matrix4f worldToView;
+	Matrix4f viewOriginToView;
 	Matrix4f viewToClip;
-	Matrix4f worldToClip;
-	Matrix4f worldToUV;
+	Matrix4f viewOriginToClip;
+	Matrix4f viewOriginToUV;
 
 	Vector3f clipmapWorldOrigin;
 	int resolutionLodBias;
@@ -170,6 +179,7 @@ static Vector3u name##ProgramDim;
 	VSM_SHADER(initOutputommandInstanceListsArgs);
 	VSM_SHADER(outputCommandInstanceLists);
 	VSM_SHADER(debugBlit);
+	VSM_SHADER(debugClipmap);
 
 	static const ShaderPropertyName VSMInfoBuffName;
 	static const ShaderPropertyName vsmPrevDataName;
@@ -284,9 +294,6 @@ public:
 		Vector2i prePageOffset;
 		Vector2i curPageOffset;
 
-		bool preRendered = false;
-		bool curRendered = false;
-
 		struct Clipmap
 		{
 			Matrix4f worldToLightViewMatrix;
@@ -342,6 +349,8 @@ public:
 		void markRendered(unsigned int frame);
 
 		void invalidate();
+
+		void clean();
 	};
 
 	struct InvalidationInfo
@@ -472,12 +481,14 @@ public:
 
 	struct ShadowViewInfo
 	{
-		Matrix4f worldToLightClip;
+		Matrix4f viewOriginToClip;
 		Vector4i viewRect;
+		Vector3f worldCenter;
 		unsigned int vsmID;
 		unsigned int mipLevel;
 		unsigned int mipCount;
 		unsigned int flags;
+		unsigned int pad;
 	};
 	vector<ShadowViewInfo> shadowViewInfosUpload;
 	GPUBuffer shadowViewInfos;
@@ -501,11 +512,14 @@ public:
 	void renderDebugView(IRenderContext& context, const CameraRenderData& mainCameraData);
 
 	void clean();
+
+	Texture2D& getClipmapDebugBuffer();
 protected:
 	vector<VirtualShadowMap*> cachedShadowMaps;
 	vector<VirtualShadowMap*> shadowMaps;
 	vector<CullingBatchInfo*> cachedCullingBatchInfos;
 	vector<CullingBatchInfo*> cullingBatchInfos;
+	Texture2D clipmapDebugBuffer;
 
 	void resizeDirectLightVSMIDs(const vector<CameraRenderData*>& cameraDatas);
 	CullingBatchInfo* fetchCullingBatchInfo();

@@ -1278,9 +1278,6 @@
     <ClInclude Include="Vendors\DX_Helper.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Test\GPUBufferTest.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Profile\ProfileCore.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -2541,9 +2538,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\RenderCore\TransformRenderData.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Test\GPUBufferTest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\Profile\RenderDocProfilor.cpp">

@@ -26,8 +26,9 @@ unsigned int DX11ShaderStage::compile(const ShaderMacroSet& macroSet, const stri
 	ShaderStage::compile(macroSet, code, errorString);
 	ComPtr<ID3DBlob> errorBlob = NULL;
 	unsigned int compileFlag = D3DCOMPILE_ENABLE_STRICTNESS;
-	if (code.find("#pragma debug") != string::npos) {
-		cout << "#pragma debug\n";
+	int shaderDebug = 0;
+	Engine::engineConfig.configInfo.get("shaderDebug", shaderDebug);
+	if (shaderDebug || code.find("#pragma debug") != string::npos) {
 		compileFlag |= D3DCOMPILE_SKIP_OPTIMIZATION |
 			D3DCOMPILE_DEBUG | D3DCOMPILE_PREFER_FLOW_CONTROL;
 	}

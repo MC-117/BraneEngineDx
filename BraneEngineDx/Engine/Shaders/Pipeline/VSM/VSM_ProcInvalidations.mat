@@ -32,7 +32,7 @@ void main(uint tid : SV_DispatchThreadID)
             insData.localExtent,
             -projData.worldCenter,
             insData.localToWorld,
-            projData.worldToClip);
+            projData.viewOriginToClip);
         if (cullData.visiable) {
             int mipCount = (projData.clipmapCount <= 0) ? VSM_MAX_MIPS : 1;
             for (int mipLevel = 0; mipLevel < mipCount; mipLevel++) {

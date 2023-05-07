@@ -5,8 +5,9 @@
 
 Vst2Config::Vst2Config()
     : sampleRate(44100)
-    , blockSize(1024)
+    , blockSize(512)
     , bitsPerSample(8)
+    , streamOutRingBufferCount(4)
 {
 }
 
@@ -39,6 +40,28 @@ LRESULT VstWindow::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
+void VstWindow::updateFromWindowRect(bool active)
+{
+    clientPos = pos;
+    clientSize = size;
+    if (hWnd) {
+        SetWindowPos(hWnd, 0, pos.x, pos.y, size.x, size.y, active ? SWP_NOOWNERZORDER : (SWP_NOOWNERZORDER | SWP_NOACTIVATE));
+    }
+}
+
+void VstWindow::updateFromClientRect(bool active)
+{
+    RECT rect = { clientPos.x, clientPos.y, clientPos.x + clientSize.x, clientPos.y + clientSize.y };
+    AdjustWindowRect(&rect, getStyle(), false);
+    pos = { rect.left, rect.top };
+    size = { rect.right - rect.left, rect.bottom - rect.top };
+    pos.x = max(pos.x, 0);
+    pos.y = max(pos.y, 0);
+    if (hWnd) {
+        SetWindowPos(hWnd, 0, pos.x, pos.y, size.x, size.y, active ? SWP_NOOWNERZORDER : (SWP_NOOWNERZORDER | SWP_NOACTIVATE));
+    }
+}
+
 void VstWindow::onLoop()
 {
     WUIWindow::onLoop();
@@ -60,9 +83,8 @@ void VstSampleBuffer::resize(int channels, int blockSize)
 void VstSampleBuffer::setSlient()
 {
     for (int c = 0; c < channels; c++) {
-        float* data = rawData[c].data();
-        for (int i = 0; i < blockSize; i++)
-            data[i] = 0.5f;
+        vector<float>& data = rawData[c];
+        memset(data.data(), 0, sizeof(float) * blockSize);
     }
 }
 
@@ -74,7 +96,19 @@ void VstSampleBuffer::release()
     }
 }
 
-void VstSampleBuffer::toPCM(void* data, int BPS, float scale)
+void VstSampleBuffer::toFloat(void* data)
+{
+    float* outData = (float*)data;
+    int i = 0;
+    for (int s = 0; s < blockSize; s++) {
+        for (int c = 0; c < channels; c++) {
+            outData[i] = channelData[c][s];
+            i++;
+        }
+    }
+}
+
+void VstSampleBuffer::toPCM(void* data, int BPS)
 {
     enum Method : uint16_t
     {
@@ -91,44 +125,44 @@ void VstSampleBuffer::toPCM(void* data, int BPS, float scale)
 
     switch (method) {
     case C1_1B:
-        C1To8Bit(data, scale);
+        C1To8Bit(data);
         break;
     case C1_2B:
-        C1To16Bit(data, scale);
+        C1To16Bit(data);
         break;
     case C2_1B:
-        C2To8Bit(data, scale);
+        C2To8Bit(data);
         break;
     case C2_2B:
-        C2To16Bit(data, scale);
+        C2To16Bit(data);
         break;
     default:
         if (BPS == 8)
-            to8Bit(data, scale);
+            to8Bit(data);
         else
-            to16Bit(data, scale);
+            to16Bit(data);
     }
 }
 
-void VstSampleBuffer::to8Bit(void* data, float scale)
+void VstSampleBuffer::to8Bit(void* data)
 {
     uint8_t* outData = (uint8_t*)data;
     int i = 0;
     for (int s = 0; s < blockSize; s++) {
         for (int c = 0; c < channels; c++) {
-            outData[i] = (uint8_t)((channelData[c][s] * scale + 1.0f) * 0x7f);
+            outData[i] = (uint8_t)((channelData[c][s] + 1.0f) * 0x7f);
             i++;
         }
     }
 }
 
-void VstSampleBuffer::to16Bit(void* data, float scale)
+void VstSampleBuffer::to16Bit(void* data)
 {
     uint16_t* outData = (uint16_t*)data;
     int i = 0;
     for (int s = 0; s < blockSize; s++) {
         for (int c = 0; c < channels; c++) {
-            outData[i] = (uint16_t)((channelData[c][s] * scale + 1.0f) * 0x7fff);
+            outData[i] = (uint16_t)((channelData[c][s] + 1.0f) * 0x7fff);
             i++;
         }
     }
@@ -138,12 +172,12 @@ static const __m128 _m0x1 = _mm_set_ps(1, 1, 1, 1);
 static const __m128 _m0x7f = _mm_set_ps(0x7f, 0x7f, 0x7f, 0x7f);
 static const __m128 _m0x7fff = _mm_set_ps(0x7fff, 0x7fff, 0x7fff, 0x7fff);
 
-void VstSampleBuffer::C1To8Bit(void* data, float scale)
+void VstSampleBuffer::C1To8Bit(void* data)
 {
     uint8_t* outData = (uint8_t*)data;
     for (int i = 0; i < blockSize; i += 4) {
         __m128 p = _mm_set_ps(channelData[0][i + 3], channelData[0][i + 2], channelData[0][i + 1], channelData[0][i]);
-        p = _mm_mul_ps(_mm_add_ps(_mm_mul_ps(p, _mm_set_ps(scale, scale, scale, scale)), _m0x1), _m0x7f);
+        p = _mm_mul_ps(_mm_add_ps(p, _m0x1), _m0x7f);
         __m128i ep = _mm_cvtps_epi32(p);
         ep = _mm_packus_epi32(ep, ep);
         ep = _mm_packus_epi16(ep, ep);
@@ -151,12 +185,12 @@ void VstSampleBuffer::C1To8Bit(void* data, float scale)
     }
 }
 
-void VstSampleBuffer::C2To8Bit(void* data, float scale)
+void VstSampleBuffer::C2To8Bit(void* data)
 {
     uint8_t* outData = (uint8_t*)data;
     for (int i = 0; i < blockSize; i += 2) {
         __m128 p = _mm_set_ps(channelData[1][i + 1], channelData[0][i + 1], channelData[1][i], channelData[0][i]);
-        p = _mm_mul_ps(_mm_add_ps(_mm_mul_ps(p, _mm_set_ps(scale, scale, scale, scale)), _m0x1), _m0x7f);
+        p = _mm_mul_ps(_mm_add_ps(p, _m0x1), _m0x7f);
         __m128i ep = _mm_cvtps_epi32(p);
         ep = _mm_packus_epi32(ep, ep);
         ep = _mm_packus_epi16(ep, ep);
@@ -164,24 +198,24 @@ void VstSampleBuffer::C2To8Bit(void* data, float scale)
     }
 }
 
-void VstSampleBuffer::C1To16Bit(void* data, float scale)
+void VstSampleBuffer::C1To16Bit(void* data)
 {
     uint16_t* outData = (uint16_t*)data;
     for (int i = 0; i < blockSize; i += 4) {
         __m128 p = _mm_set_ps(channelData[0][i + 3], channelData[0][i + 2], channelData[0][i + 1], channelData[0][i]);
-        p = _mm_mul_ps(_mm_add_ps(_mm_mul_ps(p, _mm_set_ps(scale, scale, scale, scale)), _m0x1), _m0x7fff);
+        p = _mm_mul_ps(_mm_add_ps(p, _m0x1), _m0x7fff);
         __m128i ep = _mm_cvtps_epi32(p);
         ep = _mm_packus_epi32(ep, ep);
         *(int64_t*)(outData + i) = _mm_cvtsi128_si64(ep);
     }
 }
 
-void VstSampleBuffer::C2To16Bit(void* data, float scale)
+void VstSampleBuffer::C2To16Bit(void* data)
 {
     uint16_t* outData = (uint16_t*)data;
     for (int i = 0; i < blockSize; i += 2) {
         __m128 p = _mm_set_ps(channelData[1][i + 1], channelData[0][i + 1], channelData[1][i], channelData[0][i]);
-        p = _mm_mul_ps(_mm_add_ps(_mm_mul_ps(p, _mm_set_ps(scale, scale, scale, scale)), _m0x1), _m0x7fff);
+        p = _mm_mul_ps(_mm_add_ps(p, _m0x1), _m0x7fff);
         __m128i ep = _mm_cvtps_epi32(p);
         ep = _mm_packus_epi32(ep, ep);
         *(int64_t*)(outData + i * 2) = _mm_cvtsi128_si64(ep);
@@ -190,10 +224,65 @@ void VstSampleBuffer::C2To16Bit(void* data, float scale)
 
 VstIntPtr VSTCALLBACK hostCallback(AEffect* effect, VstInt32 opcode, VstInt32 index, VstIntPtr value, void* ptr, float opt)
 {
+    static const map<VstInt32, const char*> opcodeNames =
+    {
+        { audioMasterAutomate, "audioMasterAutomate"},
+        { audioMasterVersion, "audioMasterVersion"},
+        { audioMasterCurrentId, "audioMasterCurrentId"},
+        { audioMasterIdle, "audioMasterIdle"},
+        { audioMasterGetTime, "audioMasterGetTime"},
+        { audioMasterProcessEvents, "audioMasterProcessEvents"},
+        { audioMasterIOChanged, "audioMasterIOChanged"},
+        { audioMasterSizeWindow, "audioMasterSizeWindow"},
+        { audioMasterGetSampleRate, "audioMasterGetSampleRate"},
+        { audioMasterGetBlockSize, "audioMasterGetBlockSize"},
+        { audioMasterGetInputLatency, "audioMasterGetInputLatency"},
+        { audioMasterGetOutputLatency, "audioMasterGetOutputLatency"},
+        { audioMasterGetCurrentProcessLevel, "audioMasterGetCurrentProcessLevel"},
+        { audioMasterGetAutomationState, "audioMasterGetAutomationState"},
+        { audioMasterOfflineStart, "audioMasterOfflineStart"},
+        { audioMasterOfflineRead, "audioMasterOfflineRead"},
+        { audioMasterOfflineWrite, "audioMasterOfflineWrite"},
+        { audioMasterOfflineGetCurrentPass, "audioMasterOfflineGetCurrentPass"},
+        { audioMasterOfflineGetCurrentMetaPass, "audioMasterOfflineGetCurrentMetaPass"},
+        { audioMasterGetVendorString, "audioMasterGetVendorString"},
+        { audioMasterGetProductString, "audioMasterGetProductString"},
+        { audioMasterGetVendorVersion, "audioMasterGetVendorVersion"},
+        { audioMasterVendorSpecific, "audioMasterVendorSpecific"},
+        { audioMasterCanDo, "audioMasterCanDo"},
+        { audioMasterGetLanguage, "audioMasterGetLanguage"},
+        { audioMasterGetDirectory, "audioMasterGetDirectory"},
+        { audioMasterUpdateDisplay, "audioMasterUpdateDisplay"},
+        { audioMasterBeginEdit, "audioMasterBeginEdit"},
+        { audioMasterEndEdit, "audioMasterEndEdit"},
+        { audioMasterOpenFileSelector, "audioMasterOpenFileSelector"},
+        { audioMasterCloseFileSelector, "audioMasterCloseFileSelector"},
+    };
+
     switch (opcode) {
     case audioMasterVersion:    return kVstVersion;
-    default:                    return 0;
+    case audioMasterSizeWindow:
+    {
+        ((Vst2Plugin*)effect->user)->resizeEditorWindow(index, value);
+        return 1;
     }
+    case audioMasterCanDo:
+    {
+        Console::log("CanDo: %s", (char*)ptr);
+        break;
+    }
+    default:
+    {
+        /*auto iter = opcodeNames.find(opcode);
+        if (iter == opcodeNames.end()) {
+            Console::warn("VST: Unknown opcode %d", opcode);
+        }
+        else {
+            Console::log("VST: %s", iter->second);
+        }*/
+    }
+    }
+    return 0;
 }
 
 bool Vst2Plugin::isValid() const
@@ -264,6 +353,7 @@ bool Vst2Plugin::load(const string& path)
         (VstPluginFunc)GetProcAddress(moduleHandle, "VSTPluginMain");
     // Instantiate the plugin
     plugin = mainEntryPoint(hostCallback);
+    plugin->user = this;
 
     // Check plugin's magic number
     // If incorrect, then the file either was not loaded properly, is not a
@@ -331,20 +421,20 @@ bool Vst2Plugin::init()
     outSampleBuffer.resize(outChannels, config.blockSize);
     outSampleBuffer.setSlient();
 
-    streamInData.wave.format.bitsPerSample = config.bitsPerSample;
-    streamInData.wave.format.blockAlign = 2;
-    streamInData.wave.format.channels = inChannels;
+    AudioStreamRingBuffer::Config bufferConfig;
+    bufferConfig.format = WAVE_FORMAT_PCM;
+    bufferConfig.sampleRate = config.sampleRate;
+    bufferConfig.bitsPerSample = config.bitsPerSample;
+    bufferConfig.blockAlign = config.bitsPerSample / 8 * inChannels;
+    bufferConfig.channels = inChannels;
+    bufferConfig.framesPerBuffer = config.blockSize;
+    bufferConfig.bufferCount = config.streamOutRingBufferCount;
+
+    streamInData.wave.format = bufferConfig;
     streamInData.wave.data.resize(inChannels * config.blockSize * config.bitsPerSample / 8);
 
-    streamOutData0.wave.format.bitsPerSample = 8;
-    streamOutData0.wave.format.blockAlign = 2;
-    streamOutData0.wave.format.channels = outChannels;
-    streamOutData0.wave.data.resize(outChannels * config.blockSize * config.bitsPerSample / 8);
-
-    streamOutData1.wave.format.bitsPerSample = 8;
-    streamOutData1.wave.format.blockAlign = 2;
-    streamOutData1.wave.format.channels = outChannels;
-    streamOutData1.wave.data.resize(outChannels * config.blockSize * config.bitsPerSample / 8);
+    bufferConfig.channels = outChannels;
+    streamOutRingBuffer.setConfig(bufferConfig);
 
     state = Idle;
 
@@ -385,8 +475,8 @@ bool Vst2Plugin::openEditor()
     ERect rect;
     ERect* pRect = &rect;
     dispatcher(plugin, effEditGetRect, 0, 0, &pRect, 0.0f);
-    editorWindow.setClientPosAndSize(Unit2Di{ rect.left, rect.top },
-        Unit2Di{ rect.right - rect.left, rect.bottom - rect.top });
+    /*editorWindow.setClientPosAndSize(Unit2Di{ rect.left, rect.top },
+        Unit2Di{ rect.right - rect.left, rect.bottom - rect.top });*/
     editorWindow.show();
     return true;
 }
@@ -400,9 +490,28 @@ bool Vst2Plugin::closeEditor()
     return true;
 }
 
+void Vst2Plugin::resizeEditorWindow(int width, int height)
+{
+    editorWindow.setClientSize({ width, height });
+}
+
 Time Vst2Plugin::getDuration() const
 {
     return loopTime - startTime;
+}
+
+const AudioData& Vst2Plugin::getFrontBuffer() const
+{
+    return *streamOutRingBuffer.getFrontBuffer();
+}
+
+void Vst2Plugin::getTimeInfo(VstTimeInfo& info) const
+{
+}
+
+const AudioData& Vst2Plugin::getBackBuffer() const
+{
+    return *streamOutRingBuffer.getBackBuffer();
 }
 
 void Vst2Plugin::onFetchMidiMessage(MidiMessageType type, const MidiMessage& msg)
@@ -452,11 +561,10 @@ void Vst2Plugin::onThreadLoop(Time loopTime)
     else {
         plugin->__processDeprecated(plugin, inSampleBuffer.channelData.data(), outSampleBuffer.channelData.data(), outSampleBuffer.blockSize);
     }
-    if (streamOutData == &streamOutData1 || streamOutData == NULL)
-        streamOutData = &streamOutData0;
-    else
-        streamOutData = &streamOutData1;
-    outSampleBuffer.toPCM(streamOutData->wave.data.data(), streamOutData->getBitsPerSample(), 1);
+    AudioData* streamOutData = streamOutRingBuffer.fetchNextBuffer();
+    outSampleBuffer.toPCM(streamOutData->wave.data.data(), streamOutData->getBitsPerSample());
+    streamOutData->reload();
+    streamSource.waitUntilUnprocessedRemain(2);
     streamSource.stream(streamOutData);
     if (streamSource.getState() != AudioSource::Playing)
         streamSource.play();
@@ -515,7 +623,7 @@ void Vst2PluginManger::threadMain()
                 plugin->onThreadLoop(loopTime);
         }
 
-        this_thread::sleep_for(loopTime + Vst2Config::get().getProcessInterval() - Time::now());
+        //this_thread::sleep_for(loopTime + Vst2Config::get().getProcessInterval() - Time::now() - 100ns);
     }
 }
 

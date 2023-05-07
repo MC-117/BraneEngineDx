@@ -11,6 +11,7 @@ struct PointLight
 struct DirectLight
 {
     float4x4 worldToLightView;
+	float4x4 viewOriginToLightView;
     float4x4 viewToLightClip;
     float4x4 worldToLightClip;
     float3 direction;

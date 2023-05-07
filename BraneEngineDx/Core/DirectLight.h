@@ -39,6 +39,7 @@ public:
 	float getShadowBiasNormalScale() const;
 
 	virtual Matrix4f getWorldToLightViewMatrix() const;
+	virtual Matrix4f getViewOriginToLightViewMatrix() const;
 	virtual Matrix4f getViewToLightClipMatrix() const;
 	virtual Matrix4f getWorldToLightClipMatrix() const;
 
@@ -57,6 +58,7 @@ protected:
 	int directionIdx = -1;
 	VirtualShadowMapClipmap* virtualShadowMapClipmap = NULL;
 	Matrix4f worldToLightViewMatrix = Matrix4f::Identity();
+	Matrix4f viewOriginToLightViewMatrix = Matrix4f::Identity();
 	Matrix4f viewToLightClipMatrix = Matrix4f::Identity();
 	Matrix4f worldToLightClipMatrix = Matrix4f::Identity();
 };

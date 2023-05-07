@@ -83,7 +83,7 @@ uint calcLevelOffsets(uint Level)
 	return 0x55555555u & Mask;
 }
 
-#define VSM_PAGE_TABLE_SIZE (calcLevelOffsets(VSM_LOG2_L0_PAGES))
+#define VSM_PAGE_TABLE_SIZE (calcLevelOffsets(VSM_MAX_MIPS))
 
 uint calcLog2LevelPages(uint level)
 {
@@ -131,10 +131,10 @@ int calcMipLevel(int4 rect, int coveredPixels)
 
 struct VSMProjData
 {
-	float4x4 worldToView;
+	float4x4 viewOriginToView;
 	float4x4 viewToClip;
-	float4x4 worldToClip;
-	float4x4 worldToUV;
+	float4x4 viewOriginToClip;
+	float4x4 viewOriginToUV;
 
 	float3 clipmapWorldOrigin;
 	int resolutionLodBias;
@@ -193,16 +193,16 @@ struct FrustumCullData
     float3 rectMax;
 };
 
-FrustumCullData frustumCullBoxOrtho(float3 center, float3 extent, float3 preWorldTranslation, float4x4 localToWorld, float4x4 worldToClip)
+FrustumCullData frustumCullBoxOrtho(float3 center, float3 extent, float3 preWorldTranslation, float4x4 localToWorld, float4x4 viewOriginToClip)
 {
     FrustumCullData data;
 	float3 centerWorld = mul( float4( center, 1 ), localToWorld ).xyz + preWorldTranslation;
-    float3 centerClip = mul( float4( centerWorld, 1 ), worldToClip ).xyz;
+    float3 centerClip = mul( float4( centerWorld, 1 ), viewOriginToClip ).xyz;
 
 	float3 clipDelta =
-        abs( extent.x * mul(localToWorld[0], worldToClip).xyz ) +
-        abs( extent.y * mul(localToWorld[1], worldToClip).xyz ) +
-        abs( extent.z * mul(localToWorld[2], worldToClip).xyz );
+        abs( extent.x * mul(localToWorld[0], viewOriginToClip).xyz ) +
+        abs( extent.y * mul(localToWorld[1], viewOriginToClip).xyz ) +
+        abs( extent.z * mul(localToWorld[2], viewOriginToClip).xyz );
 
 	data.rectMin = centerClip - clipDelta;
 	data.rectMax = centerClip + clipDelta;
@@ -443,12 +443,14 @@ struct VSMDrawInstanceInfo
 
 struct ShadowViewInfo
 {
-	float4x4 worldToLightClip;
+	float4x4 viewOriginToClip;
 	int4 viewRect;
+	float3 worldCenter;
 	uint vsmID;
 	uint mipLevel;
 	uint mipCount;
 	uint flags;
+	uint pad;
 };
 
 struct VisiableInstanceInfo
@@ -499,7 +501,7 @@ void transformToVirtualPage(inout float4 clipPos, inout float4 pageClipPos, uint
 {
     ShadowViewInfo viewInfo = shadowViewInfos[viewIndex];
 
-	clipPos = mul( float4( worldPos, 1 ), viewInfo.worldToLightClip );
+	clipPos = mul( float4( worldPos - viewInfo.worldCenter, 1 ), viewInfo.viewOriginToClip );
 
 	scaleBiasClipToPhysPage(viewInfo, clipPos, pageClipPos);
 }
@@ -614,7 +616,7 @@ bool vsmSampleClipmap(int vsmID, float2 shadowUV, out VSMSample vsmSample)
 
 // 	// Transform geometry world-space plane eq to shadow 'UV' texture space [0-1] ranges
 // 	float4 NormalPlaneTranslatedWorld = float4(EstimatedGeoWorldNormal, -dot(EstimatedGeoWorldNormal, worldPos));
-// 	float4 NormalPlaneUV = mul(NormalPlaneTranslatedWorld, projData.worldToUV);
+// 	float4 NormalPlaneUV = mul(NormalPlaneTranslatedWorld, projData.viewOriginToUV);
 
 // 	float2 DepthSlopeUV = -NormalPlaneUV.xy / NormalPlaneUV.z;
 // 	float MipLevelDim = float(calcLevelTexels(vsmSample.MipLevel));
@@ -647,10 +649,10 @@ float vsmSampleDirectShadow(int vsmID, float3 worldPos)
 			int clipmapVSMID = vsmID + clipmapIndex;
 			VSMProjData projData = getVSMProjData(clipmapVSMID);
 
-			float4 shadowUVz = mul(float4(worldPos - projData.worldCenter, 1.0f), projData.worldToUV);
+			float4 shadowUVz = mul(float4(worldPos - projData.worldCenter, 1.0f), projData.viewOriginToUV);
 
 			VSMSample vsmSample;
-			if (vsmSampleClipmap(vsmID, shadowUVz.xy, vsmSample)) {
+			if (vsmSampleClipmap(clipmapVSMID, shadowUVz.xy, vsmSample)) {
 				return shadowUVz.z > vsmSample.depth ? 0.0f : 1.0f;
 			}
 		}

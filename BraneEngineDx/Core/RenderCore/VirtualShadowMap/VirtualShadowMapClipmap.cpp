@@ -35,11 +35,10 @@ VirtualShadowMapClipmap::VirtualShadowMapClipmap(VirtualShadowMapArray& virtualS
 
 	const Matrix4f faceMat(faceMatInit);
 
-	Matrix4f worldToLightRotationView = Matrix4f::Identity();
-	worldToLightRotationView.block(0, 0, 3, 3) = lightData.worldToLightView.block(0, 0, 3, 3);
+	Matrix4f worldToLightRotationView = lightData.viewOriginToLightView;
 
 	// ZY plane to XY plane
-	worldToLightViewMatrix = worldToLightRotationView * faceMat;
+	worldToLightViewMatrix = worldToLightRotationView;// *faceMat;
 	const Matrix4f viewToWorldMatrix = worldToLightViewMatrix.transpose();
 
 	float lodScale = 0.5f / cameraData.data.projectionMat(0, 0);
@@ -167,10 +166,42 @@ CameraRenderData* VirtualShadowMapClipmap::getCameraRenderData() const
 	return cameraRenderData;
 }
 
+Vector3f VirtualShadowMapClipmap::getLevelWorldCenter(unsigned int clipmapIndex) const
+{
+	if (clipmapIndex < levelData.size())
+		return levelData[clipmapIndex].worldCenter;
+	return Vector3f();
+}
+
+bool VirtualShadowMapClipmap::getLevelShadowViewInfo(unsigned int clipmapIndex, VirtualShadowMapArray::ShadowViewInfo& shadowViewInfo) const
+{
+	if (clipmapIndex >= levelData.size())
+		return false;
+	const LevelData& level = levelData[clipmapIndex];
+	VirtualShadowMap* vsm = getVirtualShadowMap(clipmapIndex);
+	if (vsm == NULL)
+		return false;
+	shadowViewInfo.viewOriginToClip = MATRIX_UPLOAD_OP(level.viewToClip * worldToLightViewMatrix);
+	shadowViewInfo.worldCenter = level.worldCenter;
+	shadowViewInfo.viewRect = Vector4i(0, 0, VirtualShadowMapConfig::virtualShadowMapSize, VirtualShadowMapConfig::virtualShadowMapSize);
+	shadowViewInfo.vsmID = vsm->vsmID;
+	shadowViewInfo.flags = VSM_DirectLight;
+	shadowViewInfo.mipLevel = 0;
+	shadowViewInfo.mipCount = 1;
+	return true;
+}
+
 void VirtualShadowMapClipmap::addMeshCommand(const VSMMeshTransformIndexArray::CallItem& callItem)
 {
 	if (lightEntry) {
 		lightEntry->addMeshCommand(callItem);
+	}
+}
+
+void VirtualShadowMapClipmap::clean()
+{
+	if (lightEntry) {
+		lightEntry->clean();
 	}
 }
 
@@ -179,13 +210,13 @@ void VirtualShadowMapClipmap::getProjectData(unsigned int clipmapIndex, VirtualS
 	if (clipmapIndex < levelData.size()) {
 		const LevelData& level = levelData[clipmapIndex];
 
-		projData.worldToView = MATRIX_UPLOAD_OP(worldToLightViewMatrix);
+		projData.viewOriginToView = MATRIX_UPLOAD_OP(worldToLightViewMatrix);
 		projData.viewToClip = MATRIX_UPLOAD_OP(level.viewToClip);
-		Matrix4f worldToClip = level.viewToClip * worldToLightViewMatrix;
-		projData.worldToClip = MATRIX_UPLOAD_OP(worldToClip);
+		Matrix4f viewOriginToClip = level.viewToClip * worldToLightViewMatrix;
+		projData.viewOriginToClip = MATRIX_UPLOAD_OP(viewOriginToClip);
 		Matrix4f uvMatrix = Math::getTransitionMatrix(Vector3f(0.5f, 0.5f, 0.0f)) * 
 			Math::getScaleMatrix(Vector3f(0.5f, -0.5f, 1.0f));
-		projData.worldToUV = MATRIX_UPLOAD_OP(uvMatrix * worldToClip);
+		projData.viewOriginToUV = MATRIX_UPLOAD_OP(uvMatrix * viewOriginToClip);
 
 		projData.clipmapWorldOrigin = worldOrigin;
 		projData.resolutionLodBias = resolutionLodBias;

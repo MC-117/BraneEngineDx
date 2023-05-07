@@ -180,6 +180,7 @@ void MeshRender::render(RenderInfo& info)
 		command.sceneData = info.sceneData;
 		command.material = material;
 		command.mesh = part;
+		command.hasShadow = canCastShadow;
 		command.hasPreDepth = hasPrePass;
 		command.instanceID = instanceID;
 		command.instanceIDCount = instanceCount;

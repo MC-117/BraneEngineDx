@@ -10,6 +10,7 @@ class VirtualShadowMapClipmap;
 struct MainLightData
 {
 	Matrix4f worldToLightView;
+	Matrix4f viewOriginToLightView;
 	Matrix4f viewToLightClip;
 	Matrix4f worldToLightClip;
 	Vector3f direction;

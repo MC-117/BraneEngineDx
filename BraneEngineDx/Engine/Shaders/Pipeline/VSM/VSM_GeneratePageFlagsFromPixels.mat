@@ -41,7 +41,7 @@ void markPage(uint vsmID
 {
 	VSMProjData projData = getVSMProjData(vsmID);
 
-	float4 shadowUVZ = mul(float4(worldPos - projData.worldCenter, 1.0f), projData.worldToUV);
+	float4 shadowUVZ = mul(float4(worldPos - projData.worldCenter, 1.0f), projData.viewOriginToUV);
 	shadowUVZ.xyz /= shadowUVZ.w;
 
 	// Check overlap vs the shadow map space

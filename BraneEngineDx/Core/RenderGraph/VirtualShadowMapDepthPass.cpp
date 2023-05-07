@@ -59,12 +59,14 @@ bool VirtualShadowMapDepthPass::setRenderCommand(const IRenderCommand& cmd)
 void VirtualShadowMapDepthPass::prepare()
 {
 	for (auto sceneData : renderGraph->sceneDatas) {
-		for (auto& callItem : sceneData->virtualShadowMapRenderData.intanceIndexArray.meshTransformIndex) {
-			for (auto clipmap : sceneData->lightDataPack.mainLightClipmaps) {
+		for (auto clipmap : sceneData->lightDataPack.mainLightClipmaps) {
+			clipmap->clean();
+			for (auto& callItem : sceneData->virtualShadowMapRenderData.intanceIndexArray.meshTransformIndex) {
 				clipmap->addMeshCommand(callItem);
 			}
 		}
 	}
+	outputTextures.clear();
 }
 
 void VirtualShadowMapDepthPass::execute(IRenderContext& context)
@@ -76,6 +78,9 @@ void VirtualShadowMapDepthPass::execute(IRenderContext& context)
 		renderData.shadowMapArray.buildPageAllocations(context, sceneData->cameraRenderDatas, sceneData->lightDataPack);
 		renderData.shadowMapArray.render(context, sceneData->lightDataPack);
 		renderData.shadowMapArray.renderDebugView(context, *sceneData->cameraRenderDatas[0]);
+
+		if (renderData.shadowMapArray.isAllocated())
+			outputTextures.push_back(make_pair("Clipmap", &renderData.shadowMapArray.getClipmapDebugBuffer()));
 	}
 }
 
@@ -85,6 +90,7 @@ void VirtualShadowMapDepthPass::reset()
 
 void VirtualShadowMapDepthPass::getOutputTextures(vector<pair<string, Texture*>>& textures)
 {
+	textures = outputTextures;
 }
 
 void VirtualShadowMapDepthPass::loadDefaultResource()

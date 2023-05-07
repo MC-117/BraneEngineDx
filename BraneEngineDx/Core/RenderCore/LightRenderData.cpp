@@ -22,6 +22,7 @@ void LightRenderData::setLight(Light* light)
 		mainLightData.direction = directLight->getForward(WORLD);
 		mainLightData.intensity = directLight->intensity;
 		mainLightData.worldToLightView = directLight->getWorldToLightViewMatrix();
+		mainLightData.viewOriginToLightView = directLight->getViewOriginToLightViewMatrix();
 		mainLightData.viewToLightClip = directLight->getViewToLightClipMatrix();
 		mainLightData.worldToLightClip = directLight->getWorldToLightClipMatrix();
 		mainLightData.shadowBias = directLight->getShadowBias();

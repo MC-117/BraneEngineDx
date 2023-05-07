@@ -63,14 +63,14 @@ void main(uint tid : SV_DispatchThreadID)
             insData.localExtent,
             -projData.worldCenter,
             insData.localToWorld,
-            projData.worldToClip);
+            projData.viewOriginToClip);
         
         if (cullData.visiable) {
             const int mipCount = viewInfo.mipCount;
             uint baseFlagMask = hasMove(insData) ? VSM_ALLOCATED_FLAG : VSM_DYNAMIC_UNCACHED_FLAG;
 
             for (int mipLevel = 0; mipLevel < mipCount; mipLevel++) {
-                uint mipViewIndex = mipLevel * viewCount + mipLevel;
+                uint mipViewIndex = mipLevel * viewCount + viewIndex;
                 ShadowViewInfo mipViewInfo = shadowViewInfos[mipViewIndex];
                 uint vsmID = mipViewInfo.vsmID;
                 ScreenRect rect = getScreenRect(mipViewInfo.viewRect, cullData, 4);

@@ -63,6 +63,11 @@ Matrix4f DirectLight::getWorldToLightViewMatrix() const
 	return worldToLightViewMatrix;
 }
 
+Matrix4f DirectLight::getViewOriginToLightViewMatrix() const
+{
+	return viewOriginToLightViewMatrix;
+}
+
 Matrix4f DirectLight::getViewToLightClipMatrix() const
 {
 	return viewToLightClipMatrix;
@@ -117,6 +122,7 @@ void DirectLight::afterTick()
 	shadowData.cameraData.viewMatInv = vmatInv;
 	Matrix4f vomat = Camera::lookAt(Vector3f::Zero(), lightFW, lightUW);
 	Matrix4f vomatInv = vomat.inverse();
+	viewOriginToLightViewMatrix = vomat;
 	shadowData.cameraData.viewOriginMat = vomat;
 	shadowData.cameraData.viewOriginMatInv = vomatInv;
 	shadowData.cameraData.cameraLoc = lightPos;

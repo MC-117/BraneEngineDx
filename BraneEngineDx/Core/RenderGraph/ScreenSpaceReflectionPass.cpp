@@ -39,6 +39,7 @@ void ScreenSpaceReflectionPass::prepare()
 			resolveMaterialRenderData.create();
 		}
 	}
+	outputTextures.clear();
 }
 
 void ScreenSpaceReflectionPass::execute(IRenderContext& context)

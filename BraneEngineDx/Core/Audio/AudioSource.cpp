@@ -1,5 +1,6 @@
 #include "AudioSource.h"
 #include "../Asset.h"
+#include "../Console.h"
 #include <fstream>
 
 #ifdef AUDIO_USE_OPENAL
@@ -86,7 +87,7 @@ AudioData::~AudioData()
 	unload();
 }
 
-bool AudioData::isLoad()
+bool AudioData::isLoad() const
 {
 	return abo != AL_NONE;
 }
@@ -143,8 +144,6 @@ bool AudioData::load(const string & file)
 
 	is.close();
 
-	if (abo == AL_NONE)
-		alGenBuffers(1, &abo);
 	reload();
 
 	Vector2i loopPoint;
@@ -155,26 +154,46 @@ bool AudioData::load(const string & file)
 	return abo != AL_NONE;
 }
 
+int getALFormat(int format, int channels, int bitsPerSample)
+{
+	switch (format)
+	{
+	case WAVE_FORMAT_PCM:
+		if (channels == 1) {
+			if (bitsPerSample == 8)
+				return AL_FORMAT_MONO8;
+			else if (bitsPerSample == 16)
+				return AL_FORMAT_MONO16;
+		}
+		else if (channels == 2) {
+			if (bitsPerSample == 8)
+				return AL_FORMAT_STEREO8;
+			else if (bitsPerSample == 16)
+				return AL_FORMAT_STEREO16;
+		}
+		break;
+	case WAVE_FORMAT_IEEE_FLOAT:
+		if (bitsPerSample == 32) {
+			if (channels == 1)
+				return AL_FORMAT_MONO_FLOAT32;
+			else if (channels == 2)
+				return AL_FORMAT_STEREO_FLOAT32;
+		}
+		break;
+	}
+	throw runtime_error("Unknown Format");
+}
+
 void AudioData::reload()
 {
-	if (wave.data.empty() || abo == AL_NONE)
+	if (wave.data.empty())
 		return;
-	if (wave.format.channels == 1) {
-		if (wave.format.bitsPerSample == 8) {
-			alBufferData(abo, AL_FORMAT_MONO8, wave.data.data(), wave.data.size(), wave.format.sampleRate);
-		}
-		else {
-			alBufferData(abo, AL_FORMAT_MONO16, wave.data.data(), wave.data.size(), wave.format.sampleRate);
-		}
-	}
-	else {
-		if (wave.format.bitsPerSample == 8) {
-			alBufferData(abo, AL_FORMAT_STEREO8, wave.data.data(), wave.data.size(), wave.format.sampleRate);
-		}
-		else {
-			alBufferData(abo, AL_FORMAT_STEREO16, wave.data.data(), wave.data.size(), wave.format.sampleRate);
-		}
-	}
+	if (abo == AL_NONE)
+		alGenBuffers(1, &abo);
+	alBufferData(abo, getALFormat(wave.format.format, wave.format.channels, wave.format.bitsPerSample),
+		wave.data.data(), wave.data.size(), wave.format.sampleRate);
+	if (ALint err = alGetError())
+		Console::error("Error Calling alBufferData: %d", err);
 }
 
 void AudioData::unload()
@@ -184,7 +203,7 @@ void AudioData::unload()
 	wave.reset();
 }
 
-unsigned int AudioData::getBuffer()
+unsigned int AudioData::getBuffer() const
 {
 	return abo;
 }

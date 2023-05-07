@@ -14,7 +14,7 @@ bool AudioWave::loadFromStream(istream& is)
 
 	uint32_t fileSize = header.size + 8;
 
-	while (is.tellg() < fileSize) {
+	while (!is.eof() && is.tellg() < fileSize) {
 		Chunk chunk;
 		readStream(is, chunk);
 		swapBytes(chunk.id, sizeof(chunk.id));

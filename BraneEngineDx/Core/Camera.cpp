@@ -239,8 +239,8 @@ bool Camera::deserialize(const SerializationInfo& from)
 	SColor color;
 	from.get("clearColor", color);
 	clearColor = color;
+	cameraRender.createDefaultPostProcessGraph();
 	if (from.subfeilds.find("postProcessingGraph") != from.subfeilds.end()) {
-		cameraRender.createDefaultPostProcessGraph();
 		from.get("postProcessingGraph", *cameraRender.graph);
 	}
 	return true;

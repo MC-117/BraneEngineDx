@@ -580,7 +580,6 @@
     <ClInclude Include="Core\Terrain\TerrainGeometry.h" />
     <ClInclude Include="Core\Terrain\TerrainGeometryEditor.h" />
     <ClInclude Include="Core\Terrain\TerrainRender.h" />
-    <ClInclude Include="Core\Test\GPUBufferTest.h" />
     <ClInclude Include="Core\TextureCube.h" />
     <ClInclude Include="Core\Timeline\AnimationDataTrackEditor.h" />
     <ClInclude Include="Core\Timeline\AnimationPlayable.h" />
@@ -1096,7 +1095,6 @@
     <ClCompile Include="Core\Terrain\TerrainGeometry.cpp" />
     <ClCompile Include="Core\Terrain\TerrainGeometryEditor.cpp" />
     <ClCompile Include="Core\Terrain\TerrainRender.cpp" />
-    <ClCompile Include="Core\Test\GPUBufferTest.cpp" />
     <ClCompile Include="Core\Texture.cpp" />
     <ClCompile Include="Core\Texture2D.cpp" />
     <ClCompile Include="Core\TextureCube.cpp" />

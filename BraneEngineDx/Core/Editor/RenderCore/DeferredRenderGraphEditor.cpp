@@ -1,5 +1,6 @@
 #include "DeferredRenderGraphEditor.h"
 #include "../../Profile/ProfileCore.h"
+#include "../../GUI/GUIUtility.h"
 
 RegistEditor(DeferredRenderGraph);
 
@@ -12,13 +13,33 @@ void DeferredRenderGraphEditor::setInspectedObject(void* object)
 void DeferredRenderGraphEditor::onRenderGraphGUI(EditorInfo& info)
 {
 	ImGui::Checkbox("EnablePreDepth", &deferredRenderGraph->enablePreDepthPass);
+	ImGui::BeginGroupPanel("VSM");
 	bool enableVSM = VirtualShadowMapConfig::isEnable();
 	if (ImGui::Checkbox("EnableVSM", &enableVSM)) {
 		VirtualShadowMapConfig::setEnable(enableVSM);
-		if (enableVSM)
-			ProfilerManager::instance().setNextCapture();
+		/*if (enableVSM)
+			ProfilerManager::instance().setNextCapture();*/
 	}
-	ImGui::Checkbox("EnableVSMDebug", &VirtualShadowMapConfig::instance().debugView);
+
+	VirtualShadowMapConfig& config = VirtualShadowMapConfig::instance();
+	const char* debugViewModeNames[] = {
+		"None",
+		"ClipmapLevel",
+		"Clipmap"
+	};
+	if (ImGui::BeginCombo("VSMDebugViewMode", debugViewModeNames[config.debugViewMode])) {
+		for (int i = 0; i < VirtualShadowMapConfig::DebugViewMode::Num; i++) {
+			if (ImGui::Selectable(debugViewModeNames[i], i == config.debugViewMode)) {
+				config.debugViewMode = i;
+			}
+		}
+		ImGui::EndCombo();
+	}
+	ImGui::BeginDisabled(config.debugViewMode != VirtualShadowMapConfig::DebugViewMode::Clipmap);
+	ImGui::DragInt("VSMID", &config.debugVSMID, 1, 0, config.lastClipmapLevel - config.firstClipmapLevel);
+	ImGui::EndDisabled();
+	ImGui::EndGroupPanel();
+	
 	ImGui::Checkbox("EnableSSR", &deferredRenderGraph->ssrPass.enable);
 	RenderGraphEditor::onRenderGraphGUI(info);
 }

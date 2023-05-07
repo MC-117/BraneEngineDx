@@ -52,9 +52,9 @@ void main(uint2 tid : SV_DispatchThreadID)
                         uint invalidationFlags = prevMetaData.flags >> VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT;
                         bool isValid = invalidationFlags == 0;
                         if (isValid) {
-                            resultPageTable = vsmEncodePageTable(pageAddress);
+                            resultPageTable = vsmEncodePageTable(physAddress);
                             resultPageFlags = prevFlags & ~(VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG);
-							resultPageFlags = resultPageFlags | (isValid ? 0 : VSM_DYNAMIC_UNCACHED_FLAG);
+							resultPageFlags = resultPageFlags | ((!projData.uncached) ? 0 : VSM_DYNAMIC_UNCACHED_FLAG);
 
                             const uint physFlags = projData.uncached ? VSM_PHYSICAL_FLAG_VIEW_UNCACHED : 0U;
 

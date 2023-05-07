@@ -1,0 +1,34 @@
+#material
+Count vsmID: -1
+#localsize 8 8 1
+#compute debug
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 pixel : SV_DispatchThreadID)
+{
+    int vsmID = passID;
+	if (any(pixel >= VSM_MAX_SIZE) || vsmID < 0)
+        return;
+    float3 outColor = float3(1, 1, 0);
+    float3 blackColor = float3(0, 0, 0);
+    float2 uv = pixel / float(VSM_MAX_SIZE);
+
+    VSMProjData projData = getVSMProjData(vsmID);
+    if (projData.lightType != VSM_DirectLight)
+        outColor = blackColor;
+    else {
+        uint2 basePage = uint2(uv * VSM_L0_PAGES);
+	    VSMPhysPage physPage = vsmGetPhysicalPage(calcPageOffset(vsmID, 0, basePage));
+        uint2 virtualTexelAddress = uint2(uv * float(calcLevelTexels(0)));
+        uint2 physTexelAddress = 
+				physPage.physAddress * VSM_PAGE_SIZE +
+				(virtualTexelAddress & VSM_PAGE_SIZE_MASK);
+        float depth = vsmSamplePhysDepth(physTexelAddress);
+        if (physPage.isAnyLODValid) {
+            outColor = float3(0, depth, 0);
+        }
+    }
+
+    outDebugBuffer[pixel] = float4(outColor, 1.0f);
+}

@@ -32,6 +32,7 @@ void VirtualShadowMapRenderData::upload()
 
 void VirtualShadowMapRenderData::clean()
 {
+	intanceIndexArray.clean();
 	shadowMapArray.clean();
 	manager.swapFrameData(shadowMapArray);
 }

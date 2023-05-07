@@ -12,6 +12,7 @@ struct Vst2Config
     float sampleRate;
     int blockSize;
     int bitsPerSample;
+    int streamOutRingBufferCount;
 
     Vst2Config();
     static Vst2Config& get();
@@ -26,6 +27,9 @@ public:
 
     virtual LRESULT WndProc(UINT msg, WPARAM wParam, LPARAM lParam);
 protected:
+    virtual void updateFromWindowRect(bool active);
+    virtual void updateFromClientRect(bool active);
+
     virtual void onLoop();
 };
 
@@ -40,15 +44,16 @@ public:
     void resize(int channels, int blockSize);
     void setSlient();
     void release();
-
-    void toPCM(void* data, int BPS, float scale = 1);
+    
+    void toFloat(void* data);
+    void toPCM(void* data, int BPS);
 protected:
-    void to8Bit(void* data, float scale);
-    void to16Bit(void* data, float scale);
-    void C1To8Bit(void* data, float scale);
-    void C2To8Bit(void* data, float scale);
-    void C1To16Bit(void* data, float scale);
-    void C2To16Bit(void* data, float scale);
+    void to8Bit(void* data);
+    void to16Bit(void* data);
+    void C1To8Bit(void* data);
+    void C2To8Bit(void* data);
+    void C1To16Bit(void* data);
+    void C2To16Bit(void* data);
 };
 
 class Vst2Plugin : public IMidiStateReceivable
@@ -78,6 +83,9 @@ public:
     const string& getName() const;
     Time getDuration() const;
 
+    const AudioData& getFrontBuffer() const;
+    const AudioData& getBackBuffer() const;
+
     bool load(const string& path);
 
     virtual void bindMidiState(MidiState& state);
@@ -89,6 +97,7 @@ public:
 
     bool openEditor();
     bool closeEditor();
+    void resizeEditorWindow(int width, int height);
 protected:
     string name;
     string path;
@@ -113,13 +122,13 @@ protected:
     VstSampleBuffer outSampleBuffer;
     float* rawInData;
     AudioData streamInData;
-    AudioData streamOutData0;
-    AudioData streamOutData1;
-    AudioData* streamOutData;
+    AudioStreamRingBuffer streamOutRingBuffer;
     AudioStreamSource streamSource;
 
     void onFetchMidiMessage(MidiMessageType type, const MidiMessage& msg);
     void onThreadLoop(Time loopTime);
+
+    void getTimeInfo(VstTimeInfo& info) const;
 };
 
 typedef shared_ptr<Vst2Plugin> Vst2PluginPtr;

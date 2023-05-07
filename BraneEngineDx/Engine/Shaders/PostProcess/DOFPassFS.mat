@@ -48,11 +48,14 @@ static const float2 dofKernel[57] = {
     float2(1.159516, -0.951590), float2(1.322882, -0.707095), float2(1.435411, -0.435427), float2(1.492777, -0.147026)
 };
 
-float getDOFFactor(float2 UV)
+float getViewDepth(float2 UV)
 {
-    float realDepth = 2.0 * camData.zNear * camData.zFar / (camData.zFar + camData.zNear -
-        (2.0 * SAMPLE_TEX_LOD(depthMap, UV, 0).r - 1.0) * (camData.zFar - camData.zNear));
-    return clamp(1 - (focusDistance / realDepth), -2, 1);
+    return depthFromNDCToView(SAMPLE_TEX_LOD(depthMap, UV, 0));
+}
+
+float getDOFFactor(float viewDepth)
+{
+    return clamp(1 - (focusDistance / viewDepth), -2, 1);
 }
 
 FragmentOut DEFAULT_SCREEN_MAIN
@@ -60,24 +63,29 @@ FragmentOut DEFAULT_SCREEN_MAIN
 	FragmentOut fout;
 	if (passID == 0) {
         float weight = 0;
-        float3 c = Float3(0);
+        float3 color = Float3(0);
         int n = blurIter < 1 ? 1 : (blurIter < 2 ? 9 : (blurIter < 3 ? 25 : 57));
-        float centerFactor = getDOFFactor(fin.UV);
-        for (int i = 0; i < n; i++) {
-            float2 off = dofKernel[i] * blurRadius;
-            off /= camData.viewSize;
-            float2 uv = fin.UV + off * centerFactor;
-            uv = clamp(uv, Float2(0), Float2(1));
-            float factor = getDOFFactor(uv);
-            float3 cc = SAMPLE_TEX_LOD(screenMap, uv, 0).rgb;
-            float w = length(cc) + 0.1;
-            weight += w;
-            c += cc * w;
+        float centerDepth = getViewDepth(fin.UV);
+        float centerFactor = getDOFFactor(centerDepth);
+        if (centerFactor != 0) {
+            for (int i = 0; i < n; i++) {
+                float2 off = dofKernel[i] * blurRadius;
+                off /= camData.viewSize;
+                float2 uv = fin.UV + off * centerFactor;
+                uv = clamp(uv, Float2(0), Float2(1));
+                float depth = getViewDepth(uv);
+                if ((centerFactor > 0 ^ depth > focusDistance))
+                    continue;
+                float3 sampleColor = SAMPLE_TEX_LOD(screenMap, uv, 0).rgb;
+                float w = length(sampleColor) + 0.1;
+                weight += w;
+                color += sampleColor * w;
+            }
         }
         if (weight == 0)
             fout.FragColor.rgb = SAMPLE_TEX_LOD(screenMap, fin.UV, 0).rgb;
         else
-            fout.FragColor.rgb = c / weight;//((1 + n) * n);
+            fout.FragColor.rgb = color / weight;//((1 + n) * n);
         fout.FragColor.a = 1.0;
     }
     return fout;

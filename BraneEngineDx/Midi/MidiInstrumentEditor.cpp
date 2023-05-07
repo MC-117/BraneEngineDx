@@ -36,6 +36,21 @@ void MidiInstrumentEditor::onMidiDeviceGUI(EditorInfo& info)
 		}
 		ImGui::SameLine();
 		ImGui::Text("Time(%s) Path(%s)", vst2Plugin->getDuration().toString().c_str(), vst2Plugin->getPath().c_str());
+
+		if (ImPlot::BeginPlot("WavPlot", { -1, 0 }, ImPlotFlags_NoLegend | ImPlotFlags_NoTitle)) {
+			const vector<char>& data = vst2Plugin->getBackBuffer().wave.data;
+			int channels = vst2Plugin->getBackBuffer().getChannels();
+			int frameCount = data.size() / channels;
+			ImPlot::SetupAxesLimits(0, frameCount, 0, 255, ImPlotCond_Always);
+			ImPlotAxisFlags axisFlags = ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoLabel;
+			ImPlot::SetupAxes("Frame", "Amp", axisFlags, axisFlags);
+			for (int i = 0; i < channels; i++) {
+				ImGui::PushID(i);
+				ImPlot::PlotLine("##Channel", (const unsigned char*)data.data(), frameCount, 1.0, 0.0, ImPlotLineFlags_None, sizeof(char) * i, sizeof(char)* channels);
+				ImGui::PopID();
+			}
+			ImPlot::EndPlot();
+		}
 	}
 	else {
 		if (ImGui::Button("Load VST2 Plugin")) {
