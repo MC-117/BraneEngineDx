@@ -505,7 +505,7 @@ void VirtualShadowMapManager::bindPrevFrameData(IRenderContext& context)
 
 void VirtualShadowMapManager::processInvalidations(IRenderContext& context, MeshTransformRenderData& transformData)
 {
-	if (!transformData.needUpdate && transformData.transformUploadIndexBuffer.empty())
+	if (prevFrameData == NULL || (!transformData.needUpdate && transformData.transformUploadIndexBuffer.empty()))
 		return;
 
 	int updateCount = transformData.meshTransformDataArray.getUpdateCount();
@@ -522,6 +522,7 @@ void VirtualShadowMapManager::processInvalidations(IRenderContext& context, Mesh
 	context.bindBufferBase(prevFrameData->pageTable.getVendorGPUBuffer(), VirtualShadowMapShaders::pageTableName);
 	context.bindBufferBase(prevFrameData->pageFlags.getVendorGPUBuffer(), VirtualShadowMapShaders::pageFlagsName);
 	context.bindBufferBase(prevFrameData->projData.getVendorGPUBuffer(), VirtualShadowMapShaders::projDataName);
+	context.bindBufferBase(prevFrameData->pageRect.getVendorGPUBuffer(), VirtualShadowMapShaders::pageRectName);
 	context.bindBufferBase(invalidationInfoBuffer.getVendorGPUBuffer(), VirtualShadowMapShaders::invalidationInfoName);
 	context.bindBufferBase(prevFrameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::outPrevPhysPageMetaDataName, { true });
 
@@ -828,7 +829,7 @@ void VirtualShadowMapArray::buildPageAllocations(
 	context.bindBufferBase(frameData->pageFlags.getVendorGPUBuffer(), VirtualShadowMapShaders::outPageFlagsName, { true });
 	context.bindBufferBase(freePhysPages.getVendorGPUBuffer(), VirtualShadowMapShaders::outFreePhysPagesName, { true });
 	context.bindBufferBase(frameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::outPhysPageMetaDataName, { true });
-	context.dispatchCompute(ceil(config.pageTableSize / (float)VirtualShadowMapShaders::allocateNewPageMappingsProgramDim.x()), shadowMapCount, 1);
+	context.dispatchCompute(ceil(curFrameVSMInfo.maxPhysPages / (float)VirtualShadowMapShaders::allocateNewPageMappingsProgramDim.x()), 1, 1);
 
 	context.unbindBufferBase(VirtualShadowMapShaders::outPageFlagsName);
 	context.unbindBufferBase(VirtualShadowMapShaders::outPhysPageMetaDataName);
@@ -1027,7 +1028,7 @@ VirtualShadowMapArray::CullingBatchInfo* VirtualShadowMapArray::fetchCullingBatc
 	}
 	info->data.firstView = 0;
 	info->data.viewCount = 0;
-	info->data.maxPerInstanceCmdCount = VirtualShadowMapConfig::maxPerInstanceCmdCount;
+	info->data.maxPerInstanceCmdCount = 0;
 	info->data.frame = Time::frames();
 	cullingBatchInfos.push_back(info);
 	return info;
@@ -1057,6 +1058,7 @@ void VirtualShadowMapArray::buildCullingBatchInfos(const LightRenderData& lightD
 				int drawInstanceCount = batch.drawInstanceInfos.size();
 				int indirectDrawCount = batch.indirectCommands.size();
 				int maxInstanceDrawPerPass = drawInstanceCount * VirtualShadowMapConfig::maxPerInstanceCmdCount;
+				cullingBatchInfo->data.maxPerInstanceCmdCount = maxInstanceDrawPerPass;
 				cullingBatchInfo->data.instanceCount = drawInstanceCount;
 				cullingBatchInfo->drawInstanceInfos.uploadData(cullingBatchInfo->data.instanceCount,
 					(void*)batch.drawInstanceInfos.data());

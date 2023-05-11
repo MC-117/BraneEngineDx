@@ -133,6 +133,7 @@ void MeshTransformRenderData::upload()
 	transformBuffer.resize(dataSize);
 	if (meshTransformDataArray.updateAll) {
 		transformBuffer.uploadData(meshTransformDataArray.batchCount, meshTransformDataArray.transformDatas.data());
+		meshTransformDataArray.updateAll = false;
 	}
 	else {
 		unsigned int uploadSize = meshTransformDataArray.uploadTransformDatas.size();
