@@ -1,5 +1,7 @@
 #adapter name pbr_fragment
 #fragment
+#condition depth
+#condition depth.vsm
 #condition deferred
 #condition lighting
 #condition lighting.vsm
@@ -16,6 +18,7 @@ uniform float roughness;
 uniform float ao;
 uniform float normalScale;
 uniform float emission;
+uniform float clipValue;
 DEF_MAT_END
 
 #if defined(DEFERRED_SHADER_FEATURE)
@@ -39,26 +42,18 @@ DEF_TEX2D(emissionMap, 5);
 DEF_TEX2D(depthMap, 6);
 #endif
 
-#ifdef DEFERRED_SHADER_FEATURE
-FS_DEF_OUT_GBUFFER
-#else
-FS_DEF_OUT_BEGIN
-FS_DEF_OUT_COLOR(FragColor, 0);
-//FS_DEF_OUT_COLOR(ssnMask, 0);
-FS_DEF_OUT_END
-#endif
-
 #include "../lib/Surface_Def.hmat"
 
-#if defined(VSM_SHADER_FEATURE)
-#include "../lib/VirtualShadowMap_Def.hmat"
-#endif
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
 
 #ifndef DEFERRED_SHADER_FEATURE
 float getShadow(in DirectLight directLight, in Surface surf)
 {
     #if defined(VSM_SHADER_FEATURE)
-    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos);
+    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos,
+        surf.Normal, directLight.shadowBias.y);
     #else
     return ShadowCalculation(depthMap, depthMapSampler,
         surf.WorldPos, surf.Normal, directLight);
@@ -70,6 +65,11 @@ float getShadow(in DirectLight directLight, in Surface surf)
 FragmentOut SURFACE_MAIN
 {
     FragmentOut fout;
+
+    #ifdef DEPTH_SHADER_FEATURE
+    float alpha = SAMPLE_TEX(colorMap, fin.TexCoords).a * baseColor.a;
+    outputDepth(fin, alpha, clipValue);
+    #else
     Surface surf = getSurface(fin);
 
     #ifndef LIGHTING_SHADER_FEATURE
@@ -111,6 +111,8 @@ FragmentOut SURFACE_MAIN
     color = PBR_ColorCorrection(color) + (emission * baseColor).rgb * emissionColor;
 
     fout.FragColor = float4(color, surf.albedo.a);
+    #endif
+
     #endif
     return fout;
 }

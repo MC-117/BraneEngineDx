@@ -1,8 +1,14 @@
 #adapter name default
 #vertex
+#condition depth
+#condition depth.vsm
 #condition skeleton
+#condition skeleton.depth
+#condition skeleton.depth.vsm
 #condition skeleton.morph
-#include "../lib/TransformData_def.hmat"
+#condition skeleton.morph.depth
+#condition skeleton.morph.depth.vsm
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/MeshData_Def.hmat"
@@ -15,17 +21,33 @@
 #define VERTEX_MAIN MESH_MAIN
 #endif
 
-DefaultVertexOut VERTEX_MAIN
-{
-    DefaultVertexOut vout;
-#ifdef SKELETON_SHADER_FEATURE
-    float4x4 fm = getFinalMat(ins[0], weights, boneId);
+#if defined(DEPTH_SHADER_FEATURE) && defined(VSM_SHADER_FEATURE)
+#include "../lib/VirtualShadowMap_Def.hmat"
+#define VERTEX_OUT DefaultVSMVertexOut
 #else
-    float4x4 fm = getFinalMat(ins[0]);
+#define VERTEX_OUT DefaultVertexOut
+#endif
+
+VERTEX_OUT VERTEX_MAIN
+{
+    VERTEX_OUT vout;
+
+#if defined(DEPTH_SHADER_FEATURE) && defined(VSM_SHADER_FEATURE)
+    uint globalInsID = ins[0] + localInsID;
+    uint objID = instanceIDs[globalInsID];
+#else
+    uint objID = ins[0];
+#endif
+    uint vextexBase = ins[1];
+
+#ifdef SKELETON_SHADER_FEATURE
+    float4x4 fm = getFinalMat(objID, weights, boneId);
+#else
+    float4x4 fm = getFinalMat(objID);
 #endif
 
 #ifdef MORPH_SHADER_FEATURE
-    uint vid = ins[1] + vertexID;
+    uint vid = vextexBase + vertexID;
     float3 _pos = morphPos(vid, pos);
     float3 _norm = morphNorm(vid, norm);
 #else
@@ -33,6 +55,20 @@ DefaultVertexOut VERTEX_MAIN
     float3 _norm = norm;
 #endif
 
+#if defined(DEPTH_SHADER_FEATURE) && defined(VSM_SHADER_FEATURE)
+    float4 _WorldPos = mul(float4(_pos, 1.0), fm);
+    vout.TransMat = fm;
+    vout.TexCoords = uv;
+    vout.TexCoords.y = 1 - vout.TexCoords.y;
+    vout.InstanceID = objID;
+    vout.viewIndex = pageInfo[globalInsID];
+    
+    transformToVirtualPage(vout.clipPos, vout.pageClipPos, vout.viewIndex, _WorldPos);
+#elif defined(DEPTH_SHADER_FEATURE)
+    vout.svPos = mul(mul(float4(pos, 1.0), fm, camData.pmat));
+    vout.LocalPos = pos;
+    vout.InstanceID = objID;
+#else
     float4 _WorldPos = mul(float4(_pos, 1.0), fm);
     vout.TransMat = fm;
     vout.svPos = mul(_WorldPos, camData.pmat);
@@ -44,10 +80,11 @@ DefaultVertexOut VERTEX_MAIN
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
     vout.InstanceID = ins[0];
+#endif
     return vout;
 }
 #vertex terrain
-#include "../lib/TransformData_def.hmat"
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/TerrainMeshData_Def.hmat"
 
 DefaultTerrainVertexOut TERRAIN_MAIN
@@ -78,7 +115,7 @@ DefaultTerrainVertexOut main(InputPatch<DefaultTerrainVertexOut, 4> patch, uint 
     return patch[i];
 }
 #tess_eval terrain
-#include "../lib/TransformData_def.hmat"
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/TerrainMeshData_Def.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/CameraData_Def.hmat"

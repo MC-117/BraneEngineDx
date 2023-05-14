@@ -40,6 +40,9 @@ Serializable* VirtualShadowMapConfig::instantiate(const SerializationInfo& from)
 
 bool VirtualShadowMapConfig::deserialize(const SerializationInfo& from)
 {
+	int enableValue = 0;
+	if (from.get("enable", enableValue))
+		enable = enableValue;
 	from.get("physPoolWidth", (int&)physPoolWidth);
 	from.get("maxPhysPages", (int&)maxPhysPages);
 	from.get("firstClipmapLevel", (int&)firstClipmapLevel);
@@ -56,6 +59,7 @@ bool VirtualShadowMapConfig::deserialize(const SerializationInfo& from)
 bool VirtualShadowMapConfig::serialize(SerializationInfo& to)
 {
 	serializeInit(this, to);
+	to.set("enable", (int)enable);
 	to.set("physPoolWidth", (int&)physPoolWidth);
 	to.set("maxPhysPages", (int&)maxPhysPages);
 	to.set("firstClipmapLevel", (int&)firstClipmapLevel);

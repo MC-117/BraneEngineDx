@@ -2,7 +2,7 @@
 #vertex
 #condition skeleton
 #condition skeleton.morph
-#include "../lib/TransformData_def.hmat"
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/MeshData_Def.hmat"
 #include "../lib/SkeletonMeshData_Def.hmat"

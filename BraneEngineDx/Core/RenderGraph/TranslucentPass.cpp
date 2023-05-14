@@ -2,6 +2,7 @@
 #include "../Utility/RenderUtility.h"
 #include "../Console.h"
 #include "../RenderCore/SurfaceBufferGetter.h"
+#include "../RenderCore/VirtualShadowMap/VirtualShadowMap.h"
 
 TranslucentSSRBinding::TranslucentSSRBinding()
 	: ssrInfoBuffer(GB_Constant, GBF_Struct, sizeof(SSRInfo))
@@ -40,13 +41,28 @@ void TranslucentSSRBinding::bind(IRenderContext& context)
 
 bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 {
+	const bool enableVSMDepthPass = VirtualShadowMapConfig::isEnable();
+
+	ShaderProgram* shader = NULL;
 	Enum<ShaderFeature> shaderFeature = command.getShaderFeature();
-	ShaderProgram* shader = command.material->getShader()->getProgram(shaderFeature);
+	if (enableVSMDepthPass) {
+		ShaderMatchRule matchRule;
+		matchRule.mainFlag = (ShaderMatchFlag)((int)ShaderMatchFlag::Strict | (int)ShaderMatchFlag::Fallback_Default);
+		matchRule.fragmentFlag = ShaderMatchFlag::Best;
+		Enum<ShaderFeature> vsmShaderFeature = shaderFeature;
+		vsmShaderFeature |= Shader_VSM;
+		shader = command.material->getShader()->getProgram(vsmShaderFeature, matchRule);
+		if (shader && !shader->shaderType.has(Shader_VSM))
+			shader = NULL;
+	}
 	if (shader == NULL) {
-		Console::warn("Shader %s don't have mode %s",
-			command.material->getShaderName().c_str(),
-			getShaderFeatureNames(shaderFeature).c_str());
-		return false;
+		shader = command.material->getShader()->getProgram(shaderFeature);
+		if (shader == NULL) {
+			Console::warn("Shader %s don't have mode %s",
+				command.material->getShaderName().c_str(),
+				getShaderFeatureNames(shaderFeature).c_str());
+			return false;
+		}
 	}
 
 	if (!shader->init())
@@ -86,6 +102,10 @@ bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 	task.materialData = materialRenderData;
 	task.meshData = meshData;
 	task.extraData = command.bindings;
+
+	if (enableVSMDepthPass) {
+		task.extraData.push_back(&command.sceneData->virtualShadowMapRenderData);
+	}
 
 	for (auto& cameraRenderData : command.sceneData->cameraRenderDatas) {
 		task.cameraData = cameraRenderData;

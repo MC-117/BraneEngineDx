@@ -1,6 +1,6 @@
 #adapter name position
 #vertex
-#include "../lib/TransformData_def.hmat"
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/MeshData_Def.hmat"
 
@@ -13,7 +13,7 @@ DefaultVertexOut MESH_MAIN
     return vout;
 }
 #vertex skeleton
-#include "../lib/TransformData_def.hmat"
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/SkeletonMeshData_Def.hmat"
 
@@ -26,7 +26,7 @@ DefaultVertexOut SKELETON_MAIN
     return vout;
 }
 #vertex skeleton morph
-#include "../lib/TransformData_def.hmat"
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/SkeletonMeshData_Def.hmat"
 #include "../lib/MorphData_def.hmat"
@@ -42,7 +42,7 @@ DefaultVertexOut SKELETON_MAIN
     return vout;
 }
 #vertex terrain
-#include "../lib/TransformData_def.hmat"
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/TerrainMeshData_Def.hmat"
 
 DefaultTerrainVertexOut TERRAIN_MAIN
@@ -73,7 +73,7 @@ DefaultTerrainVertexOut main(InputPatch<DefaultTerrainVertexOut, 4> patch, uint 
     return patch[i];
 }
 #tess_eval terrain
-#include "../lib/TransformData_def.hmat"
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/TerrainMeshData_Def.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/CameraData_Def.hmat"

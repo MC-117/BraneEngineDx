@@ -9,6 +9,7 @@
 #define FS_DEF_OUT_FLOAT(col, id) float col : SV_TARGET##id
 #define FS_DEF_OUT_COUNT(col, id) uint4 col : SV_TARGET##id
 #define FS_DEF_OUT_STENCIL(stencil) uint stencil : SV_StencilRef
+#define FS_DEF_OUT_DEPTH(depth) float depth : SV_DEPTH
 #define DEFAULT_FS_MAIN main(DefaultVertexOut fin)
 
 float3x3 cotangent(float3 N, float3 p, float2 uv)

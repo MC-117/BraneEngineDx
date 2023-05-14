@@ -13,6 +13,7 @@ Scalar highlightCutSmooth: 0.0
 Scalar rimCut: 0.8
 Scalar rimCutSmooth: 0.0
 Scalar normalScale: 1.0
+Scalar clipValue: 0.3333
 Texture aoMap: white
 Texture normalMap: black
 Texture depthMap: white

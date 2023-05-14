@@ -21,16 +21,11 @@ uniform float4 baseColor;
 DEF_MAT_END
 #endif
 
-#ifdef DEFERRED_SHADER_FEATURE
-FS_DEF_OUT_GBUFFER
-#else
-FS_DEF_OUT_BEGIN
-FS_DEF_OUT_COLOR(FragColor, 0);
-//FS_DEF_OUT_COLOR(ssnMask, 0);
-FS_DEF_OUT_END
-#endif
-
 #include "lib/Surface_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
 
 FragmentOut SURFACE_MAIN
 {

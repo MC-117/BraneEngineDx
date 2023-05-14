@@ -11,11 +11,9 @@ DEF_TEX2D_UINT(gBufferE, 4);
 
 #ifdef DEFERRED_SHADER_FEATURE
 #define FS_DEF_OUT_GBUFFER \
-FS_DEF_OUT_BEGIN \
 FS_DEF_OUT_COLOR(gBufferA, 0); \
 FS_DEF_OUT_FLOAT(gBufferB, 1); \
 FS_DEF_OUT_COLOR(gBufferC, 2); \
 FS_DEF_OUT_COLOR(gBufferD, 3); \
-FS_DEF_OUT_COUNT(gBufferE, 4); \
-FS_DEF_OUT_END
+FS_DEF_OUT_COUNT(gBufferE, 4);
 #endif

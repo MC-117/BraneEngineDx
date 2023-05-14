@@ -3,7 +3,7 @@
 #include "VirtualShadowMapClipmap.h"
 #include "../CameraRenderData.h"
 
-class VirtualShadowMapRenderData
+class VirtualShadowMapRenderData : public IRenderData
 {
 public:
 	LightRenderData& lightRenderData;
@@ -20,5 +20,6 @@ public:
 	void upload();
 	void clean();
 
+	virtual void bind(IRenderContext& context);
 	void bindForLighting(IRenderContext& context);
 };

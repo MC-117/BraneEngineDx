@@ -386,7 +386,7 @@ ShaderStage* ShaderAdapter::compileShaderStage(const Enum<ShaderFeature>& featur
 		string errorStr;
 		if (stage->compile(macroSet, code, errorStr) == 0) {
 			const char* shaderTypeName = ShaderStage::enumShaderStageType(stageType);
-			Console::log("%s Shader\n%s", shaderTypeName, addLineNum(code).c_str());
+			Console::log("%s Shader\n%s", shaderTypeName, addLineNum(stage->code).c_str());
 			Console::error("%s (%s Shader) compile failed:\n%s", name.c_str(), shaderTypeName, errorStr.c_str());
 		}
 	//}

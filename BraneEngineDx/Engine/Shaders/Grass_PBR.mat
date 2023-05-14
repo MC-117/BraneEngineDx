@@ -20,7 +20,7 @@ Texture colorMap: white
 Texture noiseMap: black
 Texture depthMap: white
 #vertex
-#include "lib/TransformData_def.hmat"
+#include "lib/TransformData_Def.hmat"
 #include "lib/CameraData_Def.hmat"
 #include "lib/Light_Def.hmat"
 #include "lib/MeshData_Def.hmat"
@@ -124,22 +124,22 @@ DEF_TEX2D(noiseMap, 1);
 DEF_TEX2D(depthMap, 2);
 #endif
 
-#ifdef DEFERRED_SHADER_FEATURE
-FS_DEF_OUT_GBUFFER
-#else
-FS_DEF_OUT_BEGIN
-FS_DEF_OUT_COLOR(FragColor, 0);
-//FS_DEF_OUT_COLOR(ssnMask, 0);
-FS_DEF_OUT_END
-#endif
-
 #include "lib/Surface_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
 
 #ifndef DEFERRED_SHADER_FEATURE
 float getShadow(in DirectLight directLight, in Surface surf)
 {
+    #if defined(VSM_SHADER_FEATURE)
+    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos,
+        surf.Normal, directLight.shadowBias.y);
+    #else
     return ShadowCalculation(depthMap, depthMapSampler,
         surf.WorldPos, surf.Normal, directLight);
+    #endif
 }
 #endif
 

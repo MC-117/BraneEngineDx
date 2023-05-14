@@ -12,6 +12,7 @@ Scalar normalScale: 1
 Texture normalMap: black
 Scalar emission: 0
 Texture emissionMap: white
+Scalar clipValue: 0.3333
 Texture depthMap: white
 #vertex use default
 #fragment use pbr_fragment

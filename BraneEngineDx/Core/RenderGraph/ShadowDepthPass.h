@@ -7,5 +7,5 @@ class ShadowDepthPass : public MeshPass
 public:
 	virtual bool setRenderCommand(const IRenderCommand& cmd);
 protected:
-	Material* material;
+	Material* defaultDepthMaterial;
 };

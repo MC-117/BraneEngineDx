@@ -5,14 +5,27 @@
 
 bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 {
-	if (material == NULL) {
-		material = getAssetByPath<Material>("Engine/Shaders/Depth.mat");
+	if (defaultDepthMaterial == NULL) {
+		defaultDepthMaterial = getAssetByPath<Material>("Engine/Shaders/Depth.mat");
 	}
-	if (material == NULL)
+	if (defaultDepthMaterial == NULL)
 		return false;
 	const MeshRenderCommand* meshRenderCommand = dynamic_cast<const MeshRenderCommand*>(&cmd);
 	if (meshRenderCommand == NULL || !cmd.canCastShadow())
 		return false;
+
+	ShaderMatchRule matchRule;
+	matchRule.fragmentFlag = ShaderMatchFlag::Best;
+	Material* material = cmd.material;
+	Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
+	ShaderProgram* program = material->getShader()->getProgram((unsigned int)shaderFeature | ShaderFeature::Shader_Depth, matchRule);
+	if (program == NULL || !program->init()) {
+		material = defaultDepthMaterial;
+		program = material->getShader()->getProgram(shaderFeature);
+		if (program == NULL || !program->init())
+			return false;
+	}
+
 	MeshTransformIndex* transformIndex = cmd.sceneData->setMeshPartTransform(
 		meshRenderCommand->mesh, material, meshRenderCommand->instanceID, meshRenderCommand->instanceIDCount);
 
@@ -26,10 +39,6 @@ bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	command.mainLightData = &cmd.sceneData->lightDataPack.mainLightData;
 	command.transformIndex = transformIndex;
 	command.bindings = cmd.bindings;
-
-	ShaderProgram* program = material->getShader()->getProgram(cmd.getShaderFeature());
-	if (program == NULL || !program->init())
-		return false;
 
 	MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(material->getRenderData());
 	if (materialRenderData == NULL)

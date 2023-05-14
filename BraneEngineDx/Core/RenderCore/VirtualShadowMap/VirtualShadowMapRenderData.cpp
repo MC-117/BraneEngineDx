@@ -37,6 +37,11 @@ void VirtualShadowMapRenderData::clean()
 	manager.swapFrameData(shadowMapArray);
 }
 
+void VirtualShadowMapRenderData::bind(IRenderContext& context)
+{
+	bindForLighting(context);
+}
+
 void VirtualShadowMapRenderData::bindForLighting(IRenderContext& context)
 {
 	if (shadowMapArray.isAllocated()) {

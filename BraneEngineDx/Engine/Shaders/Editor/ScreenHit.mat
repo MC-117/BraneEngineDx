@@ -2,7 +2,6 @@
 #material
 #vertex use default
 #fragment
-#pragma debug
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/Basic_FS_Lib.hmat"
 

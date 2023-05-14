@@ -1,7 +1,6 @@
 #material
 #localsize 32 32 1
 #compute
-#pragma debug
 #include "../lib/Basic_FS_Lib.hmat"
 #include "../lib/SH_Lib.hmat"
 

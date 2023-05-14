@@ -14,11 +14,19 @@ bool VirtualShadowMapDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	if (!cmd.canCastShadow())
 		return true;
 
-	ShaderProgram* program = vsmMaterial->getShader()->getProgram(cmd.getShaderFeature());
-	if (program == NULL || !program->init())
-		return false;
+	ShaderMatchRule matchRule;
+	matchRule.fragmentFlag = ShaderMatchFlag::Best;
+	Material* material = cmd.material;
+	Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
+	ShaderProgram* program = material->getShader()->getProgram((unsigned int)shaderFeature | ShaderFeature::Shader_Depth | ShaderFeature::Shader_VSM, matchRule);
+	if (program == NULL || !program->init()) {
+		material = vsmMaterial;
+		program = material->getShader()->getProgram(shaderFeature);
+		if (program == NULL || !program->init())
+			return false;
+	}
 
-	MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(vsmMaterial->getRenderData());
+	MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(material->getRenderData());
 	if (materialRenderData == NULL)
 		return false;
 	if (materialRenderData->usedFrame < (long long)Time::frames()) {

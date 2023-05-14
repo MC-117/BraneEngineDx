@@ -2,7 +2,6 @@
 #localsize 8 8 1
 #compute
 #condition debug
-#pragma debug
 #include "../../lib/VirtualShadowMap_Def.hmat"
 
 cbuffer GenPageFlagInfo

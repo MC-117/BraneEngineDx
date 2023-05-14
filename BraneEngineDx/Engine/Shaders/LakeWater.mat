@@ -13,7 +13,6 @@ Texture waterNormalMap: black
 #fragment
 #condition default SSR
 #condition vsm SSR
-#pragma debug
 #include "lib/Light_Def.hmat"
 #include "lib/CameraData_Def.hmat"
 
@@ -36,21 +35,17 @@ DEF_TEX2D_AUTO(waterNormalMap);
 DEF_TEX2D_AUTO(depthMap);
 #endif
 
-FS_DEF_OUT_BEGIN
-FS_DEF_OUT_COLOR(FragColor, 0);
-//FS_DEF_OUT_COLOR(ssnMask, 0);
-FS_DEF_OUT_END
-
 #include "lib/Surface_Def.hmat"
 
-#if defined(VSM_SHADER_FEATURE)
-#include "lib/VirtualShadowMap_Def.hmat"
-#endif
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
 
 float getShadow(in DirectLight directLight, in Surface surf)
 {
     #if defined(VSM_SHADER_FEATURE)
-    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos);
+    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos,
+        surf.Normal, directLight.shadowBias.y);
     #else
     return ShadowCalculation(depthMap, depthMapSampler,
         surf.WorldPos, surf.Normal, directLight);

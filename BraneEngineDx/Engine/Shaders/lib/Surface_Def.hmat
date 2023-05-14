@@ -2,7 +2,12 @@
 #include "ScreenPass_Def.hmat"
 #include "CameraData_Def.hmat"
 
+#if defined(VSM_SHADER_FEATURE)
+#include "VirtualShadowMap_Def.hmat"
+#endif
+
 #define REFLECTION_MASK 1
+
 
 struct Surface
 {
@@ -57,6 +62,24 @@ Surface getSurface(in ScreenVertexOut fin)
     surf.mask = E.a;
     return surf;
 }
+#elif defined(DEPTH_SHADER_FEATURE) && defined(VSM_SHADER_FEATURE)
+#define SURFACE_MAIN DEFAULT_VSM_MAIN
+
+Surface getSurface(in DefaultVSMVertexOut fin)
+{
+    Surface surf;
+    surf.albedo = float4(1, 1, 1, 1);
+    surf.WorldPos = float3(0, 0, 0);
+    surf.depth = fin.clipPos.z;
+    surf.roughness = 0.5f;
+    surf.Normal = float3(0, 0, 0);
+    surf.metallic = 0.5f;
+    surf.TexCoords = fin.TexCoords;
+    surf.ao = 1.0f;
+    surf.matID = -1;
+    surf.mask = 0;
+    return surf;
+}
 #else
 #define SURFACE_MAIN DEFAULT_FS_MAIN
 
@@ -74,5 +97,33 @@ Surface getSurface(in DefaultVertexOut fin)
     surf.matID = materialID;
     surf.mask = 0;
     return surf;
+}
+#endif
+
+#if defined(DEFERRED_SHADER_FEATURE)
+
+#define FS_DEF_OUT_SURFACE FS_DEF_OUT_GBUFFER
+
+#elif defined(DEPTH_SHADER_FEATURE)
+
+#define FS_DEF_OUT_SURFACE
+
+#else
+
+#define FS_DEF_OUT_SURFACE FS_DEF_OUT_COLOR(FragColor, 0);
+//FS_DEF_OUT_COLOR(ssnMask, 0);
+
+#endif
+
+#if defined(DEPTH_SHADER_FEATURE) && defined(VSM_SHADER_FEATURE)
+void outputDepth(in DefaultVSMVertexOut fin, float alpha, float clipValue)
+{
+    clip(alpha - clipValue);
+    writeVSMDepth(fin);
+}
+#else
+void outputDepth(in DefaultVertexOut fin, float alpha, float clipValue)
+{
+    clip(alpha - clipValue);
 }
 #endif

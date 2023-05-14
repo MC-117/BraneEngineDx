@@ -10,6 +10,7 @@ Scalar shadowCutSmooth: 0.0
 Scalar roughness: 1
 Scalar metallic: 1
 Scalar emission: 1
+Scalar clipValue: 0.3333
 Texture colorMap: white
 Texture normalMap: black
 Texture rmoMap: white
@@ -17,8 +18,11 @@ Texture emissionMap: black
 Texture depthMap: white
 #vertex use default
 #fragment
+#condition depth
+#condition depth.vsm
 #condition deferred
 #condition lighting
+#condition lighting.vsm
 #include "lib/Light_Def.hmat"
 #include "lib/CameraData_Def.hmat"
 
@@ -36,6 +40,7 @@ uniform float shadowCutSmooth;
 uniform float roughness;
 uniform float metallic;
 uniform float emission;
+uniform float clipValue;
 DEF_MAT_END
 
 #if defined(DEFERRED_SHADER_FEATURE)
@@ -52,28 +57,32 @@ DEF_TEX2D(rmoMap, 2);
 DEF_TEX2D(depthMap, 3);
 #endif
 
-#ifdef DEFERRED_SHADER_FEATURE
-FS_DEF_OUT_GBUFFER
-#else
-FS_DEF_OUT_BEGIN
-FS_DEF_OUT_COLOR(FragColor, 0);
-//FS_DEF_OUT_COLOR(ssnMask, 0);
-FS_DEF_OUT_END
-#endif
-
 #include "lib/Surface_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
 
 #ifndef DEFERRED_SHADER_FEATURE
 float getShadow(in DirectLight directLight, in Surface surf)
 {
+    #if defined(VSM_SHADER_FEATURE)
+    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos,
+        surf.Normal, directLight.shadowBias.y);
+    #else
     return ShadowCalculation(depthMap, depthMapSampler,
         surf.WorldPos, surf.Normal, directLight);
+    #endif
 }
 #endif
 
 FragmentOut SURFACE_MAIN
 {
     FragmentOut fout;
+    #ifdef DEPTH_SHADER_FEATURE
+    float alpha = SAMPLE_TEX(colorMap, fin.TexCoords).a * baseColor.a * overColor.a;
+    outputDepth(fin, alpha, clipValue);
+    #else
     Surface surf = getSurface(fin);
 
     #ifndef LIGHTING_SHADER_FEATURE
@@ -125,6 +134,8 @@ FragmentOut SURFACE_MAIN
     fout.FragColor.a = surf.albedo.a;
     fout.FragColor *= overColor;
     //fout.ssnMask = float4(1);
+    #endif
+
     #endif
     return fout;
 }

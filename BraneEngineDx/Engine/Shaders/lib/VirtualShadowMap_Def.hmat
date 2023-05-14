@@ -555,6 +555,9 @@ struct VSMSample
 {
 	float depth;
 	uint vsmID;
+	uint mipLevel;
+	uint2 virtualTexelAddress;
+	float2 virtualTexelAddressFloat;
 };
 
 bool vsmSampleClipmap(int vsmID, float2 shadowUV, out VSMSample vsmSample)
@@ -565,7 +568,8 @@ bool vsmSampleClipmap(int vsmID, float2 shadowUV, out VSMSample vsmSample)
 		uint clipmapLevelOffset = physPage.lodOffset;
 		int clipmapLevelId = vsmID + clipmapLevelOffset;
 
-		uint2 virtualTexelAddress = uint2(shadowUV * float(calcLevelTexels(0)));
+		vsmSample.virtualTexelAddressFloat = shadowUV * float(calcLevelTexels(0));
+		vsmSample.virtualTexelAddress = uint2(vsmSample.virtualTexelAddressFloat);
 		float depthLevelScale = 1.0f;
 		float depthLevelBias = 0.0f;
 
@@ -584,7 +588,7 @@ bool vsmSampleClipmap(int vsmID, float2 shadowUV, out VSMSample vsmSample)
 			depthLevelBias = transform.bias.z;
 
 			// NOTE: Do not clamp the float address as it messes with optimal slope bias calculations
-			virtualTexelAddress = clamp(uint2(clipmapUV * float(calcLevelTexels(0))), virtualTexelAddressMin, virtualTexelAddressMax);
+			vsmSample.virtualTexelAddress = clamp(uint2(clipmapUV * float(calcLevelTexels(0))), virtualTexelAddressMin, virtualTexelAddressMax);
 
 			physPage = vsmGetPhysicalPage(calcPageOffset(clipmapLevelId, 0, vPage));
 			vsmSample.vsmID = clipmapLevelId;
@@ -594,50 +598,51 @@ bool vsmSampleClipmap(int vsmID, float2 shadowUV, out VSMSample vsmSample)
 		if (physPage.isAnyLODValid) {
 			uint2 physTexelAddress = 
 				physPage.physAddress * VSM_PAGE_SIZE +
-				(virtualTexelAddress & VSM_PAGE_SIZE_MASK);
+				(vsmSample.virtualTexelAddress & VSM_PAGE_SIZE_MASK);
 
 			// Convert depth into back into the original reference clipmap level range
 			vsmSample.depth = (vsmSamplePhysDepth(physTexelAddress) - depthLevelBias) / depthLevelScale;
+			vsmSample.mipLevel = 0;
 			return true;
 		}
 	}
 	return false;
 }
 
-// float computeVSMOptimalSlopeBias(
-// 	// Used to compare to the sampled SmSample.VirtualShadowMapId to adjust depth scale for clipmaps
-// 	int requestVSMID,
-// 	VSMSample vsmSample,
-// 	float3 worldPos,
-// 	float3 EstimatedGeoWorldNormal,
-// 	bool bClamp = true)
-// {
-// 	VSMProjData projData = getVSMProjData(vsmSample.vsmID);
+float computeVSMOptimalSlopeBias(
+	// Used to compare to the sampled SmSample.VirtualShadowMapId to adjust depth scale for clipmaps
+	int requestVSMID,
+	VSMSample vsmSample,
+	float3 worldPos,
+	float3 EstimatedGeoWorldNormal,
+	bool bClamp = true)
+{
+	VSMProjData projData = getVSMProjData(vsmSample.vsmID);
 
-// 	// Transform geometry world-space plane eq to shadow 'UV' texture space [0-1] ranges
-// 	float4 NormalPlaneTranslatedWorld = float4(EstimatedGeoWorldNormal, -dot(EstimatedGeoWorldNormal, worldPos));
-// 	float4 NormalPlaneUV = mul(NormalPlaneTranslatedWorld, projData.viewOriginToUV);
+	// Transform geometry world-space plane eq to shadow 'UV' texture space [0-1] ranges
+	float4 NormalPlaneTranslatedWorld = float4(EstimatedGeoWorldNormal, -dot(EstimatedGeoWorldNormal, worldPos));
+	float4 NormalPlaneUV = mul(NormalPlaneTranslatedWorld, projData.viewOriginToUV);
 
-// 	float2 DepthSlopeUV = -NormalPlaneUV.xy / NormalPlaneUV.z;
-// 	float MipLevelDim = float(calcLevelTexels(vsmSample.MipLevel));
-// 	float2 TexelCenter = float2(vsmSample.VirtualTexelAddress) + 0.5f;
-// 	float2 TexelCenterOffset = TexelCenter - vsmSample.VirtualTexelAddressFloat;
-// 	float2 TexelCenterOffsetUV = TexelCenterOffset / MipLevelDim;
-// 	// 2x factor due to lack of precision (probably)
-// 	float OptimalSlopeBias = 2.0f * max(0.0f, dot(DepthSlopeUV, TexelCenterOffsetUV));
+	float2 DepthSlopeUV = -NormalPlaneUV.xy / NormalPlaneUV.z;
+	float MipLevelDim = float(calcLevelTexels(vsmSample.mipLevel));
+	float2 TexelCenter = float2(vsmSample.virtualTexelAddress) + 0.5f;
+	float2 TexelCenterOffset = TexelCenter - vsmSample.virtualTexelAddressFloat;
+	float2 TexelCenterOffsetUV = TexelCenterOffset / MipLevelDim;
+	// 2x factor due to lack of precision (probably)
+	float OptimalSlopeBias = 2.0f * max(0.0f, dot(DepthSlopeUV, TexelCenterOffsetUV));
 	
-// 	// Clamp to avoid excessive degenerate slope biases causing flickering lit pixels
-// 	OptimalSlopeBias = bClamp ? min(OptimalSlopeBias, abs(100.0f * projData.ShadowViewToClipMatrix._33)) : OptimalSlopeBias;
+	// Clamp to avoid excessive degenerate slope biases causing flickering lit pixels
+	OptimalSlopeBias = bClamp ? min(OptimalSlopeBias, abs(100.0f * projData.viewOriginToClip._33)) : OptimalSlopeBias;
 
-// 	// Adjust depth scale if we sampled a different clipmap level
-// 	// NOTE: Sampled clipmap should always be >= the requested one (coarser)
-// 	// Do this after clamping to be consistent in world space
-// 	OptimalSlopeBias *= float(1u << (vsmSample.vsmID - requestVSMID));
+	// Adjust depth scale if we sampled a different clipmap level
+	// NOTE: Sampled clipmap should always be >= the requested one (coarser)
+	// Do this after clamping to be consistent in world space
+	OptimalSlopeBias *= float(1u << (vsmSample.vsmID - requestVSMID));
 
-// 	return OptimalSlopeBias;
-// }
+	return OptimalSlopeBias;
+}
 
-float vsmSampleDirectShadow(int vsmID, float3 worldPos)
+float vsmSampleDirectShadow(int vsmID, float3 worldPos, float3 worldNormal = float3(0, 0, 0), float normalBiasScale = 1.0f)
 {
 	if (vsmID != NONE_VSMID) {
 		VSMProjData baseProjData = getVSMProjData(vsmID);
@@ -649,11 +654,14 @@ float vsmSampleDirectShadow(int vsmID, float3 worldPos)
 			int clipmapVSMID = vsmID + clipmapIndex;
 			VSMProjData projData = getVSMProjData(clipmapVSMID);
 
-			float4 shadowUVz = mul(float4(worldPos - projData.worldCenter, 1.0f), projData.viewOriginToUV);
+			float3 viewOriginPos = worldPos - projData.worldCenter;
+			float4 shadowUVz = mul(float4(viewOriginPos, 1.0f), projData.viewOriginToUV);
 
 			VSMSample vsmSample;
 			if (vsmSampleClipmap(clipmapVSMID, shadowUVz.xy, vsmSample)) {
-				return shadowUVz.z > vsmSample.depth ? 0.0f : 1.0f;
+				float optimalSlopeBias = all(worldNormal == float3(0, 0, 0)) ? 0 : computeVSMOptimalSlopeBias(clipmapVSMID, vsmSample, viewOriginPos, worldNormal);
+				float biasedDepth = vsmSample.depth - optimalSlopeBias * normalBiasScale;
+				return shadowUVz.z > biasedDepth ? 0.0f : 1.0f;
 			}
 		}
 	}
@@ -683,3 +691,20 @@ float3 IntToColor(uint Index)
 
 	return Color * (1.0f / 255.0f);
 }
+
+void writeVSMDepth(DefaultVSMVertexOut fin)
+{
+	uint2 vAddress = (uint2)fin.clipPos.xy;
+	float deviceZ = fin.clipPos.z;
+
+    ShadowViewInfo viewInfo = shadowViewInfos[fin.viewIndex];
+    VSMPhysPage page = vsmGetPhysicalPage(
+        calcPageOffset(viewInfo.vsmID, viewInfo.mipLevel,
+            vAddress >> VSM_LOG2_PAGE_SIZE));
+    if (page.isThisLODValid) {
+        uint2 pAddress = page.physAddress * VSM_PAGE_SIZE + (vAddress & VSM_PAGE_SIZE_MASK);
+		InterlockedMin( outPhysPagePool[ pAddress ], asuint( deviceZ ) );
+    }
+}
+
+#define DEFAULT_VSM_MAIN main(DefaultVSMVertexOut fin)

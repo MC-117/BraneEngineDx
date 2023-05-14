@@ -1,6 +1,6 @@
 #adapter name shellfur
 #vertex
-#include "../lib/TransformData_def.hmat"
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/MeshData_Def.hmat"
@@ -30,7 +30,7 @@ DefaultVertexOut MESH_MAIN
     return vout;
 }
 #vertex skeleton
-#include "../lib/TransformData_def.hmat"
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/SkeletonMeshData_Def.hmat"
@@ -59,7 +59,7 @@ DefaultVertexOut SKELETON_MAIN
     return vout;
 }
 #vertex skeleton morph
-#include "../lib/TransformData_def.hmat"
+#include "../lib/TransformData_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/SkeletonMeshData_Def.hmat"

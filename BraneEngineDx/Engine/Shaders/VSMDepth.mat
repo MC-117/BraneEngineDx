@@ -4,17 +4,7 @@
 #fragment
 #include "lib/VirtualShadowMap_Def.hmat"
 
-void main(DefaultVSMVertexOut fin)
+void DEFAULT_VSM_MAIN
 {
-    uint2 vAddress = (uint2)fin.clipPos.xy;
-	float deviceZ = fin.clipPos.z;
-
-    ShadowViewInfo viewInfo = shadowViewInfos[fin.viewIndex];
-    VSMPhysPage page = vsmGetPhysicalPage(
-        calcPageOffset(viewInfo.vsmID, viewInfo.mipLevel,
-            vAddress >> VSM_LOG2_PAGE_SIZE));
-    if (page.isThisLODValid) {
-        uint2 pAddress = page.physAddress * VSM_PAGE_SIZE + (vAddress & VSM_PAGE_SIZE_MASK);
-		InterlockedMin( outPhysPagePool[ pAddress ], asuint( deviceZ ) );
-    }
+    writeVSMDepth(fin);
 }
