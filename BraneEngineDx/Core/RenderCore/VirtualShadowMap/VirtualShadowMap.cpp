@@ -783,7 +783,7 @@ void VirtualShadowMapArray::buildPageAllocations(
 	frameData->pageFlags.resize(pageFlagsCount);
 
 	// One additional element as the last element is used as an atomic counter
-	freePhysPages.resize(curFrameVSMInfo.maxPhysPages + 1);
+	freePhysPages.resize(curFrameVSMInfo.maxPhysPages + 2);
 	physPageAllocRequests.resize(curFrameVSMInfo.maxPhysPages + 1);
 
 	frameData->physPageMetaData.resize(curFrameVSMInfo.maxPhysPages);

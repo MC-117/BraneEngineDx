@@ -18,7 +18,7 @@ void main(uint2 tid : SV_DispatchThreadID)
 	uint resultPageFlags = 0U;
 
     const uint requestFlags = pageRequestFlags[globalPageOffset];
-    if (requestFlags != 0) {
+    {//if (requestFlags != 0) {
 #if defined(VSM_HAS_CACHE)
         uint prevVSMID = vsmPrevData[vsmID].vsmID;
         const int offsetScale = (VSM_L0_PAGES >> 2);
@@ -41,7 +41,7 @@ void main(uint2 tid : SV_DispatchThreadID)
 
                 const uint prevFlags = prevPageFlags[prevGlobalOffset] & VSM_PAGE_FLAGS_BITS_MASK;
 
-                bool matchesDetailGeometryFlag = (requestFlags & VSM_DETAIL_GEOMETRY_FLAG) == (prevFlags & VSM_DETAIL_GEOMETRY_FLAG);
+                bool matchesDetailGeometryFlag = true;//(requestFlags & VSM_DETAIL_GEOMETRY_FLAG) == (prevFlags & VSM_DETAIL_GEOMETRY_FLAG);
 
                 if ((prevFlags & VSM_ALLOCATED_FLAG) && matchesDetailGeometryFlag) {
                     uint2 physAddress = vsmDecodePageTable(prevPageTable[prevGlobalOffset]).physAddress;
@@ -56,7 +56,8 @@ void main(uint2 tid : SV_DispatchThreadID)
                             resultPageFlags = prevFlags & ~(VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG);
 							resultPageFlags = resultPageFlags | ((!projData.uncached) ? 0 : VSM_DYNAMIC_UNCACHED_FLAG);
 
-                            const uint physFlags = projData.uncached ? VSM_PHYSICAL_FLAG_VIEW_UNCACHED : 0U;
+                            uint physFlags = projData.uncached ? VSM_PHYSICAL_FLAG_VIEW_UNCACHED : 0U;
+                            physFlags |= requestFlags == 0 ? VSM_PHYSICAL_FLAG_PREVIOUS_CACHE : 0U;
 
                             VSMPhysPageMetaData outMeteData;
                             outMeteData.age = isValid ? prevMetaData.age + 1 : 0;
@@ -71,7 +72,7 @@ void main(uint2 tid : SV_DispatchThreadID)
         }
 #endif
 
-        if (resultPageFlags == 0U) {
+        if (resultPageFlags == 0U && requestFlags != 0) {
             int requestIndex = 0;
             InterlockedAdd(outPhysPageAllocRequests[vsmInfo.maxPhysPages].globalPageOffset, 1, requestIndex);
 

@@ -18,8 +18,9 @@
 
 // Stored in the physical meta data flags and must be higher than the  VSM_*_FLAG
 // The light was marked to not be cached (even though caching is enabled)
-#define VSM_PHYSICAL_FLAG_VIEW_UNCACHED		(1U << 4) 
-#define VSM_PHYSICAL_FLAG_DIRTY				(1U << 5) 
+#define VSM_PHYSICAL_FLAG_VIEW_UNCACHED		(1U << 4)
+#define VSM_PHYSICAL_FLAG_DIRTY				(1U << 5)
+#define VSM_PHYSICAL_FLAG_PREVIOUS_CACHE	(1U << 6)
 
 
 // bit-offset for storing another set of page flags used to track invalidation in the physical page metadata flags.

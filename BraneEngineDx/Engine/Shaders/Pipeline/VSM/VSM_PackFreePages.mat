@@ -15,4 +15,9 @@ void main(uint tid : SV_DispatchThreadID)
         InterlockedAdd(outFreePhysPages[vsmInfo.maxPhysPages], 1, freeListOffset);
         outFreePhysPages[freeListOffset] = tid;
     }
+    else if (metaData.flags & VSM_PHYSICAL_FLAG_PREVIOUS_CACHE) {
+        int oldListOffset = 0;
+        InterlockedAdd(outFreePhysPages[vsmInfo.maxPhysPages + 1], 1, oldListOffset);
+        outFreePhysPages[vsmInfo.maxPhysPages - oldListOffset - 1] = tid;
+    }
 }

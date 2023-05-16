@@ -65,7 +65,7 @@ VERTEX_OUT VERTEX_MAIN
     
     transformToVirtualPage(vout.clipPos, vout.pageClipPos, vout.viewIndex, _WorldPos);
 #elif defined(DEPTH_SHADER_FEATURE)
-    vout.svPos = mul(mul(float4(pos, 1.0), fm, camData.pmat));
+    vout.svPos = mul(mul(float4(pos, 1.0), fm), camData.pmat);
     vout.LocalPos = pos;
     vout.InstanceID = objID;
 #else

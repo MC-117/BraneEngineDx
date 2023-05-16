@@ -16,6 +16,7 @@ void main(uint tid : SV_DispatchThreadID)
 
     if (tid == 0) {
         outFreePhysPages[vsmInfo.maxPhysPages] = 0;
+        outFreePhysPages[vsmInfo.maxPhysPages + 1] = 0;
         outPhysPageAllocRequests[vsmInfo.maxPhysPages].globalPageOffset = 0;
     }
 }

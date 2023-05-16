@@ -7,15 +7,22 @@
 struct ShaderMatchRule
 {
 	ShaderMatchFlag mainFlag;
+	Enum<ShaderFeature> mainFeatureMask;
 	ShaderMatchFlag tessCtrlFlag;
+	Enum<ShaderFeature> tessCtrlFeatureMask;
 	ShaderMatchFlag tessEvalFlag;
+	Enum<ShaderFeature> tessEvalFeatureMask;
 	ShaderMatchFlag geometryFlag;
+	Enum<ShaderFeature> geometryFeatureMask;
 	ShaderMatchFlag fragmentFlag;
+	Enum<ShaderFeature> fragmentFeatureMask;
 
 	ShaderMatchRule();
 
 	ShaderMatchFlag& operator[](ShaderStageType stageType);
 	ShaderMatchFlag operator[](ShaderStageType stageType) const;
+
+	Enum<ShaderFeature> operator()(ShaderStageType stageType, const Enum<ShaderFeature>& feature) const;
 };
 
 class Shader

@@ -47,7 +47,7 @@ bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 	Enum<ShaderFeature> shaderFeature = command.getShaderFeature();
 	if (enableVSMDepthPass) {
 		ShaderMatchRule matchRule;
-		matchRule.mainFlag = (ShaderMatchFlag)((int)ShaderMatchFlag::Strict | (int)ShaderMatchFlag::Fallback_Default);
+		matchRule.mainFeatureMask = Shader_Skeleton | Shader_Morph | Shader_Particle | Shader_Modifier | Shader_Terrain;
 		matchRule.fragmentFlag = ShaderMatchFlag::Best;
 		Enum<ShaderFeature> vsmShaderFeature = shaderFeature;
 		vsmShaderFeature |= Shader_VSM;
