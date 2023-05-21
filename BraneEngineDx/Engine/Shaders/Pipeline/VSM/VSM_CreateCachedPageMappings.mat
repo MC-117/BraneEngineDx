@@ -60,7 +60,7 @@ void main(uint2 tid : SV_DispatchThreadID)
                             physFlags |= requestFlags == 0 ? VSM_PHYSICAL_FLAG_PREVIOUS_CACHE : 0U;
 
                             VSMPhysPageMetaData outMeteData;
-                            outMeteData.age = isValid ? prevMetaData.age + 1 : 0;
+                            outMeteData.age = requestFlags == 0 ? prevMetaData.age + 1 : 0;
                             outMeteData.flags = resultPageFlags | physFlags;
                             outMeteData.virtualPageOffset = globalPageOffset;
                             outMeteData.vsmID = vsmID;

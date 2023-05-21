@@ -27,12 +27,12 @@ void main(uint tid : SV_DispatchThreadID)
         if (freeListOffset >= 0) {
             physPageIndex = outFreePhysPages[freeListOffset];
         }
-        else if ((numOldPages + freeListOffset) >= 0) {
-            physPageIndex = outFreePhysPages[vsmInfo.maxPhysPages + freeListOffset];
-            uint prevPageOffset = outPhysPageMetaData[physPageIndex].virtualPageOffset;
-            outPageTable[prevPageOffset] = 0;
-            outPageFlags[prevPageOffset] = 0;
-        }
+        // else if ((numOldPages + freeListOffset) >= 0) {
+        //     physPageIndex = outFreePhysPages[vsmInfo.maxPhysPages + freeListOffset];
+        //     uint prevPageOffset = outPhysPageMetaData[physPageIndex].virtualPageOffset;
+        //     outPageTable[prevPageOffset] = 0;
+        //     outPageFlags[prevPageOffset] = 0;
+        // }
 
         if (physPageIndex != 0xFFFFFFFFU) {
             uint2 physPageAddress = physIndexToPageAddress(physPageIndex);

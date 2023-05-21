@@ -132,6 +132,7 @@ VSM_SHADER_IMP(initPhysicalPageMetaData);
 VSM_SHADER_IMP(createCachedPageMappingsHasCache);
 VSM_SHADER_IMP(createCachedPageMappingsNoCache);
 VSM_SHADER_IMP(packFreePages);
+VSM_SHADER_IMP(sortFreePages);
 VSM_SHADER_IMP(allocateNewPageMappings);
 VSM_SHADER_IMP(generateHierarchicalPageFlags);
 VSM_SHADER_IMP(clearInitPhysPagesIndirectArgs);
@@ -150,6 +151,7 @@ const ShaderPropertyName VirtualShadowMapShaders::pageTableName = "pageTable";
 const ShaderPropertyName VirtualShadowMapShaders::pageFlagsName = "pageFlags";
 const ShaderPropertyName VirtualShadowMapShaders::pageRectName = "pageRect";
 const ShaderPropertyName VirtualShadowMapShaders::physPageMetaDataName = "physPageMetaData";
+const ShaderPropertyName VirtualShadowMapShaders::freePhysPagesName = "freePhysPages";
 const ShaderPropertyName VirtualShadowMapShaders::projDataName = "projData";
 const ShaderPropertyName VirtualShadowMapShaders::pageRequestFlagsName = "pageRequestFlags";
 const ShaderPropertyName VirtualShadowMapShaders::physPageAllocRequestsName = "physPageAllocRequests";
@@ -251,6 +253,7 @@ void VirtualShadowMapShaders::loadDefaultResource()
 	VSM_LOAD_SHADER(createCachedPageMappingsHasCache, "VSM_CreateCachedPageMappings.mat", HasCache);
 
 	VSM_LOAD_SHADER_DEFAULT(packFreePages, "VSM_PackFreePages.mat");
+	VSM_LOAD_SHADER_DEFAULT(sortFreePages, "VSM_SortFreePages.mat");
 	VSM_LOAD_SHADER_DEFAULT(allocateNewPageMappings, "VSM_AllocateNewPageMappings.mat");
 	VSM_LOAD_SHADER_DEFAULT(generateHierarchicalPageFlags, "VSM_GenerateHierarchicalPageFlags.mat");
 	VSM_LOAD_SHADER_DEFAULT(clearInitPhysPagesIndirectArgs, "VSM_ClearInitPhysPagesIndirectArgs.mat");
@@ -572,6 +575,7 @@ VirtualShadowMapArray::VirtualShadowMapArray()
 	, genPageFlagInfoBuffer(GB_Constant, GBF_Struct, sizeof(VirtualShadowMapInfo), GAF_Read, CAF_Write)
 	, vsmPrevData(GB_Storage, GBF_Struct, sizeof(VirtualShadowMapPrevData), GAF_Read, CAF_Write)
 	, pageRequestFlags(GB_Storage, GBF_Struct, sizeof(unsigned int), GAF_ReadWrite, CAF_None)
+	, tempFreePhysPages(GB_Storage, GBF_Struct, sizeof(int), GAF_ReadWrite, CAF_None)
 	, freePhysPages(GB_Storage, GBF_Struct, sizeof(int), GAF_ReadWrite, CAF_None)
 	, physPageAllocRequests(GB_Storage, GBF_Struct, sizeof(VirtualShadowMapPhysicalPageRequest), GAF_ReadWrite, CAF_None)
 	, allocPageRect(GB_Storage, GBF_Struct, sizeof(Vector4u), GAF_ReadWrite, CAF_None)
@@ -783,6 +787,7 @@ void VirtualShadowMapArray::buildPageAllocations(
 	frameData->pageFlags.resize(pageFlagsCount);
 
 	// One additional element as the last element is used as an atomic counter
+	tempFreePhysPages.resize(curFrameVSMInfo.maxPhysPages);
 	freePhysPages.resize(curFrameVSMInfo.maxPhysPages + 2);
 	physPageAllocRequests.resize(curFrameVSMInfo.maxPhysPages + 1);
 
@@ -819,10 +824,17 @@ void VirtualShadowMapArray::buildPageAllocations(
 	context.bindShaderProgram(VirtualShadowMapShaders::packFreePagesProgram);
 	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
 	context.bindBufferBase(frameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::physPageMetaDataName);
-	context.bindBufferBase(freePhysPages.getVendorGPUBuffer(), VirtualShadowMapShaders::outFreePhysPagesName, { true });
+	context.bindBufferBase(tempFreePhysPages.getVendorGPUBuffer(), VirtualShadowMapShaders::outFreePhysPagesName, { true });
 	context.dispatchCompute(ceil(curFrameVSMInfo.maxPhysPages / (float)VirtualShadowMapShaders::packFreePagesProgramDim.x()), 1, 1);
 
 	context.unbindBufferBase(VirtualShadowMapShaders::physPageMetaDataName);
+	context.unbindBufferBase(VirtualShadowMapShaders::outFreePhysPagesName);
+
+	context.bindShaderProgram(VirtualShadowMapShaders::sortFreePagesProgram);
+	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
+	context.bindBufferBase(tempFreePhysPages.getVendorGPUBuffer(), VirtualShadowMapShaders::freePhysPagesName);
+	context.bindBufferBase(freePhysPages.getVendorGPUBuffer(), VirtualShadowMapShaders::outFreePhysPagesName, { true });
+	context.dispatchCompute(ceil(curFrameVSMInfo.maxPhysPages / (float)VirtualShadowMapShaders::packFreePagesProgramDim.x()), 1, 1);
 
 	context.bindShaderProgram(VirtualShadowMapShaders::allocateNewPageMappingsProgram);
 	context.bindBufferBase(frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
