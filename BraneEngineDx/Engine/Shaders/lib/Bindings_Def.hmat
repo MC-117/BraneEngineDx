@@ -85,8 +85,12 @@ SamplerState tex##Sampler : SAMPLE_BINDING(id);
 
 #define DEF_TEX2D_UINT(tex, id) \
 Texture2D<uint4> tex : TEX_BINDING(id);
+#define DEF_TEX2DARRAY_UINT(tex, id) \
+Texture2DArray<uint4> tex : TEX_BINDING(id);
 #define DEF_TEX2D_UINT_AUTO(tex) \
 Texture2D<uint4> tex;
+#define DEF_TEX2DARRAY_UINT_AUTO(tex) \
+Texture2DArray<uint4> tex;
 
 // Only work for pattern [tex] and [tex]Sampler.
 #define SAMPLE_TEX(tex, uv) (tex.Sample(tex##Sampler, (uv)))

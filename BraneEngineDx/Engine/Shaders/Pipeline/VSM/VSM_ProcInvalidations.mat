@@ -25,7 +25,8 @@ void main(uint tid : SV_DispatchThreadID)
     for (int vsmID = 0; vsmID <= vsmInfo.numShadowMapSlots; vsmID++) {
         VSMProjData projData = getVSMProjData(vsmID);
 
-        uint invalidationFlags = VSM_DYNAMIC_UNCACHED_FLAG << VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT;
+        bool isStaticCache = isStaticTransform(insData);
+        uint invalidationFlags = (isStaticCache ? VSM_STATIC_UNCACHED_FLAG : VSM_DYNAMIC_UNCACHED_FLAG) << VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT;
 
         FrustumCullData cullData = frustumCullBoxOrtho(
             insData.localCenter,

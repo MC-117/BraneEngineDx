@@ -24,3 +24,8 @@ TransformData getTransformData(in uint insID)
 {
     return Transforms[insID];
 }
+
+bool isStaticTransform(in TransformData data)
+{
+    return (data.flag & 1) == 1;
+}

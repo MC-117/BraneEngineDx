@@ -20,6 +20,7 @@ void main(uint2 tid : SV_DispatchThreadID)
     const uint requestFlags = pageRequestFlags[globalPageOffset];
     {//if (requestFlags != 0) {
 #if defined(VSM_HAS_CACHE)
+        const bool useStaticCache = doesUseStaticCacheMode();
         uint prevVSMID = vsmPrevData[vsmID].vsmID;
         const int offsetScale = (VSM_L0_PAGES >> 2);
 		const int2 clipmapCornerOffsetDelta = offsetScale * vsmPrevData[vsmID].clipmapCornerOffsetDelta;
@@ -50,11 +51,19 @@ void main(uint2 tid : SV_DispatchThreadID)
 
                     if ((prevMetaData.flags & VSM_ALLOCATED_FLAG) != 0) {
                         uint invalidationFlags = prevMetaData.flags >> VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT;
-                        bool isValid = invalidationFlags == 0;
-                        if (isValid) {
+                        bool isDynamicValid = useStaticCache ?
+                            (invalidationFlags & VSM_DYNAMIC_UNCACHED_FLAG) == 0 :
+                            (invalidationFlags == 0);
+                        bool isStaticValid = useStaticCache ?
+                            (invalidationFlags & VSM_STATIC_UNCACHED_FLAG) == 0 :
+                            (invalidationFlags == 0);
+                            
+                        if (isStaticValid) {
                             resultPageTable = vsmEncodePageTable(physAddress);
                             resultPageFlags = prevFlags & ~(VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG);
-							resultPageFlags = resultPageFlags | ((!projData.uncached) ? 0 : VSM_DYNAMIC_UNCACHED_FLAG);
+							resultPageFlags = resultPageFlags |
+                                (projData.uncached ? (VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG) :
+                                (isDynamicValid ? 0 : VSM_DYNAMIC_UNCACHED_FLAG));
 
                             uint physFlags = projData.uncached ? VSM_PHYSICAL_FLAG_VIEW_UNCACHED : 0U;
                             physFlags |= requestFlags == 0 ? VSM_PHYSICAL_FLAG_PREVIOUS_CACHE : 0U;

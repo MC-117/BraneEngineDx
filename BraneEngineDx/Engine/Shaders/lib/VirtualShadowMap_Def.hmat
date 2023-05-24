@@ -165,12 +165,20 @@ struct VSMInfo
 	uint numShadowMapSlots;
 	uint2 physPoolSize;
 	uint2 physPoolPages;
+	uint staticPageIndex;
+	uint flag;
+	uint2 pad;
 };
 
 cbuffer VSMInfoBuff
 {
 	VSMInfo vsmInfo;
 };
+
+bool doesUseStaticCacheMode()
+{
+	return vsmInfo.staticPageIndex == 1;
+}
 
 struct VSMPrevData
 {
@@ -356,8 +364,8 @@ RWStructuredBuffer<uint> outFreePhysPages;
 RWStructuredBuffer<VSMPhysPageRequest> outPhysPageAllocRequests;
 RWStructuredBuffer<uint4> outAllocPageRect;
 
-DEF_TEX2D_UINT_AUTO(physPagePool);
-RWTexture2D<uint> outPhysPagePool;
+Texture2DArray<uint> physPagePool;
+RWTexture2DArray<uint> outPhysPagePool;
 
 #if defined(DEBUG_SHADER_FEATURE)
 DEF_TEX2D_AUTO(debugBuffer);
@@ -436,6 +444,58 @@ float calcClipRadius(in TransformData data, float4x4 viewToClip)
     return data.localRadius * data.worldScale * viewToClip[0][0];
 }
 
+uint3 getTileOffset(uint gidx, Buffer<uint> pageIndexBuffer, inout VSMPhysPageMetaData outMetaData)
+{
+	const uint pageInputIndex = gidx >> LOG2_TILES_PER_PAGE_1D;
+	uint pageIndex = pageIndexBuffer[pageInputIndex];
+
+	int arrayIndex = 0;
+
+	if (pageIndex >= vsmInfo.maxPhysPages)
+	{
+		// Request to clear the static page
+		pageIndex -= vsmInfo.maxPhysPages;
+		arrayIndex = 1;
+	}
+
+	outMetaData = physPageMetaData[pageIndex];
+
+	// Each page has 1 << LOG2_TILES_PER_PAGE_XY groups (aka tiles) assigned to work on it.
+	const uint localTileIndex = gidx & TILES_PER_PAGE_1D_MASK;
+	// wrap to 2D tile coord
+	const uint2 localTile = uint2(localTileIndex & TILES_PER_PAGE_XY_MASK, localTileIndex >> LOG2_TILES_PER_PAGE_XY);
+
+	uint2 physPageAddress = physIndexToPageAddress(pageIndex);
+	// Pixel address of tile region for this thread group.
+	const uint2 tileOffset = (physPageAddress << uint2(VSM_LOG2_PAGE_SIZE, VSM_LOG2_PAGE_SIZE)) + (localTile << uint2(LOG2_TILE_SIZE_XY, LOG2_TILE_SIZE_XY));
+
+	return uint3(tileOffset, arrayIndex);
+}
+
+uint3 getTileBasePos(uint2 tileID, uint gidx, Buffer<uint> pageIndexBuffer, inout VSMPhysPageMetaData outMetaData)
+{
+	// Pixel address of tile region for this thread group.
+	const uint3 tileOffset = getTileOffset(gidx, pageIndexBuffer, outMetaData);
+	// Pixel address of 2x2 region to sample for this thread.
+	const uint2 basePos = tileOffset.xy + (tileID << 1u);
+
+	return uint3(basePos, tileOffset.z);
+}
+
+uint3 getTileBasePos(uint2 tileID, uint gidx, Buffer<uint> pageIndexBuffer)
+{
+	VSMPhysPageMetaData TmpMetaData;
+	return getTileBasePos(tileID, gidx, pageIndexBuffer, TmpMetaData);
+}
+
+void emitPageToProcess(RWBuffer<uint> outPageIndices, RWBuffer<uint> argCounter, uint pageIndex)
+{
+	int groupCount = 0;
+    // Each page needs TILES_PER_PAGE_1D groups launched
+    InterlockedAdd(argCounter[0], TILES_PER_PAGE_1D, groupCount);
+    outPageIndices[groupCount >> LOG2_TILES_PER_PAGE_1D] = pageIndex;
+}
+
 struct VSMDrawInstanceInfo
 {
 	uint instanceID;
@@ -454,9 +514,28 @@ struct ShadowViewInfo
 	uint pad;
 };
 
-struct VisiableInstanceInfo
+struct VSMPageInfo
 {
 	uint viewIndex;
+	bool isStaticPage;
+};
+
+uint packVSMPageInfo(in VSMPageInfo info)
+{
+	return info.viewIndex | (info.isStaticPage ? (1 << 16) : 0);
+}
+
+VSMPageInfo unpackVSMPageInfo(uint value)
+{
+	VSMPageInfo info;
+	info.viewIndex = value & 0xFFFFU;
+	info.isStaticPage = (value & (1 << 16)) != 0;
+	return info;
+}
+
+struct VisiableInstanceInfo
+{
+	uint pageInfo;
 	VSMDrawInstanceInfo drawInfo;
 };
 
@@ -467,12 +546,12 @@ struct DefaultVSMVertexOut
     float4 pageClipPos : PAGECLIP;
     float2 TexCoords : TEXCOORD;
     uint InstanceID : INSTANCEID;
-    nointerpolation uint viewIndex : PAGEINFO;
+    nointerpolation uint pageInfo : PAGEINFO;
 };
 
 StructuredBuffer<ShadowViewInfo> shadowViewInfos;
 StructuredBuffer<uint> instanceIDs;
-StructuredBuffer<uint> pageInfo;
+StructuredBuffer<uint> pageInfos;
 
 void scaleBiasClipToPhysPage(ShadowViewInfo viewInfo, inout float4 clipPos, inout float4 pageClipPos)
 {
@@ -698,13 +777,16 @@ void writeVSMDepth(DefaultVSMVertexOut fin)
 	uint2 vAddress = (uint2)fin.clipPos.xy;
 	float deviceZ = fin.clipPos.z;
 
-    ShadowViewInfo viewInfo = shadowViewInfos[fin.viewIndex];
+	VSMPageInfo pageInfo = unpackVSMPageInfo(fin.pageInfo);
+
+    ShadowViewInfo viewInfo = shadowViewInfos[pageInfo.viewIndex];
     VSMPhysPage page = vsmGetPhysicalPage(
         calcPageOffset(viewInfo.vsmID, viewInfo.mipLevel,
             vAddress >> VSM_LOG2_PAGE_SIZE));
     if (page.isThisLODValid) {
         uint2 pAddress = page.physAddress * VSM_PAGE_SIZE + (vAddress & VSM_PAGE_SIZE_MASK);
-		InterlockedMin( outPhysPagePool[ pAddress ], asuint( deviceZ ) );
+		uint arrayIndex = pageInfo.isStaticPage ? 1 : 0;
+		InterlockedMin( outPhysPagePool[ uint3(pAddress, arrayIndex) ], asuint( deviceZ ) );
     }
 }
 

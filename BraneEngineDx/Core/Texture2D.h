@@ -25,6 +25,7 @@ public:
 	virtual int getWidth() const;
 	virtual int getHeight() const;
 	virtual int getChannel() const;
+	virtual int getArrayCount() const;
 	virtual int getMipLevels() const;
 	Texture2DInfo getTextureInfo() const;
 
@@ -40,6 +41,7 @@ public:
 	virtual unsigned int bind();
 	virtual unsigned int bindBase(unsigned int index);
 	virtual unsigned int resize(unsigned int width, unsigned int height);
+	virtual unsigned int resize(unsigned int width, unsigned int height, unsigned int arrayCount);
 	bool copyFrom(const Texture2D& src, unsigned int width = 0, unsigned int height = 0);
 
 	bool save(const string& file);

@@ -28,10 +28,14 @@ bool hasMove(TransformData data)
     return data.updateFrame == frame;
 }
 
-void writeCmd(uint viewIndex, VSMDrawInstanceInfo drawInfo)
+void writeCmd(uint viewIndex, VSMDrawInstanceInfo drawInfo, bool isStatic)
 {
+    VSMPageInfo pageInfo;
+    pageInfo.viewIndex = viewIndex;
+    pageInfo.isStaticPage = isStatic;
+
     VisiableInstanceInfo info;
-    info.viewIndex = viewIndex;
+    info.pageInfo = packVSMPageInfo(pageInfo);
     info.drawInfo = drawInfo;
 
     uint visiableInstanceOutOffset = 0;
@@ -51,6 +55,7 @@ void main(uint tid : SV_DispatchThreadID)
     const uint insID = drawInstanceInfo.instanceID;
     const uint argIdx = drawInstanceInfo.indirectArgIndex;
     TransformData insData = getTransformData(insID);
+    const bool isStaticCache = isStaticTransform(insData);
 
     uint drawCountForAllViews = 0;
 
@@ -67,7 +72,8 @@ void main(uint tid : SV_DispatchThreadID)
         
         if (cullData.visiable) {
             const int mipCount = viewInfo.mipCount;
-            uint baseFlagMask = hasMove(insData) ? VSM_ALLOCATED_FLAG : VSM_DYNAMIC_UNCACHED_FLAG;
+            uint baseFlagMask = hasMove(insData) ? VSM_ALLOCATED_FLAG :
+                (isStaticCache ? VSM_STATIC_UNCACHED_FLAG : VSM_DYNAMIC_UNCACHED_FLAG);
 
             for (int mipLevel = 0; mipLevel < mipCount; mipLevel++) {
                 uint mipViewIndex = mipLevel * viewCount + viewIndex;
@@ -80,7 +86,7 @@ void main(uint tid : SV_DispatchThreadID)
 
                 if (overlapsAnyValidPage(vsmID, mipLevel, rectPages, flagMask)) {
                     drawCountForAllViews++;
-                    writeCmd(mipViewIndex, drawInstanceInfo);
+                    writeCmd(mipViewIndex, drawInstanceInfo, isStaticCache);
                 }
             }
         }

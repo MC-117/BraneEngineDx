@@ -3,12 +3,12 @@
 #compute
 #include "../../lib/VirtualShadowMap_Def.hmat"
 
-RWBuffer<uint> outInitPhysPagesIndirectArgs;
+RWBuffer<uint> outComputeIndirectArgs;
 
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
 void main(uint tid : SV_DispatchThreadID)
 {
-	outInitPhysPagesIndirectArgs[0] = 0;
-	outInitPhysPagesIndirectArgs[1] = 1;
-	outInitPhysPagesIndirectArgs[2] = 1;
+	outComputeIndirectArgs[0] = 0;
+	outComputeIndirectArgs[1] = 1;
+	outComputeIndirectArgs[2] = 1;
 }

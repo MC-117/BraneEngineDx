@@ -62,6 +62,8 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
+protected:
+	virtual void getMeshTransformData(MeshTransformData* data);
 };
 
 #endif // !_SKELETONMESHACTOR_H_

@@ -85,6 +85,7 @@ void VirtualShadowMapDepthPass::execute(IRenderContext& context)
 		renderData.manager.processInvalidations(context, sceneData->meshTransformDataPack);
 		renderData.shadowMapArray.buildPageAllocations(context, sceneData->cameraRenderDatas, sceneData->lightDataPack);
 		renderData.shadowMapArray.render(context, sceneData->lightDataPack);
+		renderData.shadowMapArray.mergeStaticPhysPages(context);
 		renderData.shadowMapArray.renderDebugView(context, *sceneData->cameraRenderDatas[0]);
 
 		if (renderData.shadowMapArray.isAllocated())

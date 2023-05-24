@@ -774,6 +774,7 @@ void Transform::getMeshTransformData(MeshTransformData* data)
 {
 	data->localToWorld = getMatrix(WORLD);
 	data->worldScale = getScale(WORLD);
+	data->flag = data->flag & 0xFFFFFFFEU | ((rigidBody != NULL && rigidBody->material.physicalType == PhysicalType::DYNAMIC) ? 0 : 1);
 }
 
 Transform* Transform::getParentTransform()

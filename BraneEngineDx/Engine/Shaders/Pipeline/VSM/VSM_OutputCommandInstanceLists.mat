@@ -7,7 +7,7 @@ StructuredBuffer<VisiableInstanceInfo> visiableInstanceInfos;
 StructuredBuffer<uint> visiableInstanceCount;
 RWStructuredBuffer<uint> shadowDepthInstanceCounter;
 RWStructuredBuffer<uint> outInstanceIDs;
-RWStructuredBuffer<uint> outPageInfo;
+RWStructuredBuffer<uint> outPageInfos;
 
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
 void main(uint visInsIdx : SV_DispatchThreadID)
@@ -19,6 +19,6 @@ void main(uint visInsIdx : SV_DispatchThreadID)
         uint outOffset = 0U;
         InterlockedAdd(shadowDepthInstanceCounter[visInsInfo.drawInfo.indirectArgIndex], 1U, outOffset);
         outInstanceIDs[outOffset] = visInsInfo.drawInfo.instanceID;
-        outPageInfo[outOffset] = visInsInfo.viewIndex;
+        outPageInfos[outOffset] = visInsInfo.pageInfo;
 	}
 }
