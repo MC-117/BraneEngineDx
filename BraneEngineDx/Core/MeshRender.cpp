@@ -139,7 +139,6 @@ void MeshRender::getMeshTransformData(MeshTransformData* data) const
 	data->localCenter = mesh->getCenter();
 	data->localExtent = mesh->getExtent();
 	data->localRadius = data->localExtent.norm();
-	data->flag = 0;
 }
 
 void MeshRender::fillMaterialsByDefault()

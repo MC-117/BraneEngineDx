@@ -15,6 +15,7 @@ void main(uint tid : SV_DispatchThreadID)
     VSMPhysPageMetaData metaData = physPageMetaData[tid];
 
 	bool fullyCached = (metaData.flags & (VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG)) == 0;
+	bool isStaticUncached = (metaData.flags & VSM_STATIC_UNCACHED_FLAG) != 0;
 
 	if ((metaData.flags & VSM_ALLOCATED_FLAG) == 0)
 	{
@@ -37,9 +38,8 @@ void main(uint tid : SV_DispatchThreadID)
 		// actually maintain separate dynamic cached pages when "only" the (theoretically)
 		// static moved. Thus if not fully cached, we always regenerate the dynamic page.
 
-        int groupCount = 0;
-        // Each page needs TILES_PER_PAGE_1D groups launched
-        InterlockedAdd(outInitPhysPagesIndirectArgs[0], TILES_PER_PAGE_1D, groupCount);
-        outPhysPagesToInit[groupCount >> LOG2_TILES_PER_PAGE_1D] = tid;
+        emitPageToProcess(outPhysPagesToInit, outInitPhysPagesIndirectArgs, tid);
+		if (isStaticUncached && doesUseStaticCacheMode() && (metaData.flags & VSM_PHYSICAL_FLAG_VIEW_UNCACHED) == 0U)
+			emitPageToProcess(outPhysPagesToInit, outInitPhysPagesIndirectArgs, tid + vsmInfo.maxPhysPages);
 	}
 }

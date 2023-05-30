@@ -142,6 +142,11 @@ int Texture2D::getChannel() const
 	return desc.channel;
 }
 
+int Texture2D::getArrayCount() const
+{
+	return desc.arrayCount;
+}
+
 int Texture2D::getMipLevels() const
 {
 	return max(1u, desc.mipLevel);
@@ -293,6 +298,18 @@ unsigned int Texture2D::resize(unsigned int width, unsigned int height)
 	else {
 		newVendorTexture();
 	}
+	return vendorTexture ? vendorTexture->resize(width, height) : 0;
+}
+
+unsigned int Texture2D::resize(unsigned int width, unsigned int height, unsigned int arrayCount)
+{
+	if (readOnly)
+		return 0;
+	if (desc.arrayCount != arrayCount) {
+		desc.arrayCount = arrayCount;
+		desc.needUpdate = true;
+	}
+	newVendorTexture();
 	return vendorTexture ? vendorTexture->resize(width, height) : 0;
 }
 

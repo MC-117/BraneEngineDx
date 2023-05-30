@@ -61,9 +61,11 @@ VERTEX_OUT VERTEX_MAIN
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.InstanceID = objID;
-    vout.viewIndex = pageInfo[globalInsID];
+    vout.pageInfo = pageInfos[globalInsID];
+
+    VSMPageInfo pageInfo = unpackVSMPageInfo(vout.pageInfo);
     
-    transformToVirtualPage(vout.clipPos, vout.pageClipPos, vout.viewIndex, _WorldPos);
+    transformToVirtualPage(vout.clipPos, vout.pageClipPos, pageInfo.viewIndex, _WorldPos);
 #elif defined(DEPTH_SHADER_FEATURE)
     vout.svPos = mul(mul(float4(pos, 1.0), fm), camData.pmat);
     vout.LocalPos = pos;

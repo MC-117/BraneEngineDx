@@ -427,3 +427,9 @@ bool SkeletonMeshActor::serialize(SerializationInfo & to) {
 	}
 	return true;
 }
+
+void SkeletonMeshActor::getMeshTransformData(MeshTransformData* data)
+{
+	Transform::getMeshTransformData(data);
+	data->flag = data->flag & 0xFFFFFFFEU | 0;
+}

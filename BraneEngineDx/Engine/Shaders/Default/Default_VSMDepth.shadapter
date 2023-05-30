@@ -39,8 +39,10 @@ DefaultVSMVertexOut VERTEX_MAIN
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.InstanceID = objID;
-    vout.viewIndex = pageInfo[globalInsID];
+    vout.pageInfo = pageInfos[globalInsID];
+
+    VSMPageInfo pageInfo = unpackVSMPageInfo(vout.pageInfo);
     
-    transformToVirtualPage(vout.clipPos, vout.pageClipPos, vout.viewIndex, _WorldPos);
+    transformToVirtualPage(vout.clipPos, vout.pageClipPos, pageInfo.viewIndex, _WorldPos);
     return vout;
 }

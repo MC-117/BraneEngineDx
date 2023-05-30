@@ -48,6 +48,7 @@ public:
 	static constexpr unsigned int maxPerInstanceCmdCount = 64;
 
 	bool enable = false;
+	bool useStaticCache = false;
 	unsigned int physPoolWidth = 128 * 128;
 	unsigned int maxPhysPages = 4096;
 	unsigned int firstClipmapLevel = 6;
@@ -116,6 +117,9 @@ struct VirtualShadowMapInfo
 	unsigned int numShadowMapSlots;
 	Vector2u physPoolSize;
 	Vector2u physPoolPages;
+	unsigned int staticPageIndex;
+	unsigned int flag;
+	unsigned int pad[2];
 };
 
 struct VirtualShadowMapPhysicalPageData
@@ -172,9 +176,11 @@ static Vector3u name##ProgramDim;
 	VSM_SHADER(sortFreePages);
 	VSM_SHADER(allocateNewPageMappings);
 	VSM_SHADER(generateHierarchicalPageFlags);
-	VSM_SHADER(clearInitPhysPagesIndirectArgs);
+	VSM_SHADER(clearComputeIndirectArgs);
 	VSM_SHADER(selectPagesToInit);
 	VSM_SHADER(initPhysicalMemoryIndirect);
+	VSM_SHADER(selectPagesToMerge);
+	VSM_SHADER(mergePhysicalPagesIndirect);
 	VSM_SHADER(cullPerPageDrawCommands);
 	VSM_SHADER(allocateCommandInstanceOutputSpace);
 	VSM_SHADER(initOutputommandInstanceListsArgs);
@@ -209,9 +215,16 @@ static Vector3u name##ProgramDim;
 	static const ShaderPropertyName outPhysPageMetaDataName;
 	static const ShaderPropertyName outFreePhysPagesName;
 	static const ShaderPropertyName outPhysPageAllocRequestsName;
+
 	static const ShaderPropertyName outInitPhysPagesIndirectArgsName;
 	static const ShaderPropertyName physPagesToInitName;
 	static const ShaderPropertyName outPhysPagesToInitName;
+
+	static const ShaderPropertyName outMergePhysPagesIndirectArgsName;
+	static const ShaderPropertyName physPagesToMergeName;
+	static const ShaderPropertyName outPhysPagesToMergeName;
+
+	static const ShaderPropertyName outComputeIndirectArgsName;
 
 	static const ShaderPropertyName physPagePoolName;
 	static const ShaderPropertyName outPhysPagePoolName;
@@ -240,8 +253,8 @@ static Vector3u name##ProgramDim;
 	static const ShaderPropertyName instanceIDsName;
 	static const ShaderPropertyName outInstanceIDsName;
 
-	static const ShaderPropertyName pageInfoName;
-	static const ShaderPropertyName outPageInfoName;
+	static const ShaderPropertyName pageInfosName;
+	static const ShaderPropertyName outPageInfosName;
 
 	static const ShaderPropertyName debugBufferName;
 	static const ShaderPropertyName outDebugBufferName;
@@ -372,7 +385,7 @@ public:
 	VirtualShadowMapFrameData& getCurFrameData();
 
 	void invalidate();
-	void setPoolTextureSize(Vector2u size);
+	void setPoolTextureSize(Vector2u size, unsigned int arrayCount);
 	LightEntry* setLightEntry(int lightID, int cameraID);
 
 	void prepare();
@@ -435,6 +448,9 @@ public:
 	GPUBuffer initPhysPagesIndirectArgs;
 	GPUBuffer physPagesToInit;
 
+	GPUBuffer mergePhysPagesIndirectArgs;
+	GPUBuffer physPagesToMerge;
+
 	struct CullingData
 	{
 		unsigned int instanceCount;
@@ -447,7 +463,7 @@ public:
 
 	struct VisiableInstanceInfo
 	{
-		unsigned int viewIndex;
+		unsigned int pageInfo;
 		VSMDrawInstanceInfo drawInfo;
 	};
 
@@ -477,7 +493,7 @@ public:
 
 		GPUBuffer drawInstanceInfos;
 		GPUBuffer instanceIDs;
-		GPUBuffer pageInfo;
+		GPUBuffer pageInfos;
 
 		CullingBatchInfo();
 	};
@@ -513,6 +529,8 @@ public:
 
 	void render(IRenderContext& context, const LightRenderData& lightData);
 	void renderDebugView(IRenderContext& context, const CameraRenderData& mainCameraData);
+
+	void mergeStaticPhysPages(IRenderContext& context);
 
 	void clean();
 
