@@ -415,6 +415,7 @@
     <ClInclude Include="Core\Animation\AnimationPoseNode.h" />
     <ClInclude Include="Core\Audio\AudioStreamSource.h" />
     <ClInclude Include="Core\Audio\AudioWave.h" />
+    <ClInclude Include="Core\Nanite\ClusterBuilder.h" />
     <ClInclude Include="Midi\MidiInstrumentEditor.h" />
     <ClInclude Include="Core\GUI\UIViewport.h" />
     <ClInclude Include="Core\Importer\AnimationClipDataImporter.h" />
@@ -897,6 +898,7 @@
     <ClCompile Include="Core\Importer\PythonScriptImporter.cpp" />
     <ClCompile Include="Core\Importer\TextureImporter.cpp" />
     <ClCompile Include="Core\Importer\TimelineImporter.cpp" />
+    <ClCompile Include="Core\Nanite\ClusterBuilder.cpp" />
     <ClCompile Include="Core\ProbeSystem\CaptureProbeRender.cpp" />
     <ClCompile Include="Core\ProbeSystem\EnvLightCaptureProbeRender.cpp" />
     <ClCompile Include="Core\PostProcess\CMAA2Pass.cpp" />
