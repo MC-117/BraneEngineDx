@@ -13,6 +13,7 @@ public:
 		int index;
 		int parentIndex;
 		Bone* bone = NULL;
+		Bone* localRootBone = NULL;
 		BoneData* data = NULL;
 		set<int> sharedSkeletonIndices;
 	};

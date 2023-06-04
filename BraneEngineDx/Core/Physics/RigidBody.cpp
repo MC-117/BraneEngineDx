@@ -1,5 +1,8 @@
 #include "RigidBody.h"
 #include "PhysicalWorld.h"
+#include "../ObjectUltility.h"
+
+SerializeInstance(RigidBody);
 
 RigidBodyCollider::RigidBodyCollider(Shape* shape, ShapeComplexType shapeComplexType, Vector3f scale)
 	: PhysicalCollider(shape, shapeComplexType, scale)
@@ -74,9 +77,7 @@ void RigidBodyCollider::apply()
 
 PTransform RigidBodyCollider::getOffsetTransform() const
 {
-	return shapeComplexType == SIMPLE ?
-		toPTransform((shape->getCenter() + positionOffset).cwiseProduct(localScale), rotationOffset)
-		: toPTransform(positionOffset.cwiseProduct(localScale), rotationOffset);
+	return shape->getOffsetTransform(positionOffset, rotationOffset, localScale);
 }
 
 RigidBody::RigidBody(::Transform& targetTransform, const PhysicalMaterial& material)
@@ -210,6 +211,11 @@ void RigidBody::updateObjectTransform()
 	else if (material.physicalType == PhysicalType::NOCOLLISIOIN)
 		rawRigidDynamic->setGlobalPose(targetTransform.getWorldTransform());
 #endif
+}
+
+void RigidBody::setWorldTransform(const Vector3f& position, const Quaternionf& rotation)
+{
+	rawRigidActor->setGlobalPose(toPTransform(position, rotation));
 }
 
 void RigidBody::addToWorld(PhysicalWorld & physicalWorld)
@@ -370,4 +376,14 @@ void RigidBody::addImpulseAtLocation(const Vector3f& impulse, const Vector3f& lo
 		PxRigidBodyExt::addForceAtPos(*rawRigidDynamic, toPVec3(impulse),
 			toPVec3(location), PxForceMode::eIMPULSE, autoWake);
 	}
+}
+
+Serializable* RigidBody::instantiate(const SerializationInfo& from)
+{
+	Transform* targetTransform = getInstanceRef<Transform>(from, "targetTransform");
+	if (targetTransform == NULL)
+		return NULL;
+	PhysicalMaterial material;
+	from.get("material", material);
+	return new RigidBody(*targetTransform, material);
 }

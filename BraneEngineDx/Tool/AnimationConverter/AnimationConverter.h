@@ -16,7 +16,7 @@ public:
 	{
 		Color baseColor = { 222, 222, 222, 255 };
 		Color highlistColor = { 255, 255, 255, 255 };
-		Color overColor = { 118, 118, 118, 255 };
+		Color overColor = { 255, 255, 255, 255 };
 		Color shadowColor = { 200, 200, 200, 255 };
 		Color rimColor = { 0.196078f, 0.196078f, 0.196078f, 1.0f };
 		float shadowCut = 0.5;

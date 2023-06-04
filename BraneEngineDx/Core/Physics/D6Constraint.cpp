@@ -1,5 +1,32 @@
 #include "D6Constraint.h"
 #include "PhysicalWorld.h"
+#include "../Utility/MathUtility.h"
+#include "../ObjectUltility.h"
+
+SerializeInstance(D6Constraint);
+
+D6Constraint::D6Config::D6Config()
+	: enableCollision(false)
+	, xMotion(MotionType::Locked)
+	, yMotion(MotionType::Locked)
+	, zMotion(MotionType::Locked)
+	, twistMotion(MotionType::Free)
+	, swing1Motion(MotionType::Free)
+	, swing2Motion(MotionType::Free)
+	, positionLimit(Limit3 {
+			Vector3f(-0.1f, -0.1f, -0.1f),
+			Vector3f(0.1f,0.1f, 0.1f)
+	})
+	, rotationLimit(Limit3 {
+		Vector3f(-PI * 0.25f, -PI * 0.25f, -PI * 0.25f),
+		Vector3f(PI * 0.25f, PI * 0.25f, PI * 0.25f)
+	})
+	, positionSpring(Vector3f())
+	, positionDamping(Vector3f())
+	, rotationSpring(Vector3f())
+	, rotationDamping(Vector3f())
+{
+}
 
 D6Constraint::D6Constraint(RigidBody& rigidBody1, RigidBody& rigidBody2)
 	: PhysicalConstraint(rigidBody1, rigidBody2)
@@ -48,6 +75,15 @@ D6Constraint::D6Config D6Constraint::getConfigure()
 	return d6Config;
 }
 
+Serializable* D6Constraint::instantiate(const SerializationInfo& from)
+{
+	RigidBody* rigidBody1 = getInstanceRef<RigidBody>(from, "rigidBody1");
+	RigidBody* rigidBody2 = getInstanceRef<RigidBody>(from, "rigidBody2");
+	if (rigidBody1 == NULL || rigidBody2 == NULL)
+		return NULL;
+	return new D6Constraint(*rigidBody1, *rigidBody2);
+}
+
 void D6Constraint::_configure()
 {
 	if (rawConstraint == NULL)
@@ -62,20 +98,37 @@ void D6Constraint::_configure()
 	joint->setMotion(PxD6Axis::eTWIST, (PxD6Motion::Enum)d6Config.twistMotion);
 	joint->setMotion(PxD6Axis::eSWING1, (PxD6Motion::Enum)d6Config.swing1Motion);
 	joint->setMotion(PxD6Axis::eSWING2, (PxD6Motion::Enum)d6Config.swing2Motion);
-	joint->setLinearLimit(PxD6Axis::eX,
-		PxJointLinearLimitPair(d6Config.positionLimit.min.x() * scale.x(), d6Config.positionLimit.max.x() * scale.x(),
-			PxSpring(d6Config.positionSpring.x() * scale.x(), d6Config.positionDamping.x() * scale.x())));
-	joint->setLinearLimit(PxD6Axis::eY,
-		PxJointLinearLimitPair(d6Config.positionLimit.min.y() * scale.y(), d6Config.positionLimit.max.y() * scale.y(),
-			PxSpring(d6Config.positionSpring.y() * scale.y(), d6Config.positionDamping.y() * scale.y())));
-	joint->setLinearLimit(PxD6Axis::eZ,
-		PxJointLinearLimitPair(d6Config.positionLimit.min.z() * scale.z(), d6Config.positionLimit.max.z() * scale.z(),
-			PxSpring(d6Config.positionSpring.z() * scale.z(), d6Config.positionDamping.z() * scale.z())));
-	joint->setTwistLimit(PxJointAngularLimitPair(
-		d6Config.rotationLimit.min.x(), d6Config.rotationLimit.max.x(),
-		PxSpring(d6Config.rotationSpring.x(), d6Config.rotationDamping.x())));
-	joint->setPyramidSwingLimit(PxJointLimitPyramid(
-		d6Config.rotationLimit.min.y(), d6Config.rotationLimit.max.y(),
-		d6Config.rotationLimit.min.z(), d6Config.rotationLimit.max.z()));
+	if (d6Config.xMotion == Limited)
+		joint->setLinearLimit(PxD6Axis::eX,
+			PxJointLinearLimitPair(d6Config.positionLimit.min.x() * scale.x(), d6Config.positionLimit.max.x() * scale.x(),
+				PxSpring(d6Config.positionSpring.x(), d6Config.positionDamping.x())));
+	if (d6Config.yMotion == Limited)
+		joint->setLinearLimit(PxD6Axis::eY,
+			PxJointLinearLimitPair(d6Config.positionLimit.min.y() * scale.y(), d6Config.positionLimit.max.y() * scale.y(),
+				PxSpring(d6Config.positionSpring.y(), d6Config.positionDamping.y())));
+	if (d6Config.zMotion == Limited)
+		joint->setLinearLimit(PxD6Axis::eZ,
+			PxJointLinearLimitPair(d6Config.positionLimit.min.z() * scale.z(), d6Config.positionLimit.max.z() * scale.z(),
+				PxSpring(d6Config.positionSpring.z(), d6Config.positionDamping.z())));
+	if (d6Config.twistMotion == Limited)
+		joint->setTwistLimit(PxJointAngularLimitPair(
+			d6Config.rotationLimit.min.x(), d6Config.rotationLimit.max.x(),
+			PxSpring(d6Config.positionSpring.x(), d6Config.positionDamping.x())));
+	if (d6Config.swing1Motion == Limited || d6Config.swing2Motion == Limited) {
+		float swing1Limit = std::abs(d6Config.rotationLimit.max.y());
+		float swing2Limit = std::abs(d6Config.rotationLimit.max.z());
+		if (swing1Limit == std::abs(d6Config.rotationLimit.min.y()) &&
+			swing2Limit == std::abs(d6Config.rotationLimit.min.z()))
+			joint->setSwingLimit(PxJointLimitCone(
+				std::clamp(swing1Limit, 0.00001f, PI), std::clamp(swing2Limit, 0.00001f, PI),
+				PxSpring(std::max(d6Config.rotationSpring.y(), d6Config.rotationSpring.z()),
+					std::max(d6Config.rotationDamping.y(), d6Config.rotationDamping.z()))));
+		else
+			joint->setPyramidSwingLimit(PxJointLimitPyramid(
+				d6Config.rotationLimit.min.y(), d6Config.rotationLimit.max.y(),
+				d6Config.rotationLimit.min.z(), d6Config.rotationLimit.max.z(),
+				PxSpring(std::max(d6Config.rotationSpring.y(), d6Config.rotationSpring.z()),
+					std::max(d6Config.rotationDamping.y(), d6Config.rotationDamping.z()))));
+	}
 	joint->setConstraintFlag(PxConstraintFlag::eCOLLISION_ENABLED, d6Config.enableCollision);
 }

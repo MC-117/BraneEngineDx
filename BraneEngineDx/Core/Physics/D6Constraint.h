@@ -1,10 +1,11 @@
 #pragma once
 #include "PhysicalConstraint.h"
 
-
 class D6Constraint : public PhysicalConstraint
 {
 public:
+	Serialize(D6Constraint, PhysicalConstraint);
+
 	enum MotionType
 	{
 		Locked, Limited, Free
@@ -31,6 +32,8 @@ public:
 		Vector3f positionDamping;
 		Vector3f rotationSpring;
 		Vector3f rotationDamping;
+
+		D6Config();
 	};
 
 	D6Constraint(RigidBody& rigidBody1, RigidBody& rigidBody2);
@@ -40,27 +43,8 @@ public:
 	void configure(D6Config config);
 	D6Config getConfigure();
 
+	static Serializable* instantiate(const SerializationInfo& from);
 protected:
-	D6Config d6Config = {
-		false,
-		MotionType::Locked,
-		MotionType::Locked,
-		MotionType::Locked,
-		MotionType::Free,
-		MotionType::Free,
-		MotionType::Free,
-		Limit3 {
-			Vector3f(-0.1f, -0.1f, -0.1f),
-			Vector3f(0.1f,0.1f, 0.1f)
-		},
-		Limit3 {
-			Vector3f(-PI * 0.25f, -PI * 0.25f, -PI * 0.25f),
-			Vector3f(PI * 0.25f, PI * 0.25f, PI * 0.25f)
-		},
-		Vector3f(0.1f,0.1f, 0.1f),
-		Vector3f(0.1f,0.1f, 0.1f),
-		Vector3f(0.1f,0.1f, 0.1f),
-		Vector3f(0.1f,0.1f, 0.1f)
-	};
+	D6Config d6Config;
 	void _configure();
 };

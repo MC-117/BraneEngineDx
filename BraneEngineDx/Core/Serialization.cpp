@@ -632,12 +632,17 @@ bool SerializationInfoParser::object_sequence()
 			}
 		}
 		else if (token == LSBR) {
+			bool isObjectArray = backupToken == NAME;
 			match(LSBR);
 			SerializationInfo& info = infos.emplace_back();
 			info.name = name;
 			info.path = path;
-			if (!array(info)) {
-				findError("Unexpected token: " + tokenString);
+			bool arraySuccess = true;
+			if (isObjectArray)
+				arraySuccess = object_array(info);
+			else
+				arraySuccess = array(info);
+			if (!arraySuccess) {
 				return false;
 			}
 		}

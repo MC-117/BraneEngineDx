@@ -6,12 +6,14 @@
 #include "PhysicalMaterial.h"
 #include "RigidBody.h"
 
-class PhysicalConstraint
+class PhysicalConstraint : public PhysicalBase
 {
 public:
+	Serialize(PhysicalConstraint, PhysicalBase);
+
 	PhysicalWorld* physicalWorld = NULL;
-	RigidBody* rigidBody1 = NULL;
-	RigidBody* rigidBody2 = NULL;
+	Ref<RigidBody> rigidBody1 = NULL;
+	Ref<RigidBody> rigidBody2 = NULL;
 	PTransform frameTransform1 = PTransform(PxIdentity);
 	PTransform frameTransform2 = PTransform(PxIdentity);
 
@@ -22,6 +24,8 @@ public:
 	virtual void removeFromWorld();
 
 	virtual PConstraint* getPConstraint() const;
+
+	static Serializable* instantiate(const SerializationInfo& from);
 protected:
 	PConstraint* rawConstraint = NULL;
 };

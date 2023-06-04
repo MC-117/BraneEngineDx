@@ -334,6 +334,11 @@ PFabric * Mesh::generateCloth(unsigned int partIndex)
 	}
 	return fabricMeshPart;
 }
+
+PTransform Mesh::getOffsetTransform(const Vector3f& positionOffset, const Quaternionf& rotationOffset, const Vector3f& localScale) const
+{
+	return toPTransform(positionOffset.cwiseProduct(localScale), rotationOffset);
+}
 #endif
 
 Mesh & Mesh::operator=(Mesh & mesh)

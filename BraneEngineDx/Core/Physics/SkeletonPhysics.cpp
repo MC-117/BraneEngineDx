@@ -286,3 +286,42 @@ void SkeletonPhysics::applySkeletonPhysicsInfo()
 		}
 	}
 }
+
+void SkeletonPhysics::releasePhysics()
+{
+	for (auto& rigidBody : rigidbodies) {
+		RigidBody* pRigidBody = rigidBody;
+		if (pRigidBody) {
+			pRigidBody->removeFromWorld();
+			delete pRigidBody;
+		}
+	}
+	rigidbodies.clear();
+	for (auto& constraint : constraints) {
+		D6Constraint* pConstraint = constraint;
+		if (pConstraint) {
+			pConstraint->removeFromWorld();
+			delete pConstraint;
+		}
+	}
+	constraints.clear();
+}
+
+void SkeletonPhysics::resetPhysics()
+{
+	for (auto& rigidBody : rigidbodies) {
+		RigidBody* pRigidBody = rigidBody;
+		if (pRigidBody) {
+			Bone* bone = dynamic_cast<Bone*>(&pRigidBody->targetTransform);
+			Skeleton::BoneInfo* info = actor->skeleton.getBone(bone->getBoneIndex());
+			Transform* rootTransform = info->localRootBone ? (Transform*)info->localRootBone : (Transform*)actor;
+			if (info) {
+				Matrix4f worldMatrix = rootTransform->getMatrix(WORLD) * info->data->offsetMatrix.inverse();
+				Vector3f pos, sca;
+				Quaternionf rot;
+				worldMatrix.decompose(pos, rot, sca);
+				pRigidBody->setWorldTransform(pos, rot);
+			}
+		}
+	}
+}

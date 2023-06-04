@@ -60,12 +60,14 @@ public:
 
 	SkeletonMeshActor* actor = NULL;
 	SkeletonPhysicsInfo info;
-	vector<RigidBody*> rigidbodies;
-	vector<D6Constraint*> constraints;
+	vector<Ref<RigidBody>> rigidbodies;
+	vector<Ref<D6Constraint>> constraints;
 
 	SkeletonPhysics(SkeletonMeshActor* actor);
 
 	SkeletonPhysicsInfo& getSkeletonPhysicsInfo();
 	void applySkeletonPhysicsInfo();
+	void releasePhysics();
+	void resetPhysics();
 };
 

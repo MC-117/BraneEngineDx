@@ -476,6 +476,9 @@ void Engine::clean()
 	InitializationManager::instance().finalize(FinalizeStage::BeforeScriptRelease);
 	PythonManager::end();
 
+	currentWorld->end();
+	delete currentWorld;
+
 	InitializationManager::instance().finalize(FinalizeStage::BeforePhysicsRelease);
 #if ENABLE_PHYSICS
 	currentWorld->physicalWorld.physicsScene->release();

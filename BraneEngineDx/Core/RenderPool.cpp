@@ -114,6 +114,7 @@ void RenderPool::render(bool guiOnly)
 	info.sceneData = sceneData;
 	info.renderGraph = renderGraph;
 	info.camera = &currentCamera;
+	renderGraph->sceneDatas.insert(sceneData);
 
 	gui.onGUI(info);
 	timer.record("GUI");

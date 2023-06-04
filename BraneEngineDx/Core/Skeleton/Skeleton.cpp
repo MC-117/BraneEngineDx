@@ -63,6 +63,7 @@ bool Skeleton::addSkeletonData(SkeletonData& data)
     skeletonInfo.boneRemapIndex.resize(data.boneList.size(), -1);
 
     BoneData* boneData = rootBoneData;
+    Bone* localRootBone = NULL;
 
     while (boneData != NULL) {
         BoneInfo* boneInfo = getBone(boneData->name);
@@ -73,10 +74,14 @@ bool Skeleton::addSkeletonData(SkeletonData& data)
             boneInfo->index = bones.size() - 1;
             boneInfo->parentIndex = parent == NULL ? -1 : parent->index;
             boneInfo->data = boneData;
-            Bone* bone = new Bone(boneData->name);
+            Bone* bone = new Bone(boneInfo->index, boneData->name);
             boneInfo->bone = bone;
+            boneInfo->localRootBone = localRootBone;
             if (parent != NULL)
                 bone->setParent(*parent->bone);
+            if (boneData == rootBoneData) {
+                localRootBone = bone;
+            }
             bone->setHidden(true);
             Vector3f pos, sca;
             Quaternionf rot;
@@ -105,6 +110,8 @@ bool Skeleton::removeSkeletonData(int index)
     for (auto b = bones.begin(), e = bones.end(); b != e;) {
         BoneInfo& boneInfo = **b;
         boneInfo.index -= indexOffset;
+        if (boneInfo.bone)
+            boneInfo.bone->boneIndex = boneInfo.index;
         boneInfo.sharedSkeletonIndices.erase(index);
         if (boneInfo.sharedSkeletonIndices.empty()) {
             boneInfo.bone->destroy();

@@ -89,6 +89,11 @@ void SkeletonMeshActor::setReferencePose()
 	skeleton.setReferencePose();
 }
 
+void SkeletonMeshActor::resetSkeletonPhysics()
+{
+	skeletonPhysics.resetPhysics();
+}
+
 BoundBox SkeletonMeshActor::calLocalBound()
 {
 	BoundBox outBound = BoundBox::none;
@@ -181,6 +186,7 @@ void SkeletonMeshActor::setupPhysics(PhysicalWorld& physicalWorld)
 void SkeletonMeshActor::releasePhysics(PhysicalWorld& physicalWorld)
 {
 	Actor::releasePhysics(physicalWorld);
+	skeletonPhysics.releasePhysics();
 	/*for (auto b = skeletonPhysics.constraints.begin(), e = skeletonPhysics.constraints.end(); b != e; b++) {
 		if ((*b)->physicalWorld != NULL) {
 			(*b)->removeFromWorld();

@@ -44,8 +44,8 @@ public:
 	virtual void afterTick();
 
 #if ENABLE_PHYSICS
-	RigidBody* rigidBody = NULL;
-	vector<PhysicalConstraint*> constraints;
+	Ref<RigidBody> rigidBody = NULL;
+	vector<Ref<PhysicalConstraint>> constraints;
 	virtual void updataRigidBody(const PhysicalMaterial& physicalMaterial = PhysicalMaterial());
 	virtual void addConstraint(PhysicalConstraint* constraint);
 	virtual PhysicalBody* getPhysicalBody();

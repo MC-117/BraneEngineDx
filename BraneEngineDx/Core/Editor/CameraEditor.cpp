@@ -168,8 +168,12 @@ void CameraEditor::onAnimation(EditorInfo& info)
 
 void CameraEditor::onPostprocess(EditorInfo& info)
 {
-	if (camera->cameraRender.graph == NULL)
+	if (camera->cameraRender.graph == NULL || camera->cameraRender.graph->passes.empty()) {
+		if (ImGui::Button("AddDefaultPass")) {
+			camera->cameraRender.createDefaultPostProcessGraph();
+		}
 		return;
+	}
 	PostProcessGraph& graph = *camera->cameraRender.graph;
 	int i = 0;
 	for (auto b = graph.passes.begin(), e = graph.passes.end(); b != e; b++, i++) {

@@ -6,6 +6,7 @@
 #include "PhysicalMaterial.h"
 #include "ContactInfo.h"
 #include "PhysicalLayer.h"
+#include "PhysicalBase.h"
 
 class PhysicalWorld;
 
@@ -53,9 +54,11 @@ public:
 	virtual void apply();
 };
 
-class PhysicalBody
+class PhysicalBody : public PhysicalBase
 {
 public:
+	Serialize(PhysicalBody, PhysicalBase);
+
 	enum BodyType {
 		NONE, RIGID, SOFT
 	} bodyType = NONE;
@@ -87,6 +90,7 @@ public:
 	virtual void initBody();
 	virtual PhysicalCollider* addCollider(Shape* shape, ShapeComplexType shapeComplexType = SIMPLE);
 	virtual void updateObjectTransform();
+	virtual void setWorldTransform(const Vector3f& position, const Quaternionf& rotation);
 	virtual void handleCollision(const ContactInfo& info);
 	virtual void addToWorld(PhysicalWorld& physicalWorld);
 	virtual void removeFromWorld();
@@ -103,6 +107,8 @@ public:
 
 	virtual Enum<LockFlag> getLockFlags() const;
 	virtual void setLockFlags(Enum<LockFlag> flags);
+
+	static Serializable* instantiate(const SerializationInfo& from);
 };
 
 #endif // !_PHYSICALBODY_H_

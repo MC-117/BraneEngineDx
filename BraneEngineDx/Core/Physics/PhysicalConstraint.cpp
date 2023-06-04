@@ -1,6 +1,8 @@
 #include "PhysicalConstraint.h"
 #include "PhysicalWorld.h"
 
+SerializeInstance(PhysicalConstraint);
+
 PhysicalConstraint::PhysicalConstraint(RigidBody & rigidBody1, RigidBody & rigidBody2)
 	: rigidBody1(&rigidBody1), rigidBody2(&rigidBody2)
 {
@@ -27,4 +29,9 @@ void PhysicalConstraint::removeFromWorld()
 PConstraint* PhysicalConstraint::getPConstraint() const
 {
 	return rawConstraint;
+}
+
+Serializable* PhysicalConstraint::instantiate(const SerializationInfo& from)
+{
+	return NULL;
 }

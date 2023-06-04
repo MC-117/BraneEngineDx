@@ -103,6 +103,8 @@ public:
 #if ENABLE_PHYSICS
 	virtual CollisionShape* generateComplexCollisionShape(const Vector3f& scale = Vector3f(1, 1, 1));
 	virtual PFabric* generateCloth(unsigned int partIndex);
+
+	virtual PTransform getOffsetTransform(const Vector3f& positionOffset, const Quaternionf& rotationOffset, const Vector3f& localScale) const;
 #endif
 
 	Mesh& operator=(Mesh& mesh);

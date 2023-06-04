@@ -17,6 +17,8 @@ void SkeletonMeshActorEditor::onSkeletonGUI(EditorInfo& info)
 {
 	if (ImGui::Button("Set Reference Pose", { -1, 36 }))
 		skeletonMeshActor->setReferencePose();
+	if (ImGui::Button("Reset Skeleton Physics", { -1, 36 }))
+		skeletonMeshActor->resetSkeletonPhysics();
 	editingBoneConstraint = ImGui::CollapsingHeader("BoneConstraint");
 	if (editingBoneConstraint) {
 		ImGui::Indent(10);
@@ -362,8 +364,8 @@ void SkeletonMeshActorEditor::onHandleGizmo(GizmoInfo& info)
 			{
 				float radius = abs(bound.maxPoint.x() - bound.minPoint.x()) * 0.5f;
 				float halfLength = (abs(bound.maxPoint.z() - bound.minPoint.z()) - abs(bound.maxPoint.x() - bound.minPoint.x())) * 0.5f;
-				info.gizmo->drawCapsuleX(Vector3f::Zero(), radius, halfLength, mat, color);
-				if (info.gizmo->pickCapsuleX(Vector3f::Zero(), radius, halfLength, Vector2f::Zero(), mat))
+				info.gizmo->drawCapsuleZ(Vector3f::Zero(), radius, halfLength, mat, color);
+				if (info.gizmo->pickCapsuleZ(Vector3f::Zero(), radius, halfLength, Vector2f::Zero(), mat))
 					selectRigidBodyInfo(i);
 				break;
 			}

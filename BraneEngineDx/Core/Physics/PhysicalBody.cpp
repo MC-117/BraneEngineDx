@@ -81,6 +81,8 @@ void PhysicalCollider::apply()
 {
 }
 
+SerializeInstance(PhysicalBody);
+
 PhysicalBody::PhysicalBody(::Transform& targetTransform, const PhysicalMaterial& material) :
 #ifdef PHYSICS_USE_BULLET
 	motionState(targetTransform, toPTransform(-shape->getCenter().cwiseProduct(targetTransform.scale))),
@@ -113,6 +115,10 @@ PhysicalCollider* PhysicalBody::addCollider(Shape* shape, ShapeComplexType shape
 }
 
 void PhysicalBody::updateObjectTransform()
+{
+}
+
+void PhysicalBody::setWorldTransform(const Vector3f& position, const Quaternionf& rotation)
 {
 }
 
@@ -191,4 +197,9 @@ Enum<PhysicalBody::LockFlag> PhysicalBody::getLockFlags() const
 void PhysicalBody::setLockFlags(Enum<PhysicalBody::LockFlag> flags)
 {
 	lockFlags = flags;
+}
+
+Serializable* PhysicalBody::instantiate(const SerializationInfo& from)
+{
+	return nullptr;
 }

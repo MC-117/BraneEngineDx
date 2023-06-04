@@ -107,6 +107,7 @@ void EditorWorld::render(RenderGraph& renderGraph)
 	info.sceneData = sceneRenderData;
 	info.renderGraph = &renderGraph;
 	info.camera = &camera;
+	renderGraph.sceneDatas.insert(sceneRenderData);
 
 	iter.reset();
 	while (iter.next()) {

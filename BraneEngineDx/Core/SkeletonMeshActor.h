@@ -35,6 +35,7 @@ public:
 	virtual Bone* getBone(size_t index);
 
 	virtual void setReferencePose();
+	virtual void resetSkeletonPhysics();
 
 	virtual BoundBox calLocalBound();
 

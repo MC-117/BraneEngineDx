@@ -103,10 +103,16 @@ void Transform::releasePhysics(PhysicalWorld & physicalWorld)
 {
 	if (rigidBody != NULL) {
 		rigidBody->removeFromWorld();
+		delete rigidBody;
 	}
 	for (int i = 0; i < constraints.size(); i++) {
-		constraints[i]->removeFromWorld();
+		PhysicalConstraint* constraint = constraints[i];
+		if (constraint) {
+			constraint->removeFromWorld();
+			delete constraint;
+		}
 	}
+	constraints.clear();
 }
 
 void Transform::collisionHappened(const ContactInfo & info)

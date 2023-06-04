@@ -65,12 +65,15 @@ class RigidBody : public PhysicalBody
 #endif // !PHYSICS_USE_BULLET
 {
 public:
+	Serialize(RigidBody, PhysicalBody);
+
 	RigidBody(::Transform& targetTransform, const PhysicalMaterial& material);
 	virtual ~RigidBody();
 
 	virtual void initBody();
 	virtual PhysicalCollider* addCollider(Shape* shape, ShapeComplexType shapeComplexType = SIMPLE);
 	virtual void updateObjectTransform();
+	virtual void setWorldTransform(const Vector3f& position, const Quaternionf& rotation);
 	virtual void addToWorld(PhysicalWorld& physicalWorld);
 	virtual void removeFromWorld();
 
@@ -86,6 +89,8 @@ public:
 
 	void addForceAtLocation(const Vector3f& force, const Vector3f& location, bool autoWake = true);
 	void addImpulseAtLocation(const Vector3f& impulse, const Vector3f& location, bool autoWake = true);
+
+	static Serializable* instantiate(const SerializationInfo& from);
 protected:
 #ifdef PHYSICS_USE_PHYSX
 	PxRigidActor* rawRigidActor = NULL;

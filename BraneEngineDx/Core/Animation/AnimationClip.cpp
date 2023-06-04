@@ -1086,16 +1086,16 @@ bool BlendSpaceAnimation::serialize(SerializationInfo & to)
 
 AnimationClipData * AnimationLoader::loadCameraAnimation(const string & file)
 {
-	ifstream f(file);
+	ifstream f(filesystem::u8path(file));
 	if (f.fail()) {
 		f.close();
 		return NULL;
 	}
 	SerializationInfoParser sp(f);
 	bool ok = sp.parse();
+	f.close();
 	if (!ok)
 		return NULL;
-	f.close();
 	SerializationInfo& info = sp.infos[0];
 	struct CameraFrame
 	{
@@ -1182,9 +1182,9 @@ AnimationClipData * AnimationLoader::loadMotionAnimation(const string & file)
 	}
 	SerializationInfoParser sp(f);
 	bool ok = sp.parse();
+	f.close();
 	if (!ok)
 		return NULL;
-	f.close();
 	SerializationInfo& info = sp.infos[0];
 	struct BoneFrame
 	{

@@ -11,6 +11,11 @@ Bone::Bone(const string & name) : Actor(name)
 	setupFlags = SetupFlags::Transform;
 }
 
+int Bone::getBoneIndex() const
+{
+	return boneIndex;
+}
+
 Serializable * Bone::instantiate(const SerializationInfo & from)
 {
 	Bone* bone = new Bone(from.name);
@@ -44,4 +49,9 @@ bool Bone::serialize(SerializationInfo & to)
 			}
 		}*/
 	return true;
+}
+
+Bone::Bone(int boneIndex, const string& name) : Actor(name), boneIndex(boneIndex)
+{
+	setupFlags = SetupFlags::Transform;
 }

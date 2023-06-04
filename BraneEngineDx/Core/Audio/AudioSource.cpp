@@ -134,7 +134,7 @@ bool AudioData::getLoopPoint(Vector2i& point)
 
 bool AudioData::load(const string & file)
 {
-	ifstream is(file, ios::binary);
+	ifstream is(filesystem::u8path(file), ios::binary);
 	if (is.fail())
 		return false;
 

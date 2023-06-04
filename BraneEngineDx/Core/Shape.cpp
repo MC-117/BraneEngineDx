@@ -129,6 +129,11 @@ CollisionShape * Shape::generateComplexCollisionShape(const Vector3f& scale)
 {
 	return NULL;
 }
+
+PTransform Shape::getOffsetTransform(const Vector3f& positionOffset, const Quaternionf& rotationOffset, const Vector3f& localScale) const
+{
+	return toPTransform((getCenter() + positionOffset).cwiseProduct(localScale), rotationOffset);
+}
 #endif
 
 Serializable * Shape::instantiate(const SerializationInfo & from)

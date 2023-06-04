@@ -836,7 +836,7 @@ void AnimationConverter::generateAsset()
 						break;
 					case 2: // Capsule
 					{
-						quat = quat * Quaternionf::FromAngleAxis(PI * 0.5, Vector3f::UnitZ());
+						quat = quat * Quaternionf::FromTwoVectors(Vector3f::UnitY(), Vector3f::UnitZ());
 						shape = new Capsule(rigid.size[0], rigid.size[1] * 0.5f);
 						break;
 					}
@@ -942,11 +942,11 @@ void AnimationConverter::generateAsset()
 					Quaternionf rotation1 = Quaternionf::FromEularAngles(toVector3f(joint.param.orientaiton));
 					rotation1.z() *= -1;
 					rotation1.w() *= -1;
-					//rotation1 = rotation1 * Quaternionf::FromAngleAxis(PI * 0.5, Vector3f::UnitZ());
+					//rotation1 = rotation1 * Quaternionf::FromTwoVectors(Vector3f::UnitY(), Vector3f::UnitZ());
 					Quaternionf rotation2 = Quaternionf::FromEularAngles(toVector3f(joint.param.orientaiton));
 					rotation2.z() *= -1;
 					rotation2.w() *= -1;
-					//rotation2 = rotation2 * Quaternionf::FromAngleAxis(PI * 0.5, Vector3f::UnitZ());
+					//rotation2 = rotation2 * Quaternionf::FromTwoVectors(Vector3f::UnitY(), Vector3f::UnitZ());
 
 					constraintInfo.boneName = bbone1->name;
 					constraintInfo.targetBoneName = bbone2->name;

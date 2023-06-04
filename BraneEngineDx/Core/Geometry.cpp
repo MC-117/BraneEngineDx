@@ -402,6 +402,11 @@ CollisionShape * Capsule::generateCollisionShape(const Vector3f& scale) const
 	return new PxCapsuleGeometry(getRadius() * scale.x(), (getHeight() * 0.5 - getRadius()) * scale.y());
 #endif
 }
+PTransform Capsule::getOffsetTransform(const Vector3f& positionOffset, const Quaternionf& rotationOffset, const Vector3f& localScale) const
+{
+	return Shape::getOffsetTransform(positionOffset,
+		rotationOffset * Quaternionf::FromTwoVectors(Vector3f::UnitX(), Vector3f::UnitZ()), localScale);
+}
 #endif
 
 Serializable * Capsule::instantiate(const SerializationInfo & from)
