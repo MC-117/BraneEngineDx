@@ -9,7 +9,7 @@ void main(uint tid : SV_DispatchThreadID)
     VSMPhysPageMetaData metaData;
     metaData.flags = 0U;
     metaData.age = 0U;
-    metaData.virtualPageOffset = 0U;
+    metaData.virtualPageOffset = NONE_PAGEID;
     metaData.vsmID = 0U;
 	if (tid < vsmInfo.maxPhysPages)
 		outPhysPageMetaData[tid] = metaData;

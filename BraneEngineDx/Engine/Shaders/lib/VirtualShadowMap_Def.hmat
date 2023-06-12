@@ -20,7 +20,6 @@
 // The light was marked to not be cached (even though caching is enabled)
 #define VSM_PHYSICAL_FLAG_VIEW_UNCACHED		(1U << 4)
 #define VSM_PHYSICAL_FLAG_DIRTY				(1U << 5)
-#define VSM_PHYSICAL_FLAG_PREVIOUS_CACHE	(1U << 6)
 
 
 // bit-offset for storing another set of page flags used to track invalidation in the physical page metadata flags.
@@ -44,6 +43,7 @@
 #define VSM_PAGE_SIZE_MASK (VSM_PAGE_SIZE - 1)
 
 #define NONE_VSMID -1
+#define NONE_PAGEID 0xFFFFFFFFU
 
 // Log2 2D dimension of thread group size, 2^4 == 16, 
 #define LOG2_TILE_THREAD_GROUP_SIZE_XY 4U
@@ -740,7 +740,7 @@ float vsmSampleDirectShadow(int vsmID, float3 worldPos, float3 worldNormal = flo
 			VSMSample vsmSample;
 			if (vsmSampleClipmap(clipmapVSMID, shadowUVz.xy, vsmSample)) {
 				float optimalSlopeBias = all(worldNormal == float3(0, 0, 0)) ? 0 : computeVSMOptimalSlopeBias(clipmapVSMID, vsmSample, viewOriginPos, worldNormal);
-				float biasedDepth = vsmSample.depth - optimalSlopeBias * normalBiasScale;
+				float biasedDepth = vsmSample.depth;// - optimalSlopeBias * normalBiasScale;
 				return shadowUVz.z > biasedDepth ? 0.0f : 1.0f;
 			}
 		}

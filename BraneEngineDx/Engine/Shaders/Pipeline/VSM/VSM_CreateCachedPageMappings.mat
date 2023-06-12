@@ -42,12 +42,13 @@ void main(uint2 tid : SV_DispatchThreadID)
 
                 const uint prevFlags = prevPageFlags[prevGlobalOffset] & VSM_PAGE_FLAGS_BITS_MASK;
 
-                bool matchesDetailGeometryFlag = true;//(requestFlags & VSM_DETAIL_GEOMETRY_FLAG) == (prevFlags & VSM_DETAIL_GEOMETRY_FLAG);
+                bool matchesDetailGeometryFlag = (requestFlags & VSM_DETAIL_GEOMETRY_FLAG) == (prevFlags & VSM_DETAIL_GEOMETRY_FLAG);
 
-                if ((prevFlags & VSM_ALLOCATED_FLAG) && matchesDetailGeometryFlag) {
+                if ((prevFlags & VSM_ALLOCATED_FLAG) &&
+                    (matchesDetailGeometryFlag || (requestFlags == 0 && !projData.uncached))) {
                     uint2 physAddress = vsmDecodePageTable(prevPageTable[prevGlobalOffset]).physAddress;
-					uint physPageIndex = physPageAddressToIndex(physAddress);
-					VSMPhysPageMetaData prevMetaData = prevPhysPageMetaData[physPageIndex];
+                    uint physPageIndex = physPageAddressToIndex(physAddress);
+                    VSMPhysPageMetaData prevMetaData = prevPhysPageMetaData[physPageIndex];
 
                     if ((prevMetaData.flags & VSM_ALLOCATED_FLAG) != 0) {
                         uint invalidationFlags = prevMetaData.flags >> VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT;
@@ -60,17 +61,17 @@ void main(uint2 tid : SV_DispatchThreadID)
                             
                         if (isStaticValid) {
                             resultPageTable = vsmEncodePageTable(physAddress);
-                            resultPageFlags = prevFlags & ~(VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG);
-							resultPageFlags = resultPageFlags |
-                                (projData.uncached ? (VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG) :
+                            uint basePageFlags = prevFlags & ~(VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG);
+                            uint extraPageFlags = (projData.uncached ? (VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG) :
                                 (isDynamicValid ? 0 : VSM_DYNAMIC_UNCACHED_FLAG));
+                            resultPageFlags = basePageFlags | (requestFlags == 0 ? 0 : extraPageFlags);
 
                             uint physFlags = projData.uncached ? VSM_PHYSICAL_FLAG_VIEW_UNCACHED : 0U;
-                            physFlags |= requestFlags == 0 ? VSM_PHYSICAL_FLAG_PREVIOUS_CACHE : 0U;
 
                             VSMPhysPageMetaData outMeteData;
                             outMeteData.age = requestFlags == 0 ? prevMetaData.age + 1 : 0;
-                            outMeteData.flags = resultPageFlags | physFlags;
+                            outMeteData.flags = basePageFlags | physFlags |
+                                (requestFlags == 0 ? (invalidationFlags << VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT) : extraPageFlags);
                             outMeteData.virtualPageOffset = globalPageOffset;
                             outMeteData.vsmID = vsmID;
                             outPhysPageMetaData[physPageIndex] = outMeteData;

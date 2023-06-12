@@ -72,7 +72,7 @@ void main(uint tid : SV_DispatchThreadID)
         
         if (cullData.visiable) {
             const int mipCount = viewInfo.mipCount;
-            uint baseFlagMask = hasMove(insData) ? VSM_ALLOCATED_FLAG :
+            uint baseFlagMask = //hasMove(insData) ? VSM_ALLOCATED_FLAG :
                 (isStaticCache ? VSM_STATIC_UNCACHED_FLAG : VSM_DYNAMIC_UNCACHED_FLAG);
 
             for (int mipLevel = 0; mipLevel < mipCount; mipLevel++) {

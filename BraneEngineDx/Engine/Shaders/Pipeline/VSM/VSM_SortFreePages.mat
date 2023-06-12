@@ -9,15 +9,15 @@ void main(uint tid : SV_DispatchThreadID, uint gtid : SV_GroupThreadID)
 	if (tid >= vsmInfo.maxPhysPages)
 	 	return;
 
-    uint numSmaller = 0;
+    uint numLarger = 0;
     uint data = freePhysPages[tid];
     for (uint otherIndex = 0; otherIndex < vsmInfo.maxPhysPages; otherIndex++) {
         uint otherData = freePhysPages[otherIndex];
-        if (otherData < data)
-            numSmaller++;
+        if (data > otherData)
+            numLarger++;
     }
     
-    outFreePhysPages[numSmaller] = data & 0xFFFFU;
+    outFreePhysPages[numLarger] = data & 0xFFFFU;
     uint age = data >> 16;
     if (age > 0)
         InterlockedAdd(outFreePhysPages[vsmInfo.maxPhysPages], 1);

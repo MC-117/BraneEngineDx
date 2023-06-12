@@ -22,7 +22,7 @@ void main(uint tid : SV_DispatchThreadID)
         InterlockedAdd(outFreePhysPages[vsmInfo.maxPhysPages], -1, freeListOffset);
         --freeListOffset;
 
-        uint physPageIndex = 0xFFFFFFFFU;
+        uint physPageIndex = NONE_PAGEID;
 
         if (freeListOffset >= 0) {
             physPageIndex = outFreePhysPages[freeListOffset];
@@ -34,7 +34,7 @@ void main(uint tid : SV_DispatchThreadID)
         //     outPageFlags[prevPageOffset] = 0;
         // }
 
-        if (physPageIndex != 0xFFFFFFFFU) {
+        if (physPageIndex != NONE_PAGEID) {
             uint2 physPageAddress = physIndexToPageAddress(physPageIndex);
 
             uint requestDetailGeometryFlag = requestFlags & VSM_DETAIL_GEOMETRY_FLAG;
@@ -45,6 +45,13 @@ void main(uint tid : SV_DispatchThreadID)
 
 			const VSMProjData projData = getVSMProjData(vsmID);
 			const uint physFlags = projData.uncached ? VSM_PHYSICAL_FLAG_VIEW_UNCACHED : 0U;
+
+            VSMPhysPageMetaData metaData = outPhysPageMetaData[physPageIndex];
+            const uint invalidPageOffset = metaData.virtualPageOffset;
+            if (invalidPageOffset != NONE_PAGEID) {
+                outPageTable[invalidPageOffset] = 0;
+			    outPageFlags[invalidPageOffset] = 0;
+            }
 
 			outPhysPageMetaData[physPageIndex].flags = flags | physFlags;
 			outPhysPageMetaData[physPageIndex].virtualPageOffset = globalPageOffset;
