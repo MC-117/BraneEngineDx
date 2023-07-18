@@ -1440,6 +1440,9 @@
     <ClInclude Include="Core\Nanite\ClusterBuilder.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Core\RenderGraph\GenMipPass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\ImGui\imgui.cpp">
@@ -2682,6 +2685,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Core\Nanite\ClusterBuilder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RenderGraph\GenMipPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

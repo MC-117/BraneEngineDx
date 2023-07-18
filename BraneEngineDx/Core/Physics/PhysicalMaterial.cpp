@@ -2,7 +2,13 @@
 
 SerializeInstance(PhysicalMaterial);
 
-PhysicalMaterial::PhysicalMaterial(float mass, PhysicalType physicalType) : mass(mass), physicalType(physicalType)
+PhysicalMaterial::PhysicalMaterial(float mass, PhysicalType physicalType)
+	: mass(mass)
+	, physicalType(physicalType)
+	, angularDamping(0)
+	, linearDamping(0)
+	, friction(0.2)
+	, restitution(0)
 {
 	if (physicalType == DYNAMIC && mass == 0)
 		mass = 0.00001;

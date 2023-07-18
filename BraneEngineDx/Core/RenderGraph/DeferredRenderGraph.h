@@ -8,6 +8,7 @@
 #include "HiZPass.h"
 #include "ScreenSpaceReflectionPass.h"
 #include "TranslucentPass.h"
+#include "GenMipPass.h"
 #include "BlitPass.h"
 #include "ImGUIPass.h"
 
@@ -16,25 +17,28 @@ struct DeferredSurfaceBuffer
 	, public IGBufferGetter
 	, public IHiZBufferGetter
 	, public IScreenSpaceReflectionBufferGetter
+	, public ISceneColorMipsGetter
 	, public IDebugBufferGetter
 {
-	Texture2D gBufferA = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGB10A2_UF });
-	Texture2D gBufferB = Texture2D(1280, 720, 1, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_R32_F });
-	Texture2D gBufferC = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F });
-	Texture2D gBufferD = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F });
-	Texture2D gBufferE = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_UI });
-	RenderTarget renderTarget = RenderTarget(1280, 720, 4, true);
+	Texture2D gBufferA;
+	Texture2D gBufferB;
+	Texture2D gBufferC;
+	Texture2D gBufferD;
+	Texture2D gBufferE;
+	Texture2D gBufferF;
+	RenderTarget renderTarget;
 
-	Texture2D hizTexture = Texture2D(1280, 720, 1, false,
-		{ TW_Border, TW_Border, TF_Point, TF_Point, TIT_R32_F, { 255, 255, 255, 255 } });
-	Texture2D hitDataMap = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F });
-	Texture2D hitColorMap = Texture2D(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear, TIT_RGBA8_UF });
+	Texture2D hizTexture;
+	Texture2D hitDataMap;
+	Texture2D hitColorMap;
 
-	RenderTarget traceRenderTarget = RenderTarget(1280, 720, 4);
-	RenderTarget resolveRenderTarget = RenderTarget(1280, 720, 4);
+	RenderTarget traceRenderTarget;
+	RenderTarget resolveRenderTarget;
 
-	Texture2D debugBuffer = Texture2D(1280, 720, 1, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F });
-	RenderTarget debugRenderTarget = RenderTarget(1280, 720, 1);
+	Texture2D sceneColorMips;
+
+	Texture2D debugBuffer;
+	RenderTarget debugRenderTarget;
 
 	DeferredSurfaceBuffer();
 
@@ -50,6 +54,7 @@ struct DeferredSurfaceBuffer
 	virtual Texture* getGBufferC();
 	virtual Texture* getGBufferD();
 	virtual Texture* getGBufferE();
+	virtual Texture* getGBufferF();
 
 	virtual Texture* getHiZTexture();
 
@@ -57,6 +62,8 @@ struct DeferredSurfaceBuffer
 	virtual Texture* getHitColorTexture();
 	virtual RenderTarget* getTraceRenderTarget();
 	virtual RenderTarget* getResolveRenderTarget();
+
+	virtual Texture* getSceneColorMips();
 
 	virtual Texture* getDebugBuffer();
 	virtual RenderTarget* getDebugRenderTarget();
@@ -77,6 +84,8 @@ public:
 
 	Material* preDepthMaterial;
 
+	BaseRenderDataCollector renderDataCollector;
+
 	ScreenHitPass screenHitPass;
 	MeshPass preDepthPass;
 	MeshPass geometryPass;
@@ -85,6 +94,8 @@ public:
 	DeferredLightingPass lightingPass;
 
 	HiZPass hizPass;
+
+	GenMipPass genMipPass;
 
 	ScreenSpaceReflectionPass ssrPass;
 
@@ -106,6 +117,7 @@ public:
 	virtual void reset();
 
 	virtual void getPasses(vector<pair<string, RenderPass*>>& passes);
+	virtual IRenderDataCollector* getRenderDataCollector();
 
 	static Serializable* instantiate(const SerializationInfo& from);
 };

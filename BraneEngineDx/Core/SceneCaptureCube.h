@@ -34,10 +34,6 @@ public:
 
 	void setTexture(TextureCube& texture);
 
-	Matrix4f getProjectionMatrix();
-	Matrix4f getViewMatrix(CubeFace face);
-	Matrix4f getViewOriginMatrix(CubeFace face);
-
 	virtual void setSize(Unit2Di size);
 
 	virtual void render(RenderInfo& info);
@@ -57,32 +53,9 @@ protected:
 	RenderTarget topRenderTarget;
 	RenderTarget bottomRenderTarget;
 
-	const Vector3f faceForwardVector[CF_Faces] = {
-		{ 1, 0, 0 },
-		{ -1, 0, 0 },
-		{ 0, -1, 0 },
-		{ 0, 1, 0 },
-		{ 0, 0, 1 },
-		{ 0, 0, -1 },
-	};
-
-	const Vector3f faceLeftwardVector[CF_Faces] = {
-		{ 0, 1, 0 },
-		{ 0, -1, 0 },
-		{ 1, 0, 0 },
-		{ -1, 0, 0 },
-		{ 0, 1, 0 },
-		{ 0, -1, 0 },
-	};
-
-	const Vector3f faceUpwardVector[CF_Faces] = {
-		{ 0, -1, 0 },
-		{ 0, -1, 0 },
-		{ 0, 0, -1 },
-		{ 0, 0, 1 },
-		{ 0, -1, 0 },
-		{ 0, -1, 0 },
-	};
-
 	CameraRenderData* cameraRenderDatas[CF_Faces];
+
+	const Matrix4f& getProjectionMatrix();
+	const Matrix4f& getViewMatrix(CubeFace face);
+	const Matrix4f& getViewOriginMatrix(CubeFace face);
 };

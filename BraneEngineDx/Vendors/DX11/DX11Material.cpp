@@ -123,6 +123,7 @@ void DX11Material::processImageData()
 			continue;
 		DX11Texture2D* tex = (DX11Texture2D*)b->second.val.texture->getVendorTexture();
 		RWOption rwOption;
+		rwOption.dimension = b->second.val.dimension;
 		rwOption.mipLevel = b->second.val.level;
 		rwOption.arrayBase = b->second.val.arrayBase;
 		rwOption.arrayCount = b->second.val.arrayCount;

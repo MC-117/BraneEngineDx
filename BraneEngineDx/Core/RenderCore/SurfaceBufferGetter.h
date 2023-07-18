@@ -15,6 +15,7 @@ struct IGBufferGetter
 	virtual Texture* getGBufferC() = 0;
 	virtual Texture* getGBufferD() = 0;
 	virtual Texture* getGBufferE() = 0;
+	virtual Texture* getGBufferF() = 0;
 };
 
 struct IHiZBufferGetter
@@ -28,4 +29,9 @@ struct IScreenSpaceReflectionBufferGetter
 	virtual Texture* getHitColorTexture() = 0;
 	virtual RenderTarget* getTraceRenderTarget() = 0;
 	virtual RenderTarget* getResolveRenderTarget() = 0;
+};
+
+struct ISceneColorMipsGetter
+{
+	virtual Texture* getSceneColorMips() = 0;
 };

@@ -37,7 +37,7 @@ FragmentOut SURFACE_MAIN
     #endif
 
     #ifdef DEFERRED_SHADER_FEATURE
-    outputSurface(surf, fout.gBufferA, fout.gBufferB, fout.gBufferC, fout.gBufferD, fout.gBufferE);
+    outputSurface(surf, GBUFFER_OUT_PARAMS(fout));
     #else
     fout.FragColor = surf.albedo;
     #endif

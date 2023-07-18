@@ -55,6 +55,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 		static const ShaderPropertyName inTexture2Name = "inTexture2";
 		static const ShaderPropertyName inTexture3Name = "inTexture3";
 		static const ShaderPropertyName inTexture4Name = "inTexture4";
+		static const ShaderPropertyName inTexture5Name = "inTexture5";
 
 		static const ShaderPropertyName rwTexture0Name = "rwTexture0";
 		static const ShaderPropertyName rwTexture1Name = "rwTexture1";
@@ -62,8 +63,9 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 		const ShaderPropertyName& gBufferASlot = inTexture0Name;
 		const ShaderPropertyName& gBufferBSlot = inTexture1Name;
 		const ShaderPropertyName& gBufferCSlot = inTexture2Name;
-		const ShaderPropertyName& gBufferESlot = inTexture3Name;
-		const ShaderPropertyName& hiZMapSlot = inTexture4Name;
+		const ShaderPropertyName& gBufferDSlot = inTexture3Name;
+		const ShaderPropertyName& gBufferESlot = inTexture4Name;
+		const ShaderPropertyName& hiZMapSlot = inTexture5Name;
 
 		const ShaderPropertyName& inHitColorMapSlot = inTexture0Name;
 
@@ -83,6 +85,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				Texture* gBufferA = gbufferGetter->getGBufferA();
 				Texture* gBufferB = gbufferGetter->getGBufferB();
 				Texture* gBufferC = gbufferGetter->getGBufferC();
+				Texture* gBufferD = gbufferGetter->getGBufferD();
 				Texture* gBufferE = gbufferGetter->getGBufferE();
 
 				Texture* hiZMap = hiZGetter->getHiZTexture();
@@ -118,6 +121,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferASlot);
 				context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBSlot);
 				context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCSlot);
+				context.bindTexture((ITexture*)gBufferD->getVendorTexture(), gBufferDSlot);
 				context.bindTexture((ITexture*)gBufferE->getVendorTexture(), gBufferESlot);
 				context.bindTexture((ITexture*)hiZMap->getVendorTexture(), hiZMapSlot);
 
@@ -159,25 +163,32 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 		static const ShaderPropertyName gBufferAName = "gBufferA";
 		static const ShaderPropertyName gBufferBName = "gBufferB";
 		static const ShaderPropertyName gBufferCName = "gBufferC";
+		static const ShaderPropertyName gBufferDName = "gBufferD";
 		static const ShaderPropertyName gBufferEName = "gBufferE";
 		static const ShaderPropertyName hiZMapName = "hiZMap";
 		static const ShaderPropertyName hitDataMapName = "hitDataMap";
 		static const ShaderPropertyName hitColorMapName = "hitColorMap";
+		static const ShaderPropertyName sceneColorMipsName = "sceneColorMips";
+		static const ShaderPropertyName brdfLUTName = "brdfLUT";
 
 		for (auto sceneData : renderGraph->sceneDatas) {
 			for (auto cameraData : sceneData->cameraRenderDatas) {
 				IGBufferGetter* gbufferGetter = dynamic_cast<IGBufferGetter*>(cameraData->surfaceBuffer);
 				IHiZBufferGetter* hiZGetter = dynamic_cast<IHiZBufferGetter*>(cameraData->surfaceBuffer);
+				ISceneColorMipsGetter* sceneColorMipsGetter = dynamic_cast<ISceneColorMipsGetter*>(cameraData->surfaceBuffer);
 				IScreenSpaceReflectionBufferGetter* ssrGetter = dynamic_cast<IScreenSpaceReflectionBufferGetter*>(cameraData->surfaceBuffer);
-				if (gbufferGetter == NULL || ssrGetter == NULL)
+				if (gbufferGetter == NULL || hiZGetter == NULL ||
+					sceneColorMipsGetter == NULL || ssrGetter == NULL)
 					continue;
 
 				Texture* gBufferA = gbufferGetter->getGBufferA();
 				Texture* gBufferB = gbufferGetter->getGBufferB();
 				Texture* gBufferC = gbufferGetter->getGBufferC();
+				Texture* gBufferD = gbufferGetter->getGBufferD();
 				Texture* gBufferE = gbufferGetter->getGBufferE();
 
-				Texture*  hiZMap = hiZGetter->getHiZTexture();
+				Texture* hiZMap = hiZGetter->getHiZTexture();
+				Texture* sceneColorMips = sceneColorMipsGetter->getSceneColorMips();
 
 				Texture* hitDataMap = ssrGetter->getHitDataTexture();
 				Texture* hitColorMap = ssrGetter->getHitColorTexture();
@@ -186,7 +197,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 
 				if (gBufferA == NULL || gBufferB == NULL || gBufferC == NULL ||
 					hiZMap == NULL || hitDataMap == NULL || hitColorMap == NULL ||
-					traceRenderTarget == NULL || resolveRenderTarget == NULL)
+					sceneColorMips == NULL || traceRenderTarget == NULL || resolveRenderTarget == NULL)
 					continue;
 
 				int width = gBufferA->getWidth();
@@ -205,16 +216,15 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				traceMaterialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val = hiZUVScale;
 				traceMaterialRenderData.upload();
 				context.bindMaterialBuffer(traceMaterialRenderData.vendorMaterial);
-				context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
 				context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
 				context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCName);
+				context.bindTexture((ITexture*)gBufferD->getVendorTexture(), gBufferDName);
 				context.bindTexture((ITexture*)gBufferE->getVendorTexture(), gBufferEName);
 				context.bindTexture((ITexture*)hiZMap->getVendorTexture(), hiZMapName);
 
 				context.bindFrame(traceRenderTarget->getVendorRenderTarget());
-				context.clearFrameColors({ Color(), Color() });
 
-				context.setRenderPostState();
+				context.setRenderPostReplaceState();
 				context.postProcessCall();
 
 				context.clearFrameBindings();
@@ -226,13 +236,22 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 
 				cameraData->bind(context);
 
+				float resolveSamples = 9;
+				float resolveRadius = 0.005;
+
+				resolveMaterialRenderData.vendorMaterial->desc.scalarField["resolveSamples"].val = resolveSamples;
+				resolveMaterialRenderData.vendorMaterial->desc.scalarField["resolveRadius"].val = resolveRadius;
 				resolveMaterialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val = hiZUVScale;
 				resolveMaterialRenderData.upload();
 				context.bindMaterialBuffer(resolveMaterialRenderData.vendorMaterial);
+				context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
 				context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
 				context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCName);
+				context.bindTexture((ITexture*)gBufferD->getVendorTexture(), gBufferDName);
 				context.bindTexture((ITexture*)hitDataMap->getVendorTexture(), hitDataMapName);
 				context.bindTexture((ITexture*)hitColorMap->getVendorTexture(), hitColorMapName);
+				context.bindTexture((ITexture*)sceneColorMips->getVendorTexture(), sceneColorMipsName);
+				context.bindTexture((ITexture*)Texture2D::brdfLUTTex.getVendorTexture(), brdfLUTName);
 
 				context.bindFrame(resolveRenderTarget->getVendorRenderTarget());
 

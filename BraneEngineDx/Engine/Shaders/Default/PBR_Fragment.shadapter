@@ -30,7 +30,6 @@ DEF_TEX2D(normalMap, 4);
 DEF_TEX2D(emissionMap, 5);
 #elif defined(LIGHTING_SHADER_FEATURE)
 DEF_GBUFFER
-DEF_TEX2D(emissionMap, 5);
 DEF_TEX2D(depthMap, 6);
 #else
 DEF_TEX2D(colorMap, 0);
@@ -59,6 +58,15 @@ float getShadow(in DirectLight directLight, in Surface surf)
         surf.WorldPos, surf.Normal, directLight);
     #endif
 }
+
+float getShadow(in PointLight pointLight, in Surface surf)
+{
+    #if defined(VSM_SHADER_FEATURE)
+    return 1;
+    #else
+    return 1;
+    #endif
+}
 #endif
 
 //[earlydepthstencil]
@@ -81,11 +89,13 @@ FragmentOut SURFACE_MAIN
     surf.roughness = roughness * SAMPLE_TEX(roughnessMap, surf.TexCoords).r;
     surf.metallic = metallic * SAMPLE_TEX(metallicMap, surf.TexCoords).r;
     surf.ao = ao * SAMPLE_TEX(aoMap, surf.TexCoords).r;
+    surf.radiosity = SAMPLE_TEX(emissionMap, surf.TexCoords);
+    surf.radiosity.rgb *= emission;
     surf.mask |= REFLECTION_MASK;
     #endif
 
     #ifdef DEFERRED_SHADER_FEATURE
-    outputSurface(surf, fout.gBufferA, fout.gBufferB, fout.gBufferC, fout.gBufferD, fout.gBufferE);
+    outputSurface(surf, GBUFFER_OUT_PARAMS(fout));
     #else
     float3 V = normalize(camData.camPos - surf.WorldPos);
     // reflectance equation
@@ -105,10 +115,9 @@ FragmentOut SURFACE_MAIN
 
     // Combination
     float3 ambient = PBR_Ambient(surf.WorldPos, surf.Normal, surf.albedo.xyz, surf.ao);
-    float3 emissionColor = SAMPLE_TEX(emissionMap, surf.TexCoords).rgb;
     float3 color = ambient + Lo;
 
-    color = PBR_ColorCorrection(color) + (emission * baseColor).rgb * emissionColor;
+    color = PBR_ColorCorrection(color) + (baseColor * surf.radiosity).rgb;
 
     fout.FragColor = float4(color, surf.albedo.a);
     #endif

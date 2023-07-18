@@ -33,7 +33,7 @@ DEF_TEX2D(aoMap, 1);
 DEF_TEX2D(normalMap, 2);
 #elif defined(LIGHTING_SHADER_FEATURE)
 DEF_GBUFFER
-DEF_TEX2D(depthMap, 5);
+DEF_TEX2D(depthMap, 6);
 #else
 DEF_TEX2D(colorMap, 0);
 DEF_TEX2D(aoMap, 1);
@@ -82,7 +82,7 @@ FragmentOut SURFACE_MAIN
     #endif
 
     #ifdef DEFERRED_SHADER_FEATURE
-    outputSurface(surf, fout.gBufferA, fout.gBufferB, fout.gBufferC, fout.gBufferD, fout.gBufferE);
+    outputSurface(surf, GBUFFER_OUT_PARAMS(fout));
     #else
     float3 V = normalize(camData.camPos - surf.WorldPos);
     float4 Lo = Float4(0.0f);

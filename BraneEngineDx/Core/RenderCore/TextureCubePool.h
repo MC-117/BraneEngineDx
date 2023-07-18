@@ -34,8 +34,10 @@ public:
 	void prepare();
 	void refreshCubePool(IRenderContext& context);
 protected:
-	static Material* material;
-	static ShaderProgram* program;
+	static Material* copyMaterial;
+	static ShaderProgram* copyProgram;
+	static Material* genMipsMaterial;
+	static ShaderProgram* genMipsProgram;
 	static bool isInited;
 
 	static void loadDefaultResource();

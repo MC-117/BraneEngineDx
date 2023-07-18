@@ -22,9 +22,10 @@ DEF_MAT_END
 #define gBufferA inTexture0
 #define gBufferB inTexture1
 #define gBufferC inTexture2
-#define gBufferE inTexture3
-#define hiZMap inTexture4
-#define hiZMapSampler inTexture4Sampler
+#define gBufferD inTexture3
+#define gBufferE inTexture4
+#define hiZMap inTexture5
+#define hiZMapSampler inTexture5Sampler
 
 #define inHitColorMap inTexture0
 
@@ -36,8 +37,9 @@ DEF_MAT_END
 DEF_TEX2D(inTexture0, 0);
 DEF_TEX2D(inTexture1, 1);
 DEF_TEX2D(inTexture2, 2);
-DEF_TEX2D_UINT(inTexture3, 3);
-DEF_TEX2D(inTexture4, 4);
+DEF_TEX2D(inTexture3, 3);
+DEF_TEX2D_UINT(inTexture4, 4);
+DEF_TEX2D(inTexture5, 5);
 
 RWTexture2D<snorm float4> rwTexture0 : register(u0);
 RWTexture2D<unorm float4> rwTexture1 : register(u1);
@@ -58,8 +60,9 @@ void main(uint2 tid : SV_DispatchThreadID)
 
                 if ((1.0f - depth) > 1 / camData.zFar) {
                     float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
-                    float3 N = normalize(worldDirToView(C.xyz));
-                    float roughness = C.a;
+                    float4 D = SAMPLE_TEX_LOD(gBufferD, UV, 0);
+                    float3 N = normalize(worldDirToView(decodeNormal(C.xyz)));
+                    float roughness = D.r;
 
                     float3 startUVZ = float3(UV, depth);
                     float3 startView = uvzPosToView(startUVZ);
@@ -77,7 +80,7 @@ void main(uint2 tid : SV_DispatchThreadID)
                     float3 dirUVZ = normalize(endUVZ - startUVZ);
                     if (rayTraceHiZ_UVZ(hiZMap, hiZMapSampler,
                         hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
-                        startUVZ, dirUVZ, hitUVZ))
+                        startUVZ, dirUVZ, hitUVZ, fadeFactor))
 #else
                     if (rayTraceHiZ_View(hiZMap, hiZMapSampler,
                         hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
@@ -107,8 +110,10 @@ void main(uint2 tid : SV_DispatchThreadID)
         else if (passID == 1) {
             float depth = SAMPLE_TEX_LOD(gBufferB, UV, 0);
             float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
-            float roughness = clamp(C.a, 0.02, 1);
-            float3 viewN = normalize(worldDirToView(C.xyz));
+            float4 D = SAMPLE_TEX_LOD(gBufferD, UV, 0);
+            float roughness = clamp(D.r, 0.02, 1);
+            float ao = D.a;
+            float3 viewN = normalize(worldDirToView(decodeNormal(C.xyz)));
             float3 viewPos = uvzPosToView(float3(UV, depth));
             float3 V = normalize(viewPos);
             int2 sampleIndex0 = UV / hiZUVScale.zw * 2.0f;
@@ -133,7 +138,7 @@ void main(uint2 tid : SV_DispatchThreadID)
                 }
                 color *= rcp(weightSum);
                 //color /= 1 - luminance(color);
-                color = max(1e-5, color);
+                color = max(1e-5, color) * ao;
                 float4 sceneColor = outGBufferA[tid];
                 sceneColor.xyz += color * 0.2;
                 outGBufferA[tid] = sceneColor;

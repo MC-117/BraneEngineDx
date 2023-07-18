@@ -481,7 +481,6 @@ void Engine::clean()
 
 	InitializationManager::instance().finalize(FinalizeStage::BeforePhysicsRelease);
 #if ENABLE_PHYSICS
-	currentWorld->physicalWorld.physicsScene->release();
 	PhysicalWorld::release();
 #endif
 

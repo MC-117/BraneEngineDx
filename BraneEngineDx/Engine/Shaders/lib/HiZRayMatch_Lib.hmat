@@ -1,8 +1,8 @@
 #include "CameraData_Def.hmat"
 
-float2 getHiZCellSize(float2 detailUVSize, float mipLevel)
+float getHiZCellSize(float2 detailUVSize, float mipLevel)
 {
-    return detailUVSize * exp2(mipLevel);
+    return length(detailUVSize * exp2(mipLevel));
 }
 
 float getHiZStepSize(float2 startUV, float curUV, float2 dirUV, float2 cellSize)
@@ -16,25 +16,34 @@ int2 getHiZCellIndex(float2 curUV, float2 cellSize)
     return int2(curUV.x / cellSize.x, curUV.y / cellSize.y);
 }
 
+bool in01Range(float2 uv)
+{
+    return all(uv > 0) && all(uv < 1);
+}
+
 bool rayTraceHiZ_UVZ(Texture2D hiZMap, SamplerState hiZMapSampler,
     int hiZStartLevel, int hiZStopLevel, int hiZMaxStep, float4 hiZUVScale,
-    float3 startUVZ, float3 dirUVZ, out float3 hitUVZ)
+    float3 startUVZ, float3 dirUVZ, out float3 hitUVZ, out float fade)
 {
     bool hit = false;
+    float detailUVSize = max(hiZUVScale.z, hiZUVScale.w) * 2;
     int mipLevel = hiZStartLevel;
     int stepNum = 0;
     float minZ;
     float stepSize;
+    float3 stepUVZ;
+    float deltaDepth;
     float3 curUVZ = startUVZ;
-    while (mipLevel > hiZStopLevel && stepNum < hiZMaxStep) {
-        float stepSize = length(getHiZCellSize(hiZUVScale.zw, mipLevel));
-        float3 stepUVZ = dirUVZ * stepSize;
+    while (mipLevel > hiZStopLevel && stepNum < hiZMaxStep && in01Range(curUVZ)) {
+        stepSize = getHiZCellSize(hiZUVScale.zw, mipLevel);
+        stepUVZ = dirUVZ * stepSize;
         float3 nextUVZ = curUVZ + stepUVZ;
         minZ = SAMPLE_TEX_LOD(hiZMap, nextUVZ.xy * hiZUVScale.xy, mipLevel);
-        float deltaDepth = nextUVZ.z - minZ;
-        if (deltaDepth > 0) {
+        deltaDepth = nextUVZ.z - minZ;
+        hit = deltaDepth > 0;
+        if (hit) {
             mipLevel--;
-            hit = deltaDepth < stepUVZ.z;
+            //hit = deltaDepth < abs(stepUVZ.z);
             //hitUVZ -= dirUVZ / dirUVZ.z * deltaDepth * 0.001;
             hitUVZ = curUVZ;
         }
@@ -44,6 +53,9 @@ bool rayTraceHiZ_UVZ(Texture2D hiZMap, SamplerState hiZMapSampler,
         }
         stepNum++;
     }
+    float minStepSize = getHiZCellSize(hiZUVScale.zw, hiZStopLevel + 1);
+    float minDepthErr = abs(dirUVZ.z * minStepSize) * 2.0f;
+    fade = hit ? (1 - saturate(deltaDepth / minDepthErr)) : 0;
     return hit;
 }
 
@@ -57,7 +69,7 @@ bool rayTraceHiZ_View(Texture2D hiZMap, SamplerState hiZMapSampler,
     float2 detailCellSize = float2(camData.aspect, 1) * 0.1;
     float3 curViewPos = startViewPos;
     while (mipLevel > hiZStopLevel && stepNum < hiZMaxStep) {
-        float cellSize = length(getHiZCellSize(detailCellSize, mipLevel));
+        float cellSize = getHiZCellSize(detailCellSize, mipLevel);
         float3 nextViewPos = curViewPos + viewDir * cellSize;
         float3 nextUVZ = viewPosToUVZ(nextViewPos);
         float depth = SAMPLE_TEX_LOD(hiZMap, nextUVZ.xy * hiZUVScale.xy, mipLevel);

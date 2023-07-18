@@ -7,6 +7,7 @@ DEF_TEX2D(gBufferB, 1); \
 DEF_TEX2D(gBufferC, 2); \
 DEF_TEX2D(gBufferD, 3); \
 DEF_TEX2D_UINT(gBufferE, 4);
+DEF_TEX2D(gBufferF, 5);
 #endif
 
 #ifdef DEFERRED_SHADER_FEATURE
@@ -15,5 +16,8 @@ FS_DEF_OUT_COLOR(gBufferA, 0); \
 FS_DEF_OUT_FLOAT(gBufferB, 1); \
 FS_DEF_OUT_COLOR(gBufferC, 2); \
 FS_DEF_OUT_COLOR(gBufferD, 3); \
-FS_DEF_OUT_COUNT(gBufferE, 4);
+FS_DEF_OUT_COUNT(gBufferE, 4); \
+FS_DEF_OUT_COLOR(gBufferF, 5);
+
+#define GBUFFER_OUT_PARAMS(fout) fout.gBufferA, fout.gBufferB, fout.gBufferC, fout.gBufferD, fout.gBufferE, fout.gBufferF
 #endif

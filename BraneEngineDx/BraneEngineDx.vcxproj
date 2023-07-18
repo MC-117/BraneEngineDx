@@ -206,7 +206,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='AudioDebug|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>ThirdParty\libremidi\include;ThirdParty\spine\include;ThirdParty\Live2DCubism\include;ThirdParty\Python37\include;ThirdParty\NvCloth\include;ThirdParty\physx-4.1\include;ThirdParty\openal-soft-1.23.1\include;ThirdParty\assimp-5.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>ThirdParty\libremidi\lib\x64;ThirdParty\spine\lib\x64;ThirdParty\Live2DCubism\lib\windows\x86_64\142;ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-4.1\lib\x64\Profile;ThirdParty\openal-soft-1.23.1\lib;ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>ThirdParty\libremidi\lib\x64;ThirdParty\spine\lib\x64;ThirdParty\Live2DCubism\lib\windows\x86_64\142;ThirdParty\Python37\libs;ThirdParty\NvCloth\lib;ThirdParty\physx-4.1\lib\x64\Debug;ThirdParty\openal-soft-1.23.1\lib;ThirdParty\assimp-5.0.1\lib\Release;$(LibraryPath)</LibraryPath>
     <SourcePath>ThirdParty\Live2DCubism\include;ThirdParty\NvCloth\src;$(VC_SourcePath)</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -417,6 +417,7 @@
     <ClInclude Include="Core\Audio\AudioWave.h" />
     <ClInclude Include="Core\Nanite\ClusterBuilder.h" />
     <ClInclude Include="Core\Physics\PhysicalBase.h" />
+    <ClInclude Include="Core\RenderGraph\GenMipPass.h" />
     <ClInclude Include="Midi\MidiInstrumentEditor.h" />
     <ClInclude Include="Core\GUI\UIViewport.h" />
     <ClInclude Include="Core\Importer\AnimationClipDataImporter.h" />
@@ -920,6 +921,7 @@
     <ClCompile Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMap.cpp" />
     <ClCompile Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMapClipmap.cpp" />
     <ClCompile Include="Core\RenderCore\VirtualShadowMap\VirtualShadowMapRenderData.cpp" />
+    <ClCompile Include="Core\RenderGraph\GenMipPass.cpp" />
     <ClCompile Include="Core\RenderGraph\ReflectionProbeArrayPass.cpp" />
     <ClCompile Include="Core\RenderGraph\ScreenHitPass.cpp" />
     <ClCompile Include="Core\RenderGraph\ShadowDepthPass.cpp" />

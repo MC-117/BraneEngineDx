@@ -472,8 +472,9 @@ ComPtr<ID3D11UnorderedAccessView> DX11Texture2D::getUAV(const RWOption& rwOption
 		return NULL;
 	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
 	ZeroMemory(&uavDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+	TexDimension dimension = rwOption.dimension == TD_Default ? desc.info.dimension : rwOption.dimension;
 	uavDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
-	uavDesc.ViewDimension = getUavDimension(desc.info.dimension);
+	uavDesc.ViewDimension = getUavDimension(dimension);
 	uavDesc.Texture2D.MipSlice = rwOption.mipLevel;
 	uavDesc.Texture2DArray.FirstArraySlice = rwOption.arrayBase;
 	uavDesc.Texture2DArray.ArraySize = rwOption.arrayCount;

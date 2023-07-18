@@ -18,7 +18,7 @@ public:
 #endif // AUDIO_USE_OPENAL
 
 	Actor(string name = "Actor");
-	~Actor();
+	virtual ~Actor();
 
 	virtual void begin();
 	virtual void tick(float deltaTime);

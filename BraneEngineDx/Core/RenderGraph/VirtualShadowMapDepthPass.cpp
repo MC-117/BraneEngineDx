@@ -32,14 +32,14 @@ bool VirtualShadowMapDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	if (materialRenderData->usedFrame < (long long)Time::frames()) {
 		materialRenderData->program = program;
 		materialRenderData->create();
-		materialRenderData->upload();
+		renderGraph->getRenderDataCollector()->add(*materialRenderData);
 		materialRenderData->usedFrame = Time::frames();
 	}
 
 	for (auto binding : cmd.bindings) {
 		if (binding->usedFrame < (long long)Time::frames()) {
 			binding->create();
-			binding->upload();
+			renderGraph->getRenderDataCollector()->add(*binding);
 			binding->usedFrame = Time::frames();
 		}
 	}

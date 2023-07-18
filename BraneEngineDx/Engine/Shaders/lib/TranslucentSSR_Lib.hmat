@@ -35,7 +35,7 @@ float3 getSSRColor(float3 startUVZ, float3 worldNorm, float roughness)
     float3 dirUVZ = normalize(endUVZ - startUVZ);
     if (rayTraceHiZ_UVZ(hiZMap, hiZMapSampler,
         hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
-        startUVZ, dirUVZ, hitUVZ))
+        startUVZ, dirUVZ, hitUVZ, fadeFactor))
 #else
     if (rayTraceHiZ_View(hiZMap, hiZMapSampler,
         hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
@@ -49,11 +49,9 @@ float3 getSSRColor(float3 startUVZ, float3 worldNorm, float roughness)
     if (fadeFactor < 1) {
         float3 worldPos = viewPosToWorld(startView);
         float3 worldL = mul(float4(L, 0), camData.vmatInv).xyz;
-        float4 refColor = getReflectionColor(worldL, worldPos);
-        if (refColor.a != 0) {
-            float3 hitPosView = uvzPosToView(hitUVZ);
-            hitColor = lerp(refColor, hitColor, fadeFactor);
-        }
+        float4 refColor = getReflectionColor(worldL, worldPos, getReflectionMip(roughness));
+        float3 hitPosView = uvzPosToView(hitUVZ);
+        hitColor = lerp(refColor, hitColor, fadeFactor);
     }
     float weight = SSR_BRDF(-V, L, viewN, roughness);
     hitColor *= weight;

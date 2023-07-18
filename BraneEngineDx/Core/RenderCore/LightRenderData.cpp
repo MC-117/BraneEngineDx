@@ -42,6 +42,7 @@ void LightRenderData::setLight(Light* light)
 		data.intensity = pointLight->intensity;
 		data.color = toLinearColor(pointLight->color);
 		data.radius = pointLight->getRadius();
+		data.vsmID = -1;
 		pointLightDatas.emplace_back(data);
 	}
 }
@@ -62,6 +63,7 @@ void LightRenderData::release()
 
 void LightRenderData::upload()
 {
+	shadowCameraRenderData.upload();
 	MainLightData mainLightDataUpload = mainLightData;
 	mainLightDataUpload.worldToLightView = MATRIX_UPLOAD_OP(mainLightDataUpload.worldToLightView);
 	mainLightDataUpload.viewToLightClip = MATRIX_UPLOAD_OP(mainLightDataUpload.viewToLightClip);

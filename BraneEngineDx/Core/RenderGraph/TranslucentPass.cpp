@@ -77,14 +77,14 @@ bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 	if (materialRenderData->usedFrame < (long long)Time::frames()) {
 		materialRenderData->program = shader;
 		materialRenderData->create();
-		materialRenderData->upload();
+		renderGraph->getRenderDataCollector()->add(*materialRenderData);
 		materialRenderData->usedFrame = Time::frames();
 	}
 
 	for (auto binding : command.bindings) {
 		if (binding->usedFrame < (long long)Time::frames()) {
 			binding->create();
-			binding->upload();
+			renderGraph->getRenderDataCollector()->add(*binding);
 			binding->usedFrame = Time::frames();
 		}
 	}
@@ -189,7 +189,7 @@ TranslucentSSRBinding* TranslucentPass::getSSRBinding(const SceneRenderData& sce
 
 	if (ssrBinding->usedFrame < (long long)Time::frames()) {
 		ssrBinding->create();
-		ssrBinding->upload();
+		renderGraph->getRenderDataCollector()->add(*ssrBinding);
 		ssrBinding->usedFrame = Time::frames();
 	}
 	return ssrBinding.get();

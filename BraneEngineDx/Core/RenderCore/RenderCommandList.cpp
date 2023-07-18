@@ -252,7 +252,7 @@ bool RenderCommandList::addRenderTask(const IRenderCommand& cmd, RenderTask& tas
 	return true;
 }
 
-bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, ShaderFeature extraFeature)
+bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataCollector& collector, ShaderFeature extraFeature)
 {
 	if (!cmd.isValid())
 		return false;
@@ -275,14 +275,14 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, ShaderFeatur
 	if (materialRenderData->usedFrame < (long long)Time::frames()) {
 		materialRenderData->program = shader;
 		materialRenderData->create();
-		materialRenderData->upload();
+		collector.add(*materialRenderData);
 		materialRenderData->usedFrame = Time::frames();
 	}
 
 	for (auto binding : cmd.bindings) {
 		if (binding->usedFrame < (long long)Time::frames()) {
 			binding->create();
-			binding->upload();
+			collector.add(*binding);
 			binding->usedFrame = Time::frames();
 		}
 	}
@@ -312,7 +312,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, ShaderFeatur
 	return success;
 }
 
-bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, vector<ShaderFeature> extraFeatures)
+bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataCollector& collector, vector<ShaderFeature> extraFeatures)
 {
 	if (!cmd.isValid())
 		return false;
@@ -320,7 +320,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, vector<Shade
 	for (auto binding : cmd.bindings) {
 		if (binding->usedFrame < (long long)Time::frames()) {
 			binding->create();
-			binding->upload();
+			collector.add(*binding);
 			binding->usedFrame = Time::frames();
 		}
 	}
@@ -354,7 +354,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, vector<Shade
 		if (materialRenderData->usedFrame < (long long)Time::frames()) {
 			materialRenderData->program = shader;
 			materialRenderData->create();
-			materialRenderData->upload();
+			collector.add(*materialRenderData);
 			materialRenderData->usedFrame = Time::frames();
 		}
 

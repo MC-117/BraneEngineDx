@@ -19,21 +19,25 @@ struct Surface
     float2 TexCoords;
     float metallic;
     float ao;
+    float4 radiosity;
+    float specular;
     uint matID;
     uint mask;
 };
 
-void outputSurface(in Surface surf, out float4 A, out float B, out float4 C, out float4 D, out int4 E)
+void outputSurface(in Surface surf, out float4 A, out float B, out float4 C, out float4 D, out int4 E, out float4 F)
 {
     A = surf.albedo;
     B = surf.depth;
-    C.xyz = surf.Normal;
-    C.a = surf.roughness;
-    D.xy = surf.TexCoords;
-    D.z = surf.metallic;
-    D.w = surf.ao;
+    C.xyz = encodeNormal(surf.Normal);
+    C.a = 1;
+    D.r = surf.roughness;
+    D.g = surf.metallic;
+    D.b = surf.specular;
+    D.a = surf.ao;
     E.rgb = packUIntToUInt3(surf.matID);
     E.a = surf.mask;
+    F = surf.radiosity;
 }
 
 #if defined(LIGHTING_SHADER_FEATURE)
@@ -50,16 +54,19 @@ Surface getSurface(in ScreenVertexOut fin)
     float B = SAMPLE_TEX(gBufferB, fin.UV);
     float4 C = SAMPLE_TEX(gBufferC, fin.UV);
     float4 D = SAMPLE_TEX(gBufferD, fin.UV);
+    float4 F = SAMPLE_TEX(gBufferF, fin.UV);
     surf.albedo = A;
     surf.depth = B;
     surf.WorldPos = uvzPosToWorld(float3(fin.UV, surf.depth));
-    surf.Normal = C.xyz;
-    surf.roughness = C.a;
-    surf.TexCoords = D.xy;
-    surf.metallic = D.b;
+    surf.TexCoords = fin.UV;
+    surf.Normal = decodeNormal(C.xyz);
+    surf.roughness = D.r;
+    surf.metallic = D.g;
+    surf.specular = D.b;
     surf.ao = D.a;
     surf.matID = matID;
     surf.mask = E.a;
+    surf.radiosity = F;
     return surf;
 }
 #elif defined(DEPTH_SHADER_FEATURE) && defined(VSM_SHADER_FEATURE)
@@ -70,14 +77,16 @@ Surface getSurface(in DefaultVSMVertexOut fin)
     Surface surf;
     surf.albedo = float4(1, 1, 1, 1);
     surf.WorldPos = float3(0, 0, 0);
-    surf.depth = fin.clipPos.z;
-    surf.roughness = 0.5f;
-    surf.Normal = float3(0, 0, 0);
-    surf.metallic = 0.5f;
     surf.TexCoords = fin.TexCoords;
+    surf.depth = fin.clipPos.z;
+    surf.Normal = float3(0, 0, 0);
+    surf.roughness = 0.5f;
+    surf.metallic = 0.5f;
+    surf.specular = 1.0f;
     surf.ao = 1.0f;
     surf.matID = -1;
     surf.mask = 0;
+    surf.radiosity = float4(0, 0, 0, 0);
     return surf;
 }
 #else
@@ -88,14 +97,16 @@ Surface getSurface(in DefaultVertexOut fin)
     Surface surf;
     surf.albedo = float4(1, 1, 1, 1);
     surf.WorldPos = fin.WorldPos;
+    surf.TexCoords = fin.TexCoords;
     surf.depth = fin.svPos.z;
     surf.roughness = 0.5f;
     surf.Normal = fin.Normal;
     surf.metallic = 0.5f;
-    surf.TexCoords = fin.TexCoords;
+    surf.specular = 1.0f;
     surf.ao = 1.0f;
     surf.matID = materialID;
     surf.mask = 0;
+    surf.radiosity = float4(0, 0, 0, 0);
     return surf;
 }
 #endif

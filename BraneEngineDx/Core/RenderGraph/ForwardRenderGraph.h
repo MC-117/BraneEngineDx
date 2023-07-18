@@ -10,6 +10,8 @@ class ForwardRenderGraph : public RenderGraph
 public:
 	Serialize(ForwardRenderGraph, RenderGraph);
 
+	BaseRenderDataCollector renderDataCollector;
+
 	ShadowDepthPass shadowDepthPass;
 	MeshPass meshPass;
 	BlitPass blitPass;
@@ -24,6 +26,8 @@ public:
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);
 	virtual void reset();
+
+	virtual IRenderDataCollector* getRenderDataCollector();
 
 	static Serializable* instantiate(const SerializationInfo& from);
 };

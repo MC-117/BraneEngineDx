@@ -125,9 +125,15 @@ void World::afterTick()
 
 void World::end()
 {
+	vector<Object*> destroyList;
 	iter.reset();
 	while (iter.next()) {
 		Object* obj = &iter.current();
+		obj->end();
+		if (obj != &defaultCamera)
+			destroyList.push_back(obj);
+	}
+	for (Object* obj : destroyList) {
 		delete obj;
 	}
 	Transform::end();

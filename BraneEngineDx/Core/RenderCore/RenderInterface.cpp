@@ -17,6 +17,22 @@ void IRenderPack::newVendorRenderExecution()
 	}
 }
 
+void BaseRenderDataCollector::add(IRenderData& data)
+{
+	collection.insert(&data);
+}
+
+void BaseRenderDataCollector::clear()
+{
+	collection.clear();
+}
+
+void BaseRenderDataCollector::upload()
+{
+	for (auto data : collection)
+		data->upload();
+}
+
 SerializeInstance(RenderGraph);
 
 void RenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)

@@ -97,7 +97,7 @@ void RenderDocProfiler::endFrame()
 
 void RenderDocProfiler::beginScope(const string& name)
 {
-    if (doCapture)
+    if (!isValid() || doCapture)
         return;
     deviceHandle = VendorManager::getInstance().getVendor().getDefaultRenderContext()->getDeviceHandle();
     windowHandle = Engine::windowContext.hwnd;
@@ -106,7 +106,7 @@ void RenderDocProfiler::beginScope(const string& name)
 
 void RenderDocProfiler::endScope()
 {
-    if (doCapture)
+    if (!isValid() || doCapture)
         return;
     rdoc_api->EndFrameCapture(deviceHandle, windowHandle);
     startRenderDoc(getNewestCapture());

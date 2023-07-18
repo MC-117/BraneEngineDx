@@ -181,8 +181,8 @@ public:
 	PxControllerManager* controllerManager = NULL;
 	set<nv::cloth::Solver*> clothSolvers;
 
-	float accumulator = 0.0f;
-	float stepSize = 1.0f / 60.0f;
+	float accumulator;
+	float stepSize;
 
 	StepSimulationCallBack onStepSimulation;
 

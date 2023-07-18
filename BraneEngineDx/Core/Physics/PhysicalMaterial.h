@@ -14,10 +14,10 @@ public:
 	Serialize(PhysicalMaterial,);
 	float mass;
 	PhysicalType physicalType;
-	float angularDamping = 0;
-	float linearDamping = 0;
-	float friction = 0;
-	float restitution = 0;
+	float angularDamping;
+	float linearDamping;
+	float friction;
+	float restitution;
 
 	PhysicalMaterial(float mass = 0, PhysicalType physicalType = STATIC);
 	PhysicalMaterial(const PhysicalMaterial& mat);

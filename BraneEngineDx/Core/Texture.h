@@ -32,6 +32,7 @@ public:
 struct Image
 {
 	Texture* texture = NULL;
+	TexDimension dimension = TD_Default;
 	unsigned int level = 0;
 	unsigned int arrayBase = 0;
 	unsigned int arrayCount = 1;

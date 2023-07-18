@@ -52,14 +52,17 @@ PxShape* RigidBodyCollider::getRawShape(PxPhysics& physics)
 		case SIMPLE:
 			collisionShape = shape->generateCollisionShape(localScale);
 			break;
-		case NONESHAPE:
-			break;
 		default:
-			break;
+			throw runtime_error("Collider need a shape");
+			return NULL;
 		}
-		if (shapeComplexType != NONESHAPE && collisionShape == NULL) {
+		if (collisionShape == NULL) {
 			collisionShape = shape->generateCollisionShape();
 			shapeComplexType = SIMPLE;
+		}
+		if (collisionShape == NULL) {
+			throw runtime_error("Collider need a shape");
+			return NULL;
 		}
 		rawShape = physics.createShape(*collisionShape, *rawMaterial, true);
 		rawShape->userData = this;
@@ -235,13 +238,13 @@ void RigidBody::addToWorld(PhysicalWorld & physicalWorld)
 	Vector3f localSca = targetTransform.getScale(WORLD);
 	float massScale = localSca.x() * localSca.y() * localSca.z();
 	if (material.physicalType == TERRAIN) {
-		rawRigidActor = PhysicalWorld::gPhysicsSDK->createRigidStatic(targetTransform.getWorldTransform());
-		rawRigidStatic = (PxRigidStatic*)rawRigidActor;
+		rawRigidStatic = PhysicalWorld::gPhysicsSDK->createRigidStatic(targetTransform.getWorldTransform());
+		rawRigidActor = rawRigidStatic;
 		rawRigidDynamic = NULL;
 	}
 	else {
-		rawRigidActor = PhysicalWorld::gPhysicsSDK->createRigidDynamic(targetTransform.getWorldTransform());
-		rawRigidDynamic = (PxRigidDynamic*)rawRigidActor;
+		rawRigidDynamic = PhysicalWorld::gPhysicsSDK->createRigidDynamic(targetTransform.getWorldTransform());
+		rawRigidActor = rawRigidDynamic;
 		rawRigidStatic = NULL;
 		rawRigidDynamic->setMass(material.mass * massScale);
 		rawRigidDynamic->setAngularDamping(material.angularDamping);
@@ -261,6 +264,7 @@ void RigidBody::addToWorld(PhysicalWorld & physicalWorld)
 			break;
 		}
 	}
+	rawRigidActor->userData = this;
 	for (int i = 0; i < colliders.size(); i++) {
 		RigidBodyCollider* collider = (RigidBodyCollider*)colliders[i];
 		PxShape* shape = collider->getRawShape(*PhysicalWorld::gPhysicsSDK);
@@ -336,35 +340,35 @@ CollisionObject * RigidBody::getCollisionObject() const
 
 void RigidBody::addForce(const Vector3f& force, bool autoWake)
 {
-	if (rawRigidDynamic) {
+	if (rawRigidDynamic && material.physicalType == DYNAMIC) {
 		rawRigidDynamic->addForce(toPVec3(force), PxForceMode::eFORCE, autoWake);
 	}
 }
 
 void RigidBody::addImpulse(const Vector3f& impulse, bool autoWake)
 {
-	if (rawRigidDynamic) {
+	if (rawRigidDynamic && material.physicalType == DYNAMIC) {
 		rawRigidDynamic->addForce(toPVec3(impulse), PxForceMode::eIMPULSE, autoWake);
 	}
 }
 
 void RigidBody::addAcceleration(const Vector3f& acceleration, bool autoWake)
 {
-	if (rawRigidDynamic) {
+	if (rawRigidDynamic && material.physicalType == DYNAMIC) {
 		rawRigidDynamic->addForce(toPVec3(acceleration), PxForceMode::eACCELERATION, autoWake);
 	}
 }
 
 void RigidBody::addVelocity(const Vector3f& velocity, bool autoWake)
 {
-	if (rawRigidDynamic) {
+	if (rawRigidDynamic && material.physicalType == DYNAMIC) {
 		rawRigidDynamic->addForce(toPVec3(velocity), PxForceMode::eVELOCITY_CHANGE, autoWake);
 	}
 }
 
 void RigidBody::addForceAtLocation(const Vector3f& force, const Vector3f& location, bool autoWake)
 {
-	if (rawRigidDynamic) {
+	if (rawRigidDynamic && material.physicalType == DYNAMIC) {
 		PxRigidBodyExt::addForceAtPos(*rawRigidDynamic, toPVec3(force),
 			toPVec3(location), PxForceMode::eFORCE, autoWake);
 	}
@@ -372,7 +376,7 @@ void RigidBody::addForceAtLocation(const Vector3f& force, const Vector3f& locati
 
 void RigidBody::addImpulseAtLocation(const Vector3f& impulse, const Vector3f& location, bool autoWake)
 {
-	if (rawRigidDynamic) {
+	if (rawRigidDynamic && material.physicalType == DYNAMIC) {
 		PxRigidBodyExt::addForceAtPos(*rawRigidDynamic, toPVec3(impulse),
 			toPVec3(location), PxForceMode::eIMPULSE, autoWake);
 	}

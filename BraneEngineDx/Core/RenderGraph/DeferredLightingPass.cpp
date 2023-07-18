@@ -53,7 +53,7 @@ bool DeferredLightingPass::addTask(DeferredLightingTask& task)
 	}
 	if (materialData->usedFrame < (long long)Time::frames()) {
 		materialData->create();
-		materialData->upload();
+		renderGraph->getRenderDataCollector()->add(*materialData);
 		materialData->usedFrame = Time::frames();
 	}
 	pTask->age = 0;
@@ -116,6 +116,7 @@ void DeferredLightingPass::execute(IRenderContext& context)
 			static const ShaderPropertyName gBufferCName = "gBufferC";
 			static const ShaderPropertyName gBufferDName = "gBufferD";
 			static const ShaderPropertyName gBufferEName = "gBufferE";
+			static const ShaderPropertyName gBufferFName = "gBufferF";
 
 			taskContext.materialRenderData = task.materialRenderData;
 			task.materialRenderData->bind(context);
@@ -129,12 +130,14 @@ void DeferredLightingPass::execute(IRenderContext& context)
 			Texture* gBufferC = task.gBufferRT->getTexture(2);
 			Texture* gBufferD = task.gBufferRT->getTexture(3);
 			Texture* gBufferE = task.gBufferRT->getTexture(4);
+			Texture* gBufferF = task.gBufferRT->getTexture(5);
 
 			context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
 			context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
 			context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCName);
 			context.bindTexture((ITexture*)gBufferD->getVendorTexture(), gBufferDName);
 			context.bindTexture((ITexture*)gBufferE->getVendorTexture(), gBufferEName);
+			context.bindTexture((ITexture*)gBufferF->getVendorTexture(), gBufferFName);
 		}
 
 		/*if (taskContext.gBufferRT != task.gBufferRT) {

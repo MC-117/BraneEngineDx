@@ -34,14 +34,14 @@ bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 	if (materialRenderData->usedFrame < (long long)Time::frames()) {
 		materialRenderData->program = program;
 		materialRenderData->create();
-		materialRenderData->upload();
+		renderGraph->getRenderDataCollector()->add(*materialRenderData);
 		materialRenderData->usedFrame = Time::frames();
 	}
 
 	for (auto binding : command.bindings) {
 		if (binding->usedFrame < (long long)Time::frames()) {
 			binding->create();
-			binding->upload();
+			renderGraph->getRenderDataCollector()->add(*binding);
 			binding->usedFrame = Time::frames();
 		}
 	}
@@ -63,7 +63,6 @@ bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 	for (CameraRenderData* cameraRenderData : command.sceneData->cameraRenderDatas) {
 		if (cameraRenderData->usedFrame < (long long)Time::frames()) {
 			cameraRenderData->create();
-			cameraRenderData->upload();
 			cameraRenderData->usedFrame = Time::frames();
 		}
 

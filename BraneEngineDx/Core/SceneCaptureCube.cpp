@@ -1,5 +1,6 @@
 #include "SceneCaptureCube.h"
 #include "RenderCore/RenderCore.h"
+#include "Utility/RenderUtility.h"
 
 SceneCaptureCube::SceneCaptureCube()
 	: SceneCapture(),
@@ -34,21 +35,6 @@ void SceneCaptureCube::setTexture(TextureCube& texture)
 	}
 }
 
-Matrix4f SceneCaptureCube::getProjectionMatrix()
-{
-	return Camera::perspective(90, 1, zNear, zFar);
-}
-
-Matrix4f SceneCaptureCube::getViewMatrix(CubeFace face)
-{
-	return Camera::lookAt(worldPosition, worldPosition + faceForwardVector[face], faceUpwardVector[face]);
-}
-
-Matrix4f SceneCaptureCube::getViewOriginMatrix(CubeFace face)
-{
-	return Camera::lookAt(Vector3f::Zero(), faceForwardVector[face], faceUpwardVector[face]);
-}
-
 void SceneCaptureCube::setSize(Unit2Di size)
 {
 	if (width != size.x) {
@@ -78,9 +64,9 @@ void SceneCaptureCube::render(RenderInfo& info)
 		Matrix4f pmat = promat * vmat;
 		cameraRender->cameraData.projectionViewMat = pmat;
 		cameraRender->cameraData.cameraLoc = worldPosition;
-		cameraRender->cameraData.cameraDir = faceForwardVector[i];
-		cameraRender->cameraData.cameraUp = faceUpwardVector[i];
-		cameraRender->cameraData.cameraLeft = faceLeftwardVector[i];
+		cameraRender->cameraData.cameraDir = getCubeFaceForwardVector((CubeFace)i);
+		cameraRender->cameraData.cameraUp = getCubeFaceUpwardVector((CubeFace)i);
+		cameraRender->cameraData.cameraLeft = getCubeFaceLeftwardVector((CubeFace)i);
 		cameraRender->cameraData.viewSize = Vector2f(width, width);
 		cameraRender->cameraData.zNear = zNear;
 		cameraRender->cameraData.zFar = zFar;
@@ -94,4 +80,19 @@ void SceneCaptureCube::render(RenderInfo& info)
 		}
 		info.sceneData->setCamera(cameraRender);
 	}
+}
+
+const Matrix4f& SceneCaptureCube::getProjectionMatrix()
+{
+	return getCubeFaceProjectionMatrix(zNear, zFar);
+}
+
+const Matrix4f& SceneCaptureCube::getViewMatrix(CubeFace face)
+{
+	return getCubeFaceViewMatrix(face, worldPosition);
+}
+
+const Matrix4f& SceneCaptureCube::getViewOriginMatrix(CubeFace face)
+{
+	return getCubeFaceViewMatrix(face, Vector3f::Zero());
 }

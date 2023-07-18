@@ -28,6 +28,8 @@ struct LocalLightData
 	float intensity = 0;
 	Vector3f color;
 	float radius;
+	int vsmID;
+	float pad[3];
 };
 
 struct LightRenderData : public IRenderData

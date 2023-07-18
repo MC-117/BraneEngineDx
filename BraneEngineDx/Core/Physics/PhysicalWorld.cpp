@@ -20,8 +20,10 @@ nv::cloth::Factory* PhysicalWorld::gNvClothFactory = NULL;
 #endif // !PHYSICS_USE_PHYSX
 
 PhysicalWorld::PhysicalWorld()
+	: accumulator(0)
+	, stepSize(1 / 60.0f)
 #ifdef PHYSICS_USE_BULLET
-	: collisionConfiguration(), dispatcher(&collisionConfiguration), overlappingPairCache(), solver(),
+	, collisionConfiguration(), dispatcher(&collisionConfiguration), overlappingPairCache(), solver(),
 	physicsScene(new btDiscreteDynamicsWorld(&dispatcher, &overlappingPairCache, &solver, &collisionConfiguration))
 {
 	init();
@@ -77,6 +79,10 @@ PhysicalWorld::~PhysicalWorld()
 #endif // !PHYSICS_USE_BULLET
 #ifdef PHYSICS_USE_PHYSX
 	//NV_CLOTH_DELETE(clothSolver);
+	if (physicsScene != NULL) {
+		physicsScene->fetchResults(true);
+		physicsScene->release();
+	}
 #endif // !PHYSICS_USE_PHYSX
 }
 
@@ -217,9 +223,8 @@ void PhysicalWorld::updatePhysicalWorld(float deltaTime)
 	physicsScene->stepSimulation(deltaTime, 2);
 #endif
 #ifdef PHYSICS_USE_PHYSX
-	float timeScale = 1.0f;
-	float stepSize = this->stepSize * timeScale;
-	accumulator += deltaTime * timeScale;
+	float stepSize = this->stepSize;
+	accumulator += deltaTime;
 	if (accumulator > 0 && accumulator < stepSize) {
 		onStepSimulation(this, accumulator);
 		physicsScene->simulate(accumulator);
@@ -250,7 +255,7 @@ void PhysicalWorld::updatePhysicalWorld(float deltaTime)
 		}
 	}
 	for (auto b = clothSolvers.begin(), e = clothSolvers.end(); b != e; b++) {
-		if ((*b)->beginSimulation(deltaTime * timeScale)) {
+		if ((*b)->beginSimulation(deltaTime)) {
 			int count = (*b)->getSimulationChunkCount();
 			for (int i = 0; i < count; i++) {
 				(*b)->simulateChunk(i);
@@ -436,7 +441,7 @@ bool PhysicalWorld::init()
 		return false;
 	}
 
-	gDispatcher = PxDefaultCpuDispatcherCreate(4);
+	gDispatcher = PxDefaultCpuDispatcherCreate(8);
 	if (!gDispatcher)
 		cerr << "PxDefaultCpuDispatcherCreate failed!" << endl;
 

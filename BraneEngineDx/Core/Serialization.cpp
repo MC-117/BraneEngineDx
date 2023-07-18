@@ -534,7 +534,7 @@ SerializationInfoParser::TokenType SerializationInfoParser::getToken()
 			}
 			break;
 		case INNAME:
-			if (!isalpha(c) && !isdigit(c) && c != '_')
+			if (!isalpha(c) && !isdigit(c) && c != '_' && c != '-')
 			{
 				ungetNextChar();
 				save = false;

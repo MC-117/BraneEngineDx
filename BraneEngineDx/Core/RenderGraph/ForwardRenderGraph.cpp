@@ -13,7 +13,7 @@ bool ForwardRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 	if (cmd.sceneData)
 		sceneDatas.insert(cmd.sceneData);
 	shadowDepthPass.setRenderCommand(cmd);
-	return meshPass.commandList.setRenderCommand(cmd);
+	return meshPass.commandList.setRenderCommand(cmd, renderDataCollector);
 }
 
 void ForwardRenderGraph::setImGuiDrawData(ImDrawData* drawData)
@@ -41,6 +41,7 @@ void ForwardRenderGraph::prepare()
 
 void ForwardRenderGraph::execute(IRenderContext& context)
 {
+	renderDataCollector.upload();
 	for (auto sceneData : sceneDatas)
 		sceneData->upload();
 	shadowDepthPass.execute(context);
@@ -58,6 +59,7 @@ void ForwardRenderGraph::execute(IRenderContext& context)
 
 void ForwardRenderGraph::reset()
 {
+	renderDataCollector.clear();
 	for (auto sceneData : sceneDatas)
 		sceneData->reset();
 	sceneDatas.clear();
@@ -71,6 +73,11 @@ void ForwardRenderGraph::reset()
 	blitPass.reset();
 	imGuiPass.reset();
 	passes.clear();
+}
+
+IRenderDataCollector* ForwardRenderGraph::getRenderDataCollector()
+{
+	return &renderDataCollector;
 }
 
 Serializable* ForwardRenderGraph::instantiate(const SerializationInfo& from)

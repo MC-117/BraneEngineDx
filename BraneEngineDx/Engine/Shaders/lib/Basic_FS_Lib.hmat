@@ -58,10 +58,32 @@ float3 AOMultiBounce(float AO,float3 albedo)
 	return max(AO, ((AO * a + b) * AO + c) * AO);
 }
 
-float2 getTexureSize(in Texture2D tex) {
+float2 getTexureSize(in Texture2D tex)
+{
     float2 size;
     tex.GetDimensions(size.x, size.y);
     return size;
+}
+
+float3 getTexureSize(in TextureCubeArray tex)
+{
+    float3 size;
+    tex.GetDimensions(size.x, size.y, size.z);
+    return size;
+}
+
+uint getLodLevels(in Texture2D tex)
+{
+    uint w, h, l;
+    tex.GetDimensions(0, w, h, l);
+    return l;
+}
+
+uint getLodLevels(in TextureCubeArray tex)
+{
+    uint w, h, e, l;
+    tex.GetDimensions(0, w, h, e, l);
+    return l;
 }
 
 float ShadowCalculation(in Texture2D depthMap, in SamplerState depthMapSampler, float3 worldPos, float3 N, in DirectLight directLight)
@@ -111,13 +133,6 @@ float2 sphereProj(float3 v)
     float tp = dot(zp, v);
     float t = v.z >= 0 ? (1 - tp * 0.5) : (tp * 0.5);
     return float2(s, t);
-}
-
-uint getLodLevels(in Texture2D tex)
-{
-    uint w, h, l;
-    tex.GetDimensions(0, w, h, l);
-    return l;
 }
 
 float luminance(float3 linearColor)
@@ -242,4 +257,14 @@ float3x3 getTangentBasis( float3 TangentZ )
 	float3 TangentY = { b,  Sign + a * TangentZ.y * TangentZ.y, -TangentZ.y };
 
 	return float3x3( TangentX, TangentY, TangentZ );
+}
+
+float3 encodeNormal(float3 n)
+{
+    return n * 0.5 + 0.5;
+}
+
+float3 decodeNormal(float3 n)
+{
+    return n * 2 - 1;
 }

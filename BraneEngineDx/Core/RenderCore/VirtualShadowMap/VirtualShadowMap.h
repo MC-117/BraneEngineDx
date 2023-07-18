@@ -56,6 +56,7 @@ public:
 
 	float clipmapRadiusZScale = 1000.0f;
 	float resolutionLodBiasClipmap = -0.5f;
+	float resolutionLodBiasLocal = -0.5f;
 
 	float pageDilationBorderSizeMain = 0.05f;
 	float pageDilationBorderSizeLocal = 0.05f;

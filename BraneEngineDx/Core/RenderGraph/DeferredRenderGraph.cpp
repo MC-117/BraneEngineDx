@@ -4,6 +4,21 @@
 #include "../Asset.h"
 
 DeferredSurfaceBuffer::DeferredSurfaceBuffer()
+	: gBufferA(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGB10A2_UF })
+	, gBufferB(1280, 720, 1, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_R32_F })
+	, gBufferC(1280, 720, 3, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGB10A2_UF })
+	, gBufferD(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F })
+	, gBufferE(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_UI })
+	, gBufferF(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F })
+	, renderTarget(1280, 720, 4, true)
+	, hizTexture(1280, 720, 1, false, { TW_Border, TW_Border, TF_Point, TF_Point, TIT_R32_F, { 255, 255, 255, 255 } })
+	, hitDataMap(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F })
+	, hitColorMap(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear, TIT_RGBA8_UF })
+	, traceRenderTarget(1280, 720, 4)
+	, resolveRenderTarget(1280, 720, 4)
+	, sceneColorMips(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Linear_Mip_Linear, TF_Linear_Mip_Linear, TIT_RGB10A2_UF })
+	, debugBuffer(1280, 720, 1, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F })
+	, debugRenderTarget(1280, 720, 1)
 {
 	gBufferA.setAutoGenMip(false);
 	gBufferB.setAutoGenMip(false);
@@ -18,6 +33,7 @@ DeferredSurfaceBuffer::DeferredSurfaceBuffer()
 	renderTarget.addTexture("gBufferC", gBufferC);
 	renderTarget.addTexture("gBufferD", gBufferD);
 	renderTarget.addTexture("gBufferE", gBufferE);
+	renderTarget.addTexture("gBufferF", gBufferF);
 	traceRenderTarget.addTexture("hitDataMap", hitDataMap);
 	traceRenderTarget.addTexture("hitColorMap", hitColorMap);
 	debugRenderTarget.addTexture("debugBuffer", debugBuffer);
@@ -33,12 +49,21 @@ void DeferredSurfaceBuffer::create(CameraRender* cameraRender)
 void DeferredSurfaceBuffer::resize(unsigned int width, unsigned int height)
 {
 	renderTarget.resize(width, height);
-	int widthP2 = 1 << max(int(log2(width)), 1);
-	int heightP2 = 1 << max(int(log2(height)), 1);
+	int widthMips = max(int(log2(width)), 1);
+	int heightMips = max(int(log2(height)), 1);
+	int widthP2 = 1 << widthMips;
+	int heightP2 = 1 << heightMips;
 	hizTexture.resize(widthP2, heightP2);
 	traceRenderTarget.resize(width, height);
 	resolveRenderTarget.resize(width, height);
 	debugRenderTarget.resize(width, height);
+
+	int mipLevel = max(widthMips, heightMips);
+	mipLevel = min(mipLevel, 5);
+	Texture2DInfo info = sceneColorMips.getTextureInfo();
+	info.sampleCount = mipLevel;
+	sceneColorMips.setTextureInfo(info);
+	sceneColorMips.resize(width / 2, height / 2);
 }
 
 void DeferredSurfaceBuffer::bind(IRenderContext& context)
@@ -80,6 +105,11 @@ Texture* DeferredSurfaceBuffer::getGBufferE()
 	return &gBufferE;
 }
 
+Texture* DeferredSurfaceBuffer::getGBufferF()
+{
+	return &gBufferF;
+}
+
 Texture* DeferredSurfaceBuffer::getHiZTexture()
 {
 	return &hizTexture;
@@ -103,6 +133,11 @@ RenderTarget* DeferredSurfaceBuffer::getTraceRenderTarget()
 RenderTarget* DeferredSurfaceBuffer::getResolveRenderTarget()
 {
 	return &resolveRenderTarget;
+}
+
+Texture* DeferredSurfaceBuffer::getSceneColorMips()
+{
+	return &sceneColorMips;
 }
 
 Texture* DeferredSurfaceBuffer::getDebugBuffer()
@@ -136,6 +171,7 @@ DeferredRenderGraph::DeferredRenderGraph()
 	vsmDepthPass.renderGraph = this;
 	lightingPass.renderGraph = this;
 	hizPass.renderGraph = this;
+	genMipPass.renderGraph = this;
 	ssrPass.renderGraph = this;
 	translucentPass.renderGraph = this;
 	blitPass.renderGraph = this;
@@ -183,7 +219,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		for (auto binding : cmd.bindings) {
 			if (binding->usedFrame < (long long)Time::frames()) {
 				binding->create();
-				binding->upload();
+				renderDataCollector.add(*binding);
 				binding->usedFrame = Time::frames();
 			}
 		}
@@ -231,7 +267,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 			if (materialRenderData->usedFrame < (long long)Time::frames()) {
 				materialRenderData->program = preProgram;
 				materialRenderData->create();
-				materialRenderData->upload();
+				renderDataCollector.add(*materialRenderData);
 				materialRenderData->usedFrame = Time::frames();
 			}
 
@@ -254,7 +290,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		if (deferredMaterialRenderData->usedFrame < (long long)Time::frames()) {
 			deferredMaterialRenderData->program = deferredShader;
 			deferredMaterialRenderData->create();
-			deferredMaterialRenderData->upload();
+			renderDataCollector.add(*deferredMaterialRenderData);
 			deferredMaterialRenderData->usedFrame = Time::frames();
 		}
 
@@ -347,6 +383,7 @@ void DeferredRenderGraph::prepare()
 		shadowDepthPass.prepare();
 	lightingPass.prepare();
 	hizPass.prepare();
+	genMipPass.prepare();
 	ssrPass.prepare();
 	translucentPass.prepare();
 	for (auto pass : passes)
@@ -371,6 +408,9 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 	context.waitSignalCPU();
 	timer.record("WaitGPU");
+
+	renderDataCollector.upload();
+	timer.record("RenderDataUpload");
 
 	for (auto sceneData : sceneDatas)
 		sceneData->upload();
@@ -406,6 +446,10 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	hizPass.execute(context);
 
 	timer.record("HiZ");
+
+	genMipPass.execute(context);
+
+	timer.record("GenMip");
 
 	ssrPass.execute(context);
 
@@ -448,6 +492,7 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 void DeferredRenderGraph::reset()
 {
+	renderDataCollector.clear();
 	for (auto sceneData : sceneDatas)
 		sceneData->reset();
 	sceneDatas.clear();
@@ -461,6 +506,7 @@ void DeferredRenderGraph::reset()
 		shadowDepthPass.reset();
 	lightingPass.reset();
 	hizPass.reset();
+	genMipPass.reset();
 	ssrPass.reset();
 	translucentPass.reset();
 	for (auto pass : passes) {
@@ -481,10 +527,16 @@ void DeferredRenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)
 		(RenderPass*)&vsmDepthPass : (RenderPass*)&shadowDepthPass));
 	passes.push_back(make_pair("Lighting", &lightingPass));
 	passes.push_back(make_pair("HiZ", &hizPass));
+	passes.push_back(make_pair("GenMip", &genMipPass));
 	passes.push_back(make_pair("SSR", &ssrPass));
 	passes.push_back(make_pair("Translucent", &translucentPass));
 	passes.push_back(make_pair("Blit", &blitPass));
 	passes.push_back(make_pair("ImGui", &imGuiPass));
+}
+
+IRenderDataCollector* DeferredRenderGraph::getRenderDataCollector()
+{
+	return &renderDataCollector;
 }
 
 Serializable* DeferredRenderGraph::instantiate(const SerializationInfo& from)

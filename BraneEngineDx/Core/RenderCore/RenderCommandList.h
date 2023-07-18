@@ -125,8 +125,8 @@ public:
 	int frameTaskCount = 0;
 
 	bool addRenderTask(const IRenderCommand& cmd, RenderTask& task);
-	bool setRenderCommand(const IRenderCommand& cmd, ShaderFeature extraFeature = Shader_Default);
-	bool setRenderCommand(const IRenderCommand& cmd, vector<ShaderFeature> extraFeatures);
+	bool setRenderCommand(const IRenderCommand& cmd, IRenderDataCollector& collector, ShaderFeature extraFeature = Shader_Default);
+	bool setRenderCommand(const IRenderCommand& cmd, IRenderDataCollector& collector, vector<ShaderFeature> extraFeatures);
 
 	void excuteCommand(RenderCommandExecutionInfo& executionInfo);
 	void resetCommand();

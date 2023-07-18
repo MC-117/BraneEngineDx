@@ -102,6 +102,7 @@ struct RTOption
 
 struct RWOption
 {
+	TexDimension dimension = TD_Default;
 	unsigned int mipLevel = 0;
 	unsigned int arrayBase = 0;
 	unsigned int arrayCount = 1;

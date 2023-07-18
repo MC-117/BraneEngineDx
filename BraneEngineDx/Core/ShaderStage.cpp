@@ -239,6 +239,7 @@ bool ShaderProgram::addShaderStage(ShaderStage & stage)
 bool ShaderProgram::init()
 {
 	shaderMacroSet.clear();
+	attributes.clear();
 	for (const auto& stage : shaderStages) {
 		shaderMacroSet.append(stage.second->getShaderMacroSet());
 		for (const auto& prop : stage.second->properties) {

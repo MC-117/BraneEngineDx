@@ -88,6 +88,24 @@ public:
 	virtual void getOutputTextures(vector<pair<string, Texture*>>& textures);
 };
 
+class IRenderDataCollector
+{
+public:
+	virtual void add(IRenderData& data) = 0;
+	virtual void clear() = 0;
+	virtual void upload() = 0;
+};
+
+class BaseRenderDataCollector : public IRenderDataCollector
+{
+public:
+	virtual void add(IRenderData& data);
+	virtual void clear();
+	virtual void upload();
+protected:
+	unordered_set<IRenderData*> collection;
+};
+
 class RenderGraph : public Serializable
 {
 public:
@@ -103,6 +121,7 @@ public:
 	virtual void execute(IRenderContext& context) = 0;
 	virtual void reset() = 0;
 
+	virtual IRenderDataCollector* getRenderDataCollector() = 0;
 	virtual void getPasses(vector<pair<string, RenderPass*>>& passes);
 
 	static Serializable* instantiate(const SerializationInfo& from);

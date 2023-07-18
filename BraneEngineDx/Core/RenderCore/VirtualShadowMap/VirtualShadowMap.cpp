@@ -4,6 +4,7 @@
 #include "../SurfaceBufferGetter.h"
 #include "../DirectShadowRenderPack.h"
 #include "../../Utility/MathUtility.h"
+#include "../../Utility/RenderUtility.h"
 #include "../../Engine.h"
 #include "../../Asset.h"
 #include "../../InitializationManager.h"
@@ -51,6 +52,7 @@ bool VirtualShadowMapConfig::deserialize(const SerializationInfo& from)
 	from.get("lastClipmapLevel", (int&)lastClipmapLevel);
 	from.get("clipmapRadiusZScale", clipmapRadiusZScale);
 	from.get("resolutionLodBiasClipmap", resolutionLodBiasClipmap);
+	from.get("resolutionLodBiasLocal", resolutionLodBiasLocal);
 	from.get("pageDilationBorderSizeMain", pageDilationBorderSizeMain);
 	from.get("pageDilationBorderSizeLocal", pageDilationBorderSizeLocal);
 	from.get("debugViewMode", debugViewMode);
@@ -68,6 +70,7 @@ bool VirtualShadowMapConfig::serialize(SerializationInfo& to)
 	to.set("lastClipmapLevel", (int&)lastClipmapLevel);
 	to.set("clipmapRadiusZScale", clipmapRadiusZScale);
 	to.set("resolutionLodBiasClipmap", resolutionLodBiasClipmap);
+	to.set("resolutionLodBiasLocal", resolutionLodBiasLocal);
 	to.set("pageDilationBorderSizeMain", pageDilationBorderSizeMain);
 	to.set("pageDilationBorderSizeLocal", pageDilationBorderSizeLocal);
 	to.set("debugViewMode", debugViewMode);
@@ -702,6 +705,35 @@ void VirtualShadowMapArray::buildPageAllocations(
 		}
 	}
 
+	int resolutionLodBiasLocal = config.resolutionLodBiasLocal;
+
+	for (auto& pointLight : lightData.pointLightDatas) {
+		if (pointLight.vsmID == VSM_None_ID)
+			continue;
+		Matrix4f viewToClip = getCubeFaceProjectionMatrix(0, pointLight.radius);
+		for (int faceIndex = 0; faceIndex < CubeFace::CF_Faces; faceIndex++) {
+			int vsmID = pointLight.vsmID + faceIndex;
+			VirtualShadowMapProjectionData& projData = projDataUpload[vsmID];
+			Matrix4f worldToLightViewMatrix = getCubeFaceViewMatrix((CubeFace)faceIndex);
+			projData.viewOriginToView = MATRIX_UPLOAD_OP(worldToLightViewMatrix);
+			projData.viewToClip = MATRIX_UPLOAD_OP(viewToClip);
+			Matrix4f viewOriginToClip = viewToClip * worldToLightViewMatrix;
+			projData.viewOriginToClip = MATRIX_UPLOAD_OP(viewOriginToClip);
+			Matrix4f uvMatrix = Math::getTransitionMatrix(Vector3f(0.5f, 0.5f, 0.0f)) *
+				Math::getScaleMatrix(Vector3f(0.5f, -0.5f, 1.0f));
+			projData.viewOriginToUV = MATRIX_UPLOAD_OP(uvMatrix * viewOriginToClip);
+
+			projData.resolutionLodBias = resolutionLodBiasLocal;
+
+			projData.worldCenter = pointLight.position;
+			projData.vsmID = vsmID;
+
+			projData.lightType = VSM_LocalLight;
+
+			projData.uncached = 0;
+		}
+	}
+
 	frameData = &manager->getCurFrameData();
 
 	vector<VirtualShadowMapPrevData> vsmPrevDataUpload;
@@ -981,6 +1013,8 @@ void VirtualShadowMapArray::render(IRenderContext& context, const LightRenderDat
 			context.drawMeshIndirect(batchInfo->shadowDepthIndirectArgs.getVendorGPUBuffer(), cmdIndex * sizeof(DrawElementsIndirectCommand));
 		}
 	}
+	context.unbindBufferBase(VirtualShadowMapShaders::instanceIDsName);
+	context.unbindBufferBase(VirtualShadowMapShaders::pageInfosName);
 	context.clearOutputBufferBindings();
 }
 
@@ -1114,6 +1148,41 @@ VirtualShadowMapArray::CullingBatchInfo* VirtualShadowMapArray::fetchCullingBatc
 
 void VirtualShadowMapArray::buildCullingBatchInfos(const LightRenderData& lightData)
 {
+	auto processCullingBatchInfo = [this](unsigned int firstView, unsigned int viewCount,
+		VirtualShadowMapManager::LightEntry* lightEntry) {
+			if (lightEntry) {
+				lightEntry->markRendered(Time::frames());
+				for (const VirtualShadowMapManager::LightEntry::Batch& batch : lightEntry->batches) {
+					CullingBatchInfo* cullingBatchInfo = fetchCullingBatchInfo();
+					cullingBatchInfo->batch = (VirtualShadowMapManager::LightEntry::Batch*)&batch;
+					cullingBatchInfo->data.firstView = firstView;
+					cullingBatchInfo->data.viewCount = viewCount;
+					int drawInstanceCount = batch.drawInstanceInfos.size();
+					int indirectDrawCount = batch.indirectCommands.size();
+					int maxInstanceDrawPerPass = drawInstanceCount * VirtualShadowMapConfig::maxPerInstanceCmdCount;
+					cullingBatchInfo->data.maxPerInstanceCmdCount = maxInstanceDrawPerPass;
+					cullingBatchInfo->data.instanceCount = drawInstanceCount;
+					cullingBatchInfo->drawInstanceInfos.uploadData(cullingBatchInfo->data.instanceCount,
+						(void*)batch.drawInstanceInfos.data());
+					cullingBatchInfo->shadowDepthIndirectArgs.uploadData(
+						batch.indirectCommands.size() * (sizeof(DrawElementsIndirectCommand) / sizeof(unsigned int)),
+						(void*)batch.indirectCommands.data());
+					AllocCmdInfo allocCmdInfoUpload;
+					allocCmdInfoUpload.indirectArgCount = indirectDrawCount;
+					cullingBatchInfo->allocCmdInfo.uploadData(1, &allocCmdInfoUpload);
+					cullingBatchInfo->visiableInstanceInfos.resize(maxInstanceDrawPerPass);
+					cullingBatchInfo->visiableInstanceCount.resize(1);
+					cullingBatchInfo->offsetBufferCount.resize(1);
+					cullingBatchInfo->outputCommandListsIndirectArgs.resize(3);
+					cullingBatchInfo->shadowDepthInstanceOffset.resize(indirectDrawCount);
+					cullingBatchInfo->shadowDepthInstanceCounter.resize(indirectDrawCount);
+					cullingBatchInfo->instanceIDs.resize(maxInstanceDrawPerPass);
+					cullingBatchInfo->pageInfos.resize(maxInstanceDrawPerPass);
+					cullingBatchInfo->cullingData.uploadData(1, &cullingBatchInfo->data, true);
+				}
+			}
+	};
+
 	for (VirtualShadowMapClipmap* clipmap : lightData.mainLightClipmaps) {
 		unsigned int firstView = shadowViewInfosUpload.size();
 		unsigned int viewCount = 0;
@@ -1126,36 +1195,24 @@ void VirtualShadowMapArray::buildCullingBatchInfos(const LightRenderData& lightD
 		}
 
 		VirtualShadowMapManager::LightEntry* lightEntry = clipmap->getLightEntry();
-		if (lightEntry) {
-			lightEntry->markRendered(Time::frames());
-			for (const VirtualShadowMapManager::LightEntry::Batch& batch : lightEntry->batches) {
-				CullingBatchInfo* cullingBatchInfo = fetchCullingBatchInfo();
-				cullingBatchInfo->batch = (VirtualShadowMapManager::LightEntry::Batch*)&batch;
-				cullingBatchInfo->data.firstView = firstView;
-				cullingBatchInfo->data.viewCount = viewCount;
-				int drawInstanceCount = batch.drawInstanceInfos.size();
-				int indirectDrawCount = batch.indirectCommands.size();
-				int maxInstanceDrawPerPass = drawInstanceCount * VirtualShadowMapConfig::maxPerInstanceCmdCount;
-				cullingBatchInfo->data.maxPerInstanceCmdCount = maxInstanceDrawPerPass;
-				cullingBatchInfo->data.instanceCount = drawInstanceCount;
-				cullingBatchInfo->drawInstanceInfos.uploadData(cullingBatchInfo->data.instanceCount,
-					(void*)batch.drawInstanceInfos.data());
-				cullingBatchInfo->shadowDepthIndirectArgs.uploadData(
-					batch.indirectCommands.size() * (sizeof(DrawElementsIndirectCommand) / sizeof(unsigned int)),
-					(void*)batch.indirectCommands.data());
-				AllocCmdInfo allocCmdInfoUpload;
-				allocCmdInfoUpload.indirectArgCount = indirectDrawCount;
-				cullingBatchInfo->allocCmdInfo.uploadData(1, &allocCmdInfoUpload);
-				cullingBatchInfo->visiableInstanceInfos.resize(maxInstanceDrawPerPass);
-				cullingBatchInfo->visiableInstanceCount.resize(1);
-				cullingBatchInfo->offsetBufferCount.resize(1);
-				cullingBatchInfo->outputCommandListsIndirectArgs.resize(3);
-				cullingBatchInfo->shadowDepthInstanceOffset.resize(indirectDrawCount);
-				cullingBatchInfo->shadowDepthInstanceCounter.resize(indirectDrawCount);
-				cullingBatchInfo->instanceIDs.resize(maxInstanceDrawPerPass);
-				cullingBatchInfo->pageInfos.resize(maxInstanceDrawPerPass);
-				cullingBatchInfo->cullingData.uploadData(1, &cullingBatchInfo->data, true);
-			}
+		processCullingBatchInfo(firstView, viewCount, lightEntry);
+	}
+
+	for (auto& pointLight : lightData.pointLightDatas) {
+		if (pointLight.vsmID == VSM_None_ID)
+			continue;
+		Matrix4f viewToClip = getCubeFaceProjectionMatrix(0, pointLight.radius);
+		for (int faceIndex = 0; faceIndex < CubeFace::CF_Faces; faceIndex++) {
+			int vsmID = pointLight.vsmID + faceIndex;
+			Matrix4f worldToLightViewMatrix = getCubeFaceViewMatrix((CubeFace)faceIndex);
+			ShadowViewInfo& view = shadowViewInfosUpload.emplace_back();
+			view.viewOriginToClip = MATRIX_UPLOAD_OP(viewToClip * worldToLightViewMatrix);
+			view.worldCenter = pointLight.position;
+			view.viewRect = Vector4i(0, 0, VirtualShadowMapConfig::virtualShadowMapSize, VirtualShadowMapConfig::virtualShadowMapSize);
+			view.vsmID = vsmID;
+			view.flags = VSM_LocalLight;
+			view.mipLevel = 0;
+			view.mipCount = 8;
 		}
 	}
 }
