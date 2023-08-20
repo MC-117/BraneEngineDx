@@ -1,0 +1,126 @@
+#order 2000
+#material
+Color sunColor: 1.000000, 0.800000, 0.400000, 1.000000
+Color cloudColor: 0.705882, 0.803922, 1.000000, 1.000000
+Color zenithColor: 0.043137, 0.129412, 0.376471, 1.000000
+Color horizonColor: 0.709804, 0.811765, 0.901961, 1.000000
+Color overallColor: 0.564706, 0.564706, 0.564706, 1.000000
+Color lightDirection: 0.000000, 0.000000, 0.000000, 0.000000
+Scalar cloudOpacity: 1.000000
+Scalar starBrightness: 0.000000
+Scalar radius: 3276800.000000
+Scalar time: 199.198853
+Scalar sunBrightness: 2.000000
+Scalar sunHeight: 1.000000
+Scalar sunRadius: 0.000300
+Scalar cloudSpeed: 2.000000
+Scalar lowNoisePower: 1.000000
+Scalar highNoisePower: 4.000000
+Scalar horizonFalloff: 8.000000
+Texture cloudNoiseMap: black
+Texture skyMap: black
+Texture starMap: black
+
+#vertex use default
+#fragment
+#condition deferred
+#condition lighting
+#include "/lib/Basic_FS_Lib.hmat"
+#include "/lib/Light_Def.hmat"
+#include "/lib/CameraData_Def.hmat"
+#include "/lib/GBuffer_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 sunColor;
+uniform float4 cloudColor;
+uniform float4 zenithColor;
+uniform float4 horizonColor;
+uniform float4 overallColor;
+uniform float4 lightDirection;
+uniform float cloudOpacity;
+uniform float starBrightness;
+uniform float sunBrightness;
+uniform float sunHeight;
+uniform float sunRadius;
+uniform float radius;
+uniform float time;
+uniform float cloudSpeed;
+uniform float lowNoisePower;
+uniform float highNoisePower;
+uniform float horizonFalloff;
+DEF_MAT_END
+
+#if defined(LIGHTING_SHADER_FEATURE)
+DEF_GBUFFER
+#else
+DEF_TEX2D(cloudNoiseMap, 0);
+DEF_TEX2D(skyMap, 1);
+DEF_TEX2D(starMap, 2);
+#endif
+
+#include "/lib/Surface_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
+
+float sphereMask(float pos, float center, float radius, float hardness) {
+    return clamp((1 - abs(pos - center) / radius) / (1 - hardness), 0, 1);
+}
+
+FragmentOut SURFACE_MAIN
+{
+    FragmentOut fout;
+    Surface surf = getSurface(fin);
+
+    #ifndef LIGHTING_SHADER_FEATURE
+    float4 _sunColor;
+    float4 _lightDirection;
+    float _sunHeight;
+    if (dot(lightDirection, lightDirection) == 0) {
+        _lightDirection.xyz = directLight.direction;
+        _sunColor = float4(directLight.color * directLight.intensity, 1.0);
+        _sunHeight = 1 - abs(dot(normalize(directLight.direction), float3(1, 0, 0)));
+    }
+    else {
+        _lightDirection = lightDirection;
+        _sunColor = sunColor;
+        _sunHeight = sunHeight;
+    }
+    float3 cameraVector = normalize(fin.WorldPos - camData.camPos);
+    float cutoff = clamp(dot(cameraVector, float3(0, 0, 1)), 0, 1);
+    float3 objectPos = getPosition(fin.TransMat);
+    float cloudAlpha = cloudOpacity * (1 - clamp(fin.LocalPos.z / (4096 * -0.05), 0, 1));
+    float offset = time * cloudSpeed * 0.1;
+    float cloud = SAMPLE_TEX(cloudNoiseMap, float2(offset + fin.TexCoords.x, fin.TexCoords.y)).r;
+    float sky = SAMPLE_TEX(skyMap, float2(offset + fin.TexCoords.x, fin.TexCoords.y)).r;
+    cloudAlpha = lerp(0, lerp(sky, cloud, cutoff), cloudAlpha);
+    float power = SAMPLE_TEX(cloudNoiseMap, fin.TexCoords).r;
+    power = lerp(lowNoisePower, highNoisePower, power);
+    power = pow(cloudAlpha, power);
+    float4 rimLight = cloudColor * power;
+    power *= power;
+    float sunVal = dot(normalize(_lightDirection.xyz), cameraVector);
+    rimLight += clamp(pow(sphereMask(sunVal, 1, 1.3, 0), 10), 0, 1) * _sunColor * power * 0.4;
+    float4 sunCol = sphereMask(sunVal, 1, sunRadius, 0) * sunBrightness * _sunColor;
+    cutoff = clamp(pow(1 - cutoff, horizonFalloff), 0, 1);
+    float4 SkyCol = zenithColor + SAMPLE_TEX(starMap, fin.TexCoords) * starBrightness * _sunHeight;
+    SkyCol = lerp(SkyCol, horizonColor, cutoff);
+    float4 oCol = sunCol + SkyCol;
+    oCol = lerp(oCol, rimLight, clamp(power, 0, 1)) * overallColor * 1.5;
+
+    // oCol = oCol / (oCol + Float4(1.0));
+    // oCol = pow(oCol, Float4(1.0/2.2));
+    oCol.a = 1;
+    #endif
+
+    #if defined(DEFERRED_SHADER_FEATURE)
+    surf.albedo = oCol;
+    outputSurface(surf, GBUFFER_OUT_PARAMS(fout));
+    #elif defined(LIGHTING_SHADER_FEATURE)
+    fout.FragColor = surf.albedo;
+    #else
+    fout.FragColor = oCol;
+    #endif
+    return fout;
+}

@@ -1,5 +1,0 @@
-#order 10
-#cullfront
-#material
-#vertex use position
-#fragment use empty_fragment

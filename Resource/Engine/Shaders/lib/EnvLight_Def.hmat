@@ -1,0 +1,83 @@
+#include "SH_Lib.hmat"
+#include "ProbeGrid_Def.hmat"
+
+struct EnvLightData
+{
+	float3 position;
+	float radius;
+    float3 tintColor;
+    int reverseIndex;
+	float falloff;
+	float cutoff;
+    int shDataOffset;
+    int pad;
+	float4 v[7];
+};
+
+Buffer<float4> envLightSHDatas;
+
+EnvLightData getEnvLightData(uint probeIndex)
+{
+    EnvLightData data;
+    uint byteOffset = getProbeByteOffset(probeIndex);
+    float4 posAndRadius = asfloat(probeByteData.Load4(byteOffset));
+    data.position = posAndRadius.xyz;
+    data.radius = posAndRadius.w;
+    uint4 value4 = probeByteData.Load4(byteOffset + 16);
+    data.tintColor = asfloat(value4.xyz);
+    data.reverseIndex = asfloat(value4.w);
+	value4 = probeByteData.Load4(byteOffset + 32);
+    data.falloff = asfloat(value4.x);
+    data.cutoff = asfloat(value4.y);
+    data.shDataOffset = asint(value4.z);
+    [unroll]
+    for (int i = 0; i < 7; i++)
+	    data.v[i] = envLightSHDatas[data.shDataOffset + i];
+    return data;
+}
+
+float3 calEnvLightFromSH(in EnvLightData data, float3 worldNorm)
+{
+    float4 NormalVector = float4(worldNorm, 1.0f); 
+
+    float3 Intermediate0, Intermediate1, Intermediate2;
+    Intermediate0.x = dot(data.v[0], NormalVector);
+    Intermediate0.y = dot(data.v[1], NormalVector);
+    Intermediate0.z = dot(data.v[2], NormalVector);
+
+    float4 vB = NormalVector.xyzz * NormalVector.yzzx;
+    Intermediate1.x = dot(data.v[3], vB);
+    Intermediate1.y = dot(data.v[4], vB);
+    Intermediate1.z = dot(data.v[5], vB);
+
+    float vC = NormalVector.x * NormalVector.x - NormalVector.y * NormalVector.y;
+    Intermediate2 = data.v[6].xyz * vC;
+
+    return max(0, Intermediate0 + Intermediate1 + Intermediate2);
+}
+
+float3 getEnvLight(float3 worldPos, float3 worldNorm)
+{
+	float3 color = float3(0, 0, 0);
+	float weightSum = 0;
+    uint3 gridIndex = getProbeGridIndex(worldPos);
+	ProbeGridIterator iter;
+	initProbeGridIterator(iter, gridIndex, PROBE_TYPE_ENV);
+	while (iterateProbeGrid(iter)) {
+		EnvLightData data = getEnvLightData(iter.probeIndex);
+        float dis = distance(data.position, worldPos);
+        float weight = 1 - dis / data.radius;
+
+        if (weight > 0.0001) {
+            color += weight * smoothstep(data.cutoff, data.falloff, data.radius - dis) *
+                data.tintColor * calEnvLightFromSH(data, worldNorm);
+            weightSum += weight;
+        }
+
+		if (data.reverseIndex == 0)
+			break;
+    }
+    
+	color *= rcp(weightSum);
+    return max(0, color);
+}

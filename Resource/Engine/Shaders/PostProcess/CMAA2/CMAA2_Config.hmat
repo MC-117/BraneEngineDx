@@ -1,0 +1,17 @@
+#pragma debug
+#define CMAA2_EDGE_UNORM 0
+#define CMAA2_UAV_STORE_TYPED 1
+#define CMAA2_UAV_STORE_TYPED_UNORM_FLOAT 0
+#define CMAA2_UAV_STORE_CONVERT_TO_SRGB 0
+#define CMAA2_SUPPORT_HDR_COLOR_RANGE 1
+#define CMAA2_EDGE_DETECTION_LUMA_PATH 1
+#define CMAA_PACK_SINGLE_SAMPLE_EDGE_TO_HALF_WIDTH 1
+
+#define CMAA2_CS_INPUT_KERNEL_SIZE_X 16
+#define CMAA2_CS_INPUT_KERNEL_SIZE_Y 16
+
+#define EdgesColor2x2CS main
+#define ProcessCandidatesCS main
+#define ComputeDispatchArgsCS main
+#define DeferredColorApply2x2CS main
+#define DebugDrawEdgesCS main

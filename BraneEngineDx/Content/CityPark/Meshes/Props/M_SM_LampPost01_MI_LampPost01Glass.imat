@@ -1,8 +1,0 @@
-#material Engine/Shaders/PBR.mat
-#twoside false
-#castshadow true
-Scalar ao: 0.000000
-Scalar metallic: 0.000000
-Scalar roughness: 0.000000
-Texture colorMap: Content/CityPark/Meshes/Props/T_M_SM_LampPost01_MI_LampPost01Glass_BaseColor.png
-Texture normalMap: Engine/Textures/Default_N.png

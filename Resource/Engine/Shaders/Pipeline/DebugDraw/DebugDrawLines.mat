@@ -1,0 +1,22 @@
+#material
+#vertex
+#include "../../lib/CameraData_Def.hmat"
+#include "../../lib/DebugDraw_Def.hmat"
+
+DebugPointVertexOut main(uint vertexID : SV_VertexID)
+{
+    DebugPointVertexOut vout;
+    DebugPointTable table = unpackDebugPointTable(debugFlags[vertexID + 1]);
+    DebugPoint p = debugLines[table.index];
+    vout.svPos = mul(float4(p.pos, 1.0f), camData.pmat);
+    vout.color = p.color;
+    return vout;
+}
+
+#fragment
+#include "../../lib/DebugDraw_Def.hmat"
+
+float4 main(DebugPointVertexOut fin) : SV_Target
+{
+    return float4(fin.color, 1.0f);
+}

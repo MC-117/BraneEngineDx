@@ -1,0 +1,21 @@
+#order 1000
+#material
+Color baseColor: 255, 255, 255, 255
+Texture colorMap: white
+Scalar metallic: 0.5
+Texture metallicMap: white
+Scalar roughness: 0.5
+Texture roughnessMap: white
+Scalar ao: 1.0
+Texture aoMap: white
+Color reflectionColor: 255, 255, 255, 255
+Texture reflectionMap: black
+Texture irradianceMap: black
+Scalar normalScale: 1
+Texture normalMap: black
+Scalar emission: 0
+Texture emissionMap: white
+Texture brdfLUT: brdfLUT
+Texture depthMap: white
+#vertex use default
+#fragment use pbr_ibl_fragment

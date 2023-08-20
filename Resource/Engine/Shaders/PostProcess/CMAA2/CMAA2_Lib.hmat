@@ -1,0 +1,530 @@
+#include "CMAA2_Config.hmat"
+
+// If the color buffer range is bigger than [0, 1] then use this, otherwise don't (and gain some precision - see https://bartwronski.com/2017/04/02/small-float-formats-r11g11b10f-precision/)
+#ifndef CMAA2_SUPPORT_HDR_COLOR_RANGE
+#define CMAA2_SUPPORT_HDR_COLOR_RANGE 0
+#endif
+
+// 0 is full color-based edge detection, 1 and 2 are idential log luma based, with the difference bing that 1 loads color and computes log luma in-place (less efficient) while 2 loads precomputed log luma from a separate R8_UNORM texture (more efficient).
+// Luma-based edge detection has a slightly lower quality but better performance so use it as a default; providing luma as a separate texture (or .a channel of the main one) will improve performance.
+// See RGBToLumaForEdges for luma conversions in non-HDR and HDR versions.
+#ifndef CMAA2_EDGE_DETECTION_LUMA_PATH
+#define CMAA2_EDGE_DETECTION_LUMA_PATH 1
+#endif
+
+// for CMAA2+MSAA support
+#ifndef CMAA_MSAA_SAMPLE_COUNT
+#define CMAA_MSAA_SAMPLE_COUNT 1
+#endif
+
+#define CMAA2_CS_OUTPUT_KERNEL_SIZE_X               (CMAA2_CS_INPUT_KERNEL_SIZE_X-2)
+#define CMAA2_CS_OUTPUT_KERNEL_SIZE_Y               (CMAA2_CS_INPUT_KERNEL_SIZE_Y-2)
+#define CMAA2_PROCESS_CANDIDATES_NUM_THREADS        128
+#define CMAA2_DEFERRED_APPLY_NUM_THREADS            32
+
+// Optimization paths
+#define CMAA2_DEFERRED_APPLY_THREADGROUP_SWAP       1   // 1 seems to be better or same on all HW
+#define CMAA2_COLLECT_EXPAND_BLEND_ITEMS            1   // this reschedules final part of work in the ProcessCandidatesCS (where the sampling and blending takes place) from few to all threads to increase hardware thread occupancy
+#ifndef CMAA2_USE_HALF_FLOAT_PRECISION                  
+#define CMAA2_USE_HALF_FLOAT_PRECISION              0   // use half precision by default? (not on by default due to driver issues on various different hardware, but let external code decide to define if needed)
+#endif
+
+#ifndef CMAA2_UAV_STORE_TYPED
+#error Warning - make sure correct value is set according to D3D11_FORMAT_SUPPORT_TYPED_UNORDERED_ACCESS_VIEW & D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE caps for the color UAV format used in g_inoutColorWriteonly
+#define CMAA2_UAV_STORE_TYPED                       1   // use defaults that match the most common scenario: DXGI_FORMAT_R8G8B8A8_UNORM as UAV on a DXGI_FORMAT_R8G8B8A8_UNORM_SRGB resource (no typed stores for sRGB so we have to manually convert)
+#endif
+
+#ifndef CMAA2_UAV_STORE_CONVERT_TO_SRGB
+#error Warning - make sure correct value is set according to whether manual linear->sRGB color conversion is needed when writing color output to g_inoutColorWriteonly
+#define CMAA2_UAV_STORE_CONVERT_TO_SRGB             1   // use defaults that match the most common scenario: DXGI_FORMAT_R8G8B8A8_UNORM as UAV on a DXGI_FORMAT_R8G8B8A8_UNORM_SRGB resource (no typed stores for sRGB so we have to manually convert)
+#endif
+
+#ifndef CMAA2_UAV_STORE_TYPED_UNORM_FLOAT
+#error Warning - make sure correct value is set according to the color UAV format used in g_inoutColorWriteonly
+#define CMAA2_UAV_STORE_TYPED_UNORM_FLOAT           1   // for typed UAV stores: set to 1 for all _UNORM formats and to 0 for _FLOAT formats
+#endif
+
+#if CMAA2_UAV_STORE_TYPED
+    #ifndef CMAA2_UAV_STORE_TYPED_UNORM_FLOAT
+        #error When CMAA2_UAV_STORE_TYPED is set to 1, CMAA2_UAV_STORE_TYPED_UNORM_FLOAT must be set 1 if the color UAV is not a _FLOAT format or 0 if it is.
+    #endif
+#else
+    #ifndef CMAA2_UAV_STORE_UNTYPED_FORMAT
+        #error Error - untyped format required (see FinalUAVStore function for the list)
+    #endif
+#endif
+
+#if (CMAA2_USE_HALF_FLOAT_PRECISION != 0)
+#error this codepath needs testing - it's likely not valid anymore
+typedef min16float      lpfloat;
+typedef min16float2     lpfloat2;
+typedef min16float3     lpfloat3;
+typedef min16float4     lpfloat4;
+#else
+typedef float           lpfloat;
+typedef float2          lpfloat2;
+typedef float3          lpfloat3;
+typedef float4          lpfloat4;
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// VARIOUS QUALITY SETTINGS
+//
+// Longest line search distance; must be even number; for high perf low quality start from ~32 - the bigger the number, 
+// the nicer the gradients but more costly. Max supported is 128!
+static const uint c_maxLineLength = 86;
+// 
+#ifndef CMAA2_EXTRA_SHARPNESS
+    #define CMAA2_EXTRA_SHARPNESS                   0     // Set to 1 to preserve even more text and shape clarity at the expense of less AA
+#endif
+//
+// It makes sense to slightly drop edge detection thresholds with increase in MSAA sample count, as with the higher
+// MSAA level the overall impact of CMAA2 alone is reduced but the cost increases.
+#define CMAA2_SCALE_QUALITY_WITH_MSAA               0
+//
+// 
+#ifndef CMAA2_STATIC_QUALITY_PRESET
+    #define CMAA2_STATIC_QUALITY_PRESET 2  // 0 - LOW, 1 - MEDIUM, 2 - HIGH, 3 - ULTRA
+#endif
+// presets (for HDR color buffer maybe use higher values)
+#if CMAA2_STATIC_QUALITY_PRESET == 0   // LOW
+    #define g_CMAA2_EdgeThreshold                   lpfloat(0.15)
+#elif CMAA2_STATIC_QUALITY_PRESET == 1 // MEDIUM
+    #define g_CMAA2_EdgeThreshold                   lpfloat(0.10)
+#elif CMAA2_STATIC_QUALITY_PRESET == 2 // HIGH (default)
+    #define g_CMAA2_EdgeThreshold                   lpfloat(0.07)
+#elif CMAA2_STATIC_QUALITY_PRESET == 3 // ULTRA
+    #define g_CMAA2_EdgeThreshold                   lpfloat(0.05)
+#else
+    #error CMAA2_STATIC_QUALITY_PRESET not set?
+#endif
+// 
+#if CMAA2_EXTRA_SHARPNESS
+#define g_CMAA2_LocalContrastAdaptationAmount       lpfloat(0.15)
+#define g_CMAA2_SimpleShapeBlurinessAmount          lpfloat(0.07)
+#else
+#define g_CMAA2_LocalContrastAdaptationAmount       lpfloat(0.10)
+#define g_CMAA2_SimpleShapeBlurinessAmount          lpfloat(0.10)
+#endif
+// 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+#if CMAA_MSAA_SAMPLE_COUNT > 1
+#define CMAA_MSAA_USE_COMPLEXITY_MASK 1
+#endif
+
+#if CMAA2_EDGE_DETECTION_LUMA_PATH == 2 || CMAA2_EDGE_DETECTION_LUMA_PATH == 3 || CMAA_MSAA_USE_COMPLEXITY_MASK
+SamplerState                    g_gather_point_clamp_Sampler        : register( s0 );       // there's also a slightly less efficient codepath that avoids Gather for easier porting
+#endif
+
+// Is the output UAV format R32_UINT for manual shader packing, or a supported UAV store format?
+#if CMAA2_UAV_STORE_TYPED
+#if CMAA2_UAV_STORE_TYPED_UNORM_FLOAT
+RWTexture2D<unorm float4>       g_inoutColorWriteonly               : register( u0 );       // final output color
+#else
+RWTexture2D<lpfloat4>           g_inoutColorWriteonly               : register( u0 );       // final output color
+#endif
+#else
+RWTexture2D<uint>               g_inoutColorWriteonly               : register( u0 );       // final output color
+#endif
+
+#if CMAA2_EDGE_UNORM
+RWTexture2D<unorm float>        g_workingEdges                      : register( u1 );       // output edges (only used in the fist pass)
+#else
+RWTexture2D<uint>               g_workingEdges                      : register( u1 );       // output edges (only used in the fist pass)
+#endif
+
+RWStructuredBuffer<uint>        g_workingShapeCandidates            : register( u2 );
+RWStructuredBuffer<uint>        g_workingDeferredBlendLocationList  : register( u3 );
+RWStructuredBuffer<uint2>       g_workingDeferredBlendItemList      : register( u4 );       // 
+RWTexture2D<uint>               g_workingDeferredBlendItemListHeads : register( u5 );
+RWByteAddressBuffer             g_workingControlBuffer              : register( u6 );
+RWByteAddressBuffer             g_workingExecuteIndirectBuffer      : register( u7 );
+
+#if CMAA_MSAA_SAMPLE_COUNT > 1
+Texture2DArray<lpfloat4>        g_inColorMSReadonly                 : register( t2 );       // input MS color
+Texture2D<lpfloat>              g_inColorMSComplexityMaskReadonly   : register( t1 );       // input MS color control surface
+#else
+Texture2D<lpfloat4>             g_inoutColorReadonly                : register( t0 );       // input color
+#endif
+
+#if CMAA2_EDGE_DETECTION_LUMA_PATH == 2
+Texture2D<float>                g_inLumaReadonly                    : register( t3 );
+#endif
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// encoding/decoding of various data such as edges
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// how .rgba channels from the edge texture maps to pixel edges:
+//
+//                   A - 0x08               (A - there's an edge between us and a pixel above us)
+//              |---------|                 (R - there's an edge between us and a pixel to the right)
+//              |         |                 (G - there's an edge between us and a pixel at the bottom)
+//     0x04 - B |  pixel  | R - 0x01        (B - there's an edge between us and a pixel to the left)
+//              |         |
+//              |_________|
+//                   G - 0x02
+uint PackEdges( lpfloat4 edges )   // input edges are binary 0 or 1
+{
+    return (uint)dot( edges, lpfloat4( 1, 2, 4, 8 ) );
+}
+uint4 UnpackEdges( uint value )
+{
+    int4 ret;
+    ret.x = ( value & 0x01 ) != 0;
+    ret.y = ( value & 0x02 ) != 0;
+    ret.z = ( value & 0x04 ) != 0;
+    ret.w = ( value & 0x08 ) != 0;
+    return ret;
+}
+lpfloat4 UnpackEdgesFlt( uint value )
+{
+    lpfloat4 ret;
+    ret.x = ( value & 0x01 ) != 0;
+    ret.y = ( value & 0x02 ) != 0;
+    ret.z = ( value & 0x04 ) != 0;
+    ret.w = ( value & 0x08 ) != 0;
+    return ret;
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// source color & color conversion helpers
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+lpfloat3 LoadSourceColor( uint2 pixelPos, int2 offset, int sampleIndex )
+{
+#if CMAA_MSAA_SAMPLE_COUNT > 1
+    lpfloat3 color = g_inColorMSReadonly.Load( int4( pixelPos, sampleIndex, 0 ), offset ).rgb;
+#else
+    lpfloat3 color = g_inoutColorReadonly.Load( int3( pixelPos, 0 ), offset ).rgb;
+#endif
+    return color;
+}
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// (R11G11B10 conversion code below taken from Miniengine's PixelPacking_R11G11B10.hlsli,  
+// Copyright (c) Microsoft, MIT license, Developed by Minigraph, Author:  James Stanard; original file link:
+// https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/PixelPacking_R11G11B10.hlsli )
+//
+// The standard 32-bit HDR color format.  Each float has a 5-bit exponent and no sign bit.
+uint Pack_R11G11B10_FLOAT( float3 rgb )
+{
+    // Clamp upper bound so that it doesn't accidentally round up to INF 
+    // Exponent=15, Mantissa=1.11111
+    rgb = min(rgb, asfloat(0x477C0000));  
+    uint r = ((f32tof16(rgb.x) + 8) >> 4) & 0x000007FF;
+    uint g = ((f32tof16(rgb.y) + 8) << 7) & 0x003FF800;
+    uint b = ((f32tof16(rgb.z) + 16) << 17) & 0xFFC00000;
+    return r | g | b;
+}
+
+float3 Unpack_R11G11B10_FLOAT( uint rgb )
+{
+    float r = f16tof32((rgb << 4 ) & 0x7FF0);
+    float g = f16tof32((rgb >> 7 ) & 0x7FF0);
+    float b = f16tof32((rgb >> 17) & 0x7FE0);
+    return float3(r, g, b);
+}
+//
+// These next two encodings are great for LDR data.  By knowing that our values are [0.0, 1.0]
+// (or [0.0, 2.0), incidentally), we can reduce how many bits we need in the exponent.  We can
+// immediately eliminate all postive exponents.  By giving more bits to the mantissa, we can
+// improve precision at the expense of range.  The 8E3 format goes one bit further, quadrupling
+// mantissa precision but increasing smallest exponent from -14 to -6.  The smallest value of 8E3
+// is 2^-14, while the smallest value of 7E4 is 2^-21.  Both are smaller than the smallest 8-bit
+// sRGB value, which is close to 2^-12.
+//
+// This is like R11G11B10_FLOAT except that it moves one bit from each exponent to each mantissa.
+uint Pack_R11G11B10_E4_FLOAT( float3 rgb )
+{
+    // Clamp to [0.0, 2.0).  The magic number is 1.FFFFF x 2^0.  (We can't represent hex floats in HLSL.)
+    // This trick works because clamping your exponent to 0 reduces the number of bits needed by 1.
+    rgb = clamp( rgb, 0.0, asfloat(0x3FFFFFFF) );
+    uint r = ((f32tof16(rgb.r) + 4) >> 3 ) & 0x000007FF;
+    uint g = ((f32tof16(rgb.g) + 4) << 8 ) & 0x003FF800;
+    uint b = ((f32tof16(rgb.b) + 8) << 18) & 0xFFC00000;
+    return r | g | b;
+}
+//
+float3 Unpack_R11G11B10_E4_FLOAT( uint rgb )
+{
+    float r = f16tof32((rgb << 3 ) & 0x3FF8);
+    float g = f16tof32((rgb >> 8 ) & 0x3FF8);
+    float b = f16tof32((rgb >> 18) & 0x3FF0);
+    return float3(r, g, b);
+}
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// This is for temporary storage - R11G11B10_E4 covers 8bit per channel sRGB well enough; 
+// For HDR range (CMAA2_SUPPORT_HDR_COLOR_RANGE) use standard float packing - not using it by default because it's not precise 
+// enough to match sRGB 8bit, but in a HDR scenario we simply need the range.
+// For even more precision un LDR try E3 version and there are other options for HDR range (see above 
+// PixelPacking_R11G11GB10.hlsli link for a number of excellent options).
+// It's worth noting that since CMAA2 works on high contrast edges, the lack of precision will not be nearly as
+// noticeable as it would be on gradients (which always remain unaffected).
+lpfloat3 InternalUnpackColor( uint packedColor )
+{
+#if CMAA2_SUPPORT_HDR_COLOR_RANGE
+    // ideally using 32bit packing is best for performance reasons but there might be precision issues: look into
+    // 
+    return Unpack_R11G11B10_FLOAT( packedColor );
+#else
+    return Unpack_R11G11B10_E4_FLOAT( packedColor );
+#endif
+}
+//
+uint InternalPackColor( lpfloat3 color )
+{
+#if CMAA2_SUPPORT_HDR_COLOR_RANGE
+    return Pack_R11G11B10_FLOAT( color );
+#else
+    return Pack_R11G11B10_E4_FLOAT( color );
+#endif
+}
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+void StoreColorSample( uint2 pixelPos, lpfloat3 color, bool isComplexShape, uint msaaSampleIndex )
+{
+    uint counterIndex;  g_workingControlBuffer.InterlockedAdd( 4*12, 1, counterIndex );
+
+    // quad coordinates
+    uint2 quadPos       = pixelPos / uint2( 2, 2 );
+    // 2x2 inter-quad coordinates
+    uint offsetXY       = (pixelPos.y % 2) * 2 + (pixelPos.x % 2);
+    // encode item-specific info: {2 bits for 2x2 quad location}, {3 bits for MSAA sample index}, {1 bit for isComplexShape flag}, {26 bits left for address (index)}
+    uint header         = ( offsetXY << 30 ) | ( msaaSampleIndex << 27 ) | ( isComplexShape << 26 );
+
+    uint counterIndexWithHeader = counterIndex | header;
+
+    uint originalIndex;
+    InterlockedExchange( g_workingDeferredBlendItemListHeads[ quadPos ], counterIndexWithHeader, originalIndex );
+    g_workingDeferredBlendItemList[counterIndex] = uint2( originalIndex, InternalPackColor( color ) );
+
+    // First one added?
+    if( originalIndex == 0xFFFFFFFF )
+    {
+        // Make a list of all edge pixels - these cover all potential pixels where AA is applied.
+        uint edgeListCounter;  g_workingControlBuffer.InterlockedAdd( 4*8, 1, edgeListCounter );
+        g_workingDeferredBlendLocationList[edgeListCounter] = (quadPos.x << 16) | quadPos.y;
+    }
+}
+//
+#if CMAA2_COLLECT_EXPAND_BLEND_ITEMS
+#define CMAA2_BLEND_ITEM_SLM_SIZE           768         // there's a fallback for extreme cases (observed with this value set to 256 or below) in which case image will remain correct but performance will suffer
+groupshared uint        g_groupSharedBlendItemCount;
+groupshared uint2       g_groupSharedBlendItems[ CMAA2_BLEND_ITEM_SLM_SIZE ];
+#endif
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Untyped UAV store packing & sRGB conversion helpers
+//
+lpfloat LINEAR_to_SRGB( lpfloat val )
+{
+    if( val < 0.0031308 )
+        val *= lpfloat( 12.92 );
+    else
+        val = lpfloat( 1.055 ) * pow( abs( val ), lpfloat( 1.0 ) / lpfloat( 2.4 ) ) - lpfloat( 0.055 );
+    return val;
+}
+lpfloat3 LINEAR_to_SRGB( lpfloat3 val )
+{
+    return lpfloat3( LINEAR_to_SRGB( val.x ), LINEAR_to_SRGB( val.y ), LINEAR_to_SRGB( val.z ) );
+}
+//
+uint FLOAT4_to_R8G8B8A8_UNORM( lpfloat4 unpackedInput )
+{
+    return (( uint( saturate( unpackedInput.x ) * 255 + 0.5 ) ) |
+            ( uint( saturate( unpackedInput.y ) * 255 + 0.5 ) << 8 ) |
+            ( uint( saturate( unpackedInput.z ) * 255 + 0.5 ) << 16 ) |
+            ( uint( saturate( unpackedInput.w ) * 255 + 0.5 ) << 24 ) );
+}
+//
+uint FLOAT4_to_R10G10B10A2_UNORM( lpfloat4 unpackedInput )
+{
+    return (( uint( saturate( unpackedInput.x ) * 1023 + 0.5    ) ) |
+            ( uint( saturate( unpackedInput.y ) * 1023 + 0.5    ) << 10 ) |
+            ( uint( saturate( unpackedInput.z ) * 1023 + 0.5    ) << 20 ) |
+            ( uint( saturate( unpackedInput.w ) * 3 + 0.5       ) << 30 ) );
+}
+//
+// This handles various permutations for various formats with no/partial/full typed UAV store support
+void FinalUAVStore( uint2 pixelPos, lpfloat3 color )
+{
+#if CMAA2_UAV_STORE_CONVERT_TO_SRGB
+    color = LINEAR_to_SRGB( color ) ;
+#endif
+
+#if CMAA2_UAV_STORE_TYPED
+    g_inoutColorWriteonly[ pixelPos ] = lpfloat4( color.rgb, 0.5 );
+#else
+    #if CMAA2_UAV_STORE_UNTYPED_FORMAT == 1     // R8G8B8A8_UNORM (or R8G8B8A8_UNORM_SRGB with CMAA2_UAV_STORE_CONVERT_TO_SRGB)
+        g_inoutColorWriteonly[ pixelPos ] = FLOAT4_to_R8G8B8A8_UNORM( lpfloat4( color, 0.5 ) );
+    #elif CMAA2_UAV_STORE_UNTYPED_FORMAT == 2   // R10G10B10A2_UNORM (or R10G10B10A2_UNORM_SRGB with CMAA2_UAV_STORE_CONVERT_TO_SRGB)
+        g_inoutColorWriteonly[ pixelPos ] = FLOAT4_to_R10G10B10A2_UNORM( lpfloat4( color, 0.5 ) );
+    #else
+        #error CMAA color packing format not defined - add it here!
+    #endif
+#endif
+}
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Edge detection and local contrast adaptation helpers
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+lpfloat GetActualEdgeThreshold( )
+{
+    lpfloat retVal = g_CMAA2_EdgeThreshold;
+    return retVal;
+}
+//
+lpfloat EdgeDetectColorCalcDiff( lpfloat3 colorA, lpfloat3 colorB )
+{
+    const lpfloat3 LumWeights = lpfloat3( 0.299, 0.587, 0.114 );
+    lpfloat3 diff = abs( (colorA.rgb - colorB.rgb) );
+    return dot( diff.rgb, LumWeights.rgb );
+}
+//
+// apply custom curve / processing to put input color (linear) in the format required by ComputeEdge
+lpfloat3 ProcessColorForEdgeDetect( lpfloat3 color )
+{
+    //pixelColors[i] = LINEAR_to_SRGB( pixelColors[i] );            // correct reference
+    //pixelColors[i] = pow( max( 0, pixelColors[i], 1.0 / 2.4 ) );  // approximate sRGB curve
+    return sqrt( color ); // just very roughly approximate RGB curve
+}
+//
+lpfloat2 ComputeEdge( int x, int y, lpfloat3 pixelColors[3 * 3 - 1] )
+{
+    lpfloat2 temp;
+    temp.x = EdgeDetectColorCalcDiff( pixelColors[x + y * 3].rgb, pixelColors[x + 1 + y * 3].rgb );
+    temp.y = EdgeDetectColorCalcDiff( pixelColors[x + y * 3].rgb, pixelColors[x + ( y + 1 ) * 3].rgb );
+    return temp;    // for HDR edge detection it might be good to premultiply both of these by some factor - otherwise clamping to 1 might prevent some local contrast adaptation. It's a very minor nitpick though, unlikely to significantly affect things.
+}                                     
+// color -> log luma-for-edges conversion
+float RGBToLumaForEdges( float3 linearRGB )
+{
+#if 0
+    // this matches Miniengine luma path
+    float Luma = dot( linearRGB, float3(0.212671, 0.715160, 0.072169) );
+    return log2(1 + Luma * 15) / 4;
+#else
+    // this is what original FXAA (and consequently CMAA2) use by default - these coefficients correspond to Rec. 601 and those should be
+    // used on gamma-compressed components (see https://en.wikipedia.org/wiki/Luma_(video)#Rec._601_luma_versus_Rec._709_luma_coefficients), 
+    float luma = dot( sqrt( linearRGB.rgb ), float3( 0.299, 0.587, 0.114 ) );  // http://en.wikipedia.org/wiki/CCIR_601
+    // using sqrt luma for now but log luma like in miniengine provides a nicer curve on the low-end
+    return luma;
+#endif
+}
+lpfloat2 ComputeEdgeLuma( int x, int y, lpfloat pixelLumas[3 * 3 - 1] )
+{
+    lpfloat2 temp;
+    temp.x = abs( pixelLumas[x + y * 3] - pixelLumas[x + 1 + y * 3] );
+    temp.y = abs( pixelLumas[x + y * 3] - pixelLumas[x + ( y + 1 ) * 3] );
+    return temp;    // for HDR edge detection it might be good to premultiply both of these by some factor - otherwise clamping to 1 might prevent some local contrast adaptation. It's a very minor nitpick though, unlikely to significantly affect things.
+}
+//
+lpfloat ComputeLocalContrastV( int x, int y, in lpfloat2 neighbourhood[4][4] )
+{
+    // new, small kernel 4-connecting-edges-only local contrast adaptation
+    return max( max( neighbourhood[x + 1][y + 0].y, neighbourhood[x + 1][y + 1].y ), max( neighbourhood[x + 2][y + 0].y, neighbourhood[x + 2][y + 1].y ) ) * lpfloat( g_CMAA2_LocalContrastAdaptationAmount );
+
+//    // slightly bigger kernel that enhances edges in-line (not worth the cost)
+//  return ( max( max( neighbourhood[x + 1][y + 0].y, neighbourhood[x + 1][y + 1].y ), max( neighbourhood[x + 2][y + 0].y, neighbourhood[x + 2][y + 1].y ) ) 
+//        - ( neighbourhood[x + 1][y + 0].x + neighbourhood[x + 1][y + 2].x ) * 0.3 ) * lpfloat( g_CMAA2_LocalContrastAdaptationAmount );
+}
+//
+lpfloat ComputeLocalContrastH( int x, int y, in lpfloat2 neighbourhood[4][4] )
+{
+    // new, small kernel 4-connecting-edges-only local contrast adaptation
+    return max( max( neighbourhood[x + 0][y + 1].x, neighbourhood[x + 1][y + 1].x ), max( neighbourhood[x + 0][y + 2].x, neighbourhood[x + 1][y + 2].x ) ) * lpfloat( g_CMAA2_LocalContrastAdaptationAmount );
+
+//    // slightly bigger kernel that enhances edges in-line (not worth the cost)
+//    return ( max( max( neighbourhood[x + 0][y + 1].x, neighbourhood[x + 1][y + 1].x ), max( neighbourhood[x + 0][y + 2].x, neighbourhood[x + 1][y + 2].x ) ) 
+//        - ( neighbourhood[x + 0][y + 1].y + neighbourhood[x + 2][y + 1].y ) * 0.3 ) * lpfloat( g_CMAA2_LocalContrastAdaptationAmount );
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+lpfloat4 ComputeSimpleShapeBlendValues( lpfloat4 edges, lpfloat4 edgesLeft, lpfloat4 edgesRight, lpfloat4 edgesTop, lpfloat4 edgesBottom, uniform bool dontTestShapeValidity )
+{
+    // a 3x3 kernel for higher quality handling of L-based shapes (still rather basic and conservative)
+
+    lpfloat fromRight   = edges.r;
+    lpfloat fromBelow   = edges.g;
+    lpfloat fromLeft    = edges.b;
+    lpfloat fromAbove   = edges.a;
+
+    lpfloat blurCoeff = lpfloat( g_CMAA2_SimpleShapeBlurinessAmount );
+
+    lpfloat numberOfEdges = dot( edges, lpfloat4( 1, 1, 1, 1 ) );
+
+    lpfloat numberOfEdgesAllAround = dot(edgesLeft.bga + edgesRight.rga + edgesTop.rba + edgesBottom.rgb, lpfloat3( 1, 1, 1 ) );
+
+    // skip if already tested for before calling this function
+    if( !dontTestShapeValidity )
+    {
+        // No blur for straight edge
+        if( numberOfEdges == 1 )
+            blurCoeff = 0;
+
+        // L-like step shape ( only blur if it's a corner, not if it's two parallel edges)
+        if( numberOfEdges == 2 )
+            blurCoeff *= ( ( lpfloat(1.0) - fromBelow * fromAbove ) * ( lpfloat(1.0) - fromRight * fromLeft ) );
+    }
+
+    // L-like step shape
+    //[branch]
+    if( numberOfEdges == 2 )
+    {
+        blurCoeff *= 0.75;
+
+#if 1
+        float k = 0.9f;
+#if 0
+        fromRight   += k * (edges.g * edgesTop.r +      edges.a * edgesBottom.r );
+        fromBelow   += k * (edges.r * edgesLeft.g +     edges.b * edgesRight.g );
+        fromLeft    += k * (edges.g * edgesTop.b +      edges.a * edgesBottom.b );
+        fromAbove   += k * (edges.b * edgesRight.a +    edges.r * edgesLeft.a );
+#else
+        fromRight   += k * (edges.g * edgesTop.r     * (1.0-edgesLeft.g)   +     edges.a * edgesBottom.r   * (1.0-edgesLeft.a)      );
+        fromBelow   += k * (edges.b * edgesRight.g   * (1.0-edgesTop.b)    +     edges.r * edgesLeft.g     * (1.0-edgesTop.r)       );
+        fromLeft    += k * (edges.a * edgesBottom.b  * (1.0-edgesRight.a)  +     edges.g * edgesTop.b      * (1.0-edgesRight.g)     );
+        fromAbove   += k * (edges.r * edgesLeft.a    * (1.0-edgesBottom.r) +     edges.b * edgesRight.a   *  (1.0-edgesBottom.b)    );
+#endif
+#endif
+    }
+
+    // if( numberOfEdges == 3 )
+    //     blurCoeff *= 0.95;
+
+    // Dampen the blurring effect when lots of neighbouring edges - additionally preserves text and texture detail
+#if CMAA2_EXTRA_SHARPNESS
+    blurCoeff *= saturate( 1.15 - numberOfEdgesAllAround / 8.0 );
+#else
+    blurCoeff *= saturate( 1.30 - numberOfEdgesAllAround / 10.0 );
+#endif
+
+    return lpfloat4( fromLeft, fromAbove, fromRight, fromBelow ) * blurCoeff;
+}
+
+uint LoadEdge( int2 pixelPos, int2 offset, uint msaaSampleIndex )
+{
+#if CMAA_PACK_SINGLE_SAMPLE_EDGE_TO_HALF_WIDTH
+    uint a      = uint(pixelPos.x+offset.x) % 2;
+
+#if CMAA2_EDGE_UNORM
+    uint edge   = (uint)(g_workingEdges.Load( uint2( uint(pixelPos.x+offset.x)/2, pixelPos.y + offset.y ) ).x * 255.0 + 0.5);
+#else    
+    uint edge   = g_workingEdges.Load( uint2( uint(pixelPos.x+offset.x)/2, pixelPos.y + offset.y ) ).x;
+#endif
+    edge = (edge >> (a*4)) & 0xF;
+#else
+    uint edge   = g_workingEdges.Load( pixelPos + offset ).x;
+#endif
+    return edge;
+}

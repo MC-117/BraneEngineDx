@@ -1,0 +1,129 @@
+#material
+#localsize 4 4 4
+#compute
+#condition debug
+#include "../lib/Basic_FS_Lib.hmat"
+
+#include "../lib/DebugDraw_Def.hmat"
+
+RWStructuredBuffer<uint2> outProbeGridLinkList;
+RWBuffer<uint> outProbeGridLinkHead;
+
+float calDistSqFromAABBToPoint(float3 center, float3 extent, float3 pos)
+{
+	float3 axisDist = max(abs(pos - center) - extent, 0);
+	return dot(axisDist, axisDist);
+}
+
+float calGridNearViewZFromZSlice(uint zSlice)
+{
+    float SliceDepth = (exp2(zSlice / probeGridZParams.z) - probeGridZParams.y) / probeGridZParams.x;
+
+	if (zSlice == (uint)probeGridSize.z)
+	{
+		SliceDepth = camData.zFar;
+	}
+
+	if (zSlice == 0)
+	{
+		SliceDepth = 0.00001f;
+	}
+
+	return SliceDepth;
+}
+
+void calCellViewAABB(uint3 GridCoordinate, out float3 ViewTileMin, out float3 ViewTileMax)
+{
+	// Compute extent of tiles in clip-space. Note that the last tile may extend a bit outside of view if view size is not evenly divisible tile size.
+	const float2 InvCulledGridSizeF = (1u << probeGridPixelSizeShift) / camData.viewSize;
+
+	float2 UnitPlaneTileMin = uvToClip(GridCoordinate.xy * InvCulledGridSizeF);
+	float2 UnitPlaneTileMax = uvToClip((GridCoordinate.xy + 1) * InvCulledGridSizeF);
+
+	float MinTileZ = calGridNearViewZFromZSlice(GridCoordinate.z);
+	float MaxTileZ = calGridNearViewZFromZSlice(GridCoordinate.z + 1);
+
+	float MinTileDeviceZ = depthFromViewToNDC(MinTileZ);
+	float3 MinDepthCorner0 = clipPosToView(float3(UnitPlaneTileMin, MinTileDeviceZ));
+	float3 MinDepthCorner1 = clipPosToView(float3(UnitPlaneTileMax, MinTileDeviceZ));
+	float3 MinDepthCorner2 = clipPosToView(float3(UnitPlaneTileMin, MinTileDeviceZ));
+	float3 MinDepthCorner3 = clipPosToView(float3(UnitPlaneTileMax, MinTileDeviceZ));
+
+	float MaxTileDeviceZ = depthFromViewToNDC(MaxTileZ);
+	float3 MaxDepthCorner0 = clipPosToView(float3(UnitPlaneTileMin, MaxTileDeviceZ));
+	float3 MaxDepthCorner1 = clipPosToView(float3(UnitPlaneTileMax, MaxTileDeviceZ));
+	float3 MaxDepthCorner2 = clipPosToView(float3(UnitPlaneTileMin, MaxTileDeviceZ));
+	float3 MaxDepthCorner3 = clipPosToView(float3(UnitPlaneTileMax, MaxTileDeviceZ));
+
+	float2 ViewMinDepthCorner0 = MinDepthCorner0.xy;
+	float2 ViewMinDepthCorner1 = MinDepthCorner1.xy;
+	float2 ViewMinDepthCorner2 = MinDepthCorner2.xy;
+	float2 ViewMinDepthCorner3 = MinDepthCorner3.xy;
+	float2 ViewMaxDepthCorner0 = MaxDepthCorner0.xy;
+	float2 ViewMaxDepthCorner1 = MaxDepthCorner1.xy;
+	float2 ViewMaxDepthCorner2 = MaxDepthCorner2.xy;
+	float2 ViewMaxDepthCorner3 = MaxDepthCorner3.xy;
+
+	//@todo - derive min and max from quadrant
+	ViewTileMin.xy = min(ViewMinDepthCorner0, ViewMinDepthCorner1);
+	ViewTileMin.xy = min(ViewTileMin.xy, ViewMinDepthCorner2);
+	ViewTileMin.xy = min(ViewTileMin.xy, ViewMinDepthCorner3);
+	ViewTileMin.xy = min(ViewTileMin.xy, ViewMaxDepthCorner0);
+	ViewTileMin.xy = min(ViewTileMin.xy, ViewMaxDepthCorner1);
+	ViewTileMin.xy = min(ViewTileMin.xy, ViewMaxDepthCorner2);
+	ViewTileMin.xy = min(ViewTileMin.xy, ViewMaxDepthCorner3);
+
+	ViewTileMax.xy = max(ViewMinDepthCorner0, ViewMinDepthCorner1);
+	ViewTileMax.xy = max(ViewTileMax.xy, ViewMinDepthCorner2);
+	ViewTileMax.xy = max(ViewTileMax.xy, ViewMinDepthCorner3);
+	ViewTileMax.xy = max(ViewTileMax.xy, ViewMaxDepthCorner0);
+	ViewTileMax.xy = max(ViewTileMax.xy, ViewMaxDepthCorner1);
+	ViewTileMax.xy = max(ViewTileMax.xy, ViewMaxDepthCorner2);
+	ViewTileMax.xy = max(ViewTileMax.xy, ViewMaxDepthCorner3);
+
+	ViewTileMin.z = -MaxTileZ;
+	ViewTileMax.z = -MinTileZ;
+}
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint3 gridIndex : SV_DispatchThreadID)
+{
+    if (all(gridIndex < probeGridSize)) {
+        float3 viewTileMin;
+        float3 viewTileMax;
+        calCellViewAABB(gridIndex, viewTileMin, viewTileMax);
+
+        float3 viewTileCenter = (viewTileMin + viewTileMax) * 0.5f;
+        float3 viewTileExtend = viewTileMax - viewTileCenter;
+
+        uint probeCount = getProbeCount();
+        float linkHead = 0;
+        for (int i = 0; i < probeCount; i++) {
+            float4 sphere = getProbeSphere(i);
+			if (sphere.w <= 0)
+				continue;
+            float3 viewPos = worldPosToView(sphere.xyz);
+            float distSq = calDistSqFromAABBToPoint(viewTileCenter, viewTileExtend, viewPos);
+            float radiusSq = sphere.w * sphere.w;
+            if (distSq <= radiusSq) {
+                uint nextLink;
+                InterlockedAdd(outProbeGridLinkList[0].x, 1, nextLink);
+				nextLink++;
+				if (nextLink < probeMaxLinkListLength) {
+					outProbeGridLinkList[nextLink] = uint2(linkHead, i);
+					linkHead = nextLink;
+				}
+            }
+        }
+
+#ifdef DEBUG_SHADER_FEATURE
+        if (linkHead != 0) {
+        //if (gridIndex.z == 0) {
+            debugDrawTransformedAABB(viewTileCenter, viewTileExtend, camData.vmatInv, IntToColor(getProbeGridFlatIndex(gridIndex)), DEBUG_PERSISTENT_FLAG);
+        }
+#endif
+
+        uint flatIndex = getProbeGridFlatIndex(gridIndex);
+        outProbeGridLinkHead[flatIndex] = linkHead;
+    }
+}

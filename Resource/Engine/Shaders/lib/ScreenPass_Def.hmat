@@ -1,0 +1,7 @@
+struct ScreenVertexOut
+{
+    float4 svPos : SV_POSITION;
+    float2 UV : TEXCOORD;
+};
+
+#define DEFAULT_SCREEN_MAIN main(ScreenVertexOut fin)

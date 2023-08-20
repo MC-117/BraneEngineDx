@@ -1,5 +1,0 @@
-#include "Live2D_VS_Lib.hmat"
-#define LIVE2D_FS_MAIN main(Live2DVertexOut fin) : SV_Target
-
-DEF_TEX2D(mainTexture, 1);
-DEF_TEX2D(maskTexture, 2);

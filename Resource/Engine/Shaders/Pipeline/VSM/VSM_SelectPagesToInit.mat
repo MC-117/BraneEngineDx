@@ -1,0 +1,45 @@
+#material
+#localsize 256 1 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+RWBuffer<uint> outInitPhysPagesIndirectArgs;
+RWBuffer<uint> outPhysPagesToInit;
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint tid : SV_DispatchThreadID)
+{
+	if (tid >= vsmInfo.maxPhysPages)
+		return;
+
+    VSMPhysPageMetaData metaData = physPageMetaData[tid];
+
+	bool fullyCached = (metaData.flags & (VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG)) == 0;
+	bool isStaticUncached = (metaData.flags & VSM_STATIC_UNCACHED_FLAG) != 0;
+
+	if ((metaData.flags & VSM_ALLOCATED_FLAG) == 0)
+	{
+		// Page not used, we're done
+	}
+	else if (fullyCached)
+	{
+		// Page fully cached. Leave the data alone.
+	}
+	else
+	{
+		// TODO: In the relatively common case of static cached/dynamic uncached we could
+		// copy the static data to initialize the dynamic data and avoid the merge later.
+		// Before doing this we need to verify it works properly with geometry getting
+		// "added on top" of cached pages though, which would break this optimization.
+
+		// At least one of the pages is uncached
+		// NOTE: Dynamic cached/static uncached is currently an invalid state
+		// Since we merge the static stuff over the dynamic stuff after rendering we can't
+		// actually maintain separate dynamic cached pages when "only" the (theoretically)
+		// static moved. Thus if not fully cached, we always regenerate the dynamic page.
+
+        emitPageToProcess(outPhysPagesToInit, outInitPhysPagesIndirectArgs, tid);
+		if (isStaticUncached && doesUseStaticCacheMode() && (metaData.flags & VSM_PHYSICAL_FLAG_VIEW_UNCACHED) == 0U)
+			emitPageToProcess(outPhysPagesToInit, outInitPhysPagesIndirectArgs, tid + vsmInfo.maxPhysPages);
+	}
+}

@@ -1,0 +1,57 @@
+#material
+#localsize 16 16
+#compute
+#include "CMAA2_Lib.hmat"
+
+[numthreads( 16, 16, 1 )]
+void DebugDrawEdgesCS( uint2 dispatchThreadID : SV_DispatchThreadID )
+{
+    int msaaSampleIndex = 0;
+    lpfloat4 edges = UnpackEdgesFlt( LoadEdge( dispatchThreadID, int2( 0, 0 ), msaaSampleIndex ) );
+
+    // show MSAA control mask
+    // uint v = g_inColorMSComplexityMaskReadonly.Load( int3( dispatchThreadID, 0 ) );
+    // FinalUAVStore( dispatchThreadID, float3( v, v, v ) );
+    // return;
+
+#if 0
+#if CMAA_MSAA_SAMPLE_COUNT > 1
+    uint2 pixelPos = dispatchThreadID.xy / 2 * 2;
+    /*
+    uint all2x2MSSamplesDifferent = 0;
+
+     [unroll] for( uint x = 0; x < 4; x++ )
+         [unroll] for( uint y = 0; y < 4; y++ )
+             all2x2MSSamplesDifferent |= g_inColorMSComplexityMaskReadonly.Load( int3( pixelPos, 0 ), int2( x-1, y-1 ) ) > 0;
+    bool firstLoopIsEnough = all2x2MSSamplesDifferent == 0;
+    */
+    
+#if CMAA_MSAA_USE_COMPLEXITY_MASK
+    float2 texSize;
+    g_inColorMSComplexityMaskReadonly.GetDimensions( texSize.x, texSize.y );
+    float2 gatherUV = float2(pixelPos) / texSize;
+    float4 TL = g_inColorMSComplexityMaskReadonly.GatherRed( g_gather_point_clamp_Sampler, gatherUV, int2( 0, 0 ) );
+    float4 TR = g_inColorMSComplexityMaskReadonly.GatherRed( g_gather_point_clamp_Sampler, gatherUV, int2( 2, 0 ) );
+    float4 BL = g_inColorMSComplexityMaskReadonly.GatherRed( g_gather_point_clamp_Sampler, gatherUV, int2( 0, 2 ) );
+    float4 BR = g_inColorMSComplexityMaskReadonly.GatherRed( g_gather_point_clamp_Sampler, gatherUV, int2( 2, 2 ) );
+    float4 sumAll = TL+TR+BL+BR;
+    bool firstLoopIsEnough = !any(sumAll);
+
+    //all2x2MSSamplesDifferent = (all2x2MSSamplesDifferent != 0)?(CMAA_MSAA_SAMPLE_COUNT):(1);
+    FinalUAVStore( dispatchThreadID, (firstLoopIsEnough).xxx );
+    return;
+#endif
+#endif
+#endif
+
+
+    //if( any(edges) )
+    {
+        lpfloat4 outputColor = lpfloat4( lerp( edges.xyz, 0.5.xxx, edges.a * 0.2 ), 1.0 );
+        FinalUAVStore( dispatchThreadID, outputColor.rgb );
+    }
+
+//#if CMAA2_EDGE_DETECTION_LUMA_PATH == 2
+//    FinalUAVStore( dispatchThreadID, g_inLumaReadonly.Load( int3( dispatchThreadID.xy, 0 ) ).r );
+//#endif
+}

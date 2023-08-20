@@ -1,8 +1,0 @@
-#material Engine/Shaders/PBR.mat
-#twoside false
-#castshadow true
-Scalar ao: 1.000000
-Scalar metallic: 1.000000
-Scalar roughness: 0.155926
-Texture colorMap: Content/CityPark/Meshes/Playground/T_M_SM_PlayGround1_04_MI_Playground3_01_BaseColor.png
-Texture normalMap: Content/CityPark/Meshes/Playground/T_M_SM_PlayGround1_04_MI_Playground3_01_Normal.png

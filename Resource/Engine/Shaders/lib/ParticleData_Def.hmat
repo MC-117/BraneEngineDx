@@ -1,0 +1,30 @@
+#include "../lib/Bindings_Def.hmat"
+
+struct Particle
+{
+    float3 pos;
+    float lifetime;
+    float3 scale;
+    float maxLifetime;
+    float3 velocity;
+    float type;
+    float3 acceleration;
+    float extSca;
+    float4 extVec;
+    float4 color;
+};
+
+struct PVOut
+{
+    Particle gParticle : PARTICLE;
+    uint index : PARTICLEID;
+};
+
+struct PGOut
+{
+    Particle particle : PARTICLE;
+    float2 UV : TEXCOORD;
+    float4 svPos : SV_POSITION;
+};
+
+StructuredBuffer<Particle> Particles : register(PARTICLE_BIND_INDEX);

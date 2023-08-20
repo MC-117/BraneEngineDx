@@ -1,9 +1,0 @@
-#material Engine/Shaders/PBR.mat
-#twoside false
-#castshadow true
-Scalar ao: 1.000000
-Scalar metallic: 0.000000
-Scalar roughness: 1.000000
-Texture colorMap: Content/CityPark/Meshes/Flora/Trees/T_M_SM_Elm12_MI_TreeBark02_1_BaseColor.png
-Texture normalMap: Content/CityPark/Meshes/Flora/Trees/T_M_SM_Elm12_MI_TreeBark02_1_Normal.png
-Texture roughnessMap: Content/CityPark/Meshes/Flora/Trees/T_M_SM_Elm12_MI_TreeBark02_1_Roughness.png

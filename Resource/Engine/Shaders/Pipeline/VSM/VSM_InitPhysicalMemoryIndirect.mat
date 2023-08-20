@@ -1,0 +1,28 @@
+#material
+#localsize 16 16 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+Buffer<uint> physPagesToInit;
+
+[numthreads(TILE_THREAD_GROUP_SIZE_XY, TILE_THREAD_GROUP_SIZE_XY, LOCAL_SIZE_Z)]
+void main(uint2 tileID : SV_GroupThreadID, uint gidx : SV_GroupID)
+{
+	VSMPhysPageMetaData metaData;
+	uint3 basePos = getTileBasePos(tileID, gidx, physPagesToInit, metaData);
+	bool isStaticCached = (metaData.flags & VSM_STATIC_UNCACHED_FLAG) == 0U;
+	
+	if (isStaticCached && doesUseStaticCacheMode() && (metaData.flags & VSM_PHYSICAL_FLAG_VIEW_UNCACHED) == 0U) {
+		outPhysPagePool[basePos + uint3(0U, 0U, 0U)] = outPhysPagePool[basePos + uint3(0U, 0U, 1U)];
+		outPhysPagePool[basePos + uint3(1U, 0U, 0U)] = outPhysPagePool[basePos + uint3(1U, 0U, 1U)];
+		outPhysPagePool[basePos + uint3(0U, 1U, 0U)] = outPhysPagePool[basePos + uint3(0U, 1U, 1U)];
+		outPhysPagePool[basePos + uint3(1U, 1U, 0U)] = outPhysPagePool[basePos + uint3(1U, 1U, 1U)];
+	}
+	else {
+		// Clear the page to 1.0
+		outPhysPagePool[basePos + uint3(0U, 0U, 0U)] = asuint(1.0f);
+		outPhysPagePool[basePos + uint3(1U, 0U, 0U)] = asuint(1.0f);
+		outPhysPagePool[basePos + uint3(0U, 1U, 0U)] = asuint(1.0f);
+		outPhysPagePool[basePos + uint3(1U, 1U, 0U)] = asuint(1.0f);
+	}
+}

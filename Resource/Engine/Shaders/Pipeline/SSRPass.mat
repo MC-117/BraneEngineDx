@@ -1,0 +1,135 @@
+#material
+#localsize 8 8
+#compute
+#include "../lib/Light_Def.hmat"
+#include "../lib/ReflectionProbe_def.hmat"
+#include "../lib/Surface_def.hmat"
+#include "../lib/SSR_Lib.hmat"
+
+#define gBufferA inTexture0
+#define gBufferB inTexture1
+#define gBufferC inTexture2
+#define gBufferD inTexture3
+#define gBufferE inTexture4
+#define hiZMap inTexture5
+#define hiZMapSampler inTexture5Sampler
+
+#define inHitColorMap inTexture0
+
+#define hitDataMap rwTexture0
+#define hitColorMap rwTexture1
+
+#define outGBufferA rwTexture1
+
+DEF_TEX2D(inTexture0, 0);
+DEF_TEX2D(inTexture1, 1);
+DEF_TEX2D(inTexture2, 2);
+DEF_TEX2D(inTexture3, 3);
+DEF_TEX2D_UINT(inTexture4, 4);
+DEF_TEX2D(inTexture5, 5);
+
+RWTexture2D<snorm float4> rwTexture0 : register(u0);
+RWTexture2D<unorm float4> rwTexture1 : register(u1);
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 tid : SV_DispatchThreadID)
+{
+	uint2 size;
+    size = rcp(hiZUVScale.zw) * 2.0f;
+    if (tid.x < size.x && tid.y < size.y) {
+        float2 UV = tid * hiZUVScale.zw * 0.5f;
+        if (passID == 0) {
+            float4 hitData = 0.0f.rrrr;
+            float4 hitColor = 0.0f.rrrr;
+            uint mask = LOAD_TEX(gBufferE, int3(tid, 0)).a;
+            if (mask & REFLECTION_MASK) {
+                float depth = SAMPLE_TEX_LOD(gBufferB, UV, 0);
+
+                if ((1.0f - depth) > 1 / camData.zFar) {
+                    float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
+                    float4 D = SAMPLE_TEX_LOD(gBufferD, UV, 0);
+                    float3 N = normalize(worldDirToView(decodeNormal(C.xyz)));
+                    float roughness = D.r;
+
+                    float3 startUVZ = float3(UV, depth);
+                    float3 startView = uvzPosToView(startUVZ);
+                    float3 V = normalize(startView);
+
+                    float3x3 tangentBasis = getTangentBasis(N);
+                    float4 HPDF = ImportanceSampleGGX(float2(0, 0), roughness * roughness);
+                    float3 H = normalize(mul(HPDF.xyz, tangentBasis));
+                    float3 L = normalize(reflect(V, H));
+                    float3 hitUVZ;
+                    float fadeFactor = 1;
+#if 1
+                    float3 endView = startView + L;
+                    float3 endUVZ = viewPosToUVZ(endView);
+                    float3 dirUVZ = normalize(endUVZ - startUVZ);
+                    if (rayTraceHiZ_UVZ(hiZMap, hiZMapSampler,
+                        hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
+                        startUVZ, dirUVZ, hitUVZ, fadeFactor))
+#else
+                    if (rayTraceHiZ_View(hiZMap, hiZMapSampler,
+                        hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
+                        startView, L, hitUVZ))
+#endif
+                    {
+                        hitColor = SAMPLE_TEX_LOD(gBufferA, hitUVZ.xy, 0);
+                        fadeFactor = GetScreenFadeBord(uvToClip(hitUVZ.xy));
+                    }
+                    else fadeFactor = 0;
+                    hitData = float4(L, HPDF.a);
+                    if (fadeFactor < 1) {
+                        float3 worldPos = viewPosToWorld(startView);
+                        float3 worldL = mul(float4(L, 0), camData.vmatInv).xyz;
+                        float4 refColor = getReflectionColor(worldL, worldPos);
+                        if (refColor.a != 0) {
+                            float3 hitPosView = uvzPosToView(hitUVZ);
+                            hitColor = lerp(refColor, hitColor, fadeFactor);
+                        }
+                    }
+                }
+            }
+
+            hitDataMap[tid] = hitData;
+            hitColorMap[tid] = hitColor;
+        }
+        else if (passID == 1) {
+            float depth = SAMPLE_TEX_LOD(gBufferB, UV, 0);
+            float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
+            float4 D = SAMPLE_TEX_LOD(gBufferD, UV, 0);
+            float roughness = clamp(D.r, 0.02, 1);
+            float ao = D.a;
+            float3 viewN = normalize(worldDirToView(decodeNormal(C.xyz)));
+            float3 viewPos = uvzPosToView(float3(UV, depth));
+            float3 V = normalize(viewPos);
+            int2 sampleIndex0 = UV / hiZUVScale.zw * 2.0f;
+            float4 hitData0 = hitDataMap[sampleIndex0];
+            float4 hitColor0 = SAMPLE_TEX_LOD(inHitColorMap, UV, 0);
+            if (any(hitData0.xyz != 0.0f.rrr)) {
+                float3 color = 0;
+                float weightSum = 0;
+                float radius = lerp(0.0005, 0.005, roughness * roughness);
+                for (int i = 0; i < ssrResolveSamples; i++) {
+                    float2 offUV = Hammersley16(i, ssrResolveSamples, uint2(0x0f3a, 0xd20c)) * camData.aspect * radius;
+                    float2 sampleUV = UV + offUV;
+                    int2 sampleIndex = sampleUV / hiZUVScale.zw * 2.0f;
+                    float4 hitData = hitDataMap[sampleIndex];
+                    float4 hitColor = SAMPLE_TEX_LOD(inHitColorMap, sampleUV, 0);
+                    //hitColor.rgb /= 1 + luminance(hitColor.rgb);
+                    float3 L = hitData.xyz;
+                    float weight = SSR_BRDF(-V, L, viewN, roughness);
+                    //weight = max(weight, hitData.a);
+                    weightSum += weight;
+                    color += hitColor.rgb * weight;
+                }
+                color *= rcp(weightSum);
+                //color /= 1 - luminance(color);
+                color = max(1e-5, color) * ao;
+                float4 sceneColor = outGBufferA[tid];
+                sceneColor.xyz += color * 0.2;
+                outGBufferA[tid] = sceneColor;
+            }
+        }
+    }
+}

@@ -1,0 +1,31 @@
+#include "Bindings_Def.hmat"
+
+struct TransformData
+{
+    float4x4 localToWorld;
+    float3 worldScale;
+    float boundScale;
+    float3 localCenter;
+    float localRadius;
+    float3 localExtent;
+    uint flag;
+    uint updateFrame;
+    uint3 pad;
+};
+
+StructuredBuffer<TransformData> Transforms : register(TRANS_BIND_INDEX);
+
+float4x4 getFinalMat(in uint insID)
+{
+    return Transforms[insID].localToWorld;
+}
+
+TransformData getTransformData(in uint insID)
+{
+    return Transforms[insID];
+}
+
+bool isStaticTransform(in TransformData data)
+{
+    return (data.flag & 1) == 1;
+}

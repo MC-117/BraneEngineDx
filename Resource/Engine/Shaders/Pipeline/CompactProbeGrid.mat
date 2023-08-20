@@ -1,0 +1,92 @@
+#material
+#localsize 4 4 4
+#compute
+#include "../lib/Basic_FS_Lib.hmat"
+
+#define MAX_LINK_LENGTH 512
+
+StructuredBuffer<uint2> probeGridLinkList;
+Buffer<uint> probeGridLinkHead;
+RWBuffer<uint> outProbeGridCulledList;
+RWStructuredBuffer<ProbeGridCulledHead> outProbeGridCulledHead;
+
+struct ProbeGridLinkListIterator
+{
+	uint nextLink;
+	uint probeIndex;
+};
+
+bool iterateProbeGridLinkList(inout ProbeGridLinkListIterator iter)
+{
+	if (iter.nextLink == 0)
+		return false;
+	uint2 data = probeGridLinkList[iter.nextLink];
+	iter.nextLink = data.x;
+	iter.probeIndex = data.y;
+	return true;
+}
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint3 gridIndex : SV_DispatchThreadID)
+{
+	ProbeGridLinkListIterator iter;
+	//ProbeGridCulledHead culledHead;
+	//initProbeGridCulledHead(culledHead);
+	uint listRange[PROBE_TYPE_RANGE];
+	[unroll(PROBE_TYPE_RANGE)]
+	for (int i = 0; i < PROBE_TYPE_RANGE; i++) {
+		listRange[i] = 0;
+	}
+	uint flatIndex = 0;
+	uint linkHead = 0;
+	uint nextLink = 0;
+	uint culledProbeCount = 0;
+	uint culledProbeIndexListOffset = 0;
+	const uint maxProbesPerCell = probeMaxCountPerCell * PROBE_TYPE_COUNT;
+
+    if (all(gridIndex < probeGridSize)) {
+		flatIndex = getProbeGridFlatIndex(gridIndex);
+		linkHead = probeGridLinkHead[flatIndex];
+		nextLink = linkHead;
+		
+		while (nextLink > 0 && culledProbeCount < maxProbesPerCell) {
+			culledProbeCount++;
+			uint2 data = probeGridLinkList[nextLink];
+			nextLink = data.x;
+			int probeIndex = data.y;
+			uint type = getProbeType(probeIndex);
+			//incProbeCount(culledHead, type);
+            for (int i = type + 1; i < PROBE_TYPE_RANGE; i++)
+			    listRange[i]++;
+		}
+
+	    InterlockedAdd(outProbeGridCulledList[0], culledProbeCount, culledProbeIndexListOffset);
+
+		// outProbeGridCulledList[0] is counter, so offset index of ProbeGridCulledList by 1
+		culledProbeIndexListOffset++;
+		
+		//offsetProbeRange(culledHead, culledProbeIndexListOffset);
+		[unroll(PROBE_TYPE_RANGE)]
+		for (int i = 0; i < PROBE_TYPE_RANGE; i++) {
+			listRange[i] += culledProbeIndexListOffset;
+		}
+		
+		//outProbeGridCulledHead[flatIndex] = culledHead;
+		outProbeGridCulledHead[flatIndex].listRange = listRange;
+
+        nextLink = linkHead;
+		culledProbeCount = 0;
+
+		while (nextLink > 0 && culledProbeCount < maxProbesPerCell) {
+			culledProbeCount++;
+			uint2 data = probeGridLinkList[nextLink];
+			nextLink = data.x;
+			int probeIndex = data.y;
+			uint type = getProbeType(probeIndex);
+			//outProbeGridCulledList[getProbeOffset(culledHead, type)] = probeIndex;
+			//incProbeOffset(culledHead, type);
+			outProbeGridCulledList[listRange[type]] = probeIndex;
+			listRange[type]++;
+		}
+    }
+}

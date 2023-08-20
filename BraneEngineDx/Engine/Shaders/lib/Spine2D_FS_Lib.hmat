@@ -1,4 +1,0 @@
-#include "Spine2D_VS_Lib.hmat"
-#define SPINE2D_FS_MAIN main(Spine2DVertexOut fin) : SV_Target
-
-DEF_TEX2D(mainTexture, 1);

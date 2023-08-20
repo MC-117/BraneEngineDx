@@ -1,0 +1,9 @@
+#material Engine/Shaders/PBR.mat
+#twoside false
+#castshadow true
+Scalar ao: 1.000000
+Scalar metallic: 0.000000
+Scalar roughness: 1.000000
+Texture colorMap: Content/CityPark/Meshes/Flora/Bushs/T_M_SM_Bush3_01_MI_ElmBranch01_BaseColor.png
+Texture normalMap: Content/CityPark/Meshes/Flora/Bushs/T_M_SM_Bush3_01_MI_ElmBranch01_Normal.png
+Texture roughnessMap: Content/CityPark/Meshes/Flora/Bushs/T_M_SM_Bush3_01_MI_ElmBranch01_Roughness.png

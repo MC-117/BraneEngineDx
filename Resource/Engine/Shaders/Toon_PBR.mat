@@ -1,0 +1,143 @@
+#order 1000
+#material
+Color baseColor: 255, 255, 255, 255
+Color shadowColor: 150, 150, 150, 255
+Color highlightColor: 255, 255, 255, 255
+Color rimColor: 255, 255, 255, 255
+Color overColor: 255, 255, 255, 255
+Scalar shadowCut: 0.5
+Scalar shadowCutSmooth: 0.0
+Scalar roughness: 1
+Scalar metallic: 1
+Scalar emission: 1
+Scalar clipValue: 0.3333
+Texture colorMap: white
+Texture normalMap: black
+Texture rmoMap: white
+Texture emissionMap: black
+Texture depthMap: white
+#vertex use default
+#fragment
+#condition depth
+#condition depth.vsm
+#condition deferred
+#condition lighting
+#condition lighting.vsm
+#include "lib/Light_Def.hmat"
+#include "lib/CameraData_Def.hmat"
+
+#include "lib/Toon_PBR_Lib.hmat"
+#include "lib/GBuffer_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 baseColor;
+uniform float4 shadowColor;
+uniform float4 highlightColor;
+uniform float4 rimColor;
+uniform float4 overColor;
+uniform float shadowCut;
+uniform float shadowCutSmooth;
+uniform float roughness;
+uniform float metallic;
+uniform float emission;
+uniform float clipValue;
+DEF_MAT_END
+
+#if defined(DEFERRED_SHADER_FEATURE)
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(normalMap, 1);
+DEF_TEX2D(rmoMap, 2);
+#elif defined(LIGHTING_SHADER_FEATURE)
+DEF_GBUFFER
+DEF_TEX2D(depthMap, 6);
+#else
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(normalMap, 1);
+DEF_TEX2D(rmoMap, 2);
+DEF_TEX2D(depthMap, 3);
+#endif
+
+#include "lib/Surface_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
+
+#ifndef DEFERRED_SHADER_FEATURE
+float getShadow(in DirectLight directLight, in Surface surf)
+{
+    #if defined(VSM_SHADER_FEATURE)
+    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos,
+        surf.Normal, directLight.shadowBias.y);
+    #else
+    return ShadowCalculation(depthMap, depthMapSampler,
+        surf.WorldPos, surf.Normal, directLight);
+    #endif
+}
+#endif
+
+FragmentOut SURFACE_MAIN
+{
+    FragmentOut fout;
+    #ifdef DEPTH_SHADER_FEATURE
+    float alpha = SAMPLE_TEX(colorMap, fin.TexCoords).a * baseColor.a * overColor.a;
+    outputDepth(fin, alpha, clipValue);
+    #else
+    Surface surf = getSurface(fin);
+
+    #ifndef LIGHTING_SHADER_FEATURE
+    float3x3 TBN = cotangent(surf.Normal, surf.WorldPos, surf.TexCoords);
+    float3 tN = normalize(SAMPLE_TEX(normalMap, surf.TexCoords).xyz * 2 - 1);
+    surf.Normal = normalize(mul(tN, TBN));
+    surf.albedo = SAMPLE_TEX(colorMap, surf.TexCoords);
+    surf.albedo.a *= baseColor.a;
+    float3 rmo = SAMPLE_TEX(rmoMap, surf.TexCoords).rgb;
+    surf.roughness = rmo.r * roughness;
+    surf.metallic = rmo.g * metallic;
+    surf.ao = rmo.b;
+    surf.mask |= REFLECTION_MASK;
+    #endif
+
+    #ifdef DEFERRED_SHADER_FEATURE
+    outputSurface(surf, GBUFFER_OUT_PARAMS(fout));
+    #else
+    Toon_PBR_Param param;
+    param.roughness = surf.roughness;
+    param.metallic = surf.metallic;
+    param.N = surf.Normal;
+    param.V = normalize(camData.camPos - surf.WorldPos);
+    param.albedo = surf.albedo.rgb;
+    param.baseColor = baseColor.rgb;
+    param.highlightColor = highlightColor.rgb;
+    param.shadowColor = shadowColor.rgb;
+    param.rimColor = rimColor.rgb;
+    param.ao = surf.ao;
+    param.shadowCut = shadowCut;
+    param.shadowCutSmooth = shadowCutSmooth;
+
+    float3 Lo = Float3(0.0);
+
+    if (directLight.intensity != 0) {
+        float shadowFactor = getShadow(directLight, surf);
+        Lo += Toon_PBR_Lo_DirectLight(directLight, shadowFactor, param);
+    }
+
+    PointLight localLight;
+    ITER_LOCAL_LIGHT(surf.WorldPos, localLight)
+    {
+        if (localLight.intensity != 0) {
+            Lo += Toon_PBR_Lo_PointLight(localLight, surf.WorldPos, 1, param);
+        }
+    }
+
+    float3 color = PBR_ColorCorrection(Lo);
+
+    fout.FragColor.rgb = color;
+    fout.FragColor.a = surf.albedo.a;
+    fout.FragColor *= overColor;
+    //fout.ssnMask = float4(1);
+    #endif
+
+    #endif
+    return fout;
+}

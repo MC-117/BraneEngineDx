@@ -1,0 +1,46 @@
+#order 1100
+#cullfront true
+#castshadow false
+#material
+Color baseColor: 0, 0, 0, 255
+Scalar borderWidth: 0.1
+Scalar refenceDistance: 0
+#vertex use outline
+#fragment
+#condition deferred
+#condition lighting
+#include "lib/GBuffer_Def.hmat"
+
+#ifdef LIGHTING_SHADER_FEATURE
+DEF_GBUFFER
+#else
+DEF_MAT_BEGIN
+uniform float borderWidth;
+uniform float refenceDistance;
+uniform float4 baseColor;
+DEF_MAT_END
+#endif
+
+#include "lib/Surface_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
+
+FragmentOut SURFACE_MAIN
+{
+    FragmentOut fout;
+    Surface surf = getSurface(fin);
+
+    #ifndef LIGHTING_SHADER_FEATURE
+    surf.albedo = baseColor;
+    #endif
+
+    #ifdef DEFERRED_SHADER_FEATURE
+    outputSurface(surf, GBUFFER_OUT_PARAMS(fout));
+    #else
+    fout.FragColor = surf.albedo;
+    #endif
+
+    return fout;
+}

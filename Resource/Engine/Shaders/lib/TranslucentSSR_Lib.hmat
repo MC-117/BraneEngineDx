@@ -1,0 +1,50 @@
+#include "SSR_Lib.hmat"
+#include "ReflectionProbe_def.hmat"
+
+DEF_TEX2D_AUTO(gBufferA);
+DEF_TEX2D_AUTO(gBufferB);
+DEF_TEX2D_AUTO(hiZMap);
+
+float3 getSSRColor(float3 startUVZ, float3 worldNorm, float roughness)
+{
+    roughness = saturate(roughness);
+    float4 hitColor = 0.0f.rrrr;
+    float3 viewN = normalize(worldDirToView(worldNorm));
+
+    float3 startView = uvzPosToView(startUVZ);
+    float3 V = normalize(startView);
+
+    float3x3 tangentBasis = getTangentBasis(viewN);
+    float4 HPDF = ImportanceSampleGGX(float2(0, 0), roughness * roughness);
+    float3 H = normalize(mul(HPDF.xyz, tangentBasis));
+    float3 L = normalize(reflect(V, H));
+    float3 hitUVZ;
+    float fadeFactor = 1;
+#if 1
+    float3 endView = startView + L;
+    float3 endUVZ = viewPosToUVZ(endView);
+    float3 dirUVZ = normalize(endUVZ - startUVZ);
+    if (rayTraceHiZ_UVZ(hiZMap, hiZMapSampler,
+        hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
+        startUVZ, dirUVZ, hitUVZ, fadeFactor))
+#else
+    if (rayTraceHiZ_View(hiZMap, hiZMapSampler,
+        hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
+        startView, L, hitUVZ))
+#endif
+    {
+        hitColor = SAMPLE_TEX_LOD(gBufferA, hitUVZ.xy, 0);
+        fadeFactor = GetScreenFadeBord(uvToClip(hitUVZ.xy));
+    }
+    else fadeFactor = 0;
+    if (fadeFactor < 1) {
+        float3 worldPos = viewPosToWorld(startView);
+        float3 worldL = mul(float4(L, 0), camData.vmatInv).xyz;
+        float4 refColor = getReflectionColor(worldL, worldPos, getReflectionMip(roughness));
+        float3 hitPosView = uvzPosToView(hitUVZ);
+        hitColor = lerp(refColor, hitColor, fadeFactor);
+    }
+    float weight = SSR_BRDF(-V, L, viewN, roughness);
+    hitColor *= weight;
+    return max(1e-5, hitColor.rgb) * 0.2f * smoothstep(0.4f, 0.7f, 1 - roughness);
+}

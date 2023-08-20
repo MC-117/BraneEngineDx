@@ -1,0 +1,20 @@
+#material Engine/Shaders/Toon.mat
+#order 1000
+#twoside false
+#castshadow true
+Scalar highlightCut: 0.999000
+Scalar highlightCutSmooth: 0.000000
+Scalar normalScale: 1.000000
+Scalar rimCut: 0.800000
+Scalar rimCutSmooth: 0.000000
+Scalar shadowCut: 0.468750
+Scalar shadowCutSmooth: 0.000000
+Color baseColor: 0.870588, 0.870588, 0.870588, 1.000000
+Color highlightColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color overColor: 0.933333, 0.933333, 0.933333, 1.000000
+Color rimColor: 1.000000, 1.000000, 1.000000, 1.000000
+Color shadowColor: 0.479815, 0.507497, 0.547482, 1.000000
+Texture aoMap: white
+Texture colorMap: Content/MMD/NTMiku/NTMiku_HO.png
+Texture depthMap: white
+Texture normalMap: Engine/Textures/Default_N.png

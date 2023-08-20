@@ -1,7 +1,0 @@
-#adapter name empty_fragment
-#fragment
-#include "../lib/Basic_FS_Lib.hmat"
-
-void DEFAULT_FS_MAIN
-{
-}

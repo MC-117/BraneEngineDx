@@ -1,0 +1,91 @@
+#adapter name shellfur
+#vertex
+#include "../lib/TransformData_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+#include "../lib/Light_Def.hmat"
+#include "../lib/MeshData_Def.hmat"
+#include "../lib/ShellFur_Def.hmat"
+
+DEF_MAT_BEGIN
+SHELL_FUR_BASE_MAT
+DEF_MAT_END
+
+DefaultVertexOut MESH_MAIN
+{
+    DefaultVertexOut vout;
+    float4x4 fm = getFinalMat(ins[0]);
+    float offset = furLength * float(passID) / float(passNum);
+    vout.LocalPos = pos + offset * normalize(norm);
+    float4 _WorldPos = mul(float4(vout.LocalPos, 1.0), fm);
+    vout.TransMat = fm;
+    vout.svPos = mul(_WorldPos, camData.pmat);
+    vout.WorldPos = _WorldPos.xyz;
+    vout.LocalPos = pos;
+    vout.Normal = normalize(mul(norm, (float3x3)(fm)));
+    vout.LocalNormal = norm;
+    vout.TexCoords = uv;
+    vout.TexCoords.y = 1 - vout.TexCoords.y;
+    vout.WorldScale = getWorldScale(fm);
+    vout.InstanceID = ins[0];
+    return vout;
+}
+#vertex skeleton
+#include "../lib/TransformData_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+#include "../lib/Light_Def.hmat"
+#include "../lib/SkeletonMeshData_Def.hmat"
+#include "../lib/ShellFur_Def.hmat"
+
+DEF_MAT_BEGIN
+SHELL_FUR_BASE_MAT
+DEF_MAT_END
+
+DefaultVertexOut SKELETON_MAIN
+{
+    DefaultVertexOut vout;
+    float4x4 fm = getFinalMat(ins[0], weights, boneId);
+    float offset = furLength * float(passID) / float(passNum);
+    vout.LocalPos = pos + offset * normalize(norm);
+    float4 _WorldPos = mul(float4(vout.LocalPos, 1.0), fm);
+    vout.TransMat = fm;
+    vout.WorldPos = _WorldPos.xyz;
+    vout.svPos = mul(_WorldPos, camData.pmat);
+    vout.Normal = normalize(mul(norm, (float3x3)(fm)));
+    vout.LocalNormal = norm;
+    vout.TexCoords = uv;
+    vout.TexCoords.y = 1 - vout.TexCoords.y;
+    vout.WorldScale = getWorldScale(fm);
+    vout.InstanceID = ins[0];
+    return vout;
+}
+#vertex skeleton morph
+#include "../lib/TransformData_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+#include "../lib/Light_Def.hmat"
+#include "../lib/SkeletonMeshData_Def.hmat"
+#include "../lib/MorphData_def.hmat"
+#include "../lib/ShellFur_Def.hmat"
+
+DEF_MAT_BEGIN
+SHELL_FUR_BASE_MAT
+DEF_MAT_END
+
+DefaultVertexOut SKELETON_MAIN
+{
+    DefaultVertexOut vout;
+    uint vid = ins[1] + vertexID;
+    float4x4 fm = getFinalMat(ins[0], weights, boneId);
+    float offset = furLength * float(passID) / float(passNum);
+    vout.LocalPos = morphPos(vid, pos) + offset * normalize(norm);
+    float4 _WorldPos = mul(float4(vout.LocalPos, 1.0), fm);
+    vout.TransMat = fm;
+    vout.WorldPos = _WorldPos.xyz;
+    vout.svPos = mul(_WorldPos, camData.pmat);
+    vout.Normal = normalize(mul(morphNorm(vertexID, norm), (float3x3)(fm)));
+    vout.LocalNormal = norm;
+    vout.TexCoords = uv;
+    vout.TexCoords.y = 1 - vout.TexCoords.y;
+    vout.WorldScale = getWorldScale(fm);
+    vout.InstanceID = ins[0];
+    return vout;
+}

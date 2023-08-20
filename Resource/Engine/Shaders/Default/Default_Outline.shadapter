@@ -1,0 +1,56 @@
+#adapter name outline
+#vertex
+#condition skeleton
+#condition skeleton.morph
+#include "../lib/TransformData_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+#include "../lib/MeshData_Def.hmat"
+#include "../lib/SkeletonMeshData_Def.hmat"
+#include "../lib/MorphData_def.hmat"
+
+#ifdef SKELETON_SHADER_FEATURE
+#define VERTEX_MAIN SKELETON_MAIN
+#else
+#define VERTEX_MAIN MESH_MAIN
+#endif
+
+DEF_MAT_BEGIN
+uniform float borderWidth;
+uniform float refenceDistance;
+uniform float4 baseColor;
+DEF_MAT_END
+
+DefaultVertexOut VERTEX_MAIN
+{
+#ifdef SKELETON_SHADER_FEATURE
+    float4x4 fm = getFinalMat(ins[0], weights, boneId);
+#else
+    float4x4 fm = getFinalMat(ins[0]);
+#endif
+
+#ifdef MORPH_SHADER_FEATURE
+    uint vid = ins[1] + vertexID;
+    float3 _pos = morphPos(vid, pos);
+    float3 _norm = morphNorm(vid, norm);
+#else
+    float3 _pos = pos;
+    float3 _norm = norm;
+#endif
+
+    float sca = 1;
+    float dist = distance(mul(float4(_pos, 1.0), fm).xyz, camData.camPos);
+    sca = dist / camData.viewSize.x;
+    DefaultVertexOut vout;
+    vout.TransMat = fm;
+    vout.LocalPos = _pos + borderWidth * 200 * sca * normalize(_norm);
+    float4 _WorldPos = mul(float4(vout.LocalPos, 1.0), fm);
+    vout.LocalNormal = _norm;
+    vout.Normal = normalize(mul(float4(_norm, 0.0), fm).xyz);
+    vout.WorldPos = _WorldPos.xyz;
+    vout.svPos = mul(_WorldPos, camData.pmat);
+    vout.TexCoords = uv;
+    vout.TexCoords.y = 1 - vout.TexCoords.y;
+    vout.WorldScale = getWorldScale(fm);
+    vout.InstanceID = ins[0];
+    return vout;
+}

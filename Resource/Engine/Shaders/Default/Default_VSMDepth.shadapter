@@ -1,0 +1,48 @@
+#adapter name vsm
+#vertex
+#condition skeleton
+#condition skeleton.morph
+#include "../lib/VirtualShadowMap_Def.hmat"
+#include "../lib/MeshData_Def.hmat"
+#include "../lib/SkeletonMeshData_Def.hmat"
+#include "../lib/MorphData_def.hmat"
+
+#if defined(SKELETON_SHADER_FEATURE)
+#define VERTEX_MAIN SKELETON_MAIN
+#else
+#define VERTEX_MAIN MESH_MAIN
+#endif
+
+DefaultVSMVertexOut VERTEX_MAIN
+{
+    DefaultVSMVertexOut vout;
+    uint globalInsID = ins[0] + localInsID;
+    uint objID = instanceIDs[globalInsID];
+#ifdef SKELETON_SHADER_FEATURE
+    float4x4 fm = getFinalMat(objID, weights, boneId);
+#else
+    float4x4 fm = getFinalMat(objID);
+#endif
+
+#ifdef MORPH_SHADER_FEATURE
+    uint vextexBase = ins[1];
+    uint vid = vextexBase + vertexID;
+    float3 _pos = morphPos(vid, pos);
+    float3 _norm = morphNorm(vid, norm);
+#else
+    float3 _pos = pos;
+    float3 _norm = norm;
+#endif
+
+    float4 _WorldPos = mul(float4(_pos, 1.0), fm);
+    vout.TransMat = fm;
+    vout.TexCoords = uv;
+    vout.TexCoords.y = 1 - vout.TexCoords.y;
+    vout.InstanceID = objID;
+    vout.pageInfo = pageInfos[globalInsID];
+
+    VSMPageInfo pageInfo = unpackVSMPageInfo(vout.pageInfo);
+    
+    transformToVirtualPage(vout.clipPos, vout.pageClipPos, pageInfo.viewIndex, _WorldPos);
+    return vout;
+}

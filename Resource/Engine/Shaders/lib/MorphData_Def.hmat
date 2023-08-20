@@ -1,0 +1,25 @@
+#include "Bindings_Def.hmat"
+Buffer<float4> morphData;
+Buffer<float> morphWeight;
+
+float3 morphPos(in uint vertexID, in float3 pos)
+{
+    uint nMorph = morphWeight[0];
+    uint base = vertexID * nMorph;
+    float3 w = float3(0, 0, 0);
+    for (uint i = 0; i < nMorph; i++) {
+        w += morphData[(base + i) * 2].xyz * morphWeight[i + 1]; 
+    }
+    return pos + w;
+}
+
+float3 morphNorm(in uint vertexID, in float3 norm)
+{
+    uint nMorph = morphWeight[0];
+    uint base = vertexID * nMorph;
+    float3 w = float3(0, 0, 0);
+    for (uint i = 0; i < nMorph; i++) {
+        w += morphData[(base + i) * 2 + 1].xyz * morphWeight[i + 1];
+    }
+    return norm + w;
+}

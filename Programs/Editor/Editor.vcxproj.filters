@@ -1,0 +1,3118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Engine\Core\RenderGraph">
+      <UniqueIdentifier>{B8B6E486-D175-3FC6-9014-EA36A8F10F26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\Live2DCubism">
+      <UniqueIdentifier>{9B71D145-777B-C165-C322-4D59BA0A942F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Actors">
+      <UniqueIdentifier>{36CB0500-A573-0CE2-1E1A-7896E52E2037}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Engine\Shaders\Editor">
+      <UniqueIdentifier>{5303948C-EDA4-CB02-8EA4-71CAF9572D49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\VST2\Vst2SDK\pluginterfaces">
+      <UniqueIdentifier>{6BD612F2-AB82-6DF3-8A15-D199F64265CF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\VST2\Vst2SDK\pluginterfaces\vst2.x">
+      <UniqueIdentifier>{B6C0B575-AEEB-8DE9-1778-E955ED64AD9D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\RenderDoc">
+      <UniqueIdentifier>{2CB0039B-375F-35EB-4E9B-CB7FD5A7DD03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{BE8545AE-7AB0-276E-1589-8AAE7ACFBD7A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\MemTracer">
+      <UniqueIdentifier>{BAD1D7F8-C546-AF4F-2638-1CF70C892795}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\NvCloth">
+      <UniqueIdentifier>{24F0FCBB-3596-3020-CFE4-9BA039DA2BD2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Script">
+      <UniqueIdentifier>{CA966D1A-2CD2-29ED-E1B0-7CD39DFC8786}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\ShaderCode">
+      <UniqueIdentifier>{4E9D4812-958F-3925-7468-1D485BE43E49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty">
+      <UniqueIdentifier>{BD2E4F53-C91C-D791-8344-5E6BE6FB5F98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Tool">
+      <UniqueIdentifier>{C6AE5DBC-A4EB-2ECF-0941-D605BFFCC88E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\GUI">
+      <UniqueIdentifier>{64B9B5E5-7DBD-5B6A-22E7-CF07D932D039}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\Python37">
+      <UniqueIdentifier>{F26B074D-E6D6-BB69-9A76-DE274395CC6C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Physics">
+      <UniqueIdentifier>{DE2ADF44-50E5-C497-DC29-9358FC3CE7BC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\Physx4">
+      <UniqueIdentifier>{61EB05D5-5FFF-9D0A-9737-F15A0163F53A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Spine2D">
+      <UniqueIdentifier>{05F898BA-4A41-1A74-E80B-A201FC3487AE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Vendors">
+      <UniqueIdentifier>{2B930108-0072-43BD-78FC-C6EF2BF82A3B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\RenderCore\VirtualShadowMap">
+      <UniqueIdentifier>{158033DA-75EC-9E9B-40C3-7CFF3D327155}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Terrain">
+      <UniqueIdentifier>{D195E8DC-BECC-524D-4173-CE995A84F7EC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Skeleton">
+      <UniqueIdentifier>{D36DED61-1181-6E05-AEA7-627403D37B77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\Assimp">
+      <UniqueIdentifier>{A4E34207-AF94-65D0-074B-6622D012A5A3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Engine\Shaders\Pipeline\DebugDraw">
+      <UniqueIdentifier>{55AF2933-2821-F042-6A27-6C1E996C032D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Graph\StateMachine">
+      <UniqueIdentifier>{359CFD4C-8D69-E92B-0345-71C4425D8704}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\VST2">
+      <UniqueIdentifier>{F13CCC60-C34B-9D9B-7B5A-7F0A5D5B3FFA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Vendors\DX11">
+      <UniqueIdentifier>{B3252392-1D4C-7A7A-5A22-F1FA9050247B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\ImGui\ImGuiNodeEditor">
+      <UniqueIdentifier>{CA3E8B5C-D70D-AB3C-6FA5-0E18F9258B3A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\WUI">
+      <UniqueIdentifier>{B94A051A-8ABE-8888-0F80-0A27BD0F8A61}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Tool\AnimationConverter\utf8">
+      <UniqueIdentifier>{85F93CD3-CF41-236E-0796-AB39CBA3D306}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\VST2\Vst2SDK">
+      <UniqueIdentifier>{833EC482-1964-925E-CF20-ADBBDB7BEBAB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\ProbeSystem">
+      <UniqueIdentifier>{B0A0EEFD-27FE-7DA0-B9C5-731CDC9EC055}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Engine\Shaders\lib">
+      <UniqueIdentifier>{F7364C5D-AA2F-1360-2CD8-991AE1F39F65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Engine\Shaders\PostProcess">
+      <UniqueIdentifier>{9ABF9F7A-2D7E-0C8A-DAC3-86320A184D8F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Nanite">
+      <UniqueIdentifier>{8FFF1B7D-4DA1-DD70-3498-86D9B9FB3150}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\RenderCore">
+      <UniqueIdentifier>{AE1C475E-7C6A-8484-ACF1-CF1A06190CB6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Graph">
+      <UniqueIdentifier>{DDBC7B27-0187-D760-F297-F458F06CC60F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Engine\Shaders\PostProcess\SMAA">
+      <UniqueIdentifier>{BFD466CD-45D2-80F6-3ED2-97A8081006A6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Engine\Shaders\Pipeline\VSM">
+      <UniqueIdentifier>{DF784059-03C3-0AC6-88DB-4ECAD4C7D73F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\ImGui">
+      <UniqueIdentifier>{A96F39E2-93FD-3BAA-7A68-8A85FBD06033}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{7BFA3072-1C5E-726F-F17E-3F972237A82C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\ImGui\ImPlot">
+      <UniqueIdentifier>{AB6921B0-2278-92F3-833B-FF5D1102C2DA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Animation">
+      <UniqueIdentifier>{4ADCF3EB-295F-F263-4CCB-862C763B3F55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Audio">
+      <UniqueIdentifier>{600A2CEC-933A-482D-B613-DE4B3D02BA5A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\STB">
+      <UniqueIdentifier>{D5C085CC-D395-9E6A-BDE8-C5A433015548}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core">
+      <UniqueIdentifier>{D1D5B90D-0E7C-85FA-52BE-FD2A1AE03299}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Editor\ProbeSystem">
+      <UniqueIdentifier>{F107BE4F-E34C-A8FD-7DA2-AECDD9AC6629}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Importer">
+      <UniqueIdentifier>{95285082-A72A-A4E6-EF3D-0224181D1AE4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\PostProcess">
+      <UniqueIdentifier>{0E69757B-769F-71DC-4096-1476A2B47D86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Tool\AnimationConverter">
+      <UniqueIdentifier>{1AB64FB9-426E-669A-C708-4B4DFEA95AE1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Vendors\DX12">
+      <UniqueIdentifier>{B8D3DE3A-DB61-F716-97DB-9BB3AAAAEB1F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\Remidi">
+      <UniqueIdentifier>{6FB0B6E6-3ACF-D471-1BF8-05DB0CE74F35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\OpenAlSoft">
+      <UniqueIdentifier>{060F9E6A-FF0F-2311-1035-4DBCE9C214FD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Engine\Shaders\Default">
+      <UniqueIdentifier>{C01326D0-E9AA-5D71-FE78-27391E64D3C5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Engine\Shaders">
+      <UniqueIdentifier>{CB3AD786-593F-C2F6-32A3-129E646915ED}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Graph\ObjectNodes">
+      <UniqueIdentifier>{ADA4FF35-05A5-91E1-6908-E98A7C62B441}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Editor\RenderCore">
+      <UniqueIdentifier>{E7FC355F-4946-F4F6-7F94-8BB39A84B8F9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Midi">
+      <UniqueIdentifier>{61B8BAEE-01AA-0103-4246-2DCAA0BCB392}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Engine\Shaders\Pipeline">
+      <UniqueIdentifier>{186F7737-F8F2-3FAB-0F0B-3F0B9FDAA3A4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Profile">
+      <UniqueIdentifier>{BE87513F-84B0-80A5-D20D-EFF7D65DEB1D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Timeline">
+      <UniqueIdentifier>{8FCD1498-6453-0194-9203-DA910D82169B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Engine">
+      <UniqueIdentifier>{46AAA7CF-4CC0-1A72-D22A-E8D3861740A3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Icon">
+      <UniqueIdentifier>{97C6A8B5-90C4-1E65-B64E-98C5CA5EA382}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Cameras">
+      <UniqueIdentifier>{D7307CF6-2116-5F7E-A960-D2043DB1D54E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Editor">
+      <UniqueIdentifier>{74A2E1EF-118B-AEDA-80C5-E77A088D4E86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\ThirdParty\Spine">
+      <UniqueIdentifier>{273D208C-83E7-45EF-BA0E-D08B1F0451C0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource\Engine\Shaders\PostProcess\CMAA2">
+      <UniqueIdentifier>{51794852-449B-9325-4247-D2D6A7B36889}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core\Utility">
+      <UniqueIdentifier>{DD19BDCD-B923-2A97-84BD-F85FD9FB5C6C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Live2D">
+      <UniqueIdentifier>{73736C5D-0C95-C4CB-D84A-5FE264F467CA}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="../../Engine/Core/PostProcess/BloomPass.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/imstb_rectpack.h">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/IGPUBuffer.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/MorphTargetWeight.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Spine2D/Spine2DActor.h">
+      <Filter>Engine\Spine2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/VectorNode.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Render.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/imgui_TextEditor.h">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/ObjectUltility.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GPUBuffer.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/VST2/Vst2Plugin.h">
+      <Filter>Engine\VST2</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/imgui_stdlib.h">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Importer/TextureImporter.h">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/GraphBaseEditor.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ObjectGraph.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/ProbeSystem/ReflectionCaptureProbeRender.h">
+      <Filter>Engine\Core\ProbeSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/BlitPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Midi/MidiInstrumentWindow.h">
+      <Filter>Engine\Midi</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Importer/AssetFileImporter.h">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/DeferredRenderGraph.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/ShotPlayableEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/VST2/Vst2SDK/pluginterfaces/vst2.x/aeffect.h">
+      <Filter>Engine\VST2\Vst2SDK\pluginterfaces\vst2.x</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/AnimationTrackEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/AudioPlayableEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/WUIProgressBar.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/AnimationPlayable.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/ITexture.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Delegate.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/LightEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Skeleton/BoneParentConstraint.h">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Audio/AudioSource.h">
+      <Filter>Engine\Core\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/AssetBrowser.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/SSAOPass.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12RenderTarget.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11Material.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/GUIUtility.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Script/ScriptEditor.h">
+      <Filter>Engine\Core\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/CameraRender.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/ProbeSystem/CaptureProbeEditor.h">
+      <Filter>Engine\Core\Editor\ProbeSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Animation/AnimationPoseGraph.h">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/LoadingUI.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/BoneEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/VariableEditor.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Tool/AnimationConverter/utf8/unchecked.h">
+      <Filter>Engine\Tool\AnimationConverter\utf8</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/HelpUI.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/Graph.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ObjectNodes/TransformNode.h">
+      <Filter>Engine\Core\Graph\ObjectNodes</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/UIControl.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ValuePinEditor.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Tool/AnimationConverter/utf8/checked.h">
+      <Filter>Engine\Tool\AnimationConverter\utf8</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/EngineUtility.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/RenderTask.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/IMaterial.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/ShaderManagerWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/PhysicsDebug.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12Vendor.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Tool/ToolShelf.h">
+      <Filter>Engine\Tool</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuizmo.h">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Camera.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ObjectNodes/ActorNode.h">
+      <Filter>Engine\Core\Graph\ObjectNodes</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/ImagePass.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/MathNode.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/imgui_extra_math.inl">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderTarget.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/imgui_impl_win32.h">
+      <Filter>Engine\Vendors</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/TextureUtility.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Tool/AnimationConverter/AnimationConverter.h">
+      <Filter>Engine\Tool\AnimationConverter</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/WorldEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/ShaderCode/ShaderCompiler.h">
+      <Filter>Engine\Core\ShaderCode</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/ProbeSystem/CaptureProbe.h">
+      <Filter>Engine\Core\ProbeSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/TextureViewer.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Terrain/TerrainActorEditor.h">
+      <Filter>Engine\Core\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Animation/AnimationState.h">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Actors/SkySphere.h">
+      <Filter>Engine\Actors</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelineClip.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/BuildProbeGridPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/imgui_node_editor.h">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12Texture2D.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/InitializationManager.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/UIWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Script/PythonManager.h">
+      <Filter>Engine\Core\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/IRendering.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/Timeline.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/RigidBody.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11GPUBuffer.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderPool.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/ShaderCode/ShaderAdapterCompiler.h">
+      <Filter>Engine\Core\ShaderCode</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Spine2D/Spine2DModel.h">
+      <Filter>Engine\Spine2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/ClothBody.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/STB/stb_image.h">
+      <Filter>Engine\ThirdParty\STB</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/AudioTrackEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/BaseEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/VST2/Vst2SDK/audioeffectx.h">
+      <Filter>Engine\VST2\Vst2SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/SkeletonPhysics.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/StateMachine/StateMachine.h">
+      <Filter>Engine\Core\Graph\StateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/ClothMeshData.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/ScreenHitData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/ReflectionProbeArrayPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Actor.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/CharacterEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/VST2/Vst2SDK/audioeffect.h">
+      <Filter>Engine\VST2\Vst2SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Shader.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/LightRenderData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/GizmoUltility.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11RenderExecution.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Mesh.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Animation/AnimationStateMachine.h">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Unit.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/AudioPlayable.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/DebugRenderData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11MeshData.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12RootSignature.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/ShotTrack.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/DebugLogWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/ShotTrackEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/imgui_impl_dx12.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/MeshActor.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/ProbeGridRenderData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/ConsoleWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/imgui_node_editor_internal.inl">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/SkeletonMeshRender.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/MaterialEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/D6Constraint.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/ObjectPreviewWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Cameras/DebugCamera.h">
+      <Filter>Engine\Cameras</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/MaterialRenderData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/ImGUIPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/imgui_internal.h">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ObjectNodes/SkeletonMeshActorNode.h">
+      <Filter>Engine\Core\Graph\ObjectNodes</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Live2D/Live2DCamera.h">
+      <Filter>Engine\Live2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12Material.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/PhysicalConstraint.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12Shader.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Config.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/EditorWorld.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/MeshTransformData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/Widgets.h">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Input.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ObjectNodes/CharacterNode.h">
+      <Filter>Engine\Core\Graph\ObjectNodes</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/BlendSpaceWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/ReflectionProbeRenderData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/Boundings.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11Texture2D.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/StateMachine/StateMachineEditor.h">
+      <Filter>Engine\Core\Graph\StateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ObjectNode.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/StringUtilityNode.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/RenderUtility.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/GenMipPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/ESCMenu.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/PhysicalBody.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/IRenderTarget.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/imgui.h">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/imstb_textedit.h">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/RenderEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Object.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/Variable.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/STB/stb_image_write.h">
+      <Filter>Engine\ThirdParty\STB</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12GPUBuffer.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/imconfig.h">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/VirtualShadowMapDepthPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Terrain/TerrainGeometry.h">
+      <Filter>Engine\Core\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Terrain/TerrainGeometryEditor.h">
+      <Filter>Engine\Core\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Skeleton/TwoBoneIKConstraintEditor.h">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Console.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/ProbeSystem/CaptureProbeRenderEditor.h">
+      <Filter>Engine\Core\Editor\ProbeSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Audio/AudioWave.h">
+      <Filter>Engine\Core\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/WUIWindow.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/RenderCore/RenderGraphEditor.h">
+      <Filter>Engine\Core\Editor\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Live2D/Live2DRender.h">
+      <Filter>Engine\Live2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/TranslucentPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Importer/Importer.h">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/imgui_bezier_math.inl">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Audio/AudioImorpter.h">
+      <Filter>Engine\Core\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/MathNodeEditor.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/CMDWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/ParticleRenderPack.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PointLight.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/Builders.h">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelineEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/WUIButton.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Actors/VehicleActor.h">
+      <Filter>Engine\Actors</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/MeshRenderPack.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/GraphEditor.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/STB/stb_image_resize.h">
+      <Filter>Engine\ThirdParty\STB</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Skeleton/BoneConstraintEditor.h">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Midi/MidiInstrumentEditor.h">
+      <Filter>Engine\Midi</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/RenderCore/DeferredRenderGraphEditor.h">
+      <Filter>Engine\Core\Editor\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Live2D/Live2DActor.h">
+      <Filter>Engine\Live2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Importer/AssimpImporter.h">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Spine2D/Spine2DRenderPack.h">
+      <Filter>Engine\Spine2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/GraphAssetInfo.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/Drawing.h">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/StaticVar.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/AnimationPlayableEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/MeshActorEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Tool/AnimationConverter/MMDVmdParser.h">
+      <Filter>Engine\Tool\AnimationConverter</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/d3dx12.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/PointLightEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/imgui_canvas.h">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/SkeletonMesh.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/RenderInterface.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/WUIMainWindow.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Animation/AnimationPoseNode.h">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12MeshData.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12SkeletonMeshData.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/HiZPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelinePlayable.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/GraphNodeEditor.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ObjectNodeEditor.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/SceneCapture.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Terrain/TerrainActor.h">
+      <Filter>Engine\Core\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/ParticleSystem.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Actors/GunTowerActor.h">
+      <Filter>Engine\Actors</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12InputLayout.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/Octree.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12ResourceUploader.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/ParticleEmitter.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelineClipTrackEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/Node.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Tool/AnimationConverter/MMDCpp14.h">
+      <Filter>Engine\Tool\AnimationConverter</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/MatBranchModifier.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/PhysicalLayer.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/half.hpp">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/ObjectEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Serialization.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/ShaderResourceFixBindingPoint.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/FixedConstraint.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/MathLibrary.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12GraphicContext.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Script/PythonFreeze.h">
+      <Filter>Engine\Core\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/UVViewer.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX_Helper.h">
+      <Filter>Engine\Vendors</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/MeshRenderEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/SkeletonMeshActorEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/ProbeSystem/EnvLightCaptureProbeRender.h">
+      <Filter>Engine\Core\ProbeSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Transform.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiIconHelp.h">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Geometry.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Live2D/Live2DMeshData.h">
+      <Filter>Engine\Live2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Skeleton/BoneParentConstraintEditor.h">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/GraphPinEditor.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelineTrackEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Light.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Events.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GraphicType.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11ShaderStage.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/PostProcessGraph.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/GUI.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Tool/AnimationConverter/utf8/SJ2UTF8Table.h">
+      <Filter>Engine\Tool\AnimationConverter\utf8</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/VolumetricLightPass.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/imgui_bezier_math.h">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelineWindow.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12PipelineState.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/EditorWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/crude_json.h">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/ActorEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/PhysicalMaterial.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/ProbeSystem/EnvLightCaptureProbeRenderEditor.h">
+      <Filter>Engine\Core\Editor\ProbeSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/TransformRenderData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/MaterialWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/TextureCubeEditorWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11RenderContext.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/IWorld.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/AnimationDataTrack.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/FlowNode.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/ProbeTypes.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/IRenderContext.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/ScreenHitPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImPlot/implot.h">
+      <Filter>Engine\ThirdParty\ImGui\ImPlot</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/TextureCubePool.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Skeleton/TwoBoneIKConstraint.h">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/imgui_impl_dx11.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/ContactInfo.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/FlowNodeEditor.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Base.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Engine.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/SceneRenderData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/DirectLightEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelineTrack.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12RenderExecution.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/ShotPlayable.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/Editor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/SerializationEditor.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/imgui_extra_math.h">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Nanite/ClusterBuilder.h">
+      <Filter>Engine\Core\Nanite</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Tool/AnimationConverter/utf8/core.h">
+      <Filter>Engine\Tool\AnimationConverter\utf8</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Asset.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Skeleton/Skeleton.h">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/CameraData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12CommandListDispatcher.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/WUIFont.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Terrain/TerrainRender.h">
+      <Filter>Engine\Core\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Live2D/Live2DActorEditor.h">
+      <Filter>Engine\Live2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Midi/MidiInstrument.h">
+      <Filter>Engine\Midi</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/DirectShadowRenderPack.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/GraphWindow.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/DirectLight.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/InputNode.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/ProgressUI.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/IOUtility.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/imgui_node_editor_internal.h">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/PhysicalBase.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/ShadowDepthPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Profile/RenderDocProfilor.h">
+      <Filter>Engine\Core\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Shape.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Script/PythonScript.h">
+      <Filter>Engine\Core\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Importer/IgnoreImporter.h">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/SceneCaptureCube.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/AudioTrack.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/CMAA2Pass.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/SkyLightCapturePass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/StateMachine/StateNodeEditor.h">
+      <Filter>Engine\Core\Graph\StateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Script/PythonObjectBehaviorEditor.h">
+      <Filter>Engine\Core\Script</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/SkeletonMeshRenderEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/RenderCore.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Spine2D/Spine2DMeshData.h">
+      <Filter>Engine\Spine2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Importer/TimelineImporter.h">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/VirtualShadowMap/VirtualShadowMapRenderData.h">
+      <Filter>Engine\Core\RenderCore\VirtualShadowMap</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/DeferredLightingPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/RenderCommandList.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12DescriptorHeap.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/WUIImGuiWindow.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/ClothActorEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/ScreenSpaceReflectionPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11RenderTarget.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/ProbeSystem/CaptureProbeRender.h">
+      <Filter>Engine\Core\ProbeSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/BlurPass.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/DOFPass.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Texture.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/MeshData.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/SMAA_SearchTex.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/TextureCube.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/PostProcessPass.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Spine2D/Spine2DActorEditor.h">
+      <Filter>Engine\Spine2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/EnvLightData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/ToneMapPass.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/AnimationBaseEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11Vendor.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/VST2/Vst2SDK/aeffeditor.h">
+      <Filter>Engine\VST2\Vst2SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/WUIControl.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11DeviceSurface.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/SurfaceBufferGetter.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/Decimal.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Live2D/Live2DModel.h">
+      <Filter>Engine\Live2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ValuePin.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Importer/PythonScriptImporter.h">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/ShaderStage.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/IVendor.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/SkeletonMeshData.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelinePlayableEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/VirtualShadowMap/VirtualShadowMapClipmap.h">
+      <Filter>Engine\Core\RenderCore\VirtualShadowMap</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/Guid.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ObjectNodes/PhysicsNode.h">
+      <Filter>Engine\Core\Graph\ObjectNodes</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ValueNodeEditor.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/ParticleSystemEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/AnimationDataTrackEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/Curve.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/hash.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Tool/AnimationConverter/utf8/utf8.h">
+      <Filter>Engine\Tool\AnimationConverter\utf8</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelineEditorInfo.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Tool/AnimationConverter/MMDPmxParser.h">
+      <Filter>Engine\Tool\AnimationConverter</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12BufferPool.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Animation/AnimationStateEditor.h">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/MathUtility.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/ProbeSystem/ReflectionCaptureProbeRenderEditor.h">
+      <Filter>Engine\Core\Editor\ProbeSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Spine2D/Spine2DRender.h">
+      <Filter>Engine\Spine2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/MeshPass.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/AnimationDataWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelinePlayer.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GrassMeshActor.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ValueNode.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/World.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/ObjectGraphEditor.h">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/PhysicalWorld.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/AnimationTrack.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX11/DX11SkeletonMeshData.h">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Midi/MidiDevice.h">
+      <Filter>Engine\Midi</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelineClipEditor.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/SphericalConstraint.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Animation/AnimationPoseNodeEditor.h">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/imstb_truetype.h">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/ForwardRenderGraph.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/VirtualShadowMap/VirtualShadowMap.h">
+      <Filter>Engine\Core\RenderCore\VirtualShadowMap</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/IRenderExecution.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Graph/StateMachine/StateNode.h">
+      <Filter>Engine\Core\Graph\StateMachine</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Importer/MaterialImporter.h">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/WUIESCMenu.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Audio/AudioStreamSource.h">
+      <Filter>Engine\Core\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/VST2/Vst2SDK/pluginterfaces/vst2.x/aeffectx.h">
+      <Filter>Engine\VST2\Vst2SDK\pluginterfaces\vst2.x</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DXGI_Helper.h">
+      <Filter>Engine\Vendors</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderCore/CameraRenderData.h">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Material.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Actors/ClothActor.h">
+      <Filter>Engine\Actors</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Importer/AnimationClipDataImporter.h">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Spine2D/Spine2DConfig.h">
+      <Filter>Engine\Spine2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/AssetLoadWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Physics/PhysicalController.h">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/CameraEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Live2D/Live2DConfig.h">
+      <Filter>Engine\Live2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Vendors/DX12/DX12Context.h">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/SMAAPass.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Animation/AnimationPose.h">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Skeleton/BoneConstraint.h">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Timeline/TimelineClipTrack.h">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/InspectorWindow.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/ThirdParty/ImGui/ImPlot/implot_internal.h">
+      <Filter>Engine\ThirdParty\ImGui\ImPlot</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/SHMath.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/SkeletonMeshActor.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Live2D/Live2DConsole.h">
+      <Filter>Engine\Live2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Animation/AnimationClip.h">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/PostProcess/SMAA_AreaTex.h">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/RenderCore/RenderPassEditor.h">
+      <Filter>Engine\Core\Editor\RenderCore</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Profile/ProfileCore.h">
+      <Filter>Engine\Core\Profile</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Brane.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Bone.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/VST2/Vst2SDK/pluginterfaces/vst2.x/vstfxstore.h">
+      <Filter>Engine\VST2\Vst2SDK\pluginterfaces\vst2.x</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Texture2D.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/MeshRender.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/Gizmo.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/GUI/UIViewport.h">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Editor/TransformEditor.h">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/WUI/WUILabel.h">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/RenderGraph/SSRBindings.h">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Utility/Utility.h">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Live2D/Live2DAllocator.h">
+      <Filter>Engine\Live2D</Filter>
+    </ClInclude>
+    <ClInclude Include="../../Engine/Core/Character.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="../../Engine/Core/PostProcess/ImagePass.cpp">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Live2D/Live2DAllocator.cpp">
+      <Filter>Engine\Live2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/IGPUBuffer.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/PostProcess/CMAA2Pass.cpp">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Actors/ClothActor.cpp">
+      <Filter>Engine\Actors</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12MeshData.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/imgui_impl_dx11.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Midi/MidiInstrumentWindow.cpp">
+      <Filter>Engine\Midi</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Animation/AnimationState.cpp">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/Graph.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Utility/EngineUtility.cpp">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Spine2D/Spine2DConfig.cpp">
+      <Filter>Engine\Spine2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ObjectNodes/CharacterNode.cpp">
+      <Filter>Engine\Core\Graph\ObjectNodes</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/FixedConstraint.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Actors/VehicleActor.cpp">
+      <Filter>Engine\Actors</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Mesh.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelineClipTrackEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/BlendSpaceWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Importer/Importer.cpp">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/RenderInterface.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/ShadowDepthPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Cameras/DebugCamera.cpp">
+      <Filter>Engine\Cameras</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ValuePinEditor.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/MeshActor.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ObjectNodes/TransformNode.cpp">
+      <Filter>Engine\Core\Graph\ObjectNodes</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/PhysicalConstraint.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11RenderContext.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Script/PythonObjectBehaviorEditor.cpp">
+      <Filter>Engine\Core\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/AudioTrackEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/ProbeSystem/CaptureProbe.cpp">
+      <Filter>Engine\Core\ProbeSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Utility/Decimal.cpp">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/Timeline.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/imgui_stdlib.cpp">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Spine2D/Spine2DModel.cpp">
+      <Filter>Engine\Spine2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Profile/ProfileCore.cpp">
+      <Filter>Engine\Core\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Script/PythonManager.cpp">
+      <Filter>Engine\Core\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Terrain/TerrainActorEditor.cpp">
+      <Filter>Engine\Core\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/InitializationManager.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/Widgets.cpp">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Audio/AudioWave.cpp">
+      <Filter>Engine\Core\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/SerializationEditor.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/ProbeSystem/EnvLightCaptureProbeRender.cpp">
+      <Filter>Engine\Core\ProbeSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Script/ScriptEditor.cpp">
+      <Filter>Engine\Core\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/MeshRenderEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GPUBuffer.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/ActorEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/ReflectionProbeRenderData.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/VirtualShadowMap/VirtualShadowMap.cpp">
+      <Filter>Engine\Core\RenderCore\VirtualShadowMap</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ValuePin.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/SkeletonMeshData.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12Material.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Importer/MaterialImporter.cpp">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/IVendor.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Tool/AnimationConverter/AnimationConverter.cpp">
+      <Filter>Engine\Tool\AnimationConverter</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/ClothMeshData.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12Vendor.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ObjectNode.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12RootSignature.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/imgui_impl_win32.cpp">
+      <Filter>Engine\Vendors</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/PostProcess/PostProcessGraph.cpp">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/Gizmo.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelineTrackEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/imgui.cpp">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/CameraEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/imgui_draw.cpp">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/D6Constraint.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/SkeletonPhysics.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Actors/GunTowerActor.cpp">
+      <Filter>Engine\Actors</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Skeleton/TwoBoneIKConstraint.cpp">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/ScreenHitData.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/WUIFont.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/BlitPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Utility/Guid.cpp">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/TextureViewer.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/InputNode.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/AnimationDataWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Profile/RenderDocProfilor.cpp">
+      <Filter>Engine\Core\Profile</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11ShaderStage.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/DeferredRenderGraph.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Camera.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/MatBranchModifier.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12RenderExecution.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/imgui_tables.cpp">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Midi/MidiInstrumentEditor.cpp">
+      <Filter>Engine\Midi</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Actors/SkySphere.cpp">
+      <Filter>Engine\Actors</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/VariableEditor.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/AnimationTrackEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/imgui_impl_dx12.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Unit.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/imgui_node_editor_api.cpp">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/ParticleEmitter.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/TranslucentPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/VirtualShadowMap/VirtualShadowMapRenderData.cpp">
+      <Filter>Engine\Core\RenderCore\VirtualShadowMap</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/imgui_node_editor.cpp">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/TextureCube.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/GraphPinEditor.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/TextureCubePool.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/SceneCaptureCube.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/PhysicalWorld.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/AudioTrack.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12Context.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/PostProcess/VolumetricLightPass.cpp">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/PhysicsDebug.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/FlowNode.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/World.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/VST2/Vst2Plugin.cpp">
+      <Filter>Engine\VST2</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Shader.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/RenderEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Script/PythonFreeze.cpp">
+      <Filter>Engine\Core\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/WUILabel.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Live2D/Live2DConsole.cpp">
+      <Filter>Engine\Live2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/WUIControl.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/SkeletonMesh.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Events.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelineTrack.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/ImPlot/implot_demo.cpp">
+      <Filter>Engine\ThirdParty\ImGui\ImPlot</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/AnimationPlayableEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Geometry.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Audio/AudioImorpter.cpp">
+      <Filter>Engine\Core\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/MeshRender.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/MaterialWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Spine2D/Spine2DMeshData.cpp">
+      <Filter>Engine\Spine2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Directlight.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Importer/TimelineImporter.cpp">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Importer/AnimationClipDataImporter.cpp">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Skeleton/BoneConstraintEditor.cpp">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12Shader.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12GraphicContext.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/StateMachine/StateNodeEditor.cpp">
+      <Filter>Engine\Core\Graph\StateMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Texture.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11DeviceSurface.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/CharacterEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/ParticleSystemEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/AnimationPlayable.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/DirectLightEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Terrain/TerrainRender.cpp">
+      <Filter>Engine\Core\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/ShotPlayableEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/ClothBody.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelineWindow.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/GizmoUltility.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Material.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/PointLightEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Midi/MidiInstrument.cpp">
+      <Filter>Engine\Midi</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/VST2/Vst2SDK/audioeffect.cpp">
+      <Filter>Engine\VST2\Vst2SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Midi/MidiDevice.cpp">
+      <Filter>Engine\Midi</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/PostProcess/PostProcessPass.cpp">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/ImPlot/implot.cpp">
+      <Filter>Engine\ThirdParty\ImGui\ImPlot</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Animation/AnimationPoseNode.cpp">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/WUIProgressBar.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/TransformRenderData.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/MorphTargetWeight.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ObjectGraph.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/MathLibrary.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12SkeletonMeshData.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/TransformEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/StateMachine/StateNode.cpp">
+      <Filter>Engine\Core\Graph\StateMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12PipelineState.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/InspectorWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelinePlayable.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11Vendor.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/VirtualShadowMap/VirtualShadowMapClipmap.cpp">
+      <Filter>Engine\Core\RenderCore\VirtualShadowMap</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Tool/AnimationConverter/MMDPmxParser.cpp">
+      <Filter>Engine\Tool\AnimationConverter</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Console.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/IRenderContext.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/MaterialEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/ProbeSystem/CaptureProbeEditor.cpp">
+      <Filter>Engine\Core\Editor\ProbeSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Spine2D/Spine2DActor.cpp">
+      <Filter>Engine\Spine2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/MathNodeEditor.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Utility/IOUtility.cpp">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/ScreenHitPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/AnimationTrack.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/RenderTask.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/WorldEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/PostProcess/DOFPass.cpp">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelineEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/ProbeSystem/ReflectionCaptureProbeRenderEditor.cpp">
+      <Filter>Engine\Core\Editor\ProbeSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Utility/MathUtility.cpp">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ObjectNodeEditor.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/GUI.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Live2D/Live2DActor.cpp">
+      <Filter>Engine\Live2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/WUIMainWindow.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Skeleton/Skeleton.cpp">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Live2D/Live2DConfig.cpp">
+      <Filter>Engine\Live2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11Texture2D.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/BaseEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Importer/AssimpImporter.cpp">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Animation/AnimationPose.cpp">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/MaterialRenderData.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Utility/Utility.cpp">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Bone.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/AnimationDataTrackEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/ShotPlayable.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/ConsoleWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/imgui_demo.cpp">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/TextureCubeEditorWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/PhysicalController.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ObjectGraphEditor.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Audio/AudioSource.cpp">
+      <Filter>Engine\Core\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/HiZPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/PhysicalMaterial.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Live2D/Live2DRender.cpp">
+      <Filter>Engine\Live2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12Texture2D.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Texture2D.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/imgui_widgets.cpp">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/LoadingUI.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/ProbeSystem/CaptureProbeRender.cpp">
+      <Filter>Engine\Core\ProbeSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/RenderCore/RenderGraphEditor.cpp">
+      <Filter>Engine\Core\Editor\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12RenderTarget.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/VST2/Vst2SDK/audioeffectx.cpp">
+      <Filter>Engine\VST2\Vst2SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11RenderExecution.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/PostProcess/ToneMapPass.cpp">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12ResourceUploader.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Skeleton/BoneParentConstraint.cpp">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/PostProcess/BlurPass.cpp">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/SphericalConstraint.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/EditorWorld.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/PhysicalBase.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/ProbeGridRenderData.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/crude_json.cpp">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/ObjectPreviewWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Importer/PythonScriptImporter.cpp">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Terrain/TerrainGeometryEditor.cpp">
+      <Filter>Engine\Core\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Spine2D/Spine2DRenderPack.cpp">
+      <Filter>Engine\Spine2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/PhysicalLayer.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderTarget.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/IMaterial.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Spine2D/Spine2DRender.cpp">
+      <Filter>Engine\Spine2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/MeshTransformData.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Audio/AudioStreamSource.cpp">
+      <Filter>Engine\Core\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/ShotTrack.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ObjectNodes/SkeletonMeshActorNode.cpp">
+      <Filter>Engine\Core\Graph\ObjectNodes</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/SceneRenderData.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/EnvLightData.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GrassMeshActor.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/ParticleRenderPack.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/ProbeSystem/CaptureProbeRenderEditor.cpp">
+      <Filter>Engine\Core\Editor\ProbeSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/ObjectUltility.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/PostProcess/BloomPass.cpp">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/ReflectionProbeArrayPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/PointLight.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/LightRenderData.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/SSRBindings.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/MeshPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/GraphWindow.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11RenderTarget.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelineEditorInfo.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/RenderCommandList.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Skeleton/TwoBoneIKConstraintEditor.cpp">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/Builders.cpp">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/IRenderTarget.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/GenMipPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/ShaderStage.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/Editor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/LightEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Utility/TextureUtility.cpp">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/IRenderExecution.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Serialization.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/RenderCore/DeferredRenderGraphEditor.cpp">
+      <Filter>Engine\Core\Editor\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Animation/AnimationPoseGraph.cpp">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Importer/IgnoreImporter.cpp">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Terrain/TerrainGeometry.cpp">
+      <Filter>Engine\Core\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/SkeletonMeshRender.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/FlowNodeEditor.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelinePlayer.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/SkeletonMeshActor.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Importer/AssetFileImporter.cpp">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/GraphNodeEditor.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11MeshData.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12InputLayout.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Utility/RenderUtility.cpp">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/SkeletonMeshRenderEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/AnimationBaseEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/ShaderManagerWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/WUIESCMenu.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Character.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/MeshRenderPack.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelinePlayableEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ValueNodeEditor.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/ProgressUI.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/DebugLogWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/ParticleSystem.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Animation/AnimationPoseNodeEditor.cpp">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/ImGuizmo.cpp">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Utility/Boundings.cpp">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/ShaderCode/ShaderCompiler.cpp">
+      <Filter>Engine\Core\ShaderCode</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Object.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/ImPlot/implot_items.cpp">
+      <Filter>Engine\ThirdParty\ImGui\ImPlot</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12DescriptorHeap.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/UVViewer.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/CameraRenderData.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/UIControl.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Importer/TextureImporter.cpp">
+      <Filter>Engine\Core\Importer</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/RigidBody.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Live2D/Live2DMeshData.cpp">
+      <Filter>Engine\Live2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/EditorWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/AssetLoadWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/AudioPlayable.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/CMDWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12BufferPool.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/StateMachine/StateMachineEditor.cpp">
+      <Filter>Engine\Core\Graph\StateMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11SkeletonMeshData.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12CommandListDispatcher.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/CameraRender.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/ForwardRenderGraph.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/ShotTrackEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/Variable.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/MeshData.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/HelpUI.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Physics/PhysicalBody.cpp">
+      <Filter>Engine\Core\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/UIViewport.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/WUIButton.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Live2D/Live2DActorEditor.cpp">
+      <Filter>Engine\Live2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/imgui_TextEditor.cpp">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/GUIUtility.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/DebugRenderData.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/GraphAssetInfo.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/StringUtilityNode.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Light.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/BuildProbeGridPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/PostProcess/SSAOPass.cpp">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Script/PythonScript.cpp">
+      <Filter>Engine\Core\Script</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Live2D/Live2DModel.cpp">
+      <Filter>Engine\Live2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DXGI_Helper.cpp">
+      <Filter>Engine\Vendors</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderCore/DirectShadowRenderPack.cpp">
+      <Filter>Engine\Core\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/UIWindow.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/ESCMenu.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/GraphEditor.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Brane.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Nanite/ClusterBuilder.cpp">
+      <Filter>Engine\Core\Nanite</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/StateMachine/StateMachine.cpp">
+      <Filter>Engine\Core\Graph\StateMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ObjectNodes/ActorNode.cpp">
+      <Filter>Engine\Core\Graph\ObjectNodes</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/ScreenSpaceReflectionPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GUI/AssetBrowser.cpp">
+      <Filter>Engine\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/Drawing.cpp">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/ObjectEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Skeleton/BoneConstraint.cpp">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/WUIImGuiWindow.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Transform.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/DeferredLightingPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Input.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/SkeletonMeshActorEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Spine2D/Spine2DActorEditor.cpp">
+      <Filter>Engine\Spine2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ValueNode.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/MeshActorEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/ClothActorEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="initial.cpp">
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/AudioPlayableEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/Node.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/GraphicType.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelineClip.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11Material.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/PostProcess/SMAAPass.cpp">
+      <Filter>Engine\Core\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/AnimationDataTrack.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelineClipTrack.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Tool/ToolShelf.cpp">
+      <Filter>Engine\Tool</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Base.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/ProbeSystem/ReflectionCaptureProbeRender.cpp">
+      <Filter>Engine\Core\ProbeSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Animation/AnimationStateEditor.cpp">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/ShaderCode/ShaderAdapterCompiler.cpp">
+      <Filter>Engine\Core\ShaderCode</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Utility/SHMath.cpp">
+      <Filter>Engine\Core\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Live2D/Live2DCamera.cpp">
+      <Filter>Engine\Live2D</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Actor.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/MathNode.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/ThirdParty/ImGui/ImGuiNodeEditor/imgui_canvas.cpp">
+      <Filter>Engine\ThirdParty\ImGui\ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/WUI/WUIWindow.cpp">
+      <Filter>Engine\Core\WUI</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Engine.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/ObjectNodes/PhysicsNode.cpp">
+      <Filter>Engine\Core\Graph\ObjectNodes</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX12/DX12GPUBuffer.cpp">
+      <Filter>Engine\Vendors\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderPool.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/ImGUIPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Animation/AnimationClip.cpp">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Graph/GraphBaseEditor.cpp">
+      <Filter>Engine\Core\Graph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/ProbeSystem/EnvLightCaptureProbeRenderEditor.cpp">
+      <Filter>Engine\Core\Editor\ProbeSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Animation/AnimationStateMachine.cpp">
+      <Filter>Engine\Core\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Shape.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/BoneEditor.cpp">
+      <Filter>Engine\Core\Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Asset.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Skeleton/BoneParentConstraintEditor.cpp">
+      <Filter>Engine\Core\Skeleton</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Render.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Terrain/TerrainActor.cpp">
+      <Filter>Engine\Core\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Editor/RenderCore/RenderPassEditor.cpp">
+      <Filter>Engine\Core\Editor\RenderCore</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/Timeline/TimelineClipEditor.cpp">
+      <Filter>Engine\Core\Timeline</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/RenderGraph/VirtualShadowMapDepthPass.cpp">
+      <Filter>Engine\Core\RenderGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Core/SceneCapture.cpp">
+      <Filter>Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="../../Engine/Vendors/DX11/DX11GPUBuffer.cpp">
+      <Filter>Engine\Vendors\DX11</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_GeneratePageFlagsFromPixels.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Engine/ThirdParty/Assimp/Assimp.Module.py">
+      <Filter>Engine\ThirdParty\Assimp</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_InitOutputCommandInstanceListsArgs.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/TerrainMeshData_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_GenerateHierarchicalPageFlags.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/SSAOPassFS.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/ToneMapPass.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/SMAA/SMAA_Config.hmat">
+      <Filter>Resource\Engine\Shaders\PostProcess\SMAA</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/ScreenPass_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/SkeletonMeshData_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/UploadInstanceData.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/UploadMatrix.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/CopyTex2D.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/Toon_IBL_Fragment.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Basic_FS_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/CMAA2/CMAA2_DeferredColorApply2x2.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess\CMAA2</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/PureColor_Fragment.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/Default_Default.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/PBR_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Const_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/CMAA2/CMAA2_ProcessCandidates.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess\CMAA2</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Depth.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PBR_IBL_Transparent.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/TranslucentSSR_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/ParticleData_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/ToneMapPassFS.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_AllocateNewPageMappings.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Editor/VisualReflectionProbe.mat">
+      <Filter>Resource\Engine\Shaders\Editor</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_AllocateCommandInstanceOutputSpace.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PBR_Grid.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/SSRPass.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/Default_Position.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/CMAA2/CMAA2_Config.hmat">
+      <Filter>Resource\Engine\Shaders\PostProcess\CMAA2</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/CMAA2/CMAA2_DebugDrawEdges.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess\CMAA2</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/SH_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/CalEnvLighting.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/CameraData_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_ProcInvalidations.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/TransformData_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_DebugClipmap.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Outline.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Engine/Engine.Module.py">
+      <Filter>Engine</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Basic_VS_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Gamma_Correction_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Engine/ThirdParty/ImGui/ImGui.Module.py">
+      <Filter>Engine\ThirdParty\ImGui</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/VirtualShadowMap_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Toon_IBL.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Engine/ThirdParty/Python37/Python37.Module.py">
+      <Filter>Engine\ThirdParty\Python37</Filter>
+    </None>
+    <None Include="../../Engine/ThirdParty/Live2DCubism/Live2DCubism.Module.py">
+      <Filter>Engine\ThirdParty\Live2DCubism</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/SSRResolvePassFS.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/ReflectionProbe_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/BuildProbeGridLinkList.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Engine/ThirdParty/Remidi/Remidi.Module.py">
+      <Filter>Engine\ThirdParty\Remidi</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/GBuffer_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/GenMipsArray.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Engine/ThirdParty/Spine/Spine.Module.py">
+      <Filter>Engine\ThirdParty\Spine</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/DebugDraw/DebugDrawLines.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\DebugDraw</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/CMAA2/CMAA2_ComputeDispatchArgs.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess\CMAA2</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Grass_PBR.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_MergePhysicalPagesIndirect.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Bindings_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="Editor.Target.py">
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/HiZRayMatch_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Wireframe.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/SMAA/SMAA_NeighborhoodBlending.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess\SMAA</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_SelectPagesToInit.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_CreateCachedPageMappings.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Editor/ImagePPTest.mat">
+      <Filter>Resource\Engine\Shaders\Editor</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Toon_UV.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Editor/ColorBufferTest.mat">
+      <Filter>Resource\Engine\Shaders\Editor</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/SSRTracePassFS.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/MorphData_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/Toon_Fragment.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/LakeWater.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/Default_Outline.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_SortFreePages.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/BloomPassFS.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PBR.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Toon.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Editor/VisualEnvLightProbe.mat">
+      <Filter>Resource\Engine\Shaders\Editor</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Surface_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/CMAA2/CMAA2_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\PostProcess\CMAA2</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/UVViewer.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_InitPhysicalMemoryIndirect.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Engine/ThirdParty/NvCloth/NvCloth.Module.py">
+      <Filter>Engine\ThirdParty\NvCloth</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Live2D.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/ShellFur_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Toon_Transparent.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Editor/ScreenHit.mat">
+      <Filter>Resource\Engine\Shaders\Editor</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/VSMDepth.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_DebugBlit.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Engine/Icon/Logo.ico">
+      <Filter>Engine\Icon</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_PackFreePages.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/UploadTransform.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/Default_Particle.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Spine2D_VS_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Toon_Dither.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/Default_ShellFur.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/DOFPassFS.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Editor/VisualProbeGrid.mat">
+      <Filter>Resource\Engine\Shaders\Editor</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/Empty_Fragment.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Live2D_FS_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Grass_Toon.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_InitPageRects.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="Editor.Module.py">
+    </None>
+    <None Include="../../Engine/ThirdParty/MemTracer/MemTracer.Module.py">
+      <Filter>Engine\ThirdParty\MemTracer</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Spine2D_FS_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Spine2D.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/PBR_IBL_Fragment.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Engine/ThirdParty/STB/STB.Module.py">
+      <Filter>Engine\ThirdParty\STB</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/SMAA/SMAA_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\PostProcess\SMAA</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/DebugDraw/DebugDrawInitArgs.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\DebugDraw</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/PBR_Fragment.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/GenHiZ.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/SMAA/SMAA_BlendingWeightCalculation.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess\SMAA</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PBR_BSDF.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/ClearColor.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/ProbeGrid_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Engine/ThirdParty/RenderDoc/RenderDoc.Module.py">
+      <Filter>Engine\ThirdParty\RenderDoc</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Toon_PBR_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/Default_PostProcess.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_ClearComputeIndirectArgs.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/BlurPass.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Toon_PBR.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/PBR_BSDF_Fragment.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/CompactProbeGrid.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Toon_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/MeshData_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_InitPhysicalPageMetaData.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/DebugDraw_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/DebugDraw/DebugDrawPackFree.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\DebugDraw</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/CopyTex2DArray.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/BlitPass.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/GenMips.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/EnvLight_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Live2D_VS_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_SelectPagesToMerge.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_OutputCommandInstanceLists.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/VolumetricLightFS.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Terrain_TessCtrl_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/SMAA/SMAA_EdgeDetection.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess\SMAA</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/Light_Def.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/ShellFur.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PBR_IBL.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Engine/ThirdParty/Physx4/Physx4.Module.py">
+      <Filter>Engine\ThirdParty\Physx4</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/PostProcess/CMAA2/CMAA2_EdgesColor2x2.mat">
+      <Filter>Resource\Engine\Shaders\PostProcess\CMAA2</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Toon_Specular.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/lib/SSR_Lib.hmat">
+      <Filter>Resource\Engine\Shaders\lib</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Particle.mat">
+      <Filter>Resource\Engine\Shaders</Filter>
+    </None>
+    <None Include="../../Engine/ThirdParty/OpenAlSoft/OpenAlSoft.Module.py">
+      <Filter>Engine\ThirdParty\OpenAlSoft</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Pipeline/VSM/VSM_CullPerPageDrawCommands.mat">
+      <Filter>Resource\Engine\Shaders\Pipeline\VSM</Filter>
+    </None>
+    <None Include="../../Resource/Engine/Shaders/Default/Default_VSMDepth.shadapter">
+      <Filter>Resource\Engine\Shaders\Default</Filter>
+    </None>
+  </ItemGroup>
+</Project>

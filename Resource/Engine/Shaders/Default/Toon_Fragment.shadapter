@@ -1,0 +1,136 @@
+#adapter name toon_fragment
+#fragment
+#condition depth
+#condition depth.vsm
+#condition deferred
+#condition lighting
+#condition lighting.vsm
+#include "../lib/Light_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+
+#include "../lib/Toon_Lib.hmat"
+#include "../lib/GBuffer_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 baseColor;
+uniform float4 shadowColor;
+uniform float4 highlightColor;
+uniform float4 rimColor;
+uniform float4 overColor;
+uniform float shadowCut;
+uniform float shadowCutSmooth;
+uniform float highlightCut;
+uniform float highlightCutSmooth;
+uniform float rimCut;
+uniform float rimCutSmooth;
+uniform float normalScale;
+uniform float clipValue;
+DEF_MAT_END
+
+#if defined(DEFERRED_SHADER_FEATURE)
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(aoMap, 1);
+DEF_TEX2D(normalMap, 2);
+#elif defined(LIGHTING_SHADER_FEATURE)
+DEF_GBUFFER
+DEF_TEX2D(depthMap, 6);
+#else
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(aoMap, 1);
+DEF_TEX2D(normalMap, 2);
+DEF_TEX2D(depthMap, 3);
+#endif
+
+#include "../lib/Surface_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
+
+#ifndef DEFERRED_SHADER_FEATURE
+float getShadow(in DirectLight directLight, in Surface surf)
+{
+    #if defined(VSM_SHADER_FEATURE)
+    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos,
+        surf.Normal, directLight.shadowBias.y);
+    #else
+    return ShadowCalculation(depthMap, depthMapSampler,
+        surf.WorldPos, surf.Normal, directLight);
+    #endif
+}
+#endif
+
+[earlydepthstencil]
+FragmentOut SURFACE_MAIN
+{
+    FragmentOut fout;
+    #ifdef DEPTH_SHADER_FEATURE
+    float alpha = SAMPLE_TEX(colorMap, fin.TexCoords).a * baseColor.a * overColor.a;
+    outputDepth(fin, alpha, clipValue);
+    #else
+    Surface surf = getSurface(fin);
+
+    #ifndef LIGHTING_SHADER_FEATURE
+    float3x3 TBN = cotangent(surf.Normal, surf.WorldPos, surf.TexCoords);
+    float3 tN = normalize(SAMPLE_TEX(normalMap, surf.TexCoords).xyz * 2 - 1) * normalScale;
+    surf.Normal = normalize(mul(tN, TBN));
+    surf.albedo = SAMPLE_TEX(colorMap, fin.TexCoords);
+    surf.ao = SAMPLE_TEX(aoMap, surf.TexCoords).r;
+    surf.albedo.a *= baseColor.a;
+    surf.metallic = 0.1;
+    surf.roughness = 0.9;
+    #endif
+
+    #ifdef DEFERRED_SHADER_FEATURE
+    outputSurface(surf, GBUFFER_OUT_PARAMS(fout));
+    #else
+    float3 V = normalize(camData.camPos - surf.WorldPos);
+    float4 Lo = Float4(0.0f);
+    float L_Dot = 0;
+    float lightInstansity = 0;
+
+    lightInstansity = getLightFinalIntensity(directLight);
+    if (lightInstansity != 0) {
+        float3 L = directLight.direction;
+        float4 Lo_dir = Toon_Lo_DirectLight(directLight, surf.Normal, V, baseColor, highlightColor,
+            highlightCut, highlightCutSmooth);
+        Lo = lerp(shadowColor * lightInstansity, Lo_dir, getShadow(directLight, surf));
+        L_Dot = dot(surf.Normal, L);
+    }
+
+    PointLight localLight;
+    ITER_LOCAL_LIGHT(surf.WorldPos, localLight)
+    {
+        float intensity = getLightFinalIntensity(localLight);
+        if (intensity != 0) {
+            float3 L = normalize(localLight.pos - surf.WorldPos);
+            float distance = length(localLight.pos - surf.WorldPos);
+            float attenuation = distance / localLight.radius;
+            attenuation = max(1 - attenuation * attenuation, 0);
+            float3 radiance = localLight.color * localLight.intensity * attenuation;
+            float4 Lo_point = Toon_Lo(surf.Normal, V, L, radiance, baseColor,
+                highlightColor, highlightCut, highlightCutSmooth);
+            Lo += Lo_point;
+            L_Dot = max(dot(surf.Normal, L) * attenuation, L_Dot);
+            lightInstansity += intensity * attenuation;
+        }
+    }
+    
+    Lo = smoothToon(Lo, shadowColor * lightInstansity, L_Dot, shadowCut, shadowCutSmooth);
+    Lo = smoothToon(rimColor * lightInstansity, Lo, fresnelSchlick(dot(surf.Normal,
+        normalize(camData.camPos - surf.WorldPos)), 0.33f),
+        rimCut, rimCutSmooth);
+
+    Lo *= 0.1f;
+
+    float4 ambient = Toon_Ambient(surf.WorldPos, surf.Normal, surf.albedo, surf.ao);
+
+    fout.FragColor = surf.albedo * Lo + ambient;
+    fout.FragColor.a = surf.albedo.a;
+    fout.FragColor *= overColor;
+    //fout.ssnMask = float4(1);
+    #endif
+
+    #endif
+    return fout;
+}

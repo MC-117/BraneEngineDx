@@ -1,0 +1,34 @@
+﻿#material
+Texture screenMap
+#vertex use postprocess
+#fragment postprocess
+#include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/ProbeGrid_Def.hmat"
+#include "../lib/ScreenPass_Def.hmat"
+
+DEF_TEX2D(screenMap, 0);
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+FS_DEF_OUT_END
+
+FragmentOut DEFAULT_SCREEN_MAIN
+{
+    FragmentOut fout;
+    uint3 gridIndex = getProbeGridIndex(fin.UV * camData.viewSize, 0);
+    ProbeGridIterator iter;
+    initProbeGridIterator(iter, gridIndex);
+    int i = 0;
+    while (iterateProbeGrid(iter)) {
+        i++;
+    }
+    float4 tintColor;
+    if (i == 0)
+        tintColor = float4(1.0f, 0, 0, 1.0f);
+    else if (i == 1)
+        tintColor = float4(0, 1.0f, 0, 1.0f);
+    else
+        tintColor = float4(0, 0, 1.0f, 1.0);
+    fout.FragColor = lerp(SAMPLE_TEX(screenMap, fin.UV), tintColor, 0.5f);
+    return fout;
+}

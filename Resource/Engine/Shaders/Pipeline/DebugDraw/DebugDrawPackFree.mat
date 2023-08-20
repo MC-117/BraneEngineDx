@@ -1,0 +1,40 @@
+#material
+#localsize 256 1 1
+#compute
+#include "../../lib/DebugDraw_Def.hmat"
+
+RWBuffer<uint> lastDebugFlags;
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint tid : SV_DispatchThreadID)
+{
+    uint maxSize;
+    outDebugFlags.GetDimensions(maxSize);
+    uint flagIndex = tid * 2 + 1;
+    if (flagIndex < maxSize) {
+        uint code0 = lastDebugFlags[flagIndex];
+        uint code1 = lastDebugFlags[flagIndex + 1];
+        if (code0 == DEBUG_INDEX_NONE) {
+            outDebugFlags[flagIndex] = flagIndex - 1;
+            outDebugFlags[flagIndex + 1] = flagIndex;
+            return;
+        }
+        DebugPointTable table0 = unpackDebugPointTable(code0);
+        DebugPointTable table1 = unpackDebugPointTable(code1);
+        uint keepFlags = DEBUG_Allocated_FLAG | DEBUG_PERSISTENT_FLAG;
+        uint lineIndex;
+        if ((table0.flags & keepFlags) == keepFlags) {
+            InterlockedAdd(outDebugFlags[0], 2, lineIndex);
+            lineIndex++;
+            outDebugFlags[lineIndex] = code0;
+            outDebugFlags[lineIndex + 1] = code1;
+        }
+        else {
+            InterlockedAdd(lastDebugFlags[0], 2, lineIndex);
+            lineIndex++;
+            lineIndex = maxSize - lineIndex - 1;
+            outDebugFlags[lineIndex] = table0.index;
+            outDebugFlags[lineIndex + 1] = table1.index;
+        }
+    }
+}

@@ -1,0 +1,188 @@
+#order 2450
+#noearlyz
+#castshadow false
+#material
+Scalar noiseUVScale: 500
+Scalar darkCut: 0.5
+Scalar darkSmooth: 0.5
+Scalar roughness: 0.5
+Scalar metallic: 0.5
+Scalar alphaCut: 0.5
+Scalar time: 0
+Scalar windDensity: 1
+Color baseColor: 255, 255, 255, 255
+Color darkColor: 255, 255, 255, 255
+Color shadowColor: 150, 150, 150, 255
+Color noiseColor: 150, 150, 150, 255
+Color overColor: 255, 255, 255, 255
+Color windForce: 2.0, 2.0, 0.0, 0.0
+Texture colorMap: white
+Texture noiseMap: black
+Texture depthMap: white
+#vertex
+#include "lib/TransformData_Def.hmat"
+#include "lib/CameraData_Def.hmat"
+#include "lib/Light_Def.hmat"
+#include "lib/MeshData_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float time;
+uniform float windDensity;
+uniform float4 windForce;
+uniform float noiseUVScale;
+uniform float darkCut;
+uniform float darkSmooth;
+uniform float alphaCut;
+uniform float roughness;
+uniform float metallic;
+uniform float4 baseColor;
+uniform float4 darkColor;
+uniform float4 noiseColor;
+uniform float4 overColor;
+DEF_MAT_END
+
+float2 random2(float2 st){
+    st = float2( dot(st,float2(127.1,311.7)),
+              dot(st,float2(269.5,183.3)) );
+    return -1.0 + 2.0*frac(sin(st)*43758.5453123);
+}
+
+float snoise(float2 st) {
+    float2 i = floor(st);
+    float2 f = frac(st);
+
+    float2 u = f*f*(3.0-2.0*f);
+
+    return lerp( lerp( dot( random2(i + float2(0.0,0.0) ), f - float2(0.0,0.0) ),
+                     dot( random2(i + float2(1.0,0.0) ), f - float2(1.0,0.0) ), u.x),
+                lerp( dot( random2(i + float2(0.0,1.0) ), f - float2(0.0,1.0) ),
+                     dot( random2(i + float2(1.0,1.0) ), f - float2(1.0,1.0) ), u.x), u.y);
+}
+
+DefaultVertexOut MESH_MAIN
+{
+    DefaultVertexOut vout;
+    float4x4 fm = getFinalMat(ins[0]);
+    float4 _WorldPos = mul(float4(pos, 1.0), fm);
+
+    float2 offset = (snoise((_WorldPos.xz + time * normalize(windForce.xy)) *
+        windDensity) - 0.5) * windForce.xy;
+    
+    _WorldPos.xy += offset * uv.y;
+
+    vout.WorldPos = _WorldPos.xyz;
+    vout.LocalPos = pos;
+    vout.svPos = mul(_WorldPos, camData.pmat);
+    vout.Normal = normalize(mul(norm, (float3x3)(fm)));
+    vout.TexCoords = uv;
+    vout.TexCoords.y = 1 - uv.y;
+    vout.InstanceID = ins[0];
+    return vout;
+}
+
+#fragment
+#condition deferred
+#condition lighting
+#include "lib/Light_Def.hmat"
+#include "lib/CameraData_Def.hmat"
+#include "lib/Toon_Lib.hmat"
+#include "lib/PBR_Lib.hmat"
+#include "lib/GBuffer_Def.hmat"
+
+static const float4x4 thresholdMatrix = float4x4(
+1.0 / 17.0,  9.0 / 17.0,  3.0 / 17.0, 11.0 / 17.0,
+13.0 / 17.0,  5.0 / 17.0, 15.0 / 17.0,  7.0 / 17.0,
+4.0 / 17.0, 12.0 / 17.0,  2.0 / 17.0, 10.0 / 17.0,
+16.0 / 17.0,  8.0 / 17.0, 14.0 / 17.0,  6.0 / 17.0
+);
+
+DEF_MAT_BEGIN
+uniform float time;
+uniform float windDensity;
+uniform float4 windForce;
+uniform float noiseUVScale;
+uniform float darkCut;
+uniform float darkSmooth;
+uniform float alphaCut;
+uniform float roughness;
+uniform float metallic;
+uniform float4 baseColor;
+uniform float4 darkColor;
+uniform float4 noiseColor;
+uniform float4 overColor;
+DEF_MAT_END
+
+#if defined(DEFERRED_SHADER_FEATURE)
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(noiseMap, 1);
+#elif defined(LIGHTING_SHADER_FEATURE)
+DEF_GBUFFER
+DEF_TEX2D(depthMap, 6);
+#else
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(noiseMap, 1);
+DEF_TEX2D(depthMap, 2);
+#endif
+
+#include "lib/Surface_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
+
+#ifndef DEFERRED_SHADER_FEATURE
+float getShadow(in DirectLight directLight, in Surface surf)
+{
+    #if defined(VSM_SHADER_FEATURE)
+    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos,
+        surf.Normal, directLight.shadowBias.y);
+    #else
+    return ShadowCalculation(depthMap, depthMapSampler,
+        surf.WorldPos, surf.Normal, directLight);
+    #endif
+}
+#endif
+
+FragmentOut SURFACE_MAIN
+{
+    FragmentOut fout;
+    Surface surf = getSurface(fin);
+
+    #ifndef LIGHTING_SHADER_FEATURE
+    float4 tintColor = smoothToon(darkColor, baseColor, fin.TexCoords.y, darkCut, darkSmooth);
+    tintColor *= lerp(overColor, noiseColor, SAMPLE_TEX(noiseMap, fin.WorldPos.xy / noiseUVScale));
+    surf.albedo = SAMPLE_TEX(colorMap, fin.TexCoords) * tintColor;
+    surf.metallic = metallic;
+    surf.roughness = roughness;
+    #endif
+    
+    if (surf.albedo.a < alphaCut)
+        discard;
+    
+    #ifdef DEFERRED_SHADER_FEATURE
+    outputSurface(surf, GBUFFER_OUT_PARAMS(fout));
+    #else
+    float3 V = normalize(camData.camPos - surf.WorldPos);
+    float3 Lo = Float3(0.0);
+
+    if (directLight.intensity != 0) {
+        float shadowFactor = getShadow(directLight, surf);
+        Lo += PBR_Lo_DirectLight(directLight, surf.Normal, V, surf.albedo.xyz,
+            surf.metallic, surf.roughness) * shadowFactor;
+    }
+
+    PointLight localLight;
+    ITER_LOCAL_LIGHT(surf.WorldPos, localLight)
+    {
+        if (localLight.intensity != 0) {
+            Lo += PBR_Lo_PointLight(localLight, surf.WorldPos, surf.Normal, V, surf.albedo.xyz, surf.metallic, surf.roughness);
+        }
+    }
+
+    float3 ambient = PBR_Ambient(surf.albedo.xyz, surf.ao);
+    float3 color = ambient + Lo;
+    
+    fout.FragColor = float4(color, surf.albedo.a);
+    #endif
+    return fout;
+}

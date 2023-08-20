@@ -1,0 +1,96 @@
+#material
+#localsize 64 1 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+cbuffer CullingData
+{
+	uint instanceCount;
+	uint firstView;
+	uint viewCount;
+    uint maxPerInstanceCmdCount;
+    uint frame;
+    uint3 pad;
+};
+
+StructuredBuffer<VSMDrawInstanceInfo> drawInstanceInfos;
+RWStructuredBuffer<VisiableInstanceInfo> outVisiableInstanceInfos;
+RWStructuredBuffer<uint> outVisiableInstanceCount;
+RWBuffer<uint> outShadowDepthIndirectArgs;
+
+bool isOrtho(ShadowViewInfo viewInfo)
+{
+    return viewInfo.flags == VSM_DirectLight;
+}
+
+bool hasMove(TransformData data)
+{
+    return data.updateFrame == frame;
+}
+
+void writeCmd(uint viewIndex, VSMDrawInstanceInfo drawInfo, bool isStatic)
+{
+    VSMPageInfo pageInfo;
+    pageInfo.viewIndex = viewIndex;
+    pageInfo.isStaticPage = isStatic;
+
+    VisiableInstanceInfo info;
+    info.pageInfo = packVSMPageInfo(pageInfo);
+    info.drawInfo = drawInfo;
+
+    uint visiableInstanceOutOffset = 0;
+    InterlockedAdd(outVisiableInstanceCount[0], 1U, visiableInstanceOutOffset);
+    if (visiableInstanceOutOffset < maxPerInstanceCmdCount) {
+        outVisiableInstanceInfos[visiableInstanceOutOffset] = info;
+    }
+}
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint tid : SV_DispatchThreadID)
+{
+	if (tid >= instanceCount)
+        return;
+
+    VSMDrawInstanceInfo drawInstanceInfo = drawInstanceInfos[tid];
+    const uint insID = drawInstanceInfo.instanceID;
+    const uint argIdx = drawInstanceInfo.indirectArgIndex;
+    TransformData insData = getTransformData(insID);
+    const bool isStaticCache = isStaticTransform(insData);
+
+    uint drawCountForAllViews = 0;
+
+    for (int viewIndex = firstView; viewIndex < firstView + viewCount; viewIndex++) {
+        ShadowViewInfo viewInfo = shadowViewInfos[viewIndex];
+        VSMProjData projData = getVSMProjData(viewInfo.vsmID);
+
+        FrustumCullData cullData = frustumCullBoxOrtho(
+            insData.localCenter,
+            insData.localExtent,
+            -projData.worldCenter,
+            insData.localToWorld,
+            projData.viewOriginToClip);
+        
+        if (cullData.visiable) {
+            const int mipCount = viewInfo.mipCount;
+            uint baseFlagMask = //hasMove(insData) ? VSM_ALLOCATED_FLAG :
+                (isStaticCache ? VSM_STATIC_UNCACHED_FLAG : VSM_DYNAMIC_UNCACHED_FLAG);
+
+            for (int mipLevel = 0; mipLevel < mipCount; mipLevel++) {
+                uint mipViewIndex = mipLevel * viewCount + viewIndex;
+                ShadowViewInfo mipViewInfo = shadowViewInfos[mipViewIndex];
+                uint vsmID = mipViewInfo.vsmID;
+                ScreenRect rect = getScreenRect(mipViewInfo.viewRect, cullData, 4);
+
+                uint4 rectPages = getPageRect(rect, vsmID, mipLevel);
+                uint flagMask = VSM_DETAIL_GEOMETRY_FLAG | baseFlagMask;
+
+                if (overlapsAnyValidPage(vsmID, mipLevel, rectPages, flagMask)) {
+                    drawCountForAllViews++;
+                    writeCmd(mipViewIndex, drawInstanceInfo, isStaticCache);
+                }
+            }
+        }
+    }
+
+    InterlockedAdd(outShadowDepthIndirectArgs[argIdx * DRAW_ELEMENT_INDIRECT_ARGS + DRAW_INDIRECT_INS_COUNT_IDX], drawCountForAllViews);
+}

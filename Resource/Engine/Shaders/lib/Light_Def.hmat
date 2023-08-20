@@ -1,0 +1,102 @@
+#include "Bindings_Def.hmat"
+#include "ProbeGrid_Def.hmat"
+
+struct PointLight
+{
+    float3 pos;
+    float radius;
+    float3 color;
+    float intensity;
+    int vsmID;
+    uint3 pad;
+};
+
+struct DirectLight
+{
+    float4x4 worldToLightView;
+	float4x4 viewOriginToLightView;
+    float4x4 viewToLightClip;
+    float4x4 worldToLightClip;
+    float3 direction;
+    float intensity;
+    float4 shadowBias;
+    int vsmID;
+    float3 pad;
+    float3 color;
+};
+
+cbuffer DirectLightBuffer : register(DIRECT_LIGHT_BIND_INDEX)
+{
+    DirectLight directLight;
+    uint pointLightCount;
+};
+
+PointLight getPointLight(uint probeIndex)
+{
+    PointLight light;
+    uint byteOffset = getProbeByteOffset(probeIndex);
+    float4 posAndRadius = asfloat(probeByteData.Load4(byteOffset));
+    light.pos = posAndRadius.xyz;
+    light.radius = posAndRadius.w;
+    float4 color = asfloat(probeByteData.Load4(byteOffset + 16));
+    light.color = color.rgb;
+    light.intensity = color.a;
+    light.vsmID = asint(probeByteData.Load(byteOffset + 32));
+    light.pad = 0;
+    return light;
+}
+
+void initLocalLightIterator(out ProbeGridIterator iter, float3 worldPos)
+{
+    initProbeGridIterator(iter,
+        getProbeGridIndex(worldPos),PROBE_TYPE_LIGHT);
+}
+
+bool iterateLocalLight(inout ProbeGridIterator iter, out PointLight light)
+{
+    if (iterateProbeGrid(iter)) {
+        light = getPointLight(iter.probeIndex);
+        return true;
+    }
+    return false;
+}
+
+#define ITER_LOCAL_LIGHT(worldPos, localLight) \
+ProbeGridIterator _localIter; \
+initLocalLightIterator(_localIter, worldPos); \
+while(iterateLocalLight(_localIter, localLight))
+
+#define ITER_LOCAL_LIGHT_BEGIN(worldPos, localLight) \
+{ \
+    ITER_LOCAL_LIGHT(worldPos, localLight) {
+
+#define ITER_LOCAL_LIGHT_END } \
+}
+
+float3 getLightRadiance(in DirectLight light)
+{
+    return light.color * light.intensity;
+}
+
+float3 getLightRadiance(in PointLight light, in float3 worldPos)
+{
+    float distance = length(light.pos - worldPos);
+    float attenuation = distance / light.radius;
+    attenuation = max(1 - attenuation * attenuation, 0);
+    return light.color * light.intensity * attenuation;
+}
+
+float rgbToIntensity(float3 rgb)
+{
+    return dot(rgb, float3(0.299f, 0.587f, 0.114f));
+}
+
+float getLightFinalIntensity(in DirectLight light)
+{
+    return rgbToIntensity(light.color) * light.intensity;
+}
+
+float getLightFinalIntensity(in PointLight light)
+{
+    return rgbToIntensity(light.color) * light.intensity;
+}

@@ -1,9 +1,0 @@
-#define SHELL_FUR_BASE_MAT \
-uniform float furLength; \
-uniform float furLengthRand; \
-uniform float furDensity; \
-uniform float furThicknessBase; \
-uniform float furThicknessTip; \
-uniform float furThicknessRand; \
-uniform float furGrowth; \
-uniform float furGrowthRand;

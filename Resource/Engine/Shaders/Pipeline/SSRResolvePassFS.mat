@@ -1,0 +1,90 @@
+#material
+#vertex use postprocess
+#fragment postprocess
+#include "../lib/Light_Def.hmat"
+#include "../lib/ReflectionProbe_def.hmat"
+#include "../lib/Surface_def.hmat"
+#include "../lib/SSR_Lib.hmat"
+
+DEF_TEX2D(gBufferB, 0);
+DEF_TEX2D(gBufferC, 1);
+DEF_TEX2D(gBufferD, 2);
+DEF_TEX2D(hitDataMap, 3);
+DEF_TEX2D(hitColorMap, 4);
+DEF_TEX2D(sceneColorMips, 5);
+DEF_TEX2D(gBufferA, 6);
+DEF_TEX2D(brdfLUT, 7);
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+FS_DEF_OUT_END
+
+float getSceneColorMip(float cocRadius)
+{
+    float mipLevels = getLodLevels(sceneColorMips);
+    return clamp(log2(cocRadius), 0, mipLevels - 1);
+}
+
+FragmentOut DEFAULT_SCREEN_MAIN
+{
+    FragmentOut fout;
+
+    float2 UV = fin.UV;
+    float depth = SAMPLE_TEX_LOD(gBufferB, UV, 0);
+    float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
+    float4 D = SAMPLE_TEX_LOD(gBufferD, UV, 0);
+    float roughness = D.r;
+    float metallic = D.g;
+    float ao = D.a;
+    float3 viewN = normalize(worldDirToView(decodeNormal(C.xyz)));
+    float3 viewPos = uvzPosToView(float3(UV, depth));
+    float3 viewDir = normalize(viewPos);
+    float3 color = 0;
+    float weightSum = 0;
+    float roughnessSq = roughness * roughness;
+    float radius = lerp(0.0005, ssrResolveRadius, roughnessSq);
+    float nDotV = dot(viewN, -viewDir);
+    float coneTangent = lerp(0, roughness * 0.5f, nDotV * sqrt(roughness));
+
+    float4 hitData0 = SAMPLE_TEX_LOD(hitDataMap, UV, 0);
+
+    if (hitData0.a > 0) {
+        for (int i = 0; i < ssrResolveSamples; i++) {
+            float2 offUV = Hammersley16(i, ssrResolveSamples, uint2(0x0f3a, 0xd20c)) *
+                float2(1, rcp(camData.aspect)) * radius * 10;
+            float2 sampleUV = UV + offUV;
+            float4 hitData = SAMPLE_TEX_LOD(hitDataMap, sampleUV, 0);
+            float2 hitUV = hitData.xy + offUV;
+
+            float cocRadius = coneTangent * length(hitUV - sampleUV) * 100;
+            float sceneColorMip = getSceneColorMip(cocRadius);
+
+            float4 hitColor = SAMPLE_TEX_LOD(hitColorMap, sampleUV, 0);
+            float4 sceneColor = SAMPLE_TEX_LOD(sceneColorMips, hitUV, sceneColorMip);
+            float3 sampleColor = lerp(hitColor.rgb, sceneColor.rgb, hitColor.a);
+            //sampleColor /= 1 + luminance(sampleColor);
+
+            //float3 hitViewPos = uvzPosToView(hitData.xyz);
+            float weight = max(1e-5, hitData.a);//SSR_BRDF(-viewDir, hitViewPos - viewPos, viewN, roughness) / max(1e-5, hitData.a);
+            
+            //weight = max(weight, hitData.a);
+            weightSum += weight;
+            color += sampleColor * weight;
+        }
+
+        color *= rcp(weightSum);
+        //color /= 1 - luminance(color);
+        color = max(1e-5, color);// * smoothstep(0.4f, 0.7f, 1 - roughness);
+
+        float2 envBRDF = SAMPLE_TEX(brdfLUT, float2(nDotV, 1 - roughness)).rg;
+        float a = saturate(pow(nDotV + ao, roughnessSq) - 1 + ao);
+        float3 albedo = SAMPLE_TEX_LOD(gBufferA, UV, 0).rgb;
+        float3 F0 = ComputeF0(albedo, metallic);
+        a *= F0 * envBRDF.x + saturate(50.0 * F0.g) * envBRDF.y;
+        color *= a;
+    }
+
+    fout.FragColor = float4(color, 1);
+
+    return fout;
+}

@@ -1,0 +1,42 @@
+#order 1000
+#material
+Color sunColor: 255, 204, 102, 255
+Color overallColor: 140, 140, 140, 255
+Color lightDirection: 1, 0, 0, 1
+Scalar sunBrightness: 2
+Scalar sunHeight: 1
+Scalar sunRadius: 0.0003
+Scalar radius: 3276800
+Texture skyMap: black
+
+#vertex use default
+#fragment
+#include "../Shaders/lib/Basic_FS_Lib.hmat"
+#include "../Shaders/lib/CameraData_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 sunColor;
+uniform float4 overallColor;
+uniform float4 lightDirection;
+uniform float sunBrightness;
+uniform float sunHeight;
+uniform float sunRadius;
+uniform float radius;
+DEF_MAT_END
+
+DEF_TEX2D(skyMap, 0);
+
+float sphereMask(float pos, float center, float radius, float hardness) {
+    return clamp((1 - abs(pos - center) / radius) / (1 - hardness), 0, 1);
+}
+
+float4 DEFAULT_FS_MAIN : SV_TARGET
+{
+    float3 cameraVector = normalize(fin.WorldPos - camData.camPos);
+    float sunVal = dot(normalize(lightDirection.xyz), cameraVector);
+    float4 sunCol = sphereMask(sunVal, 1, sunRadius, 0) * sunBrightness * sunColor;
+    float4 SkyCol = SAMPLE_TEX(skyMap, fin.TexCoords);
+    float4 oCol = sunCol + SkyCol;
+    oCol = oCol * overallColor * 1.5;
+    return oCol;
+}

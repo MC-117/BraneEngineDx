@@ -1,0 +1,88 @@
+#material
+#localsize 32 32 1
+#compute
+#include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/SH_Lib.hmat"
+
+#define MASK(a, b) ((a) == (b) ? 1 : 0)
+
+struct RGBASHCoeff3Data
+{
+    float4 coeffs[9];
+};
+
+DEF_TEX2DARRAY(lightCubeMap, 0);
+RWStructuredBuffer<RGBASHCoeff3Data> outSHCoeffs : register(u0);
+
+groupshared float4 samples[LOCAL_SIZE_X][LOCAL_SIZE_Y];
+
+float3 getCubeDir(float2 uv, uint face)
+{
+	if (face == 0)
+		return float3(1, -uv.y, -uv.x);
+	else if (face == 1)
+		return float3(-1, -uv.y, uv.x);
+	else if (face == 2)
+		return float3(uv.x, 1, uv.y);
+	else if (face == 3)
+		return float3(uv.x, -1, -uv.y);
+	else if (face == 4)
+		return float3(uv.x, -uv.y, 1);
+	else
+		return float3(-uv.x, -uv.y, -1);
+}
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint3 texel : SV_DispatchThreadID)
+{
+    float2 uv = texel.xy / float2(LOCAL_SIZE_X, LOCAL_SIZE_Y);
+    float2 scaledUV = uv * 2 - 1;
+    float squaredUV = 1 + dot(scaledUV, scaledUV);
+	float texelWeight = 4 / (sqrt(squaredUV) * squaredUV);
+    uint cubeFace = texel.z;
+    float3 cubeDir = normalize(getCubeDir(scaledUV, cubeFace));
+    SHCoeff3 shCoeffs = SHBasisFunction3(cubeDir);
+    float3 lightColor = LOAD_TEX(lightCubeMap, float4(texel, 0)).rgb;
+
+    RGBASHCoeff3Data outSHCoeff;
+
+    for (uint coeffIndex = 0; coeffIndex < 9; coeffIndex++) {
+        float4 coeffMask0 = float4(
+            MASK(coeffIndex, 0),
+            MASK(coeffIndex, 1),
+            MASK(coeffIndex, 2),
+            MASK(coeffIndex, 3));
+        float4 coeffMask1 = float4(
+            MASK(coeffIndex, 4),
+            MASK(coeffIndex, 5),
+            MASK(coeffIndex, 6),
+            MASK(coeffIndex, 7));
+        float coeffMask2 = MASK(coeffIndex, 8);
+        
+        float shCoeff =
+            dot(shCoeffs.V0, coeffMask0) +
+            dot(shCoeffs.V1, coeffMask1) +
+            shCoeffs.V2 * coeffMask2;
+        
+        float4 curSample = float4(lightColor * shCoeff * texelWeight, texelWeight);
+
+        for (uint step = 1; step < LOCAL_SIZE_X; step<<=1) {
+            if (all((texel.xy % step) == 0)) {
+                samples[texel.x][texel.y] = curSample;
+            }
+            GroupMemoryBarrierWithGroupSync();
+            if (all((texel.xy % (step << 1)) == 0)) {
+                curSample += samples[texel.x       ][texel.y + step];
+                curSample += samples[texel.x + step][texel.y       ];
+                curSample += samples[texel.x + step][texel.y + step];
+                curSample /= 4.0f;
+            }
+            GroupMemoryBarrierWithGroupSync();
+        }
+        if (all(texel.xy == 0))
+            outSHCoeff.coeffs[coeffIndex] = curSample;
+    }
+
+    if (all(texel.xy == 0))
+        outSHCoeffs[cubeFace] = outSHCoeff;
+}

@@ -340,10 +340,10 @@ ASALocalRun/
 healthchecksdb
 
 # Not ignore thirdparty library
-!/BraneEngineDx/ThirdParty
-!/BraneEngineDx/ThirdParty/*
-!/BraneEngineDx/ThirdParty/*/*
-!/BraneEngineDx/ThirdParty/*/*/*
-!/BraneEngineDx/ThirdParty/*/*/*/*
-!/BraneEngineDx/ThirdParty/*/*/*/*/*
-!/BraneEngineDx/ThirdParty/*/*/*/*/*/*
+!/Engine/ThirdParty
+!/Engine/ThirdParty/*
+!/Engine/ThirdParty/*/*
+!/Engine/ThirdParty/*/*/*
+!/Engine/ThirdParty/*/*/*/*
+!/Engine/ThirdParty/*/*/*/*/*
+!/Engine/ThirdParty/*/*/*/*/*/*

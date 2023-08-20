@@ -1,0 +1,65 @@
+#include "Basic_FS_Lib.hmat"
+
+struct ReflectionProbeData
+{
+	float3 position;
+	float radius;
+	float4 tintColor;
+	float falloff;
+	float cutoff;
+	int cubeMapIndex;
+	int pad;
+};
+
+TextureCubeArray reflectionCubeMap : register(RELFECTION_PROBE_CUBEMAP_INDEX);
+SamplerState reflectionCubeMapSampler : register(RELFECTION_PROBE_CUBEMAP_SAMPLER_INDEX);
+
+#define REFLECTION_CAPTURE_ROUGHEST_MIP 1
+#define REFLECTION_CAPTURE_ROUGHNESS_MIP_SCALE 1.2
+
+ReflectionProbeData getReflectionProbeData(uint probeIndex)
+{
+	ReflectionProbeData data;
+    uint byteOffset = getProbeByteOffset(probeIndex);
+    float4 posAndRadius = asfloat(probeByteData.Load4(byteOffset));
+    data.position = posAndRadius.xyz;
+    data.radius = posAndRadius.w;
+    data.tintColor = asfloat(probeByteData.Load4(byteOffset + 16));
+	float2 offData = asfloat(probeByteData.Load4(byteOffset + 32));
+    data.falloff = offData.x;
+    data.cutoff = offData.y;
+	int2 indexData = asint(probeByteData.Load4(byteOffset + 40));
+    data.cubeMapIndex = indexData.x;
+	return data;
+}
+
+float getReflectionMip(float roughness)
+{
+	uint mipLevels = getLodLevels(reflectionCubeMap) - 1;
+	float levelFrom1x1 = REFLECTION_CAPTURE_ROUGHEST_MIP - REFLECTION_CAPTURE_ROUGHNESS_MIP_SCALE * log2(max(roughness, 0.001));
+	return mipLevels - 1 - levelFrom1x1;
+}
+
+float4 getReflectionColor(float3 L, float3 worldPos, float mipLevel = 0.0f)
+{
+	float minDis = 10000000;
+	float4 color = float4(0, 0, 0, 0);
+	float weightSum = 0;
+	uint3 gridIndex = getProbeGridIndex(worldPos);
+	ProbeGridIterator iter;
+	initProbeGridIterator(iter, gridIndex, PROBE_TYPE_REF);
+	while (iterateProbeGrid(iter)) {
+		ReflectionProbeData data = getReflectionProbeData(iter.probeIndex);
+		if (data.cubeMapIndex >= 0) {
+			float dis = distance(data.position, worldPos);
+			float weight = 1 - dis / data.radius;
+			if (weight > 0.0001) {
+				float4 sampleColor = SAMPLE_TEX_LOD(reflectionCubeMap, float4(L, data.cubeMapIndex), mipLevel);
+				color += sampleColor * weight * smoothstep(data.cutoff, data.falloff, data.radius - dis) * data.tintColor;
+				weightSum += weight;
+			}
+		}
+	}
+	color *= rcp(weightSum);
+	return max(0, color);
+}

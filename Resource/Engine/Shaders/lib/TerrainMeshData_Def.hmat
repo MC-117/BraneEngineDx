@@ -1,0 +1,28 @@
+#include "Basic_VS_Lib.hmat"
+#define TERRAIN_MAIN main(uint2 ins : INS, float3 pos : POSITION, float2 uv : TEXCOORD, uint vertexID : SV_VertexID)
+
+struct DefaultTerrainVertexOut
+{
+    float4x4 TransMat : MATRIX;
+    float3 Normal : NORMAL;
+    float3 WorldScale : WOLRDSCALE;
+    float3 WorldPos : POSITION;
+    float3 LocalPos : LOCALPOS;
+    float2 TexCoords : TEXCOORD;
+    float2 InstanceID : INSTANCEID;
+};
+
+struct DefaultTerrainPatchTess
+{
+    float svEdge[4] : SV_TessFactor;
+    float svInside[2] : SV_InsideTessFactor;
+};
+
+cbuffer TerrainData : register(MAT_BASE_BIND_INDEX)
+{
+    float terrainUnitSize;
+    float terrainHeight;
+    int2 terrainGrid;
+    float terrainTessTriSize;
+    float3 terrainPading;
+};

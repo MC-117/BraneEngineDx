@@ -1,0 +1,18 @@
+#include "MeshData_Def.hmat"
+#include "Bindings_Def.hmat"
+
+#define LIVE2D_VS_MAIN MESH_MAIN
+
+struct Live2DVertexOut
+{
+    float4 Position : SV_POSITION;
+    float2 uv : TEXCOORD0;
+    float4 clipPosition : TEXCOORD1;
+};
+
+DEF_MAT_BEGIN
+uniform float4x4 projectMatrix;
+uniform float4x4 clipMatrix;
+uniform float4 baseColor;
+uniform float4 channelFlag;
+DEF_MAT_END

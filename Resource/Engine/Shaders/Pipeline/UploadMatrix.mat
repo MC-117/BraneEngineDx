@@ -1,0 +1,18 @@
+#material
+#localsize 16 1
+#compute
+#include "../lib/Basic_FS_Lib.hmat"
+
+Buffer<uint> indexBuf : TEX_BINDING(0);
+StructuredBuffer<float4x4> srcBuf : TEX_BINDING(1);
+RWStructuredBuffer<float4x4> dstBuf : register(u0);
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint tid : SV_DispatchThreadID)
+{
+	uint size = indexBuf[0];
+    if (tid < size) {
+        uint index = indexBuf[tid + 1];
+        dstBuf[index] = srcBuf[tid];
+    }
+}

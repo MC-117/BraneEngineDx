@@ -1,0 +1,135 @@
+#include "CameraData_Def.hmat"
+
+#define PROBE_TYPE_LIGHT 0
+#define PROBE_TYPE_REF 1
+#define PROBE_TYPE_ENV 2
+#define PROBE_TYPE_COUNT 3
+#define PROBE_TYPE_RANGE 4
+
+struct ProbeGridCulledHead
+{
+	uint listRange[PROBE_TYPE_RANGE];
+};
+
+ByteAddressBuffer probeByteData : register(PROBE_GRID_DATA_BIND_INDEX);
+Buffer<uint> probeGridCulledList : register(PROBE_GRID_LIST_BIND_INDEX);
+StructuredBuffer<ProbeGridCulledHead> probeGridCulledHead : register(PROBE_GRID_HEAD_BIND_INDEX);
+
+void initProbeGridCulledHead(out ProbeGridCulledHead head)
+{
+	[unroll(PROBE_TYPE_RANGE)] for (int i = 0; i < PROBE_TYPE_RANGE; i++) {
+		head.listRange[i] = 0;
+	}
+}
+
+void offsetProbeRange(inout ProbeGridCulledHead head, uint offset)
+{
+	[unroll(PROBE_TYPE_RANGE)] for (int i = 0; i < PROBE_TYPE_RANGE; i++) {
+		head.listRange[i] += offset;
+	}
+}
+
+void incProbeCount(inout ProbeGridCulledHead head, uint type)
+{
+    for (int i = type + 1; i < PROBE_TYPE_RANGE; i++)
+	    head.listRange[i]++;
+}
+
+void incProbeOffset(inout ProbeGridCulledHead head, uint type)
+{
+    head.listRange[type]++;
+}
+
+uint getProbeOffset(in ProbeGridCulledHead head)
+{
+	return head.listRange[0];
+}
+
+uint getProbeOffset(in ProbeGridCulledHead head, uint type)
+{
+	return head.listRange[type];
+}
+
+uint getProbeCount(in ProbeGridCulledHead head)
+{
+	return head.listRange[PROBE_TYPE_COUNT] - head.listRange[0];
+}
+
+uint getProbeCount(in ProbeGridCulledHead head, uint type)
+{
+	return head.listRange[type + 1] - head.listRange[type];
+}
+
+uint getProbeCount()
+{
+	return probeCount;
+}
+
+uint getProbeGridFlatIndex(uint3 gridIndex)
+{
+	return (gridIndex.z * probeGridSize.y +
+        gridIndex.y) * probeGridSize.x + gridIndex.x;
+}
+
+uint getProbeByteOffset(uint probeIndex)
+{
+	return probeIndex * probeByteWidth;
+}
+
+float4 getProbeSphere(uint probeIndex)
+{
+	return asfloat(probeByteData.Load4(getProbeByteOffset(probeIndex)));
+}
+
+uint getProbeType(uint probeIndex)
+{
+	return probeByteData.Load(getProbeByteOffset(probeIndex + 1) - 4);
+}
+
+uint3 getProbeGridIndex(float2 screenPos, float viewDepth)
+{
+	uint zSlice = (uint)(max(0, log2(viewDepth * probeGridZParams.x + probeGridZParams.y) * probeGridZParams.z));
+	zSlice = min(zSlice, (uint)(probeGridSize.z - 1));
+	return uint3(((uint2)screenPos) >> probeGridPixelSizeShift, zSlice);
+}
+
+uint3 getProbeGridIndex(float3 worldPos)
+{
+	float3 viewPos = worldPosToView(worldPos);
+	float2 screenPos = viewPosToUVZ(viewPos).xy * camData.viewSize;
+	return getProbeGridIndex(screenPos, -viewPos.z);
+}
+
+struct ProbeGridIterator
+{
+	uint indexBegin;
+	uint indexEnd;
+	uint probeIndex;
+};
+
+void initProbeGridIterator(out ProbeGridIterator iter, uint3 girdIndex)
+{
+	uint flatIndex = getProbeGridFlatIndex(girdIndex);
+	ProbeGridCulledHead head = probeGridCulledHead[flatIndex];
+	iter.indexBegin = getProbeOffset(head);
+	iter.indexEnd = getProbeOffset(head, PROBE_TYPE_COUNT);
+	iter.probeIndex = -1;
+}
+
+void initProbeGridIterator(out ProbeGridIterator iter, uint3 girdIndex, uint probeType)
+{
+	uint flatIndex = getProbeGridFlatIndex(girdIndex);
+	ProbeGridCulledHead head = probeGridCulledHead[flatIndex];
+	iter.indexBegin = getProbeOffset(head, probeType);
+	iter.indexEnd = getProbeOffset(head, probeType + 1);
+	iter.probeIndex = -1;
+}
+
+bool iterateProbeGrid(inout ProbeGridIterator iter)
+{
+	if (iter.indexBegin >= iter.indexEnd)
+		return false;
+	iter.probeIndex = probeGridCulledList[iter.indexBegin];
+	iter.indexBegin++;
+	return true;
+}

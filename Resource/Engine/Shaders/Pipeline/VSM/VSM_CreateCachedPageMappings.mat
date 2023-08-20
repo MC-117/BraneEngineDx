@@ -1,0 +1,98 @@
+#material
+#localsize 256 1 1
+#compute
+#condition custom1 VSM_HAS_CACHE
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 tid : SV_DispatchThreadID)
+{
+    if (tid.x >= VSM_PAGE_TABLE_SIZE)
+        return;
+
+    uint pageOffset = tid.x;
+    uint vsmID = tid.y;
+    uint globalPageOffset = calcPageTableLevelOffset(vsmID, 0) + pageOffset;
+
+    uint resultPageTable = VSM_PHYSICAL_PAGE_INVALID;
+	uint resultPageFlags = 0U;
+
+    const uint requestFlags = pageRequestFlags[globalPageOffset];
+    {//if (requestFlags != 0) {
+#if defined(VSM_HAS_CACHE)
+        const bool useStaticCache = doesUseStaticCacheMode();
+        uint prevVSMID = vsmPrevData[vsmID].vsmID;
+        const int offsetScale = (VSM_L0_PAGES >> 2);
+		const int2 clipmapCornerOffsetDelta = offsetScale * vsmPrevData[vsmID].clipmapCornerOffsetDelta;
+
+        if (prevVSMID != NONE_VSMID) {
+            const VSMProjData projData = getVSMProjData(vsmID);
+
+            uint mipLevel = 0U;
+            uint2 pageAddress = uint2(0, 0);
+            calcPageAddressFromIndex(pageOffset, mipLevel, pageAddress);
+
+            int2 prevPageAddress = int2(pageAddress);
+            if (projData.lightType == VSM_DirectLight)
+                prevPageAddress += clipmapCornerOffsetDelta;
+            
+            if (all(prevPageAddress >= 0) &&
+                all(prevPageAddress < (uint(VSM_L0_PAGES) >> mipLevel))) {
+                uint prevGlobalOffset = calcPageOffset(prevVSMID, mipLevel, uint2(prevPageAddress));
+
+                const uint prevFlags = prevPageFlags[prevGlobalOffset] & VSM_PAGE_FLAGS_BITS_MASK;
+
+                bool matchesDetailGeometryFlag = (requestFlags & VSM_DETAIL_GEOMETRY_FLAG) == (prevFlags & VSM_DETAIL_GEOMETRY_FLAG);
+
+                if ((prevFlags & VSM_ALLOCATED_FLAG) &&
+                    (matchesDetailGeometryFlag || (requestFlags == 0 && !projData.uncached))) {
+                    uint2 physAddress = vsmDecodePageTable(prevPageTable[prevGlobalOffset]).physAddress;
+                    uint physPageIndex = physPageAddressToIndex(physAddress);
+                    VSMPhysPageMetaData prevMetaData = prevPhysPageMetaData[physPageIndex];
+
+                    if ((prevMetaData.flags & VSM_ALLOCATED_FLAG) != 0) {
+                        uint invalidationFlags = prevMetaData.flags >> VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT;
+                        bool isDynamicValid = useStaticCache ?
+                            (invalidationFlags & VSM_DYNAMIC_UNCACHED_FLAG) == 0 :
+                            (invalidationFlags == 0);
+                        bool isStaticValid = useStaticCache ?
+                            (invalidationFlags & VSM_STATIC_UNCACHED_FLAG) == 0 :
+                            (invalidationFlags == 0);
+                            
+                        if (isStaticValid) {
+                            resultPageTable = vsmEncodePageTable(physAddress);
+                            uint basePageFlags = prevFlags & ~(VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG);
+                            uint extraPageFlags = (projData.uncached ? (VSM_DYNAMIC_UNCACHED_FLAG | VSM_STATIC_UNCACHED_FLAG) :
+                                (isDynamicValid ? 0 : VSM_DYNAMIC_UNCACHED_FLAG));
+                            resultPageFlags = basePageFlags | (requestFlags == 0 ? 0 : extraPageFlags);
+
+                            uint physFlags = projData.uncached ? VSM_PHYSICAL_FLAG_VIEW_UNCACHED : 0U;
+
+                            VSMPhysPageMetaData outMeteData;
+                            outMeteData.age = requestFlags == 0 ? prevMetaData.age + 1 : 0;
+                            outMeteData.flags = basePageFlags | physFlags |
+                                (requestFlags == 0 ? (invalidationFlags << VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT) : extraPageFlags);
+                            outMeteData.virtualPageOffset = globalPageOffset;
+                            outMeteData.vsmID = vsmID;
+                            outPhysPageMetaData[physPageIndex] = outMeteData;
+                        }
+                    }
+                }
+            }
+        }
+#endif
+
+        if (resultPageFlags == 0U && requestFlags != 0) {
+            int requestIndex = 0;
+            InterlockedAdd(outPhysPageAllocRequests[vsmInfo.maxPhysPages].globalPageOffset, 1, requestIndex);
+
+            if (requestIndex < vsmInfo.maxPhysPages) {
+                outPhysPageAllocRequests[requestIndex].globalPageOffset = globalPageOffset;
+                outPhysPageAllocRequests[requestIndex].vsmID = vsmID;
+            }
+        }
+    }
+
+    outPageTable[globalPageOffset] = resultPageTable;
+    outPageFlags[globalPageOffset] = resultPageFlags;
+}
