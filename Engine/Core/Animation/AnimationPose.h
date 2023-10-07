@@ -23,7 +23,7 @@ enum struct AnimationBlendMode : unsigned char
 	Replace, Additive
 };
 
-struct TransformData
+struct ENGINE_API TransformData
 {
 	Vector3f position = { 0, 0, 0 };
 	Quaternionf rotation = Quaternionf::Identity();
@@ -39,7 +39,7 @@ struct TransformData
 	TransformData& mutiply(float value);
 };
 
-struct AnimationPose
+struct ENGINE_API AnimationPose
 {
 	Skeleton* skeleton;
 	MorphTargetRemapper* morphTargetRemapper;

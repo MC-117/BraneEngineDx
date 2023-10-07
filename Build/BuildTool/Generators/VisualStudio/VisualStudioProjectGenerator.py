@@ -34,8 +34,16 @@ class VSTargetConfig:
         self.sourcePathStr : str = ''.join([''.join(item+";" for item in module.sourcePaths) for module in config.modules])
         self.libraryStr : str = ''.join([''.join(item+";" for item in module.libFiles) for module in config.modules])
 
-        self.preprocessorDefinitionStr : str = ''.join([''.join(item+";" for item in module.preprocessorDefinitions) for module in config.modules])
-        self.preprocessorDefinitionStr += getDebugMacro(config.enableDebug) + ';'
+        apiDefine = ''
+        if config.target.type == TargetType.ModuleDll:
+            apiDefine = '__declspec(dllexport)'
+        elif config.target.type == TargetType.Executable or config.target.type == TargetType.SharedDll:
+            apiDefine = '__declspec(dllimport)'
+        moduleDefines = [getDebugMacro(config.enableDebug)]
+        for module in config.modules:
+            moduleDefines.extend(module.preprocessorDefinitions)
+            moduleDefines.append(f'{module.name.upper()}_API={apiDefine}')
+        self.preprocessorDefinitionStr = ';'.join(moduleDefines) + ';'
 
         self.includeFiles : list[str] = config.includeFiles
         self.sourceFiles : list[str] = config.sourceFiles
@@ -96,9 +104,9 @@ class VisualStudioProjectGenerator(ProjectGenerator, name = "VS"):
         def getTargetTypeName(targetType : TargetType):
             if targetType == TargetType.Executable:
                 return 'Application'
-            elif targetType == TargetType.StaticLib:
+            elif targetType == TargetType.StaticLib or targetType == TargetType.ModuleLib:
                 return 'StaticLibrary'
-            elif targetType == TargetType.SharedDll:
+            elif targetType == TargetType.SharedDll or targetType == TargetType.ModuleDll:
                 return 'DynamicLibrary'
             raise TypeError(targetType)
         
@@ -315,7 +323,6 @@ f'''
             
             w.wl('<PropertyGroup Label="UserMacros" />')
 
-            workPathByProjPath = Path(os.path.relpath(os.curdir, target.getPath())).as_posix()
             for config in vsTargetConfigs:
                 w.ss(f'<PropertyGroup Condition="\'$(Configuration)|$(Platform)\'==\'{config.conditionStr}\'">')
                 w.wl(f'<LinkIncremental>{config.enableDebug}</LinkIncremental>')
@@ -324,14 +331,10 @@ f'''
                 w.wl(f'<SourcePath>{config.sourcePathStr}$(VC_SourcePath);</SourcePath>')
                 
                 if config.intermediatePath:
-                    w.wl(f'<IntDir>{config.intermediatePath}</IntDir>')
-                else:
-                    w.wl(f'<IntDir>{workPathByProjPath}/Intermediate/{config.plaform.name}/$(Configuration)/$(ProjectName)</IntDir>')
+                    w.wl(f'<IntDir>{config.intermediatePath}/</IntDir>')
                 
                 if config.outputPath:
-                    w.wl(f'<OutDir>{config.outputPath}</OutDir>')
-                else:
-                    w.wl(f'<OutDir>{workPathByProjPath}/Binaries/{config.plaform.name}/$(Configuration)/$(ProjectName)</OutDir>')
+                    w.wl(f'<OutDir>{config.outputPath}/</OutDir>')
                 
                 if config.outputName:
                     w.wl(f'<TargetName>{config.outputName}</TargetName>')
@@ -364,10 +367,15 @@ f'''
                 w.wl(f'<EnableDpiAwareness>{target.enableDpiAwareness}</EnableDpiAwareness>')
                 w.se('</Manifest>')
 
-                w.ss('<PostBuildEvent>')
-                copyCmd = 'echo f|xcopy "$(ProjectDir){}" "$(TargetDir){}" /y /d\n'
-                w.wl(f'<Command>{"".join([copyCmd.format(os.path.normpath(dllFile), os.path.basename(dllFile)) for dllFile in config.dllFiles])}</Command>')
-                w.se('</PostBuildEvent>')
+                w.ss('<CustomBuildStep>')
+                if target.type == TargetType.Executable:
+                    copyCmd = 'echo f|xcopy "$(ProjectDir){}" "$(TargetDir){}" /y /d\n'
+                    inputFile = "$(ProjectDir){}"
+                    outputFile = "$(TargetDir){}"
+                    w.wl(f'<Command>{"".join([copyCmd.format(os.path.normpath(dllFile), os.path.basename(dllFile)) for dllFile in config.dllFiles])}</Command>')
+                    w.wl(f'<Inputs>{";".join([inputFile.format(os.path.normpath(dllFile)) for dllFile in config.dllFiles])}</Inputs>')
+                    w.wl(f'<Outputs>{";".join([outputFile.format(os.path.basename(dllFile)) for dllFile in config.dllFiles])}</Outputs>')
+                w.se('</CustomBuildStep>')
                 
                 w.se('</ItemDefinitionGroup>')
             

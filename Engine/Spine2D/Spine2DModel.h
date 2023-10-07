@@ -7,7 +7,7 @@
 
 class AssetInfo;
 
-class Spine2DAnimation
+class ENGINE_API Spine2DAnimation
 {
 	friend class Spine2DModel;
 	friend class Spine2DActor;
@@ -20,7 +20,7 @@ protected:
 	spine::Animation* animation = NULL;
 };
 
-class Spine2DModel
+class ENGINE_API Spine2DModel
 {
 public:
 	Spine2DModel();

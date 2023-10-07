@@ -18,7 +18,7 @@ class PhysicalConstraint;
 
 class Object;
 
-class ObjectBehavior : public Base
+class ENGINE_API ObjectBehavior : public Base
 {
 	friend class Object;
 public:
@@ -45,7 +45,7 @@ protected:
 	Object* object = NULL;
 };
 
-class Object : public Base
+class ENGINE_API Object : public Base
 {
 public:
 	Serialize(Object, Base);
@@ -117,7 +117,7 @@ protected:
 	virtual void addInternalNode(Object& object);
 };
 
-class ObjectIterator
+class ENGINE_API ObjectIterator
 {
 public:
 	ObjectIterator(Object* root);
@@ -131,7 +131,7 @@ protected:
 	bool delay = false;
 };
 
-class ObjectConstIterator
+class ENGINE_API ObjectConstIterator
 {
 public:
 	ObjectConstIterator(const Object* root);
@@ -149,7 +149,7 @@ enum InstanceRuleEnum
 	IR_Default, IR_WorldUniqueName, IR_ExistUniqueName
 };
 
-void ChildrenInstantiateObject(const SerializationInfo& from, Object* pObj, InstanceRuleEnum rule = IR_Default);
+ENGINE_API void ChildrenInstantiateObject(const SerializationInfo& from, Object* pObj, InstanceRuleEnum rule = IR_Default);
 
 #define ChildrenInstantiate(Type, from, pObj) ChildrenInstantiate##Type(from, pObj);
 

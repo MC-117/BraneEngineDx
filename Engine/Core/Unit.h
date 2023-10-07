@@ -191,7 +191,7 @@ bool Unit2D<T>::operator!=(const Unit2D<T>& u) const
 	return x != u.x || y != u.y;
 }
 
-struct Color
+struct ENGINE_API Color
 {
 	float r = 0, g = 0, b = 0, a = 0;
 
@@ -222,6 +222,14 @@ struct Color
 	bool operator!=(const Color& c) const;
 };
 
+struct LineDrawData
+{
+	Vector4f p0;
+	Color c0;
+	Vector4f p1;
+	Color c1;
+};
+
 enum TransformSpace {
 	WORLD, LOCAL, RELATE
 };
@@ -241,7 +249,7 @@ struct DrawElementsIndirectCommand {
 	unsigned int baseInstance;
 };
 
-struct InstanceDrawData
+struct ENGINE_API InstanceDrawData
 {
 	unsigned int instanceID;
 	unsigned int baseVertex;
@@ -403,7 +411,7 @@ inline T* Sampler<T>::toArray(bool atStack)
 	return array;
 }
 
-struct Time : public chrono::steady_clock::time_point
+struct ENGINE_API Time : public chrono::steady_clock::time_point
 {
 public:
 	Time(const __int64& nanosecond = 0);
@@ -411,27 +419,27 @@ public:
 	Time(const chrono::duration<long long, nano>& t);
 	Time(const Time& t);
 
-	inline unsigned long long toNanosecond() {
+	inline unsigned long long toNanosecond() const {
 		return time_since_epoch().count();
 	}
 
-	inline double toMillisecond() {
+	inline double toMillisecond() const {
 		return time_since_epoch().count() * 0.000001;
 	}
 
-	inline double toSecond() {
+	inline double toSecond() const {
 		return time_since_epoch().count() * 0.000000001;
 	}
 
-	unsigned int getDay();
-	unsigned int getHour();
-	unsigned int getMinute();
-	unsigned int getSecond();
-	unsigned int getMillisecond();
-	unsigned int getMicrosecond();
-	unsigned int getNanosecond();
+	unsigned int getDay() const;
+	unsigned int getHour() const;
+	unsigned int getMinute() const;
+	unsigned int getSecond() const;
+	unsigned int getMillisecond() const;
+	unsigned int getMicrosecond() const;
+	unsigned int getNanosecond() const;
 
-	string toString();
+	string toString() const;
 
 	operator __int64() const;
 
@@ -450,7 +458,7 @@ protected:
 	static atomic_ullong frameCount;
 };
 
-class Timer
+class ENGINE_API Timer
 {
 public:
 	Time initTime;
@@ -470,7 +478,7 @@ public:
 	string toString();
 };
 
-struct Particle
+struct ENGINE_API Particle
 {
 	Vector3f position;
 	float lifetime;

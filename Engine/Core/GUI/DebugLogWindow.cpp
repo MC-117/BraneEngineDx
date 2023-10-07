@@ -26,13 +26,13 @@ void DebugLogWindow::onRenderWindow(GUIRenderInfo & info)
 		ImVec4 col;
 		switch (b->state)
 		{
-		case Console::Log_Normal:
+		case LogState::Log_Normal:
 			col = { 0, 0, 1, 1 };
 			break;
-		case Console::Log_Warning:
+		case LogState::Log_Warning:
 			col = { 1, 1, 0, 1 };
 			break;
-		case Console::Log_Error:
+		case LogState::Log_Error:
 			col = { 1, 0, 0, 1 };
 			break;
 		}

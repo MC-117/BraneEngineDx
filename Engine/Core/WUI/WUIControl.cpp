@@ -1,5 +1,4 @@
 #include "WUIControl.h"
-#include "resource.h"
 
 bool WUIControl::isRegistClass = false;
 unsigned int WUIControl::nextHMenuID = 1001;
@@ -45,7 +44,7 @@ LRESULT WUIControl::defaultWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 		return ui->WndProc(msg, wParam, lParam);
 }
 
-void WUIControl::registDefaultClass(HINSTANCE hIns)
+void WUIControl::registDefaultClass(HINSTANCE hIns, LPSTR hIcon)
 {
 	if (!isRegistClass) {
 		wndClassEx.cbSize = sizeof(WNDCLASSEX);
@@ -54,12 +53,12 @@ void WUIControl::registDefaultClass(HINSTANCE hIns)
 		wndClassEx.cbClsExtra = 0;
 		wndClassEx.cbWndExtra = 0;
 		wndClassEx.hInstance = hIns;
-		wndClassEx.hIcon = LoadIcon(wndClassEx.hInstance, MAKEINTRESOURCE(IDI_ICON1));
+		wndClassEx.hIcon = LoadIcon(wndClassEx.hInstance, hIcon);
 		wndClassEx.hCursor = LoadCursor(NULL, IDC_ARROW);
 		wndClassEx.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
 		wndClassEx.lpszMenuName = NULL;
 		wndClassEx.lpszClassName = "BraneEngineClass";
-		wndClassEx.hIconSm = LoadIcon(wndClassEx.hInstance, IDI_APPLICATION);
+		wndClassEx.hIconSm = LoadIcon(wndClassEx.hInstance, hIcon);
 		if (!RegisterClassEx(&wndClassEx))
 			throw std::runtime_error("Register Window Class Failed");
 		isRegistClass = true;
@@ -492,6 +491,7 @@ BOOL WUIControl::onSysCommand(WPARAM wParam, LPARAM lParam)
 {
 	if ((wParam & 0xfff0) == SC_KEYMENU)
 		return 1;
+	return 0;
 }
 
 void WUIControl::onParentMove(const Unit2Di& pos, const Unit2Di& size)

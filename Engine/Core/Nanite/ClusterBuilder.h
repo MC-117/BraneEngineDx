@@ -151,7 +151,7 @@ struct DisjointSet
 
 class MeshPart;
 
-class ClusterBuilder
+class ENGINE_API ClusterBuilder
 {
 public:
 	static bool clusterTriangles(const MeshPart& mesh);

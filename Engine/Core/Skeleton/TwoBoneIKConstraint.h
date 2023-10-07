@@ -5,7 +5,7 @@
 class Skeleton;
 class Transform;
 
-class TwoBoneIKConstraint : public BoneConstraint
+class ENGINE_API TwoBoneIKConstraint : public BoneConstraint
 {
 public:
 	Serialize(TwoBoneIKConstraint, BoneConstraint);

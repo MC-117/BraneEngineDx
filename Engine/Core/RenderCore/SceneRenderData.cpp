@@ -30,10 +30,17 @@ void SceneRenderData::setCamera(Render* cameraRender)
 	}
 }
 
-void SceneRenderData::setLight(Render* lightRender)
+void SceneRenderData::setMainLight(Render* lightRender)
 {
 	if (lightRender->getRenderType() == IRendering::Light_Render)
-		lightDataPack.setLight((Light*)lightRender);
+		lightDataPack.setMainLight((Light*)lightRender);
+}
+
+int SceneRenderData::setLocalLight(Render* lightRender)
+{
+	if (lightRender->getRenderType() == IRendering::Light_Render)
+		return lightDataPack.setLocalLight((Light*)lightRender);
+	return -1;
 }
 
 int SceneRenderData::setReflectionCapture(Render* captureRender)

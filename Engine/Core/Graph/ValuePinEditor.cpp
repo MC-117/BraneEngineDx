@@ -20,10 +20,10 @@ void KeyCodePinEditor::setInspectedObject(void* object)
 void KeyCodePinEditor::onInspectGUI(EditorInfo& info)
 {
 	char value = valuePin->getValue();
-	string keyName = Engine::input.getKeyName(value);
+	string keyName = Engine::getInput().getKeyName(value);
 	if (ImGui::BeginCombo(valuePin->getDisplayName().c_str(), keyName.c_str())) {
 		for (int i = 0; i < 128; i++) {
-			string keyName = Engine::input.getKeyName(i);
+			string keyName = Engine::getInput().getKeyName(i);
 			bool selected = value == i;
 			ImGui::PushID(i);
 			if (ImGui::Selectable(keyName.c_str(), &selected)) {
@@ -41,7 +41,7 @@ void KeyCodePinEditor::onPinGUI(EditorInfo& info, GraphInfo& graphInfo)
 		GraphPinEditor::onPinGUI(info, graphInfo);
 	else {
 		char value = valuePin->getValue();
-		ImGui::TextUnformatted(Engine::input.getKeyName(value).c_str());
+		ImGui::TextUnformatted(Engine::getInput().getKeyName(value).c_str());
 	}
 }
 
@@ -49,7 +49,7 @@ void KeyCodePinEditor::onContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo)
 {
 	char value = valuePin->getValue();
 	for (int i = 0; i < 128; i++) {
-		string keyName = Engine::input.getKeyName(i);
+		string keyName = Engine::getInput().getKeyName(i);
 		bool selected = value == i;
 		ImGui::PushID(i);
 		if (ImGui::Selectable(keyName.c_str(), &selected)) {

@@ -1,0 +1,9 @@
+{
+    "extension_api": 1,
+    "name": "VSMDebug",
+    "version": "1.0.1",
+    "minimum_renderdoc": "1.17",
+    "description": "Debug VSM",
+    "author": "luoyizhou",
+    "url": ""
+}

@@ -7,7 +7,7 @@
 template<typename T>
 class Delegate;
 
-class DelegateHandle
+class ENGINE_API DelegateHandle
 {
 	template<typename T>
 	friend class Delegate;

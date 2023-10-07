@@ -5,7 +5,7 @@
 #include "SkeletonMeshData.h"
 #include "Mesh.h"
 
-struct SkeletonMeshPart : public MeshPart
+struct ENGINE_API SkeletonMeshPart : public MeshPart
 {
 	MorphMeshData* morphMeshData = NULL;
 
@@ -44,7 +44,7 @@ struct SkeletonMeshPart : public MeshPart
 
 class SkeletonData;
 
-struct BoneData
+struct ENGINE_API BoneData
 {
 	string name;
 	unsigned int index;
@@ -63,7 +63,7 @@ struct BoneData
 	BoneData* getNext(BoneData* limitBone = NULL);
 };
 
-class SkeletonData
+class ENGINE_API SkeletonData
 {
 public:
 	map<string, unsigned int> boneName;
@@ -77,7 +77,7 @@ public:
 	BoneData* getBoneData(unsigned int index);
 };
 
-class SkeletonMesh : public Mesh
+class ENGINE_API SkeletonMesh : public Mesh
 {
 public:
 	SkeletonData skeletonData;

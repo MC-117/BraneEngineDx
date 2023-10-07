@@ -4,7 +4,7 @@
 
 typedef Texture2DInfo TextureCubeInfo;
 
-class TextureCube : public Texture
+class ENGINE_API TextureCube : public Texture
 {
 public:
 	bool isStandard = false;

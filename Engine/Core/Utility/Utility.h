@@ -4,17 +4,17 @@
 #include "Curve.h"
 #include "../Delegate.h"
 
-vector<string> split(const string& str, char ch, unsigned int num = -1, void(*post)(string&) = NULL);
-vector<string> split(const string& str, const string& chs, unsigned int num = -1, void(*post)(string&) = NULL);
-string& trim(string& str, char ch);
-string& trimL(string& str, const string& chs);
-string& trimR(string& str, const string& chs);
-string& trim(string& str, const string& chs);
+ENGINE_API vector<string> split(const string& str, char ch, unsigned int num = -1, void(*post)(string&) = NULL);
+ENGINE_API vector<string> split(const string& str, const string& chs, unsigned int num = -1, void(*post)(string&) = NULL);
+ENGINE_API string& trim(string& str, char ch);
+ENGINE_API string& trimL(string& str, const string& chs);
+ENGINE_API string& trimR(string& str, const string& chs);
+ENGINE_API string& trim(string& str, const string& chs);
 
 inline void trimSpace(string& str) { trim(str, " \t\n"); }
 
-bool splitPattern(const string& str, char start, char end, vector<pair<bool, string>>& re, bool(*post)(bool, string&) = NULL);
-bool splitMap(const string& str, char start, char end, map<string, string>& re, bool(*post)(string&, string&) = NULL);
+ENGINE_API bool splitPattern(const string& str, char start, char end, vector<pair<bool, string>>& re, bool(*post)(bool, string&) = NULL);
+ENGINE_API bool splitMap(const string& str, char start, char end, map<string, string>& re, bool(*post)(string&, string&) = NULL);
 
 template<class V>
 void findSimilar(const map<string, V>& container, string key, vector<V>& re)
@@ -31,20 +31,20 @@ void findSimilar(const map<string, V>& container, string key, vector<V>& re)
 	}
 }
 
-bool equal(const Quaternionf& q0, const Quaternionf& q1, float threahold = 0.000001f);
+ENGINE_API bool equal(const Quaternionf& q0, const Quaternionf& q1, float threahold = 0.000001f);
 
-PVec3 toPVec3(const Vector3f& v);
-PQuat toPQuat(const Quaternionf& q);
-PTransform toPTransform(const Vector3f& v, const Quaternionf& q = Quaternionf::Identity());
+ENGINE_API PVec3 toPVec3(const Vector3f& v);
+ENGINE_API PQuat toPQuat(const Quaternionf& q);
+ENGINE_API PTransform toPTransform(const Vector3f& v, const Quaternionf& q = Quaternionf::Identity());
 
-Vector3f toVector3f(const PVec3& v);
-Quaternionf toQuaternionf(const PQuat& q);
+ENGINE_API Vector3f toVector3f(const PVec3& v);
+ENGINE_API Quaternionf toQuaternionf(const PQuat& q);
 
-void CohenSutherlandLineClipAndDraw(Vector2f& p0, Vector2f& p1);
+ENGINE_API void CohenSutherlandLineClipAndDraw(Vector2f& p0, Vector2f& p1);
 
-string& validateRelativePath(string& path);
-string getFilePath(const string& path, const string& pwd);
-bool readHeadFile(const string& codeLine, string& code, const string& envPath = "", unordered_set<string>& headFiles = unordered_set<string>());
+ENGINE_API string& validateRelativePath(string& path);
+ENGINE_API string getFilePath(const string& path, const string& pwd);
+ENGINE_API bool readHeadFile(const string& codeLine, string& code, const string& envPath = "", unordered_set<string>& headFiles = unordered_set<string>());
 
 struct FileDlgDesc
 {
@@ -59,7 +59,7 @@ struct FileDlgDesc
 	string defFileExt;
 };
 
-bool openFileDlg(FileDlgDesc& desc);
+ENGINE_API bool openFileDlg(FileDlgDesc& desc);
 
 struct FolderDlgDesc
 {
@@ -69,7 +69,7 @@ struct FolderDlgDesc
 	string folderPath;
 };
 
-bool openFolderDlg(FolderDlgDesc& desc);
+ENGINE_API bool openFolderDlg(FolderDlgDesc& desc);
 
 template<class TT, class ST>
 inline bool isClassOf(ST* ptr)
@@ -77,7 +77,7 @@ inline bool isClassOf(ST* ptr)
 	return dynamic_cast<TT*>(ptr) != NULL;
 }
 
-struct Path
+struct ENGINE_API Path
 {
 	vector<string> logicPath;
 
@@ -103,7 +103,7 @@ struct Path
 	operator string() const;
 };
 
-struct AssetPath
+struct ENGINE_API AssetPath
 {
 	string name;
 	string path;
@@ -326,7 +326,7 @@ inline Enum<E>::operator E() const
 	return (E)enumValue;
 }
 
-struct LongProgressWork
+struct ENGINE_API LongProgressWork
 {
 	string name;
 	string text;

@@ -147,6 +147,7 @@ bool AnimationPose::resetToBindPose()
 	for (int i = 0; i < morphTargetWeight.size(); i++) {
 		morphTargetWeight[i] = 0;
 	}
+	return true;
 }
 
 bool AnimationPose::lerp(const AnimationPose & pose, float value)

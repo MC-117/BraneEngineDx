@@ -7,7 +7,7 @@
 #include "../Core/Audio/AudioStreamSource.h"
 #include "../Core/WUI/WUIWindow.h"
 
-struct Vst2Config
+struct ENGINE_API Vst2Config
 {
     float sampleRate;
     int blockSize;
@@ -20,7 +20,7 @@ struct Vst2Config
     chrono::nanoseconds getProcessInterval() const;
 };
 
-class VstWindow : public WUIWindow
+class ENGINE_API VstWindow : public WUIWindow
 {
 public:
     VstWindow();
@@ -33,7 +33,7 @@ protected:
     virtual void onLoop();
 };
 
-struct VstSampleBuffer
+struct ENGINE_API VstSampleBuffer
 {
 public:
     int channels = 0;
@@ -56,7 +56,7 @@ protected:
     void C2To16Bit(void* data);
 };
 
-class Vst2Plugin : public IMidiStateReceivable
+class ENGINE_API Vst2Plugin : public IMidiStateReceivable
 {
     friend class Vst2PluginManger;
 public:
@@ -133,7 +133,7 @@ protected:
 
 typedef shared_ptr<Vst2Plugin> Vst2PluginPtr;
 
-class Vst2PluginManger : public Initialization
+class ENGINE_API Vst2PluginManger : public Initialization
 {
 public:
     static Vst2PluginManger& instance();

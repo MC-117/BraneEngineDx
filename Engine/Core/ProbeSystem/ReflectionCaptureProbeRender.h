@@ -3,7 +3,7 @@
 #include "CaptureProbeRender.h"
 #include "../SceneCaptureCube.h"
 
-class ReflectionCaptureProbeRender : public CaptureProbeRender
+class ENGINE_API ReflectionCaptureProbeRender : public CaptureProbeRender
 {
 public:
 	Serialize(ReflectionCaptureProbeRender, CaptureProbeRender);

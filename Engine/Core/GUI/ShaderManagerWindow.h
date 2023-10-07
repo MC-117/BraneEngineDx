@@ -2,7 +2,7 @@
 
 #include "UIWindow.h"
 
-class ShaderManagerWindow : public UIWindow
+class ENGINE_API ShaderManagerWindow : public UIWindow
 {
 public:
 	ShaderManagerWindow(string name = "ShaderManager", bool defaultShow = false);

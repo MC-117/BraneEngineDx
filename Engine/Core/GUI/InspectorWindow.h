@@ -6,7 +6,7 @@
 
 class Asset;
 
-class InspectorWindow : public UIWindow
+class ENGINE_API InspectorWindow : public UIWindow
 {
 public:
 	Asset* assignAsset = NULL;

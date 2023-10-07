@@ -4,7 +4,7 @@
 #include "../Audio/AudioSource.h"
 #include "../Transform.h"
 
-class AudioPlayable : public TimelinePlayable
+class ENGINE_API AudioPlayable : public TimelinePlayable
 {
 	friend class AudioTrack;
 public:

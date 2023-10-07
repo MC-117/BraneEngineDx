@@ -5,7 +5,7 @@
 #include "Live2DCamera.h"
 #include "../Core/Render.h"
 
-struct Live2DClipContext
+struct ENGINE_API Live2DClipContext
 {
     bool _isUsing = false;                                ///< 現在の描画状態でマスクの準備が必要ならtrue
     const int* _clippingIdList;                 ///< クリッピングマスクのIDリスト
@@ -23,7 +23,7 @@ struct Live2DClipContext
     void CalcClippedDrawTotalBounds(Csm::CubismModel& model);
 };
 
-class Live2DRender : public Render
+class ENGINE_API Live2DRender : public Render
 {
 public:
     Live2DRender();

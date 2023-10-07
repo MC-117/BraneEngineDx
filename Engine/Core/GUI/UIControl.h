@@ -23,7 +23,7 @@ struct GUIPostInfo
 	GUI& gui;
 };
 
-class UIControl
+class ENGINE_API UIControl
 {
 public:
 	string name = "UIControl";

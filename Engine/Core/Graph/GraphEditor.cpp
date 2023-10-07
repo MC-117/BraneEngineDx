@@ -429,8 +429,8 @@ void GraphEditor::onNodeContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo)
 void GraphEditor::onGraphAction(EditorInfo& info, GraphInfo& graphInfo)
 {
 	namespace ne = ax::NodeEditor;
-	if (Engine::input.getKeyDown(VK_CONTROL)) {
-		if (Engine::input.getKeyPress('C')) {
+	if (Engine::getInput().getKeyDown(VK_CONTROL)) {
+		if (Engine::getInput().getKeyPress('C')) {
 			int count = ne::GetSelectedObjectCount();
 			vector<ax::NodeEditor::NodeId> nodeIDs;
 			nodeIDs.resize(count);
@@ -445,7 +445,7 @@ void GraphEditor::onGraphAction(EditorInfo& info, GraphInfo& graphInfo)
 				ImGui::SetClipboardText(stream.str().c_str());
 			}
 		}
-		else if (Engine::input.getKeyPress('V')) {
+		else if (Engine::getInput().getKeyPress('V')) {
 			stringstream stream(ImGui::GetClipboardText());
 			SerializationInfoParser parser(stream);
 			if (parser.parse()) {

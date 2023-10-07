@@ -26,7 +26,7 @@ struct BlendSpaceGridContext
 
 };
 
-class BlendSpaceWindow : public UIWindow
+class ENGINE_API BlendSpaceWindow : public UIWindow
 {
 public:
 	BlendSpaceWindow(string name = "BlendSpaceWindow", bool defaultShow = false);

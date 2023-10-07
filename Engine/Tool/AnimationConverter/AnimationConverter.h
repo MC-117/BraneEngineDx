@@ -9,7 +9,7 @@
 #include "MMDVmdParser.h"
 #include "MMDPmxParser.h"
 
-class AnimationConverter : public UIWindow
+class ENGINE_API AnimationConverter : public UIWindow
 {
 public:
 	struct ToonParameter

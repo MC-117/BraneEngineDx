@@ -3,7 +3,7 @@
 #include "TimelinePlayable.h"
 
 class TimelineClipTrack;
-class TimelineClip : public Base
+class ENGINE_API TimelineClip : public Base
 {
 	friend class TimelineClipTrack;
 public:

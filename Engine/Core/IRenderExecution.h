@@ -4,7 +4,7 @@
 
 #include "Unit.h"
 
-class IRenderExecution
+class ENGINE_API IRenderExecution
 {
 public:
 	IRenderExecution();

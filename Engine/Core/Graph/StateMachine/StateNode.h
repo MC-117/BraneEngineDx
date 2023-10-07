@@ -2,7 +2,7 @@
 
 #include "../Graph.h"
 
-class StateTransition : public Base
+class ENGINE_API StateTransition : public Base
 {
 	friend class StateNode;
 	friend class StateTransitionPin;
@@ -32,7 +32,7 @@ protected:
 	Ref<StateNode> nextState;
 };
 
-class StateGraphTransition : public StateTransition
+class ENGINE_API StateGraphTransition : public StateTransition
 {
 	friend class StateGraphTransitionPin;
 public:
@@ -58,7 +58,7 @@ protected:
 	BoolPin* transitionPin = NULL;
 };
 
-class StateTransitionPin : public FlowPin
+class ENGINE_API StateTransitionPin : public FlowPin
 {
 	friend class StateNode;
 public:
@@ -88,7 +88,7 @@ protected:
 	vector<StateTransition*> transitions;
 };
 
-class StateNode : public GraphNode
+class ENGINE_API StateNode : public GraphNode
 {
 public:
 	Serialize(StateNode, GraphNode);
@@ -123,7 +123,7 @@ protected:
 	virtual void addOutput(GraphPin& output);
 };
 
-class StateEntryTransitionPin : public StateTransitionPin
+class ENGINE_API StateEntryTransitionPin : public StateTransitionPin
 {
 public:
 	Serialize(StateEntryTransitionPin, StateTransitionPin);

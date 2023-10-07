@@ -10,7 +10,7 @@
 
 class Render;
 
-class SceneRenderData
+class ENGINE_API SceneRenderData
 {
 public:
 	vector<CameraRenderData*> cameraRenderDatas;
@@ -28,7 +28,8 @@ public:
 	SceneRenderData();
 
 	void setCamera(Render* cameraRender);
-	void setLight(Render* lightRender);
+	void setMainLight(Render* lightRender);
+	int setLocalLight(Render* lightRender);
 	int setReflectionCapture(Render* captureRender);
 	int setEnvLightCapture(Render* captureRender);
 	int setEnvLightData(Render* captureRender);

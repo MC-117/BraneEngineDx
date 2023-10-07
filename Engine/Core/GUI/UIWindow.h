@@ -5,7 +5,7 @@
 #include "UIControl.h"
 #include "../Texture2D.h"
 
-class UIWindow : public UIControl
+class ENGINE_API UIWindow : public UIControl
 {
 public:
 	Color backgroundColor = { 255, 255, 255, 255 };

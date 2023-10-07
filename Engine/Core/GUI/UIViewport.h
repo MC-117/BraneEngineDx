@@ -1,7 +1,7 @@
 #pragma once
 #include "UIWindow.h"
 
-class UIViewport : public UIWindow
+class ENGINE_API UIViewport : public UIWindow
 {
 public:
 	UIViewport(const string& name = "Viewport", bool defaultShow = false);

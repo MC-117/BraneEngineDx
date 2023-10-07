@@ -20,7 +20,7 @@ struct Matrix3f;
 struct Matrix4f;
 struct Quaternionf;
 
-struct Block
+struct ENGINE_API Block
 {
 	float* d = nullptr;
 	unsigned int rowCount = 0, colCount = 0;
@@ -53,7 +53,7 @@ struct Block
 	bool operator!=(const Block& b) const;
 };
 
-struct Vector2f : protected DirectX::XMFLOAT2
+struct ENGINE_API Vector2f : protected DirectX::XMFLOAT2
 {
 	Vector2f(float x = 0, float y = 0);
 	Vector2f(const Vector2f& v);
@@ -296,7 +296,7 @@ typedef Vector2T<long long> Vector2l;
 typedef Vector2T<unsigned int> Vector2u;
 typedef Vector2T<unsigned long long> Vector2ul;
 
-struct Vector3f : protected DirectX::XMFLOAT3
+struct ENGINE_API Vector3f : protected DirectX::XMFLOAT3
 {
 	Vector3f(float x = 0, float y = 0, float z = 0);
 	Vector3f(const Vector3f& v);
@@ -557,7 +557,7 @@ typedef Vector3T<long long> Vector3l;
 typedef Vector3T<unsigned int> Vector3u;
 typedef Vector3T<unsigned long long> Vector3ul;
 
-struct Vector4f : protected DirectX::XMFLOAT4
+struct ENGINE_API Vector4f : protected DirectX::XMFLOAT4
 {
 	Vector4f(float x = 0, float y = 0, float z = 0, float w = 0);
 	Vector4f(const Vector3f& v, float w);
@@ -841,7 +841,7 @@ typedef Vector4T<long long> Vector4l;
 typedef Vector4T<unsigned int> Vector4u;
 typedef Vector4T<unsigned long long> Vector4ul;
 
-struct Matrix3f : protected DirectX::XMFLOAT3X3
+struct ENGINE_API Matrix3f : protected DirectX::XMFLOAT3X3
 {
 	Matrix3f();
 	Matrix3f(const Matrix3f& m);
@@ -884,7 +884,7 @@ struct Matrix3f : protected DirectX::XMFLOAT3X3
 	operator Block() const;
 };
 
-struct Matrix4f : protected DirectX::XMFLOAT4X4
+struct ENGINE_API Matrix4f : protected DirectX::XMFLOAT4X4
 {
 	Matrix4f();
 	Matrix4f(const Matrix4f& m);
@@ -927,7 +927,7 @@ struct Matrix4f : protected DirectX::XMFLOAT4X4
 	operator Block() const;
 };
 
-struct Quaternionf : public Vector4f
+struct ENGINE_API Quaternionf : public Vector4f
 {
 	Quaternionf(float w = 0, float x = 0, float y = 0, float z = 0);
 	Quaternionf(const Quaternionf& q);

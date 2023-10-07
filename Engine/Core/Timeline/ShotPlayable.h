@@ -3,7 +3,7 @@
 #include "TimelinePlayable.h"
 #include "../Camera.h"
 
-class ShotPlayable : public TimelinePlayable
+class ENGINE_API ShotPlayable : public TimelinePlayable
 {
 public:
 	friend class ShotTrack;

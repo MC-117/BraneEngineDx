@@ -6,7 +6,7 @@
 
 class Mesh;
 
-class EditorWindow : public UIWindow
+class ENGINE_API EditorWindow : public UIWindow
 {
 public:
 	Material& baseMat;

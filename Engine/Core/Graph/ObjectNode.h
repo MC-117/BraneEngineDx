@@ -4,7 +4,7 @@
 #include "Variable.h"
 #include "../Object.h"
 
-class RefPin : public ValuePin
+class ENGINE_API RefPin : public ValuePin
 {
 public:
 	Serialize(RefPin, ValuePin);
@@ -116,7 +116,7 @@ bool PinType::serialize(SerializationInfo& to)					  \
 	return true;												  \
 }
 
-class RefVariable : public GraphVariable
+class ENGINE_API RefVariable : public GraphVariable
 {
 public:
 	Serialize(RefVariable, GraphVariable);

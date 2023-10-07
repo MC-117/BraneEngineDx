@@ -2,7 +2,7 @@
 #include "../Core/GUI/UIWindow.h"
 #include "MidiInstrumentEditor.h"
 
-class MidiInstrumentWindow : public UIWindow
+class ENGINE_API MidiInstrumentWindow : public UIWindow
 {
 public:
 	MidiInstrumentWindow(string name = "MidiInstrumentWindow", bool defaultShow = false);

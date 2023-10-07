@@ -97,7 +97,7 @@ void WUIMainWindow::onLoop()
 	Time lastTime = time;
 	time = Time::now();
 	Time deltaTime = time - lastTime;
-	Engine::mainLoop(deltaTime.toMillisecond() * 0.001);
+	Engine::get().mainLoop(deltaTime.toMillisecond() * 0.001);
 	if (!init) {
 		ShowWindow(hWnd, SW_SHOW);
 		SetForegroundWindow(hWnd);

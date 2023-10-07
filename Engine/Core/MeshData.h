@@ -7,7 +7,7 @@
 
 class IRenderContext;
 
-class MeshData
+class ENGINE_API MeshData
 {
 public:
 	static MeshData* currentMeshData;

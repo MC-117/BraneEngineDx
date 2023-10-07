@@ -5,7 +5,7 @@
 
 class AnimationTrack;
 
-class AnimationPlayable : public TimelinePlayable
+class ENGINE_API AnimationPlayable : public TimelinePlayable
 {
 	friend class AnimationTrack;
 public:

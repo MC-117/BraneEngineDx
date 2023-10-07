@@ -4,7 +4,7 @@ from Core.Foundation import Log, BuildParam
 class Live2DCubismTarget(Target):
     def __init__(self, param : BuildParam):
         Target.__init__(self, param)
-        self.type = TargetType.StaticLib
+        self.type = TargetType.ModuleLib
         releaseConfig = TargetConfig(self, 'Release', PlaformType.Win64)
         debugConfig = TargetConfig(self, 'Debug', PlaformType.Win64)
         debugConfig.enableDebug = True

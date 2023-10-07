@@ -16,7 +16,7 @@ struct TerrainData
 	Vector3f pading;
 };
 
-class TerrainPatchMeshData : public MeshData
+class ENGINE_API TerrainPatchMeshData : public MeshData
 {
 public:
 	bool inited = false;
@@ -53,7 +53,7 @@ public:
 	virtual void bindShapeWithContext(IRenderContext& context);
 };
 
-class TerrainGeometry : public Shape
+class ENGINE_API TerrainGeometry : public Shape
 {
 public:
 	Serialize(TerrainGeometry, Shape);

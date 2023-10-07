@@ -4,7 +4,7 @@
 
 #include "HelpUI.h"
 
-class WUIESCMenu : public WUIControl
+class ENGINE_API WUIESCMenu : public WUIControl
 {
 public:
 	WUILabel menuLabel;

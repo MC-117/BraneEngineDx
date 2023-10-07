@@ -2,7 +2,7 @@
 
 #include "Variable.h"
 
-class EntryNode : public GraphNode
+class ENGINE_API EntryNode : public GraphNode
 {
 public:
 	Serialize(EntryNode, GraphNode);
@@ -11,7 +11,7 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from);
 };
 
-class ReturnNode : public GraphNode
+class ENGINE_API ReturnNode : public GraphNode
 {
 public:
 	Serialize(ReturnNode, GraphNode);
@@ -20,7 +20,7 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from);
 };
 
-class InOutFlowNode : public GraphNode
+class ENGINE_API InOutFlowNode : public GraphNode
 {
 public:
 	Serialize(InOutFlowNode, GraphNode);
@@ -36,7 +36,7 @@ protected:
 	FlowPin* outPin = NULL;
 };
 
-class SetVariableNode : public InOutFlowNode
+class ENGINE_API SetVariableNode : public InOutFlowNode
 {
 public:
 	Serialize(SetVariableNode, InOutFlowNode);
@@ -58,7 +58,7 @@ protected:
 	Ref<GraphVariable> variable;
 };
 
-class SequenceNode : public GraphNode
+class ENGINE_API SequenceNode : public GraphNode
 {
 public:
 	Serialize(SequenceNode, GraphNode);
@@ -72,7 +72,7 @@ protected:
 	FlowPin* inFlowPin = NULL;
 };
 
-class BranchNode : public GraphNode
+class ENGINE_API BranchNode : public GraphNode
 {
 public:
 	Serialize(BranchNode, GraphNode);
@@ -89,7 +89,7 @@ protected:
 	FlowPin* falsePin = NULL;
 };
 
-class LoopNode : public GraphNode
+class ENGINE_API LoopNode : public GraphNode
 {
 public:
 	Serialize(LoopNode, GraphNode);
@@ -105,7 +105,7 @@ protected:
 	FlowPin* outPin = NULL;
 };
 
-class BreakNode : public GraphNode
+class ENGINE_API BreakNode : public GraphNode
 {
 public:
 	Serialize(BreakNode, GraphNode);
@@ -119,7 +119,7 @@ protected:
 	FlowPin* breakPin = NULL;
 };
 
-class ForLoopNode : public GraphNode
+class ENGINE_API ForLoopNode : public GraphNode
 {
 public:
 	Serialize(ForLoopNode, GraphNode);

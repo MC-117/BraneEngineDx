@@ -469,7 +469,8 @@ bool Vst2Plugin::openEditor()
         editorWindow.show();
         return true;
     }
-    Engine::mainWindow.addControl(editorWindow);
+    if (Engine::getMainWindow())
+        Engine::getMainWindow()->addControl(editorWindow);
     HWND hWnd = editorWindow.create();
     dispatcher(plugin, effEditOpen, 0, 0, hWnd, 0.0f);
     ERect rect;

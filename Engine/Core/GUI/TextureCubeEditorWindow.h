@@ -3,7 +3,7 @@
 #include "UIWindow.h"
 #include "../TextureCube.h"
 
-class TextureCubeEditorWindow : public UIWindow
+class ENGINE_API TextureCubeEditorWindow : public UIWindow
 {
 public:
 	Texture* texture = NULL;

@@ -8,7 +8,9 @@ struct CameraRenderData;
 struct DebugRenderData : public IRenderData
 {
     int maxSize;
-    GPUBuffer lineBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(Vector3f) * 2, GAF_ReadWrite, CAF_None);
+    vector<LineDrawData> updateLineData;
+    GPUBuffer uploadLineBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(Vector4f) * 2);
+    GPUBuffer lineBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(Vector4f) * 2, GAF_ReadWrite, CAF_None);
     GPUBuffer flagBufferA = GPUBuffer(GB_Storage, GBF_UInt, 0, GAF_ReadWrite, CAF_None);
     GPUBuffer flagBufferB = GPUBuffer(GB_Storage, GBF_UInt, 0, GAF_ReadWrite, CAF_None);
     GPUBuffer commandBuffer = GPUBuffer(GB_Command, GBF_UInt, 0, GAF_ReadWrite, CAF_None);
@@ -42,6 +44,7 @@ protected:
     static ShaderProgram* initDrawArgsProgram;
     static Material* drawLineMaterial;
     static ShaderProgram* drawLineProgram;
+    static ShaderProgram* drawUploadLineProgram;
 
     static void loadDefaultResource();
 };

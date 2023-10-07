@@ -4,7 +4,7 @@
 
 #include "../Core/GUI/UIWindow.h"
 
-class ToolShelf : public UIWindow
+class ENGINE_API ToolShelf : public UIWindow
 {
 public:
 	vector<pair<UIWindow*, bool>> tools;

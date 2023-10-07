@@ -5,7 +5,7 @@
 class Bone;
 class Skeleton;
 
-class BoneConstraint : public Serializable
+class ENGINE_API BoneConstraint : public Serializable
 {
 	friend class Skeleton;
 public:

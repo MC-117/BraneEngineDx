@@ -1163,6 +1163,24 @@ void DX11RenderContext::execteImGuiDraw(ImDrawData* drawData)
 	ImGui_ImplDX11_RenderDrawData(drawData, deviceContext.Get());
 }
 
+bool DX11RenderContext::drawMesh(const DrawElementsIndirectCommand& cmd)
+{
+	if (currentProgram->isComputable())
+		return false;
+	bindDrawInfo();
+	deviceContext->DrawIndexedInstanced(cmd.count, cmd.instanceCount, cmd.firstIndex, cmd.baseVertex, cmd.baseInstance);
+	return true;
+}
+
+bool DX11RenderContext::drawArray(const DrawArraysIndirectCommand& cmd)
+{
+	if (currentProgram->isComputable())
+		return false;
+	bindDrawInfo();
+	deviceContext->DrawInstanced(cmd.count, cmd.instanceCount, cmd.first, cmd.baseInstance);
+	return true;
+}
+
 bool DX11RenderContext::drawMeshIndirect(IGPUBuffer* argBuffer, unsigned int byteOffset)
 {
 	if (currentProgram->isComputable())

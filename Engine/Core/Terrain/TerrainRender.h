@@ -3,7 +3,7 @@
 #include "../Render.h"
 #include "TerrainGeometry.h"
 
-class TerrainRender : public Render
+class ENGINE_API TerrainRender : public Render
 {
 public:
 	TerrainGeometry* geometry = NULL;

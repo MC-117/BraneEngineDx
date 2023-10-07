@@ -12,7 +12,7 @@ class RigidBody;
 struct MeshTransformData;
 #endif
 
-class Transform : public Object
+class ENGINE_API Transform : public Object
 {
 public:
 	Serialize(Transform, Object);

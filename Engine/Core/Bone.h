@@ -5,7 +5,7 @@
 #include "Actor.h"
 #include "MeshRender.h"
 
-class Bone : public Actor
+class ENGINE_API Bone : public Actor
 {
 	friend class Skeleton;
 public:

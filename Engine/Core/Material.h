@@ -6,7 +6,7 @@
 #include "Texture2D.h"
 #include "RenderCore/RenderInterface.h"
 
-class Material
+class ENGINE_API Material
 {
 	friend class MaterialRenderData;
 public:

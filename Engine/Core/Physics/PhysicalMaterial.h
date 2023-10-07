@@ -8,7 +8,7 @@ enum PhysicalType {
 	STATIC, DYNAMIC, NOCOLLISIOIN, TERRAIN
 };
 
-class PhysicalMaterial : public Serializable
+class ENGINE_API PhysicalMaterial : public Serializable
 {
 public:
 	Serialize(PhysicalMaterial,);

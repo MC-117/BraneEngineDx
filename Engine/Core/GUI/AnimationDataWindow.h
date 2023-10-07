@@ -3,7 +3,7 @@
 #include "UIWindow.h"
 #include "../Animation/AnimationClip.h"
 
-class AnimationDataWindow : public UIWindow
+class ENGINE_API AnimationDataWindow : public UIWindow
 {
 public:
 	AnimationDataWindow(string name = "AnimationDataWindow", bool defaultShow = false);

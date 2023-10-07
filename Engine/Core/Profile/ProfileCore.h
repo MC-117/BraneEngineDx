@@ -2,7 +2,7 @@
 #include "../Unit.h"
 #include "../InitializationManager.h"
 
-class IProfiler
+class ENGINE_API IProfiler
 {
 public:
 	IProfiler();
@@ -25,7 +25,7 @@ public:
 };
 
 
-class ProfilerManager : public Initialization
+class ENGINE_API ProfilerManager : public Initialization
 {
 	friend class IProfiler;
 public:

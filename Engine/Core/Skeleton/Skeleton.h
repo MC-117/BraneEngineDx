@@ -5,7 +5,7 @@
 #include "BoneConstraint.h"
 #include "../SkeletonMesh.h"
 
-class Skeleton
+class ENGINE_API Skeleton
 {
 public:
 	struct BoneInfo

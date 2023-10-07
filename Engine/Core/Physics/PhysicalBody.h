@@ -24,7 +24,7 @@ public:
 
 class PhysicalBody;
 
-class PhysicalCollider
+class ENGINE_API PhysicalCollider
 {
 public:
 	PhysicalBody* body = NULL;
@@ -54,7 +54,7 @@ public:
 	virtual void apply();
 };
 
-class PhysicalBody : public PhysicalBase
+class ENGINE_API PhysicalBody : public PhysicalBase
 {
 public:
 	Serialize(PhysicalBody, PhysicalBase);

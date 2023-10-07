@@ -119,7 +119,7 @@ void DX11DeviceSurface::clearColor(const Color& color)
 
 void DX11DeviceSurface::swapBuffer(bool vsync, int maxFps)
 {
-	if (!desc.inited) {
+	if (!desc.inited || swapChain == NULL) {
 		resize(desc.width, desc.height, desc.multisampleLevel);
 	}
 	//fenceValue++;

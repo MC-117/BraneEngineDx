@@ -12,7 +12,7 @@ struct ShaderStageDesc
 	const string& name;
 };
 
-struct ShaderMacroSet
+struct ENGINE_API ShaderMacroSet
 {
 	unordered_map<ShaderPropertyName, string> shaderMacros;
 	size_t hash = 0;
@@ -30,7 +30,7 @@ struct ShaderMacroSet
 
 class ShaderManager;
 
-class ShaderStage
+class ENGINE_API ShaderStage
 {
 	friend class ShaderProgram;
 	friend class ShaderAdapter;
@@ -64,7 +64,7 @@ protected:
 };
 
 // Abstract class of shader program(render pipeline) for vendor to implement
-class ShaderProgram
+class ENGINE_API ShaderProgram
 {
 	friend class ShaderManager;
 public:
@@ -138,7 +138,7 @@ enum struct ShaderMatchFlag : uint16_t
 	Auto = Best | Fallback_Auto | Fill
 };
 
-class ShaderAdapter
+class ENGINE_API ShaderAdapter
 {
 public:
 	string name;
@@ -155,7 +155,7 @@ protected:
 	ShaderStage* bestMacthShaderStage(const Enum<ShaderFeature>& feature, ShaderFeature excludeFeature);
 };
 
-class ShaderFile
+class ENGINE_API ShaderFile
 {
 public:
 	string path;
@@ -171,7 +171,7 @@ public:
 	void reset();
 };
 
-class ShaderManager
+class ENGINE_API ShaderManager
 {
 	friend struct ShaderCompiler;
 public:

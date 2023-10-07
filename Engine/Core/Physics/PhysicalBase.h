@@ -3,7 +3,7 @@
 
 class PhysicalWorld;
 
-class PhysicalBase : public Base
+class ENGINE_API PhysicalBase : public Base
 {
 public:
 	Serialize(PhysicalBase, Base);

@@ -486,6 +486,10 @@ bool PhysicalWorld::init()
 void PhysicalWorld::release()
 {
 #ifdef PHYSICS_USE_PHYSX
+	if (!isInitSDK) {
+		isInitSDK = false;
+		return;
+	}
 	PxCloseVehicleSDK();
 	NvClothDestroyFactory(gNvClothFactory);
 	gCooking->release();

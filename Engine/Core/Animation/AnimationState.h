@@ -4,7 +4,7 @@
 #include "AnimationPoseGraph.h"
 #include "../Graph/StateMachine/StateNode.h"
 
-class AnimationGraphContext : public GraphContext
+class ENGINE_API AnimationGraphContext : public GraphContext
 {
 public:
 	SkeletonMeshActor* targetActor = NULL;
@@ -12,7 +12,7 @@ public:
 	virtual ~AnimationGraphContext() = default;
 };
 
-class AnimationStateContext : public GraphContext
+class ENGINE_API AnimationStateContext : public GraphContext
 {
 public:
 	float timeRemain = 0;
@@ -22,7 +22,7 @@ public:
 	virtual ~AnimationStateContext() = default;
 };
 
-class AnimationDefaultCanTransitionNode : public GraphNode
+class ENGINE_API AnimationDefaultCanTransitionNode : public GraphNode
 {
 public:
 	Serialize(AnimationDefaultCanTransitionNode, GraphNode);
@@ -39,7 +39,7 @@ protected:
 	BoolPin* outputPin = NULL;
 };
 
-class AnimationTransition : public StateGraphTransition
+class ENGINE_API AnimationTransition : public StateGraphTransition
 {
 public:
 	Serialize(AnimationTransition, StateGraphTransition);
@@ -70,7 +70,7 @@ protected:
 	FloatVariable* normalizedTimeRemainVariable;
 };
 
-class AnimationState : public StateNode
+class ENGINE_API AnimationState : public StateNode
 {
 public:
 	Serialize(AnimationState, StateNode);

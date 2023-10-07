@@ -1,15 +1,11 @@
-from Core.BuildObject import Module
+from Core.BuildObject import Module, TargetConfig, PlaformType, TargetType
 from Core.Foundation import BuildParam, FileSearcher
 
 class EngineModule(Module):
     def __init__(self, param : BuildParam):
         Module.__init__(self, param)
         self.includePaths = [f'{self.getPath()}']
-        self.fileSearcher.addPath('.', True)
-        self.fileSearcher.addPath('../Resource/Engine/Shaders', True)
-        self.fileSearcher.excludePath('ThirdParty')
-        
-        self.otherFileSearchPattern = '^.*\.(py|shadapter|mat|hmat)'
+        self.buildTarget = 'Engine'
         
         self.libFiles = [
             'dxguid.lib',
@@ -40,3 +36,17 @@ class EngineModule(Module):
             'Spine',
             'STB',
         ]
+    
+    def setup(self, config : TargetConfig):
+        if config.plaform != PlaformType.Win64:
+            raise NotImplementedError('Only support Win64')
+        if config.target.type == TargetType.ModuleLib or config.target.type == TargetType.ModuleDll:
+            self.fileSearcher.addPath('.', True)
+            self.fileSearcher.addPath('../Resource/Engine/Shaders', True)
+            self.fileSearcher.excludePath('ThirdParty')
+        
+            self.otherFileSearchPattern = '^.*\.(py|shadapter|mat|hmat)'
+        else:
+            self.libPaths = [self.buildTargetAbsOutputPath]
+            self.libFiles.append(self.buildTargetOutputName + '.lib')
+            self.dllFiles = [f'{self.buildTargetAbsOutputPath}/{self.buildTargetOutputName}.dll']

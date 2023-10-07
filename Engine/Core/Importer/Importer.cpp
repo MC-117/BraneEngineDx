@@ -9,6 +9,21 @@ bool ExtensionLess::operator()(const string& left, const string& right) const
 	return _stricmp(left.c_str(), right.c_str()) < 0;
 }
 
+ImportNoneContext ImportContext::none;
+ImportContext::ImportContext()
+	: sourceFlags(Import_Source_All)
+{
+}
+
+void ImportNoneContext::report(const string& text)
+{
+}
+
+ImportNoneContext::ImportNoneContext()
+{
+	sourceFlags = Import_Source_None;
+}
+
 ImportInfo::ImportInfo(const string& path)
 	: path(path)
 	, filename(getFileNameWithoutExt(path))
@@ -48,7 +63,7 @@ bool IImporter::reload(Asset& asset, ImportResult& result)
 	return importer->reloadInternal(asset, result);
 }
 
-bool IImporter::loadFolder(const string& folder, LongProgressWork* work)
+bool IImporter::loadFolder(const string& folder, ImportContext& context)
 {
 	namespace FS = filesystem;
 	if (!FS::is_directory(folder) || !FS::exists(folder))
@@ -88,8 +103,7 @@ bool IImporter::loadFolder(const string& folder, LongProgressWork* work)
 				continue;
 			}
 
-			if (work)
-				work->setProgress(0, "load " + path);
+			context.report("load " + path);
 
 			IImporter* importer = iter->second.newFunc();
 			if (importer == NULL)
@@ -107,8 +121,7 @@ bool IImporter::loadFolder(const string& folder, LongProgressWork* work)
 	}
 
 	for (auto path : delayedLoadAssets) {
-		if (work)
-			work->setProgress(0, "load " + path);
+		context.report("load " + path);
 		ImportInfo info(path);
 		string iniPath = path + ".ini";
 		try

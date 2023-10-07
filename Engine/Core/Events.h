@@ -19,7 +19,7 @@ typedef void(*EventOnTick)(Object*, float);
 typedef void(*EventOnAfterTick)(Object*);
 typedef void(*EventOnEnd)(Object*);
 
-class Events
+class ENGINE_API Events
 {
 public:
 	void* target = NULL;

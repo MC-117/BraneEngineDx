@@ -3,7 +3,7 @@
 #include "../Utility/Utility.h"
 #include "AnimationPose.h"
 
-struct TransformAnimationData
+struct ENGINE_API TransformAnimationData
 {
 	string objectName;
 	Curve<float, Vector3f> positionCurve;
@@ -14,7 +14,7 @@ struct TransformAnimationData
 	void write(ostream& out) const;
 };
 
-class TransformAnimationPlayer
+class ENGINE_API TransformAnimationPlayer
 {
 public:
 
@@ -46,7 +46,7 @@ protected:
 	TransformData transformData;
 };
 
-struct AnimationClipData
+struct ENGINE_API AnimationClipData
 {
 	string name;
 	float duration = 0;
@@ -74,7 +74,7 @@ struct AnimationClipData
 	void write(ostream& out, LongProgressWork* work) const;
 };
 
-class AnimationBase : public Serializable
+class ENGINE_API AnimationBase : public Serializable
 {
 public:
 	Serialize(AnimationBase,);
@@ -102,7 +102,7 @@ public:
 	virtual bool serialize(SerializationInfo& to) { serializeInit(this, to); return true; }
 };
 
-class AnimationClip : public AnimationBase
+class ENGINE_API AnimationClip : public AnimationBase
 {
 public:
 	AnimationClipData* animationClipData = NULL;
@@ -142,7 +142,7 @@ public:
 };
 
 class Skeleton;
-class BlendSpaceAnimation : public AnimationBase
+class ENGINE_API BlendSpaceAnimation : public AnimationBase
 {
 public:
 	Serialize(BlendSpaceAnimation, AnimationBase);
@@ -180,7 +180,7 @@ public:
 	virtual bool serialize(SerializationInfo& to);
 };
 
-class AnimationLoader
+class ENGINE_API AnimationLoader
 {
 public:
 	static AnimationClipData * loadCameraAnimation(const string & file);

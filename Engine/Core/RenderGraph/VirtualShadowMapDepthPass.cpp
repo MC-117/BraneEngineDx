@@ -1,6 +1,7 @@
 #include "VirtualShadowMapDepthPass.h"
 #include "../RenderCore/SceneRenderData.h"
 #include "../Asset.h"
+#include "Core/Profile/ProfileCore.h"
 
 Material* VirtualShadowMapDepthPass::vsmMaterial = NULL;
 
@@ -73,6 +74,12 @@ void VirtualShadowMapDepthPass::prepare()
 				clipmap->addMeshCommand(callItem);
 			}
 		}
+		for (auto localShadow : sceneData->lightDataPack.localLightShadows) {
+			localShadow->clean();
+			for (auto& callItem : sceneData->virtualShadowMapRenderData.intanceIndexArray.meshTransformIndex) {
+				localShadow->addMeshCommand(callItem);
+			}
+		}
 	}
 	outputTextures.clear();
 }
@@ -83,7 +90,7 @@ void VirtualShadowMapDepthPass::execute(IRenderContext& context)
 		VirtualShadowMapRenderData& renderData = sceneData->virtualShadowMapRenderData;
 
 		renderData.manager.processInvalidations(context, sceneData->meshTransformDataPack);
-		renderData.shadowMapArray.buildPageAllocations(context, sceneData->cameraRenderDatas, sceneData->lightDataPack);
+		renderData.shadowMapArray.buildPageAllocations(context, sceneData->cameraRenderDatas, sceneData->lightDataPack, sceneData->debugRenderData);
 		renderData.shadowMapArray.render(context, sceneData->lightDataPack);
 		renderData.shadowMapArray.mergeStaticPhysPages(context);
 		renderData.shadowMapArray.renderDebugView(context, *sceneData->cameraRenderDatas[0]);

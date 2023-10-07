@@ -3,7 +3,7 @@
 #include "../Render.h"
 #include "../TextureCube.h"
 
-class CaptureProbeRender : public Serializable, public Render
+class ENGINE_API CaptureProbeRender : public Serializable, public Render
 {
 public:
 	Serialize(CaptureProbeRender,);

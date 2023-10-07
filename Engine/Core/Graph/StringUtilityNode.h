@@ -2,7 +2,7 @@
 
 #include "FlowNode.h"
 
-class ToStringNode : public GraphNode
+class ENGINE_API ToStringNode : public GraphNode
 {
 public:
 	Serialize(ToStringNode, GraphNode);

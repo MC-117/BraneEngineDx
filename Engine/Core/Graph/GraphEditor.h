@@ -3,7 +3,7 @@
 #include "Graph.h"
 #include "GraphNodeEditor.h"
 
-class GraphEditor : public GraphNodeEditor
+class ENGINE_API GraphEditor : public GraphNodeEditor
 {
 public:
 	GraphEditor() = default;

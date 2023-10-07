@@ -13,7 +13,7 @@ GetMousePositionNode::GetMousePositionNode()
 
 bool GetMousePositionNode::process(GraphContext& context)
 {
-    Unit2Di pos = Engine::input.getMousePos();
+    Unit2Di pos = Engine::getInput().getMousePos();
     valuePin->setValue({ (float)pos.x, (float)pos.y });
     return true;
 }
@@ -35,7 +35,7 @@ GetMouseMoveNode::GetMouseMoveNode()
 
 bool GetMouseMoveNode::process(GraphContext& context)
 {
-    Unit2Di move = Engine::input.getMouseMove();
+    Unit2Di move = Engine::getInput().getMouseMove();
     valuePin->setValue({ (float)move.x, (float)move.y });
     return true;
 }
@@ -59,7 +59,7 @@ GetMouseDownNode::GetMouseDownNode()
 
 bool GetMouseDownNode::process(GraphContext& context)
 {
-    valuePin->setValue(Engine::input.getMouseButtonDown((MouseButtonEnum)indexPin->getValue()));
+    valuePin->setValue(Engine::getInput().getMouseButtonDown((MouseButtonEnum)indexPin->getValue()));
     return true;
 }
 
@@ -82,7 +82,7 @@ GetMouseUpNode::GetMouseUpNode()
 
 bool GetMouseUpNode::process(GraphContext& context)
 {
-    valuePin->setValue(Engine::input.getMouseButtonUp((MouseButtonEnum)indexPin->getValue()));
+    valuePin->setValue(Engine::getInput().getMouseButtonUp((MouseButtonEnum)indexPin->getValue()));
     return true;
 }
 
@@ -105,7 +105,7 @@ GetMousePressNode::GetMousePressNode()
 
 bool GetMousePressNode::process(GraphContext& context)
 {
-    valuePin->setValue(Engine::input.getMouseButtonPress((MouseButtonEnum)indexPin->getValue()));
+    valuePin->setValue(Engine::getInput().getMouseButtonPress((MouseButtonEnum)indexPin->getValue()));
     return true;
 }
 
@@ -128,7 +128,7 @@ GetMouseReleaseNode::GetMouseReleaseNode()
 
 bool GetMouseReleaseNode::process(GraphContext& context)
 {
-    valuePin->setValue(Engine::input.getMouseButtonRelease((MouseButtonEnum)indexPin->getValue()));
+    valuePin->setValue(Engine::getInput().getMouseButtonRelease((MouseButtonEnum)indexPin->getValue()));
     return true;
 }
 
@@ -151,7 +151,7 @@ GetKeyDownNode::GetKeyDownNode()
 
 bool GetKeyDownNode::process(GraphContext& context)
 {
-    valuePin->setValue(Engine::input.getKeyDown(keyCodePin->getValue()));
+    valuePin->setValue(Engine::getInput().getKeyDown(keyCodePin->getValue()));
     return true;
 }
 
@@ -174,7 +174,7 @@ GetKeyUpNode::GetKeyUpNode()
 
 bool GetKeyUpNode::process(GraphContext& context)
 {
-    valuePin->setValue(Engine::input.getKeyUp(keyCodePin->getValue()));
+    valuePin->setValue(Engine::getInput().getKeyUp(keyCodePin->getValue()));
     return true;
 }
 
@@ -197,7 +197,7 @@ GetKeyPressNode::GetKeyPressNode()
 
 bool GetKeyPressNode::process(GraphContext& context)
 {
-    valuePin->setValue(Engine::input.getKeyPress(keyCodePin->getValue()));
+    valuePin->setValue(Engine::getInput().getKeyPress(keyCodePin->getValue()));
     return true;
 }
 
@@ -220,7 +220,7 @@ GetKeyReleaseNode::GetKeyReleaseNode()
 
 bool GetKeyReleaseNode::process(GraphContext& context)
 {
-    valuePin->setValue(Engine::input.getKeyRelease(keyCodePin->getValue()));
+    valuePin->setValue(Engine::getInput().getKeyRelease(keyCodePin->getValue()));
     return true;
 }
 

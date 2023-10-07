@@ -16,7 +16,7 @@ enum InputStateEnum
 	Up, Down, OnPress, OnRelease
 };
 
-class Input
+class ENGINE_API Input
 {
 public:
 	Input(string name = "Input");

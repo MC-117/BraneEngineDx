@@ -20,6 +20,7 @@ T& getListNode(list<T>& l, unsigned int index) {
 		if (index == 0)
 			return *b;
 	}
+	throw overflow_error("out of range when access list");
 }
 
 void CMDWindow::onRenderWindow(GUIRenderInfo& info)

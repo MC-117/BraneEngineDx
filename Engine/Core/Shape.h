@@ -15,7 +15,7 @@ enum ShapeComplexType
 	SIMPLE, COMPLEX, NONESHAPE
 };
 
-class Shape : public Serializable
+class ENGINE_API Shape : public Serializable
 {
 public:
 	Serialize(Shape,);

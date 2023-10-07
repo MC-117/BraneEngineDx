@@ -2,7 +2,7 @@
 
 #include "StateNode.h"
 
-class StateMachine : public Graph
+class ENGINE_API StateMachine : public Graph
 {
 public:
 	Serialize(StateMachine, Graph);

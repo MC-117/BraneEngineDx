@@ -5,7 +5,7 @@
 #include "Unit.h"
 #include "GraphicType.h"
 
-class IBufferBinding
+class ENGINE_API IBufferBinding
 {
 public:
 	virtual void updateBuffer() = 0;
@@ -24,7 +24,7 @@ struct GPUBufferDesc
 	unsigned int id = 0;
 };
 
-class IGPUBuffer
+class ENGINE_API IGPUBuffer
 {
 public:
 	GPUBufferDesc& desc;

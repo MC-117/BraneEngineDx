@@ -4,7 +4,7 @@
 
 #include "Mesh.h"
 
-class Geometry : public Shape
+class ENGINE_API Geometry : public Shape
 {
 public:
 	Geometry();
@@ -14,7 +14,7 @@ public:
 	virtual Mesh* toMesh();
 };
 
-class Box : public Geometry
+class ENGINE_API Box : public Geometry
 {
 public:
 	Serialize(Box, Shape);
@@ -28,7 +28,7 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from);
 };
 
-class Sphere : public Geometry
+class ENGINE_API Sphere : public Geometry
 {
 public:
 	Serialize(Sphere, Shape);
@@ -46,7 +46,7 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from);
 };
 
-class Column : public Geometry
+class ENGINE_API Column : public Geometry
 {
 public:
 	Serialize(Column, Shape);
@@ -65,7 +65,7 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from);
 };
 
-class Cone : public Geometry
+class ENGINE_API Cone : public Geometry
 {
 public:
 	Serialize(Cone, Shape);
@@ -81,7 +81,7 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from);
 };
 
-class Capsule : public Geometry
+class ENGINE_API Capsule : public Geometry
 {
 public:
 	Serialize(Capsule, Shape);

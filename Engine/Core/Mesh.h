@@ -8,7 +8,7 @@
 struct MeshPart;
 class Mesh;
 
-struct MeshPart
+struct ENGINE_API MeshPart
 {
 	MeshData* meshData = NULL;
 	unsigned int vertexFirst = 0;
@@ -75,7 +75,7 @@ struct MeshPart
 	MeshPart clone() const;
 };
 
-class Mesh : public Shape
+class ENGINE_API Mesh : public Shape
 {
 public:
 	multimap<string, unsigned int> meshPartNameMap;

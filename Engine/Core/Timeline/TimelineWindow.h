@@ -3,7 +3,7 @@
 #include "../GUI/UIWindow.h"
 #include "TimelineEditor.h"
 
-class TimelineWindow : public UIWindow
+class ENGINE_API TimelineWindow : public UIWindow
 {
 public:
 	TimelineWindow(string name = "Timeline", bool defaultShow = false);

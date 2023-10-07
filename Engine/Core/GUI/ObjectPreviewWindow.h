@@ -6,7 +6,7 @@
 class Asset;
 class Gizmo;
 
-class ObjectPreviewWindow : public UIWindow
+class ENGINE_API ObjectPreviewWindow : public UIWindow
 {
 public:
 	ObjectPreviewWindow(string name = "ObjectPreviewWindow", bool defaultShow = false);

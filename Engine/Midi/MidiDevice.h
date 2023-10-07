@@ -47,7 +47,7 @@ struct MidiControlState
 	uint8_t pad;
 };
 
-struct MidiChannelState
+struct ENGINE_API MidiChannelState
 {
 	enum { MaxNotes = 128, MaxControls = 128 };
 	MidiNoteState noteStates[MaxNotes];
@@ -59,7 +59,7 @@ struct MidiChannelState
 	void reset();
 };
 
-struct MidiState
+struct ENGINE_API MidiState
 {
 	enum { MaxChannels = 16 };
 	MidiChannelState channelStates[MaxChannels];
@@ -78,14 +78,14 @@ struct MidiState
 	void clearDelegates();
 };
 
-class IMidiStateReceivable
+class ENGINE_API IMidiStateReceivable
 {
 public:
 	virtual void bindMidiState(MidiState& state) = 0;
 	virtual void unbindMidiState() = 0;
 };
 
-class MidiDevice
+class ENGINE_API MidiDevice
 {
 	friend class MidiDeviceManager;
 public:

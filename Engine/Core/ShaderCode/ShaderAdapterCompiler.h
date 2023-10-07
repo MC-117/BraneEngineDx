@@ -2,7 +2,7 @@
 
 #include "ShaderCompiler.h"
 
-class ShaderAdapterCompiler
+class ENGINE_API ShaderAdapterCompiler
 {
 public:
 	static bool compile(const string& path);

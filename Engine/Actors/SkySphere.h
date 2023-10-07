@@ -5,7 +5,7 @@
 #include "../Core/Actor.h"
 #include "../Core/MeshRender.h"
 
-class SkySphere : public Actor
+class ENGINE_API SkySphere : public Actor
 {
 public:
 	Serialize(SkySphere, Actor);

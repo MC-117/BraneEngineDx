@@ -5,7 +5,7 @@
 #include "SkeletonMeshActor.h"
 #include "Physics/PhysicalController.h"
 
-class Character : public Actor
+class ENGINE_API Character : public Actor
 {
 public:
 	Serialize(Character, Actor);

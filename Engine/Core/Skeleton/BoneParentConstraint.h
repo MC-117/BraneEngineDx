@@ -2,7 +2,7 @@
 
 #include "BoneConstraint.h"
 
-class BoneParentConstraint : public BoneConstraint
+class ENGINE_API BoneParentConstraint : public BoneConstraint
 {
 public:
 	Serialize(BoneParentConstraint, BoneConstraint);

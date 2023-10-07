@@ -36,7 +36,7 @@ struct MaterialDesc
 	map<string, MatAttribute<Image>> imageField;
 };
 
-class IMaterial
+class ENGINE_API IMaterial
 {
 public:
 	MaterialDesc& desc;

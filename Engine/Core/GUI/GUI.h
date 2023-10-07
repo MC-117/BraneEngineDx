@@ -4,10 +4,11 @@
 
 #include "UIControl.h"
 #include "Gizmo.h"
+#include "Core/EngineLoop.h"
 
 class Gizmo;
 
-class GUI
+class ENGINE_API GUI
 {
 public:
 	multimap<string, UIControl*> uiControls;
@@ -27,6 +28,7 @@ public:
 	virtual void onSceneResize(Unit2Di size);
 
 	void setSceneBlurTex(Texture2D* tex);
+	void setMainControl(UIControl* uc);
 	void addUIControl(UIControl& uc);
 	UIControl* getUIControl(const string& name);
 	vector<UIControl*> getUIControls(const string& name);
@@ -49,7 +51,22 @@ public:
 protected:
 	static bool mouseOnUI;
 	static bool anyItemFocus;
+	UIControl* mainControl = NULL;
 	UIControl* focusControl = NULL;
+};
+
+class ENGINE_API GUIEngineLoop : public EngineLoop
+{
+public:
+	GUIEngineLoop(GUI& gui);
+	
+	virtual bool willQuit();
+	
+	virtual void init();
+	virtual void loop(float deltaTime);
+	virtual void release();
+protected:
+	GUI& gui;
 };
 
 #endif // !_GUI_H_

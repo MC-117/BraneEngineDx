@@ -5,7 +5,7 @@
 #include "../RenderCore/EnvLightData.h"
 #include "../Utility/SHMath.h"
 
-class EnvLightCaptureProbeRender : public CaptureProbeRender
+class ENGINE_API EnvLightCaptureProbeRender : public CaptureProbeRender
 {
 public:
 	Serialize(EnvLightCaptureProbeRender, CaptureProbeRender);

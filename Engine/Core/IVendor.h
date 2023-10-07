@@ -59,7 +59,7 @@ type##Register::type##Register()\
 	VendorManager::getInstance().regist(name, []()->IVendor* { return new type(); });\
 }\
 
-class IVendor
+class ENGINE_API IVendor
 {
 public:
 	IVendor();
@@ -120,7 +120,7 @@ protected:
 	string name;
 };
 
-class VendorManager
+class ENGINE_API VendorManager
 {
 public:
 	typedef IVendor*(*VendorRegistFunc)();

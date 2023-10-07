@@ -19,7 +19,7 @@ struct RenderInfo
 	Camera* camera = NULL;
 };
 
-class Render : public IRendering
+class ENGINE_API Render : public IRendering
 {
 public:
 	void* renderPool = NULL;

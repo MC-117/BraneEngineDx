@@ -5,7 +5,7 @@
 #include "PhysicalBody.h"
 #include "ClothMeshData.h"
 
-class ClothBodyCollider : public PhysicalCollider
+class ENGINE_API ClothBodyCollider : public PhysicalCollider
 {
 public:
 	union {
@@ -36,7 +36,7 @@ public:
 	virtual void apply();
 };
 
-class ClothVertexCluster
+class ENGINE_API ClothVertexCluster
 {
 public:
 	ClothMeshData* mesh = NULL;
@@ -64,7 +64,7 @@ public:
 	Vector3f getVertexPosition(int indexOfIndex) const;
 };
 
-class ClothBody : public PhysicalBody
+class ENGINE_API ClothBody : public PhysicalBody
 {
 	friend class ClothBodyCollider;
 	friend class ClothVertexCluster;

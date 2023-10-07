@@ -5,7 +5,7 @@
 #include "WUILabel.h"
 #include "WUIButton.h"
 
-class HelpUI : public WUIControl
+class ENGINE_API HelpUI : public WUIControl
 {
 public:
 	WUIButton closeButton;

@@ -4,7 +4,7 @@
 #include "Spine2DModel.h"
 #include "../Core/Render.h"
 
-class Spine2DRender : public Render
+class ENGINE_API Spine2DRender : public Render
 {
 public:
     Spine2DRender();

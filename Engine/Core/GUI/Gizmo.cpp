@@ -31,40 +31,39 @@ bool Gizmo::getEnableGUI() const
 void Gizmo::drawAABB(const BoundBox& bound, const Matrix4f& transformMat, Color color)
 {
 	Vector3f extent = bound.getExtent();
-	Vector3f center = bound.getCenter();
-	Vector3f points[8] =
+	Vector4f center = Vector4f(bound.getCenter(), 0.0f);
+	Vector4f points[8] =
 	{
-		center + extent,
-		center + Vector3f(-extent.x(), extent.y(), extent.z()),
-		center + Vector3f(-extent.x(), -extent.y(), extent.z()),
-		center + Vector3f(extent.x(), -extent.y(), extent.z()),
+		center + Vector4f(extent, 1.0f),
+		center + Vector4f(-extent.x(), extent.y(), extent.z(), 1.0f),
+		center + Vector4f(-extent.x(), -extent.y(), extent.z(), 1.0f),
+		center + Vector4f(extent.x(), -extent.y(), extent.z(), 1.0f),
 
-		center + Vector3f(extent.x(), extent.y(), -extent.z()),
-		center + Vector3f(-extent.x(), extent.y(), -extent.z()),
-		center - extent,
-		center + Vector3f(extent.x(), -extent.y(), -extent.z())
+		center + Vector4f(extent.x(), extent.y(), -extent.z(), 1.0f),
+		center + Vector4f(-extent.x(), extent.y(), -extent.z(), 1.0f),
+		center + Vector4f(-extent, 1.0f),
+		center + Vector4f(extent.x(), -extent.y(), -extent.z(), 1.0f)
 	};
 
 	for (int i = 0; i < 8; i++) {
-		Vector3f& point = points[i];
-		Vector4f vec = transformMat * Vector4f(point.x(), point.y(), point.z(), 1);
-		point = Vector3f(vec);
+		Vector4f& point = points[i];
+		point = transformMat * Vector4f(point.x(), point.y(), point.z(), 1);
 	}
 
-	lines.emplace_back(LineDraw{ points[0], points[1], color });
-	lines.emplace_back(LineDraw{ points[1], points[2], color });
-	lines.emplace_back(LineDraw{ points[2], points[3], color });
-	lines.emplace_back(LineDraw{ points[3], points[0], color });
+	lines.emplace_back(LineDrawData{ points[0], color, points[1], color });
+	lines.emplace_back(LineDrawData{ points[1], color, points[2], color });
+	lines.emplace_back(LineDrawData{ points[2], color, points[3], color });
+	lines.emplace_back(LineDrawData{ points[3], color, points[0], color });
 
-	lines.emplace_back(LineDraw{ points[0], points[4], color });
-	lines.emplace_back(LineDraw{ points[1], points[5], color });
-	lines.emplace_back(LineDraw{ points[2], points[6], color });
-	lines.emplace_back(LineDraw{ points[3], points[7], color });
+	lines.emplace_back(LineDrawData{ points[0], color, points[4], color });
+	lines.emplace_back(LineDrawData{ points[1], color, points[5], color });
+	lines.emplace_back(LineDrawData{ points[2], color, points[6], color });
+	lines.emplace_back(LineDrawData{ points[3], color, points[7], color });
 
-	lines.emplace_back(LineDraw{ points[4], points[5], color });
-	lines.emplace_back(LineDraw{ points[5], points[6], color });
-	lines.emplace_back(LineDraw{ points[6], points[7], color });
-	lines.emplace_back(LineDraw{ points[7], points[4], color });
+	lines.emplace_back(LineDrawData{ points[4], color, points[5], color });
+	lines.emplace_back(LineDrawData{ points[5], color, points[6], color });
+	lines.emplace_back(LineDrawData{ points[6], color, points[7], color });
+	lines.emplace_back(LineDrawData{ points[7], color, points[4], color });
 }
 
 void Gizmo::drawPoint(const Vector3f& p, float size, Color color)
@@ -74,7 +73,7 @@ void Gizmo::drawPoint(const Vector3f& p, float size, Color color)
 
 void Gizmo::drawLine(const Vector3f& p0, const Vector3f& p1, Color color)
 {
-	lines.emplace_back(LineDraw{ p0, p1, color });
+	lines.emplace_back(LineDrawData{ Vector4f(p0, 1.0f), color, Vector4f(p1, 1.0f), color });
 }
 
 void Gizmo::drawCircleX(const Vector3f& p, float radius, const Matrix4f& transformMat, Color color, float segment)
@@ -83,7 +82,7 @@ void Gizmo::drawCircleX(const Vector3f& p, float radius, const Matrix4f& transfo
 	for (int i = 0; i < segment; i++) {
 		float radian = (i + 1) / (float)segment * PI * 2;
 		Vector4f pointB = transformMat * Vector4f(p.x(), p.y() + radius * cosf(radian), p.z() + radius * sinf(radian), 1);
-		lines.emplace_back(LineDraw{ (Vector3f)pointA, (Vector3f)pointB, color });
+		lines.emplace_back(LineDrawData{ pointA, color, pointB, color });
 		pointA = pointB;
 	}
 }
@@ -94,7 +93,7 @@ void Gizmo::drawCircleY(const Vector3f& p, float radius, const Matrix4f& transfo
 	for (int i = 0; i < segment; i++) {
 		float radian = (i + 1) / (float)segment * PI * 2;
 		Vector4f pointB = transformMat * Vector4f(p.x() + radius * cosf(radian), p.y(), p.z() + radius * sinf(radian), 1);
-		lines.emplace_back(LineDraw{ (Vector3f)pointA, (Vector3f)pointB, color });
+		lines.emplace_back(LineDrawData{ pointA, color, pointB, color });
 		pointA = pointB;
 	}
 }
@@ -105,7 +104,7 @@ void Gizmo::drawCircleZ(const Vector3f& p, float radius, const Matrix4f& transfo
 	for (int i = 0; i < segment; i++) {
 		float radian = (i + 1) / (float)segment * PI * 2;
 		Vector4f pointB = transformMat * Vector4f(p.x() + radius * cosf(radian), p.y() + radius * sinf(radian), p.z(), 1);
-		lines.emplace_back(LineDraw{ (Vector3f)pointA, (Vector3f)pointB, color });
+		lines.emplace_back(LineDrawData{ pointA, color, pointB, color });
 		pointA = pointB;
 	}
 }
@@ -157,7 +156,7 @@ void Gizmo::drawCapsuleX(const Vector3f& p, float radius, float halfLength, cons
 	for (int i = 0; i < 4; i++) {
 		Vector4f linePointA = transformMat * (linePointAs[i] + offset);
 		Vector4f linePointB = transformMat * (linePointBs[i] + offset);
-		lines.emplace_back(LineDraw{ (Vector3f)linePointA, (Vector3f)linePointB, color });
+		lines.emplace_back(LineDrawData{ linePointA, color, linePointB, color });
 	}
 }
 
@@ -183,7 +182,7 @@ void Gizmo::drawCapsuleY(const Vector3f& p, float radius, float halfLength, cons
 	for (int i = 0; i < 4; i++) {
 		Vector4f linePointA = transformMat * (linePointAs[i] + offset);
 		Vector4f linePointB = transformMat * (linePointBs[i] + offset);
-		lines.emplace_back(LineDraw{ (Vector3f)linePointA, (Vector3f)linePointB, color });
+		lines.emplace_back(LineDrawData{ linePointA, color, linePointB, color });
 	}
 }
 
@@ -209,7 +208,7 @@ void Gizmo::drawCapsuleZ(const Vector3f& p, float radius, float halfLength, cons
 	for (int i = 0; i < 4; i++) {
 		Vector4f linePointA = transformMat * (linePointAs[i] + offset);
 		Vector4f linePointB = transformMat * (linePointBs[i] + offset);
-		lines.emplace_back(LineDraw{ (Vector3f)linePointA, (Vector3f)linePointB, color });
+		lines.emplace_back(LineDrawData{ linePointA, color, linePointB, color });
 	}
 }
 
@@ -221,8 +220,8 @@ void Gizmo::drawPyramidX(const Vector3f& p, float radius, float length, float se
 	for (int i = 0; i < segment; i++) {
 		float radian = (i + 1) / (float)segment * PI * 2;
 		Vector4f point = transformMat * (pos + Vector4f(0, radius * cosf(radian), radius * sinf(radian), 0));
-		lines.emplace_back(LineDraw{ (Vector3f)lastPoint, (Vector3f)highPoint, color });
-		lines.emplace_back(LineDraw{ (Vector3f)point, (Vector3f)lastPoint, color });
+		lines.emplace_back(LineDrawData{ lastPoint, color, highPoint, color });
+		lines.emplace_back(LineDrawData{ point, color, lastPoint, color });
 		lastPoint = point;
 	}
 }
@@ -235,8 +234,8 @@ void Gizmo::drawPyramidY(const Vector3f& p, float radius, float length, float se
 	for (int i = 0; i < segment; i++) {
 		float radian = (i + 1) / (float)segment * PI * 2;
 		Vector4f point = transformMat * (pos + Vector4f(radius * cosf(radian), 0, radius * sinf(radian), 0));
-		lines.emplace_back(LineDraw{ (Vector3f)lastPoint, (Vector3f)highPoint, color });
-		lines.emplace_back(LineDraw{ (Vector3f)point, (Vector3f)lastPoint, color });
+		lines.emplace_back(LineDrawData{ lastPoint, color, highPoint, color });
+		lines.emplace_back(LineDrawData{ point, color, lastPoint, color });
 		lastPoint = point;
 	}
 }
@@ -249,8 +248,8 @@ void Gizmo::drawPyramidZ(const Vector3f& p, float radius, float length, float se
 	for (int i = 0; i < segment; i++) {
 		float radian = (i + 1) / (float)segment * PI * 2;
 		Vector4f point = transformMat * (pos + Vector4f(radius * cosf(radian), radius * sinf(radian), 0, 0));
-		lines.emplace_back(LineDraw{ (Vector3f)lastPoint, (Vector3f)highPoint, color });
-		lines.emplace_back(LineDraw{ (Vector3f)point, (Vector3f)lastPoint, color });
+		lines.emplace_back(LineDrawData{ lastPoint, color, highPoint, color });
+		lines.emplace_back(LineDrawData{ point, color, lastPoint, color });
 		lastPoint = point;
 	}
 }
@@ -663,7 +662,7 @@ void Gizmo::drawIcon(Texture2D& icon, const Vector3f& position, int size, const 
 
 void Gizmo::controlFreeCamera(float transitionSensitivity, float rotationSensitivity)
 {
-	Input& input = Engine::input;
+	Input& input = Engine::getInput();
 	if (!isFocused || !input.getMouseButtonDown(MouseButtonEnum::Right))
 		return;
 	double deltaTime = Time::delta().toSecond();
@@ -687,7 +686,7 @@ void Gizmo::controlTurnCamera(float transitionSensitivity, float distanceSensiti
 	if (!isFocused)
 		return;
 
-	Input& input = Engine::input;
+	Input& input = Engine::getInput();
 	double deltaTime = Time::delta().toSecond();
 	float up = (int)input.getKeyDown('E') - (int)input.getKeyDown('Q');
 	up *= deltaTime * transitionSensitivity;
@@ -779,6 +778,8 @@ void Gizmo::reset()
 
 void Gizmo::beginFrame(ImDrawList* drawList)
 {
+	if (camera == NULL)
+		return;
 	this->drawList = drawList;
 
 	windowPos = ImGui::GetWindowPos();
@@ -802,6 +803,8 @@ void Gizmo::beginFrame(ImDrawList* drawList)
 
 void Gizmo::endFrame()
 {
+	if (camera == NULL)
+		return;
 	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
 		if ((!ImGuizmo::IsOver() && !picked && !isUsing && !isLastUsing)) {
 			EditorManager::selectObject(NULL);
@@ -815,6 +818,8 @@ void Gizmo::endFrame()
 
 void Gizmo::begineWindow()
 {
+	if (camera == NULL)
+		return;
 	const ImU32 flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
 		ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus |
@@ -871,6 +876,8 @@ void Gizmo::begineWindow()
 
 void Gizmo::endWindow()
 {
+	if (camera == NULL)
+		return;
 	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
 		if ((!ImGuizmo::IsOver() && !picked && !isUsing && !isLastUsing)) {
 			EditorManager::selectObject(NULL);
@@ -1000,63 +1007,63 @@ void Gizmo::onRender2D()
 			point.size, ImColor(point.color.r, point.color.g, point.color.b, point.color.a));
 	}
 
-	for (PxU32 i = 0; i < lines.size(); i++)
-	{
-		const LineDraw& line = lines[i];
-		Vector3f p0 = line.p0;
-		Vector3f p1 = line.p1;
-
-		float dis0 = (p0 - camPos).norm();
-		float dis1 = (p1 - camPos).norm();
-
-		if (dis0 > cullDistance && dis1 > cullDistance)
-			continue;
-
-		Vector4f _p0 = pvm * Vector4f(p0.x(), p0.y(), p0.z(), 1);
-		Vector4f _p1 = pvm * Vector4f(p1.x(), p1.y(), p1.z(), 1);
-
-		if ((_p0.z() < camera.zNear || _p0.z() > camera.zFar) &&
-			(_p1.z() < camera.zNear || _p1.z() > camera.zFar))
-			continue;
-
-		if (_p0.z() < camera.zNear) {
-			clip(p0, p1, camDir, camPos, camera.zNear);
-			_p0 = pvm * Vector4f(p0.x(), p0.y(), p0.z(), 1);
-		}
-
-		if (_p1.z() < camera.zNear) {
-			clip(p1, p0, camDir, camPos, camera.zNear);
-			_p1 = pvm * Vector4f(p1.x(), p1.y(), p1.z(), 1);
-		}
-
-		//if (_p0.w() > 0) {
-		//	_p0 /= _p0.w();
-		//}
-		//else {
-		//	_p0 *= -_p0.w();// *tan(info.camera->fov * 0.5f);
-		//}
-
-		//if (_p1.w() > 0) {
-		//	_p1 /= _p1.w();
-		//}
-		//else {
-		//	_p1 *= -_p1.w();// .tan(info.camera->fov * 0.5f);
-		//}
-
-		_p0 /= _p0.w();
-		_p1 /= _p1.w();
-
-		Vector2f __p0((_p0.x() + 1.0f) * 0.5f, (1.0f - _p0.y()) * 0.5f);
-		Vector2f __p1((_p1.x() + 1.0f) * 0.5f, (1.0f - _p1.y()) * 0.5f);
-
-		//CohenSutherlandLineClipAndDraw(__p0, __p1);
-
-		/*if (in01(__p0) && in01(__p1))*/
-
-		list->AddLine({ windowPos.x + __p0.x() * camera.size.x, windowPos.y + __p0.y() * camera.size.y },
-			{ windowPos.x + __p1.x() * camera.size.x, windowPos.y + __p1.y() * camera.size.y },
-			ImColor(line.color.r, line.color.g, line.color.b, line.color.a));
-	}
+	// for (PxU32 i = 0; i < lines.size(); i++)
+	// {
+	// 	const LineDraw& line = lines[i];
+	// 	Vector3f p0 = line.p0;
+	// 	Vector3f p1 = line.p1;
+	//
+	// 	float dis0 = (p0 - camPos).norm();
+	// 	float dis1 = (p1 - camPos).norm();
+	//
+	// 	if (dis0 > cullDistance && dis1 > cullDistance)
+	// 		continue;
+	//
+	// 	Vector4f _p0 = pvm * Vector4f(p0.x(), p0.y(), p0.z(), 1);
+	// 	Vector4f _p1 = pvm * Vector4f(p1.x(), p1.y(), p1.z(), 1);
+	//
+	// 	if ((_p0.z() < camera.zNear || _p0.z() > camera.zFar) &&
+	// 		(_p1.z() < camera.zNear || _p1.z() > camera.zFar))
+	// 		continue;
+	//
+	// 	if (_p0.z() < camera.zNear) {
+	// 		clip(p0, p1, camDir, camPos, camera.zNear);
+	// 		_p0 = pvm * Vector4f(p0.x(), p0.y(), p0.z(), 1);
+	// 	}
+	//
+	// 	if (_p1.z() < camera.zNear) {
+	// 		clip(p1, p0, camDir, camPos, camera.zNear);
+	// 		_p1 = pvm * Vector4f(p1.x(), p1.y(), p1.z(), 1);
+	// 	}
+	//
+	// 	//if (_p0.w() > 0) {
+	// 	//	_p0 /= _p0.w();
+	// 	//}
+	// 	//else {
+	// 	//	_p0 *= -_p0.w();// *tan(info.camera->fov * 0.5f);
+	// 	//}
+	//
+	// 	//if (_p1.w() > 0) {
+	// 	//	_p1 /= _p1.w();
+	// 	//}
+	// 	//else {
+	// 	//	_p1 *= -_p1.w();// .tan(info.camera->fov * 0.5f);
+	// 	//}
+	//
+	// 	_p0 /= _p0.w();
+	// 	_p1 /= _p1.w();
+	//
+	// 	Vector2f __p0((_p0.x() + 1.0f) * 0.5f, (1.0f - _p0.y()) * 0.5f);
+	// 	Vector2f __p1((_p1.x() + 1.0f) * 0.5f, (1.0f - _p1.y()) * 0.5f);
+	//
+	// 	//CohenSutherlandLineClipAndDraw(__p0, __p1);
+	//
+	// 	/*if (in01(__p0) && in01(__p1))*/
+	//
+	// 	list->AddLine({ windowPos.x + __p0.x() * camera.size.x, windowPos.y + __p0.y() * camera.size.y },
+	// 		{ windowPos.x + __p1.x() * camera.size.x, windowPos.y + __p1.y() * camera.size.y },
+	// 		ImColor(line.c0.r, line.c0.g, line.c0.b, line.c0.a));
+	// }
 
 	for (int i = 0; i < texts.size(); i++) {
 		TextDraw& text = texts[i];
@@ -1124,13 +1131,14 @@ void Gizmo::onRender2D()
 	}
 	list->PopClipRect();
 	points.clear();
-	lines.clear();
 	texts.clear();
 	icons.clear();
 }
 
 void Gizmo::onRender3D(RenderInfo& info)
 {
+	info.sceneData->debugRenderData.updateLineData = std::move(lines);
+	
 	for (auto& draw : meshes) {
 		if (draw.instanceID < 0) {
 			MeshTransformData data;

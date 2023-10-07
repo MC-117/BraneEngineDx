@@ -5,7 +5,7 @@
 #include "Geometry.h"
 #include "Transform.h"
 
-class Light : public Transform, public Render
+class ENGINE_API Light : public Transform, public Render
 {
 public:
 	Serialize(Light, Transform);

@@ -3,7 +3,7 @@
 #include "../GUI/UIWindow.h"
 #include "GraphEditor.h"
 
-class GraphWindow : public UIWindow
+class ENGINE_API GraphWindow : public UIWindow
 {
 public:
 	GraphWindow(string name = "Graph", bool defaultShow = false);

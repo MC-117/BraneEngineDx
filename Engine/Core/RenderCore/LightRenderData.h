@@ -6,6 +6,7 @@
 
 class Light;
 class VirtualShadowMapClipmap;
+struct VirtualShadowMapLightEntry;
 
 struct MainLightData
 {
@@ -27,6 +28,7 @@ struct LightRenderData : public IRenderData
 	ProbePoolRenderData& probePool;
 	MainLightData mainLightData;
 	vector<VirtualShadowMapClipmap*> mainLightClipmaps;
+	vector<VirtualShadowMapLightEntry*> localLightShadows;
 	vector<int> pointLightProbeIndices;
 	GPUBuffer mainLightBuffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(MainLightData));
 
@@ -35,8 +37,10 @@ struct LightRenderData : public IRenderData
 
 	LightRenderData(ProbePoolRenderData& probePool);
 
-	void setLight(Light* light);
+	void setMainLight(Light* light);
+	int setLocalLight(Light* light);
 	void addVirtualShadowMapClipmap(VirtualShadowMapClipmap& clipmap);
+	void addVirtualShadowMapLocalShadow(VirtualShadowMapLightEntry& localShadow);
 
 	int getLocalLightCount() const;
 	LocalLightData& getLocalLightData(int localLightIndex);

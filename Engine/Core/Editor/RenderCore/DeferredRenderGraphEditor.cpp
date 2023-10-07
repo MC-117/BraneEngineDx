@@ -10,6 +10,8 @@ void DeferredRenderGraphEditor::setInspectedObject(void* object)
 	RenderGraphEditor::setInspectedObject(deferredRenderGraph);
 }
 
+//extern bool captureVSMTrigger;
+
 void DeferredRenderGraphEditor::onRenderGraphGUI(EditorInfo& info)
 {
 	if (ImGui::Button("TriggerDebugDraw", { -1, 36 }))
@@ -19,11 +21,16 @@ void DeferredRenderGraphEditor::onRenderGraphGUI(EditorInfo& info)
 	bool enableVSM = VirtualShadowMapConfig::isEnable();
 	if (ImGui::Checkbox("EnableVSM", &enableVSM)) {
 		VirtualShadowMapConfig::setEnable(enableVSM);
+		// captureVSMTrigger = true;
 		/*if (enableVSM)
 			ProfilerManager::instance().setNextCapture();*/
 	}
 
 	VirtualShadowMapConfig& config = VirtualShadowMapConfig::instance();
+
+	ImGui::DragFloat("LocalMinZ", &config.localLightViewMinZ, 0.00005f, 0, 1, "%.5f");
+	ImGui::DragFloat("ScreenRayLen", &config.screenRayLength, 0.00005f, 0, 1, "%.5f");
+
 	const char* debugViewModeNames[] = {
 		"None",
 		"ClipmapLevel",
@@ -38,9 +45,15 @@ void DeferredRenderGraphEditor::onRenderGraphGUI(EditorInfo& info)
 		ImGui::EndCombo();
 	}
 	ImGui::BeginDisabled(config.debugViewMode != VirtualShadowMapConfig::DebugViewMode::Clipmap);
-	ImGui::DragInt("VSMID", &config.debugVSMID, 1, 0, config.lastClipmapLevel - config.firstClipmapLevel);
-	ImGui::EndDisabled();
-	ImGui::EndGroupPanel();
+	if (!deferredRenderGraph->sceneDatas.empty())
+	{
+		SceneRenderData* sceneData = NULL;
+		sceneData = *deferredRenderGraph->sceneDatas.begin();
+		int count = sceneData->virtualShadowMapRenderData.manager.getShadowMapCount();
+		ImGui::DragInt("VSMID", &config.debugVSMID, 1, 0, count);
+		ImGui::EndDisabled();
+		ImGui::EndGroupPanel();
+	}
 	
 	ImGui::BeginGroupPanel("SSR");
 	ImGui::Checkbox("EnableSSR", &deferredRenderGraph->ssrPass.enable);

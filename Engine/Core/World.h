@@ -3,6 +3,7 @@
 #define _WORLD_H_
 #include "Input.h"
 #include "IWorld.h"
+#include "EngineLoop.h"
 #include "Transform.h"
 #include "Audio/AudioSource.h"
 #include "Camera.h"
@@ -12,7 +13,7 @@
 #include "Physics/PhysicalWorld.h"
 #endif
 
-class World : public Transform, public IWorld {
+class ENGINE_API World : public Transform, public IWorld {
 public:
 	Serialize(World, Transform);
 #if ENABLE_PHYSICS
@@ -93,6 +94,22 @@ protected:
 	vector<Object*> destroyList;
 
 	int64_t getCurrentTime();
+};
+
+class WorldEngineLoop : public EngineLoop
+{
+public:
+	WorldEngineLoop(Ref<World> world);
+
+	void setWorld(Ref<World> world);
+
+	virtual bool willQuit();
+	
+	virtual void init();
+	virtual void loop(float deltaTime);
+	virtual void release();
+protected:
+	Ref<World> world;
 };
 
 #endif // !_WORLD_H_

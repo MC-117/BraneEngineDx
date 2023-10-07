@@ -4,7 +4,7 @@
 
 #include "../Core/Camera.h"
 
-class DebugCamera : public Camera
+class ENGINE_API DebugCamera : public Camera
 {
 public:
 	float cameraSpeed = 1;

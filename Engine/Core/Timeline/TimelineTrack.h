@@ -2,7 +2,7 @@
 
 #include "TimelinePlayable.h"
 
-class TimelineTrack : public Base
+class ENGINE_API TimelineTrack : public Base
 {
 public:
 	Serialize(TimelineTrack, Base);

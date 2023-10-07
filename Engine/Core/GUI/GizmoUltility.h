@@ -2,4 +2,4 @@
 
 #include "Gizmo.h"
 
-float getFitIconSize(GizmoInfo& info);
+ENGINE_API float getFitIconSize(GizmoInfo& info);

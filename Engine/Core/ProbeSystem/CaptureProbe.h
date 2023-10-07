@@ -3,7 +3,7 @@
 #include "ReflectionCaptureProbeRender.h"
 #include "../Transform.h"
 
-class CaptureProbe : public Transform
+class ENGINE_API CaptureProbe : public Transform
 {
 public:
 	Serialize(CaptureProbe, Transform);

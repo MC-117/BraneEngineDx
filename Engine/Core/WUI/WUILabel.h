@@ -3,7 +3,7 @@
 #define _WUILABEL_H_
 
 #include "WUIFont.h"
-class WUILabel : public WUIControl
+class ENGINE_API WUILabel : public WUIControl
 {
 public:
 	WUIFont font;

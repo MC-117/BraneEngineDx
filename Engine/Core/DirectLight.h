@@ -17,7 +17,7 @@ struct DirectLightShadowData
 
 class VirtualShadowMapClipmap;
 
-class DirectLight : public Light
+class ENGINE_API DirectLight : public Light
 {
 public:
 	Serialize(DirectLight, Light);

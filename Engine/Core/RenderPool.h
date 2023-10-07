@@ -7,7 +7,7 @@
 
 using namespace std;
 
-class RenderPool
+class ENGINE_API RenderPool
 {
 public:
 	Camera& defaultCamera;

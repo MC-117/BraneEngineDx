@@ -4,7 +4,7 @@
 #include <type_traits>
 #include "Brane.h"
 
-class Base : public Serializable
+class ENGINE_API Base : public Serializable
 {
 	template<class T>
 	friend struct Ref;

@@ -4,7 +4,7 @@
 
 SerializeInstance(PointLight);
 
-unsigned int PointLight::pointLightCount = 0;
+unsigned int PointLight::pointLightCount = 1;
 
 PointLight::PointLight(const string& name, Color color, float intensity, float attenuation, float radius) : Light::Light(name, color, intensity, attenuation, Sphere(radius))
 {
@@ -27,7 +27,14 @@ void PointLight::preRender()
 
 void PointLight::render(RenderInfo & info)
 {
-	info.sceneData->setLight(this);
+	int localLightIndex = info.sceneData->setLocalLight(this);
+	if (VirtualShadowMapConfig::isEnable()) {
+		virtualShadowMapLightEntry = info.sceneData->virtualShadowMapRenderData.newLocalLightShadow(
+			localLightIndex, index);
+		info.sceneData->lightDataPack.addVirtualShadowMapLocalShadow(*virtualShadowMapLightEntry);
+	}
+	else
+		virtualShadowMapLightEntry = NULL;
 }
 
 Serializable* PointLight::instantiate(const SerializationInfo& from)

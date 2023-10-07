@@ -2,6 +2,7 @@
 #include "../RenderCore/DirectShadowRenderPack.h"
 #include "../Engine.h"
 #include "../Asset.h"
+#include "Core/Profile/ProfileCore.h"
 
 DeferredSurfaceBuffer::DeferredSurfaceBuffer()
 	: gBufferA(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGB10A2_UF })
@@ -394,6 +395,8 @@ void DeferredRenderGraph::prepare()
 	imGuiPass.prepare();
 }
 
+// bool captureVSMTrigger = false;
+
 void DeferredRenderGraph::execute(IRenderContext& context)
 {
 	auto clearTexFrameBindings = [&]() {
@@ -436,6 +439,11 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	geometryPass.execute(context);
 
 	timer.record("Base");
+	
+	// if (captureVSMTrigger)
+	// {
+	// 	ProfilerManager::instance().beginScope("VSM");
+	// }
 
 	if (VirtualShadowMapConfig::isEnable())
 		vsmDepthPass.execute(context);
@@ -449,6 +457,12 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	lightingPass.execute(context);
 
 	timer.record("Lighting");
+	
+	// if (captureVSMTrigger)
+	// {
+	// 	ProfilerManager::instance().endScope();
+	// 	captureVSMTrigger = false;
+	// }
 
 	clearTexFrameBindings();
 

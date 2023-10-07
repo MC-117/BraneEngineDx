@@ -432,7 +432,7 @@ void TimelineEditor::onTimelineGUI(EditorInfo& info)
 		}
 	}
 
-	if (Engine::input.getKeyPress(VK_DELETE)) {
+	if (Engine::getInput().getKeyPress(VK_DELETE)) {
 		Base* base = EditorManager::getSelectedBase();
 		if (dynamic_cast<TimelineClip*>(base) != NULL) {
 			timeline->removeClip((TimelineClip*)base);

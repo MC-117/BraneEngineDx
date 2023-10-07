@@ -2,8 +2,8 @@
 
 #include "Object.h"
 
-bool isSameBranch(const Object& child, const Object& other);
-Object* findFirst(const Object& root, const Serialization& serialization);
+ENGINE_API bool isSameBranch(const Object& child, const Object& other);
+ENGINE_API Object* findFirst(const Object& root, const Serialization& serialization);
 
 template<class T>
 Ref<T> getInstanceRef(const SerializationInfo& from, const string& name)

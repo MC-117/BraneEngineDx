@@ -7,7 +7,7 @@
 
 class PythonRuntimeObject;
 
-class PythonScript
+class ENGINE_API PythonScript
 {
 	friend class PythonRuntimeObject;
 public:
@@ -46,7 +46,7 @@ protected:
 	set<PythonRuntimeObject*> instances;
 };
 
-struct PythonFunctionObject
+struct ENGINE_API PythonFunctionObject
 {
 	PyObject* func;
 	PythonRuntimeObject* object;
@@ -56,7 +56,7 @@ struct PythonFunctionObject
 	bool call();
 };
 
-class PythonRuntimeObject
+class ENGINE_API PythonRuntimeObject
 {
 	friend class PythonScript;
 	friend class PythonFunctionObject;
@@ -88,7 +88,7 @@ protected:
 	PyObject* pyobject = NULL;
 };
 
-class PythonObjectBehavior : public ObjectBehavior, public PythonRuntimeObject
+class ENGINE_API PythonObjectBehavior : public ObjectBehavior, public PythonRuntimeObject
 {
 public:
 	Serialize(PythonObjectBehavior, ObjectBehavior);

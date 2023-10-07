@@ -3,7 +3,7 @@
 #include "Graph.h"
 #include "ObjectNode.h"
 
-class ObjectGraph : public ObjectBehavior
+class ENGINE_API ObjectGraph : public ObjectBehavior
 {
 public:
 	Serialize(ObjectGraph, ObjectBehavior);

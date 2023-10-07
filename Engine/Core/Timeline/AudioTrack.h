@@ -3,7 +3,7 @@
 #include "TimelineClipTrack.h"
 #include "AudioPlayable.h"
 
-class AudioTrack : public TimelineClipTrack
+class ENGINE_API AudioTrack : public TimelineClipTrack
 {
 public:
 	Serialize(AudioTrack, TimelineClipTrack);

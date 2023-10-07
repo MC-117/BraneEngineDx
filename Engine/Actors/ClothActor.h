@@ -3,7 +3,7 @@
 #include "../Core/Physics/ClothBody.h"
 #include "../Core/MeshActor.h"
 
-class ClothActor : public MeshActor
+class ENGINE_API ClothActor : public MeshActor
 {
 public:
 	Serialize(ClothActor, MeshActor);

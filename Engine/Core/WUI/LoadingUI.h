@@ -4,7 +4,7 @@
 
 #include "WUIFont.h"
 
-class LoadingUI : public WUIControl
+class ENGINE_API LoadingUI : public WUIControl
 {
 public:
 	LoadingUI(const string& imgPath, HINSTANCE hIns);

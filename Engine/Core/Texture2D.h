@@ -5,7 +5,7 @@
 #include "Texture.h"
 #include "IVendor.h"
 
-class Texture2D : public Texture
+class ENGINE_API Texture2D : public Texture
 {
 public:
 	bool isStandard = false;

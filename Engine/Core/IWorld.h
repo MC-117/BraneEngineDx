@@ -1,7 +1,7 @@
 #pragma once
 #include "Object.h"
 
-class IWorld
+class ENGINE_API IWorld
 {
 public:
 	virtual Object* find(const string& name) const = 0;

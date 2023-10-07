@@ -9,7 +9,7 @@ void CubismLogVerbose_Impl(const char* fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	Console::pushLog(Console::Log_Normal, fmt, ap);
+	Console::pushLog(LogState::Log_Normal, fmt, ap);
 	va_end(ap);
 }
 
@@ -17,7 +17,7 @@ void CubismLogDebug_Impl(const char* fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	Console::pushLog(Console::Log_Normal, fmt, ap);
+	Console::pushLog(LogState::Log_Normal, fmt, ap);
 	va_end(ap);
 }
 
@@ -25,7 +25,7 @@ void CubismLogInfo_Impl(const char* fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	Console::pushLog(Console::Log_Normal, fmt, ap);
+	Console::pushLog(LogState::Log_Normal, fmt, ap);
 	va_end(ap);
 }
 
@@ -33,7 +33,7 @@ void CubismLogWarning_Impl(const char* fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	Console::pushLog(Console::Log_Warning , fmt, ap);
+	Console::pushLog(LogState::Log_Warning , fmt, ap);
 	va_end(ap);
 }
 
@@ -41,6 +41,6 @@ void CubismLogError_Impl(const char* fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	Console::pushLog(Console::Log_Error, fmt, ap);
+	Console::pushLog(LogState::Log_Error, fmt, ap);
 	va_end(ap);
 }

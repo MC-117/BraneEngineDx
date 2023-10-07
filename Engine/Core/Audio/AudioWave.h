@@ -6,7 +6,7 @@
 #define WAVE_FORMAT_MULAW 0x0007
 #define WAVE_FORMAT_EXTENSIBLE 0xFFFE
 
-struct AudioWave
+struct ENGINE_API AudioWave
 {
     struct Header
     {

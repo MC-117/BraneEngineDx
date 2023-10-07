@@ -2,7 +2,7 @@
 #include "../Core/SkeletonMeshActor.h"
 #include "../Core/Camera.h"
 #include "../Core/ParticleSystem.h"
-class GunTowerActor : public SkeletonMeshActor
+class ENGINE_API GunTowerActor : public SkeletonMeshActor
 {
 public:
 	ParticleSystem particleSystem;

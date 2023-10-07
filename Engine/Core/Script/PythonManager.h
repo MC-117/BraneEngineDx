@@ -6,7 +6,7 @@
 #include <Python.h>
 #include <structmember.h>
 
-class PythonManager
+class ENGINE_API PythonManager
 {
 private:
 	static bool isInit;

@@ -6,7 +6,7 @@
 
 class Graph;
 
-struct GraphInfo
+struct ENGINE_API GraphInfo
 {
 	ax::NodeEditor::EditorContext* context = NULL;
 	ax::NodeEditor::Utilities::BlueprintNodeBuilder* builder = NULL;
@@ -27,7 +27,7 @@ struct GraphInfo
 	void openGraph(Graph* graph);
 };
 
-class GraphBaseEditor : public BaseEditor
+class ENGINE_API GraphBaseEditor : public BaseEditor
 {
 public:
 	GraphBaseEditor() = default;

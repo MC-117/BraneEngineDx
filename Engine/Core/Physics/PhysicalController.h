@@ -5,7 +5,7 @@
 #include "PhysicalBody.h"
 #include "../Geometry.h"
 
-class PhysicalController : public PhysicalBody, public PxUserControllerHitReport
+class ENGINE_API PhysicalController : public PhysicalBody, public PxUserControllerHitReport
 {
 public:
 #ifdef PHYSICS_USE_PHYSX

@@ -5,7 +5,7 @@
 #include "Render.h"
 #include "Mesh.h"
 
-class ParticleEmitter : public Serializable
+class ENGINE_API ParticleEmitter : public Serializable
 {
 public:
 	Serialize(ParticleEmitter,);
@@ -72,7 +72,7 @@ protected:
 	bool transformUpdate = false;
 };
 
-class ParticleRender : public Render
+class ENGINE_API ParticleRender : public Render
 {
 public:
 	vector<ParticleEmitter> particleEmtters;

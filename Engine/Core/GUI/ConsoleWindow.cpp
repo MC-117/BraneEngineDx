@@ -28,19 +28,19 @@ void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
 			for (auto b = Console::logs.begin(), e = Console::logs.end(); b != e; b++) {
 				switch (b->state)
 				{
-				case Console::Log_Normal:
+				case LogState::Log_Normal:
 					if (showLog)
 						ImGui::Text("[Log][%d:%d:%d:%d]%s", b->timeStamp.getHour() + b->timeStamp.getDay() * 24,
 							b->timeStamp.getMinute(), b->timeStamp.getSecond(), b->timeStamp.getMillisecond(),
 							b->text.c_str());
 					break;
-				case Console::Log_Warning:
+				case LogState::Log_Warning:
 					if (showWarning)
 						ImGui::TextColored({ 1, 1, 0, 1 }, "[Warning][%d:%d:%d:%d]%s", b->timeStamp.getHour() + b->timeStamp.getDay() * 24,
 							b->timeStamp.getMinute(), b->timeStamp.getSecond(), b->timeStamp.getMillisecond(),
 							b->text.c_str());
 					break;
-				case Console::Log_Error:
+				case LogState::Log_Error:
 					if (showError)
 						ImGui::TextColored({ 1, 0, 0, 1 }, "[Error][%d:%d:%d:%d]%s", b->timeStamp.getHour() + b->timeStamp.getDay() * 24,
 							b->timeStamp.getMinute(), b->timeStamp.getSecond(), b->timeStamp.getMillisecond(),
@@ -51,27 +51,11 @@ void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
 				}
 			}
 			if (Console::getNewLogCount() != 0) {
-				if ((Console::logs.back().state == Console::Log_Normal && showLog) ||
-					(Console::logs.back().state == Console::Log_Warning && showWarning) ||
-					(Console::logs.back().state == Console::Log_Error && showError))
+				if ((Console::logs.back().state == LogState::Log_Normal && showLog) ||
+					(Console::logs.back().state == LogState::Log_Warning && showWarning) ||
+					(Console::logs.back().state == LogState::Log_Error && showError))
 					ImGui::SetScrollHereY(1.0f);
 			}
-			ImGui::PopStyleVar();
-			ImGui::EndChild();
-			ImGui::EndTabItem();
-		}
-		if (ImGui::BeginTabItem("Stdout")) {
-			ImGui::BeginChild("Output_Area", { 0, 0 }, false, ImGuiWindowFlags_HorizontalScrollbar);
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-			ImGui::Text(Console::STDOUT.str().c_str());
-			ImGui::PopStyleVar();
-			ImGui::EndChild();
-			ImGui::EndTabItem();
-		}
-		if (ImGui::BeginTabItem("Stderr")) {
-			ImGui::BeginChild("Output_Area", { 0, 0 }, false, ImGuiWindowFlags_HorizontalScrollbar);
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-			ImGui::Text(Console::STDERR.str().c_str());
 			ImGui::PopStyleVar();
 			ImGui::EndChild();
 			ImGui::EndTabItem();
@@ -196,11 +180,11 @@ void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
 			for (auto b = Console::pyLogs.begin(), e = Console::pyLogs.end(); b != e; b++) {
 				switch (b->state)
 				{
-				case Console::Log_Normal:
+				case LogState::Log_Normal:
 					if (showPyLog)
 						ImGui::Text(b->text.c_str());
 					break;
-				case Console::Log_Error:
+				case LogState::Log_Error:
 					if (showPyError)
 						ImGui::TextColored({ 1, 0, 0, 1 }, b->text.c_str());
 					break;
@@ -209,8 +193,8 @@ void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
 				}
 			}
 			if (Console::getNewPyLogCount != 0) {
-				if ((Console::pyLogs.back().state == Console::Log_Normal && showPyLog) ||
-					(Console::pyLogs.back().state == Console::Log_Error && showPyError))
+				if ((Console::pyLogs.back().state == LogState::Log_Normal && showPyLog) ||
+					(Console::pyLogs.back().state == LogState::Log_Error && showPyError))
 					ImGui::SetScrollHereY(1.0f);
 			}
 			ImGui::PopStyleVar();

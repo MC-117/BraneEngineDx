@@ -8,5 +8,5 @@ class ToolModule(Module):
         self.fileSearcher.addPath('.', True)
 
         self.moduleDependencies = [
-            'Engine',
+            'Launch',
         ]

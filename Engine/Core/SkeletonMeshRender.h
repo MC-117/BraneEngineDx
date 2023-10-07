@@ -8,7 +8,7 @@
 
 class SkeletonRenderData;
 
-class SkeletonMeshRender : public MeshRender
+class ENGINE_API SkeletonMeshRender : public MeshRender
 {
 public:
 	SkeletonMesh* skeletonMesh;

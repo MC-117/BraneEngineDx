@@ -9,7 +9,7 @@
 #include <typeinfo>
 #include "Unit.h"
 
-static class Brane
+static class ENGINE_API Brane
 {
 public:
 	static InstanceID registerPtr(void* ptr);

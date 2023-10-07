@@ -3,7 +3,7 @@
 #define _ESCMENU_H_
 
 #include "UIWindow.h"
-class ESCMenu : public UIWindow
+class ENGINE_API ESCMenu : public UIWindow
 {
 public:
 	ESCMenu(string name = "ESCMenu", bool defaultShow = false);

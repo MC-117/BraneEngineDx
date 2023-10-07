@@ -2,7 +2,7 @@
 #include "../Config.h"
 #include "../Serialization.h"
 
-struct PhysicalLayer
+struct ENGINE_API PhysicalLayer
 {
 public:
 	struct LayerBool

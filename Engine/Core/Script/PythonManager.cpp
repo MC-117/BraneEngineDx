@@ -126,7 +126,7 @@ PyObject * UtilityPy::getInput(PyObject * self, PyObject * args)
 		PyErr_SetString(PyExc_RuntimeError, "no world is load");
 		return NULL;
 	}
-	PyObject* obj = PyObject_CallFunction((PyObject*)&InputPy::Type, "L", &Engine::input);
+	PyObject* obj = PyObject_CallFunction((PyObject*)&InputPy::Type, "L", &Engine::getInput());
 	if (obj == NULL)
 		PyErr_SetString(PyExc_RuntimeError, "construct Input failed");
 	return obj;
@@ -2686,7 +2686,7 @@ PyObject * WorldPy::getInput(PyObject * self, PyObject * args)
 		PyErr_SetString(PyExc_MemoryError, "access c pointer failed");
 		return NULL;
 	}
-	PyObject* obj = PyObject_CallFunction((PyObject*)&InputPy::Type, "L", &Engine::input);
+	PyObject* obj = PyObject_CallFunction((PyObject*)&InputPy::Type, "L", &Engine::getInput());
 	if (obj == NULL)
 		PyErr_SetString(PyExc_RuntimeError, "construct Input failed");
 	return obj;

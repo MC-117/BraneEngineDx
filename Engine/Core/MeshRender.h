@@ -7,7 +7,7 @@
 
 struct MeshTransformData;
 
-class MeshRender : public Render
+class ENGINE_API MeshRender : public Render
 {
 public:
 	Mesh* mesh;

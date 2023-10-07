@@ -4,7 +4,7 @@
 
 #include "WUIControl.h"
 
-class WUIFont
+class ENGINE_API WUIFont
 {
 public:
 	WUIFont(const string& familyName = "Arial", unsigned int size = 12, unsigned int weight = FW_THIN);

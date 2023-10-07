@@ -2,7 +2,7 @@
 
 #include "../Unit.h"
 
-struct SHCoeff3
+struct ENGINE_API SHCoeff3
 {
 	enum { CoeffCount = 9 };
 
@@ -18,7 +18,7 @@ struct SHCoeff3
 	SHCoeff3(const SHCoeff3& sh);
 };
 
-struct SHCoeff3RGB
+struct ENGINE_API SHCoeff3RGB
 {
 	SHCoeff3 r;
 	SHCoeff3 g;

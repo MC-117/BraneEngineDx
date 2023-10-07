@@ -48,7 +48,7 @@ void WUIESCMenu::play()
 	if (world == NULL)
 		return;
 	if (!world->renderPool.gui.isShowUIControl("Editor"))
-	Engine::input.setCursorHidden(true);
+	Engine::getInput().setCursorHidden(true);
 }
 
 void WUIESCMenu::help()
@@ -117,7 +117,7 @@ void WUIESCMenu::onLoop()
 	World* world = Engine::getCurrentWorld();
 	if (world == NULL)
 		return;
-	Input& input = Engine::input;
+	Input& input = Engine::getInput();
 	if (input.getKeyPress(VK_ESCAPE)) {
 		if (isHide()) {
 			show(false);

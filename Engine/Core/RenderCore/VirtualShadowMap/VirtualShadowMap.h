@@ -3,6 +3,8 @@
 #include "../LightRenderData.h"
 #include "../TransformRenderData.h"
 
+struct DebugRenderData;
+
 constexpr unsigned int log2Const(unsigned int n)
 {
 	return (n > 1) ? 1 + log2Const(n / 2) : 0;
@@ -61,6 +63,9 @@ public:
 	float pageDilationBorderSizeMain = 0.05f;
 	float pageDilationBorderSizeLocal = 0.05f;
 
+	float localLightViewMinZ = 0.001f;
+	float screenRayLength = 0.0005f;
+
 	enum DebugViewMode
 	{
 		None,
@@ -107,7 +112,9 @@ struct VirtualShadowMapProjectionData
 
 	int uncached;
 
-	int pad[2];
+	float screenRayLength;
+
+	int pad;
 };
 
 struct VirtualShadowMapInfo
@@ -177,6 +184,7 @@ static Vector3u name##ProgramDim;
 	VSM_SHADER(sortFreePages);
 	VSM_SHADER(allocateNewPageMappings);
 	VSM_SHADER(generateHierarchicalPageFlags);
+	VSM_SHADER(propagateMappedMips);
 	VSM_SHADER(clearComputeIndirectArgs);
 	VSM_SHADER(selectPagesToInit);
 	VSM_SHADER(initPhysicalMemoryIndirect);
@@ -333,6 +341,8 @@ public:
 			float viewCenterZ,
 			float ViewRadiusZ,
 			const LightEntry& lightEntry);
+
+		void updateLocal(int vsmID, const LightEntry& lightEntry);
 	};
 
 	struct LightEntry
@@ -352,15 +362,25 @@ public:
 
 			bool operator==(const Batch& batch) const { return transformData == batch.transformData; }
 		};
+		struct LocalLightKey
+		{
+			Vector4f sphere;
+
+			LocalLightKey();
+
+			bool validateAndUpdate(const LocalLightData& lightData);
+		};
 		int lightID = -1;
 		int preRenderFrame = -1;
 		int curRenderFrame = -1;
+		LocalLightKey localLightKey;
 		vector<ShadowMap*> shadowMaps;
 		unordered_set<Batch, Batch::Hasher> batches;
 
 		ShadowMap* setShadowMap(int index);
 
 		void updateClipmap();
+		void updateLocal(const LocalLightData& lightData);
 		void addMeshCommand(const VSMMeshTransformIndexArray::CallItem& callItem);
 		void markRendered(unsigned int frame);
 
@@ -384,6 +404,7 @@ public:
 	bool isCacheValid() const;
 
 	VirtualShadowMapFrameData& getCurFrameData();
+	int getShadowMapCount() const;
 
 	void invalidate();
 	void setPoolTextureSize(Vector2u size, unsigned int arrayCount);
@@ -406,6 +427,8 @@ protected:
 	VirtualShadowMapFrameData* prevFrameData;
 	VirtualShadowMapInfo prevShadowMapInfo;
 };
+
+struct VirtualShadowMapLightEntry : VirtualShadowMapManager::LightEntry {};
 
 class VirtualShadowMap
 {
@@ -457,9 +480,10 @@ public:
 		unsigned int instanceCount;
 		unsigned int firstView;
 		unsigned int viewCount;
+		unsigned int primaryViewCount;
 		unsigned int maxPerInstanceCmdCount;
 		unsigned int frame;
-		unsigned int pad[3];
+		unsigned int pad[2];
 	};
 
 	struct VisiableInstanceInfo
@@ -525,7 +549,8 @@ public:
 	void buildPageAllocations(
 		IRenderContext& context,
 		const vector<CameraRenderData*>& cameraDatas,
-		const LightRenderData& lightData
+		const LightRenderData& lightData,
+		DebugRenderData& debugData
 	);
 
 	void render(IRenderContext& context, const LightRenderData& lightData);

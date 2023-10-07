@@ -1,6 +1,6 @@
 #pragma once
 #include "UIWindow.h"
-class CMDWindow : public UIWindow
+class ENGINE_API CMDWindow : public UIWindow
 {
 public:
 	CMDWindow(string name = "CMDWindow", bool defaultShow = false);

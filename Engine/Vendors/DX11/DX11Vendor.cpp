@@ -58,7 +58,7 @@ bool DX11Vendor::imGuiNewFrame(const EngineConfig & config, const WindowContext 
 
 bool DX11Vendor::imGuiDrawFrame(const EngineConfig & config, const WindowContext & context)
 {
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData(), dxContext.deviceContext.Get());
 	return true;
 }
 

@@ -4,7 +4,7 @@
 
 #include "IVendor.h"
 
-class GPUBuffer
+class ENGINE_API GPUBuffer
 {
 public:
 	GPUBuffer(GPUBufferType type, GPUBufferFormat format, unsigned int structSize = 0, GPUAccessFlag gpuAccess = GAF_Read, CPUAccessFlag cpuAccess = CAF_Write);

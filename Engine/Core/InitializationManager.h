@@ -6,11 +6,11 @@ enum class InitializeStage: short
 {
 	BeforeEngineConfig,
 	BeforeEngineSetup,
-	BeforeScriptSetup,
 	BeforePhysicsSetup,
 	BeforeWindowSetup,
 	BeforeRenderVendorSetup,
 	BeforeAssetLoading,
+	BeforeGameSetup,
 	AfterEngineSetup,
 	Num
 };
@@ -18,7 +18,7 @@ enum class InitializeStage: short
 enum class FinalizeStage : short
 {
 	BeforeEngineRelease,
-	BeforeScriptRelease,
+	BeforeGameRelease,
 	BeforePhysicsRelease,
 	BeforeRenderVenderRelease,
 	AfterRenderVenderRelease,
@@ -27,7 +27,7 @@ enum class FinalizeStage : short
 };
 
 class InitializationManager;
-class Initialization
+class ENGINE_API Initialization
 {
 	friend InitializationManager;
 protected:
@@ -41,7 +41,7 @@ protected:
 	virtual bool finalize() = 0;
 };
 
-class InitializationManager
+class ENGINE_API InitializationManager
 {
 	friend Initialization;
 public:

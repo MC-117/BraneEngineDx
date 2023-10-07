@@ -8,7 +8,7 @@
 #include "Physics/SkeletonPhysics.h"
 #include "Bone.h"
 
-class SkeletonMeshActor : public Actor
+class ENGINE_API SkeletonMeshActor : public Actor
 {
 public:
 	Serialize(SkeletonMeshActor, Actor);

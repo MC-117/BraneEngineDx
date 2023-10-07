@@ -88,7 +88,7 @@ class Solution:
     
     def setup(self):
         for target in self.targetCollector:
-            target.setupModules(self.moduleCollector)
+            target.setupModules(self.moduleCollector, self.targetCollector)
     
     def generateProject(self, generatorName : str, solutionName : str):
         generator = ProjectGenerator.Get(generatorName)

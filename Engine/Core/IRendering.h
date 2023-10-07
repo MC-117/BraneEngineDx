@@ -8,7 +8,7 @@
 #include "Material.h"
 #include "RenderCore/CameraData.h"
 
-class IRendering
+class ENGINE_API IRendering
 {
 public:
 	enum RenderType

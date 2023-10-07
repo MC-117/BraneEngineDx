@@ -6,7 +6,7 @@
 #include "PhysicalMaterial.h"
 #include "RigidBody.h"
 
-class PhysicalConstraint : public PhysicalBase
+class ENGINE_API PhysicalConstraint : public PhysicalBase
 {
 public:
 	Serialize(PhysicalConstraint, PhysicalBase);

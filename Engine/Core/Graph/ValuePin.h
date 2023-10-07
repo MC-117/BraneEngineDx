@@ -2,7 +2,7 @@
 
 #include "Node.h"
 
-class ValuePin : public GraphPin
+class ENGINE_API ValuePin : public GraphPin
 {
 	friend class VariableNode;
 	friend class ReturnNode;
@@ -21,7 +21,7 @@ protected:
 	ValuePin(const string& name);
 };
 
-class ValueCasterManager
+class ENGINE_API ValueCasterManager
 {
 public:
 	typedef void(*CastFunction)(const ValuePin* from, ValuePin* to);

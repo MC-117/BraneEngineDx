@@ -3,7 +3,7 @@
 #include "../Object.h"
 #include "Timeline.h"
 
-class TimelinePlayer : public Object
+class ENGINE_API TimelinePlayer : public Object
 {
 public:
 	Serialize(TimelinePlayer, Object);

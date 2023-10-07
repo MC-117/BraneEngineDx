@@ -1,7 +1,7 @@
 #pragma once
 #include "PhysicalConstraint.h"
 
-class D6Constraint : public PhysicalConstraint
+class ENGINE_API D6Constraint : public PhysicalConstraint
 {
 public:
 	Serialize(D6Constraint, PhysicalConstraint);

@@ -151,7 +151,7 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 	}
 	if (!alwaysShow) {
 		if (ImGui::Button("Hide UI", size)) {
-			Engine::input.setCursorHidden(true);
+			Engine::getInput().setCursorHidden(true);
 			gui.hideAllUIControl();
 			gui.gizmo.setEnableGUI(false);
 		}
@@ -230,10 +230,10 @@ void EditorWindow::onPostAction(GUIPostInfo & info)
 		return;
 	World& world = *w;
 	if (isFocus() || info.focusControl == NULL) {
-		if (Engine::input.getKeyDown(VK_CONTROL)) {
+		if (Engine::getInput().getKeyDown(VK_CONTROL)) {
 			Object* selectedObj = EditorManager::getSelectedObject();
 			if (selectedObj != NULL &&
-				Engine::input.getKeyPress('C')) {
+				Engine::getInput().getKeyPress('C')) {
 				SerializationInfo copyInfo;
 				if (selectedObj->serialize(copyInfo)) {
 					parentObj = selectedObj->parent;
@@ -247,7 +247,7 @@ void EditorWindow::onPostAction(GUIPostInfo & info)
 					parentObj = NULL;
 				}
 			}
-			else if (Engine::input.getKeyPress('V')) {
+			else if (Engine::getInput().getKeyPress('V')) {
 				if (ImGui::GetClipboardText()) {
 					istringstream stream(ImGui::GetClipboardText());
 					SerializationInfoParser parser(stream);

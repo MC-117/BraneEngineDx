@@ -4,7 +4,7 @@
 #include "WUIProgressBar.h"
 #include "../Utility/Utility.h"
 
-class ProgressUI : public WUIControl
+class ENGINE_API ProgressUI : public WUIControl
 {
 public:
 	WUILabel titleLabel;

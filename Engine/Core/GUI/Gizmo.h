@@ -22,19 +22,13 @@ struct GizmoCameraInfo
 	float speedInEditor = 1;
 };
 
-class Gizmo
+class ENGINE_API Gizmo
 {
 public:
 	struct PointDraw
 	{
 		Vector3f p;
 		float size;
-		Color color;
-	};
-
-	struct LineDraw
-	{
-		Vector3f p0, p1;
 		Color color;
 	};
 
@@ -80,7 +74,7 @@ public:
 	};
 
 	vector<PointDraw> points;
-	vector<LineDraw> lines;
+	vector<LineDrawData> lines;
 	vector<TextDraw> texts;
 	vector<IconDraw> icons;
 	vector<MeshDraw> meshes;

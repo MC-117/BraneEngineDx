@@ -4,7 +4,7 @@
 
 #include "Material.h"
 
-class RenderTarget
+class ENGINE_API RenderTarget
 {
 public:
 	RenderTarget();

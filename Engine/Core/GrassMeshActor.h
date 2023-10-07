@@ -5,7 +5,7 @@
 #include "MeshActor.h"
 #include <random>
 
-class GrassMeshActor : public MeshActor
+class ENGINE_API GrassMeshActor : public MeshActor
 {
 public:
 	Serialize(GrassMeshActor, MeshActor);

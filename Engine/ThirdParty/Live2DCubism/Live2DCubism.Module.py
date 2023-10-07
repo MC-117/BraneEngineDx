@@ -5,16 +5,17 @@ class Live2DCubismModule(Module):
     def __init__(self, param : BuildParam):
         Module.__init__(self, param)
         self.includePaths = [f'{self.getPath()}/include']
-        self.sourceTarget = 'Live2DCubism'
+        self.buildTarget = 'Live2DCubism'
     
     def setup(self, config : TargetConfig):
         if config.plaform != PlaformType.Win64:
             raise NotImplementedError('Only support Win64')
-        if config.target.type == TargetType.StaticLib:
+        if config.target.type == TargetType.ModuleLib:
             self.fileSearcher.addPath('include', True)
         else:
-            self.libPaths = [f'{self.getPath()}/lib/windows/x86_64/142']
+            self.libPaths = [self.buildTargetAbsOutputPath]
+            self.libFiles = [self.buildTargetOutputName + '.lib']
             if config.enableDebug:
-                self.libFiles = ['Live2DCubismCore_MTd.lib', 'Live2DCubism_MTd.lib']
+                self.libFiles.append('Live2DCubismCore_MTd.lib')
             else:
-                self.libFiles = ['Live2DCubismCore_MT.lib', 'Live2DCubism_MT.lib']
+                self.libFiles.append('Live2DCubismCore_MT.lib')

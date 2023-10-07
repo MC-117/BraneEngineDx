@@ -13,7 +13,7 @@ void DebugCamera::tick(float deltaTime)
 	World* world = Engine::getCurrentWorld();
 	if (world == NULL)
 		return;
-	Input& input = Engine::input;
+	Input& input = Engine::getInput();
 	if (&world->getCurrentCamera() != this)
 		return;
 	if ((input.getCursorHidden())) {

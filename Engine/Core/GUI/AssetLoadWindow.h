@@ -6,7 +6,7 @@
 #include "../SkeletonMesh.h"
 #include "../Material.h"
 
-class AssetLoadWindow : public UIWindow
+class ENGINE_API AssetLoadWindow : public UIWindow
 {
 public:
 	char path[200] = "\0";

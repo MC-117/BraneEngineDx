@@ -2,7 +2,7 @@
 
 #include "FlowNode.h"
 
-class GraphProxy : public GraphNode
+class ENGINE_API GraphProxy : public GraphNode
 {
 	friend class Graph;
 public:
@@ -25,7 +25,7 @@ protected:
 	Ref<GraphNode> returnNode;
 };
 
-class Graph : public GraphNode
+class ENGINE_API Graph : public GraphNode
 {
 public:
 	Serialize(Graph, GraphNode);

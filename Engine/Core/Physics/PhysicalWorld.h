@@ -147,7 +147,7 @@ public:
 	}
 };
 
-class PhysicalWorld
+class ENGINE_API PhysicalWorld
 #ifdef PHYSICS_USE_PHYSX
 	: public PxContactModifyCallback
 #endif // PHYSICS_USE_PHYSX

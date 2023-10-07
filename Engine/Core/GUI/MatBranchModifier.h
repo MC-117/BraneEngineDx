@@ -6,7 +6,7 @@
 #include "../MeshRender.h"
 #include "../SkeletonMeshActor.h"
 
-class MatBranchModifier : public UIWindow
+class ENGINE_API MatBranchModifier : public UIWindow
 {
 public:
 	MeshRender* meshRender = NULL;

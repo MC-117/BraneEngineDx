@@ -4,7 +4,7 @@
 
 #include "UIWindow.h"
 
-class SerializationEditor : public UIWindow
+class ENGINE_API SerializationEditor : public UIWindow
 {
 public:
 	SerializationInfo* serializationInfo = NULL;

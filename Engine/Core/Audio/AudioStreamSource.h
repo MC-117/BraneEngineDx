@@ -2,7 +2,7 @@
 
 #include "AudioSource.h"
 
-class AudioStreamRingBuffer
+class ENGINE_API AudioStreamRingBuffer
 {
 public:
 	struct Config : AudioWave::FormatChunk
@@ -25,7 +25,7 @@ protected:
 	int frontIndex;
 };
 
-class AudioStreamSource : public AudioSource
+class ENGINE_API AudioStreamSource : public AudioSource
 {
 public:
 	Serialize(AudioStreamSource, AudioSource);

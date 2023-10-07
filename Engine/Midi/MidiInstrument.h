@@ -3,7 +3,7 @@
 #include "../Core/Base.h"
 #include "../Core/Audio/AudioSource.h"
 
-class MidiInstrument : public Base, public IMidiStateReceivable
+class ENGINE_API MidiInstrument : public Base, public IMidiStateReceivable
 {
 public:
 	Serialize(MidiInstrument, Base);

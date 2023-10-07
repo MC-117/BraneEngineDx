@@ -3,7 +3,7 @@
 #include "WUIFont.h"
 #include "../Delegate.h"
 
-class WUIProgressBar : public WUIControl
+class ENGINE_API WUIProgressBar : public WUIControl
 {
 public:
 	WUIProgressBar();

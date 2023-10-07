@@ -9,6 +9,8 @@ class TargetType(enum.Enum):
     Executable = 0
     StaticLib = 1
     SharedDll = 2
+    ModuleLib = 3
+    ModuleDll = 4
 
 class CharSetType(enum.Enum):
     Utf8 = 0
@@ -37,7 +39,9 @@ class Target(BuildObject):
 class Module(BuildObject):
     def __init__(self, param : BuildParam):
         BuildObject.__init__(self, param)
-        self.sourceTarget = ''
+        self.buildTarget : str = ''
+        self.buildTargetAbsOutputPath : str = ''
+        self.buildTargetOutputName : str = ''
         self.includePaths : list[str] = []
         self.sourcePaths : list[str] = []
         self.libPaths : list[str] = []
@@ -83,6 +87,13 @@ class Module(BuildObject):
                 collector.absPaths)
         return []
     
+    def resolveBuildTarget(self, config : TargetConfig, target : Target):
+        compatibleConfig = target.getCompatibleConfig(config)
+        if compatibleConfig is None:
+            Log.wrn(f'Target "{target.name}" is not compatible with config({config.name} | {config.plaform.name})')
+        self.buildTargetAbsOutputPath = target.convertToAbsPath(compatibleConfig.outputPath)
+        self.buildTargetOutputName = compatibleConfig.outputName
+    
     def setup(self, config : TargetConfig):
         pass
 
@@ -110,6 +121,22 @@ class TargetConfig:
         
     def __hash__(self) -> int:
         return hash((self.name, self.plaform))
+    
+    def isCompatible(self, name : str, plaform : PlaformType):
+        return self.name == name and self.plaform == plaform
+    
+    def isCompatible(self, other : TargetConfig):
+        return self == other
+    
+    def autoFill(self):
+        workPathByProjPath = Path(os.path.relpath(os.curdir, self.target.getPath())).as_posix()
+        specificPath = f'{self.plaform.name}/{self.name}/{self.target.name}'
+        if not self.intermediatePath:
+            self.intermediatePath = f'{workPathByProjPath}/Intermediate/{specificPath}'
+        if not self.outputPath:
+            self.outputPath = f'{workPathByProjPath}/Binaries/{specificPath}'
+        if not self.outputName:
+            self.outputName = self.target.name
 
 class Target(BuildObject):
     def __init__(self, param : BuildParam):
@@ -170,9 +197,22 @@ class Target(BuildObject):
                 Log.log(f'Resolving dependencies of Module "{moduleName}"')
         
         targetDependencies = [name for name in self.targetDependencies]
-        targetDependencies.extend([module.sourceTarget for module in self.modules
-            if module.sourceTarget and module.sourceTarget != self.name])
+        targetDependencies.extend([module.buildTarget for module in self.modules
+            if module.buildTarget and module.buildTarget != self.name])
         self.targetDependencies = set(targetDependencies)
+
+        if len(self.targetDependencies) > 0:
+            Log.log(f'Target "{self.name}" depends on Targets {" ".join([targetName for targetName in self.targetDependencies])}')
+    
+    def getCompatibleConfig(self, name : str, plaform : PlaformType):
+        for config in self.configs:
+            if config.isCompatible(name, plaform):
+                return config
+    
+    def getCompatibleConfig(self, config : TargetConfig):
+        for _config in self.configs:
+            if _config.isCompatible(config):
+                return _config
     
     def convertToRelatedPath(self, path : str):
         if os.path.isabs(path):
@@ -185,16 +225,32 @@ class Target(BuildObject):
         for i in range(len(paths)):
             paths[i] = self.convertToRelatedPath(paths[i])
     
-    def setupModules(self, collector : BuildObjectCollector[Module]):
+    def convertToAbsPath(self, path : str):
+        if os.path.isabs(path):
+            return Path(path).as_posix()
+        else:
+            absPath = os.path.abspath(f'{self.getPath()}/{path}')
+            return Path(absPath if absPath else path).as_posix()
+    
+    def setupModules(self, moduleCollector : BuildObjectCollector[Module], targetCollector : BuildObjectCollector[Target]):
         for config in self.configs:
             for module in self.modules:
                 instance = module.instance()
                 config.modules.append(instance)
+            config.autoFill()
             for module in config.modules:
+                if module.buildTarget:
+                    buildTarget = targetCollector.get(module.buildTarget)
+                    if buildTarget is None:
+                        errStr = f'Build Target "{module.buildTarget}" not found in Module "{module.name}"'
+                        Log.err(errStr)
+                        raise LookupError(errStr)
+                    else:
+                        module.resolveBuildTarget(config, buildTarget)
                 module.setup(config)
-                includeFiles = module.searchIncludeFiles(collector)
-                sourceFiles = module.searchSourceFiles(collector)
-                otherFiles = module.searchOtherFiles(collector)
+                includeFiles = module.searchIncludeFiles(moduleCollector)
+                sourceFiles = module.searchSourceFiles(moduleCollector)
+                otherFiles = module.searchOtherFiles(moduleCollector)
                 otherFiles.append(module.defFile)
                 otherFiles.append(self.defFile)
                 self.convertToRelatedPaths(includeFiles)
@@ -208,9 +264,9 @@ class Target(BuildObject):
                 self.convertToRelatedPaths(module.sourcePaths)
                 self.convertToRelatedPaths(module.dllFiles)
 
-                if config.intermediatePath:
-                    config.intermediatePath = self.convertToRelatedPath(config.intermediatePath)
-                if config.outputPath:
-                    config.outputPath = self.convertToRelatedPath(config.outputPath)
-                if config.debugPath:
-                    config.debugPath = self.convertToRelatedPath(config.debugPath)
+            if config.intermediatePath:
+                config.intermediatePath = self.convertToRelatedPath(config.intermediatePath)
+            if config.outputPath:
+                config.outputPath = self.convertToRelatedPath(config.outputPath)
+            if config.debugPath:
+                config.debugPath = self.convertToRelatedPath(config.debugPath)

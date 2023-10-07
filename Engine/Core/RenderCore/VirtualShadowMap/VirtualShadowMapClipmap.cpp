@@ -234,5 +234,8 @@ void VirtualShadowMapClipmap::getProjectData(unsigned int clipmapIndex, VirtualS
 		projData.lightType = VSM_DirectLight;
 
 		projData.uncached = 0;
+
+		VirtualShadowMapConfig& config = VirtualShadowMapConfig::instance();
+		projData.screenRayLength = config.screenRayLength;
 	}
 }

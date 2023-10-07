@@ -39,7 +39,7 @@ enum TIRE_TYPE
 	MAX_NUM_TIRE_TYPES
 };
 
-class RigidBodyCollider : public PhysicalCollider
+class ENGINE_API RigidBodyCollider : public PhysicalCollider
 {
 public:
 	PxShape* rawShape = NULL;
@@ -59,7 +59,7 @@ public:
 	PTransform getOffsetTransform() const;
 };
 
-class RigidBody : public PhysicalBody
+class ENGINE_API RigidBody : public PhysicalBody
 #ifdef PHYSICS_USE_BULLET
 	, public CollisionRigidBody
 #endif // !PHYSICS_USE_BULLET

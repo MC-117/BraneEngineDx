@@ -346,6 +346,7 @@ bool Texture2D::copyFrom(const Texture2D& src, unsigned int width, unsigned int 
 	desc.bindType = src.desc.bindType;
 	desc.mipLevel = src.desc.mipLevel;
 	desc.needUpdate = true;
+	return true;
 }
 
 template<class T>

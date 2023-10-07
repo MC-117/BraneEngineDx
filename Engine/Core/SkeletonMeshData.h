@@ -4,7 +4,7 @@
 
 #include "MeshData.h"
 
-class MorphMeshData
+class ENGINE_API MorphMeshData
 {
 public:
 	// Data structure: |     vertex 0      |     vertex 1      |
@@ -21,7 +21,7 @@ public:
 	void init(unsigned int vertexCount, unsigned int morphCount);
 };
 
-class SkeletonMeshData : public MeshData
+class ENGINE_API SkeletonMeshData : public MeshData
 {
 public:
 	vector<Vector4u> boneIndexes;

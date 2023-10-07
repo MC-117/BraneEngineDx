@@ -5,7 +5,7 @@
 #include "UIWindow.h"
 #include "../../ThirdParty/ImGui/imgui_TextEditor.h"
 
-class ConsoleWindow : public UIWindow
+class ENGINE_API ConsoleWindow : public UIWindow
 {
 public:
 	bool showLog = true, showWarning = true, showError = true;

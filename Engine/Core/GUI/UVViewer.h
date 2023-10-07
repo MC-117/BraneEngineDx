@@ -6,7 +6,7 @@
 #include "../MeshRender.h"
 #include "../Asset.h"
 
-class UVViewer : public UIWindow
+class ENGINE_API UVViewer : public UIWindow
 {
 public:
 	UVViewer(string name = "UVViewer", bool defaultShow = false);

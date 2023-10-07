@@ -285,8 +285,8 @@ const Vector3f& getCubeFaceForwardVector(CubeFace face)
 	static const Vector3f faceForwardVector[CF_Faces] = {
 		{ 1, 0, 0 },
 		{ -1, 0, 0 },
-		{ 0, -1, 0 },
 		{ 0, 1, 0 },
+		{ 0, -1, 0 },
 		{ 0, 0, 1 },
 		{ 0, 0, -1 },
 	};
@@ -296,12 +296,12 @@ const Vector3f& getCubeFaceForwardVector(CubeFace face)
 const Vector3f& getCubeFaceLeftwardVector(CubeFace face)
 {
 	static const Vector3f faceLeftwardVector[CF_Faces] = {
-		{ 0, 1, 0 },
-		{ 0, -1, 0 },
+		{ 0, 0, 1 },
+		{ 0, 0, -1 },
 		{ 1, 0, 0 },
-		{ -1, 0, 0 },
+		{ 1, 0, 0 },
 		{ 0, 1, 0 },
-		{ 0, -1, 0 },
+		{ 0, 1, 0 },
 	};
 	return faceLeftwardVector[face];
 }
@@ -313,18 +313,18 @@ const Vector3f& getCubeFaceUpwardVector(CubeFace face)
 		{ 0, -1, 0 },
 		{ 0, 0, -1 },
 		{ 0, 0, 1 },
-		{ 0, -1, 0 },
-		{ 0, -1, 0 },
+		{ -1, 0, 0 },
+		{ 1, 0, 0 },
 	};
 	return faceUpwardVector[face];
 }
 
-const Matrix4f& getCubeFaceProjectionMatrix(float zNear, float zFar)
+Matrix4f&& getCubeFaceProjectionMatrix(float zNear, float zFar)
 {
-	return Math::perspective(90, 1, zNear, zFar);
+	return std::move(Math::perspective(90, 1, zNear, zFar));
 }
 
-const Matrix4f& getCubeFaceViewMatrix(CubeFace face, const Vector3f& position)
+Matrix4f&& getCubeFaceViewMatrix(CubeFace face, const Vector3f& position)
 {
-	return Math::lookAt(position, position + getCubeFaceForwardVector(face), getCubeFaceUpwardVector(face));
+	return std::move(Math::lookAt(position, position + getCubeFaceForwardVector(face), getCubeFaceUpwardVector(face)));
 }

@@ -6,7 +6,7 @@
 #include "../Editor/EditorWorld.h"
 #include "../MeshActor.h"
 
-class MaterialWindow : public UIWindow
+class ENGINE_API MaterialWindow : public UIWindow
 {
 public:
 	MaterialWindow(Material* material = NULL, string name = "MaterialWindow", bool defaultShow = false);

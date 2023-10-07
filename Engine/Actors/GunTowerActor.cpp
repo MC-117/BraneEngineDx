@@ -95,7 +95,7 @@ void GunTowerActor::tick(float deltaTime)
 	World* world = Engine::getCurrentWorld();
 	if (world != NULL) {
 		targetDirection = world->getCurrentCamera().getForward(WORLD);
-		Input& input = Engine::input;
+		Input& input = Engine::getInput();
 		if ((input.getCursorHidden() || input.getMouseButtonDown(MouseButtonEnum::Right))) {
 			if (input.getMouseButtonPress(MouseButtonEnum::Left))
 				fire();

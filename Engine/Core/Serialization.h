@@ -9,7 +9,7 @@
 class Serializable;
 class Serialization;
 
-class SerializationManager
+class ENGINE_API SerializationManager
 {
 public:
 	// Using StaticVar class to solve the problem that some SerializationInfo objects
@@ -19,7 +19,7 @@ public:
 	static Serialization* getSerialization(const string& type);
 };
 
-class SerializationInfo
+class ENGINE_API SerializationInfo
 {
 public:
 	string type;
@@ -427,7 +427,7 @@ inline bool SerializationInfo::get(const size_t i, T & object)
 	return false;
 }
 
-class Serializable
+class ENGINE_API Serializable
 {
 public:
 	static Serializable* instantiate(const SerializationInfo& from);
@@ -438,7 +438,7 @@ protected:
 	static void serializeInit(const Serializable* serializable, SerializationInfo& to);
 };
 
-class Attribute
+class ENGINE_API Attribute
 {
 public:
 	const string name;
@@ -450,7 +450,7 @@ public:
 	virtual void resolve(Attribute* conflict) { }
 };
 
-class SerializationScope
+class ENGINE_API SerializationScope
 {
 public:
 	SerializationScope() { lastScope = currentScope; currentScope = this; }
@@ -468,7 +468,7 @@ protected:
 	static SerializationScope* currentScope;
 };
 
-class Serialization
+class ENGINE_API Serialization
 {
 public:
 	static map<filesystem::path, SerializationInfo*> serializationInfoByPath;
@@ -587,7 +587,7 @@ Serialization& Type::getSerialization() const \
 	return Type##Serialization::serialization; \
 } \
 
-class SerializationInfoParser
+class ENGINE_API SerializationInfoParser
 {
 public:
 	enum TokenType
@@ -628,7 +628,7 @@ protected:
 	bool factor(SerializationInfo& info, const string& name);
 };
 
-class SerializationInfoWriter
+class ENGINE_API SerializationInfoWriter
 {
 public:
 	ostream& stream;
@@ -641,7 +641,7 @@ protected:
 	void internalWrite(const SerializationInfo& info, bool showType = true);
 };
 
-class SVector2f : public Serializable
+class ENGINE_API SVector2f : public Serializable
 {
 public:
 	Serialize(SVector2f,);
@@ -658,7 +658,7 @@ public:
 	operator Vector2f() const;
 };
 
-class SVector3f : public Serializable
+class ENGINE_API SVector3f : public Serializable
 {
 public:
 	Serialize(SVector3f,);
@@ -675,7 +675,7 @@ public:
 	operator Vector3f() const;
 };
 
-class SQuaternionf : public Serializable
+class ENGINE_API SQuaternionf : public Serializable
 {
 public:
 	Serialize(SQuaternionf,);
@@ -692,7 +692,7 @@ public:
 	operator Quaternionf() const;
 };
 
-class SColor : public Serializable
+class ENGINE_API SColor : public Serializable
 {
 public:
 	Serialize(SColor,);
@@ -709,7 +709,7 @@ public:
 	operator Color() const;
 };
 
-class SEnum
+class ENGINE_API SEnum
 {
 public:
 	SEnum(const void* enumPtr) : ptr((int*)enumPtr) { }

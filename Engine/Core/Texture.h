@@ -5,7 +5,7 @@
 #include "Unit.h"
 #include "ITexture.h"
 
-class Texture
+class ENGINE_API Texture
 {
 public:
 	Texture();
@@ -29,7 +29,7 @@ public:
 	virtual unsigned int resize(unsigned int width, unsigned int height);
 };
 
-struct Image
+struct ENGINE_API Image
 {
 	Texture* texture = NULL;
 	TexDimension dimension = TD_Default;

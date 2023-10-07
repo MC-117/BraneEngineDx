@@ -2,7 +2,7 @@
 #include "../Mesh.h"
 #include "../GPUBuffer.h"
 
-class ClothMeshData : public MeshData
+class ENGINE_API ClothMeshData : public MeshData
 {
 public:
 	bool inited = false;

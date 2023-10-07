@@ -2,7 +2,7 @@
 
 #include "Spine2DConfig.h"
 
-class Spine2DMeshData : public MeshData
+class ENGINE_API Spine2DMeshData : public MeshData
 {
 public:
 	bool inited = false;

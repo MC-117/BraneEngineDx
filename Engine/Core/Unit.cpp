@@ -25,42 +25,42 @@ Time::Time(const Time& t)
 {
 }
 
-unsigned int Time::getDay()
+unsigned int Time::getDay() const
 {
 	return chrono::duration_cast<chrono::hours>(time_since_epoch()).count() / 24;
 }
 
-unsigned int Time::getHour()
+unsigned int Time::getHour() const
 {
 	return chrono::duration_cast<chrono::hours>(time_since_epoch()).count() % 24;
 }
 
-unsigned int Time::getMinute()
+unsigned int Time::getMinute() const
 {
 	return chrono::duration_cast<chrono::minutes>(time_since_epoch()).count() % 60;
 }
 
-unsigned int Time::getSecond()
+unsigned int Time::getSecond() const
 {
 	return chrono::duration_cast<chrono::seconds>(time_since_epoch()).count() % 60;
 }
 
-unsigned int Time::getMillisecond()
+unsigned int Time::getMillisecond() const
 {
 	return chrono::duration_cast<chrono::milliseconds>(time_since_epoch()).count() % 1000;
 }
 
-unsigned int Time::getMicrosecond()
+unsigned int Time::getMicrosecond() const
 {
 	return chrono::duration_cast<chrono::microseconds>(time_since_epoch()).count() % 1000;
 }
 
-unsigned int Time::getNanosecond()
+unsigned int Time::getNanosecond() const
 {
 	return chrono::duration_cast<chrono::nanoseconds>(time_since_epoch()).count() % 1000;
 }
 
-string Time::toString()
+string Time::toString() const
 {
 	char buffer[11];
 	sprintf_s(buffer, ":%2d:%2d:%3d", getMinute(), getSecond(), getMillisecond());

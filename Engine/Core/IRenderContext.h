@@ -13,7 +13,7 @@ struct RenderContextDesc
 
 };
 
-class IRenderContext
+class ENGINE_API IRenderContext
 {
 public:
 	RenderContextDesc& desc;
@@ -103,6 +103,8 @@ public:
 	virtual void execteMeshDraw(IRenderExecution* execution, const vector<DrawElementsIndirectCommand>& cmds) = 0;
 	virtual void execteImGuiDraw(ImDrawData* drawData) = 0;
 
+	virtual bool drawMesh(const DrawElementsIndirectCommand& cmd) = 0;
+	virtual bool drawArray(const DrawArraysIndirectCommand& cmd) = 0;
 	virtual bool drawMeshIndirect(IGPUBuffer* argBuffer, unsigned int byteOffset) = 0;
 	virtual bool drawArrayIndirect(IGPUBuffer* argBuffer, unsigned int byteOffset) = 0;
 

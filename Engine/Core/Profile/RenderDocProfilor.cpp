@@ -51,7 +51,7 @@ bool RenderDocProfiler::isValid() const
 void RenderDocProfiler::tick()
 {
     if (isValid() &&
-        Engine::input.getKeyPress(VK_F11))
+        Engine::getInput().getKeyPress(VK_F11))
         setCapture();
 }
 
@@ -108,7 +108,11 @@ void RenderDocProfiler::endScope()
 {
     if (!isValid() || doCapture)
         return;
-    rdoc_api->EndFrameCapture(deviceHandle, windowHandle);
+    if (rdoc_api->EndFrameCapture(deviceHandle, windowHandle) == 0)
+    {
+        Console::error("RenderDoc capture in scope failed");
+        return;
+    }
     startRenderDoc(getNewestCapture());
 }
 
@@ -116,18 +120,15 @@ string RenderDocProfiler::getNewestCapture()
 {
     if (!isValid())
         return string();
+    int32_t index = rdoc_api->GetNumCaptures() - 1;
+    if (index < 0)
+        return string();
     char logFile[512];
     uint64_t timestamp;
     uint32_t logPathLength = 512;
-    uint32_t index = 0;
     string outString;
-
-    while (rdoc_api->GetCapture(index, logFile, &logPathLength, &timestamp))
-    {
+    if (rdoc_api->GetCapture(index, logFile, &logPathLength, &timestamp))
         outString = logFile;
-
-        index++;
-    }
     return outString;
 }
 

@@ -81,7 +81,7 @@ void World::tick(float deltaTime)
 		}
 	}
 
-	if (Engine::input.getCursorHidden()) {
+	if (Engine::getInput().getCursorHidden()) {
 		renderPool.gui.gizmo.setCameraControl(Gizmo::CameraControlMode::None);
 	}
 	else {
@@ -413,4 +413,41 @@ bool World::serialize(SerializationInfo & to)
 int64_t World::getCurrentTime()
 {
 	return Time::now().toNanosecond();
+}
+
+WorldEngineLoop::WorldEngineLoop(Ref<World> world)
+{
+	setWorld(world);
+}
+
+void WorldEngineLoop::setWorld(Ref<World> world)
+{
+	this->world = world;
+}
+
+bool WorldEngineLoop::willQuit()
+{
+	return world->willQuit();
+}
+
+void WorldEngineLoop::init()
+{
+	if (!world)
+		return;
+	world->begin();
+}
+
+void WorldEngineLoop::loop(float deltaTime)
+{
+	if (!world)
+		return;
+	world->tick(deltaTime);
+	world->afterTick();
+}
+
+void WorldEngineLoop::release()
+{
+	if (!world)
+		return;
+	world->end();
 }

@@ -2,7 +2,7 @@
 
 #include "Camera.h"
 
-class SceneCapture : public Render
+class ENGINE_API SceneCapture : public Render
 {
 public:
 	SceneCapture();

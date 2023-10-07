@@ -1,3 +1,4 @@
+#include "resource.h"
 #include "Core\Engine.h"
 #include "Core\Console.h"
 #include "Core\ObjectUltility.h"
@@ -19,6 +20,7 @@
 #include "Actors\GunTowerActor.h"
 #include "Live2D\Live2DActor.h"
 #include "Actors\ClothActor.h"
+#include "Core/Application.h"
 #include "Midi/MidiInstrumentWindow.h"
 
 VehicleActor* loadCubeVehicle(float unit = 2)
@@ -142,111 +144,118 @@ VehicleActor* loadVehicle()
 	return &vehicle;
 }
 
-void InitialWorld()
+class EditorApplication : public WorldApplication
 {
-	World& world = *Engine::getCurrentWorld();
-	//world.input.setCursorHidden(true);
+public:
+	EditorApplication() : WorldApplication(MAKEINTRESOURCE(IDI_ICON1)) {}
+	virtual void initializeWorld()
+	{
+		World& world = *Engine::getCurrentWorld();
+		//world.input.setCursorHidden(true);
 
-	//world.physicalWorld.setPause(true);
-	world.physicalWorld.setGravity(Vector3f(0, 0, -10));
+		//world.physicalWorld.setPause(true);
+		world.physicalWorld.setGravity(Vector3f(0, 0, -10));
 
-	//Mesh* clothMesh = getAssetByPath<Mesh>("Content/Cloth/ClothPlane.fbx");
-	//Material* clothMaterial = getAssetByPath<Material>("Content/Cloth/ClothM.imat");
-	//ClothActor& cloth = *new ClothActor("Cloth");
-	//cloth.setMesh(clothMesh);
-	//cloth.meshRender.setMaterial(0, *clothMaterial);
-	////cloth.addSphereCollider({ 0, 0, -100 }, 10);
-	//cloth.addSphereCollider({ 20, 20, -100 }, 10);
-	//cloth.addSphereCollider({ -20, 20, -100 }, 10);
-	//cloth.addSphereCollider({ 20, -20, -100 }, 10);
-	//cloth.addSphereCollider({ -20, -20, -100 }, 10);
-	////cloth.addBoxCollider({ 0, 0, -305 }, { 100, 100, 5 });
+		//Mesh* clothMesh = getAssetByPath<Mesh>("Content/Cloth/ClothPlane.fbx");
+		//Material* clothMaterial = getAssetByPath<Material>("Content/Cloth/ClothM.imat");
+		//ClothActor& cloth = *new ClothActor("Cloth");
+		//cloth.setMesh(clothMesh);
+		//cloth.meshRender.setMaterial(0, *clothMaterial);
+		////cloth.addSphereCollider({ 0, 0, -100 }, 10);
+		//cloth.addSphereCollider({ 20, 20, -100 }, 10);
+		//cloth.addSphereCollider({ -20, 20, -100 }, 10);
+		//cloth.addSphereCollider({ 20, -20, -100 }, 10);
+		//cloth.addSphereCollider({ -20, -20, -100 }, 10);
+		////cloth.addBoxCollider({ 0, 0, -305 }, { 100, 100, 5 });
 
-	//ClothVertexCluster* cluster = cloth.clothBody.addVertexCluster({ 50, 50, 0 }, Quaternionf::Identity());
-	//cluster->addSphere({ 0, 0, 0, 5 });
-	//cluster = cloth.clothBody.addVertexCluster({ 50, -50, 0 }, Quaternionf::Identity());
-	//cluster->addSphere({ 0, 0, 0, 5 });
-	//world += cloth;
-	//cloth.setPosition(0, 0, 300);
+		//ClothVertexCluster* cluster = cloth.clothBody.addVertexCluster({ 50, 50, 0 }, Quaternionf::Identity());
+		//cluster->addSphere({ 0, 0, 0, 5 });
+		//cluster = cloth.clothBody.addVertexCluster({ 50, -50, 0 }, Quaternionf::Identity());
+		//cluster->addSphere({ 0, 0, 0, 5 });
+		//world += cloth;
+		//cloth.setPosition(0, 0, 300);
 
-	DebugCamera& debugCamera = *new DebugCamera();
-	world += debugCamera;
-	world.switchCamera(debugCamera);
+		DebugCamera& debugCamera = *new DebugCamera();
+		world += debugCamera;
+		world.switchCamera(debugCamera);
 
-	static VehicleActor* vehicles = loadVehicle();
-	static VehicleActor* cubeVehicles = loadCubeVehicle();
+		static VehicleActor* vehicles = loadVehicle();
+		static VehicleActor* cubeVehicles = loadCubeVehicle();
 
-	/*Live2DModel* live2DModel = getAssetByPath<Live2DModel>("Content/Live2D/Hiyori/Hiyori.model3.live2d");
-	if (live2DModel != NULL) {
-		Live2DActor& live2DActor = *new Live2DActor("Hiyori");
-		live2DActor.setModel(live2DModel);
-		world += live2DActor;
-	}*/
+		/*Live2DModel* live2DModel = getAssetByPath<Live2DModel>("Content/Live2D/Hiyori/Hiyori.model3.live2d");
+		if (live2DModel != NULL) {
+			Live2DActor& live2DActor = *new Live2DActor("Hiyori");
+			live2DActor.setModel(live2DModel);
+			world += live2DActor;
+		}*/
 
-	/*world.events.registerOnTick([](Object* self, float dt) {
-		World* world = (World*)self;
-		Input& input = Engine::input;
-		if (input.getCursorHidden() || input.getMouseButtonDown(MouseButtonEnum::Right)) {
-			if (input.getKeyPress('Q')) {
-				if (vehicles->isControled())
-					world->switchCamera(cubeVehicles->TPCamera);
-				else if (cubeVehicles->isControled())
-					world->switchCamera(vehicles->TPCamera);
+		/*world.events.registerOnTick([](Object* self, float dt) {
+			World* world = (World*)self;
+			Input& input = Engine::input;
+			if (input.getCursorHidden() || input.getMouseButtonDown(MouseButtonEnum::Right)) {
+				if (input.getKeyPress('Q')) {
+					if (vehicles->isControled())
+						world->switchCamera(cubeVehicles->TPCamera);
+					else if (cubeVehicles->isControled())
+						world->switchCamera(vehicles->TPCamera);
+				}
 			}
+			if (input.getKeyPress('P')) {
+				world->physicalWorld.setPause(!world->physicalWorld.getPause());
+			}
+		});*/
+
+		ESCMenu& escMenu = *new ESCMenu("ESCMenu", true);
+		world += escMenu;
+
+		EditorWindow& editorWindow = *new EditorWindow(world, Material::nullMaterial, "Editor", false);
+		editorWindow.blurBackground = true;
+		editorWindow.showCloseButton = false;
+		world += editorWindow;
+
+		DebugLogWindow& debugLogWindow = *new DebugLogWindow("DebugLogWindow", true);
+		world += debugLogWindow;
+		debugLogWindow.show = true;
+
+		CMDWindow& cmdWindow = *new CMDWindow("CMDWindow");
+		world += cmdWindow;
+
+		MatBranchModifier& matBranchModifier = *new MatBranchModifier("MatBranchModifier", false);
+		world += matBranchModifier;
+
+		PhysicsDebug& physicsDebug = *new PhysicsDebug("PhysicsDebug");
+		world += physicsDebug;
+
+		TimelineWindow& timelineWindow = *new TimelineWindow("Timeline");
+		world += timelineWindow;
+
+		//GraphWindow& graphWindow = *new GraphWindow("Graph");
+		//world += graphWindow;
+
+		ShaderManagerWindow& shaderManagerWindow = *new ShaderManagerWindow("ShaderManagerWindow");
+		world += shaderManagerWindow;
+
+		UVViewer& uvViewer = *new UVViewer("UVViewer");
+		world += uvViewer;
+
+		MidiInstrumentWindow& midiInstrumentWindow = *new MidiInstrumentWindow("MidiInstrumentWindow");
+		world += midiInstrumentWindow;
+
+		SerializationInfo* info = getAssetByPath<SerializationInfo>(Engine::engineConfig.startMapPath);
+		if (info == NULL) {
+			Console::error("Can not load map '%s'", Engine::engineConfig.startMapPath.c_str());
+			return;
 		}
-		if (input.getKeyPress('P')) {
-			world->physicalWorld.setPause(!world->physicalWorld.getPause());
-		}
-	});*/
 
-	ESCMenu& escMenu = *new ESCMenu("ESCMenu", true);
-	world += escMenu;
+		world.loadWorld(*info);
+		world.deserialize(*info);
 
-	EditorWindow& editorWindow = *new EditorWindow(world, Material::nullMaterial, "Editor", false);
-	editorWindow.blurBackground = true;
-	editorWindow.showCloseButton = false;
-	world += editorWindow;
-
-	DebugLogWindow& debugLogWindow = *new DebugLogWindow("DebugLogWindow", true);
-	world += debugLogWindow;
-	debugLogWindow.show = true;
-
-	CMDWindow& cmdWindow = *new CMDWindow("CMDWindow");
-	world += cmdWindow;
-
-	MatBranchModifier& matBranchModifier = *new MatBranchModifier("MatBranchModifier", false);
-	world += matBranchModifier;
-
-	PhysicsDebug& physicsDebug = *new PhysicsDebug("PhysicsDebug");
-	world += physicsDebug;
-
-	TimelineWindow& timelineWindow = *new TimelineWindow("Timeline");
-	world += timelineWindow;
-
-	GraphWindow& graphWindow = *new GraphWindow("Graph");
-	world += graphWindow;
-
-	ShaderManagerWindow& shaderManagerWindow = *new ShaderManagerWindow("ShaderManagerWindow");
-	world += shaderManagerWindow;
-
-	UVViewer& uvViewer = *new UVViewer("UVViewer");
-	world += uvViewer;
-
-	MidiInstrumentWindow& midiInstrumentWindow = *new MidiInstrumentWindow("MidiInstrumentWindow");
-	world += midiInstrumentWindow;
-
-	SerializationInfo* info = getAssetByPath<SerializationInfo>(Engine::engineConfig.startMapPath);
-	if (info == NULL) {
-		Console::error("Can not load map '%s'", Engine::engineConfig.startMapPath.c_str());
-		return;
+		// if (findFirst(world, *SerializationManager::getSerialization("DirectLight")) == NULL) {
+		// 	DirectLight& dirLight = *new DirectLight("DirLight");
+		// 	dirLight.setRotation(0, -45, -45);
+		// 	world += dirLight;
+		// }
 	}
+};
 
-	world.loadWorld(*info);
-	world.deserialize(*info);
-
-	if (findFirst(world, DirectLight::DirectLightSerialization::serialization) == NULL) {
-		DirectLight& dirLight = *new DirectLight("DirLight");
-		dirLight.setRotation(0, -45, -45);
-		world += dirLight;
-	}
-}
+RegisterApplication(EditorApplication);

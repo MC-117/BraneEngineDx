@@ -139,7 +139,7 @@ void DirectLight::preRender()
 
 void DirectLight::render(RenderInfo& info)
 {
-	info.sceneData->setLight(this);
+	info.sceneData->setMainLight(this);
 	if (VirtualShadowMapConfig::isEnable()) {
 		if (virtualShadowMapClipmap)
 			delete virtualShadowMapClipmap;

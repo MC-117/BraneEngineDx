@@ -6,7 +6,7 @@
 #include "MeshRender.h"
 #include "Physics/PhysicalWorld.h"
 
-class MeshActor : public Actor {
+class ENGINE_API MeshActor : public Actor {
 public:
 	Serialize(MeshActor, Actor);
 

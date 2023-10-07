@@ -25,7 +25,7 @@ void ESCMenu::onPreAction(GUIRenderInfo& info)
 	World* world = Engine::getCurrentWorld();
 	if (world == NULL)
 		return;
-	Input& input = Engine::input;
+	Input& input = Engine::getInput();
 	if (input.getKeyPress(VK_ESCAPE))
 		show = !show;
 	if (show)
@@ -119,7 +119,7 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 			audioSource->play();
 #endif // AUDIO_USE_OPENAL
 			info.gui.hideAllUIControl();
-			Engine::input.setCursorHidden(true);
+			Engine::getInput().setCursorHidden(true);
 		}
 		/*info.gui.hideAllUIControl();
 		world->input.setCursorHidden(true);*/
@@ -150,7 +150,7 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 		info.gui.gizmo.setEnableGUI(true);
 	}
 	if (ImGui::Button("Toggle Fullscreen", size)) {
-		Engine::mainWindow.toggleFullscreen();
+		Engine::toggleFullscreen();
 	}
 	if (ImGui::Button("Quit", size)) {
 		world->quit();

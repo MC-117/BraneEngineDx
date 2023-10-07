@@ -4,7 +4,9 @@
 
 #include "Light.h"
 
-class PointLight : public Light
+struct VirtualShadowMapLightEntry;
+
+class ENGINE_API PointLight : public Light
 {
 public:
 	Serialize(PointLight, Light);
@@ -22,6 +24,7 @@ public:
 	virtual bool serialize(SerializationInfo& to);
 protected:
 	unsigned int index = -1;
+	VirtualShadowMapLightEntry* virtualShadowMapLightEntry = NULL;
 	static unsigned int pointLightCount;
 };
 

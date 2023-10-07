@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{EEA39177-5D5A-8D7C-C69A-5C213A49AAD8}</ProjectGuid>
+    <RootNamespace>ShaderCompiler</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <UseDebugLibraries>False</UseDebugLibraries>
+    <WholeProgramOptimization>True</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <UseDebugLibraries>True</UseDebugLibraries>
+    <WholeProgramOptimization>False</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>False</LinkIncremental>
+    <IncludePath>../../Engine/ThirdParty/Spine/include;../../Engine/ThirdParty/RenderDoc/include;../../Engine/ThirdParty/Remidi/include;../../Engine/ThirdParty/Python37/include;../../Engine/ThirdParty/Physx4/include;../../Engine/ThirdParty/OpenAlSoft/include;../../Engine/ThirdParty/NvCloth/include;../../Engine/ThirdParty/MemTracer/include;../../Engine/ThirdParty/Live2DCubism/include;../../Engine/ThirdParty/ImGui;../../Engine/ThirdParty/Assimp/include;../../Engine;../../Engine/Launch;.;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>../../Engine/ThirdParty/Spine/lib/x64;../../Engine/ThirdParty/Remidi/lib/x64;../../Engine/ThirdParty/Python37/libs;../../Engine/ThirdParty/Physx4/lib/x64/Release;../../Engine/ThirdParty/OpenAlSoft/lib;../../Engine/ThirdParty/NvCloth/lib;../../Engine/ThirdParty/MemTracer/lib;../../Engine/ThirdParty/Live2DCubism/lib/windows/x86_64/142;../../Binaries/Win64/Release/ImGui;../../Engine/ThirdParty/Assimp/lib/Release;../../Binaries/Win64/Release/Engine;$(LibraryPath)</LibraryPath>
+    <SourcePath>../../Engine/ThirdParty/NvCloth/src;$(VC_SourcePath);</SourcePath>
+    <IntDir>../../Intermediate/Win64/Release/ShaderCompiler/</IntDir>
+    <OutDir>../../Binaries/Win64/Release/ShaderCompiler/</OutDir>
+    <TargetName>ShaderCompiler</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>True</LinkIncremental>
+    <IncludePath>../../Engine/ThirdParty/Spine/include;../../Engine/ThirdParty/RenderDoc/include;../../Engine/ThirdParty/Remidi/include;../../Engine/ThirdParty/Python37/include;../../Engine/ThirdParty/Physx4/include;../../Engine/ThirdParty/OpenAlSoft/include;../../Engine/ThirdParty/NvCloth/include;../../Engine/ThirdParty/MemTracer/include;../../Engine/ThirdParty/Live2DCubism/include;../../Engine/ThirdParty/ImGui;../../Engine/ThirdParty/Assimp/include;../../Engine;../../Engine/Launch;.;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>../../Engine/ThirdParty/Spine/lib/x64;../../Engine/ThirdParty/Remidi/lib/x64;../../Engine/ThirdParty/Python37/libs;../../Engine/ThirdParty/Physx4/lib/x64/Debug;../../Engine/ThirdParty/OpenAlSoft/lib;../../Engine/ThirdParty/NvCloth/lib;../../Engine/ThirdParty/MemTracer/lib;../../Engine/ThirdParty/Live2DCubism/lib/windows/x86_64/142;../../Binaries/Win64/Debug/ImGui;../../Engine/ThirdParty/Assimp/lib/Debug;../../Binaries/Win64/Debug/Engine;$(LibraryPath)</LibraryPath>
+    <SourcePath>../../Engine/ThirdParty/NvCloth/src;$(VC_SourcePath);</SourcePath>
+    <IntDir>../../Intermediate/Win64/Debug/ShaderCompiler/</IntDir>
+    <OutDir>../../Binaries/Win64/Debug/ShaderCompiler/</OutDir>
+    <TargetName>ShaderCompiler</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>True</FunctionLevelLinking>
+      <IntrinsicFunctions>True</IntrinsicFunctions>
+      <SDLCheck>True</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;STB_API=__declspec(dllimport);SPINE_API=__declspec(dllimport);RENDERDOC_API=__declspec(dllimport);REMIDI_API=__declspec(dllimport);PYTHON37_API=__declspec(dllimport);PHYSX4_API=__declspec(dllimport);OPENALSOFT_API=__declspec(dllimport);NVCLOTH_API=__declspec(dllimport);MEMTRACER_API=__declspec(dllimport);LIVE2DCUBISM_API=__declspec(dllimport);IMGUI_API=__declspec(dllimport);ASSIMP_API=__declspec(dllimport);_HAS_STD_BYTE=0;AUDIO_USE_OPENAL;ENGINE_API=__declspec(dllimport);LAUNCH_API=__declspec(dllimport);SHADERCOMPILER_API=__declspec(dllimport);_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>False</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>True</EnableCOMDATFolding>
+      <OptimizeReferences>True</OptimizeReferences>
+      <GenerateDebugInformation>True</GenerateDebugInformation>
+      <AdditionalDependencies>spine-cpp.lib;libremidi.lib;winmm.lib;python3.lib;python37.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;OpenAL32.lib;NvCloth_x64.lib;memtracer.lib;Live2DCubism_MT.lib;Live2DCubismCore_MT.lib;ImGui.lib;assimp-vc142-mt.lib;IrrXML.lib;zlibstatic.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;dwmapi.lib;Engine.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>True</EnableDpiAwareness>
+    </Manifest>
+    <CustomBuildStep>
+      <Command>echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysX_64.dll" "$(TargetDir)PhysX_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll" "$(TargetDir)renderdoc.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll" "$(TargetDir)python3.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXDevice64.dll" "$(TargetDir)PhysXDevice64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXCommon_64.dll" "$(TargetDir)PhysXCommon_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\OpenAlSoft\dll\OpenAL32.dll" "$(TargetDir)OpenAL32.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll" "$(TargetDir)NvCloth_x64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXGpu_64.dll" "$(TargetDir)PhysXGpu_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXCooking_64.dll" "$(TargetDir)PhysXCooking_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Binaries\Win64\Release\Engine\Engine.dll" "$(TargetDir)Engine.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXFoundation_64.dll" "$(TargetDir)PhysXFoundation_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Python37\python37.dll" "$(TargetDir)python37.dll" /y /d
+</Command>
+      <Inputs>$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysX_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXDevice64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXCommon_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\OpenAlSoft\dll\OpenAL32.dll;$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXGpu_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXCooking_64.dll;$(ProjectDir)..\..\Binaries\Win64\Release\Engine\Engine.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXFoundation_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python37.dll</Inputs>
+      <Outputs>$(TargetDir)PhysX_64.dll;$(TargetDir)renderdoc.dll;$(TargetDir)python3.dll;$(TargetDir)PhysXDevice64.dll;$(TargetDir)PhysXCommon_64.dll;$(TargetDir)OpenAL32.dll;$(TargetDir)NvCloth_x64.dll;$(TargetDir)PhysXGpu_64.dll;$(TargetDir)PhysXCooking_64.dll;$(TargetDir)Engine.dll;$(TargetDir)PhysXFoundation_64.dll;$(TargetDir)python37.dll</Outputs>
+    </CustomBuildStep>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>True</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;STB_API=__declspec(dllimport);SPINE_API=__declspec(dllimport);RENDERDOC_API=__declspec(dllimport);REMIDI_API=__declspec(dllimport);PYTHON37_API=__declspec(dllimport);PHYSX4_API=__declspec(dllimport);OPENALSOFT_API=__declspec(dllimport);NVCLOTH_API=__declspec(dllimport);MEMTRACER_API=__declspec(dllimport);LIVE2DCUBISM_API=__declspec(dllimport);IMGUI_API=__declspec(dllimport);ASSIMP_API=__declspec(dllimport);_HAS_STD_BYTE=0;AUDIO_USE_OPENAL;ENGINE_API=__declspec(dllimport);LAUNCH_API=__declspec(dllimport);SHADERCOMPILER_API=__declspec(dllimport);_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>False</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>True</GenerateDebugInformation>
+      <AdditionalDependencies>spine-cpp.lib;libremidi.lib;winmm.lib;python3.lib;python37.lib;LowLevelAABB_static_64.lib;LowLevelDynamics_static_64.lib;LowLevel_static_64.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_64.lib;PhysXCooking_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_64.lib;PhysXPvdSDK_static_64.lib;PhysXTask_static_64.lib;PhysXVehicle_static_64.lib;PhysX_64.lib;SceneQuery_static_64.lib;SimulationController_static_64.lib;OpenAL32.lib;NvCloth_x64.lib;memtracer.lib;Live2DCubism_MTd.lib;Live2DCubismCore_MTd.lib;ImGui.lib;assimp-vc142-mtd.lib;IrrXMLd.lib;zlibstaticd.lib;dxguid.lib;dinput8.lib;d3d11.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;dwmapi.lib;Engine.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>True</EnableDpiAwareness>
+    </Manifest>
+    <CustomBuildStep>
+      <Command>echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll" "$(TargetDir)renderdoc.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll" "$(TargetDir)python3.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXFoundation_64.dll" "$(TargetDir)PhysXFoundation_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Binaries\Win64\Debug\Engine\Engine.dll" "$(TargetDir)Engine.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXGpu_64.dll" "$(TargetDir)PhysXGpu_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\OpenAlSoft\dll\OpenAL32.dll" "$(TargetDir)OpenAL32.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXDevice64.dll" "$(TargetDir)PhysXDevice64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll" "$(TargetDir)NvCloth_x64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysX_64.dll" "$(TargetDir)PhysX_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCooking_64.dll" "$(TargetDir)PhysXCooking_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCommon_64.dll" "$(TargetDir)PhysXCommon_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Python37\python37.dll" "$(TargetDir)python37.dll" /y /d
+</Command>
+      <Inputs>$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXFoundation_64.dll;$(ProjectDir)..\..\Binaries\Win64\Debug\Engine\Engine.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXGpu_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\OpenAlSoft\dll\OpenAL32.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXDevice64.dll;$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysX_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCooking_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCommon_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python37.dll</Inputs>
+      <Outputs>$(TargetDir)renderdoc.dll;$(TargetDir)python3.dll;$(TargetDir)PhysXFoundation_64.dll;$(TargetDir)Engine.dll;$(TargetDir)PhysXGpu_64.dll;$(TargetDir)OpenAL32.dll;$(TargetDir)PhysXDevice64.dll;$(TargetDir)NvCloth_x64.dll;$(TargetDir)PhysX_64.dll;$(TargetDir)PhysXCooking_64.dll;$(TargetDir)PhysXCommon_64.dll;$(TargetDir)python37.dll</Outputs>
+    </CustomBuildStep>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="../../Engine/ThirdParty/STB/stb_image_write.h" />
+    <ClInclude Include="../../Engine/ThirdParty/STB/stb_image_resize.h" />
+    <ClInclude Include="../../Engine/ThirdParty/STB/stb_image.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="../../Engine/Launch/Launch.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../Engine/ThirdParty/STB/STB.Module.py" />
+    <None Include="ShaderCompiler.Target.py" />
+    <None Include="../../Engine/ThirdParty/Spine/Spine.Module.py" />
+    <None Include="../../Engine/ThirdParty/Python37/Python37.Module.py" />
+    <None Include="../../Engine/ThirdParty/MemTracer/MemTracer.Module.py" />
+    <None Include="../../Engine/ThirdParty/OpenAlSoft/OpenAlSoft.Module.py" />
+    <None Include="../../Engine/ThirdParty/Physx4/Physx4.Module.py" />
+    <None Include="../../Engine/ThirdParty/Remidi/Remidi.Module.py" />
+    <None Include="../../Engine/Launch/Launch.Module.py" />
+    <None Include="../../Engine/ThirdParty/RenderDoc/RenderDoc.Module.py" />
+    <None Include="../../Engine/ThirdParty/NvCloth/NvCloth.Module.py" />
+    <None Include="../../Engine/ThirdParty/ImGui/ImGui.Module.py" />
+    <None Include="../../Engine/ThirdParty/Assimp/Assimp.Module.py" />
+    <None Include="ShaderCompiler.Module.py" />
+    <None Include="../../Engine/Engine.Module.py" />
+    <None Include="../../Engine/Icon/Logo.ico" />
+    <None Include="../../Engine/ThirdParty/Live2DCubism/Live2DCubism.Module.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ShaderCompiler.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

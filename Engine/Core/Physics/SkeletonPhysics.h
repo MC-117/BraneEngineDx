@@ -3,7 +3,7 @@
 
 class SkeletonMeshActor;
 
-class SkeletonPhysics
+class ENGINE_API SkeletonPhysics
 {
 public:
 	struct ShapeInfo

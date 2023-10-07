@@ -11,7 +11,7 @@
 #include <AL\alext.h>
 
 class AudioDevice;
-class AudioDeviceManager : public Initialization
+class ENGINE_API AudioDeviceManager : public Initialization
 {
 	friend class AudioDevice;
 public:
@@ -27,7 +27,7 @@ protected:
 	virtual bool finalize();
 };
 
-class AudioDevice
+class ENGINE_API AudioDevice
 {
 public:
 	AudioDevice();
@@ -43,7 +43,7 @@ protected:
 	ALCcontext* context;
 };
 
-class AudioData
+class ENGINE_API AudioData
 {
 public:
 	string name;
@@ -72,7 +72,7 @@ protected:
 	unsigned int abo = AL_NONE;
 };
 
-class AudioSource : public Base
+class ENGINE_API AudioSource : public Base
 {
 public:
 	enum AudioState
@@ -117,7 +117,7 @@ protected:
 	unsigned int sbo = AL_NONE;
 };
 
-class AudioListener
+class ENGINE_API AudioListener
 {
 public:
 	Vector3f position;

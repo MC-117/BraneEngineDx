@@ -3,7 +3,7 @@
 #include "../Unit.h"
 
 struct ExtentBox;
-struct BoundBox
+struct ENGINE_API BoundBox
 {
 	Vector3f minPoint;
 	Vector3f maxPoint;
@@ -31,7 +31,7 @@ struct BoundBox
 	bool operator!=(const BoundBox& box) const;
 };
 
-struct ExtentBox
+struct ENGINE_API ExtentBox
 {
 	Vector3f center;
 	Vector3f extent;

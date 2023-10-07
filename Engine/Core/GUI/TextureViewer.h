@@ -4,7 +4,7 @@
 
 #include "UIWindow.h"
 
-class TextureViewer : public UIWindow
+class ENGINE_API TextureViewer : public UIWindow
 {
 public:
 	Texture* texture = NULL;

@@ -3,7 +3,7 @@
 #include "ValuePin.h"
 #include "Node.h"
 
-class CastToNode : public GraphNode
+class ENGINE_API CastToNode : public GraphNode
 {
 public:
 	Serialize(CastToNode, GraphNode);

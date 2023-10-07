@@ -20,7 +20,7 @@ struct ClipInfo
 	TimelinePlayable* playable;
 };
 
-class TimelinePlayable : public Serializable
+class ENGINE_API TimelinePlayable : public Serializable
 {
 public:
 	Serialize(TimelinePlayable,);

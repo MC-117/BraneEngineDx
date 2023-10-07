@@ -2,7 +2,7 @@
 
 #include "Live2DConfig.h"
 
-class Live2DMeshData : public MeshData
+class ENGINE_API Live2DMeshData : public MeshData
 {
 public:
 	bool inited = false;

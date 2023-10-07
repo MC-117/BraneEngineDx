@@ -4,9 +4,9 @@
 #include "WUIWindow.h"
 #include "../IRenderTarget.h"
 
-class WUIImGuiWindow : public WUIWindow
+class ENGINE_API WUIImGuiWindow : public WUIWindow
 {
-public:
+public:	
 	WUIImGuiWindow();
 	virtual ~WUIImGuiWindow();
 
@@ -21,9 +21,9 @@ public:
 
 	virtual LRESULT WndProc(UINT msg, WPARAM wParam, LPARAM lParam);
 protected:
-	ImGuiViewport* viewport = NULL;
+	ImGuiViewport* viewport;
 	DeviceSurfaceDesc deviceSurfaceDesc;
-	IDeviceSurface* deviceSurface = NULL;
+	IDeviceSurface* deviceSurface;
 	virtual void onResize(WPARAM wParam, const Unit2Di& size);
 	virtual void onResizeExit();
 	virtual void onImGuiRender();

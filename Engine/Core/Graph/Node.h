@@ -5,7 +5,7 @@
 
 class GraphNode;
 
-class GraphCategoryAttribute : public Attribute
+class ENGINE_API GraphCategoryAttribute : public Attribute
 {
 public:
 	string category;
@@ -14,7 +14,7 @@ public:
 	virtual void resolve(Attribute* conflict);
 };
 
-class GraphContext
+class ENGINE_API GraphContext
 {
 public:
 	float deltaTime = 0;
@@ -32,7 +32,7 @@ enum struct GraphPinShape : unsigned char
 	Flow, Circle, Square, Grid, RoundSquare, Diamond
 };
 
-class GraphPin : public Base
+class ENGINE_API GraphPin : public Base
 {
 	friend class GraphNode;
 public:
@@ -71,7 +71,7 @@ protected:
 	Ref<GraphPin> connectedPin;
 };
 
-class FlowPin : public GraphPin
+class ENGINE_API FlowPin : public GraphPin
 {
 	friend class GraphNode;
 public:
@@ -89,7 +89,7 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from);
 };
 
-class GraphNode : public Base
+class ENGINE_API GraphNode : public Base
 {
 	friend class GraphProxy;
 	friend class Graph;

@@ -11,6 +11,7 @@ Material* DebugRenderData::initDrawArgsMaterial = NULL;
 ShaderProgram* DebugRenderData::initDrawArgsProgram = NULL;
 Material* DebugRenderData::drawLineMaterial = NULL;
 ShaderProgram* DebugRenderData::drawLineProgram = NULL;
+ShaderProgram* DebugRenderData::drawUploadLineProgram = NULL;
 
 DebugRenderData::DebugRenderData()
     : maxSize(81920)
@@ -23,10 +24,12 @@ void DebugRenderData::create()
     packFreeProgram->init();
     initDrawArgsProgram->init();
     drawLineProgram->init();
+    drawUploadLineProgram->init();
 }
 
 void DebugRenderData::release()
 {
+    uploadLineBuffer.resize(0);
     lineBuffer.resize(0);
     flagBufferA.resize(0);
     flagBufferB.resize(0);
@@ -34,6 +37,7 @@ void DebugRenderData::release()
 
 void DebugRenderData::upload()
 {
+    uploadLineBuffer.uploadData(updateLineData.size() * 2, updateLineData.data(), true);
     lineBuffer.resize(maxSize);
     flagBufferA.resize(maxSize + 1);
     flagBufferB.resize(maxSize + 1);
@@ -63,6 +67,7 @@ void DebugRenderData::bind(IRenderContext& context)
 
 void DebugRenderData::clean()
 {
+    updateLineData.clear();
     persistentDebugDraw = false;
 }
 
@@ -133,6 +138,22 @@ void DebugRenderData::debugDraw(IRenderContext& context, CameraRenderData& camer
 
     context.unbindBufferBase(debugLinesName);
     context.unbindBufferBase(debugFlagsName);
+
+    context.bindShaderProgram(drawUploadLineProgram);
+    context.bindBufferBase(uploadLineBuffer.getVendorGPUBuffer(), debugLinesName);
+    cameraRenderData.bindCameraBuffOnly(context);
+    context.setViewport(0, 0, cameraRenderData.data.viewSize.x(),  cameraRenderData.data.viewSize.y());
+    context.setLineDrawContext();
+    cameraRenderData.surface.bind(context, Clear_None, Clear_All);
+    context.setRenderOpaqueState();
+    DrawArraysIndirectCommand cmd;
+    cmd.count = uploadLineBuffer.size();
+    cmd.first = 0;
+    cmd.baseInstance = 0;
+    cmd.instanceCount = 1;
+    context.drawArray(cmd);
+
+    context.unbindBufferBase(debugLinesName);
 }
 
 void DebugRenderData::loadDefaultResource()
@@ -158,6 +179,9 @@ void DebugRenderData::loadDefaultResource()
         throw runtime_error("Not found default shader");
     drawLineProgram = drawLineMaterial->getShader()->getProgram(Shader_Default);
     if (drawLineProgram == NULL)
+        throw runtime_error("Not found default shader");
+    drawUploadLineProgram = drawLineMaterial->getShader()->getProgram(Shader_Custom_1);
+    if (drawUploadLineProgram == NULL)
         throw runtime_error("Not found default shader");
     
     isInit = true;

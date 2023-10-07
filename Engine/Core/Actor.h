@@ -8,7 +8,7 @@
 #include "Audio/AudioSource.h"
 #endif // AUDIO_USE_OPENAL
 
-class Actor : public Transform
+class ENGINE_API Actor : public Transform
 {
 public:
 	Serialize(Actor, Transform);

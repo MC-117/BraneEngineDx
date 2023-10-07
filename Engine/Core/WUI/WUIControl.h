@@ -5,7 +5,7 @@
 #include "../Unit.h"
 #include "../Delegate.h"
 
-class WUIControl
+class ENGINE_API WUIControl
 {
 public:
 	WUIControl* parent = NULL;
@@ -16,7 +16,7 @@ public:
 
 	static WNDCLASSEX wndClassEx;
 	static LRESULT defaultWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	static void registDefaultClass(HINSTANCE hIns);
+	static void registDefaultClass(HINSTANCE hIns, LPSTR hIcon);
 
 	virtual void addControl(WUIControl& ctrl);
 

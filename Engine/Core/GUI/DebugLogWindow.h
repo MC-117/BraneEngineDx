@@ -4,7 +4,7 @@
 
 #include "UIWindow.h"
 
-class DebugLogWindow : public UIWindow
+class ENGINE_API DebugLogWindow : public UIWindow
 {
 public:
 	DebugLogWindow(string name = "DebugLogWindow", bool defaultShow = false);

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <type_traits>
 
-struct Decimal
+struct ENGINE_API Decimal
 {
 	enum Type : char {
 		Int, Float

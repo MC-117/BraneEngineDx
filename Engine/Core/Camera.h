@@ -9,7 +9,7 @@
 #include "RenderTarget.h"
 #include "RenderCore/CameraData.h"
 
-class Camera : public Transform
+class ENGINE_API Camera : public Transform
 {
 public:
 	Serialize(Camera, Transform);

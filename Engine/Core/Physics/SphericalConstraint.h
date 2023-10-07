@@ -1,6 +1,6 @@
 #pragma once
 #include "PhysicalConstraint.h"
-class SphericalConstraint : public PhysicalConstraint
+class ENGINE_API SphericalConstraint : public PhysicalConstraint
 {
 public:
 	SphericalConstraint(RigidBody& rigidBody1, RigidBody& rigidBody2);

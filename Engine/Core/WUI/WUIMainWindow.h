@@ -5,7 +5,7 @@
 #include "../Unit.h"
 #include "WUIImGuiWindow.h"
 
-class WUIMainWindow : public WUIImGuiWindow
+class ENGINE_API WUIMainWindow : public WUIImGuiWindow
 {
 public:
 	WUIMainWindow();

@@ -23,7 +23,7 @@ struct WheelDesc
 	Vector3f offset;
 };
 
-class WheelActor : public MeshActor
+class ENGINE_API WheelActor : public MeshActor
 {
 public:
 	WheelDesc desc;
@@ -56,7 +56,7 @@ struct VehicleDesc
 	float dumpFactor = 3;
 };
 
-class VehicleActor : public MeshActor
+class ENGINE_API VehicleActor : public MeshActor
 {
 public:
 	VehicleDesc desc;

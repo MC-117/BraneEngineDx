@@ -3,7 +3,7 @@
 #include "../ShaderStage.h"
 #include <fstream>
 
-class ShaderCompiler
+class ENGINE_API ShaderCompiler
 {
 public:
 	enum ShaderToken

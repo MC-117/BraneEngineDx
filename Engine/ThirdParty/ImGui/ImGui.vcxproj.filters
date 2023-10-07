@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ImGuiNodeEditor">
+      <UniqueIdentifier>{49834272-55FF-D250-6744-0B955BFC19B4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImPlot">
+      <UniqueIdentifier>{B5BE81A2-91BB-9D48-9A88-9566550EEDF1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="imstb_rectpack.h">
+    </ClInclude>
+    <ClInclude Include="imstb_truetype.h">
+    </ClInclude>
+    <ClInclude Include="imconfig.h">
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/Drawing.h">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="ImPlot/implot.h">
+      <Filter>ImPlot</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/imgui_node_editor.h">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/imgui_node_editor_internal.inl">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="ImPlot/implot_internal.h">
+      <Filter>ImPlot</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_internal.h">
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/Widgets.h">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="imstb_textedit.h">
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/imgui_extra_math.h">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/imgui_node_editor_internal.h">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/imgui_bezier_math.inl">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiIconHelp.h">
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/imgui_extra_math.inl">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/imgui_canvas.h">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/crude_json.h">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_TextEditor.h">
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/imgui_bezier_math.h">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuizmo.h">
+    </ClInclude>
+    <ClInclude Include="imgui_stdlib.h">
+    </ClInclude>
+    <ClInclude Include="ImGuiNodeEditor/Builders.h">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui.h">
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="imgui_demo.cpp">
+    </ClCompile>
+    <ClCompile Include="ImGuiNodeEditor/Drawing.cpp">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="ImPlot/implot.cpp">
+      <Filter>ImPlot</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGuizmo.cpp">
+    </ClCompile>
+    <ClCompile Include="imgui_TextEditor.cpp">
+    </ClCompile>
+    <ClCompile Include="ImGuiNodeEditor/Widgets.cpp">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="ImPlot/implot_demo.cpp">
+      <Filter>ImPlot</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui.cpp">
+    </ClCompile>
+    <ClCompile Include="imgui_tables.cpp">
+    </ClCompile>
+    <ClCompile Include="imgui_widgets.cpp">
+    </ClCompile>
+    <ClCompile Include="ImGuiNodeEditor/imgui_canvas.cpp">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_stdlib.cpp">
+    </ClCompile>
+    <ClCompile Include="ImGuiNodeEditor/imgui_node_editor_api.cpp">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="ImPlot/implot_items.cpp">
+      <Filter>ImPlot</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_draw.cpp">
+    </ClCompile>
+    <ClCompile Include="ImGuiNodeEditor/Builders.cpp">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGuiNodeEditor/imgui_node_editor.cpp">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGuiNodeEditor/crude_json.cpp">
+      <Filter>ImGuiNodeEditor</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ImGui.Module.py">
+    </None>
+    <None Include="ImGui.Target.py">
+    </None>
+  </ItemGroup>
+</Project>

@@ -2,7 +2,7 @@
 #include "SceneCapture.h"
 #include "TextureCube.h"
 
-class SceneCaptureCube : public SceneCapture
+class ENGINE_API SceneCaptureCube : public SceneCapture
 {
 public:
 	unsigned int width = 0;

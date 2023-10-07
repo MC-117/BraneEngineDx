@@ -4,7 +4,7 @@
 #include "SkeletonMesh.h"
 #include "RenderCore/RenderInterface.h"
 
-class MorphTargetWeight
+class ENGINE_API MorphTargetWeight
 {
 public:
 	Mesh* mesh = NULL;
@@ -36,7 +36,7 @@ struct MorphTargetWeightRenderData : public IRenderData
 	virtual void bind(IRenderContext& context);
 };
 
-class MorphTargetRemapper
+class ENGINE_API MorphTargetRemapper
 {
 public:
 	struct MappedInfo

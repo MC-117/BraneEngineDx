@@ -236,7 +236,7 @@ enum BlendMode : uint8_t
 const uint32_t BM_Order_BitMask = 0xE0000000;
 const uint8_t BM_Order_BitOffset = 32 - 3;
 
-struct RenderMode
+struct ENGINE_API RenderMode
 {
 	const uint32_t Order_BitMask = 0x1FFFFFFF;
 	const uint32_t SubOrder_BitMask = 0xFFFF;
@@ -254,7 +254,7 @@ struct RenderMode
 	operator uint32_t() const;
 };
 
-struct ShaderPropertyName
+struct ENGINE_API ShaderPropertyName
 {
 	size_t hash;
 

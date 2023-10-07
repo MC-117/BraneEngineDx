@@ -3,7 +3,7 @@
 #include "AnimationState.h"
 #include "../Graph/StateMachine/StateMachine.h"
 
-class AnimationStateMachine : public StateMachine, public IAnimationPoseNode
+class ENGINE_API AnimationStateMachine : public StateMachine, public IAnimationPoseNode
 {
 public:
 	Serialize(AnimationStateMachine, StateMachine);

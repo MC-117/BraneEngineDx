@@ -25,8 +25,7 @@ void SurfaceData::bind(IRenderContext& context, Enum<ClearFlags> plusClearFlags,
 
 void CameraRenderData::create()
 {
-	if (cameraRender == NULL || probeGrid.probePool == NULL) {
-		throw runtime_error("CameraRenderData is not complete");
+	if (cameraRender == NULL) {
 		return;
 	}
 	data = cameraRender->cameraData;

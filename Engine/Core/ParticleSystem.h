@@ -5,7 +5,7 @@
 #include "Actor.h"
 #include "ParticleEmitter.h"
 
-class ParticleSystem : public Actor
+class ENGINE_API ParticleSystem : public Actor
 {
 public:
 	Serialize(ParticleSystem, Actor);

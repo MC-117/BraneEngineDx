@@ -18,15 +18,21 @@ static void ImGui_ImplWin32_GetWin32StyleFromViewportFlags(ImGuiViewportFlags fl
         *out_ex_style |= WS_EX_TOPMOST;
 }
 
-WUIImGuiWindow::WUIImGuiWindow() : WUIWindow(Engine::windowContext.hinstance)
+WUIImGuiWindow::WUIImGuiWindow()
+    : WUIWindow(Engine::windowContext.hinstance)
+    , viewport(NULL)
+    , deviceSurface(NULL)
 {
 }
 
 WUIImGuiWindow::~WUIImGuiWindow()
 {
-    viewport->PlatformUserData = viewport->PlatformHandle = nullptr;
-    viewport->RendererUserData = nullptr;
-    delete deviceSurface;
+    if (viewport) {
+        viewport->PlatformUserData = viewport->PlatformHandle = nullptr;
+        viewport->RendererUserData = nullptr;
+    }
+    if (deviceSurface)
+        delete deviceSurface;
 }
 
 void WUIImGuiWindow::initViewport(ImGuiViewport& viewport)
@@ -164,7 +170,7 @@ LRESULT WUIImGuiWindow::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 void WUIImGuiWindow::onResize(WPARAM wParam, const Unit2Di& size)
 {
     if (deviceSurface)
-            deviceSurface->resize(size.x, size.y);
+        deviceSurface->resize(size.x, size.y);
     WUIWindow::onResize(wParam, size);
 }
 

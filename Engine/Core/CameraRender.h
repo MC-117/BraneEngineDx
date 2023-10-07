@@ -7,7 +7,7 @@
 #include "RenderTarget.h"
 #include "PostProcess/PostProcessGraph.h"
 
-class CameraRender : public Render
+class ENGINE_API CameraRender : public Render
 {
 	friend struct CameraRenderData;
 public:

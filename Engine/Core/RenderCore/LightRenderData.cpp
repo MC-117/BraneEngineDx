@@ -15,7 +15,7 @@ LightRenderData::LightRenderData(ProbePoolRenderData& probePool) : probePool(pro
 {
 }
 
-void LightRenderData::setLight(Light* light)
+void LightRenderData::setMainLight(Light* light)
 {
 	if (shadowTarget == NULL && light->getShadowRenderTarget() != NULL) {
 		shadowTarget = light->getShadowRenderTarget();
@@ -32,12 +32,21 @@ void LightRenderData::setLight(Light* light)
 		mainLightData.shadowBias = directLight->getShadowBias();
 		mainLightData.color = toLinearColor(directLight->color);
 		mainLightData.vsmID = -1;
+		
 		shadowCameraRenderData.data = directLight->shadowData.cameraData;
 		shadowCameraRenderData.surface.clearFlags = Clear_Depth;
 		shadowCameraRenderData.surface.renderTarget = shadowTarget;
 		shadowCameraRenderData.surface.clearColors.resize(1);
 		shadowCameraRenderData.surface.clearColors[0] = Color();
 		shadowCameraRenderData.renderOrder = 0;
+	}
+}
+
+int LightRenderData::setLocalLight(Light* light)
+{
+	if (shadowTarget == NULL && light->getShadowRenderTarget() != NULL) {
+		shadowTarget = light->getShadowRenderTarget();
+		shadowTarget->init();
 	}
 	PointLight* pointLight = dynamic_cast<PointLight*>(light);
 	if (pointLight != NULL) {
@@ -48,7 +57,11 @@ void LightRenderData::setLight(Light* light)
 		data.color = toLinearColor(pointLight->color);
 		data.radius = pointLight->getRadius();
 		data.vsmID = -1;
+		int lightID = pointLightProbeIndices.size();
+		pointLightProbeIndices.push_back(probeIndex);
+		return lightID;
 	}
+	return -1;
 }
 
 void LightRenderData::create()
@@ -59,6 +72,11 @@ void LightRenderData::create()
 void LightRenderData::addVirtualShadowMapClipmap(VirtualShadowMapClipmap& clipmap)
 {
 	mainLightClipmaps.push_back(&clipmap);
+}
+
+void LightRenderData::addVirtualShadowMapLocalShadow(VirtualShadowMapLightEntry& localShadow)
+{
+	localLightShadows.push_back(&localShadow);
 }
 
 int LightRenderData::getLocalLightCount() const
@@ -99,7 +117,10 @@ void LightRenderData::bind(IRenderContext& context)
 void LightRenderData::clean()
 {
 	shadowTarget = NULL;
+	mainLightData.intensity = 0;
+	mainLightData.vsmID = -1;
 	mainLightData.pointLightCount = 0;
 	pointLightProbeIndices.clear();
 	mainLightClipmaps.clear();
+	localLightShadows.clear();
 }

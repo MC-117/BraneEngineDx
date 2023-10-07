@@ -4,7 +4,7 @@
 #include "../Utility/Boundings.h"
 #include "WUIControl.h"
 
-class WUIWindow : public WUIControl
+class ENGINE_API WUIWindow : public WUIControl
 {
 public:
 	enum HitState

@@ -3,14 +3,14 @@
 #include "../Graph/ObjectNodes/SkeletonMeshActorNode.h"
 #include "AnimationClip.h"
 
-class IAnimationPoseNode
+class ENGINE_API IAnimationPoseNode
 {
 public:
 	virtual void setContext(const AnimationContext& context) = 0;
 	virtual AnimationPose* getPose() = 0;
 };
 
-class AnimationPosePin : public ValuePin
+class ENGINE_API AnimationPosePin : public ValuePin
 {
 	friend class AnimationPoseSourceNode;
 	friend class AnimationPoseResultNode;
@@ -40,7 +40,7 @@ protected:
 	AnimationPose* pose = NULL;
 };
 
-class AnimationPoseSourceNode : public GraphNode, public IAnimationPoseNode
+class ENGINE_API AnimationPoseSourceNode : public GraphNode, public IAnimationPoseNode
 {
 public:
 	Serialize(AnimationPoseSourceNode, GraphNode);
@@ -69,7 +69,7 @@ protected:
 	AnimationPose bindPose;
 };
 
-class AnimationPoseResultNode : public ReturnNode
+class ENGINE_API AnimationPoseResultNode : public ReturnNode
 {
 public:
 	Serialize(AnimationPoseResultNode, ReturnNode);
@@ -87,7 +87,7 @@ protected:
 	AnimationPosePin poseInputPin;
 };
 
-class AnimationPoseApplyNode : public InOutFlowNode
+class ENGINE_API AnimationPoseApplyNode : public InOutFlowNode
 {
 public:
 	Serialize(AnimationPoseApplyNode, GraphNode);
@@ -105,7 +105,7 @@ protected:
 	AnimationPosePin poseInputPin;
 };
 
-class AnimationBaseNode : public AnimationPoseSourceNode
+class ENGINE_API AnimationBaseNode : public AnimationPoseSourceNode
 {
 public:
 	Serialize(AnimationBaseNode, AnimationPoseSourceNode);
@@ -145,7 +145,7 @@ protected:
 	AnimationBaseNode(AnimationBase& animationBase, const string& name = "AnimationBase");
 };
 
-class AnimationClipNode : public AnimationBaseNode
+class ENGINE_API AnimationClipNode : public AnimationBaseNode
 {
 public:
 	Serialize(AnimationClipNode, AnimationBaseNode);
@@ -180,7 +180,7 @@ protected:
 	FlowPin endPin;
 };
 
-class BlendSpaceNode : public AnimationBaseNode
+class ENGINE_API BlendSpaceNode : public AnimationBaseNode
 {
 public:
 	Serialize(BlendSpaceNode, AnimationBaseNode);
@@ -210,7 +210,7 @@ protected:
 	vector<TransformData> bindPoses;
 };
 
-class AnimationPoseLerpNode : public GraphNode, public IAnimationPoseNode
+class ENGINE_API AnimationPoseLerpNode : public GraphNode, public IAnimationPoseNode
 {
 public:
 	Serialize(AnimationPoseLerpNode, GraphNode);

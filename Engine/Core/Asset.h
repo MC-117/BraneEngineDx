@@ -10,7 +10,7 @@ class Asset;
 class AssetInfo;
 class AssetManager;
 
-class Asset {
+class ENGINE_API Asset {
 public:
 	const AssetInfo& assetInfo;
 	string name;
@@ -24,7 +24,7 @@ public:
 	Object* createObject();
 };
 
-class AssetInfo {
+class ENGINE_API AssetInfo {
 public:
 	static map<string, Asset*> assetsByPath;
 
@@ -126,7 +126,7 @@ public:
 	static AssetInfo& getInstance();
 };
 
-static class AssetManager {
+static class ENGINE_API AssetManager {
 public:
 	static StaticVar<map<string, AssetInfo*>> assetInfoList;
 

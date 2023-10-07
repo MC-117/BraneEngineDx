@@ -59,7 +59,7 @@ struct Live2DParameter
     static const char* defaultParameterNames[ParamCount];
 };
 
-class Live2DActor : public Actor
+class ENGINE_API Live2DActor : public Actor
 {
 public:
 	Serialize(Live2DActor, Actor);
@@ -101,49 +101,49 @@ public:
 protected:
 
     Live2DModel* modelAsset = NULL;
-    Csm::CubismModel* _model = NULL;                          ///< Modelインスタンス
+    Csm::CubismModel* _model = NULL;
 
-    Csm::CubismMotionManager* _motionManager = NULL;          ///< モーション管理
-    Csm::CubismMotionManager* _expressionManager = NULL;      ///< 表情管理
-    Csm::CubismEyeBlink* _eyeBlink = NULL;                    ///< 自動まばたき
-    Csm::CubismBreath* _breath = NULL;                        ///< 呼吸
-    Csm::CubismModelMatrix* _modelMatrix = NULL;              ///< モデル行列
-    Csm::CubismPose* _pose = NULL;                            ///< ポーズ管理
-    Csm::CubismTargetPoint* _dragManager = NULL;              ///< マウスドラッグ
-    Csm::CubismPhysics* _physics = NULL;                      ///< 物理演算
-    Csm::CubismModelUserData* _modelUserData = NULL;          ///< ユーザデータ
+    Csm::CubismMotionManager* _motionManager = NULL;
+    Csm::CubismMotionManager* _expressionManager = NULL;
+    Csm::CubismEyeBlink* _eyeBlink = NULL;
+    Csm::CubismBreath* _breath = NULL;
+    Csm::CubismModelMatrix* _modelMatrix = NULL;
+    Csm::CubismPose* _pose = NULL;
+    Csm::CubismTargetPoint* _dragManager = NULL;
+    Csm::CubismPhysics* _physics = NULL;
+    Csm::CubismModelUserData* _modelUserData = NULL;
 
-    bool    _initialized = false;                  ///< 初期化されたかどうか
-    bool    _updating = false;                     ///< 更新されたかどうか
-    float   _opacity = 1.0f;                       ///< 不透明度
-    bool    _lipSync = true;                       ///< リップシンクするかどうか
-    float   _lastLipSyncValue = 0.0f;              ///< 最後のリップシンクの制御値
-    float   _dragX = 0.0f;                         ///< マウスドラッグのX位置
-    float   _dragY = 0.0f;                         ///< マウスドラッグのY位置
-    float   _accelerationX = 0.0f;                 ///< X軸方向の加速度
-    float   _accelerationY = 0.0f;                 ///< Y軸方向の加速度
-    float   _accelerationZ = 0.0f;                 ///< Z軸方向の加速度
+    bool    _initialized = false;
+    bool    _updating = false;
+    float   _opacity = 1.0f;
+    bool    _lipSync = true;
+    float   _lastLipSyncValue = 0.0f;
+    float   _dragX = 0.0f;
+    float   _dragY = 0.0f;
+    float   _accelerationX = 0.0f;
+    float   _accelerationY = 0.0f;
+    float   _accelerationZ = 0.0f;
 
-    Csm::csmFloat32 _userTimeSeconds = 0; ///< デルタ時間の積算値[秒]
-    Csm::csmVector<Csm::CubismIdHandle> _eyeBlinkIds; ///< モデルに設定されたまばたき機能用パラメータID
-    Csm::csmVector<Csm::CubismIdHandle> _lipSyncIds; ///< モデルに設定されたリップシンク機能用パラメータID
-    map<string, Csm::ACubismMotion*>   _motions; ///< 読み込まれているモーションのリスト
-    map<string, Csm::ACubismMotion*>   _expressions; ///< 読み込まれている表情のリスト
+    Csm::csmFloat32 _userTimeSeconds = 0;
+    Csm::csmVector<Csm::CubismIdHandle> _eyeBlinkIds;
+    Csm::csmVector<Csm::CubismIdHandle> _lipSyncIds;
+    map<string, Csm::ACubismMotion*>   _motions;
+    map<string, Csm::ACubismMotion*>   _expressions;
     vector<Csm::csmRectF> _hitArea;
     vector<Csm::csmRectF> _userArea;
 
     const Csm::CubismId* parameters[Live2DParameter::ParamCount] = { 0 };
     int parameterIndex[Live2DParameter::ParamCount] = { -1 };
 
-    // 外部定義ファイル(json)と合わせる
-    const Csm::csmChar* MotionGroupIdle = "Idle"; // アイドリング
-    const Csm::csmChar* MotionGroupTapBody = "TapBody"; // 体をタップしたとき
 
-    // 外部定義ファイル(json)と合わせる
+    const Csm::csmChar* MotionGroupIdle = "Idle";
+    const Csm::csmChar* MotionGroupTapBody = "TapBody";
+
+
     const Csm::csmChar* HitAreaNameHead = "Head";
     const Csm::csmChar* HitAreaNameBody = "Body";
 
-    // モーションの優先度定数
+
     const Csm::csmInt32 PriorityNone = 0;
     const Csm::csmInt32 PriorityIdle = 1;
     const Csm::csmInt32 PriorityNormal = 2;

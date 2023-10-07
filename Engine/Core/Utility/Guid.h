@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 
-struct Guid
+struct ENGINE_API Guid
 {
     union {
         struct {

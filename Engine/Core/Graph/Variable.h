@@ -2,7 +2,7 @@
 
 #include "ValuePin.h"
 
-class GraphVariable : public Base
+class ENGINE_API GraphVariable : public Base
 {
 	friend class Graph;
 public:
@@ -280,7 +280,7 @@ DEC_OBJECT_VAR_CLASS(Vector3f, Vector3fVariable, Vector3fPin);
 DEC_OBJECT_VAR_CLASS(Quaternionf, QuaternionfVariable, QuaternionfPin);
 DEC_OBJECT_VAR_CLASS(Color, ColorVariable, ColorPin);
 
-class VariableNode : public GraphNode
+class ENGINE_API VariableNode : public GraphNode
 {
 public:
 	Serialize(VariableNode, GraphNode);

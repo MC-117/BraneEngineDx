@@ -4,7 +4,7 @@
 
 #include "ShaderStage.h"
 
-struct ShaderMatchRule
+struct ENGINE_API ShaderMatchRule
 {
 	ShaderMatchFlag mainFlag;
 	Enum<ShaderFeature> mainFeatureMask;
@@ -25,7 +25,7 @@ struct ShaderMatchRule
 	Enum<ShaderFeature> operator()(ShaderStageType stageType, const Enum<ShaderFeature>& feature) const;
 };
 
-class Shader
+class ENGINE_API Shader
 {
 public:
 	string name = "__Default";

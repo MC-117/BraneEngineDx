@@ -15,6 +15,24 @@ VirtualShadowMapClipmap* VirtualShadowMapRenderData::newClipmap(CameraRender& ca
 		lightRenderData.mainLightData);
 }
 
+VirtualShadowMapLightEntry* VirtualShadowMapRenderData::newLocalLightShadow(int renderLightID, int persistentLightID)
+{
+	LocalLightData& lightData = lightRenderData.getLocalLightData(renderLightID);
+	VirtualShadowMapManager::LightEntry* lightEntry = manager.setLightEntry(persistentLightID, 0);
+	if (lightEntry) {
+		lightEntry->updateLocal(lightData);
+		for (int i = 0; i < CubeFace::CF_Faces; i++) {
+			VirtualShadowMap* shadowMap = shadowMapArray.allocate();
+			VirtualShadowMapManager::ShadowMap* shadowEntry = lightEntry->setShadowMap(i);
+			shadowEntry->updateLocal(shadowMap->vsmID, *lightEntry);
+			shadowMap->shadowMap = shadowEntry;
+			if (i == 0)
+				lightData.vsmID = shadowMap->vsmID;
+		}
+	}
+	return (VirtualShadowMapLightEntry*)lightEntry;
+}
+
 void VirtualShadowMapRenderData::create()
 {
 	manager.prepare();

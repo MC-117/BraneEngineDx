@@ -29,7 +29,7 @@ struct RenderTargetDesc
 	Texture* depthTexure = NULL;
 };
 
-class IRenderTarget
+class ENGINE_API IRenderTarget
 {
 public:
 	RenderTargetDesc& desc;
@@ -58,7 +58,7 @@ struct DeviceSurfaceDesc
 	bool inited = false;
 };
 
-class IDeviceSurface
+class ENGINE_API IDeviceSurface
 {
 public:
 	DeviceSurfaceDesc& desc;

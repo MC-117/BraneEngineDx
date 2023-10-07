@@ -5,7 +5,7 @@
 #include "Unit.h"
 #include "GraphicType.h"
 
-struct Texture2DInfo
+struct ENGINE_API Texture2DInfo
 {
 	TexWrapType wrapSType;
 	TexWrapType wrapTType;
@@ -69,7 +69,7 @@ struct TextureDesc
 	bool needUpdate = false;
 };
 
-class ITexture
+class ENGINE_API ITexture
 {
 public:
 	TextureDesc& desc;
@@ -99,7 +99,7 @@ struct Texture2DDesc : public TextureDesc
 	unsigned int bindType = 0;
 };
 
-class ITexture2D : public ITexture
+class ENGINE_API ITexture2D : public ITexture
 {
 public:
 	Texture2DDesc& desc;

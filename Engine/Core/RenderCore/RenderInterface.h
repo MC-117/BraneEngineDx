@@ -107,7 +107,7 @@ protected:
 	unordered_set<IRenderData*> collection;
 };
 
-class RenderGraph : public Serializable
+class ENGINE_API RenderGraph : public Serializable
 {
 public:
 	Serialize(RenderGraph,);

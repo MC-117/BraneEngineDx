@@ -3,7 +3,7 @@
 #include "TerrainRender.h"
 #include "../Actor.h"
 
-class TerrainActor : public Actor
+class ENGINE_API TerrainActor : public Actor
 {
 public:
 	Serialize(TerrainActor, Actor);

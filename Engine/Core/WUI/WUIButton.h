@@ -5,7 +5,7 @@
 #include "WUIFont.h"
 #include "../Delegate.h"
 
-class WUIButton : public WUIControl
+class ENGINE_API WUIButton : public WUIControl
 {
 public:
 	WUIFont font;

@@ -6,7 +6,7 @@
 
 class Asset;
 
-class AssetBrowser : public UIWindow
+class ENGINE_API AssetBrowser : public UIWindow
 {
 public:
 	int seletedIndex = -1;

@@ -5,7 +5,7 @@
 
 class Spine2DActor;
 
-class Spine2DAnimationTrack
+class ENGINE_API Spine2DAnimationTrack
 {
 	friend class Spine2DActor;
 public:
@@ -23,7 +23,7 @@ protected:
 	spine::TrackEntry* track = NULL;
 };
 
-class Spine2DActor : public Actor
+class ENGINE_API Spine2DActor : public Actor
 {
 	friend class Spine2DAnimationTrack;
 public:

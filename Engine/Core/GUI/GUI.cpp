@@ -44,6 +44,9 @@ void GUI::onGUI(RenderInfo& info)
 
 	GUIRenderInfo _info = { viewSize, sceneBlurTex, info.sceneData, info.renderGraph, *this, info.camera };
 
+	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++)
+		b->second->onPreAction(_info);
+	
 	// ImGui Dock Begin
 	ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
 
@@ -123,17 +126,28 @@ void GUI::onGUI(RenderInfo& info)
 	ImGui::PopClipRect();
 	ImGui::SetCursorPos(bkCurPos);
 
-	// DockSpace
-	ImGuiIO& io = ImGui::GetIO();
-	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-	{
-		ImGuiID dockspace_id = ImGui::GetID("MainDockSpace");
-		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+	if (mainControl) {
+		UIWindow* windoiw = dynamic_cast<UIWindow*>(mainControl);
+		ImGui::BeginChild(windoiw->name.c_str());
+		if (windoiw)
+			windoiw->onRenderWindow(_info);
+		else
+			mainControl->render(_info);
+		ImGui::EndChild();
+	}
+	else {
+		// DockSpace
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+		{
+			ImGuiID dockspace_id = ImGui::GetID("MainDockSpace");
+			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+		}
+		// ImGui Dock End
 	}
 
 	ImGui::End();
 	ImGui::PopStyleVar(3);
-	// ImGui Dock End
 
 	gizmo.begineWindow();
 	gizmo.onGUI(Engine::getCurrentWorld());
@@ -141,11 +155,8 @@ void GUI::onGUI(RenderInfo& info)
 	
 	focusControl = NULL;
 
-	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++)
-		b->second->onPreAction(_info);
-
 	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++) {
-		if (b->second->show)
+		if (b->second->show && b->second != mainControl)
 			b->second->render(_info);
 		UIWindow* win = dynamic_cast<UIWindow*>(b->second);
 		if (win->isFocus())
@@ -178,7 +189,8 @@ void GUI::render(RenderInfo& info)
 	{
 		ImGui::UpdatePlatformWindows();
 	}
-	info.renderGraph->setImGuiDrawData(ImGui::GetDrawData());
+	if (info.renderGraph)
+		info.renderGraph->setImGuiDrawData(ImGui::GetDrawData());
 }
 
 void GUI::onSceneResize(Unit2Di size)
@@ -191,6 +203,13 @@ void GUI::onSceneResize(Unit2Di size)
 void GUI::setSceneBlurTex(Texture2D * tex)
 {
 	sceneBlurTex = tex;
+}
+
+void GUI::setMainControl(UIControl* uc)
+{
+	mainControl = uc;
+	if (uc)
+		addUIControl(*uc);
 }
 
 void GUI::addUIControl(UIControl & uc)
@@ -299,4 +318,51 @@ GUI & GUI::operator+=(UIControl * uc)
 {
 	addUIControl(*uc);
 	return *this;
+}
+
+GUIEngineLoop::GUIEngineLoop(GUI& gui)
+	: gui(gui)
+{
+}
+
+bool GUIEngineLoop::willQuit()
+{
+	return false;
+}
+
+void GUIEngineLoop::init()
+{
+	
+}
+
+void GUIEngineLoop::loop(float deltaTime)
+{
+	RenderInfo info;
+	info.camera = NULL;
+	info.renderGraph = NULL;
+	info.sceneData = NULL;
+	gui.onGUI(info);
+	gui.render(info);
+	
+	ImGui::Render();
+	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		ImGui::UpdatePlatformWindows();
+	}
+
+	IDeviceSurface* surface = Engine::getMainDeviceSurface();
+	if (surface == NULL)
+		throw runtime_error("MainDeviceSurface not initialized");
+
+	surface->bindSurface();
+	surface->clearColor(Color(0, 0, 0));
+
+	IVendor& Vendor = VendorManager::getInstance().getVendor();
+	Vendor.imGuiDrawFrame(Engine::engineConfig, Engine::windowContext);
+
+	surface->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
+}
+
+void GUIEngineLoop::release()
+{
 }
