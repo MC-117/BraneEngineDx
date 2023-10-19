@@ -133,7 +133,7 @@ void DirectLight::afterTick()
 	shadowData.cameraData.aspect = 1;
 }
 
-void DirectLight::preRender()
+void DirectLight::preRender(PreRenderInfo& info)
 {
 }
 

@@ -2,6 +2,14 @@
 
 #include "../Unit.h"
 
+enum MeshTransformFlags : unsigned int
+{
+	MeshTransform_None = 0,
+	MeshTransform_Dynamic = 1 << 0,
+	MeshTransform_NegScale = 1 << 1,
+	MeshTransform_Bit_Mask = 0xFFFFFFFCU,
+};
+
 struct MeshTransformData
 {
 	Matrix4f localToWorld;
@@ -18,4 +26,7 @@ struct MeshTransformData
 
 	bool operator==(const MeshTransformData& other) const;
 	bool operator!=(const MeshTransformData& other) const;
+
+	bool isDynamic() const;
+	bool isNegativeScale() const;
 };

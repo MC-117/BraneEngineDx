@@ -1,6 +1,7 @@
 #include "SkeletonMeshRender.h"
 #include "Asset.h"
 #include "Console.h"
+#include "Camera.h"
 #include "RenderCore/RenderCore.h"
 
 SkeletonMeshRender::SkeletonMeshRender() : MeshRender()
@@ -85,9 +86,11 @@ void SkeletonMeshRender::render(RenderInfo & info)
 		command.hasPreDepth = hasPrePass;
 		command.instanceID = instanceID;
 		command.instanceIDCount = instanceCount;
-		MeshTransformRenderData* transformData = isStatic ? &info.sceneData->staticMeshTransformDataPack : &info.sceneData->meshTransformDataPack;
-		command.transformData = transformData;
-		command.transformIndex = transformData->setMeshPartTransform(part, material, instanceID, instanceCount);
+		ViewCulledMeshBatchDrawData batchDrawData = info.sceneData->getViewCulledBatchDrawData(info.camera->getRender(), isStatic);
+		command.batchDrawData = batchDrawData;
+		const MeshBatchDrawKey renderKey(part, material, batchDrawData.transformData->getMeshTransform(instanceID).isNegativeScale());
+		command.meshBatchDrawCall = batchDrawData.batchDrawCommandArray->setMeshBatchDrawCall(renderKey, instanceID, instanceCount);
+		command.reverseCullMode = renderKey.negativeScale;
 		command.bindings.push_back(getRenderData());
 		if (morphWeights.getMorphCount() > 0)
 			command.bindings.push_back(morphWeights.getRenderData());
@@ -96,8 +99,7 @@ void SkeletonMeshRender::render(RenderInfo & info)
 
 		Material* outlineMaterial = outlineMaterials[i];
 		if (outlineEnable[i] && outlineMaterial != NULL) {
-			command.instanceIDCount = instanceCount;
-			command.transformIndex = transformData->setMeshPartTransform(part, outlineMaterial, instanceID, instanceCount);
+			command.meshBatchDrawCall = batchDrawData.batchDrawCommandArray->setMeshBatchDrawCall(renderKey, instanceID, instanceCount);
 			command.material = outlineMaterial;
 			info.renderGraph->setRenderCommand(command);
 		}

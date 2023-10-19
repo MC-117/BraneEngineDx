@@ -113,12 +113,8 @@ struct InstanceDrawData
 
 cbuffer DrawInfoBuf : register(DRAW_INFO_BIND_INDEX)
 {
-    uniform uint baseVertex;
-    uniform uint baseInstance;
     uniform uint passID;
     uniform uint passNum;
     uniform uint materialID;
     uniform float gameTime;
-    uniform uint pad1;
-    uniform uint pad2;
 };

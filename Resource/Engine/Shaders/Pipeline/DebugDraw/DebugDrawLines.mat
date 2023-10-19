@@ -1,14 +1,19 @@
 #material
 #vertex
+#condition custom1
 #include "../../lib/CameraData_Def.hmat"
 #include "../../lib/DebugDraw_Def.hmat"
 
 DebugPointVertexOut main(uint vertexID : SV_VertexID)
 {
     DebugPointVertexOut vout;
+#ifdef CUSTOM1_SHADER_FEATURE
+    DebugPoint p = debugLines[vertexID];
+#else
     DebugPointTable table = unpackDebugPointTable(debugFlags[vertexID + 1]);
     DebugPoint p = debugLines[table.index];
-    vout.svPos = mul(float4(p.pos, 1.0f), camData.pmat);
+#endif
+    vout.svPos = mul(p.pos, camData.pmat);
     vout.color = p.color;
     return vout;
 }
@@ -18,5 +23,5 @@ DebugPointVertexOut main(uint vertexID : SV_VertexID)
 
 float4 main(DebugPointVertexOut fin) : SV_Target
 {
-    return float4(fin.color, 1.0f);
+    return fin.color;
 }

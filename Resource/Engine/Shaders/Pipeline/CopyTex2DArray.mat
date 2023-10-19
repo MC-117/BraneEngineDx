@@ -13,9 +13,7 @@ void main(uint3 tid : SV_DispatchThreadID)
     dstTex.GetDimensions(size.x, size.y, size.z);
     if (all(tid < size)) {
         float2 UV = tid.xy / size.xy;
-        uint index = tid.z == 2 ? 3 : tid.z;
-        index = tid.z == 3 ? 2 : index;
-        UV.y = 1 - UV.y;
+        uint index = tid.z;
         dstTex[tid] = SAMPLE_TEX_LOD(srcTex, float3(UV, index), 0);
     }
 }

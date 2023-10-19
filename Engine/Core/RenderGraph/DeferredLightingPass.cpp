@@ -119,6 +119,7 @@ void DeferredLightingPass::execute(IRenderContext& context)
 			static const ShaderPropertyName gBufferFName = "gBufferF";
 
 			taskContext.materialRenderData = task.materialRenderData;
+			task.materialRenderData->bindCullMode(context, false);
 			task.materialRenderData->bind(context);
 			if (task.sceneData->lightDataPack.shadowTarget == NULL)
 				context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), depthMapName);

@@ -25,19 +25,20 @@ bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 		if (program == NULL || !program->init())
 			return false;
 	}
-
-	MeshTransformIndex* transformIndex = cmd.sceneData->setMeshPartTransform(
-		meshRenderCommand->mesh, material, meshRenderCommand->instanceID, meshRenderCommand->instanceIDCount);
+	IMeshBatchDrawCommandArray* drawCommandArray = dynamic_cast<IMeshBatchDrawCommandArray*>(meshRenderCommand->batchDrawData.batchDrawCommandArray);
+	const MeshBatchDrawKey renderKey(meshRenderCommand->mesh, material, meshRenderCommand->reverseCullMode);
+	MeshBatchDrawCall* batchDrawCall = drawCommandArray->setMeshBatchDrawCall(renderKey, meshRenderCommand->instanceIDCount);
 
 	DirectShadowRenderCommand command;
 	command.instanceID = meshRenderCommand->instanceID;
 	command.instanceIDCount = meshRenderCommand->instanceIDCount;
+	command.reverseCullMode = renderKey.negativeScale;
 	command.sceneData = cmd.sceneData;
-	command.transformData = cmd.transformData;
+	command.batchDrawData = cmd.batchDrawData;
 	command.material = material;
 	command.mesh = meshRenderCommand->mesh;
 	command.mainLightData = &cmd.sceneData->lightDataPack.mainLightData;
-	command.transformIndex = transformIndex;
+	command.meshBatchDrawCall = batchDrawCall;
 	command.bindings = cmd.bindings;
 
 	MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(material->getRenderData());
@@ -72,7 +73,7 @@ bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	RenderTask task;
 	task.age = 0;
 	task.sceneData = command.sceneData;
-	task.transformData = command.transformData;
+	task.batchDrawData = command.batchDrawData;
 	task.shaderProgram = program;
 	task.renderMode = command.getRenderMode();
 	task.cameraData = &cameraRenderData;

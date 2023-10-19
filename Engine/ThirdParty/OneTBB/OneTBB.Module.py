@@ -11,9 +11,9 @@ class OneTBBModule(Module):
             self.libPaths = [f'{self.getPath()}/lib/x64']
             if config.enableDebug:
                 self.libFiles = ['tbb_debug.lib', 'tbb12_debug.lib']
-                self.dllFiles = [f'{self.getPath()}/bin/tbb12_debug.dll']
+                self.dllFiles = [f'{self.getPath()}/bin/x64/tbb12_debug.dll']
             else:
                 self.libFiles = ['tbb.lib', 'tbb12.lib']
-                self.dllFiles = [f'{self.getPath()}/bin/tbb12.dll']
+                self.dllFiles = [f'{self.getPath()}/bin/x64/tbb12.dll']
         else:
             raise NotImplementedError('Only support Win64')

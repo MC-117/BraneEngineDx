@@ -1,0 +1,46 @@
+#material
+#localsize 64 1 1
+#compute
+#include "../lib/TransformData_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+#include "../lib/InstanceCulling_Lib.hmat"
+#include "../lib/Const_Def.hmat"
+
+Buffer<uint> instanceCullingResult;
+Buffer<uint2> instanceData;
+Buffer<uint> commands;
+RWBuffer<uint> prunedInstanceData;
+RWBuffer<uint> prunedCommands;
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint cmdIdx : SV_DispatchThreadID)
+{
+    uint numCmd;
+    commands.GetDimensions(numCmd);
+    if (cmdIdx >= numCmd)
+        return;
+    const uint cntIdx = cmdIdx * DRAW_ELEMENT_INDIRECT_ARGS;
+    const uint insCntIdx = cntIdx + DRAW_INDIRECT_INS_COUNT_IDX;
+    const uint fstIdx = cntIdx + DRAW_ELEMENT_INDIRECT_FST_IDX_IDX;
+    const uint vtxIdx = cntIdx + DRAW_ELEMENT_INDIRECT_BASE_VTX_IDX;
+    const uint insIdx = cntIdx + DRAW_ELEMENT_INDIRECT_BASE_INS_IDX;
+
+    uint baseIns = commands[insIdx];
+    uint numIns = commands[insCntIdx];
+
+    prunedCommands[cntIdx] = commands[cntIdx];
+    prunedCommands[fstIdx] = commands[fstIdx];
+    prunedCommands[vtxIdx] = commands[vtxIdx];
+    prunedCommands[insIdx] = baseIns;
+
+    for (uint idx = 0; idx < numIns; idx++) {
+        uint2 data = instanceData[baseIns + idx];
+        uint insID = data[0];
+        uint flags = instanceCullingResult[insID];
+        if (flags == SceneCull_NoneCulled) {
+            uint newIdx;
+            InterlockedAdd(prunedCommands[insCntIdx], 1, newIdx);
+            prunedInstanceData[baseIns + newIdx] = data;
+        }
+    }
+}

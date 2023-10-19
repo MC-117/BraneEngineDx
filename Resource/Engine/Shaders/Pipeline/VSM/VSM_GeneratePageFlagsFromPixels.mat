@@ -3,6 +3,9 @@
 #compute
 #condition debug
 #include "../../lib/VirtualShadowMap_Def.hmat"
+#if defined(DEBUG_SHADER_FEATURE)
+#include "../../lib/DebugDraw_Def.hmat"
+#endif
 
 cbuffer GenPageFlagInfo
 {
@@ -56,13 +59,8 @@ void markPage(uint vsmID
 
 	// Check overlap vs the shadow map space
 	// NOTE: XY test not really needed anymore with the precise cone test in the caller, but we'll leave it for the moment
-	bool inClip = shadowUVZ.w > 0.0f && 
-		all(shadowUVZ.xyz <= shadowUVZ.w) &&
-		all(shadowUVZ.xyz >= float3(-shadowUVZ.ww, 0.0f));
-
-	#if defined(DEBUG_SHADER_FEATURE)
-	outDebugBuffer[pixel] = float4(0.5f, 0.5f, 0.5f, 1.0f);
-	#endif
+	bool inClip = all(shadowUVZ.xyz <= 1.0f) &&
+		all(shadowUVZ.xyz >= 0.0f);
 
 	if (!inClip)
 		return;
@@ -76,7 +74,7 @@ void markPage(uint vsmID
 	uint pageOffset = calcPageOffset(vsmID, mipLevel, pageAddress);
 	markPageAddress(pageOffset, flags);
 	#if defined(DEBUG_SHADER_FEATURE)
-	outDebugBuffer[pixel] = float4(IntToColor(pageOffset), 1.0f);
+	outDebugBuffer[pixel] = float4(IntToColor(mipLevel), 1.0f);
 	#endif
 
 	if (usePageDilation)
@@ -126,8 +124,9 @@ void main(uint2 pixel : SV_DispatchThreadID, uint gidx : SV_GroupIndex)
         return;
 	float2 uv = pixel / camData.viewSize;
     float depth = sceneDepthMap[pixel];
+	float screenDepth = depthFromNDCToView(depth);
     float3 worldPos = uvzPosToWorld(float3(uv, depth));
-    float3 worldNorm = normalize(sceneNormalMap[pixel]);
+    float3 worldNorm = normalize(decodeNormal(sceneNormalMap[pixel]));
 
     const float2 pageDilationDither = float2(
 		(gidx & 1) ? 1.0f : -1.0f,
@@ -158,26 +157,45 @@ void main(uint2 pixel : SV_DispatchThreadID, uint gidx : SV_GroupIndex)
 			);
     }
 
+	#if defined(DEBUG_SHADER_FEATURE)
+	if (all(pixel == 0)) {
+		for (int probeIndex = 0; probeIndex < getProbeCount(); probeIndex++) {
+			if (getProbeType(probeIndex) == PROBE_TYPE_LIGHT) {
+				PointLight localLight = getPointLight(probeIndex);
+				for (int i = 0; i < 6; i++) {
+					uint vsmID = localLight.vsmID + i;
+					VSMProjData projData = getVSMProjData(vsmID);
+					debugDrawTranslatedFrustum(inverse(projData.viewOriginToClip), localLight.pos,
+						float3(0, 1, 0));
+				}
+			}
+		}
+	}
+	#endif
+
     PointLight localLight;
     ITER_LOCAL_LIGHT(worldPos, localLight)
     {
         if (localLight.intensity != 0 && localLight.vsmID != NONE_VSMID) {
-            float localPos = localLight.pos - worldPos;
-            float distSq = dot(localPos);
-            if (distSq > (localLight.radius * localLight.radius))
-                continue;
-            if (backFaceCull && isBackFaceCulled(worldNorm, normalize(localPos)))
-                continue;
-            uint mipLevel = getMipLevelLocal(localLight.vsmID, localPos, depth);
-            markPage(vsmID
-            , mipLevel
-			, worldPos
-			, usePageDilation
-			, pageDilationOffset
-			#if defined(DEBUG_SHADER_FEATURE)
-			, pixel
-			#endif
-			);
+			float3 localPos = worldPos - localLight.pos;
+			float distSq = dot(localPos, localPos);
+			if (distSq > (localLight.radius * localLight.radius))
+				continue;
+			if (backFaceCull && isBackFaceCulled(worldNorm, normalize(-localPos)))
+				continue;
+			for (int i = 0; i < 6; i++) {
+				uint vsmID = localLight.vsmID + i;
+				uint mipLevel = getMipLevelLocal(vsmID, localPos, screenDepth);
+				markPage(vsmID
+				, mipLevel
+				, worldPos
+				, usePageDilation
+				, pageDilationOffset
+				#if defined(DEBUG_SHADER_FEATURE)
+				, pixel
+				#endif
+				);
+			}
         }
     }
 }

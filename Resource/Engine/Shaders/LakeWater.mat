@@ -41,16 +41,7 @@ FS_DEF_OUT_BEGIN
 FS_DEF_OUT_SURFACE
 FS_DEF_OUT_END
 
-float getShadow(in DirectLight directLight, in Surface surf)
-{
-    #if defined(VSM_SHADER_FEATURE)
-    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos,
-        surf.Normal, directLight.shadowBias.y);
-    #else
-    return ShadowCalculation(depthMap, depthMapSampler,
-        surf.WorldPos, surf.Normal, directLight);
-    #endif
-}
+#include "lib/Shadow_Lib.hmat"
 
 float3 blendNormal(float3 N1, float3 N2)
 {
@@ -146,7 +137,9 @@ FragmentOut SURFACE_MAIN
     ITER_LOCAL_LIGHT(surf.WorldPos, localLight)
     {
         if (localLight.intensity != 0) {
-            Lo += PBR_Lo_PointLight(localLight, surf.WorldPos, surf.Normal, V, surf.albedo.xyz, surf.metallic, surf.roughness);
+            float shadowFactor = getShadow(localLight, surf);
+            Lo += PBR_Lo_PointLight(localLight, surf.WorldPos, surf.Normal, V,
+                surf.albedo.xyz, surf.metallic, surf.roughness) * shadowFactor;
         }
     }
 

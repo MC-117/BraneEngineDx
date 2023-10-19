@@ -69,5 +69,10 @@ void Spine2DRenderPack::excute(IRenderContext& context, RenderTaskContext& taskC
 
 		context.meshDrawCall(draw.meshPartDesc);
 	}
+}
+
+void Spine2DRenderPack::reset()
+{
+	materialData = NULL;
 	drawList.clear();
 }

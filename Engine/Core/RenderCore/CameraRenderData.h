@@ -2,6 +2,7 @@
 
 #include "ScreenHitData.h"
 #include "ProbeGridRenderData.h"
+#include "ViewCullingContext.h"
 
 class CameraRender;
 
@@ -21,6 +22,13 @@ struct SurfaceData
 	void bind(IRenderContext& context, Enum<ClearFlags> plusClearFlags = Clear_None, Enum<ClearFlags> minusClearFlags = Clear_None);
 };
 
+enum CameraRenderFlags : unsigned int
+{
+	CameraRender_Default = 0,
+	CameraRender_DebugDraw = 1 << 0,
+	CameraRender_SceneCapture = 1 << 1,
+};
+
 struct CameraRenderData : public IRenderData
 {
 	struct CameraUploadData
@@ -29,14 +37,17 @@ struct CameraRenderData : public IRenderData
 		ProbeGridInfo probeGridInfo;
 	};
 	int cameraRenderID = 0;
-	CameraRender* cameraRender;
+	CameraRender* cameraRender = NULL;
 	CameraData data;
 	ProbeGridInfo probeGridInfo;
 	ProbeGridRenderData probeGrid;
-	int renderOrder;
+	int renderOrder = 0;
+	Enum<CameraRenderFlags> flags = CameraRender_Default;
 	ScreenHitData* hitData = NULL;
 	ISurfaceBuffer* surfaceBuffer = NULL;
 	SurfaceData surface;
+	ViewCullingContext cullingContext;
+	ViewCullingContext staticCullingContext;
 	GPUBuffer buffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(CameraUploadData));
 
 	virtual void create();

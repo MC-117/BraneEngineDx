@@ -1073,8 +1073,6 @@ void DX11RenderContext::meshDrawCall(const MeshPartDesc& mesh)
 	else {
 		bindMeshData(mesh.meshData);
 	}
-	drawInfo.baseInstance = 0;
-	drawInfo.baseVertex = mesh.vertexFirst;
 	bindDrawInfo();
 	deviceContext->DrawIndexed(mesh.elementCount, mesh.elementFirst, mesh.vertexFirst);
 }
@@ -1084,8 +1082,6 @@ void DX11RenderContext::postProcessCall()
 	currentMeshData = NULL;
 	deviceContext->IASetInputLayout(dxContext.screenInputLayout.Get());
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	drawInfo.baseInstance = 0;
-	drawInfo.baseVertex = 0;
 	bindDrawInfo();
 	deviceContext->Draw(4, 0);
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -1093,9 +1089,9 @@ void DX11RenderContext::postProcessCall()
 
 void DX11RenderContext::execteParticleDraw(IRenderExecution* execution, const vector<DrawArraysIndirectCommand>& cmds)
 {
-	DX11RenderExecution* dxExec = dynamic_cast<DX11RenderExecution*>(execution);
-	if (dxExec == NULL)
-		return;
+	// DX11RenderExecution* dxExec = dynamic_cast<DX11RenderExecution*>(execution);
+	// if (dxExec == NULL)
+	// 	return;
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 #if INDIRECT_DRAW
 	size_t size = sizeof(DrawArraysIndirectCommand) * cmds.size();
@@ -1113,13 +1109,11 @@ void DX11RenderContext::execteParticleDraw(IRenderExecution* execution, const ve
 #endif
 	for (int i = 0; i < cmds.size(); i++) {
 		const DrawArraysIndirectCommand& c = cmds[i];
-		drawInfo.baseInstance = c.baseInstance;
-		drawInfo.baseVertex = c.first;
 		bindDrawInfo();
 #if INDIRECT_DRAW
 		deviceContext->DrawInstancedIndirect(dxExec->cmdBuffer.Get(), sizeof(DrawArraysIndirectCommand) * i);
 #else
-		deviceContext->DrawInstanced(cmds[i].count, cmds[i].instanceCount, cmds[i].first, cmds[i].baseInstance);
+		deviceContext->DrawInstanced(c.count, c.instanceCount, c.first, c.baseInstance);
 #endif
 	}
 }
@@ -1145,8 +1139,6 @@ void DX11RenderContext::execteMeshDraw(IRenderExecution* execution, const vector
 #endif
 	for (int i = 0; i < cmds.size(); i++) {
 		const DrawElementsIndirectCommand& c = cmds[i];
-		drawInfo.baseInstance = c.baseInstance;
-		drawInfo.baseVertex = c.baseVertex;
 		bindDrawInfo();
 #if INDIRECT_DRAW
 		deviceContext->DrawIndexedInstancedIndirect(dxExec->cmdBuffer.Get(), sizeof(DrawArraysIndirectCommand) * i);

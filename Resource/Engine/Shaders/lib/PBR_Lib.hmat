@@ -68,20 +68,6 @@ float GeometrySmith(float3 N, float3 V, float3 L, float k)
     return ggx1 * ggx2;
 }
 
-float2 Hammersley( uint Index, uint NumSamples, uint2 Random )
-{
-	float E1 = frac( (float)Index / NumSamples + float( Random.x & 0xffff ) / (1<<16) );
-	float E2 = float( reversebits(Index) ^ Random.y ) * 2.3283064365386963e-10;
-	return float2( E1, E2 );
-}
-
-float2 Hammersley16( uint Index, uint NumSamples, uint2 Random )
-{
-	float E1 = frac( (float)Index / NumSamples + float( Random.x ) * (1.0 / 65536.0) );
-	float E2 = float( ( reversebits(Index) >> 16 ) ^ Random.y ) * (1.0 / 65536.0);
-	return float2( E1, E2 );
-}
-
 float3 ComputeF0(float3 albedo, float metallic)
 {
     float3 F0 = Float3(0.04);

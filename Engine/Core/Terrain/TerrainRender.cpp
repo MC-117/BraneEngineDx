@@ -1,5 +1,6 @@
 #include "TerrainRender.h"
 #include "../RenderCore/RenderCore.h"
+#include "../Camera.h"
 
 TerrainRender::TerrainRender() : Render()
 {
@@ -16,7 +17,7 @@ TerrainGeometry* TerrainRender::getGeometry() const
     return geometry;
 }
 
-void TerrainRender::preRender()
+void TerrainRender::preRender(PreRenderInfo& info)
 {
 }
 
@@ -32,8 +33,11 @@ void TerrainRender::render(RenderInfo& info)
     command.mesh = &geometry->meshPart;
     command.instanceID = instanceID;
     command.instanceIDCount = instanceCount;
-    command.transformData = isStatic ? &info.sceneData->staticMeshTransformDataPack : &info.sceneData->meshTransformDataPack;
-    command.transformIndex = info.sceneData->setMeshPartTransform(&geometry->meshPart, material, instanceID, instanceCount);
+    ViewCulledMeshBatchDrawData batchDrawData = info.sceneData->getViewCulledBatchDrawData(info.camera->getRender(), isStatic);
+    command.batchDrawData = batchDrawData;
+    MeshBatchDrawKey renderKey(&geometry->meshPart, material, batchDrawData.transformData->getMeshTransform(instanceID).isNegativeScale());
+    command.meshBatchDrawCall = batchDrawData.batchDrawCommandArray->setMeshBatchDrawCall(renderKey, instanceID, instanceCount);
+    command.reverseCullMode = renderKey.negativeScale;
     info.renderGraph->setRenderCommand(command);
 }
 

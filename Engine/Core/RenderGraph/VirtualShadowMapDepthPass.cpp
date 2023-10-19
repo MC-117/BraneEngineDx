@@ -55,12 +55,12 @@ bool VirtualShadowMapDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	data.instanceID = meshCmd->instanceID;
 	data.baseVertex = meshCmd->mesh->vertexFirst;
 
-	VSMMeshTransformIndex* instanceIndex = sceneData.virtualShadowMapRenderData.intanceIndexArray.setTransformIndex(
-		MeshMaterialGuid(meshCmd->mesh, meshCmd->material),
+	VSMMeshBatchDrawCall* call = sceneData.virtualShadowMapRenderData.meshBatchDrawCallCollection.setMeshBatchDrawCall(
+		VSMMeshBatchDrawKey(meshCmd->mesh, meshCmd->material, meshCmd->reverseCullMode),
 		data, meshCmd->instanceID, meshCmd->instanceIDCount);
-	instanceIndex->payload.shaderProgram = program;
-	instanceIndex->payload.transformData = meshCmd->transformData;
-	instanceIndex->payload.bindings = meshCmd->bindings;
+	call->shaderProgram = program;
+	call->transformData = meshCmd->batchDrawData.transformData;
+	call->bindings = meshCmd->bindings;
 
 	return true;
 }
@@ -70,13 +70,13 @@ void VirtualShadowMapDepthPass::prepare()
 	for (auto sceneData : renderGraph->sceneDatas) {
 		for (auto clipmap : sceneData->lightDataPack.mainLightClipmaps) {
 			clipmap->clean();
-			for (auto& callItem : sceneData->virtualShadowMapRenderData.intanceIndexArray.meshTransformIndex) {
+			for (auto& callItem : sceneData->virtualShadowMapRenderData.meshBatchDrawCallCollection.callMap) {
 				clipmap->addMeshCommand(callItem);
 			}
 		}
 		for (auto localShadow : sceneData->lightDataPack.localLightShadows) {
 			localShadow->clean();
-			for (auto& callItem : sceneData->virtualShadowMapRenderData.intanceIndexArray.meshTransformIndex) {
+			for (auto& callItem : sceneData->virtualShadowMapRenderData.meshBatchDrawCallCollection.callMap) {
 				localShadow->addMeshCommand(callItem);
 			}
 		}
@@ -89,7 +89,7 @@ void VirtualShadowMapDepthPass::execute(IRenderContext& context)
 	for (auto sceneData : renderGraph->sceneDatas) {
 		VirtualShadowMapRenderData& renderData = sceneData->virtualShadowMapRenderData;
 
-		renderData.manager.processInvalidations(context, sceneData->meshTransformDataPack);
+		renderData.manager.processInvalidations(context, sceneData->meshTransformRenderData);
 		renderData.shadowMapArray.buildPageAllocations(context, sceneData->cameraRenderDatas, sceneData->lightDataPack, sceneData->debugRenderData);
 		renderData.shadowMapArray.render(context, sceneData->lightDataPack);
 		renderData.shadowMapArray.mergeStaticPhysPages(context);

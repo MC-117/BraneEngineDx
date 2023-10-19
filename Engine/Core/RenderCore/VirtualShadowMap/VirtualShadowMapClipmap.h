@@ -17,7 +17,7 @@ public:
 	Vector3f getLevelWorldCenter(unsigned int clipmapIndex) const;
 	bool getLevelShadowViewInfo(unsigned int clipmapIndex, VirtualShadowMapArray::ShadowViewInfo& shadowViewInfo) const;
 
-	void addMeshCommand(const VSMMeshTransformIndexArray::CallItem& callItem);
+	void addMeshCommand(const VSMMeshBatchDrawCallCollection::CallItem& callItem);
 	void clean();
 
 	void getProjectData(unsigned int clipmapIndex, VirtualShadowMapProjectionData& projData) const;

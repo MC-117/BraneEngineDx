@@ -129,6 +129,7 @@ void ParticleRenderPack::excute(IRenderContext& context, RenderTaskContext& task
 
 	if (taskContext.materialData != materialData) {
 		taskContext.materialData = materialData;
+		materialData->bindCullMode(context, false);
 		materialData->bind(context);
 	}
 
@@ -136,6 +137,11 @@ void ParticleRenderPack::excute(IRenderContext& context, RenderTaskContext& task
 	cmd.count = 1;
 	cmd.baseInstance = particleData->particleBase;
 	cmd.instanceCount = particleData->batchCount;
-	newVendorRenderExecution();
-	context.execteParticleDraw(vendorRenderExecution, { cmd });
+	context.execteParticleDraw(NULL, { cmd });
+}
+
+void ParticleRenderPack::reset()
+{
+	materialData = NULL;
+	particleData = NULL;
 }

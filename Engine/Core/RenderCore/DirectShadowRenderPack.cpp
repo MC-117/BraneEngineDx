@@ -34,66 +34,67 @@ bool DirectShadowRenderCommand::canCastShadow() const
 
 IRenderPack* DirectShadowRenderCommand::createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const
 {
-	return new DirectShadowRenderPack(sceneData.meshTransformDataPack);
+	return new DirectShadowRenderPack();
 }
 
-DirectShadowRenderPack::DirectShadowRenderPack(MeshTransformRenderData& meshTransformDataPack)
-	: meshTransformDataPack(meshTransformDataPack)
+DirectShadowRenderPack::DirectShadowRenderPack()
 {
 }
 
 bool DirectShadowRenderPack::setRenderCommand(const IRenderCommand& command)
 {
 	const DirectShadowRenderCommand* directShadowRenderCommand = dynamic_cast<const DirectShadowRenderCommand*>(&command);
-	if (directShadowRenderCommand == NULL || directShadowRenderCommand->transformIndex == NULL)
+	if (directShadowRenderCommand == NULL || directShadowRenderCommand->meshBatchDrawCall == NULL)
 		return false;
 
 	materialData = dynamic_cast<MaterialRenderData*>(command.material->getRenderData());
 	if (materialData == NULL)
 		return false;
 
-	setRenderData(directShadowRenderCommand->mesh, directShadowRenderCommand->transformIndex);
+	if (directShadowRenderCommand->meshBatchDrawCall
+		&& directShadowRenderCommand->meshBatchDrawCall->getInstanceCount() > 0
+		&& directShadowRenderCommand->meshBatchDrawCall->getDrawCommandCount() > 0) {
+		meshBatchDrawCalls.insert(directShadowRenderCommand->meshBatchDrawCall);
+	}
 
 	return true;
 }
 
-void DirectShadowRenderPack::setRenderData(MeshPart* part, MeshTransformIndex* data)
-{
-	meshParts.insert(pair<MeshPart*, MeshTransformIndex*>(part, data));
-}
-
 void DirectShadowRenderPack::excute(IRenderContext& context, RenderTaskContext& taskContext)
 {
-	if (meshParts.empty())
+	if (meshBatchDrawCalls.empty())
 		return;
-
-	newVendorRenderExecution();
 
 	if (taskContext.materialData != materialData) {
 		taskContext.materialData = materialData;
+
+		materialData->bindCullMode(context, false);
 		materialData->bind(context);
 	}
 
-	cmds.resize(meshParts.size());
-	int index = 0;
-	for (auto b = meshParts.begin(), e = meshParts.end(); b != e; b++, index++) {
-		DrawElementsIndirectCommand& c = cmds[index];
-		c.baseVertex = b->first->vertexFirst;
-		c.count = b->first->elementCount;
-		c.firstIndex = b->first->elementFirst;
-		if (b->second) {
-			c.instanceCount = b->second->batchCount;
-			c.baseInstance = b->second->indexBase;
+	for (auto& item : meshBatchDrawCalls)
+	{
+		if (item->reverseCullMode) {
+			materialData->bindCullMode(context, true);
 		}
-		else {
-			c.instanceCount = 1;
-			c.baseInstance = 0;
+		for (int passIndex = 0; passIndex < materialData->desc.passNum; passIndex++) {
+			materialData->desc.currentPass = passIndex;
+			context.setDrawInfo(passIndex, materialData->desc.passNum, materialData->desc.materialID);
+			context.bindDrawInfo();
+			unsigned int commandOffset = item->getDrawCommandOffset();
+			unsigned int commandEnd = commandOffset + item->getDrawCommandCount();
+			for (; commandOffset < commandEnd; commandOffset++) {
+				context.drawMeshIndirect(taskContext.batchDrawData.batchDrawCommandArray->getCommandBuffer(), sizeof(DrawElementsIndirectCommand) * commandOffset);
+			}
+		}
+		if (item->reverseCullMode) {
+			materialData->bindCullMode(context, false);
 		}
 	}
+}
 
-	for (int passIndex = 0; passIndex < materialData->desc.passNum; passIndex++) {
-		materialData->desc.currentPass = passIndex;
-		context.setDrawInfo(passIndex, materialData->desc.passNum, 0);
-		context.execteMeshDraw(vendorRenderExecution, cmds);
-	}
+void DirectShadowRenderPack::reset()
+{
+	materialData = NULL;
+	meshBatchDrawCalls.clear();
 }

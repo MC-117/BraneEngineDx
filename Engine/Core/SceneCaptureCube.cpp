@@ -78,6 +78,7 @@ void SceneCaptureCube::render(RenderInfo& info)
 			cameraRenderData->surfaceBuffer = info.renderGraph->newSurfaceBuffer();
 			cameraRenderData->surfaceBuffer->resize(cameraRender->size.x, cameraRender->size.y);
 		}
+		cameraRenderData->flags = CameraRender_SceneCapture;
 		info.sceneData->setCamera(cameraRender);
 	}
 }

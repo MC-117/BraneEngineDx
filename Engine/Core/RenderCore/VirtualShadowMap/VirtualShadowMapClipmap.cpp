@@ -191,7 +191,7 @@ bool VirtualShadowMapClipmap::getLevelShadowViewInfo(unsigned int clipmapIndex, 
 	return true;
 }
 
-void VirtualShadowMapClipmap::addMeshCommand(const VSMMeshTransformIndexArray::CallItem& callItem)
+void VirtualShadowMapClipmap::addMeshCommand(const VSMMeshBatchDrawCallCollection::CallItem& callItem)
 {
 	if (lightEntry) {
 		lightEntry->addMeshCommand(callItem);

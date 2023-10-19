@@ -14,8 +14,12 @@ class ENGINE_API SceneRenderData
 {
 public:
 	vector<CameraRenderData*> cameraRenderDatas;
-	MeshTransformRenderData meshTransformDataPack;
-	MeshTransformRenderData staticMeshTransformDataPack;
+	
+	MeshTransformRenderData meshTransformRenderData;
+	MeshTransformRenderData staticMeshTransformRenderData;
+	MeshBatchDrawCommandArray meshBatchDrawCommandArray;
+	MeshBatchDrawCommandArray staticMeshBatchDrawCommandArray;
+	
 	ParticleRenderData particleDataPack;
 	ProbePoolRenderData probePoolPack;
 	LightRenderData lightDataPack;
@@ -35,18 +39,23 @@ public:
 	int setEnvLightData(Render* captureRender);
 	unsigned int setMeshTransform(const MeshTransformData& data);
 	unsigned int setMeshTransform(const vector<MeshTransformData>& datas);
-	MeshTransformIndex* getMeshPartTransform(MeshPart* meshPart, Material* material);
-	MeshTransformIndex* setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount = 1);
+	MeshBatchDrawCall* getMeshPartTransform(const MeshBatchDrawKey& key);
+	MeshBatchDrawCall* setMeshPartTransform(const MeshBatchDrawKey& key, unsigned int transformIndex, unsigned int transformCount = 1);
 
 	unsigned int setStaticMeshTransform(const MeshTransformData& data);
 	unsigned int setStaticMeshTransform(const vector<MeshTransformData>& datas);
-	MeshTransformIndex* getStaticMeshPartTransform(MeshPart* meshPart, Material* material);
-	MeshTransformIndex* setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount = 1);
+	MeshBatchDrawCall* getStaticMeshPartTransform(const MeshBatchDrawKey& key);
+	MeshBatchDrawCall* setStaticMeshPartTransform(const MeshBatchDrawKey& key, unsigned int transformIndex, unsigned int transformCount = 1);
 	void cleanStaticMeshTransform(unsigned int base, unsigned int count);
 	void cleanStaticMeshPartTransform(MeshPart* meshPart, Material* material);
 
 	void setUpdateStatic();
 	bool willUpdateStatic();
+
+	MeshBatchDrawData getBatchDrawData(bool isStatic);
+	ViewCulledMeshBatchDrawData getViewCulledBatchDrawData(Render* cameraRender, bool isStatic);
+
+	void executeViewCulling(IRenderContext& context);
 
 	bool frustumCulling(const BoundBox& bound, const Matrix4f& mat) const;
 

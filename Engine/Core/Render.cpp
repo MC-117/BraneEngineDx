@@ -19,7 +19,7 @@ Color Render::getBaseColor()
 	return { 0, 0, 0, 0 };
 }
 
-void Render::preRender()
+void Render::preRender(PreRenderInfo& info)
 {
 }
 

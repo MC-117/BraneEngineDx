@@ -30,6 +30,9 @@ void DeferredRenderGraphEditor::onRenderGraphGUI(EditorInfo& info)
 
 	ImGui::DragFloat("LocalMinZ", &config.localLightViewMinZ, 0.00005f, 0, 1, "%.5f");
 	ImGui::DragFloat("ScreenRayLen", &config.screenRayLength, 0.00005f, 0, 1, "%.5f");
+	ImGui::DragInt("pcfPixel", (int*)&config.pcfPixel, 0.00005f, 0, 5);
+	ImGui::DragInt("pcfStep", (int*)&config.pcfStep, 0.00005f, 1, 5);
+	ImGui::DragFloat("pcfRadiusScale", &config.pcfRadiusScale, 0.01f, 0, 5);
 
 	const char* debugViewModeNames[] = {
 		"None",

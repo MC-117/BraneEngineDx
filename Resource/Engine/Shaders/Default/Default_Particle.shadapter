@@ -5,7 +5,7 @@
 PVOut main(uint instanceID : SV_InstanceID)
 {
     PVOut pvout;
-    pvout.index = baseInstance + instanceID;
+    pvout.index = instanceID;
     pvout.gParticle = Particles[pvout.index];
     return pvout;
 }

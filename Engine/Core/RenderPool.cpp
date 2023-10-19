@@ -110,6 +110,9 @@ void RenderPool::render(bool guiOnly)
 	IVendor& vendor = VendorManager::getInstance().getVendor();
 
 	Camera& currentCamera = (camera == NULL ? defaultCamera : *camera);
+	PreRenderInfo preInfo;
+	preInfo.sceneData = sceneData;
+	preInfo.camera = &currentCamera;
 	RenderInfo info;
 	info.sceneData = sceneData;
 	info.renderGraph = renderGraph;
@@ -120,13 +123,20 @@ void RenderPool::render(bool guiOnly)
 	timer.record("GUI");
 
 	if (!guiOnly) {
+		// for (auto lightB = prePool.begin(), lightE = prePool.end(); lightB != lightE; lightB++) {
+		// 	(*(lightB))->preRender(preInfo);
+		// }
+		
 		for (auto lightB = prePool.begin(), lightE = prePool.end(); lightB != lightE; lightB++) {
 			(*(lightB))->render(info);
 		}
 
+		// for (auto b = pool.begin(), e = pool.end(); b != e; b++) {
+		// 	(*b)->preRender(preInfo);
+		// }
+
 		timer.record("SceneData");
 
-		RenderTarget* shadowTarget = NULL;
 		for (auto b = pool.begin(), e = pool.end(); b != e; b++) {
 			(*b)->render(info);
 		}

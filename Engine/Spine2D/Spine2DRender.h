@@ -25,7 +25,7 @@ public:
 
     Texture2D* getOutputTexture();
 
-    virtual void preRender();
+    virtual void preRender(PreRenderInfo& info);
     virtual void render(RenderInfo& info);
     virtual Matrix4f getTransformMatrix() const;
     virtual IRendering::RenderType getRenderType() const;

@@ -88,18 +88,15 @@ FragmentOut DEFAULT_FS_MAIN
     PointLight localLight;
     ITER_LOCAL_LIGHT(fin.WorldPos, localLight)
     {
-        float intensity = getLightFinalIntensity(localLight);
+        float intensity = getLightIntensity(localLight, fin.WorldPos);
         if (intensity != 0) {
             float3 L = normalize(localLight.pos - fin.WorldPos);
-            float distance = length(localLight.pos - fin.WorldPos);
-            float attenuation = distance / localLight.radius;
-            attenuation = max(1 - attenuation * attenuation, 0);
-            float3 radiance = localLight.color * localLight.intensity * attenuation;
+            float3 radiance = localLight.color * intensity;
             float4 Lo_point = Toon_Lo(N, V, L, radiance, baseColor,
                 highlightColor, highlightCut, highlightCutSmooth);
             Lo += Lo_point;
-            L_Dot = max(dot(N, L) * attenuation, L_Dot);
-            lightInstansity += intensity * attenuation;
+            L_Dot = max(dot(N, L), L_Dot);
+            lightInstansity += intensity;
         }
     }
     

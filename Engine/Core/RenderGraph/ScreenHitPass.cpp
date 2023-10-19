@@ -11,17 +11,19 @@ bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 	const ScreenHitRenderCommand* screenHitRenderCommand = dynamic_cast<const ScreenHitRenderCommand*>(&cmd);
 	if (screenHitRenderCommand == NULL)
 		return false;
-	MeshTransformIndex* transformIndex = cmd.sceneData->setMeshPartTransform(
-		screenHitRenderCommand->mesh, material, screenHitRenderCommand->instanceID, screenHitRenderCommand->instanceIDCount);
+	IMeshBatchDrawCommandArray* drawCommandArray = dynamic_cast<IMeshBatchDrawCommandArray*>(screenHitRenderCommand->batchDrawData.batchDrawCommandArray);
+	const MeshBatchDrawKey renderKey(screenHitRenderCommand->mesh, material, screenHitRenderCommand->reverseCullMode);
+	MeshBatchDrawCall* batchDrawCall = drawCommandArray->setMeshBatchDrawCall(renderKey, screenHitRenderCommand->instanceID, screenHitRenderCommand->instanceIDCount);
 
 	ScreenHitRenderCommand command;
 	command.instanceID = screenHitRenderCommand->instanceID;
 	command.instanceIDCount = screenHitRenderCommand->instanceIDCount;
+	command.reverseCullMode = screenHitRenderCommand->reverseCullMode;
 	command.sceneData = cmd.sceneData;
-	command.transformData = cmd.transformData;
+	command.batchDrawData = cmd.batchDrawData;
 	command.material = material;
 	command.mesh = screenHitRenderCommand->mesh;
-	command.transformIndex = transformIndex;
+	command.meshBatchDrawCall = batchDrawCall;
 	command.bindings = cmd.bindings;
 
 	ShaderProgram* program = material->getShader()->getProgram(cmd.getShaderFeature());
@@ -53,7 +55,7 @@ bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 	RenderTask task;
 	task.age = 0;
 	task.sceneData = command.sceneData;
-	task.transformData = command.transformData;
+	task.batchDrawData = command.batchDrawData;
 	task.shaderProgram = program;
 	task.renderMode = command.getRenderMode();
 	task.materialData = materialRenderData;

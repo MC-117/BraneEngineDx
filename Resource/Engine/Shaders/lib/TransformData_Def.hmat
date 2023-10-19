@@ -15,6 +15,13 @@ struct TransformData
 
 StructuredBuffer<TransformData> Transforms : register(TRANS_BIND_INDEX);
 
+uint getTransformCount()
+{
+    uint count, stride;
+    Transforms.GetDimensions(count, stride);
+    return count;
+}
+
 float4x4 getFinalMat(in uint insID)
 {
     return Transforms[insID].localToWorld;

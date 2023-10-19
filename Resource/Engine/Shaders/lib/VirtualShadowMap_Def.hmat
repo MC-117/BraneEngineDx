@@ -1,5 +1,6 @@
 #include "Basic_FS_Lib.hmat"
 #include "TransformData_Def.hmat"
+#include "FrustumCulling_Lib.hmat"
 
 #define VSM_DirectLight 0
 #define VSM_LocalLight 1
@@ -154,8 +155,15 @@ struct VSMProjData
 
 	int uncached;
 
-	int2 pad;
+	float screenRayLength;
+
+	int pad;
 };
+
+bool isViewOrtho(VSMProjData projData)
+{
+	return projData.lightType == VSM_DirectLight;
+}
 
 struct VSMInfo
 {
@@ -166,8 +174,11 @@ struct VSMInfo
 	uint2 physPoolSize;
 	uint2 physPoolPages;
 	uint staticPageIndex;
+	uint pcfPixel;
+	uint pcfStep;
+	float pcfRadiusScale;
 	uint flag;
-	uint2 pad;
+	uint3 pad;
 };
 
 cbuffer VSMInfoBuff
@@ -194,32 +205,6 @@ struct ScreenRect
     int hzbLevel;
     int depth;
 };
-
-struct FrustumCullData
-{
-    float3 rectMin;
-    bool visiable;
-    float3 rectMax;
-};
-
-FrustumCullData frustumCullBoxOrtho(float3 center, float3 extent, float3 preWorldTranslation, float4x4 localToWorld, float4x4 viewOriginToClip)
-{
-    FrustumCullData data;
-	float3 centerWorld = mul( float4( center, 1 ), localToWorld ).xyz + preWorldTranslation;
-    float3 centerClip = mul( float4( centerWorld, 1 ), viewOriginToClip ).xyz;
-
-	float3 clipDelta =
-        abs( extent.x * mul(localToWorld[0], viewOriginToClip).xyz ) +
-        abs( extent.y * mul(localToWorld[1], viewOriginToClip).xyz ) +
-        abs( extent.z * mul(localToWorld[2], viewOriginToClip).xyz );
-
-	data.rectMin = centerClip - clipDelta;
-	data.rectMax = centerClip + clipDelta;
-
-    data.visiable = data.rectMax.z > 0.0f && !any(
-        (data.rectMax.xy < -1.0f) || (data.rectMin.xy > 1.0f));
-    return data;
-}
 
 ScreenRect getScreenRect(int4 viewRect, FrustumCullData cullData, int coveredPixels)
 {
@@ -299,15 +284,16 @@ struct VSMPhysPageRequest
 //   [10:19] PageAddress.y
 //   [20:25] LODOffset
 //   [26:30] (currently unused)
-//   [31] bAnyLODValid
+//   [31] isAnyLODValid
 struct VSMPhysPage
 {
-	uint2 physAddress;	// Physical page address X, Y
+	uint2 physAddress;		// Physical page address X, Y
 	uint lodOffset;			// 0 if page is mapped at this mip/clipmap level; 1 if mapped at next courser level, etc. [0..64)
 	bool isAnyLODValid;		// Valid physical page mapped at some LOD level
-	bool isThisLODValid;		// Valid page mapped at this specific level (equivalent to bAnyMipValid && LODOffset == 0)
+	bool isThisLODValid;	// Valid page mapped at this specific level (equivalent to bAnyMipValid && LODOffset == 0)
 };
 
+#define VSM_PHYSICAL_PAGE_NOT_THIS_FRAME_FLAG 0x4000000
 #define VSM_PHYSICAL_PAGE_ANY_MIP_VALID_FLAG 0x8000000
 #define VSM_PHYSICAL_PAGE_INVALID 0x00000000
 
@@ -532,7 +518,7 @@ struct ShadowViewInfo
 	int4 viewRect;
 	float3 worldCenter;
 	uint vsmID;
-	uint mipLevel;
+	int mipLevel;
 	uint mipCount;
 	uint flags;
 	uint pad;
@@ -543,6 +529,11 @@ struct VSMPageInfo
 	uint viewIndex;
 	bool isStaticPage;
 };
+
+bool isViewOrtho(ShadowViewInfo viewInfo)
+{
+    return viewInfo.flags == VSM_DirectLight;
+}
 
 uint packVSMPageInfo(in VSMPageInfo info)
 {
@@ -567,7 +558,7 @@ struct DefaultVSMVertexOut
 {
     float4x4 TransMat : TRANSMAT;
     float4 clipPos : SV_POSITION;
-    float4 pageClipPos : PAGECLIP;
+    float4 pageClipPos : SV_ClipDistance;
     float2 TexCoords : TEXCOORD;
     uint InstanceID : INSTANCEID;
     nointerpolation uint pageInfo : PAGEINFO;
@@ -607,7 +598,23 @@ void transformToVirtualPage(inout float4 clipPos, inout float4 pageClipPos, uint
 
 	clipPos = mul( float4( worldPos - viewInfo.worldCenter, 1 ), viewInfo.viewOriginToClip );
 
+	if (clipPos.z > clipPos.w)
+	{
+		clipPos.z = 0.999999f;
+		clipPos.w = 1.0f;
+	}
+
 	scaleBiasClipToPhysPage(viewInfo, clipPos, pageClipPos);
+}
+
+uint vsmGetCubeFace(float3 dir)
+{
+	if(abs(dir.x) >= abs(dir.y) && abs(dir.x) >= abs(dir.z))
+		return dir.x > 0 ? 0 : 1;
+	else if(abs(dir.y) > abs(dir.z))
+		return dir.y > 0 ? 2 : 3;
+	else
+		return dir.z > 0 ? 4 : 5;
 }
 
 float vsmSamplePhysDepth(uint2 physTexelAddress)
@@ -713,18 +720,47 @@ bool vsmSampleClipmap(int vsmID, float2 shadowUV, out VSMSample vsmSample)
 	return false;
 }
 
+VSMPhysPage vsmGetFinalPhysicalPage(uint vsmID, uint2 pageAddress)
+{
+	uint pageOffset = calcPageOffset(vsmID, 0, pageAddress);
+	VSMPhysPage physPage = vsmGetPhysicalPage(pageOffset);
+	if (physPage.isAnyLODValid && !physPage.isThisLODValid) {
+		pageOffset = calcPageOffset(vsmID, physPage.lodOffset, pageAddress >> physPage.lodOffset);
+		physPage.physAddress = vsmGetPhysicalPage(pageOffset).physAddress;
+	}
+	return physPage;
+}
+
+bool vsmSampleLocal(int vsmID, float2 shadowUV, out VSMSample vsmSample)
+{
+    uint2 vPage = uint2(shadowUV * VSM_L0_PAGES);
+    VSMPhysPage physPage = vsmGetFinalPhysicalPage(vsmID, vPage);
+    if (physPage.isAnyLODValid) {
+        vsmSample.vsmID = vsmID;
+        vsmSample.mipLevel = physPage.lodOffset;
+        vsmSample.virtualTexelAddressFloat = shadowUV * float(calcLevelTexels(physPage.lodOffset));
+        vsmSample.virtualTexelAddress = uint2(vsmSample.virtualTexelAddressFloat);
+        uint2 physTexelAddress = 
+		    physPage.physAddress * VSM_PAGE_SIZE +
+		    (vsmSample.virtualTexelAddress & VSM_PAGE_SIZE_MASK);
+        vsmSample.depth = vsmSamplePhysDepth(physTexelAddress);
+        return true;
+    }
+    return false;
+}
+
 float computeVSMOptimalSlopeBias(
 	// Used to compare to the sampled SmSample.VirtualShadowMapId to adjust depth scale for clipmaps
 	int requestVSMID,
 	VSMSample vsmSample,
-	float3 worldPos,
+	float3 viewOriginPos,
 	float3 EstimatedGeoWorldNormal,
 	bool bClamp = true)
 {
 	VSMProjData projData = getVSMProjData(vsmSample.vsmID);
 
 	// Transform geometry world-space plane eq to shadow 'UV' texture space [0-1] ranges
-	float4 NormalPlaneTranslatedWorld = float4(EstimatedGeoWorldNormal, -dot(EstimatedGeoWorldNormal, worldPos));
+	float4 NormalPlaneTranslatedWorld = float4(EstimatedGeoWorldNormal, -dot(EstimatedGeoWorldNormal, viewOriginPos));
 	float4 NormalPlaneUV = mul(NormalPlaneTranslatedWorld, projData.viewOriginToUV);
 
 	float2 DepthSlopeUV = -NormalPlaneUV.xy / NormalPlaneUV.z;
@@ -746,7 +782,7 @@ float computeVSMOptimalSlopeBias(
 	return OptimalSlopeBias;
 }
 
-float vsmSampleDirectShadow(int vsmID, float3 worldPos, float3 worldNormal = float3(0, 0, 0), float normalBiasScale = 1.0f)
+float vsmSampleDirectShadow(int vsmID, float3 worldPos, float3 worldNormal = float3(0, 0, 0), float rayLength = 0.0f, float normalBiasScale = 1.0f)
 {
 	if (vsmID != NONE_VSMID) {
 		VSMProjData baseProjData = getVSMProjData(vsmID);
@@ -763,13 +799,154 @@ float vsmSampleDirectShadow(int vsmID, float3 worldPos, float3 worldNormal = flo
 
 			VSMSample vsmSample;
 			if (vsmSampleClipmap(clipmapVSMID, shadowUVz.xy, vsmSample)) {
+				float rayBias = projData.screenRayLength * max(rayLength, 0.0f) * baseProjData.viewToClip._33;
 				float optimalSlopeBias = all(worldNormal == float3(0, 0, 0)) ? 0 : computeVSMOptimalSlopeBias(clipmapVSMID, vsmSample, viewOriginPos, worldNormal);
-				float biasedDepth = vsmSample.depth;// - optimalSlopeBias * normalBiasScale;
+				float biasedDepth = vsmSample.depth - rayBias;// - optimalSlopeBias * normalBiasScale;
 				return shadowUVz.z > biasedDepth ? 0.0f : 1.0f;
 			}
 		}
 	}
 	return 1.0f;
+}
+
+float vsmSampleDirectShadowPCF(int vsmID, float3 worldPos, float3 worldNormal = float3(0, 0, 0), float rayLength = 0.0f, float normalBiasScale = 1.0f)
+{
+	if (vsmID != NONE_VSMID) {
+		VSMProjData baseProjData = getVSMProjData(vsmID);
+		const int firstClipmapLevel = baseProjData.clipmapLevel;
+		const int clipmapLevel = calcClipmapLevel(baseProjData, worldPos);
+		const int clipmapOffset = clipmapLevel - firstClipmapLevel;
+		const int clipmapCount = baseProjData.clipmapCount;
+		int clipmapIndex = max(0, clipmapOffset);
+
+		if (clipmapIndex < baseProjData.clipmapCount) {
+			int clipmapVSMID = vsmID + clipmapIndex;
+			VSMProjData projData = getVSMProjData(clipmapVSMID);
+
+			float3 viewOriginPos = worldPos - projData.worldCenter;
+			float4 shadowUVz = mul(float4(viewOriginPos, 1.0f), projData.viewOriginToUV);
+
+			const int pcfPixel = vsmInfo.pcfPixel;
+			const int pcfStep = vsmInfo.pcfStep;
+			const float pcfRadiusScale = vsmInfo.pcfRadiusScale;
+			float clipLevelScale = pow(0.5f, clipmapIndex + pcfStep - 1);
+			float radius = rcp(VSM_MAX_SIZE) * clipLevelScale * sqrt(length(worldPos - camData.camPos)) * 0.25f * pcfRadiusScale;
+			float shadow = 0.0f;
+			const int pixelWidth = pcfPixel / pcfStep * 2 + 1;
+			const int pixelCount = pixelWidth * pixelWidth;
+			for (int x = -pcfPixel; x <= pcfPixel; x+=pcfStep) {
+				for (int y = -pcfPixel; y <= pcfPixel; y+=pcfStep) {
+					VSMSample vsmSample;
+					float2 offset = float2(x, y);
+					float2 scaledOffset = offset / pcfPixel;
+					scaledOffset *= dot(scaledOffset, scaledOffset) * pcfPixel;
+					float2 shadowUV = shadowUVz.xy + scaledOffset * radius;
+					shadowUV = saturate(shadowUV);
+					if (vsmSampleClipmap(clipmapVSMID, shadowUV, vsmSample)) {
+						float rayBias = projData.screenRayLength * max(rayLength, 0.0f) * baseProjData.viewToClip._33;
+						// float optimalSlopeBias = all(worldNormal == float3(0, 0, 0)) ? 0 : computeVSMOptimalSlopeBias(clipmapVSMID, vsmSample, viewOriginPos, worldNormal);
+						float biasedDepth = vsmSample.depth - rayBias;// - optimalSlopeBias * normalBiasScale;
+						shadow += shadowUVz.z > biasedDepth ? 0.0f : 1.0f;
+					}
+					else shadow += 1.0f;
+				}
+			}
+			return shadow / pixelCount;
+		}
+	}
+	return 1.0f;
+}
+
+float3 getVSMRayDir(float2 offset, float3 rayDir)
+{
+	float3 N = rayDir;
+	float3 dPdu = cross(N, (abs(N.x) > 1e-6f) ? float3(1, 0, 0) : float3(0, 1, 0));
+	float3 dPdv = cross(dPdu, N);
+	return normalize(rayDir + dPdu * offset.x + dPdv * offset.y);
+}
+
+struct VSMRayCastResult
+{
+	bool isValid;
+	float depth;
+};
+
+float vsmRayCast(int vsmID, float3 rayStartUVz, float3 rayVecUVz, int steps, out float hitDepth)
+{
+	const float stepScale = 1.0f / steps;
+	float rayLenUVz = length(rayVecUVz);
+	float rayDirUVz = normalize(rayVecUVz);
+	for (int i = 0; i <= steps; i++) {
+		const float scale = stepScale * i;
+		const float curlen = rayLenUVz * scale * scale;
+		float3 rayUVz = rayStartUVz + rayDirUVz * curlen;
+		VSMSample vsmSample;
+		if (vsmSampleClipmap(vsmID, rayUVz.xy, vsmSample)) {
+			if (rayUVz.z > vsmSample.depth) {
+				hitDepth = rayUVz.z;
+				return curlen / rayLenUVz;
+			}
+		}
+	}
+	hitDepth = -1;
+	return 1.0f;
+}
+
+float vsmTraceDirectShadow(int vsmID, float3 worldPos, float3 worldNormal = float3(0, 0, 0), float rayLength = 0.0f, float normalBiasScale = 1.0f)
+{
+	if (vsmID != NONE_VSMID) {
+		VSMProjData baseProjData = getVSMProjData(vsmID);
+		const int firstClipmapLevel = baseProjData.clipmapLevel;
+		const int clipmapLevel = calcClipmapLevel(baseProjData, worldPos);
+		const int clipmapCount = clipmapLevel - firstClipmapLevel;
+		int clipmapIndex = max(0, clipmapCount);
+
+		if (clipmapIndex < baseProjData.clipmapCount) {
+			int clipmapVSMID = vsmID + clipmapIndex;
+			VSMProjData projData = getVSMProjData(clipmapVSMID);
+
+			float4 viewOriginPos = float4(worldPos - projData.worldCenter, 1.0f);
+			float4 rayStartUVz = mul(viewOriginPos, projData.viewOriginToUV);
+
+			rayLength = length(worldPos - camData.camPos) * 0.015f;
+
+			float shadow = 0.0f;
+			const int rayCount = 14;
+			const int samplesPerRay = 2;
+			for (int i = 0; i < rayCount; i++) {
+				float2 rayOffset = Hammersley(i, rayCount, uint2(0x0f3a, 0xd20c));
+				float3 rayVec = getVSMRayDir(rayOffset * 10.0f, -projData.worldDirection) * rayLength;
+				float3 rayUVzVec = mul(float4(rayVec, 0.0f), projData.viewOriginToUV).xyz;
+				float hitDepth;
+				shadow += vsmRayCast(clipmapVSMID, rayStartUVz, rayUVzVec, samplesPerRay, hitDepth);
+			}
+			return shadow / rayCount;
+		}
+	}
+	return 1.0f;
+}
+
+float vsmSampleLocalShadow(int vsmID, float3 worldPos, float3 worldNormal = float3(0, 0, 0), float rayLength = 0.0f, float normalBiasScale = 1.0f)
+{
+    if (vsmID != NONE_VSMID) {
+        VSMProjData baseProjData = getVSMProjData(vsmID);
+        float3 viewOriginPos = worldPos - baseProjData.worldCenter;
+        
+        vsmID += vsmGetCubeFace(viewOriginPos);
+        baseProjData = getVSMProjData(vsmID);
+
+        float4 shadowUVz = mul(float4(viewOriginPos, 1.0f), baseProjData.viewOriginToUV);
+        shadowUVz.xyz /= shadowUVz.w;
+        
+        VSMSample vsmSample;
+		if (vsmSampleLocal(vsmID, shadowUVz.xy, vsmSample)) {
+			float rayBias = baseProjData.screenRayLength * max(rayLength, 0.0f) * baseProjData.viewToClip._33;
+			float optimalSlopeBias = all(worldNormal == float3(0, 0, 0)) ? 0 : computeVSMOptimalSlopeBias(vsmID, vsmSample, viewOriginPos, worldNormal);
+			float biasedDepth = vsmSample.depth - rayBias;
+			return shadowUVz.z > biasedDepth ? 0.0f : 1.0f;
+		}
+    }
+    return 1.0f;
 }
 
 void writeVSMDepth(DefaultVSMVertexOut fin)

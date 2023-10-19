@@ -31,7 +31,7 @@ struct RenderTask
 	size_t hashCode = 0;
 	int age = 0;
 	SceneRenderData* sceneData = NULL;
-	IRenderData* transformData = NULL;
+	BatchDrawData batchDrawData;
 	RenderMode renderMode;
 	CameraRenderData* cameraData = NULL;
 	SurfaceData surface;

@@ -21,7 +21,7 @@ float PointLight::getRadius() const
 	return boundShape.getRadius();
 }
 
-void PointLight::preRender()
+void PointLight::preRender(PreRenderInfo& info)
 {
 }
 

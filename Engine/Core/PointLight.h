@@ -16,7 +16,7 @@ public:
 	void setRadius(float radius);
 	float getRadius() const;
 
-	virtual void preRender();
+	virtual void preRender(PreRenderInfo& info);
 	virtual void render(RenderInfo & info);
 
 	static Serializable* instantiate(const SerializationInfo& from);

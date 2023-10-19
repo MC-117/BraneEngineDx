@@ -240,6 +240,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		}
 
 		const MeshRenderCommand* meshCommand = dynamic_cast<const MeshRenderCommand*>(&cmd);
+		
 		bool hasPreDepth = enablePreDepthPass && preDepthMaterial && meshCommand != NULL && meshCommand->hasPreDepth;
 
 		ShaderProgram* preProgram = NULL;
@@ -253,16 +254,20 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		MeshRenderCommand preCommand;
 
 		if (hasPreDepth) {
-			MeshTransformIndex* transformIndex = NULL;
+			MeshBatchDrawCall* batchDrawCall = NULL;
 			for (int j = 0; j < meshCommand->instanceIDCount; j++)
-				transformIndex = cmd.sceneData->setMeshPartTransform(
-					meshCommand->mesh, preDepthMaterial, meshCommand->instanceID + j);
+			{
+				unsigned int transformID = meshCommand->instanceID + j;
+				IMeshBatchDrawCommandArray* drawCommandArray = dynamic_cast<IMeshBatchDrawCommandArray*>(meshCommand->batchDrawData.batchDrawCommandArray);
+				const MeshBatchDrawKey renderKey(meshCommand->mesh, preDepthMaterial, meshCommand->reverseCullMode);
+				batchDrawCall = drawCommandArray->setMeshBatchDrawCall(renderKey, transformID);
+			}
 
 			preCommand.sceneData = cmd.sceneData;
-			preCommand.transformData = cmd.transformData;
+			preCommand.batchDrawData = cmd.batchDrawData;
 			preCommand.material = preDepthMaterial;
 			preCommand.mesh = meshCommand->mesh;
-			preCommand.transformIndex = transformIndex;
+			preCommand.meshBatchDrawCall = batchDrawCall;
 			preCommand.bindings = cmd.bindings;
 
 			MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(preDepthMaterial->getRenderData());
@@ -275,7 +280,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 
 			preTask.age = 0;
 			preTask.sceneData = preCommand.sceneData;
-			preTask.transformData = preCommand.transformData;
+			preTask.batchDrawData = preCommand.batchDrawData;
 			preTask.shaderProgram = preProgram;
 			preTask.surface = defaultPreDepthSurfaceData;
 			preTask.renderMode = preCommand.getRenderMode();
@@ -299,7 +304,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		RenderTask geoTask;
 		geoTask.age = 0;
 		geoTask.sceneData = cmd.sceneData;
-		geoTask.transformData = cmd.transformData;
+		geoTask.batchDrawData = cmd.batchDrawData;
 		geoTask.surface = defaultGeometrySurfaceData;
 		if (!enablePreDepthPass)
 			geoTask.surface.clearFlags |= Clear_Depth;
@@ -424,6 +429,12 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	
 	timer.record("SceneDataUpload");
 
+	for (auto sceneData : sceneDatas) {
+		sceneData->executeViewCulling(context);
+	}
+
+	timer.record("SceneViewCulling");
+
 	screenHitPass.execute(context);
 
 	timer.record("ScreenHit");
@@ -481,8 +492,10 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	clearTexFrameBindings();
 
 	for (auto sceneData : sceneDatas) {
-		for (auto& cameraRenderData : sceneData->cameraRenderDatas)
-			sceneData->debugRenderData.debugDraw(context, *cameraRenderData);
+		for (auto& cameraRenderData : sceneData->cameraRenderDatas) {
+			if (cameraRenderData->flags.has(CameraRender_DebugDraw))
+				sceneData->debugRenderData.debugDraw(context, *cameraRenderData);
+		}
 	}
 
 	translucentPass.execute(context);

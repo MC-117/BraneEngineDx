@@ -36,4 +36,5 @@ public:
 
 	virtual bool setRenderCommand(const IRenderCommand& command);
 	virtual void excute(IRenderContext& context, RenderTaskContext& taskContext);
+	virtual void reset();
 };

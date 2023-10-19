@@ -13,7 +13,7 @@ SceneRenderData::SceneRenderData()
 	, envLightDataPack(probePoolPack)
 	, virtualShadowMapRenderData(lightDataPack)
 {
-	staticMeshTransformDataPack.setFrequentUpdate(false);
+	staticMeshTransformRenderData.setFrequentUpdate(false);
 }
 
 void SceneRenderData::setCamera(Render* cameraRender)
@@ -27,6 +27,8 @@ void SceneRenderData::setCamera(Render* cameraRender)
 			cameraRenderDatas.push_back(cameraRenderData);
 		cameraRenderData->probeGrid.probePool = &probePoolPack;
 		cameraRenderData->create();
+		cameraRenderData->cullingContext.setSourceBatchDrawCommandArray(&meshBatchDrawCommandArray);
+		cameraRenderData->staticCullingContext.setSourceBatchDrawCommandArray(&staticMeshBatchDrawCommandArray);
 	}
 }
 
@@ -60,12 +62,12 @@ int SceneRenderData::setEnvLightData(Render* captureRender)
 
 unsigned int SceneRenderData::setMeshTransform(const MeshTransformData& data)
 {
-	return meshTransformDataPack.setMeshTransform(data);
+	return meshTransformRenderData.setMeshTransform(data);
 }
 
 unsigned int SceneRenderData::setMeshTransform(const vector<MeshTransformData>& datas)
 {
-	return meshTransformDataPack.setMeshTransform(datas);
+	return meshTransformRenderData.setMeshTransform(datas);
 }
 
 inline Guid makeGuid(void* ptr0, void* ptr1)
@@ -76,54 +78,85 @@ inline Guid makeGuid(void* ptr0, void* ptr1)
 	return guid;
 }
 
-MeshTransformIndex* SceneRenderData::getMeshPartTransform(MeshPart* meshPart, Material* material)
+MeshBatchDrawCall* SceneRenderData::getMeshPartTransform(const MeshBatchDrawKey& key)
 {
-	return meshTransformDataPack.getMeshPartTransform(meshPart, material);
+	return meshBatchDrawCommandArray.getMeshBatchDrawCall(key);
 }
 
-MeshTransformIndex* SceneRenderData::setMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount)
+MeshBatchDrawCall* SceneRenderData::setMeshPartTransform(const MeshBatchDrawKey& key, unsigned int transformIndex, unsigned int transformCount)
 {
-	return meshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex, transformCount);
+	return meshBatchDrawCommandArray.setMeshBatchDrawCall(key, transformIndex, transformCount);
 }
 
 unsigned int SceneRenderData::setStaticMeshTransform(const MeshTransformData& data)
 {
-	return staticMeshTransformDataPack.setMeshTransform(data);
+	return staticMeshTransformRenderData.setMeshTransform(data);
 }
 
 unsigned int SceneRenderData::setStaticMeshTransform(const vector<MeshTransformData>& datas)
 {
-	return staticMeshTransformDataPack.setMeshTransform(datas);
+	return staticMeshTransformRenderData.setMeshTransform(datas);
 }
 
-MeshTransformIndex* SceneRenderData::getStaticMeshPartTransform(MeshPart* meshPart, Material* material)
+MeshBatchDrawCall* SceneRenderData::getStaticMeshPartTransform(const MeshBatchDrawKey& key)
 {
-	return staticMeshTransformDataPack.getMeshPartTransform(meshPart, material);
+	return staticMeshBatchDrawCommandArray.getMeshBatchDrawCall(key);
 }
 
-MeshTransformIndex* SceneRenderData::setStaticMeshPartTransform(MeshPart* meshPart, Material* material, unsigned int transformIndex, unsigned int transformCount)
+MeshBatchDrawCall* SceneRenderData::setStaticMeshPartTransform(const MeshBatchDrawKey& key, unsigned int transformIndex, unsigned int transformCount)
 {
-	return staticMeshTransformDataPack.setMeshPartTransform(meshPart, material, transformIndex, transformCount);
+	return staticMeshBatchDrawCommandArray.setMeshBatchDrawCall(key, transformIndex, transformCount);
 }
 
 void SceneRenderData::cleanStaticMeshTransform(unsigned int base, unsigned int count)
 {
-	staticMeshTransformDataPack.cleanTransform(base, count);
+	staticMeshTransformRenderData.cleanTransform(base, count);
 }
 
 void SceneRenderData::cleanStaticMeshPartTransform(MeshPart* meshPart, Material* material)
 {
-	staticMeshTransformDataPack.cleanPart(meshPart, material);
+	staticMeshBatchDrawCommandArray.cleanPart(meshPart, material);
 }
 
 void SceneRenderData::setUpdateStatic()
 {
-	staticMeshTransformDataPack.setDelayUpdate();
+	staticMeshTransformRenderData.setDelayUpdate();
 }
 
 bool SceneRenderData::willUpdateStatic()
 {
-	return staticMeshTransformDataPack.getNeedUpdate();
+	return staticMeshTransformRenderData.getNeedUpdate();
+}
+
+MeshBatchDrawData SceneRenderData::getBatchDrawData(bool isStatic)
+{
+	MeshBatchDrawData batchDrawData;
+	batchDrawData.transformData = isStatic ? &staticMeshTransformRenderData : &meshTransformRenderData;
+	batchDrawData.batchDrawCommandArray = isStatic ? &staticMeshBatchDrawCommandArray : &meshBatchDrawCommandArray;
+	return batchDrawData;
+}
+
+ViewCulledMeshBatchDrawData SceneRenderData::getViewCulledBatchDrawData(Render* cameraRender, bool isStatic)
+{
+	ViewCulledMeshBatchDrawData batchDrawData;
+	CameraRender* _cameraRender = dynamic_cast<CameraRender*>(cameraRender);
+	if (_cameraRender) {
+		CameraRenderData* cameraRenderData = _cameraRender->getRenderData();
+		batchDrawData.transformData = isStatic ? &staticMeshTransformRenderData : &meshTransformRenderData;
+		batchDrawData.batchDrawCommandArray = isStatic
+			? &cameraRenderData->staticCullingContext
+			: &cameraRenderData->cullingContext;
+	}
+	return batchDrawData;
+}
+
+void SceneRenderData::executeViewCulling(IRenderContext& context)
+{
+	for (CameraRenderData* data : cameraRenderDatas) {
+		data->cullingContext.executeCulling(context, *data, meshTransformRenderData);
+		data->staticCullingContext.executeCulling(context, *data, staticMeshTransformRenderData);
+	}
+	//cullingContext.runCulling();
 }
 
 bool SceneRenderData::frustumCulling(const BoundBox& bound, const Matrix4f& mat) const
@@ -137,8 +170,11 @@ bool SceneRenderData::frustumCulling(const BoundBox& bound, const Matrix4f& mat)
 
 void SceneRenderData::create()
 {
-	meshTransformDataPack.create();
-	staticMeshTransformDataPack.create();
+	meshTransformRenderData.create();
+	staticMeshTransformRenderData.create();
+	meshBatchDrawCommandArray.create();
+	staticMeshBatchDrawCommandArray.create();
+
 	particleDataPack.create();
 	probePoolPack.create();
 	lightDataPack.create();
@@ -151,8 +187,11 @@ void SceneRenderData::create()
 
 void SceneRenderData::reset()
 {
-	meshTransformDataPack.clean();
-	staticMeshTransformDataPack.clean();
+	meshTransformRenderData.clean();
+	staticMeshTransformRenderData.clean();
+	meshBatchDrawCommandArray.clean();
+	staticMeshBatchDrawCommandArray.clean();
+	
 	particleDataPack.clean();
 	probePoolPack.clean();
 	lightDataPack.clean();
@@ -166,8 +205,11 @@ void SceneRenderData::reset()
 
 void SceneRenderData::release()
 {
-	meshTransformDataPack.release();
-	staticMeshTransformDataPack.release();
+	meshTransformRenderData.release();
+	staticMeshTransformRenderData.release();
+	meshBatchDrawCommandArray.release();
+	staticMeshBatchDrawCommandArray.release();
+	
 	particleDataPack.release();
 	probePoolPack.release();
 	lightDataPack.release();
@@ -180,8 +222,11 @@ void SceneRenderData::release()
 
 void SceneRenderData::upload()
 {
-	meshTransformDataPack.upload();
-	staticMeshTransformDataPack.upload();
+	meshTransformRenderData.upload();
+	staticMeshTransformRenderData.upload();
+	meshBatchDrawCommandArray.upload();
+	staticMeshBatchDrawCommandArray.upload();
+	
 	particleDataPack.upload();
 	probePoolPack.upload();
 	lightDataPack.upload();

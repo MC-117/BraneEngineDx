@@ -35,6 +35,7 @@ class EngineModule(Module):
             'RenderDoc',
             'Spine',
             'STB',
+            'OneTBB',
         ]
     
     def setup(self, config : TargetConfig):

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TransformRenderData.h"
+#include "MeshBatchRenderData.h"
 #include "CameraData.h"
 #include "MaterialRenderData.h"
 
@@ -26,7 +26,8 @@ struct ScreenHitRenderCommand : public IRenderCommand
 {
 	int instanceID = 0;
 	int instanceIDCount = 0;
-	MeshTransformIndex* transformIndex = NULL;
+	bool reverseCullMode = false;
+	MeshBatchDrawCall* meshBatchDrawCall = NULL;
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
 	virtual RenderMode getRenderMode() const;
@@ -37,12 +38,11 @@ struct ScreenHitRenderCommand : public IRenderCommand
 struct ScreenHitRenderPack : public IRenderPack
 {
 	MaterialRenderData* materialData;
-	map<MeshPart*, MeshTransformIndex*> meshParts;
-	vector<DrawElementsIndirectCommand> cmds;
+	unordered_set<MeshBatchDrawCall*> meshBatchDrawCalls;
 
 	ScreenHitRenderPack();
 
 	virtual bool setRenderCommand(const IRenderCommand& command);
-	virtual void setRenderData(MeshPart* part, MeshTransformIndex* data);
 	virtual void excute(IRenderContext& context, RenderTaskContext& taskContext);
+	virtual void reset();
 };

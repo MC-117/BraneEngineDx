@@ -116,7 +116,7 @@ IRendering::RenderType CameraRender::getRenderType() const
 	return IRendering::RenderType::Camera_Render;
 }
 
-void CameraRender::preRender()
+void CameraRender::preRender(PreRenderInfo& info)
 {
 }
 
@@ -149,6 +149,7 @@ CameraRenderData* CameraRender::getRenderData()
 	CameraRenderData* cameraRenderData = new CameraRenderData();
 	cameraRenderData->cameraRenderID = cameraRenderID;
 	cameraRenderData->cameraRender = this;
+	cameraRenderData->flags = CameraRender_DebugDraw;
 	renderData = cameraRenderData;
 	return renderData;
 }

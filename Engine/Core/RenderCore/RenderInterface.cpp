@@ -3,18 +3,7 @@
 
 IRenderPack::~IRenderPack()
 {
-	if (vendorRenderExecution != NULL)
-		delete vendorRenderExecution;
-}
-
-void IRenderPack::newVendorRenderExecution()
-{
-	if (vendorRenderExecution == NULL) {
-		vendorRenderExecution = VendorManager::getInstance().getVendor().newRenderExecution();
-		if (vendorRenderExecution == NULL) {
-			throw runtime_error("Vendor new RenderExecution failed");
-		}
-	}
+	
 }
 
 void BaseRenderDataCollector::add(IRenderData& data)

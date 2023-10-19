@@ -6,7 +6,8 @@ struct DirectShadowRenderCommand : public IRenderCommand
 {
 	int instanceID = 0;
 	int instanceIDCount = 0;
-	MeshTransformIndex* transformIndex = NULL;
+	bool reverseCullMode = false;
+	MeshBatchDrawCall* meshBatchDrawCall = NULL;
 	MainLightData* mainLightData = NULL;
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
@@ -17,15 +18,12 @@ struct DirectShadowRenderCommand : public IRenderCommand
 
 struct DirectShadowRenderPack : public IRenderPack
 {
-	MeshTransformRenderData& meshTransformDataPack;
-
 	MaterialRenderData* materialData;
-	map<MeshPart*, MeshTransformIndex*> meshParts;
-	vector<DrawElementsIndirectCommand> cmds;
+	unordered_set<MeshBatchDrawCall*> meshBatchDrawCalls;
 
-	DirectShadowRenderPack(MeshTransformRenderData& meshTransformDataPack);
+	DirectShadowRenderPack();
 
 	virtual bool setRenderCommand(const IRenderCommand& command);
-	virtual void setRenderData(MeshPart* part, MeshTransformIndex* data);
 	virtual void excute(IRenderContext& context, RenderTaskContext& taskContext);
+	virtual void reset();
 };

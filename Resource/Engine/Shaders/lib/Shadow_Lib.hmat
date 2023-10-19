@@ -1,0 +1,26 @@
+#include "../lib/Surface_Def.hmat"
+
+#ifndef DEFERRED_SHADER_FEATURE
+float getShadow(in DirectLight directLight, in Surface surf)
+{
+    #if defined(VSM_SHADER_FEATURE)
+    float rayLength = camData.promatInv[1][1] * (1 - surf.depth);
+    return vsmSampleDirectShadowPCF(directLight.vsmID, surf.WorldPos,
+        surf.Normal, rayLength, directLight.shadowBias.y);
+    #else
+    return ShadowCalculation(depthMap, depthMapSampler,
+        surf.WorldPos, surf.Normal, directLight);
+    #endif
+}
+
+float getShadow(in PointLight localLight, in Surface surf)
+{
+    #if defined(VSM_SHADER_FEATURE)
+    float rayLength = camData.promatInv[1][1] * (1 - surf.depth);
+    return vsmSampleLocalShadow(localLight.vsmID, surf.WorldPos,
+        surf.Normal, rayLength);
+    #else
+    return 1;
+    #endif
+}
+#endif

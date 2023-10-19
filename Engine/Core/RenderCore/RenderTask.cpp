@@ -11,7 +11,7 @@ size_t RenderTask::Hasher::operator()(const RenderTask* t) const
 size_t RenderTask::Hasher::operator()(const RenderTask& t) const
 {
 	size_t hash = (size_t)t.sceneData;
-	hash_combine(hash, (size_t)t.transformData);
+	hash_combine(hash, (size_t)t.batchDrawData.transformData);
 	hash_combine(hash, (size_t)t.shaderProgram);
 	hash_combine(hash, (size_t)t.surface.renderTarget);
 	hash_combine(hash, (size_t)t.cameraData->cameraRender);
@@ -49,13 +49,17 @@ bool RenderTask::ExecutionOrder::operator()(const RenderTask& t0, const RenderTa
 						if (t0.shaderProgram < t1.shaderProgram)
 							return true;
 						if (t0.shaderProgram == t1.shaderProgram) {
-							if (t0.transformData < t1.transformData)
+							if (t0.batchDrawData.transformData < t1.batchDrawData.transformData)
 								return true;
-							if (t0.transformData == t1.transformData) {
-								if (t0.meshData < t1.meshData)
+							if (t0.batchDrawData.transformData == t1.batchDrawData.transformData) {
+								if (t0.batchDrawData.batchDrawCommandArray < t1.batchDrawData.batchDrawCommandArray)
 									return true;
-								if (t0.meshData == t1.meshData)
-									return t0.materialData < t1.materialData;
+								if (t0.batchDrawData.batchDrawCommandArray == t1.batchDrawData.batchDrawCommandArray) {
+									if (t0.meshData < t1.meshData)
+										return true;
+									if (t0.meshData == t1.meshData)
+										return t0.materialData < t1.materialData;
+								}
 							}
 						}
 					}
@@ -101,7 +105,6 @@ void RenderTask::execute(RenderTaskParameter& parameter)
 
 		context.setViewport(0, 0, cameraData->data.viewSize.x(), cameraData->data.viewSize.y());
 		cameraData->bind(context);
-
 	}
 
 	if (taskContext.sceneData != sceneData || shaderSwitch) {
@@ -110,11 +113,18 @@ void RenderTask::execute(RenderTaskParameter& parameter)
 		sceneData->bind(context);
 	}
 
-	if (taskContext.transformData != transformData || shaderSwitch) {
-		taskContext.transformData = transformData;
+	if (taskContext.batchDrawData.transformData != batchDrawData.transformData || shaderSwitch) {
+		taskContext.batchDrawData.transformData = batchDrawData.transformData;
 
-		if (transformData)
-			transformData->bind(context);
+		if (batchDrawData.transformData)
+			batchDrawData.transformData->bind(context);
+	}
+
+	if (taskContext.batchDrawData.batchDrawCommandArray != batchDrawData.batchDrawCommandArray || shaderSwitch) {
+		taskContext.batchDrawData.batchDrawCommandArray = batchDrawData.batchDrawCommandArray;
+
+		if (batchDrawData.batchDrawCommandArray)
+			batchDrawData.batchDrawCommandArray->bindInstanceBuffer(context);
 	}
 
 	if (taskContext.renderMode != renderMode) {

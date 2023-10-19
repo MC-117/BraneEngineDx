@@ -47,18 +47,7 @@ FS_DEF_OUT_BEGIN
 FS_DEF_OUT_SURFACE
 FS_DEF_OUT_END
 
-#ifndef DEFERRED_SHADER_FEATURE
-float getShadow(in DirectLight directLight, in Surface surf)
-{
-    #if defined(VSM_SHADER_FEATURE)
-    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos,
-        surf.Normal, directLight.shadowBias.y);
-    #else
-    return ShadowCalculation(depthMap, depthMapSampler,
-        surf.WorldPos, surf.Normal, directLight);
-    #endif
-}
-#endif
+#include "../lib/Shadow_Lib.hmat"
 
 [earlydepthstencil]
 FragmentOut SURFACE_MAIN
@@ -101,18 +90,15 @@ FragmentOut SURFACE_MAIN
     PointLight localLight;
     ITER_LOCAL_LIGHT(surf.WorldPos, localLight)
     {
-        float intensity = getLightFinalIntensity(localLight);
+        float intensity = getLightIntensity(localLight, surf.WorldPos);
         if (intensity != 0) {
             float3 L = normalize(localLight.pos - surf.WorldPos);
-            float distance = length(localLight.pos - surf.WorldPos);
-            float attenuation = distance / localLight.radius;
-            attenuation = max(1 - attenuation * attenuation, 0);
-            float3 radiance = localLight.color * localLight.intensity * attenuation;
+            float3 radiance = localLight.color * intensity;
             float4 Lo_point = Toon_Lo(surf.Normal, V, L, radiance, baseColor,
                 highlightColor, highlightCut, highlightCutSmooth);
-            Lo += Lo_point;
-            L_Dot = max(dot(surf.Normal, L) * attenuation, L_Dot);
-            lightInstansity += intensity * attenuation;
+            Lo += lerp(shadowColor * intensity, Lo_point, getShadow(localLight, surf));
+            L_Dot = max(dot(surf.Normal, L), L_Dot);
+            lightInstansity += intensity;
         }
     }
     

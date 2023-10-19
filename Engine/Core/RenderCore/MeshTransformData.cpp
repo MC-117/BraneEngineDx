@@ -29,3 +29,13 @@ bool MeshTransformData::operator!=(const MeshTransformData& other) const
 		localExtent != other.localExtent ||
 		flag != other.flag;
 }
+
+bool MeshTransformData::isDynamic() const
+{
+	return !!(flag & MeshTransform_Dynamic);
+}
+
+bool MeshTransformData::isNegativeScale() const
+{
+	return !!(flag & MeshTransform_NegScale);
+}

@@ -60,6 +60,9 @@ bool VirtualShadowMapConfig::deserialize(const SerializationInfo& from)
 	from.get("debugVSMID", debugVSMID);
 	from.get("localLightViewMinZ", localLightViewMinZ);
 	from.get("screenRayLength", screenRayLength);
+	from.get("pcfPixel", (int&)pcfPixel);
+	from.get("pcfStep", (int&)pcfStep);
+	from.get("pcfRadiusScale", pcfRadiusScale);
 	return false;
 }
 
@@ -80,6 +83,9 @@ bool VirtualShadowMapConfig::serialize(SerializationInfo& to)
 	to.set("debugVSMID", debugVSMID);
 	to.set("localLightViewMinZ", localLightViewMinZ);
 	to.set("screenRayLength", screenRayLength);
+	to.set("pcfPixel", (int&)pcfPixel);
+	to.set("pcfStep", (int&)pcfStep);
+	to.set("pcfRadiusScale", pcfRadiusScale);
 	return false;
 }
 
@@ -312,6 +318,45 @@ bool VSMInstanceDrawResource::ExecutionOrder::operator()(const VSMInstanceDrawRe
 	return (*this)(*t0, *t1);
 }
 
+VSMMeshBatchDrawKey::VSMMeshBatchDrawKey(MeshPart* meshPart, Material* material, bool negativeScale)
+	: MeshBatchDrawKey(meshPart, material, negativeScale)
+{
+}
+
+bool VSMMeshBatchDrawKey::isValid() const
+{
+	return meshPart != NULL && meshPart->meshData != NULL && material != NULL;
+}
+
+bool VSMMeshBatchDrawKey::operator<(const VSMMeshBatchDrawKey& key) const
+{
+	if (meshPart < key.meshPart)
+		return true;
+	else if (meshPart == key.meshPart)
+	{
+		if (material < key.material)
+			return true;
+		else if (material == key.material)
+			return negativeScale < key.negativeScale;
+	}
+	return false;
+}
+
+bool VSMMeshBatchDrawKey::operator==(const VSMMeshBatchDrawKey& key) const
+{
+	return meshPart == key.meshPart
+	&& material == key.material
+	&& negativeScale == key.negativeScale;
+}
+
+std::size_t hash<VSMMeshBatchDrawKey>::operator()(const VSMMeshBatchDrawKey& key) const
+{
+	size_t hash = (size_t)key.meshPart;
+	hash_combine(hash, (size_t)key.material);
+	hash_combine(hash, key.negativeScale ? 1 : 0);
+	return hash;
+}
+
 bool VirtualShadowMapManager::ShadowMap::isValid() const
 {
 	return preVirtualShadowMapID != VSM_None_ID;
@@ -415,11 +460,14 @@ void VirtualShadowMapManager::LightEntry::updateLocal(const LocalLightData& ligh
 	batches.clear();
 }
 
-void VirtualShadowMapManager::LightEntry::addMeshCommand(const VSMMeshTransformIndexArray::CallItem& callItem)
+void VirtualShadowMapManager::LightEntry::addMeshCommand(const VSMMeshBatchDrawCallCollection::CallItem& callItem)
 {
-	IRenderData* transformData = callItem.second.payload.transformData;
-	MeshPart* mesh = callItem.first.meshPart;
-	if (transformData == NULL || mesh == NULL || callItem.second.batchCount == 0)
+	const VSMMeshBatchDrawKey& key = callItem.first;
+	const VSMMeshBatchDrawCall& call = callItem.second;
+	IRenderData* transformData = call.transformData;
+	MeshPart* mesh = key.meshPart;
+	unsigned int instanceCount = callItem.second.getInstanceCount();
+	if (transformData == NULL || mesh == NULL || instanceCount == 0)
 		return;
 	Batch keyBatch = { transformData };
 	auto iter = batches.find(keyBatch);
@@ -428,12 +476,11 @@ void VirtualShadowMapManager::LightEntry::addMeshCommand(const VSMMeshTransformI
 		batch = (Batch*)&*batches.insert(keyBatch).first;
 	else
 		batch = (Batch*)&*iter;
-	const VSMMeshTransformIndex& index = callItem.second;
 	const unsigned int commandIndex = batch->indirectCommands.size();
-	batch->drawInstanceInfos.reserve(batch->drawInstanceInfos.size() + index.batchCount);
-	for (int i = 0; i < index.batchCount; i++) {
+	batch->drawInstanceInfos.reserve(batch->drawInstanceInfos.size() + instanceCount);
+	for (int i = 0; i < instanceCount; i++) {
 		VSMDrawInstanceInfo& info = batch->drawInstanceInfos.emplace_back();
-		info.instanceID = index.indices[i].instanceID;
+		info.instanceID = call.instanceData[i].instanceID;
 		info.indirectArgIndex = commandIndex;
 	}
 
@@ -446,10 +493,11 @@ void VirtualShadowMapManager::LightEntry::addMeshCommand(const VSMMeshTransformI
 
 	VSMInstanceDrawResource& resource = batch->resources.emplace_back();
 	resource.materialData = dynamic_cast<MaterialRenderData*>(callItem.first.material->getRenderData());
-	resource.meshData = callItem.first.meshPart->meshData;
-	resource.transformData = callItem.second.payload.transformData;
-	resource.shaderProgram = callItem.second.payload.shaderProgram;
-	resource.extraData = callItem.second.payload.bindings;
+	resource.meshData = mesh->meshData;
+	resource.reverseCullMode = key.negativeScale;
+	resource.transformData = call.transformData;
+	resource.shaderProgram = call.shaderProgram;
+	resource.extraData = call.bindings;
 }
 
 void VirtualShadowMapManager::LightEntry::clean()
@@ -573,12 +621,12 @@ void VirtualShadowMapManager::bindPrevFrameData(IRenderContext& context)
 	context.bindBufferBase(prevFrameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::prevPhysPageMetaDataName);
 }
 
-void VirtualShadowMapManager::processInvalidations(IRenderContext& context, MeshTransformRenderData& transformData)
+void VirtualShadowMapManager::processInvalidations(IRenderContext& context, MeshTransformRenderData& transformRenderData)
 {
-	if (prevFrameData == NULL || (!transformData.needUpdate && transformData.transformUploadIndexBuffer.empty()))
+	if (prevFrameData == NULL || !transformRenderData.isUpdatedThisFrame())
 		return;
 
-	int updateCount = transformData.meshTransformDataArray.getUpdateCount();
+	int updateCount = transformRenderData.meshTransformDataArray.getUpdateCount();
 
 	InvalidationInfo invalidationInfo;
 	invalidationInfo.numUpdateInstances = updateCount;
@@ -587,7 +635,7 @@ void VirtualShadowMapManager::processInvalidations(IRenderContext& context, Mesh
 
 	context.bindShaderProgram(VirtualShadowMapShaders::procInvalidationsProgram);
 
-	transformData.bind(context);
+	transformRenderData.bind(context);
 	context.bindBufferBase(prevFrameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
 	context.bindBufferBase(prevFrameData->pageTable.getVendorGPUBuffer(), VirtualShadowMapShaders::pageTableName);
 	context.bindBufferBase(prevFrameData->pageFlags.getVendorGPUBuffer(), VirtualShadowMapShaders::pageFlagsName);
@@ -596,10 +644,10 @@ void VirtualShadowMapManager::processInvalidations(IRenderContext& context, Mesh
 	context.bindBufferBase(invalidationInfoBuffer.getVendorGPUBuffer(), VirtualShadowMapShaders::invalidationInfoName);
 	context.bindBufferBase(prevFrameData->physPageMetaData.getVendorGPUBuffer(), VirtualShadowMapShaders::outPrevPhysPageMetaDataName, { true });
 
-	const bool updateAll = transformData.meshTransformDataArray.updateAll;
+	const bool updateAll = transformRenderData.meshTransformDataArray.updateAll;
 
 	if (!updateAll) {
-		context.bindBufferBase(transformData.transformUploadIndexBuffer.getVendorGPUBuffer(), VirtualShadowMapShaders::invalidationIndicesName);
+		context.bindBufferBase(transformRenderData.transformUploadIndexBuffer.getVendorGPUBuffer(), VirtualShadowMapShaders::invalidationIndicesName);
 	}
 
 	context.dispatchCompute(ceil(updateCount / (float)VirtualShadowMapShaders::procInvalidationsProgramDim.x()), 1, 1);
@@ -693,6 +741,9 @@ void VirtualShadowMapArray::init(VirtualShadowMapManager& manager)
 	curFrameVSMInfo.physPoolSize = physPoolSize;
 	curFrameVSMInfo.physPoolPages = physPagesXY;
 	curFrameVSMInfo.staticPageIndex = config.useStaticCache ? 1 : 0;
+	curFrameVSMInfo.pcfPixel = config.pcfPixel;
+	curFrameVSMInfo.pcfStep = config.pcfStep;
+	curFrameVSMInfo.pcfRadiusScale = config.pcfRadiusScale;
 	curFrameVSMInfo.flag = uncache ? 1 : 0;
 
 	manager.setPoolTextureSize(physPoolSize, config.useStaticCache ? 2 : 1);
@@ -1043,8 +1094,14 @@ void VirtualShadowMapArray::render(IRenderContext& context, const LightRenderDat
 
 			if (shaderSwitch || resourceContext.materialData != resource.materialData) {
 				resourceContext.materialData = resource.materialData;
-
+				resourceContext.reverseCullMode = resource.reverseCullMode;
+				
+				resource.materialData->bindCullMode(context, resource.reverseCullMode);
 				resource.materialData->bind(context);
+			}
+			else if (resourceContext.reverseCullMode != resource.reverseCullMode) {
+				resourceContext.reverseCullMode = resource.reverseCullMode;
+				resource.materialData->bindCullMode(context, resource.reverseCullMode);
 			}
 
 			if (shaderSwitch || cmdIndex == 0) {
@@ -1059,7 +1116,7 @@ void VirtualShadowMapArray::render(IRenderContext& context, const LightRenderDat
 			option.output = false;
 			option.offset = cmdIndex * batchInfo->shadowDepthInstanceOffset.getVendorGPUBuffer()->desc.cellSize;
 			option.stride = 0;
-			context.bindBufferBase(batchInfo->shadowDepthInstanceOffset.getVendorGPUBuffer(), 0, option);
+			context.bindBufferBase(batchInfo->shadowDepthInstanceOffset.getVendorGPUBuffer(), TRANS_INDEX_BIND_INDEX, option);
 
 			Image image;
 			image.texture = physPagePool;

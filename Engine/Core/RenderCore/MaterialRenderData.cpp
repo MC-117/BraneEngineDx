@@ -45,13 +45,17 @@ void MaterialRenderData::bind(IRenderContext& context)
 {
 	if (vendorMaterial == NULL)
 		return;
-	if (material->isTwoSide)
-		context.setCullState(Cull_Off);
-	else if (material->cullFront)
-		context.setCullState(Cull_Front);
-	else
-		context.setCullState(Cull_Back);
 	context.bindMaterialBuffer(vendorMaterial);
 	context.bindMaterialTextures(vendorMaterial);
 	context.bindMaterialImages(vendorMaterial);
+}
+
+void MaterialRenderData::bindCullMode(IRenderContext& context, bool reverseCullMode)
+{
+	if (material->isTwoSide)
+		context.setCullState(Cull_Off);
+	else if (material->cullFront)
+		context.setCullState(reverseCullMode ? Cull_Back : Cull_Front);
+	else
+		context.setCullState(reverseCullMode ? Cull_Front : Cull_Back);
 }

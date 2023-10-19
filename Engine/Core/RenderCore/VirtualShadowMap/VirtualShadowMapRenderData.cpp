@@ -36,6 +36,7 @@ VirtualShadowMapLightEntry* VirtualShadowMapRenderData::newLocalLightShadow(int 
 void VirtualShadowMapRenderData::create()
 {
 	manager.prepare();
+	shadowMapArray.init(manager);
 }
 
 void VirtualShadowMapRenderData::release()
@@ -45,12 +46,12 @@ void VirtualShadowMapRenderData::release()
 
 void VirtualShadowMapRenderData::upload()
 {
-	intanceIndexArray.processIndices();
+	meshBatchDrawCallCollection.calculateCountAndOffset();
 }
 
 void VirtualShadowMapRenderData::clean()
 {
-	intanceIndexArray.clean();
+	meshBatchDrawCallCollection.clean();
 	shadowMapArray.clean();
 	manager.swapFrameData(shadowMapArray);
 }

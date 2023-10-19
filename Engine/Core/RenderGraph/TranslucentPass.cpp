@@ -90,7 +90,7 @@ bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 	RenderTask task;
 	task.age = 0;
 	task.sceneData = command.sceneData;
-	task.transformData = command.transformData;
+	task.batchDrawData = command.batchDrawData;
 	task.shaderProgram = shader;
 	task.renderMode = command.getRenderMode();
 	task.materialData = materialRenderData;

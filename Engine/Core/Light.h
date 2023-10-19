@@ -24,7 +24,7 @@ public:
 	virtual Render* getRender();
 	virtual unsigned int getRenders(vector<Render*>& renders);
 
-	virtual void preRender();
+	virtual void preRender(PreRenderInfo& info);
 	virtual void render(RenderInfo & info);
 	virtual IRendering::RenderType getRenderType() const;
 	virtual Shape* getShape();

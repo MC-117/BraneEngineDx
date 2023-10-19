@@ -49,7 +49,7 @@ void main(uint tid : SV_DispatchThreadID)
             VSMPhysPageMetaData metaData = outPhysPageMetaData[physPageIndex];
             const uint invalidPageOffset = metaData.virtualPageOffset;
             if (invalidPageOffset != NONE_PAGEID) {
-                outPageTable[invalidPageOffset] = 0;
+                outPageTable[invalidPageOffset] = VSM_PHYSICAL_PAGE_INVALID;
 			    outPageFlags[invalidPageOffset] = 0;
             }
 

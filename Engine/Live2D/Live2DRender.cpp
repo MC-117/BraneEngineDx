@@ -167,7 +167,7 @@ void Live2DRender::set3DMode(bool value)
     _is3DMode = value;
 }
 
-void Live2DRender::preRender()
+void Live2DRender::preRender(PreRenderInfo& info)
 {
 }
 

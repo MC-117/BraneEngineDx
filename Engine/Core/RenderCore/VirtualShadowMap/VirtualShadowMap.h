@@ -1,7 +1,7 @@
 #pragma once
 #include "../RenderInterface.h"
 #include "../LightRenderData.h"
-#include "../TransformRenderData.h"
+#include "../MeshBatchRenderData.h"
 
 struct DebugRenderData;
 
@@ -66,6 +66,10 @@ public:
 	float localLightViewMinZ = 0.001f;
 	float screenRayLength = 0.0005f;
 
+	unsigned int pcfPixel = 2;
+	unsigned int pcfStep = 1;
+	float pcfRadiusScale = 1;
+
 	enum DebugViewMode
 	{
 		None,
@@ -126,8 +130,11 @@ struct VirtualShadowMapInfo
 	Vector2u physPoolSize;
 	Vector2u physPoolPages;
 	unsigned int staticPageIndex;
+	unsigned int pcfPixel;
+	unsigned int pcfStep;
+	float pcfRadiusScale;
 	unsigned int flag;
-	unsigned int pad[2];
+	unsigned int pad[3];
 };
 
 struct VirtualShadowMapPhysicalPageData
@@ -288,6 +295,7 @@ struct VSMInstanceDrawResource
 		bool operator()(const VSMInstanceDrawResource* t0, const VSMInstanceDrawResource* t1) const;
 	};
 
+	bool reverseCullMode = false;
 	IRenderData* transformData = NULL;
 	MaterialRenderData* materialData = NULL;
 	ShaderProgram* shaderProgram = NULL;
@@ -295,15 +303,124 @@ struct VSMInstanceDrawResource
 	list<IRenderData*> extraData;
 };
 
-struct VSMnstanceIndexPayload
+template<class Data>
+struct TVSMMeshBatchDrawCall : TDrawCallBase<Data>
 {
-	IRenderData* transformData;
-	ShaderProgram* shaderProgram;
+	vector<Data> instanceData;
+	DrawElementsIndirectCommand command;
+	unsigned int drawCommandOffset = 0;
+
+	bool reverseCullMode = false;
+	IRenderData* transformData = NULL;
+	ShaderProgram* shaderProgram = NULL;
 	list<IRenderData*> bindings;
+	
+	template<class K>
+	void addDraw(const K& key, const Data& data, unsigned int instanceIndex, unsigned int instanceCount);
+
+	void calculateCountAndOffset(unsigned int instanceOffset, unsigned int commandOffset);
+	
+	void fetchInstanceData(Data* dst, unsigned int count);
+	unsigned int getInstanceCount() const;
+	unsigned int getInstanceOffset() const;
+
+	void fetchDrawCommands(DrawElementsIndirectCommand* dst, unsigned int count);
+	unsigned int getDrawCommandCount() const;
+	unsigned int getDrawCommandOffset() const;
+	
+	void clean();
 };
 
-typedef TMeshTransformIndex<InstanceDrawData, VSMnstanceIndexPayload> VSMMeshTransformIndex;
-typedef TMeshTransformIndexArray<MeshMaterialGuid, InstanceDrawData, VSMnstanceIndexPayload> VSMMeshTransformIndexArray;
+template <class Data>
+template <class K>
+void TVSMMeshBatchDrawCall<Data>::addDraw(const K& key, const Data& data, unsigned int instanceIndex, unsigned int instanceCount)
+{
+	if (command.instanceCount == 0)
+		key.assignDrawCommand(command);
+	int index = command.instanceCount;
+	int count = index + instanceCount;
+	if (instanceData.size() < count)
+		instanceData.resize(count);
+	Data _data = data;
+	for (; index < count; index++) {
+		instanceData[index] = _data;
+		_data = drawInstanceIncrease(_data);
+	}
+	command.instanceCount += instanceCount;
+}
+
+template <class Data>
+void TVSMMeshBatchDrawCall<Data>::calculateCountAndOffset(unsigned int instanceOffset, unsigned int commandOffset)
+{
+	command.baseInstance = instanceOffset;
+	drawCommandOffset = commandOffset;
+}
+
+template <class Data>
+void TVSMMeshBatchDrawCall<Data>::fetchInstanceData(Data* dst, unsigned int count)
+{
+	memcpy(dst, instanceData.data(), sizeof(Data) * command.instanceCount);
+}
+
+template <class Data>
+unsigned TVSMMeshBatchDrawCall<Data>::getInstanceCount() const
+{
+	return command.instanceCount;
+}
+
+template <class Data>
+unsigned TVSMMeshBatchDrawCall<Data>::getInstanceOffset() const
+{
+	return command.baseInstance;
+}
+
+template <class Data>
+void TVSMMeshBatchDrawCall<Data>::fetchDrawCommands(DrawElementsIndirectCommand* dst, unsigned int count)
+{
+	memcpy(dst, &command, sizeof(DrawElementsIndirectCommand));
+}
+
+template <class Data>
+unsigned TVSMMeshBatchDrawCall<Data>::getDrawCommandCount() const
+{
+	return 1;
+}
+
+template <class Data>
+unsigned TVSMMeshBatchDrawCall<Data>::getDrawCommandOffset() const
+{
+	return drawCommandOffset;
+}
+
+template <class Data>
+void TVSMMeshBatchDrawCall<Data>::clean()
+{
+	command.baseInstance = 0;
+	command.instanceCount = 0;
+	drawCommandOffset = 0;
+	
+	reverseCullMode = false;
+	transformData = NULL;
+	shaderProgram = NULL;
+	bindings.clear();
+}
+
+struct VSMMeshBatchDrawKey : MeshBatchDrawKey
+{
+	VSMMeshBatchDrawKey(MeshPart* meshPart, Material* material, bool negativeScale = false);
+	bool isValid() const;
+	bool operator<(const VSMMeshBatchDrawKey& key) const;
+	bool operator==(const VSMMeshBatchDrawKey& key) const;
+};
+
+template <>
+struct std::hash<VSMMeshBatchDrawKey>
+{
+	std::size_t operator()(const VSMMeshBatchDrawKey& key) const;
+};
+
+typedef TVSMMeshBatchDrawCall<InstanceDrawData> VSMMeshBatchDrawCall;
+typedef TMeshBatchDrawCallCollection<VSMMeshBatchDrawKey, InstanceDrawData, TVSMMeshBatchDrawCall> VSMMeshBatchDrawCallCollection;
 
 class VirtualShadowMapManager
 {
@@ -381,7 +498,7 @@ public:
 
 		void updateClipmap();
 		void updateLocal(const LocalLightData& lightData);
-		void addMeshCommand(const VSMMeshTransformIndexArray::CallItem& callItem);
+		void addMeshCommand(const VSMMeshBatchDrawCallCollection::CallItem& callItem);
 		void markRendered(unsigned int frame);
 
 		void invalidate();
@@ -415,7 +532,7 @@ public:
 	void buildPrevData(const vector<VirtualShadowMap*>& shadowMaps, vector<VirtualShadowMapPrevData>& prevData);
 	void bindPrevFrameData(IRenderContext& context);
 
-	void processInvalidations(IRenderContext& context, MeshTransformRenderData& transformData);
+	void processInvalidations(IRenderContext& context, MeshTransformRenderData& transformRenderData);
 
 	void swapFrameData(VirtualShadowMapArray& virtualShadowMapArray);
 protected:

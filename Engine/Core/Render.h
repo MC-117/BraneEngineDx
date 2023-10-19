@@ -19,6 +19,12 @@ struct RenderInfo
 	Camera* camera = NULL;
 };
 
+struct PreRenderInfo
+{
+	SceneRenderData* sceneData = NULL;
+	Camera* camera = NULL;
+};
+
 class ENGINE_API Render : public IRendering
 {
 public:
@@ -39,7 +45,7 @@ public:
 	virtual void setBaseColor(Color color);
 	virtual Color getBaseColor();
 
-	virtual void preRender();
+	virtual void preRender(PreRenderInfo& info);
 	virtual void render(RenderInfo& info);
 	virtual void postRender();
 	virtual Matrix4f getTransformMatrix() const;

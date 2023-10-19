@@ -39,7 +39,7 @@ public:
 
 	virtual bool isValid();
 	virtual IRendering::RenderType getRenderType() const;
-	virtual void preRender();
+	virtual void preRender(PreRenderInfo& info);
 	virtual void render(RenderInfo& info);
 
 	CameraRenderData* getRenderData();

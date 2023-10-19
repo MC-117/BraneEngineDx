@@ -9,7 +9,7 @@ public:
 	LightRenderData& lightRenderData;
 	VirtualShadowMapManager manager;
 	VirtualShadowMapArray shadowMapArray;
-	VSMMeshTransformIndexArray intanceIndexArray;
+	VSMMeshBatchDrawCallCollection meshBatchDrawCallCollection;
 
 	VirtualShadowMapRenderData(LightRenderData& lightRenderData);
 

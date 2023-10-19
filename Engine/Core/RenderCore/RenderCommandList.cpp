@@ -240,6 +240,12 @@ bool RenderCommandList::addRenderTask(const IRenderCommand& cmd, RenderTask& tas
 		*pTask = task;
 	}
 
+	if (pTask->age > 0) {
+		if (pTask->renderPack != NULL) {
+			pTask->renderPack->reset();
+		}
+	}
+
 	if (pTask->renderPack == NULL) {
 		task.renderPack = pTask->renderPack = cmd.createRenderPack(*cmd.sceneData, *this);
 	}
@@ -294,7 +300,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataC
 	RenderTask task;
 	task.age = 0;
 	task.sceneData = cmd.sceneData;
-	task.transformData = cmd.transformData;
+	task.batchDrawData = cmd.batchDrawData;
 	task.shaderProgram = shader;
 	task.renderMode = cmd.getRenderMode();
 	task.materialData = materialRenderData;
@@ -361,7 +367,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataC
 		RenderTask task;
 		task.age = 0;
 		task.sceneData = cmd.sceneData;
-		task.transformData = cmd.transformData;
+		task.batchDrawData = cmd.batchDrawData;
 		task.shaderProgram = shader;
 		task.renderMode = cmd.getRenderMode();
 		task.materialData = materialRenderData;
@@ -433,17 +439,18 @@ void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 void RenderCommandList::resetCommand()
 {
 	frameTaskCount = 0;
-	//for (auto b = taskSet.begin(); b != taskSet.end();) {
-	//	RenderTask* task = *b;
-	//	if (task->age > 2) {
-	//		//taskMap.erase(task->hashCode);
-	//		if (task->renderPack) {
-	//			delete task->renderPack;
-	//			task->renderPack = NULL;
-	//		}
-	//		b = taskSet.erase(b);
-	//		delete task;
-	//	}
-	//	else b++;
-	//}
+	// for (auto b = taskSet.begin(); b != taskSet.end(); b++) {
+	// 	RenderTask* task = *b;
+	// 	if (task->age > 1)
+	// 	{
+	// 		//taskMap.erase(task->hashCode);
+	// 		if (task->renderPack) {
+	// 			delete task->renderPack;
+	// 			task->renderPack = NULL;
+	// 		}
+	// 		//b = taskSet.erase(b);
+	// 		//delete task;
+	// 	}
+	// 	//else b++;
+	// }
 }

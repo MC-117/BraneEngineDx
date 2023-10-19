@@ -211,9 +211,7 @@ HRESULT DX11ShaderStage::createShader(ID3D11Device* device, ShaderStageType type
 
 bool DrawInfo::operator==(const DrawInfo& i) const
 {
-	return baseVertex == i.baseVertex &&
-		baseInstance == i.baseInstance &&
-		passID == i.passID &&
+	return passID == i.passID &&
 		passNum == i.passNum &&
 		materialID == i.materialID &&
 		gameTime == i.gameTime;
@@ -221,9 +219,7 @@ bool DrawInfo::operator==(const DrawInfo& i) const
 
 bool DrawInfo::operator!=(const DrawInfo& i) const
 {
-	return baseVertex != i.baseVertex ||
-		baseInstance != i.baseInstance ||
-		passID != i.passID ||
+	return passID != i.passID ||
 		passNum != i.passNum ||
 		materialID != i.materialID ||
 		gameTime != i.gameTime;

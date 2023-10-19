@@ -1138,6 +1138,7 @@ void Gizmo::onRender2D()
 void Gizmo::onRender3D(RenderInfo& info)
 {
 	info.sceneData->debugRenderData.updateLineData = std::move(lines);
+	ViewCulledMeshBatchDrawData batchDrawData = info.sceneData->getViewCulledBatchDrawData(info.camera->getRender(), false);
 	
 	for (auto& draw : meshes) {
 		if (draw.instanceID < 0) {
@@ -1162,8 +1163,10 @@ void Gizmo::onRender3D(RenderInfo& info)
 		cmd.instanceID = draw.instanceID;
 		cmd.instanceIDCount = draw.instanceCount;
 		cmd.hasShadow = false;
-		cmd.transformData = &info.sceneData->meshTransformDataPack;
-		cmd.transformIndex = info.sceneData->setMeshPartTransform(draw.meshPart, draw.material, draw.instanceID);
+		cmd.batchDrawData = batchDrawData;
+		MeshBatchDrawKey renderKey(draw.meshPart, draw.material, batchDrawData.transformData->getMeshTransform(draw.instanceID).isNegativeScale());
+		cmd.meshBatchDrawCall = batchDrawData.batchDrawCommandArray->setMeshBatchDrawCall(renderKey, draw.instanceID);
+		cmd.reverseCullMode = renderKey.negativeScale;
 		info.renderGraph->setRenderCommand(cmd);
 	}
 
@@ -1176,7 +1179,8 @@ void Gizmo::onRender3D(RenderInfo& info)
 		cmd.sceneData = info.sceneData;
 		cmd.instanceID = hit.instanceID;
 		cmd.instanceIDCount = hit.instanceCount;
-		cmd.transformData = &info.sceneData->meshTransformDataPack;
+		cmd.batchDrawData = batchDrawData;
+		cmd.reverseCullMode = batchDrawData.transformData->getMeshTransform(hit.instanceID).isNegativeScale();
 		info.renderGraph->setRenderCommand(cmd);
 	}
 	meshes.clear();

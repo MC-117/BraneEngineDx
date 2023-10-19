@@ -15,6 +15,7 @@ class CameraRender;
 class RenderTask;
 class SceneRenderData;
 class RenderCommandList;
+class IGPUBuffer;
 
 struct IRenderData
 {
@@ -40,10 +41,42 @@ struct ISurfaceBuffer
 
 struct IRenderPack;
 
+struct IBatchDrawCommandArray
+{
+	virtual ~IBatchDrawCommandArray() = default;
+	virtual void bindInstanceBuffer(IRenderContext& context) = 0;
+	virtual IGPUBuffer* getInstanceBuffer() = 0;
+	virtual IGPUBuffer* getCommandBuffer() = 0;
+	virtual unsigned int getInstanceCount() const = 0;
+	virtual unsigned int getCommandCount() const = 0;
+};
+
+struct BatchDrawData
+{
+	IRenderData* transformData = NULL;
+	IBatchDrawCommandArray* batchDrawCommandArray = NULL;
+
+	bool isValid() const { return transformData && batchDrawCommandArray; }
+};
+
+template<class TransformRenderData, class CommandArray>
+struct TBatchDrawData
+{
+	TransformRenderData* transformData = NULL;
+	CommandArray* batchDrawCommandArray = NULL;
+
+	operator BatchDrawData() const
+	{
+		return BatchDrawData{ transformData, batchDrawCommandArray };
+	}
+
+	bool isValid() const { return transformData && batchDrawCommandArray; }
+};
+
 struct IRenderCommand
 {
 	SceneRenderData* sceneData = NULL;
-	IRenderData* transformData = NULL;
+	BatchDrawData batchDrawData;
 	Material* material = NULL;
 	MeshPart* mesh = NULL;
 	list<IRenderData*> bindings;
@@ -57,7 +90,7 @@ struct IRenderCommand
 struct RenderTaskContext
 {
 	SceneRenderData* sceneData;
-	IRenderData* transformData;
+	BatchDrawData batchDrawData;
 	RenderTarget* renderTarget;
 	IRenderData* cameraData;
 	ShaderProgram* shaderProgram;
@@ -68,11 +101,10 @@ struct RenderTaskContext
 
 struct IRenderPack
 {
-	IRenderExecution* vendorRenderExecution = NULL;
 	virtual ~IRenderPack();
 	virtual bool setRenderCommand(const IRenderCommand& command) = 0;
 	virtual void excute(IRenderContext& context, RenderTaskContext& taskContext) = 0;
-	virtual void newVendorRenderExecution();
+	virtual void reset() = 0;
 };
 
 class RenderGraph;

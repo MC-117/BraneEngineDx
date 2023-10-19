@@ -15,8 +15,12 @@ void main(uint2 pixel : SV_DispatchThreadID)
     float2 uv = pixel / float(VSM_MAX_SIZE);
 
     VSMProjData projData = getVSMProjData(vsmID);
-    if (projData.lightType != VSM_DirectLight)
-        outColor = blackColor;
+    if (projData.lightType != VSM_DirectLight) {
+        VSMSample vsmSample;
+		if (vsmSampleLocal(vsmID, uv, vsmSample)) {
+            outColor = float3(0, vsmSample.depth, 0);
+        }
+    }
     else {
         uint2 basePage = uint2(uv * VSM_L0_PAGES);
 	    VSMPhysPage physPage = vsmGetPhysicalPage(calcPageOffset(vsmID, 0, basePage));

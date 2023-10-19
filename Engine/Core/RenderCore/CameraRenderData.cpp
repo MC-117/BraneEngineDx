@@ -51,6 +51,9 @@ void CameraRenderData::create()
 	if (surfaceBuffer) {
 		surfaceBuffer->create(cameraRender);
 	}
+
+	cullingContext.init();
+	staticCullingContext.init();
 }
 
 void CameraRenderData::release()

@@ -9,7 +9,7 @@ RWBuffer<uint> commandBuffer;
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
 void main(uint tid : SV_DispatchThreadID)
 {
-    commandBuffer[DRAW_INDIRECT_VTX_COUNT_IDX] = outDebugFlags[0];
+    commandBuffer[DRAW_INDIRECT_COUNT_IDX] = outDebugFlags[0];
     commandBuffer[DRAW_INDIRECT_INS_COUNT_IDX] = 1;
     commandBuffer[DRAW_ARRAY_INDIRECT_FST_VTX_IDX] = 0;
     commandBuffer[DRAW_ARRAY_INDIRECT_BASE_INS_IDX] = 0;

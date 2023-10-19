@@ -47,27 +47,7 @@ FS_DEF_OUT_BEGIN
 FS_DEF_OUT_SURFACE
 FS_DEF_OUT_END
 
-#ifndef DEFERRED_SHADER_FEATURE
-float getShadow(in DirectLight directLight, in Surface surf)
-{
-    #if defined(VSM_SHADER_FEATURE)
-    return vsmSampleDirectShadow(directLight.vsmID, surf.WorldPos,
-        surf.Normal, directLight.shadowBias.y);
-    #else
-    return ShadowCalculation(depthMap, depthMapSampler,
-        surf.WorldPos, surf.Normal, directLight);
-    #endif
-}
-
-float getShadow(in PointLight pointLight, in Surface surf)
-{
-    #if defined(VSM_SHADER_FEATURE)
-    return 1;
-    #else
-    return 1;
-    #endif
-}
-#endif
+#include "../lib/Shadow_Lib.hmat"
 
 //[earlydepthstencil]
 FragmentOut SURFACE_MAIN
@@ -111,7 +91,9 @@ FragmentOut SURFACE_MAIN
     ITER_LOCAL_LIGHT(surf.WorldPos, localLight)
     {
         if (localLight.intensity != 0) {
-            Lo += PBR_Lo_PointLight(localLight, surf.WorldPos, surf.Normal, V, surf.albedo.xyz, surf.metallic, surf.roughness);
+            float shadowFactor = getShadow(localLight, surf);
+            Lo += PBR_Lo_PointLight(localLight, surf.WorldPos, surf.Normal, V,
+                surf.albedo.xyz, surf.metallic, surf.roughness) * shadowFactor;
         }
     }
 

@@ -33,7 +33,7 @@ unsigned int Light::getRenders(vector<Render*>& renders)
 	return 1;
 }
 
-void Light::preRender()
+void Light::preRender(PreRenderInfo& info)
 {
 	Render::transformMat = Transform::transformMat;
 }

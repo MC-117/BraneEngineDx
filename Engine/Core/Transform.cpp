@@ -779,8 +779,11 @@ bool Transform::serialize(SerializationInfo & to)
 void Transform::getMeshTransformData(MeshTransformData* data)
 {
 	data->localToWorld = getMatrix(WORLD);
-	data->worldScale = getScale(WORLD);
-	data->flag = data->flag & 0xFFFFFFFEU | ((rigidBody != NULL && rigidBody->material.physicalType == PhysicalType::DYNAMIC) ? 0 : 1);
+	Vector3f worldScale = getScale(WORLD);
+	data->worldScale = worldScale;
+	MeshTransformFlags negativeScaleFlag = (worldScale.x() * worldScale.y() * worldScale.z()) < 0 ? MeshTransform_NegScale : MeshTransform_None;
+	MeshTransformFlags dynamicFlag = (rigidBody != NULL && rigidBody->material.physicalType == PhysicalType::DYNAMIC) ? MeshTransform_None : MeshTransform_Dynamic;
+	data->flag = negativeScaleFlag | dynamicFlag;
 }
 
 Transform* Transform::getParentTransform()

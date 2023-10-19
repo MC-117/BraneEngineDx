@@ -150,8 +150,23 @@ void MeshRender::fillMaterialsByDefault()
 	}*/
 }
 
-void MeshRender::preRender()
+void MeshRender::preRender(PreRenderInfo& info)
 {
+	// if (!frustumCulling)
+	// 	return;
+	// for (int i = 0; i < materials.size(); i++) {
+	// 	Material* material = materials[i];
+	// 	if (material == NULL || !meshPartsEnable[i])
+	// 		continue;
+	// 	
+	// 	MeshPart* part = &mesh->meshParts[i];
+	//
+	// 	if (!part->isValid())
+	// 		continue;
+	// 	
+	// 	MeshBatchRenderData* transformData = isStatic ? &info.sceneData->staticMeshTransformDataPack : &info.sceneData->meshTransformDataPack;
+	// 	info.sceneData->setCulling(part, transformData, instanceID, instanceCount);
+	// }
 }
 
 void MeshRender::render(RenderInfo& info)
@@ -171,10 +186,6 @@ void MeshRender::render(RenderInfo& info)
 		if (!part->isValid())
 			continue;
 
-		/*if (frustumCulling && !info.sceneData->frustumCulling(part->bound, transformMat)) {
-			continue;
-		}*/
-
 		MeshRenderCommand command;
 		command.sceneData = info.sceneData;
 		command.material = material;
@@ -183,14 +194,17 @@ void MeshRender::render(RenderInfo& info)
 		command.hasPreDepth = hasPrePass;
 		command.instanceID = instanceID;
 		command.instanceIDCount = instanceCount;
-		MeshTransformRenderData* transformData = isStatic ? &info.sceneData->staticMeshTransformDataPack : &info.sceneData->meshTransformDataPack;
-		command.transformData = transformData;
-		command.transformIndex = transformData->setMeshPartTransform(part, material, instanceID, instanceCount);
+		ViewCulledMeshBatchDrawData batchDrawData = info.sceneData->getViewCulledBatchDrawData(info.camera->getRender(), isStatic);
+		command.batchDrawData = batchDrawData;
+		MeshBatchDrawKey renderKey(part, material, batchDrawData.transformData->getMeshTransform(instanceID).isNegativeScale());
+		command.meshBatchDrawCall = batchDrawData.batchDrawCommandArray->setMeshBatchDrawCall(renderKey, instanceID, instanceCount);
+		command.reverseCullMode = renderKey.negativeScale;
 		info.renderGraph->setRenderCommand(command);
 
 		Material* outlineMaterial = outlineMaterials[i];
 		if (outlineEnable[i] && outlineMaterial != NULL) {
-			command.transformIndex = transformData->setMeshPartTransform(part, outlineMaterial, instanceID, instanceCount);
+			renderKey.material = outlineMaterial;
+			command.meshBatchDrawCall = batchDrawData.batchDrawCommandArray->setMeshBatchDrawCall(renderKey, instanceID, instanceCount);
 			command.material = outlineMaterial;
 			info.renderGraph->setRenderCommand(command);
 		}

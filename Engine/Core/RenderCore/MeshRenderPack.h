@@ -5,7 +5,8 @@
 #include "../SkeletonMesh.h"
 #include "MaterialRenderData.h"
 #include "LightRenderData.h"
-#include "TransformRenderData.h"
+#include "MeshBatchRenderData.h"
+#include "ViewCullingContext.h"
 
 struct MeshRenderCommand : public IRenderCommand
 {
@@ -13,7 +14,11 @@ struct MeshRenderCommand : public IRenderCommand
 	int instanceIDCount = 0;
 	bool hasShadow = true;
 	bool hasPreDepth = false;
-	MeshTransformIndex* transformIndex = NULL;
+	bool reverseCullMode = false;
+	MeshBatchDrawCall* meshBatchDrawCall = NULL;
+
+	MeshBatchDrawKey getMeshBatchDrawKey() const;
+
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
 	virtual RenderMode getRenderMode() const;
@@ -26,11 +31,11 @@ struct MeshDataRenderPack : public IRenderPack
 	LightRenderData& lightDataPack;
 
 	MaterialRenderData* materialData;
-	map<MeshPart*, MeshTransformIndex*> meshParts;
+	unordered_set<MeshBatchDrawCall*> meshBatchDrawCalls;
 
 	MeshDataRenderPack(LightRenderData& lightDataPack);
 
 	virtual bool setRenderCommand(const IRenderCommand& command);
-	virtual void setRenderData(MeshPart* part, MeshTransformIndex* data);
 	virtual void excute(IRenderContext& context, RenderTaskContext& taskContext);
+	virtual void reset();
 };

@@ -14,4 +14,5 @@ struct MaterialRenderData : public IRenderData
 	virtual void release();
 	virtual void upload();
 	virtual void bind(IRenderContext& context);
+	virtual void bindCullMode(IRenderContext& context, bool reverseCullMode);
 };

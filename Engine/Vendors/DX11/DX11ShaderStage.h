@@ -32,14 +32,10 @@ public:
 
 struct DrawInfo
 {
-	unsigned int baseVertex;
-	unsigned int baseInstance;
 	unsigned int passID;
 	unsigned int passNum;
 	unsigned int materialID;
 	float gameTime;
-	unsigned int pad1;
-	unsigned int pad2;
 
 	bool operator==(const DrawInfo& i) const;
 	bool operator!=(const DrawInfo& i) const;

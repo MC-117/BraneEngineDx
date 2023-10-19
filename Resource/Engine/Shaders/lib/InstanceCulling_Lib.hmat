@@ -1,0 +1,5 @@
+#include "FrustumCulling_Lib.hmat"
+
+#define SceneCull_NoneCulled (0)
+#define SceneCull_FrustumCulled (1 << 0)
+#define SceneCull_OcclusionCulled (1 << 1)

@@ -1,0 +1,101 @@
+#material
+#localsize 256 1 1
+#compute
+#include "../../lib/VirtualShadowMap_Def.hmat"
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint tid : SV_DispatchThreadID, uint2 gid : SV_GroupID)
+{
+    const uint NumLevel0Entries = VSM_L0_PAGES * VSM_L0_PAGES;
+	if (tid.x >= NumLevel0Entries)
+	{
+		return;
+	}
+
+	int vsmID = gid.y;
+	uint PageTableEntryIndex = tid.x;
+
+	uint2 Level0Page;
+	Level0Page.x = PageTableEntryIndex & ((1U << VSM_LOG2_L0_PAGES) - 1U);
+	Level0Page.y = PageTableEntryIndex >> VSM_LOG2_L0_PAGES;
+
+	VSMProjData projData = getVSMProjData(vsmID);
+
+	if (projData.lightType == VSM_DirectLight)
+	{
+		// Directional lights propagate pages to their coarser/larger clipmap levels (and only use mip0 pages)
+		// Each clipmap level is a separate VSM, so we gather any mapped coarser pages as necessary and write only our own page output
+		// There's also technically a race similar to below with other threads writing the PT data we are reading,
+		// but it's still deterministic as long as we only look at pages with "bThisLODValid".
+		// There's some redundant work of course, but this shader is pretty cheap overall
+
+		uint Page0Offset = calcPageOffset(vsmID, 0, Level0Page);
+		VSMPhysPage pPage0 = vsmDecodePageTable(outPageTable[Page0Offset]);
+
+		if (!pPage0.isThisLODValid)
+		{
+			const int OffsetScale = (VSM_L0_PAGES >> 2);
+			int2 BaseOffset = OffsetScale * projData.clipmapOffset;
+			int2 BasePage   = int2(Level0Page) - BaseOffset;
+
+			// Search for first mapped page past this one
+			uint RemainingLevels = projData.clipmapCount - projData.clipmapIndex;
+			for (uint ClipmapOffset = 1; ClipmapOffset < RemainingLevels; ++ClipmapOffset)
+			{
+				const int ClipmapLevelId = vsmID + int(ClipmapOffset);
+
+				VSMProjData LevelProjectionData = getVSMProjData(ClipmapLevelId);
+				int2 LevelOffset = OffsetScale * LevelProjectionData.clipmapOffset;
+
+				int2 LevelPage = (BasePage + (LevelOffset << ClipmapOffset)) >> ClipmapOffset;
+
+				if (all(LevelPage >= 0) && all(LevelPage < VSM_L0_PAGES))
+				{
+					uint LevelPageOffset = calcPageOffset(ClipmapLevelId, 0, uint2(LevelPage));
+					VSMPhysPage pPage = vsmDecodePageTable(outPageTable[LevelPageOffset]);
+					if (pPage.isThisLODValid)
+					{
+						outPageTable[Page0Offset] = vsmEncodePageTable(pPage.physAddress, ClipmapOffset);
+						break;
+					}
+				}
+				else
+				{
+					// TODO: We're off the edge... can this ever even happen in practice given the construction?
+				}
+			}
+		}
+	}
+	else
+	{
+		// Local lights propagate pages to their coarser mips
+		int MappedPageLevel = -1;
+	
+		for (int Level = (VSM_MAX_MIPS - 1); Level >= 0; --Level)
+		{
+			uint2 vPage = Level0Page >> Level;
+			uint PageOffset = calcPageOffset(vsmID, Level, vPage);
+			VSMPhysPage pPage = vsmDecodePageTable(outPageTable[PageOffset]);\
+
+			[branch]
+			if (pPage.isThisLODValid)
+			{
+				// This page is mapped, so leave it alone and propagate downwards
+				MappedPageLevel = Level;
+			}
+			else if( MappedPageLevel >= 0 )
+			{
+				// This page is not mapped; replace it with our suitably offset parent mapped page
+				// Ensure only one thread writes each value to avoid races, but we read on all threads as the broadcast
+				// Note that this can race with the other threads reading this value, but since bThisLODValid will
+				// always be false on these updated pages the values will be ignored. As long as the writes to the page
+				// table are atomic (currently a single DWORD), this is safe.
+				if (all((vPage << Level) == Level0Page))
+				{
+					uint MipOffset = MappedPageLevel - Level;
+					outPageTable[PageOffset] = vsmEncodePageTable(pPage.physAddress, MipOffset);
+				}
+			}
+		}
+	}
+}

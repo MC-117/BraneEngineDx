@@ -95,6 +95,7 @@ public:
 	virtual void setTerrainDrawContext() = 0;
 
 	virtual void setDrawInfo(int passIndex, int passNum, unsigned int materialID) = 0;
+	virtual void bindDrawInfo() = 0;
 
 	virtual void meshDrawCall(const MeshPartDesc& mesh) = 0;
 	virtual void postProcessCall() = 0;

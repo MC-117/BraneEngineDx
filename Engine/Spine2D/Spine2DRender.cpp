@@ -98,7 +98,7 @@ Texture2D* Spine2DRender::getOutputTexture()
     return &drawTexture;
 }
 
-void Spine2DRender::preRender()
+void Spine2DRender::preRender(PreRenderInfo& info)
 {
 }
 

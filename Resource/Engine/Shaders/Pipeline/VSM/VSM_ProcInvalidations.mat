@@ -28,12 +28,13 @@ void main(uint tid : SV_DispatchThreadID)
         bool isStaticCache = isStaticTransform(insData);
         uint invalidationFlags = (isStaticCache ? VSM_STATIC_UNCACHED_FLAG : VSM_DYNAMIC_UNCACHED_FLAG) << VSM_PHYSICAL_PAGE_INVALIDATION_FLAGS_SHIFT;
 
-        FrustumCullData cullData = frustumCullBoxOrtho(
+        FrustumCullData cullData = frustumCullBox(
             insData.localCenter,
             insData.localExtent,
             -projData.worldCenter,
             insData.localToWorld,
-            projData.viewOriginToClip);
+            projData.viewOriginToClip,
+            isViewOrtho(projData));
         if (cullData.visiable) {
             int mipCount = (projData.clipmapCount <= 0) ? VSM_MAX_MIPS : 1;
             for (int mipLevel = 0; mipLevel < mipCount; mipLevel++) {
