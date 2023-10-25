@@ -1,5 +1,6 @@
 import qrenderdoc as qrd
 from PySide2 import QtWidgets, QtCore
+from .Core import *
 import struct as st
 import math
 from functools import partial
@@ -11,28 +12,6 @@ VSM_PHYSICAL_PAGE_ANY_MIP_VALID_FLAG = 0x8000000
 physPagesXY = (128, 32)
 physPageRowMask = physPagesXY[0] - 1
 physPageRowShift = int(math.log2(physPagesXY[0]))
-
-class ProcessProxy:
-	def __init__(self):
-		self.data = []
-		self.error = ''
-
-	def check(self, ctx):
-		if self.error:
-			ctx.Extensions().MessageDialog(self.error, "Error!~")
-			return False
-		return True
-
-def process_proxy(func):
-	def wrapper(proxy, ctrl):
-		try:
-			func(proxy.data, ctrl)
-		except:
-			import traceback
-
-			proxy.error = "VSM debug fail\n%s" % traceback.format_exc()
-
-	return wrapper
 
 def calcLevelOffsets(Level : int):
 	NumBits = Level << 1
@@ -97,7 +76,7 @@ def decodePhysPage(bytes, offset):
 	data.flags, data.age, data.vPage, data.vsmID = st.unpack_from('IIII', bytes, offset)
 	return data
 
-class VSMWindow(qrd.CaptureViewer):
+class VSMWindow(BaseWindow):
 	FORMAT = 0
 	BUF_NAME = 1
 	TABLE_BUF_NAME = 2
@@ -105,37 +84,16 @@ class VSMWindow(qrd.CaptureViewer):
 	PHYS_PAGE_NAME = 4
 	NUM = 5
 	def __init__(self, ctx: qrd.CaptureContext, closeCallback):
-		super().__init__()
-
-		def addTextBox(name, key):
-			horBox = self.mqt.CreateHorizontalContainer()
-			self.mqt.AddWidget(self.vertBox, horBox)
-			label = self.mqt.CreateLabel()
-			self.mqt.SetWidgetText(label, name)
-			self.mqt.AddWidget(horBox, label)
-			textBox = self.mqt.CreateTextBox(True, partial(self._qt_setValue, key))
-			self.mqt.AddWidget(horBox, textBox)
-		
-		def addButton(name, func):
-			button = self.mqt.CreateButton(lambda c, w, t: func())
-			self.mqt.SetWidgetText(button, name)
-			self.mqt.AddWidget(self.vertBox, button)
-		
-		self.mqt : qrd.MiniQtHelper = ctx.Extensions().GetMiniQtHelper()
-		self.ctx = ctx
-		self.topWindow = self.mqt.CreateToplevelWidget("VSM", closeCallback)
+		super().__init__("VSM", ctx, closeCallback)
 
 		self.values = ['' for _ in range(VSMWindow.NUM) ]
 
-		self.vertBox = self.mqt.CreateVerticalContainer()
-		self.mqt.AddWidget(self.topWindow, self.vertBox)
-
-		addTextBox('Buffer', VSMWindow.BUF_NAME)
-		addTextBox('Format', VSMWindow.FORMAT)
-		addTextBox('TableBuffer', VSMWindow.TABLE_BUF_NAME)
-		addTextBox('PhysPageBuffer', VSMWindow.PHYS_PAGE_NAME)
-		addTextBox('DebugClipPos [X] [Y]', VSMWindow.DEBUG_PIXEL_NAME)
-		addButton('SetDebugPixel', self.setDebugPixel)
+		self.addTextBox('Buffer', VSMWindow.BUF_NAME)
+		self.addTextBox('Format', VSMWindow.FORMAT)
+		self.addTextBox('TableBuffer', VSMWindow.TABLE_BUF_NAME)
+		self.addTextBox('PhysPageBuffer', VSMWindow.PHYS_PAGE_NAME)
+		self.addTextBox('DebugClipPos [X] [Y]', VSMWindow.DEBUG_PIXEL_NAME)
+		self.addButton('SetDebugPixel', self.setDebugPixel)
 
 		self.debugPixelLabel = self.mqt.CreateLabel()
 		self.mqt.SetWidgetText(self.debugPixelLabel, 'DebugPixel:')
@@ -144,68 +102,17 @@ class VSMWindow(qrd.CaptureViewer):
 		self.mqt.SetWidgetText(debugPixelButton, 'UpdateDebugPixel')
 		self.mqt.AddWidget(self.vertBox, debugPixelButton)
 
-		addButton('FilterBuffer', self.filterBuffer)
-		addButton('MapPageFromFilterBuffer', self.mapPage)
-		addButton('ShowPage', self.showPage)
-		addButton('ShowPhysPage', self.showPhysPage)
+		self.addButton('FilterBuffer', self.filterBuffer)
+		self.addButton('MapPageFromFilterBuffer', self.mapPage)
+		self.addButton('ShowPage', self.showPage)
+		self.addButton('ShowPhysPage', self.showPhysPage)
 
 		self.tableView = QtWidgets.QTableWidget()
 		self.mqt.AddWidget(self.vertBox, self.tableView)
 
 		ctx.AddCaptureViewer(self)
 	
-	def error_log(func):
-		def wrapper(self):
-			manager = self.ctx.Extensions()
-			try:
-				func(self)
-			except:
-				import traceback
-
-				manager.MessageDialog("VSM debug fail\n%s" % traceback.format_exc(), "Error!~")
-
-		return wrapper
-
-	@error_log
-	def showAsDialog(self):
-		self.mqt.ShowWidgetAsDialog(self.topWindow)
-	
-	@error_log
-	def showAsDock(self):
-		self.ctx.AddDockWindow(self.topWindow, qrd.DockReference.MainToolArea, None)
-		self.ctx.RaiseDockWindow(self.topWindow)
-	
-	def __getitem__(self, index):
-		return self.values[index]
-	
-	def __setitem__(self, index, value):
-		self.values[index] = value
-	
-	def _qt_setValue(self, key, c, w, v):
-		self[key] = v
-
-	def getBuf(self, name):
-		for buf in self.ctx.GetBuffers():
-			if self.ctx.GetResourceName(buf.resourceId) == name:
-				return buf
-	
-	def showInTable(self, headers, data):
-		self.tableView.clear()
-		rows = len(data)
-		cols = len(headers)
-		self.tableView.setRowCount(rows)
-		self.tableView.setColumnCount(cols)
-		h = 0
-		for header in headers:
-			self.tableView.setHorizontalHeaderItem(h, QtWidgets.QTableWidgetItem(header))
-			h += 1
-		row = 0
-		for d in data:
-			for col in range(cols):
-				self.tableView.setItem(row, col, QtWidgets.QTableWidgetItem(str(d[col])))
-			row += 1
-	
-	@error_log
+	@BaseWindow.error_log
 	def filterBuffer(self):
 		@process_proxy
 		def process(data, ctrl):
@@ -222,7 +129,7 @@ class VSMWindow(qrd.CaptureViewer):
 		if proxy.check(self.ctx):
 			self.showInTable(['Value'], proxy.data)
 	
-	@error_log
+	@BaseWindow.error_log
 	def mapPage(self):
 		@process_proxy
 		def process(data, ctrl):
@@ -246,7 +153,7 @@ class VSMWindow(qrd.CaptureViewer):
 		if proxy.check(self.ctx):
 			self.showInTable(['VPage', 'VSMID', 'Mip', 'Address', 'PPage', 'LodOffset', 'AnyLODValid', 'ThisLODValid'], proxy.data)
 	
-	@error_log
+	@BaseWindow.error_log
 	def showPage(self):
 		@process_proxy
 		def process(data, ctrl):
@@ -265,7 +172,7 @@ class VSMWindow(qrd.CaptureViewer):
 		if proxy.check(self.ctx):
 			self.showInTable(['PPage', 'Mip', 'AnyLODValid', 'ThisLODValid'], proxy.data)
 	
-	@error_log
+	@BaseWindow.error_log
 	def showPhysPage(self):
 		@process_proxy
 		def process(data, ctrl):
@@ -302,7 +209,7 @@ class VSMWindow(qrd.CaptureViewer):
 	# 	trace.constantBlocks = binding.constantBlocks
 	# 	self.ctx.DebugShader(binding, reflection, shader.GetGraphicsPipelineObject())
 
-	@error_log
+	@BaseWindow.error_log
 	def setDebugPixel(self):
 		viewer = self.ctx.GetTextureViewer()
 		if viewer is None:
@@ -323,7 +230,7 @@ class VSMWindow(qrd.CaptureViewer):
 		y = (y / w * 0.5 + 0.5) * 16384
 		viewer.GotoLocation(int(x), int(y))
 
-	@error_log
+	@BaseWindow.error_log
 	def updateDebugPixel(self):
 		viewer = self.ctx.GetTextureViewer()
 		if viewer is None:

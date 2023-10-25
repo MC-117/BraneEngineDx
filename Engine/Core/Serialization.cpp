@@ -519,6 +519,8 @@ SerializationInfoParser::TokenType SerializationInfoParser::getToken()
 			{
 				if (c == '.' && isfloat == 0)
 					isfloat = 1;
+				else if (c == 'e' && isfloat == 0)
+					isfloat = 2;
 				else if (c == 'e' && isfloat == 1)
 					isfloat = 2;
 				else if (c == '+' && isfloat == 2)

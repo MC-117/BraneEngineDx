@@ -32,7 +32,7 @@ EnvLightData getEnvLightData(uint probeIndex)
     data.shDataOffset = asint(value4.z);
     [unroll]
     for (int i = 0; i < 7; i++)
-	    data.v[i] = envLightSHDatas[data.shDataOffset + i];
+	    data.v[i] = envLightSHDatas[data.shDataOffset * 7 + i];
     return data;
 }
 
