@@ -25,6 +25,7 @@ class EngineModule(Module):
         self.moduleDependencies = [
             'Assimp',
             'ImGui',
+            'ImPlot',
             'Live2DCubism',
             'MemTracer',
             'NvCloth',
