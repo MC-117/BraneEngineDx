@@ -7,6 +7,7 @@
 #include "GUI.h"
 #include "GUIUtility.h"
 #include "../Script/PythonManager.h"
+#include "../Profile/RenderProfile.h"
 
 ConsoleWindow::ConsoleWindow(Object & object, string name, bool defaultShow) : UIWindow(object, name, defaultShow)
 {
@@ -95,6 +96,46 @@ void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
 							(ImU32)ImColor(255, 255, 255) };
 					}, (void*)&pdata, b->second.times.size(), 0, { 0, 40 });
 					delete[] avgs;
+				}
+			}
+			if (ImGui::CollapsingHeader("RenderProfile"))
+			{
+				RenderDurationProfiler& profiler = RenderDurationProfiler::GInstance();
+				ImGui::BeginDisabled(profiler.isRecording());
+				if (ImGui::Button("CaptureRenderFrame"))
+				{
+					profiler.setCapture();
+					ImPlot::SetNextAxisToFit(ImAxis_X1);
+				}
+				ImGui::EndDisabled();
+				ImGui::SameLine();
+				if (profiler.isRecording())
+				{
+					if (ImGui::Button(ICON_FA_PAUSE" RecordRenderFrame"))
+					{
+						profiler.stopRecording();
+					}
+				}
+				else
+				{
+					if (ImGui::Button(ICON_FA_PLAY" RecordRenderFrame"))
+					{
+						profiler.startRecording();
+						ImPlot::SetNextAxisToFit(ImAxis_X1);
+					}
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("ClearRenderFrame"))
+				{
+					profiler.clearCapture();
+				}
+				const RenderDurationFrame& frame = RenderDurationProfiler::GInstance().getDurationFrame();
+				ImPlot::ImPlotRenderFrameProfileContext context;
+				if (ImPlot::BeginPlotRenderFrameProfile(context, "RenderFrameGraph", (frame.getMaxDepth() + 1) * 2,
+					{ -1, -1 }, ImPlotFlags_NoTitle | ImPlotFlags_NoLegend | ImPlotFlags_NoMenus))
+				{
+					ImPlot::PlotRenderFrameProfile(context, "RenderFrame", frame);
+					ImPlot::EndPlotRenderFrameProfile();
 				}
 			}
 			ImGui::EndChild();

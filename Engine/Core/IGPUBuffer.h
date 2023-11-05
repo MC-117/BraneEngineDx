@@ -2,7 +2,6 @@
 #ifndef _IGPUBUFFER_H_
 #define _IGPUBUFFER_H_
 
-#include "Unit.h"
 #include "GraphicType.h"
 
 class ENGINE_API IBufferBinding

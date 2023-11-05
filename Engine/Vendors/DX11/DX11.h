@@ -42,10 +42,13 @@ struct DX11Context
 	ComPtr<ID3D11InputLayout> skeletonMeshInputLayout = NULL;
 	ComPtr<ID3D11InputLayout> terrainInputLayout = NULL;
 
+	uint64_t gpuFrequency = 0;
+
 	void setHWnd(HWND hWnd);
 
 	bool createDevice(unsigned int width, unsigned int height);
 	void cleanupDevice();
+	void fetchGPUFrrequency();
 	void createRenderState();
 	void createInputLayout();
 	void cleanupRenderState();

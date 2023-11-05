@@ -21,6 +21,8 @@ struct DX12Context
 	static const int backBufferCount = 3;
 	int activeBackBufferIndex = 0;
 
+	uint64_t gpuFrequency = 0;
+
 	// DescHeap
 	/*DX12DescriptorHeap dynamicCSUViewDescHeap = DX12DescriptorHeap(50, false, true);
 	DX12DescriptorHeap dynamicSamplerDescHeap = DX12DescriptorHeap(50, false, true);*/
@@ -54,6 +56,7 @@ struct DX12Context
 	void setHWnd(HWND hWnd);
 	bool createDevice(unsigned int width, unsigned int height);
 	void cleanupDevice();
+	void fetchGPUFrrequency();
 	void createSwapChain(unsigned int width, unsigned int height, unsigned int multisampleLevels);
 
 	void executeCommandQueue();

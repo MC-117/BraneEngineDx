@@ -6,6 +6,7 @@
 #include "DX11RenderTarget.h"
 #include "DX11DeviceSurface.h"
 #include "DX11GPUBuffer.h"
+#include "DX11GPUQuery.h"
 #include "DX11MeshData.h"
 #include "DX11SkeletonMeshData.h"
 #include "DX11RenderExecution.h"

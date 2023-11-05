@@ -74,7 +74,7 @@ Time::operator __int64() const
 
 Time Time::now()
 {
-	return chrono::steady_clock::now();
+	return chrono::duration_cast<chrono::nanoseconds>(chrono::system_clock::now().time_since_epoch());
 }
 
 Time Time::duration()

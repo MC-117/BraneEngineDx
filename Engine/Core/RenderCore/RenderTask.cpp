@@ -2,6 +2,7 @@
 #include "CameraRenderData.h"
 #include "SceneRenderData.h"
 #include "../RenderTarget.h"
+#include "../Profile/RenderProfile.h"
 
 size_t RenderTask::Hasher::operator()(const RenderTask* t) const
 {
@@ -72,6 +73,7 @@ bool RenderTask::ExecutionOrder::operator()(const RenderTask& t0, const RenderTa
 
 void RenderTask::execute(RenderTaskParameter& parameter)
 {
+	RENDER_SCOPE(RenderTask)
 	IRenderContext& context = *parameter.renderContext;
 	RenderTaskContext& taskContext = *parameter.taskContext;
 	//Time t = Time::now();

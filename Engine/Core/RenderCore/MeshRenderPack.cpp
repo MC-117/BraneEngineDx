@@ -1,5 +1,7 @@
 #include "MeshRenderPack.h"
 #include "RenderCommandList.h"
+#include "../Profile/RenderProfile.h"
+#include "Core/Asset.h"
 
 MeshBatchDrawKey MeshRenderCommand::getMeshBatchDrawKey() const
 {
@@ -96,6 +98,7 @@ void MeshDataRenderPack::excute(IRenderContext& context, RenderTaskContext& task
 			unsigned int commandOffset = item->getDrawCommandOffset();
 			unsigned int commandEnd = commandOffset + item->getDrawCommandCount();
 			for (; commandOffset < commandEnd; commandOffset++) {
+				RENDER_DESC_SCOPE(DrawMesh, "Material(%s)", AssetInfo::getPath(materialData->material).c_str());
 				context.drawMeshIndirect(taskContext.batchDrawData.batchDrawCommandArray->getCommandBuffer(), sizeof(DrawElementsIndirectCommand) * commandOffset);
 			}
 		}

@@ -55,7 +55,7 @@ int LightRenderData::setLocalLight(Light* light)
 		data.position = pointLight->getPosition(WORLD);
 		data.intensity = pointLight->intensity;
 		data.color = toLinearColor(pointLight->color);
-		data.radius = pointLight->getRadius();
+		data.radius = pointLight->getRadius() * pointLight->getScale(WORLD).x();
 		data.vsmID = -1;
 		int lightID = pointLightProbeIndices.size();
 		pointLightProbeIndices.push_back(probeIndex);

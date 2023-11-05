@@ -156,6 +156,13 @@ enum CullType
 	Cull_Front
 };
 
+enum GPUQueryType
+{
+	GQT_Unknown,
+	GQT_Occlusion,
+	GQT_Timestamp
+};
+
 enum ShaderFeature
 {
 	Shader_Default		 = 0,

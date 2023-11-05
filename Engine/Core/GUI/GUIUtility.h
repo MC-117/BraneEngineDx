@@ -1,12 +1,14 @@
 #pragma once
 
 #include "../Config.h"
+#include "../Serialization.h"
 #include "../Utility/Curve.h"
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "../../ThirdParty/ImGui/imgui_internal.h"
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 #include "../../ThirdParty/ImGui/ImGuiIconHelp.h"
 #include "../../ThirdParty/ImGui/ImPlot/implot.h"
+#include "../../ThirdParty/ImGui/ImPlot/implot_internal.h"
 
 class Asset;
 class Object;

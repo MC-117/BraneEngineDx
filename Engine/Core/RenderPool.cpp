@@ -8,6 +8,7 @@
 #include "Profile/ProfileCore.h"
 #include "RenderGraph/ForwardRenderGraph.h"
 #include "RenderGraph/DeferredRenderGraph.h"
+#include "Profile/RenderProfile.h"
 
 RenderPool::RenderPool(Camera & defaultCamera)
 	: defaultCamera(defaultCamera), renderThread(renderThreadLoop, this)
@@ -194,8 +195,11 @@ void RenderPool::renderFence()
 void RenderPool::renderThreadMain()
 {
 	renderFence();
-	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
-	renderGraph->execute(context);
+	{
+		RENDER_SCOPE(Frame);
+		IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
+		renderGraph->execute(context);
+	}
 	ProfilerManager::instance().endFrame();
 	renderFrame = Time::frames();
 }

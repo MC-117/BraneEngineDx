@@ -5,6 +5,7 @@
 #include "ShaderStage.h"
 #include "IRenderTarget.h"
 #include "IGPUBuffer.h"
+#include "IGPUQuery.h"
 #include "SkeletonMeshData.h"
 #include "IRenderExecution.h"
 

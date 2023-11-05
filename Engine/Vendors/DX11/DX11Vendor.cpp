@@ -2,6 +2,7 @@
 #include "DX11Texture2D.h"
 #include "DX11DeviceSurface.h"
 #include "../../Core/Utility/RenderUtility.h"
+#include "../../Core/Profile/RenderDurationProfiler.h"
 #include "../imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 
@@ -116,6 +117,11 @@ LRESULT DX11Vendor::wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	return ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
 }
 
+uint64_t DX11Vendor::getGPUFrequency()
+{
+	return dxContext.gpuFrequency;
+}
+
 IRenderContext* DX11Vendor::getDefaultRenderContext()
 {
 	return &defaultRenderContext;
@@ -166,6 +172,11 @@ IRenderTarget* DX11Vendor::newRenderTarget(RenderTargetDesc& desc)
 IGPUBuffer* DX11Vendor::newGPUBuffer(GPUBufferDesc& desc)
 {
 	return new DX11GPUBuffer(dxContext, desc);
+}
+
+IGPUQuery* DX11Vendor::newGPUQuery(GPUQueryDesc& desc)
+{
+	return new DX11GPUQuery(dxContext, desc);
 }
 
 MeshPartDesc DX11Vendor::newMeshPart(unsigned int vertCount, unsigned int elementCount)

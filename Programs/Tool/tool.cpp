@@ -7,6 +7,22 @@
 #include "Core/Application.h"
 #include "Core/Importer/Importer.h"
 #include "Core/GUI/ShaderManagerWindow.h"
+#include "ImPlot/implot.h"
+
+class ImPlotWindow : public UIWindow
+{
+public:
+	ImPlotWindow(string name = "ImPlot", bool defaultShow = false)
+		: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
+	{
+		
+	}
+
+	virtual void render(GUIRenderInfo& info)
+	{
+		ImPlot::ShowDemoWindow(&show);
+	}
+};
 
 class ToolApplication : public EngineWindowApplication
 {
@@ -29,7 +45,8 @@ public:
 		toolShelf.registTool(*new ConsoleWindow(*Engine::getCurrentWorld()));
 		toolShelf.registTool(*new AnimationConverter());
 		toolShelf.registTool(*new TimelineWindow());
-		
+		toolShelf.registTool(*new ImPlotWindow());
+
 		gui.setMainControl(&toolShelf);
 		engine.setEngineLoop(*new GUIEngineLoop(gui));
 		Engine::get().getEngineLoop()->init();

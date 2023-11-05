@@ -88,6 +88,8 @@ bool DX12Context::createDevice(unsigned int width, unsigned int height)
 	resourceUploader.init(device);
 	resourceUploader.reset(activeBackBufferIndex);
 
+	fetchGPUFrrequency();
+
 	resetFrame();
 
     return true;
@@ -111,6 +113,12 @@ void DX12Context::cleanupDevice()
 	dx12Debug.Reset();
 	dx12Debug.Reset();
 	device.Reset();
+}
+
+void DX12Context::fetchGPUFrrequency()
+{
+	if (FAILED(commandQueue->GetTimestampFrequency(&gpuFrequency)))
+		throw runtime_error("GetTimestampFrequency failed");
 }
 
 void DX12Context::createSwapChain(unsigned int width, unsigned int height, unsigned int multisampleLevels)

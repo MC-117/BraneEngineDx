@@ -2,7 +2,7 @@
 #include "../RenderCore/DirectShadowRenderPack.h"
 #include "../Engine.h"
 #include "../Asset.h"
-#include "Core/Profile/ProfileCore.h"
+#include "Core/Profile/RenderProfile.h"
 
 DeferredSurfaceBuffer::DeferredSurfaceBuffer()
 	: gBufferA(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGB10A2_UF })
@@ -412,123 +412,142 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 		}
 	};
 
-	timer.reset();
+	{
+		RENDER_SCOPE(WaitGPU)
+		clearTexFrameBindings();
 
-	clearTexFrameBindings();
-
-	context.waitSignalCPU();
-	timer.record("WaitGPU");
-
-	renderDataCollector.upload();
-	timer.record("RenderDataUpload");
-
-	for (auto sceneData : sceneDatas) {
-		sceneData->upload();
-		sceneData->debugRenderData.initBuffer(context, false);
-	}
-	
-	timer.record("SceneDataUpload");
-
-	for (auto sceneData : sceneDatas) {
-		sceneData->executeViewCulling(context);
+		context.waitSignalCPU();
 	}
 
-	timer.record("SceneViewCulling");
+	{
+		RENDER_SCOPE(RenderDataUpload)
+		renderDataCollector.upload();
+	}
 
-	screenHitPass.execute(context);
-
-	timer.record("ScreenHit");
-
-	preDepthPass.execute(context);
-
-	timer.record("PreDepth");
-
-	buildProbeGridPass.execute(context);
-
-	timer.record("BuildProbeGrid");
-
-	geometryPass.execute(context);
-
-	timer.record("Base");
-	
-	// if (captureVSMTrigger)
-	// {
-	// 	ProfilerManager::instance().beginScope("VSM");
-	// }
-
-	if (VirtualShadowMapConfig::isEnable())
-		vsmDepthPass.execute(context);
-	else
-		shadowDepthPass.execute(context);
-
-	timer.record("ShadowDepth");
-
-	context.clearFrameBindings();
-
-	lightingPass.execute(context);
-
-	timer.record("Lighting");
-	
-	// if (captureVSMTrigger)
-	// {
-	// 	ProfilerManager::instance().endScope();
-	// 	captureVSMTrigger = false;
-	// }
-
-	clearTexFrameBindings();
-
-	hizPass.execute(context);
-
-	timer.record("HiZ");
-
-	genMipPass.execute(context);
-
-	timer.record("GenMip");
-
-	ssrPass.execute(context);
-
-	timer.record("SSR");
-
-	clearTexFrameBindings();
-
-	for (auto sceneData : sceneDatas) {
-		for (auto& cameraRenderData : sceneData->cameraRenderDatas) {
-			if (cameraRenderData->flags.has(CameraRender_DebugDraw))
-				sceneData->debugRenderData.debugDraw(context, *cameraRenderData);
+	{
+		RENDER_SCOPE(SceneDataUpload)
+		for (auto sceneData : sceneDatas) {
+			sceneData->upload();
+			sceneData->debugRenderData.initBuffer(context, false);
 		}
 	}
 
-	translucentPass.execute(context);
-
-	context.setGPUSignal();
-	context.clearFrameBindings();
-
-	timer.record("Transparent");
-
-	for (auto sceneData : sceneDatas) {
-		for (auto& cameraRenderData : sceneData->cameraRenderDatas)
-			context.resolveMultisampleFrame(cameraRenderData->surface.renderTarget->getVendorRenderTarget());
-		sceneData->reflectionProbeDataPack.cubeMapPool.refreshCubePool(context);
-		sceneData->envLightProbeDataPack.computeEnvLights(context);
+	{
+		RENDER_SCOPE(SceneViewCulling)
+		for (auto sceneData : sceneDatas) {
+			sceneData->executeViewCulling(context);
+		}
 	}
 
-	timer.record("SceneFetch");
+	{
+		RENDER_SCOPE(ScreenHit)
+		screenHitPass.execute(context);
+	}
 
-	for (auto pass : passes)
-		pass->execute(context);
-	blitPass.execute(context);
+	{
+		RENDER_SCOPE(PreDepth)
+		preDepthPass.execute(context);
+	}
 
-	timer.record("PostProcess");
+	{
+		RENDER_SCOPE(BuildProbeGrid)
+		buildProbeGridPass.execute(context);
+	}
 
-	imGuiPass.execute(context);
+	{
+		RENDER_SCOPE(Base)
+		geometryPass.execute(context);
+	}
 
-	timer.record("ImGui");
+	{
+		RENDER_SCOPE(ShadowDepth)
+		// if (captureVSMTrigger)
+		// {
+		// 	ProfilerManager::instance().beginScope("VSM");
+		// }
 
-	Engine::getMainDeviceSurface()->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
+		if (VirtualShadowMapConfig::isEnable())
+			vsmDepthPass.execute(context);
+		else
+			shadowDepthPass.execute(context);
+	}
 
-	timer.record("Swap");
+	{
+		RENDER_SCOPE(Lighting)
+		context.clearFrameBindings();
 
-	Console::getTimer("RenderGraph") = timer;
+		lightingPass.execute(context);
+	}
+
+	{
+		RENDER_SCOPE(HiZ)
+		// if (captureVSMTrigger)
+		// {
+		// 	ProfilerManager::instance().endScope();
+		// 	captureVSMTrigger = false;
+		// }
+
+		clearTexFrameBindings();
+
+		hizPass.execute(context);
+	}
+
+	{
+		RENDER_SCOPE(GenMip)
+		genMipPass.execute(context);
+	}
+
+	{
+		RENDER_SCOPE(SSR)
+		ssrPass.execute(context);
+	}
+
+	{
+		RENDER_SCOPE(DebugDraw)
+		clearTexFrameBindings();
+
+		for (auto sceneData : sceneDatas) {
+			for (auto& cameraRenderData : sceneData->cameraRenderDatas) {
+				if (cameraRenderData->flags.has(CameraRender_DebugDraw))
+					sceneData->debugRenderData.debugDraw(context, *cameraRenderData);
+			}
+		}
+	}
+
+	{
+		RENDER_SCOPE(Transparent)
+		translucentPass.execute(context);
+
+		context.setGPUSignal();
+		context.clearFrameBindings();
+	}
+
+	{
+		RENDER_SCOPE(SceneFetch)
+		for (auto sceneData : sceneDatas) {
+			for (auto& cameraRenderData : sceneData->cameraRenderDatas)
+				context.resolveMultisampleFrame(cameraRenderData->surface.renderTarget->getVendorRenderTarget());
+			sceneData->reflectionProbeDataPack.cubeMapPool.refreshCubePool(context);
+			sceneData->envLightProbeDataPack.computeEnvLights(context);
+		}
+	}
+
+	{
+		RENDER_SCOPE(PostProcess)
+		for (auto pass : passes)
+			pass->execute(context);
+		blitPass.execute(context);
+	}
+
+	{
+		RENDER_SCOPE(ImGui)
+		imGuiPass.execute(context);
+	}
+
+	{
+		RENDER_SCOPE(Swap)
+		Engine::getMainDeviceSurface()->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
+	}
 }
 
 void DeferredRenderGraph::reset()

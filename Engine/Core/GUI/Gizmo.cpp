@@ -1137,6 +1137,8 @@ void Gizmo::onRender2D()
 
 void Gizmo::onRender3D(RenderInfo& info)
 {
+	if (info.sceneData == NULL || info.camera == NULL || info.renderGraph == NULL)
+		return;
 	info.sceneData->debugRenderData.updateLineData = std::move(lines);
 	ViewCulledMeshBatchDrawData batchDrawData = info.sceneData->getViewCulledBatchDrawData(info.camera->getRender(), false);
 	

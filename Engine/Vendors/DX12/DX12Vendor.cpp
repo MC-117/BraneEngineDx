@@ -94,6 +94,11 @@ LRESULT DX12Vendor::wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	return ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
 }
 
+uint64_t DX12Vendor::getGPUFrequency()
+{
+	return dxContext.gpuFrequency;
+}
+
 IRenderContext* DX12Vendor::getDefaultRenderContext()
 {
 	throw runtime_error("Not Implemented");
@@ -140,6 +145,12 @@ IRenderTarget* DX12Vendor::newRenderTarget(RenderTargetDesc& desc)
 IGPUBuffer* DX12Vendor::newGPUBuffer(GPUBufferDesc& desc)
 {
 	return new DX12GPUBuffer(dxContext, desc);
+}
+
+IGPUQuery* DX12Vendor::newGPUQuery(GPUQueryDesc& desc)
+{
+	throw runtime_error("Not Implemented");
+	return nullptr;
 }
 
 MeshPartDesc DX12Vendor::newMeshPart(unsigned int vertCount, unsigned int elementCount)

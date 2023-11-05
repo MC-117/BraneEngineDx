@@ -1,6 +1,8 @@
 #include "DX12GPUBuffer.h"
 #include "../DXGI_Helper.h"
 
+#ifdef VENDOR_USE_DX12
+
 DX12GPUBuffer::DX12GPUBuffer(DX12Context& context, GPUBufferDesc& desc)
     : dxContext(context), IGPUBuffer(desc)
 {
@@ -316,3 +318,5 @@ void DX12GPUBuffer::uploadInternal(int backBufferIndex, unsigned int first, unsi
 	DX12SubBuffer*& dx12Buffer = dx12Buffers[dxContext.activeBackBufferIndex];
 	dx12Buffer->upload(data, size * desc.cellSize, first * desc.cellSize);
 }
+
+#endif

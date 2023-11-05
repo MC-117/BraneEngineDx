@@ -215,7 +215,7 @@ namespace ImGui {
 		}
 		textPos.y = min_p.y + (max_p.y - min_p.y - textSize.y) * 0.5f;
 
-		drawList->PushClipRect(min_p, max_p);
+		drawList->PushClipRect(min_p, max_p, true);
 		drawList->AddText(textPos, col, text);
 		drawList->PopClipRect();
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "../../Core/Config.h"
 #include "../../Core/IGPUBuffer.h"
 
 #ifdef VENDOR_USE_DX12

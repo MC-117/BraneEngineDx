@@ -6,6 +6,7 @@ class ENGINE_API IProfiler
 {
 public:
 	IProfiler();
+	virtual ~IProfiler() = default;
 
 	virtual bool init() = 0;
 	virtual bool release() = 0;

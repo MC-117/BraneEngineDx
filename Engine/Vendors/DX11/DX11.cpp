@@ -40,6 +40,8 @@ bool DX11Context::createDevice(unsigned int width, unsigned int height)
 	createRenderState();
 	createInputLayout();
 
+	fetchGPUFrrequency();
+
 	return true;
 }
 
@@ -62,6 +64,46 @@ void DX11Context::cleanupDevice()
 	if (device) {
 		device.Reset();
 	}
+}
+
+void DX11Context::fetchGPUFrrequency()
+{
+	D3D11_QUERY_DESC queryDesc;
+	queryDesc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
+	queryDesc.MiscFlags = 0;
+	ComPtr<ID3D11Query> freqQuery;
+	device->CreateQuery(&queryDesc, freqQuery.GetAddressOf());
+	int tryCount = 0;
+	bool isSuccessed = false;
+	D3D11_QUERY_DATA_TIMESTAMP_DISJOINT freqQueryData;
+	while (!isSuccessed && tryCount < 10)
+	{
+		deviceContext->Begin(freqQuery.Get());
+		deviceContext->End(freqQuery.Get());
+
+		freqQueryData.Frequency = 0;
+		freqQueryData.Disjoint = 0;
+		const Time startTime = Time::now();
+		do {
+			this_thread::sleep_for(5ms);
+			if (SUCCEEDED(deviceContext->GetData(freqQuery.Get(), &freqQueryData, sizeof(freqQueryData), 0)))
+			{
+				if (freqQueryData.Disjoint)
+				{
+					isSuccessed = true;
+					break;
+				}
+			}
+		}
+		while ((Time::now() - startTime) < 0.5s);
+
+		tryCount++;
+	}
+
+	if (freqQueryData.Frequency == 0)
+		throw runtime_error("Fetch gpu frequency failed");
+
+	gpuFrequency = freqQueryData.Frequency;
 }
 
 void DX11Context::createRenderState()

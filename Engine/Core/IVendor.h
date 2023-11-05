@@ -80,6 +80,8 @@ public:
 
 	virtual LRESULT wndProcFunc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+	virtual uint64_t getGPUFrequency() = 0;
+
 	virtual IRenderContext* getDefaultRenderContext() = 0;
 	virtual IRenderContext* newRenderContext() = 0;
 
@@ -90,6 +92,7 @@ public:
 	virtual IMaterial* newMaterial(MaterialDesc& desc) = 0;
 	virtual IRenderTarget* newRenderTarget(RenderTargetDesc& desc) = 0;
 	virtual IGPUBuffer* newGPUBuffer(GPUBufferDesc& desc) = 0;
+	virtual IGPUQuery* newGPUQuery(GPUQueryDesc& desc) = 0;
 	virtual MeshPartDesc newMeshPart(unsigned int vertCount, unsigned int elementCount) = 0;
 	virtual SkeletonMeshPartDesc newSkeletonMeshPart(unsigned int vertCount, unsigned int elementCount,
 		unsigned int boneCount, unsigned int morphVertCount, unsigned int morphCount) = 0;
