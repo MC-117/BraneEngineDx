@@ -562,6 +562,7 @@
     <ClCompile Include="Core/Editor/ProbeSystem/CaptureProbeRenderEditor.cpp" />
     <ClCompile Include="Core/Bone.cpp" />
     <ClCompile Include="Core/Editor/ProbeSystem/CaptureProbeEditor.cpp" />
+    <ClCompile Include="Core\ITexture.cpp" />
     <ClCompile Include="Live2D/Live2DCamera.cpp" />
     <ClCompile Include="Tool/ToolShelf.cpp" />
     <ClCompile Include="Core/GUI/AnimationDataWindow.cpp" />

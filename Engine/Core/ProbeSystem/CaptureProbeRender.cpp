@@ -21,9 +21,14 @@ Vector3f CaptureProbeRender::getWorldPosition() const
 	return bound.getCenter();
 }
 
-void CaptureProbeRender::setWorldPosition(const Vector3f& position)
+float CaptureProbeRender::getWorldScale() const
 {
-	float radius = getRadius();
+	return getWorldRadius() / getRadius();
+}
+
+void CaptureProbeRender::setWorldPositionAndScale(const Vector3f& position, float scale)
+{
+	float radius = getRadius() * scale;
 	Vector3f radiusVector = { radius, radius, radius };
 	bound.minPoint = position - radiusVector;
 	bound.maxPoint = position + radiusVector;
@@ -31,11 +36,28 @@ void CaptureProbeRender::setWorldPosition(const Vector3f& position)
 
 float CaptureProbeRender::getRadius() const
 {
+	return localRadius;
+}
+
+float CaptureProbeRender::getWorldRadius() const
+{
 	return (bound.maxPoint.x() - bound.minPoint.x()) * 0.5f;
 }
 
 void CaptureProbeRender::setRadius(float radius)
 {
+	float scale = getWorldScale();
+	localRadius = radius;
+	radius *= scale;
+	Vector3f position = bound.getCenter();
+	Vector3f radiusVector = { radius, radius, radius };
+	bound.minPoint = position - radiusVector;
+	bound.maxPoint = position + radiusVector;
+}
+
+void CaptureProbeRender::setWorldRadius(float radius)
+{
+	localRadius = radius / getWorldScale();
 	Vector3f position = bound.getCenter();
 	Vector3f radiusVector = { radius, radius, radius };
 	bound.minPoint = position - radiusVector;

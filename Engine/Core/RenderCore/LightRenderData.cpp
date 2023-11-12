@@ -84,6 +84,11 @@ int LightRenderData::getLocalLightCount() const
 	return pointLightProbeIndices.size();
 }
 
+int LightRenderData::getProbeIndexByLocalLightIndex(int localLightIndex) const
+{
+	return pointLightProbeIndices[localLightIndex];
+}
+
 LocalLightData& LightRenderData::getLocalLightData(int localLightIndex)
 {
 	return probePool.getProbeByteData(pointLightProbeIndices[localLightIndex]).localLightData;

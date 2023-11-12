@@ -26,6 +26,9 @@ public:
 	virtual bool isMainCameraRender() const;
 	virtual void setMainCameraRender();
 
+	void setCameraRenderFlags(Enum<CameraRenderFlags> flags);
+	Enum<CameraRenderFlags> getCameraRenderFlags() const;
+
 	virtual void createDefaultPostProcessGraph();
 
 	virtual void triggerScreenHit(const Vector2u& hitPosition);
@@ -43,12 +46,15 @@ public:
 	virtual void render(RenderInfo& info);
 
 	CameraRenderData* getRenderData();
+	void setDebugProbeIndex(int probeIndex);
 
 	static CameraRender* getMainCameraRender();
 protected:
 	static int cameraRenderNextID;
 	static CameraRender* mainCameraRender;
 	int cameraRenderID = 0;
+	int debugProbeIndex = -1;
+	Enum<CameraRenderFlags> flags;
 	CameraRenderData* renderData = NULL;
 	Texture2D* internalTexture = NULL;
 	RenderTarget* internalRenderTarget = NULL;

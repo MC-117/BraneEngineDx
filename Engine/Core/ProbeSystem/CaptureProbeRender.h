@@ -8,6 +8,7 @@ class ENGINE_API CaptureProbeRender : public Serializable, public Render
 public:
 	Serialize(CaptureProbeRender,);
 
+	float localRadius = 0;
 	BoundBox bound;
 	int resolution = 128;
 
@@ -17,9 +18,12 @@ public:
 	virtual void setProbeCubeMap(TextureCube* probeCubeMap);
 	virtual BoundBox getWorldBound() const;
 	virtual Vector3f getWorldPosition() const;
-	virtual void setWorldPosition(const Vector3f& position);
+	virtual float getWorldScale() const;
+	virtual void setWorldPositionAndScale(const Vector3f& position, float scale);
 	virtual float getRadius() const;
+	virtual float getWorldRadius() const;
 	virtual void setRadius(float radius);
+	virtual void setWorldRadius(float radius);
 	virtual int getResolution() const;
 	virtual void setResolution(int resolution);
 	virtual void updateCapture();

@@ -21,13 +21,24 @@ float PointLight::getRadius() const
 	return boundShape.getRadius();
 }
 
+int PointLight::getLocalLightIndex() const
+{
+	return localLightIndex;
+}
+
+int PointLight::getProbeIndex() const
+{
+	return probeIndex;
+}
+
 void PointLight::preRender(PreRenderInfo& info)
 {
 }
 
 void PointLight::render(RenderInfo & info)
 {
-	int localLightIndex = info.sceneData->setLocalLight(this);
+	localLightIndex = info.sceneData->setLocalLight(this);
+	probeIndex = info.sceneData->lightDataPack.getProbeIndexByLocalLightIndex(localLightIndex);
 	if (VirtualShadowMapConfig::isEnable()) {
 		virtualShadowMapLightEntry = info.sceneData->virtualShadowMapRenderData.newLocalLightShadow(
 			localLightIndex, index);

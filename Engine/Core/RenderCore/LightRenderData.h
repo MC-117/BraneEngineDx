@@ -43,6 +43,7 @@ struct LightRenderData : public IRenderData
 	void addVirtualShadowMapLocalShadow(VirtualShadowMapLightEntry& localShadow);
 
 	int getLocalLightCount() const;
+	int getProbeIndexByLocalLightIndex(int localLightIndex) const;
 	LocalLightData& getLocalLightData(int localLightIndex);
 	const LocalLightData& getLocalLightData(int localLightIndex) const;
 

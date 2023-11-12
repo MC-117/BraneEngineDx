@@ -23,6 +23,8 @@ protected:
 	{
 		Engine::engineConfig.configInfo.get("probeGrid.probeGridPixels", (int&)ProbeGridConfig::instance().probeGridPixels);
 		Engine::engineConfig.configInfo.get("probeGrid.probeGridZSlices", (int&)ProbeGridConfig::instance().probeGridZSlices);
+		Engine::engineConfig.configInfo.get("probeGrid.probeMaxCountPerCell", (int&)ProbeGridConfig::instance().probeMaxCountPerCell);
+		Engine::engineConfig.configInfo.get("probeGrid.nearOffsetScale", ProbeGridConfig::instance().nearOffsetScale);
 		return true;
 	}
 
@@ -34,7 +36,7 @@ protected:
 
 ProbeGridConfigInitializer ProbeGridConfigInitializer::instance;
 
-Vector3f GetLightGridZParams(float NearPlane, float FarPlane, unsigned int lightGridSizeZ)
+Vector3f GetLightGridZParams(float NearPlane, float FarPlane, unsigned int lightGridSizeZ, float nearOffsetScale)
 {
 	// S = distribution scale
 	// B, O are solved for given the z distances of the first+last slice, and the # of slices.
@@ -42,7 +44,7 @@ Vector3f GetLightGridZParams(float NearPlane, float FarPlane, unsigned int light
 	// slice = log2(z*B + O) * S
 
 	// Don't spend lots of resolution right in front of the near plane
-	double NearOffset = .095 * 100;
+	double NearOffset = .095 * nearOffsetScale;
 	// Space out the slices so they aren't all clustered at the near plane
 	double S = 4.05;
 
@@ -55,16 +57,21 @@ Vector3f GetLightGridZParams(float NearPlane, float FarPlane, unsigned int light
 	return Vector3f(B, O, S);
 }
 
-void ProbeGridInfo::init(int width, int height, float zNear, float zFar, int probeCount)
+ProbeGridInfo::ProbeGridInfo()
+	: debugProbeIndex(-1)
+{
+}
+
+void ProbeGridInfo::init(int width, int height, float zNear, float zFar, const ProbePoolRenderData& probePool)
 {
 	ProbeGridConfig& config = ProbeGridConfig::instance();
 	probeGridSize.x() = ceil(width / (float)config.probeGridPixels);
 	probeGridSize.y() = ceil(height / (float)config.probeGridPixels);
 	probeGridSize.z() = config.probeGridZSlices;
 	probeGridPixelSizeShift = floor(log2((float)config.probeGridPixels));
-	probeGridZParams = GetLightGridZParams(zNear, zFar + 10.0f, config.probeGridZSlices);
+	probeGridZParams = GetLightGridZParams(zNear, zFar + 10.0f, config.probeGridZSlices, config.nearOffsetScale);
 	probeByteWidth = ProbeByteSize;
-	this->probeCount = probeCount;
+	probeCount = probePool.getProbeCount();
 	probeGridCellCount = probeGridSize.x() * probeGridSize.y() * probeGridSize.z();
 	probeMaxCountPerCell = config.probeMaxCountPerCell;
 	probeMaxLinkListLength = probeGridCellCount * probeMaxCountPerCell * ProbeType::ProbeType_Count;

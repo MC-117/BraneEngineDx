@@ -19,9 +19,9 @@ void EnvLightCaptureProbeRender::setLightCubeMap(TextureCube* lightCubeMap)
 	this->lightCubeMap = lightCubeMap;
 }
 
-void EnvLightCaptureProbeRender::setWorldPosition(const Vector3f& position)
+void EnvLightCaptureProbeRender::setWorldPositionAndScale(const Vector3f& position, float scale)
 {
-	CaptureProbeRender::setWorldPosition(position);
+	CaptureProbeRender::setWorldPositionAndScale(position, scale);
 	sceneCaptureCube.worldPosition = position;
 }
 

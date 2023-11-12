@@ -1,4 +1,7 @@
 #include "TextureUtility.h"
+#define STBI_MALLOC(sz)           ((void*)mallocTexture(sz))
+#define STBI_REALLOC(p,newsz)     ((void*)reallocTexture((unsigned char*)(p),newsz))
+#define STBI_FREE(p)              freeTexture(p)
 #define STBI_WINDOWS_UTF8
 #define __STDC_LIB_EXT1__
 #define STB_IMAGE_IMPLEMENTATION
@@ -32,6 +35,21 @@ bool MipFileHeader::isValid() const
 	}
 }
 
+unsigned char* mallocTexture(size_t size)
+{
+	return (unsigned char*)malloc(size);
+}
+
+unsigned char* reallocTexture(unsigned char* data, size_t size)
+{
+	return (unsigned char*)realloc(data, size);
+}
+
+void freeTexture(void* data)
+{
+	free(data);
+}
+
 unsigned char* rgb2rgba(unsigned char* data, unsigned char* dst, unsigned int pixles, bool discard)
 {
 	int size = pixles * 4;
@@ -40,7 +58,7 @@ unsigned char* rgb2rgba(unsigned char* data, unsigned char* dst, unsigned int pi
 		bp[3] = 255;
 	}
 	if (discard)
-		delete[] data;
+		freeTexture(data);
 	return dst;
 }
 
@@ -62,10 +80,10 @@ unsigned char* loadMip(const string& file, MipFileHeader& header, vector<pair<in
 		psize += size.first * size.second;
 	}
 	psize *= (header.channel == 3 ? 4 : header.channel);
-	unsigned char* data = new unsigned char[psize];
+	unsigned char* data = mallocTexture(psize);
 	unsigned char* temp = NULL;
 	if (header.channel == 3)
-		temp = new unsigned char[mips.front().first * mips.front().second * 3];
+		temp = mallocTexture(mips.front().first * mips.front().second * 3);
 	int pos = 0;
 	for (int i = 0; i < header.count; i++) {
 		int ps = mips[i].first * mips[i].second;
@@ -81,7 +99,7 @@ unsigned char* loadMip(const string& file, MipFileHeader& header, vector<pair<in
 	iff.close();
 	if (header.channel == 3) {
 		header.channel = 4;
-		delete[] temp;
+		freeTexture(temp);
 	}
 	return data;
 }

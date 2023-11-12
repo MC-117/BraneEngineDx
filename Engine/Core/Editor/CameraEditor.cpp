@@ -70,6 +70,10 @@ void CameraEditor::onCameraGUI(EditorInfo& info)
 			world.switchCamera(*camera);
 	ImGui::Checkbox("EditorControl", &gizmoCameraInfo.canControlledByEditor);
 	ImGui::DragFloat("EditorSpeed", &gizmoCameraInfo.speedInEditor, 0.01f, 0, 128);
+	Enum<CameraRenderFlags> flags = camera->cameraRender.getCameraRenderFlags();
+	bool debugDraw = flags.has(CameraRender_DebugDraw);
+	ImGui::Checkbox("DebugDraw", &debugDraw);
+	camera->cameraRender.setCameraRenderFlags(debugDraw ? (flags.enumValue | CameraRender_DebugDraw) : (flags.enumValue & ~CameraRender_DebugDraw));
 	float fov = camera->fov;
 	if (ImGui::DragFloat("FOV", &fov, 0.1, 0, 180)) {
 		camera->fov = fov;

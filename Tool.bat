@@ -1,2 +1,2 @@
 @echo off
-"./Binaries/Win64/Release/Tool/Tool.exe" Resource
+start /B "./Binaries/Win64/Release/Tool/Tool.exe" Resource

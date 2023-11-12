@@ -67,6 +67,7 @@ struct TextureDesc
 	unsigned long long textureHandle = 0;
 	int width = 0, height = 0, channel = 0, arrayCount = 1;
 	bool needUpdate = false;
+	string name;
 };
 
 class ENGINE_API ITexture
@@ -96,7 +97,11 @@ struct Texture2DDesc : public TextureDesc
 	unsigned int mipLevel = 1;
 	bool autoGenMip = true;
 	bool externalData = false;
+	bool hasAssetData = false;
 	unsigned int bindType = 0;
+
+	bool hasOwnedSourceData() const;
+	bool canReleaseAssetData() const;
 };
 
 class ENGINE_API ITexture2D : public ITexture

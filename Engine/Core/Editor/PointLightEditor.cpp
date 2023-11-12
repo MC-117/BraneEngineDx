@@ -1,5 +1,6 @@
 #include "PointLightEditor.h"
 #include "../GUI/GizmoUltility.h"
+#include "Core/Camera.h"
 
 RegistEditor(PointLight);
 
@@ -29,6 +30,7 @@ void PointLightEditor::onHandleGizmo(GizmoInfo& info)
 {
 	LightEditor::onHandleGizmo(info);
 	info.gizmo->drawSphere(Vector3f::Zero(), pointLight->getRadius(), pointLight->getTransformMat(), pointLight->color);
+	info.camera->cameraRender.setDebugProbeIndex(pointLight->getProbeIndex());
 }
 
 void PointLightEditor::onLightGUI(EditorInfo& info)

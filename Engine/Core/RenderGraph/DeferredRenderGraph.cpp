@@ -406,7 +406,7 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 {
 	auto clearTexFrameBindings = [&]() {
 		context.clearFrameBindings();
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i <= 16; i++) {
 			context.bindTexture(NULL, Fragment_Shader_Stage, i, -1);
 			context.bindTexture(NULL, Compute_Shader_Stage, i, -1);
 		}
@@ -415,6 +415,7 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 	{
 		RENDER_SCOPE(WaitGPU)
 		clearTexFrameBindings();
+		context.clearVertexBindings();
 
 		context.waitSignalCPU();
 	}
@@ -510,6 +511,8 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 			for (auto& cameraRenderData : sceneData->cameraRenderDatas) {
 				if (cameraRenderData->flags.has(CameraRender_DebugDraw))
 					sceneData->debugRenderData.debugDraw(context, *cameraRenderData);
+				if (cameraRenderData->flags.has(CameraRender_GizmoDraw))
+					sceneData->debugRenderData.gizmoDraw(context, *cameraRenderData);
 			}
 		}
 	}

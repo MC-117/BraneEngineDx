@@ -138,7 +138,10 @@ void DebugRenderData::debugDraw(IRenderContext& context, CameraRenderData& camer
 
     context.unbindBufferBase(debugLinesName);
     context.unbindBufferBase(debugFlagsName);
+}
 
+void DebugRenderData::gizmoDraw(IRenderContext& context, CameraRenderData& cameraRenderData)
+{
     context.bindShaderProgram(drawUploadLineProgram);
     context.bindBufferBase(uploadLineBuffer.getVendorGPUBuffer(), debugLinesName);
     cameraRenderData.bindCameraBuffOnly(context);

@@ -225,7 +225,9 @@ enum RenderStage : uint16_t
 	RS_Opaque = 1000,
 	RS_Aplha = 2450,
 	RS_Transparent = 2500,
-	RS_Post = 0x1000
+	RS_Post = 0x1000,
+	RS_Max = 0x1000,
+	RS_Count = 6
 };
 
 const uint32_t RS_Order_BitMask = 0x1FFF0000;
@@ -304,4 +306,12 @@ struct ShaderProperty
 	int offset;
 	int size;
 	int meta;
+};
+
+enum CameraRenderFlags : unsigned int
+{
+	CameraRender_Default = 0,
+	CameraRender_GizmoDraw = 1 << 0,
+	CameraRender_DebugDraw = 1 << 1,
+	CameraRender_SceneCapture = 1 << 2,
 };

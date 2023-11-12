@@ -19,9 +19,9 @@ void ReflectionCaptureProbeRender::setProbeCubeMap(TextureCube* reflectionCubeMa
 	this->reflectionCubeMap = reflectionCubeMap;
 }
 
-void ReflectionCaptureProbeRender::setWorldPosition(const Vector3f& position)
+void ReflectionCaptureProbeRender::setWorldPositionAndScale(const Vector3f& position, float scale)
 {
-	CaptureProbeRender::setWorldPosition(position);
+	CaptureProbeRender::setWorldPositionAndScale(position, scale);
 	sceneCaptureCube.worldPosition = position;
 }
 

@@ -5,13 +5,16 @@ int CameraRender::cameraRenderNextID = 1;
 CameraRender* CameraRender::mainCameraRender = NULL;
 
 CameraRender::CameraRender()
+	: flags(CameraRender_GizmoDraw)
 {
 	cameraRenderID = cameraRenderNextID;
 	cameraRenderNextID++;
 	createInternalRenderTarget();
 }
 
-CameraRender::CameraRender(RenderTarget& renderTarget) : renderTarget(&renderTarget)
+CameraRender::CameraRender(RenderTarget& renderTarget)
+	: renderTarget(&renderTarget)
+	, flags(CameraRender_GizmoDraw)
 {
 }
 
@@ -50,6 +53,16 @@ bool CameraRender::isMainCameraRender() const
 void CameraRender::setMainCameraRender()
 {
 	mainCameraRender = this;
+}
+
+void CameraRender::setCameraRenderFlags(Enum<CameraRenderFlags> flags)
+{
+	this->flags = flags;
+}
+
+Enum<CameraRenderFlags> CameraRender::getCameraRenderFlags() const
+{
+	return flags;
 }
 
 void CameraRender::createDefaultPostProcessGraph()
@@ -139,6 +152,7 @@ void CameraRender::render(RenderInfo& info)
 			cameraRenderData->surfaceBuffer->resize(size.x, size.y);
 		}
 		info.sceneData->setCamera(this);
+		debugProbeIndex = -1;
 	}
 }
 
@@ -146,12 +160,16 @@ CameraRenderData* CameraRender::getRenderData()
 {
 	if (renderData)
 		return renderData;
-	CameraRenderData* cameraRenderData = new CameraRenderData();
-	cameraRenderData->cameraRenderID = cameraRenderID;
-	cameraRenderData->cameraRender = this;
-	cameraRenderData->flags = CameraRender_DebugDraw;
-	renderData = cameraRenderData;
+	renderData = new CameraRenderData();
+	renderData->cameraRenderID = cameraRenderID;
+	renderData->cameraRender = this;
+	renderData->setDebugProbeIndex(debugProbeIndex);
 	return renderData;
+}
+
+void CameraRender::setDebugProbeIndex(int probeIndex)
+{
+	debugProbeIndex = probeIndex;
 }
 
 CameraRender* CameraRender::getMainCameraRender()

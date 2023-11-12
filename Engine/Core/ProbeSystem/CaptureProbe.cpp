@@ -44,7 +44,8 @@ void CaptureProbe::prerender(SceneRenderData& sceneData)
 	if (captureProbeRender == NULL)
 		return;
 	Vector3f position = getPosition(WORLD);
-	captureProbeRender->setWorldPosition(position);
+	float scale = getScale(WORLD).x();
+	captureProbeRender->setWorldPositionAndScale(position, scale);
 }
 
 Render* CaptureProbe::getRender()

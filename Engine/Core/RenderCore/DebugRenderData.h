@@ -33,6 +33,7 @@ struct DebugRenderData : public IRenderData
 
     void initBuffer(IRenderContext& context, bool forceClearAll);
     void debugDraw(IRenderContext& context, CameraRenderData& cameraRenderData);
+    void gizmoDraw(IRenderContext& context, CameraRenderData& cameraRenderData);
 
 protected:
     bool firstTick = true;

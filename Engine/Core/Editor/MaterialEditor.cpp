@@ -1,6 +1,7 @@
 #include "MaterialEditor.h"
 #include "../Engine.h"
 #include "../Utility/EngineUtility.h"
+#include "../Utility/RenderUtility.h"
 #include "../GUI/TextureViewer.h"
 #include "../GUI/GUIUtility.h"
 #include <thread>
@@ -10,34 +11,6 @@ RegistEditor(Material);
 void MaterialEditor::setInspectedObject(void* object)
 {
 	material = (Material*)object;
-}
-
-RenderStage enumRenderStage(uint16_t renderOrder)
-{
-	if (renderOrder < RenderStage::RS_Opaque)
-		return RenderStage::RS_PreBackground;
-	if (renderOrder < RenderStage::RS_Aplha)
-		return RenderStage::RS_Opaque;
-	if (renderOrder < RenderStage::RS_Transparent)
-		return RenderStage::RS_Aplha;
-	if (renderOrder < RenderStage::RS_Post)
-		return RenderStage::RS_Transparent;
-	return RenderStage::RS_Post;
-}
-
-const char* getRenderStageName(RenderStage stage)
-{
-	if (stage == RenderStage::RS_PreBackground)
-		return "PreBackground";
-	if (stage == RenderStage::RS_Opaque)
-		return "Opaque";
-	if (stage == RenderStage::RS_Aplha)
-		return "Aplha";
-	if (stage == RenderStage::RS_Transparent)
-		return "Transparent";
-	if (stage == RenderStage::RS_Post)
-		return "Post";
-	return "Unknown";
 }
 
 void MaterialEditor::onMaterialGUI(EditorInfo& info)
@@ -101,7 +74,7 @@ void MaterialEditor::onMaterialGUI(EditorInfo& info)
 		{ RenderStage::RS_Transparent, "Transparent" },
 		{ RenderStage::RS_Post, "Post" }
 	};
-	if (ImGui::BeginCombo("RenderOrder", renderStageName[renderStage])) {
+	if (ImGui::BeginCombo("RenderOrder", getRenderStageName(renderStage))) {
 		for (const auto& item : renderStageName) {
 			bool selected = renderStage == item.first;
 			if (ImGui::Selectable(item.second, &selected)) {

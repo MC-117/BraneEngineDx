@@ -23,6 +23,16 @@ void SurfaceData::bind(IRenderContext& context, Enum<ClearFlags> plusClearFlags,
 		context.clearFrameStencil(clearStencil);
 }
 
+void CameraRenderData::setDebugProbeIndex(int probeIndex)
+{
+	probeGridInfo.debugProbeIndex = probeIndex;
+}
+
+int CameraRenderData::getDebugProbeIndex() const
+{
+	return probeGridInfo.debugProbeIndex;
+}
+
 void CameraRenderData::create()
 {
 	if (cameraRender == NULL) {
@@ -31,6 +41,10 @@ void CameraRenderData::create()
 	data = cameraRender->cameraData;
 
 	hitData = cameraRender->getTriggeredScreenHitData();
+
+	setDebugProbeIndex(cameraRender->debugProbeIndex);
+	cameraRender->debugProbeIndex = -1;
+	flags = cameraRender->getCameraRenderFlags();
 
 	renderOrder = cameraRender->renderOrder;
 	surface.clearFlags = Clear_All;
@@ -75,7 +89,7 @@ void CameraRenderData::upload()
 
 	if (probeGrid.probePool)
 	{
-		probeGridInfo.init(data.viewSize.x(), data.viewSize.y(), data.zNear, data.zFar, probeGrid.probePool->getProbeCount());
+		probeGridInfo.init(data.viewSize.x(), data.viewSize.y(), data.zNear, data.zFar, *probeGrid.probePool);
 		uploadData.probeGridInfo = probeGridInfo;
 	}
 

@@ -1,5 +1,6 @@
 #include "DX11Texture2D.h"
 #include "../../Core/Utility/Utility.h"
+#include "Core/Utility/TextureUtility.h"
 
 #ifdef VENDOR_USE_DX11
 
@@ -339,8 +340,8 @@ unsigned int DX11Texture2D::bind()
 		if (initData != NULL)
 			delete[] initData;
 	}
-	if (desc.data && !desc.externalData) {
-		free(desc.data);
+	if (desc.canReleaseAssetData()) {
+		freeTexture(desc.data);
 		desc.data = NULL;
 	}
 	desc.textureHandle = (unsigned long long)this;

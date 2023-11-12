@@ -18,6 +18,9 @@ struct ENGINE_API MipFileHeader
 	bool isValid() const;
 };
 
+ENGINE_API unsigned char* mallocTexture(size_t size);
+ENGINE_API unsigned char* reallocTexture(unsigned char* data, size_t size);
+ENGINE_API void freeTexture(void* data);
 ENGINE_API unsigned char* rgb2rgba(unsigned char* data, unsigned char* dst, unsigned int pixles, bool discard = true);
 ENGINE_API unsigned char* loadMip(const string& file, MipFileHeader& header, vector<pair<int, int>>& mips);
 ENGINE_API bool writeMip(const string& file, const MipFileHeader& header, const vector<pair<int, int>>& mips, const unsigned char* data);

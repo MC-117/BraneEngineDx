@@ -44,8 +44,8 @@ TextureCube::~TextureCube()
 {
 	if (!readOnly && vendorTexture != NULL)
 		delete vendorTexture;
-	if (desc.data != NULL)
-		delete[] desc.data;
+	if (desc.hasOwnedSourceData())
+		freeTexture(desc.data);
 }
 
 bool TextureCube::isValid() const
@@ -55,7 +55,7 @@ bool TextureCube::isValid() const
 
 bool TextureCube::isStatic() const
 {
-	return desc.data != NULL;
+	return desc.hasAssetData;
 }
 
 int TextureCube::getWidth() const
@@ -120,7 +120,7 @@ void TextureCube::setTextureInfo(const TextureCubeInfo& info)
 bool TextureCube::load(const string& file)
 {
 	if (desc.data != NULL) {
-		free(desc.data);
+		freeTexture(desc.data);
 		desc.data = NULL;
 	}
 	if (vendorTexture != NULL) {
@@ -165,11 +165,14 @@ bool TextureCube::load(const string& file)
 			desc.channel = 4;
 		}
 	}
-	if (!success)
-		if (desc.data) {
-			free(desc.data);
-			desc.data = NULL;
-		}
+	if (success) {
+		desc.hasAssetData = true;
+		desc.needUpdate = true;
+	}
+	else if (desc.data) {
+		freeTexture(desc.data);
+		desc.data = NULL;
+	}
 	return success && desc.data;
 }
 
@@ -189,23 +192,28 @@ unsigned int TextureCube::resize(unsigned int width, unsigned int height)
 {
 	if (readOnly)
 		return 0;
-	if (desc.data) {
+	if (desc.hasAssetData) {
 		if (desc.width != width || desc.height != width) {
 			size_t singleSize = desc.width * desc.width * desc.channel;
 			size_t outSingleSize = width * width * desc.channel;
-			unsigned char* outData = new unsigned char[singleSize * desc.arrayCount];
+			unsigned char* outData = mallocTexture(singleSize * desc.arrayCount);
 			for (int i = 0; i < desc.arrayCount; i++) {
 				resizeTexture(desc.data + singleSize * i * sizeof(char),
 					desc.width, desc.height, desc.channel,
 					outData + outSingleSize * i * sizeof(char),
 					width, width, isStandard);
 			}
-			delete[] desc.data;
+			freeTexture(desc.data);
 			desc.data = outData;
 			if (vendorTexture == NULL) {
 				desc.width = width;
 				desc.height = width;
 			}
+		}
+	}
+	else if (desc.hasAssetData) {
+		if (desc.data == NULL){
+			throw runtime_error("Source data is free");
 		}
 	}
 	else {
@@ -235,7 +243,7 @@ bool TextureCube::save(const string& file)
 	}
 	else {
 		IVendor& vendor = VendorManager::getInstance().getVendor();
-		outData = new unsigned char[desc.width * desc.height * desc.channel];
+		outData = mallocTexture(desc.width * desc.height * desc.channel);
 		vendor.readBackTexture2D(vendorTexture, outData);
 	}
 
@@ -251,7 +259,7 @@ bool TextureCube::save(const string& file)
 	vector<pair<int, int>> mips = vector<pair<int, int>>(6, { desc.width, desc.height });
 	bool ret = writeMip(file, header, mips, outData);
 	if (desc.data == NULL)
-		delete[] outData;
+		freeTexture(outData);
 	return ret;
 }
 

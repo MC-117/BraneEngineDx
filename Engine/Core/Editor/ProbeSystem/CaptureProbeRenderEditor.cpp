@@ -1,6 +1,8 @@
 #include "CaptureProbeRenderEditor.h"
 #include "../../Transform.h"
 #include "../../GUI/GizmoUltility.h"
+#include "../../Camera.h"
+#include "../../RenderCore/CameraRenderData.h"
 
 RegistEditor(CaptureProbeRender);
 
@@ -34,7 +36,8 @@ void CaptureProbeRenderEditor::onPersistentGizmo(GizmoInfo& info, Base* ownedObj
 void CaptureProbeRenderEditor::onHandleGizmo(GizmoInfo& info, Base* ownedObject)
 {
 	info.gizmo->drawSphere(captureProbeRender->getWorldPosition(),
-		captureProbeRender->getRadius(), Matrix4f::Identity(), { 1.0f, 1.0f, 1.0f, 1.0f });
+		captureProbeRender->getWorldRadius(), Matrix4f::Identity(), { 1.0f, 1.0f, 1.0f, 1.0f });
+	info.camera->cameraRender.setDebugProbeIndex(captureProbeRender->getProbeIndex());
 }
 
 void CaptureProbeRenderEditor::onCaptureProbeRenderGUI(EditorInfo& info)

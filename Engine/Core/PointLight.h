@@ -16,6 +16,9 @@ public:
 	void setRadius(float radius);
 	float getRadius() const;
 
+	int getLocalLightIndex() const;
+	int getProbeIndex() const;
+
 	virtual void preRender(PreRenderInfo& info);
 	virtual void render(RenderInfo & info);
 
@@ -24,6 +27,8 @@ public:
 	virtual bool serialize(SerializationInfo& to);
 protected:
 	unsigned int index = -1;
+	int localLightIndex = -1;
+	int probeIndex = -1;
 	VirtualShadowMapLightEntry* virtualShadowMapLightEntry = NULL;
 	static unsigned int pointLightCount;
 };

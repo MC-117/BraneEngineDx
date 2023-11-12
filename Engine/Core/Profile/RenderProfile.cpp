@@ -110,6 +110,10 @@ void ImPlot::PlotRenderFrameProfile(ImPlotRenderFrameProfileContext& context, co
                     ImGui::EndTooltip();
                 }
             }
+            else if (pWidth > 0.0001)
+            {
+                drawList->AddLine(p0, p1, col);
+            }
         };
         
         for (const RenderDurationScope* scope : frame.getScopes())

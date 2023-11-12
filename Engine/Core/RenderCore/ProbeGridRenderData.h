@@ -9,9 +9,12 @@ struct ProbeGridConfig
 	unsigned int probeGridPixels = 64;
 	unsigned int probeGridZSlices = 64;
 	unsigned int probeMaxCountPerCell = 16;
+	float nearOffsetScale = 10;
 
 	static ProbeGridConfig& instance();
 };
+
+class ProbePoolRenderData;
 
 struct ProbeGridInfo
 {
@@ -23,8 +26,12 @@ struct ProbeGridInfo
 	unsigned int probeGridCellCount;
 	unsigned int probeMaxCountPerCell;
 	unsigned int probeMaxLinkListLength;
+	int debugProbeIndex;
+	int pad[3];
 
-	void init(int width, int height, float zNear, float zFar, int probeCount);
+	ProbeGridInfo();
+
+	void init(int width, int height, float zNear, float zFar, const ProbePoolRenderData& probePool);
 };
 
 class ProbePoolRenderData : public IRenderData
@@ -73,8 +80,6 @@ public:
 	virtual void upload();
 	virtual void bind(IRenderContext& context);
 	void clean();
-
-	void computeProbeGrid(IRenderContext& context, CameraRenderData& cameraRenderData);
 protected:
 	static Material* buildMaterial;
 	static ShaderProgram* buildProgram;

@@ -53,7 +53,9 @@ void BuildProbeGridPass::execute(IRenderContext& context)
 			context.clearOutputBufferUint(probeGrid.probeGridLinkListBuffer.getVendorGPUBuffer(), initData);
 			context.clearOutputBufferUint(probeGrid.probeGridCulledListBuffer.getVendorGPUBuffer(), initData);
 
-			if (sceneData->debugRenderData.isTriggerPersistentDebugDraw())
+			if (cameraData->flags.has(CameraRender_DebugDraw) &&
+				(sceneData->debugRenderData.isTriggerPersistentDebugDraw() ||
+					cameraData->getDebugProbeIndex() > 0))
 				context.bindShaderProgram(buildDebugProgram);
 			else
 				context.bindShaderProgram(buildProgram);

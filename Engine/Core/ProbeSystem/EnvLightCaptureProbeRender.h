@@ -20,7 +20,7 @@ public:
 
 	virtual TextureCube* getLightCubeMap() const;
 	virtual void setLightCubeMap(TextureCube* lightCubeMap);
-	virtual void setWorldPosition(const Vector3f& position);
+	virtual void setWorldPositionAndScale(const Vector3f& position, float scale);
 	virtual void updateCapture();
 	virtual int getProbeIndex() const;
 	virtual int getCaptureIndex() const;

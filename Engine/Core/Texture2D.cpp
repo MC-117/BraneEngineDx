@@ -49,7 +49,7 @@ Texture2D::Texture2D(Color color, unsigned int width, unsigned int height, unsig
 		throw runtime_error("Error image size");
 	
 	this->isStandard = isStandard;
-	unsigned char* data = new unsigned char[size];
+	unsigned char* data = mallocTexture(size);
 	for (int h = 0; h < height; h++)
 		for (int w = 0; w < width; w++) {
 			int p = (h * width + w) * channel;
@@ -113,8 +113,8 @@ Texture2D::~Texture2D()
 {
 	if (!readOnly && vendorTexture != NULL)
 		delete vendorTexture;
-	if (!desc.externalData && desc.data != NULL)
-		delete[] desc.data;
+	if (desc.hasOwnedSourceData())
+		freeTexture(desc.data);
 }
 
 bool Texture2D::isValid() const
@@ -124,7 +124,7 @@ bool Texture2D::isValid() const
 
 bool Texture2D::isStatic() const
 {
-	return desc.data != NULL;
+	return desc.hasAssetData;
 }
 
 int Texture2D::getWidth() const
@@ -206,7 +206,7 @@ bool Texture2D::assign(ITexture2D* venderTex)
 bool Texture2D::load(const string & file)
 {
 	if (desc.data != NULL) {
-		free(desc.data);
+		freeTexture(desc.data);
 		desc.data = NULL;
 	}
 	if (vendorTexture != NULL) {
@@ -230,7 +230,7 @@ bool Texture2D::load(const string & file)
 			desc.autoGenMip = false;
 		}
 		else {
-			free(desc.data);
+			freeTexture(desc.data);
 			desc.data = NULL;
 		}
 	}
@@ -238,7 +238,7 @@ bool Texture2D::load(const string & file)
 		desc.data = loadTexture(file, desc.width, desc.height, desc.channel);
 		if (desc.channel == 3) {
 			unsigned int pixles = desc.width * desc.height;
-			unsigned char* data = new unsigned char[pixles * 4];
+			unsigned char* data = mallocTexture(pixles * 4);
 			desc.data = rgb2rgba(desc.data, data, pixles);
 			desc.channel = 4;
 		}
@@ -264,6 +264,7 @@ bool Texture2D::load(const string & file)
 			desc.info.internalType = TIT_SRGBA8_UF;
 	}
 	desc.needUpdate = true;
+	desc.hasAssetData = true;
 	return desc.data;
 }
 
@@ -285,14 +286,20 @@ unsigned int Texture2D::resize(unsigned int width, unsigned int height)
 		return 0;
 	if (desc.data) {
 		if (desc.width != width || desc.height != height) {
-			unsigned char* outData = new unsigned char[width * height * desc.channel];
+			unsigned char* outData = mallocTexture(width * height * desc.channel);
 			resizeTexture(desc.data, desc.width, desc.height, desc.channel, outData, width, height, isStandard);
-			delete[] desc.data;
+			freeTexture(desc.data);
 			desc.data = outData;
 			if (vendorTexture == NULL) {
 				desc.width = width;
 				desc.height = height;
 			}
+			desc.needUpdate = true;
+		}
+	}
+	else if (desc.hasAssetData) {
+		if (desc.data == NULL){
+			throw runtime_error("Source data is free");
 		}
 	}
 	else {
@@ -325,12 +332,11 @@ bool Texture2D::copyFrom(const Texture2D& src, unsigned int width, unsigned int 
 	if (desc.data) {
 		int pixels = desc.width * desc.height * desc.channel;
 		if (pixels != srcPixels) {
-			delete[] desc.data;
-			desc.data = new unsigned char[srcPixels];
+			desc.data = reallocTexture(desc.data, srcPixels);
 		}
 	}
 	else {
-		desc.data = new unsigned char[srcPixels];
+		desc.data = mallocTexture(srcPixels);
 	}
 
 	if (src.desc.width != width || src.desc.height != height)
@@ -346,6 +352,7 @@ bool Texture2D::copyFrom(const Texture2D& src, unsigned int width, unsigned int 
 	desc.bindType = src.desc.bindType;
 	desc.mipLevel = src.desc.mipLevel;
 	desc.needUpdate = true;
+	desc.hasAssetData = false;
 	return true;
 }
 
@@ -394,16 +401,16 @@ bool Texture2D::save(const string& file)
 		const int pixelsByChannels = pixels * desc.channel;
 		const int pixelSize = getPixelSize(desc.info.internalType, desc.channel);
 		const int unitSize = pixelSize / desc.channel;
-		rawData = malloc(desc.width * desc.height * pixelSize);
+		rawData = mallocTexture(desc.width * desc.height * pixelSize);
 		vendor.readBackTexture2D(vendorTexture, rawData);
 
 		if (desc.info.internalType == TIT_RGB10A2_UF) {
-			outData = (unsigned char*)malloc(pixelsByChannels * sizeof(unsigned char));
+			outData = mallocTexture(pixelsByChannels * sizeof(unsigned char));
 			convertRGB10A2ToBytes(rawData, outData, pixels);
-			free(rawData);
+			freeTexture(rawData);
 		}
 		else if (isFloatPixel(desc.info.internalType)) {
-			outData = (unsigned char*)malloc(pixelsByChannels * sizeof(unsigned char));
+			outData = mallocTexture(pixelsByChannels * sizeof(unsigned char));
 			switch (unitSize)
 			{
 			case sizeof(half_float::half):
@@ -415,7 +422,7 @@ bool Texture2D::save(const string& file)
 			default:
 				throw runtime_error("Unsupport format");
 			}
-			free(rawData);
+			freeTexture(rawData);
 		}
 		else if (unitSize != sizeof(unsigned char)) {
 			switch (unitSize)
@@ -429,7 +436,7 @@ bool Texture2D::save(const string& file)
 			default:
 				throw runtime_error("Unsupport format");
 			}
-			free(rawData);
+			freeTexture(rawData);
 		}
 		else outData = (unsigned char*)rawData;
 	}
@@ -437,7 +444,7 @@ bool Texture2D::save(const string& file)
 	bool ret = writeTexture(file, desc.width, desc.height, desc.channel, outData);
 
 	if (desc.data == NULL)
-		free(outData);
+		freeTexture(outData);
 	return ret;
 }
 

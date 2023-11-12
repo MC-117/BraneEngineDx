@@ -1,7 +1,9 @@
 #include "VirtualShadowMapDepthPass.h"
 #include "../RenderCore/SceneRenderData.h"
 #include "../Asset.h"
-#include "Core/Profile/ProfileCore.h"
+#include "../Profile/ProfileCore.h"
+#include "../Profile/RenderProfile.h"
+#include "../Utility/RenderUtility.h"
 
 Material* VirtualShadowMapDepthPass::vsmMaterial = NULL;
 
@@ -18,8 +20,13 @@ bool VirtualShadowMapDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	ShaderMatchRule matchRule;
 	matchRule.fragmentFlag = ShaderMatchFlag::Best;
 	Material* material = cmd.material;
+	ShaderProgram* program = NULL;
+	
 	Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
-	ShaderProgram* program = material->getShader()->getProgram((unsigned int)shaderFeature | ShaderFeature::Shader_Depth | ShaderFeature::Shader_VSM, matchRule);
+	const RenderStage stage = enumRenderStage(cmd.getRenderMode().getRenderStage());
+	if (stage == RS_Aplha || stage == RS_Transparent)
+		program = material->getShader()->getProgram((unsigned int)shaderFeature | ShaderFeature::Shader_Depth | ShaderFeature::Shader_VSM, matchRule);
+
 	if (program == NULL || !program->init()) {
 		material = vsmMaterial;
 		program = material->getShader()->getProgram(shaderFeature);
@@ -87,6 +94,7 @@ void VirtualShadowMapDepthPass::prepare()
 void VirtualShadowMapDepthPass::execute(IRenderContext& context)
 {
 	for (auto sceneData : renderGraph->sceneDatas) {
+		RENDER_SCOPE(VSMDepth);
 		VirtualShadowMapRenderData& renderData = sceneData->virtualShadowMapRenderData;
 
 		renderData.manager.processInvalidations(context, sceneData->meshTransformRenderData);

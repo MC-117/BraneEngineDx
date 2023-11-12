@@ -2,6 +2,8 @@
 #include "../Camera.h"
 #include "../RenderCore/RenderCommandList.h"
 #include "../Console.h"
+#include "../Profile/RenderProfile.h"
+#include "../Asset.h"
 
 bool DeferredLightingTask::ExecutionOrder::operator()(const DeferredLightingTask& t0, const DeferredLightingTask& t1) const
 {
@@ -74,6 +76,8 @@ void DeferredLightingPass::execute(IRenderContext& context)
 		task.age++;
 		if (task.age > 1)
 			continue;
+
+		RENDER_DESC_SCOPE(DrawLighting, "Material(%s)", AssetInfo::getPath(task.material).c_str());
 
 		bool cameraDataSwitch = false;
 		bool shaderSwitch = false;

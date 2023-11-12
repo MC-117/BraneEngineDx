@@ -1,7 +1,5 @@
 #include "RenderPool.h"
 #include "Light.h"
-//#define STB_IMAGE_WRITE_IMPLEMENTATION
-//#include "stb_image_write.h"
 #include "Console.h"
 #include "IVendor.h"
 #include "Engine.h"

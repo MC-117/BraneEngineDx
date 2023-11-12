@@ -122,6 +122,39 @@ const char* getShaderExtension(ShaderStageType type)
 	return "";
 }
 
+RenderStage enumRenderStage(uint16_t stageNum)
+{
+	RenderStage stages[] = {
+		RS_PreBackground,
+		RS_Geometry,
+		RS_Opaque,
+		RS_Aplha,
+		RS_Transparent,
+		RS_Post
+	};
+
+	for (int i = 0; i < RS_Count; i++) {
+		if (stageNum < stages[i])
+			return stages[i - 1];
+	}
+	return RS_Post;
+}
+
+const char* getRenderStageName(RenderStage stage)
+{
+	if (stage == RenderStage::RS_PreBackground)
+		return "PreBackground";
+	if (stage == RenderStage::RS_Opaque)
+		return "Opaque";
+	if (stage == RenderStage::RS_Aplha)
+		return "Aplha";
+	if (stage == RenderStage::RS_Transparent)
+		return "Transparent";
+	if (stage == RenderStage::RS_Post)
+		return "Post";
+	return "Unknown";
+}
+
 int getGPUBufferFormatCellSize(GPUBufferFormat format)
 {
 	switch (format)

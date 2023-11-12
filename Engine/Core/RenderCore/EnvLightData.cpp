@@ -163,7 +163,7 @@ int EnvLightRenderData::setLightData(EnvLightCaptureProbeRender* capture)
 	data.tintColor = Vector3f(capture->tintColor.r, capture->tintColor.g, capture->tintColor.b);
 	data.reverseIndex = 0;
 	data.position = capture->getWorldPosition();
-	data.radius = capture->getRadius();
+	data.radius = capture->getWorldRadius();
 	data.cutoff = capture->cutoff;
 	data.falloff = capture->falloff;
 	data.shDataOffset = envLightSHData.size();

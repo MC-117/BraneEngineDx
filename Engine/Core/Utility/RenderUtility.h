@@ -10,6 +10,8 @@ ENGINE_API string getShaderFeatureName(ShaderFeature feature);
 ENGINE_API string getShaderFeatureNames(Enum<ShaderFeature> feature);
 ENGINE_API const char* getShaderPropertyTypeName(ShaderProperty::Type type);
 ENGINE_API const char* getShaderExtension(ShaderStageType type);
+ENGINE_API RenderStage enumRenderStage(uint16_t stageNum);
+ENGINE_API const char* getRenderStageName(RenderStage stage);
 ENGINE_API int getGPUBufferFormatCellSize(GPUBufferFormat format);
 ENGINE_API int getPixelSize(TexInternalType type, int channels);
 ENGINE_API bool isFloatPixel(TexInternalType type);

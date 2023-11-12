@@ -11,7 +11,7 @@ int ReflectionProbeRenderData::setProbe(ReflectionCaptureProbeRender* capture)
 	int probeIndex = -1;
 	ReflectionProbeData& data = probePool.emplace(ProbeType::ProbeType_Ref, probeIndex).reflectionProbeData;
 	data.position = capture->getWorldPosition();
-	data.radius = capture->getRadius();
+	data.radius = capture->getWorldRadius();
 	data.tintColor = capture->tintColor;
 	probeIndices.push_back(probeIndex);
 	cubeMaps.push_back(cubeMap);
