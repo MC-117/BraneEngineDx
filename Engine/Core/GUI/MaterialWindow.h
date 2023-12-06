@@ -15,7 +15,7 @@ public:
 	Material* getMaterial();
 
 	void onMaterialPreview(GUIRenderInfo& info);
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	Material* material = NULL;
 	EditorWorld editorWorld;

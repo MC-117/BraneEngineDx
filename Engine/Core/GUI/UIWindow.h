@@ -22,8 +22,8 @@ public:
 	bool isFocus() const;
 	void setFocus();
 
-	virtual void render(GUIRenderInfo& info);
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onGUI(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	Texture2D* backgroundTex = NULL;
 	bool nextFocus = false;

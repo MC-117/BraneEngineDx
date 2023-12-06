@@ -17,7 +17,7 @@ InspectorWindow::InspectorWindow(Object & object, string name, bool defaultShow)
 	});
 }
 
-void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
+void InspectorWindow::onWindowGUI(GUIRenderInfo& info)
 {
 	Base* target = EditorManager::getSelectedBase();
 	if (target != NULL) {
@@ -31,7 +31,7 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 		if (iWorld == NULL) {
 			iWorld = Engine::getCurrentWorld();
 		}
-		EditorInfo editorInfo = { &info.gui, &info.gui.gizmo, info.camera, iWorld, false };
+		EditorInfo editorInfo = { &info.gui, info.gizmo, info.camera, iWorld, false };
 		Editor* editor = EditorManager::getEditor(*target);
 		if (editor != NULL) {
 			editor->onGUI(editorInfo);
@@ -411,7 +411,7 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 //								}
 //								if (meshAsset != NULL) {
 //									ImGui::SameLine();
-//									if (ImGui::Button("¡Á"))
+//									if (ImGui::Button("ï¿½ï¿½"))
 //										b->removeSpawnMesh();
 //								}
 //								bool hasCollision = b->hasCollision;
@@ -1170,7 +1170,7 @@ void InspectorWindow::onRenderWindow(GUIRenderInfo& info)
 //						ImGui::PushID(b._Ptr);
 //						Texture* texture = b->second.val;
 //						if (texture == NULL) {
-//							ImGui::Button("¨w", { 64, 64 });
+//							ImGui::Button("ï¿½w", { 64, 64 });
 //						}
 //						else {
 //							unsigned long long id = texture->getTextureID();

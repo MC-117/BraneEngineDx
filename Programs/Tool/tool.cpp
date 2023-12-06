@@ -5,6 +5,7 @@
 #include "Core/GUI/ConsoleWindow.h"
 #include "Core/Timeline/TimelineWindow.h"
 #include "Core/Application.h"
+#include "Core/EngineLoop/GUIEngineLoop.h"
 #include "Core/Importer/Importer.h"
 #include "Core/GUI/ShaderManagerWindow.h"
 #include "ImPlot/implot.h"
@@ -18,7 +19,7 @@ public:
 		
 	}
 
-	virtual void render(GUIRenderInfo& info)
+	virtual void onGUI(GUIRenderInfo& info)
 	{
 		ImPlot::ShowDemoWindow(&show);
 	}
@@ -47,12 +48,11 @@ public:
 		toolShelf.registTool(*new TimelineWindow());
 		toolShelf.registTool(*new ImPlotWindow());
 
-		gui.setMainControl(&toolShelf);
-		engine.setEngineLoop(*new GUIEngineLoop(gui));
+		GUI::get().setMainControl(&toolShelf);
+		engine.setEngineLoop(*new GUIOnlyEngineLoop(GUI::get()));
 		Engine::get().getEngineLoop()->init();
 	}
 protected:
-	GUI gui;
 	ToolShelf toolShelf;
 };
 

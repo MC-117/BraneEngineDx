@@ -8,7 +8,7 @@ class ENGINE_API DebugLogWindow : public UIWindow
 {
 public:
 	DebugLogWindow(string name = "DebugLogWindow", bool defaultShow = false);
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	Time startTime;
 };

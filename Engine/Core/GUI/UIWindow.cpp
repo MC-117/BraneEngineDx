@@ -34,7 +34,7 @@ void UIWindow::setFocus()
 	nextFocus = true;
 }
 
-void UIWindow::render(GUIRenderInfo& info)
+void UIWindow::onGUI(GUIRenderInfo& info)
 {
 	int styleCount = styleVars.size() + styleFVars.size();
 	for (auto b = styleVars.begin(), e = styleVars.end(); b != e; b++)
@@ -58,7 +58,7 @@ void UIWindow::render(GUIRenderInfo& info)
 					{ b.x / (float)info.viewSize.x, b.y / (float)info.viewSize.y }, (ImColor&)backgroundColor, style.WindowRounding);//, ImDrawCornerFlags_Top);
 			}
 		}
-		onRenderWindow(info);
+		onWindowGUI(info);
 		ImGui::End();
 	}
 	else {
@@ -67,6 +67,6 @@ void UIWindow::render(GUIRenderInfo& info)
 	ImGui::PopStyleVar(styleCount);
 }
 
-void UIWindow::onRenderWindow(GUIRenderInfo& info)
+void UIWindow::onWindowGUI(GUIRenderInfo& info)
 {
 }

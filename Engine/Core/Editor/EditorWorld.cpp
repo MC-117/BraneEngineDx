@@ -171,7 +171,7 @@ void EditorWorld::update()
 
 Texture* EditorWorld::getSceneTexture()
 {
-	return camera.cameraRender.getSceneMap();
+	return camera.cameraRender.getSceneTexture();
 }
 
 SceneRenderData* EditorWorld::getSceneRenderData()

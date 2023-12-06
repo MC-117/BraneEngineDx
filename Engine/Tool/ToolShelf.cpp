@@ -12,7 +12,7 @@ void ToolShelf::registTool(UIWindow & tool)
 	
 }
 
-void ToolShelf::onRenderWindow(GUIRenderInfo & info)
+void ToolShelf::onWindowGUI(GUIRenderInfo & info)
 {
 	for (int i = 0; i < tools.size(); i++) {
 		if (!tools[i].second) {

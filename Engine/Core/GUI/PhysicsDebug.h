@@ -6,6 +6,6 @@ public:
 	PhysicsDebug(string name = "PhysicsDebug", bool defaultShow = false);
 	virtual ~PhysicsDebug();
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 };
 

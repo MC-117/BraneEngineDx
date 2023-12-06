@@ -13,7 +13,7 @@ public:
 
 	void registTool(UIWindow& tool);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 };
 
 #endif // !_TOOLSHELF_H_

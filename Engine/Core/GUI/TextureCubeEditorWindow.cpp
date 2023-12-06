@@ -6,6 +6,6 @@ TextureCubeEditorWindow::TextureCubeEditorWindow(string name, bool defaultShow)
 {
 }
 
-void TextureCubeEditorWindow::onRenderWindow(GUIRenderInfo& info)
+void TextureCubeEditorWindow::onWindowGUI(GUIRenderInfo& info)
 {
 }

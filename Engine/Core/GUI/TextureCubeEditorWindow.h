@@ -10,7 +10,7 @@ public:
 
 	TextureCubeEditorWindow(string name = "TextureCubeEditor", bool defaultShow = false);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	Texture2D textures[6];
 	TextureCube* textureCube = NULL;

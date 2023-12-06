@@ -27,7 +27,7 @@ void BlendSpaceWindow::setBlendSpaceAnimation(BlendSpaceAnimation & animation)
 	}
 }
 
-void BlendSpaceWindow::onRenderWindow(GUIRenderInfo & info)
+void BlendSpaceWindow::onWindowGUI(GUIRenderInfo & info)
 {
 	if (blendSpace == NULL)
 		return;

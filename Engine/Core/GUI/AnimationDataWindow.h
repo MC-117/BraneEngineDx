@@ -10,7 +10,7 @@ public:
 
 	void setAnimationData(AnimationClipData* data);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 
 	static void showAnimationData(GUI& gui, AnimationClipData* data);
 protected:

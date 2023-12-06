@@ -75,6 +75,7 @@ class ENGINE_API WorldApplication : public EngineWindowApplication
 public:
     WorldApplication(NativeIconHandle iconHandle);
 
+    virtual void initializeGUILayout(GUI& gui) = 0;
     virtual void initializeWorld() = 0;
     
     virtual void loadAssets();

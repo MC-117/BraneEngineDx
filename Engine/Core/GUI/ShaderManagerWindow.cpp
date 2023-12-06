@@ -7,7 +7,7 @@ ShaderManagerWindow::ShaderManagerWindow(string name, bool defaultShow)
 {
 }
 
-void ShaderManagerWindow::onRenderWindow(GUIRenderInfo& info)
+void ShaderManagerWindow::onWindowGUI(GUIRenderInfo& info)
 {
 	ShaderManager& manager = ShaderManager::getInstance();
 

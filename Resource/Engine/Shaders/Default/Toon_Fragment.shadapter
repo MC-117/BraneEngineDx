@@ -75,16 +75,16 @@ FragmentOut SURFACE_MAIN
     #else
     float3 V = normalize(camData.camPos - surf.WorldPos);
     float4 Lo = Float4(0.0f);
-    float L_Dot = 0;
-    float lightInstansity = 0;
+    float shadowFactor = 0;
 
-    lightInstansity = getLightFinalIntensity(directLight);
-    if (lightInstansity != 0) {
+    if (getLightFinalIntensity(directLight) != 0) {
         float3 L = directLight.direction;
+        float rampValue = min(smoothToon(1, 0, dot(surf.Normal, L), shadowCut, shadowCutSmooth), getShadow(directLight, surf));
+        float4 rampColor = lerp(shadowColor, baseColor, rampValue);
         float4 Lo_dir = Toon_Lo_DirectLight(directLight, surf.Normal, V, baseColor, highlightColor,
             highlightCut, highlightCutSmooth);
-        Lo = lerp(shadowColor * lightInstansity, Lo_dir, getShadow(directLight, surf));
-        L_Dot = dot(surf.Normal, L);
+        Lo = lerp(shadowColor, Lo_dir, rampValue);
+        shadowFactor = rampValue;
     }
 
     PointLight localLight;
@@ -93,17 +93,18 @@ FragmentOut SURFACE_MAIN
         float intensity = getLightIntensity(localLight, surf.WorldPos);
         if (intensity != 0) {
             float3 L = normalize(localLight.pos - surf.WorldPos);
+            float rampValue = min(smoothToon(1, 0, dot(surf.Normal, L), shadowCut, shadowCutSmooth), getShadow(localLight, surf));
+            float4 rampColor = lerp(shadowColor, baseColor, rampValue);
             float3 radiance = localLight.color * intensity;
             float4 Lo_point = Toon_Lo(surf.Normal, V, L, radiance, baseColor,
                 highlightColor, highlightCut, highlightCutSmooth);
-            Lo += lerp(shadowColor * intensity, Lo_point, getShadow(localLight, surf));
-            L_Dot = max(dot(surf.Normal, L), L_Dot);
-            lightInstansity += intensity;
+            Lo += lerp(shadowColor, Lo_point, rampValue);
+            shadowFactor = max(shadowFactor, rampValue);
         }
     }
     
-    Lo = smoothToon(Lo, shadowColor * lightInstansity, L_Dot, shadowCut, shadowCutSmooth);
-    Lo = smoothToon(rimColor * lightInstansity, Lo, fresnelSchlick(dot(surf.Normal,
+    Lo = lerp(shadowColor, Lo, shadowFactor);
+    Lo = smoothToon(rimColor, Lo, fresnelSchlick(dot(surf.Normal,
         normalize(camData.camPos - surf.WorldPos)), 0.33f),
         rimCut, rimCutSmooth);
 

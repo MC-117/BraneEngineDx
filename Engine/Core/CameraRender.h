@@ -24,7 +24,6 @@ public:
 	virtual ~CameraRender();
 
 	virtual bool isMainCameraRender() const;
-	virtual void setMainCameraRender();
 
 	void setCameraRenderFlags(Enum<CameraRenderFlags> flags);
 	Enum<CameraRenderFlags> getCameraRenderFlags() const;
@@ -34,7 +33,7 @@ public:
 	virtual void triggerScreenHit(const Vector2u& hitPosition);
 	virtual bool fetchScreenHit(ScreenHitInfo& hitInfo) const;
 	
-	virtual Texture* getSceneMap();
+	virtual Texture* getSceneTexture();
 	virtual RenderTarget& getRenderTarget();
 	virtual Texture2D* getSceneBlurTex();
 
@@ -47,11 +46,8 @@ public:
 
 	CameraRenderData* getRenderData();
 	void setDebugProbeIndex(int probeIndex);
-
-	static CameraRender* getMainCameraRender();
 protected:
 	static int cameraRenderNextID;
-	static CameraRender* mainCameraRender;
 	int cameraRenderID = 0;
 	int debugProbeIndex = -1;
 	Enum<CameraRenderFlags> flags;

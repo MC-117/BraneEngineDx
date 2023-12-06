@@ -6,6 +6,7 @@
 
 class GUI;
 class UIControl;
+class Gizmo;
 
 struct GUIRenderInfo
 {
@@ -15,6 +16,7 @@ struct GUIRenderInfo
 	RenderGraph* renderGraph;
 	GUI& gui;
 	Camera* camera;
+	Gizmo* gizmo;
 };
 
 struct GUIPostInfo
@@ -35,10 +37,12 @@ public:
 	virtual ~UIControl();
 
 	virtual void onPreAction(GUIRenderInfo& info);
-	virtual void render(GUIRenderInfo& info);
+	virtual void onGUI(GUIRenderInfo& info);
 	virtual void onPostAction(GUIPostInfo& info);
-	virtual void onSceneResize(Unit2Di size);
+	virtual void onSceneResize(const Vector2i& size);
 	virtual void onAttech(GUI& gui);
+
+	virtual void onRender(RenderInfo& info);
 };
 
 #endif // !_UICONTROL_H_

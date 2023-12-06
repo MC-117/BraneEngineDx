@@ -11,6 +11,7 @@
 
 class ENGINE_API Camera : public Transform
 {
+	friend class GUISurface;
 public:
 	Serialize(Camera, Transform);
 	enum CameraMode {
@@ -66,6 +67,8 @@ public:
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
+protected:
+	GUISurface* guiSurface = NULL;
 };
 
 #endif // !_CAMERA_H_

@@ -663,18 +663,18 @@ void Gizmo::drawIcon(Texture2D& icon, const Vector3f& position, int size, const 
 void Gizmo::controlFreeCamera(float transitionSensitivity, float rotationSensitivity)
 {
 	Input& input = Engine::getInput();
-	if (!isFocused || !input.getMouseButtonDown(MouseButtonEnum::Right))
+	if (!isFocused || !ImGui::IsMouseDown(ImGuiMouseButton_Right))
 		return;
 	double deltaTime = Time::delta().toSecond();
 	Vector3f v(0, 0, 0);
-	v.x() = (int)input.getKeyDown('W') - (int)input.getKeyDown('S');
+	v.x() = (int)ImGui::IsKeyDown(ImGuiKey_W) - (int)ImGui::IsKeyDown(ImGuiKey_S);
 	v.x() += input.getMouseWheelValue();
-	v.y() = (int)input.getKeyDown('A') - (int)input.getKeyDown('D');
-	v.z() = (int)input.getKeyDown('E') - (int)input.getKeyDown('Q');
+	v.y() = (int)ImGui::IsKeyDown(ImGuiKey_A) - (int)ImGui::IsKeyDown(ImGuiKey_D);
+	v.z() = (int)ImGui::IsKeyDown(ImGuiKey_E) - (int)ImGui::IsKeyDown(ImGuiKey_Q);
 	v *= deltaTime * transitionSensitivity;
 	cameraDeltaTransition += v;
 
-	Unit2Di m = input.getMouseMove();
+	ImVec2 m = ImGui::GetIO().MouseDelta;
 	cameraDeltaRollPitchYaw.z() += m.x * -rotationSensitivity;
 	cameraDeltaRollPitchYaw.y() += m.y * rotationSensitivity;
 
@@ -686,18 +686,17 @@ void Gizmo::controlTurnCamera(float transitionSensitivity, float distanceSensiti
 	if (!isFocused)
 		return;
 
-	Input& input = Engine::getInput();
 	double deltaTime = Time::delta().toSecond();
-	float up = (int)input.getKeyDown('E') - (int)input.getKeyDown('Q');
+	float up = (int)ImGui::IsKeyDown(ImGuiKey_E) - (int)ImGui::IsKeyDown(ImGuiKey_Q);
 	up *= deltaTime * transitionSensitivity;
 	cameraDeltaTransition.z() += up;
 
-	float deep = input.getMouseWheelValue();
+	float deep = ImGui::GetIO().MouseWheel;
 	deep *= deltaTime * distanceSensitivity;
 	cameraDeltaDistance += deep;
 
-	if (input.getMouseButtonDown(MouseButtonEnum::Right)) {
-		Unit2Di m = input.getMouseMove();
+	if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
+		ImVec2 m = ImGui::GetMouseDragDelta();
 		cameraDeltaRollPitchYaw.z() += m.x * -rotationSensitivity;
 		cameraDeltaRollPitchYaw.y() += m.y * rotationSensitivity;
 		isUsing = true;
@@ -792,6 +791,18 @@ void Gizmo::beginFrame(ImDrawList* drawList)
 	projMatrix = camera->getProjectionMatrix();
 	viewMatrix = camera->getViewMatrix();
 
+	ScreenHitInfo hitInfo;
+	if (camera->cameraRender.fetchScreenHit(hitInfo)) {
+		auto iter = objectIDToInstanceID.find(hitInfo.hitInstanceID);
+		if (iter != objectIDToInstanceID.end()) {
+			picked = true;
+			Object* object = (Object*)Brane::getPtrByInsID(iter->second);
+			EditorManager::selectObject(object);
+		}
+	}
+
+	objectIDToInstanceID.clear();
+
 	if (ImGui::IsWindowHovered()) {
 		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)) {
 			ImGui::SetWindowFocus();
@@ -808,7 +819,9 @@ void Gizmo::endFrame()
 	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
 		if ((!ImGuizmo::IsOver() && !picked && !isUsing && !isLastUsing)) {
 			EditorManager::selectObject(NULL);
-			ImVec2 pos = ImGui::GetMousePos();
+			ImVec2 mousePos = ImGui::GetMousePos();
+			ImVec2 winPos = ImGui::GetWindowPos();
+			ImVec2 pos = { mousePos.x - winPos.x, mousePos.y - winPos.y };
 			if (pos.x >= 0 && pos.y >= 0)
 				camera->cameraRender.triggerScreenHit({ (unsigned int)pos.x, (unsigned int)pos.y });
 		}
@@ -842,53 +855,14 @@ void Gizmo::begineWindow()
 
 	ImGui::Begin("gizmo", NULL, flags);
 
-	drawList = ImGui::GetBackgroundDrawList();
-	windowPos = ImGui::GetWindowPos();
-
-	ImGuizmo::SetOrthographic(camera->mode == camera->Orthotropic);
-	ImGuizmo::SetRect(windowPos.x, windowPos.y, camera->size.x, camera->size.y);
-
-	ImGuizmo::SetDrawlist(drawList);
-
-	projMatrix = camera->getProjectionMatrix();
-	viewMatrix = camera->getViewMatrix();
-
-	ScreenHitInfo hitInfo;
-	if (camera->cameraRender.fetchScreenHit(hitInfo)) {
-		auto iter = objectIDToInstanceID.find(hitInfo.hitInstanceID);
-		if (iter != objectIDToInstanceID.end()) {
-			picked = true;
-			Object* object = (Object*)Brane::getPtrByInsID(iter->second);
-			EditorManager::selectObject(object);
-		}
-	}
-
-	objectIDToInstanceID.clear();
-
-	if (ImGui::IsWindowHovered()) {
-		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)) {
-			ImGui::SetWindowFocus();
-		}
-	}
-
-	isFocused = ImGui::IsWindowFocused();
+	beginFrame(ImGui::GetBackgroundDrawList());
 }
 
 void Gizmo::endWindow()
 {
 	if (camera == NULL)
 		return;
-	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-		if ((!ImGuizmo::IsOver() && !picked && !isUsing && !isLastUsing)) {
-			EditorManager::selectObject(NULL);
-			ImVec2 mousePos = ImGui::GetMousePos();
-			ImVec2 winPos = ImGui::GetWindowPos();
-			ImVec2 pos = { mousePos.x - winPos.x, mousePos.y - winPos.y };
-			if (pos.x >= 0 && pos.y >= 0)
-				camera->cameraRender.triggerScreenHit({ (unsigned int)pos.x, (unsigned int)pos.y });
-		}
-	}
-	isLastUsing = isUsing;
+	endFrame();
 	ImGui::End();
 	ImGui::PopStyleVar();
 	ImGui::PopStyleColor(2);
@@ -970,7 +944,7 @@ void clip(Vector3f& p0, const Vector3f p1, const Vector3f& camDir, const Vector3
 	p0 += a * t;
 }
 
-void Gizmo::onRender2D()
+void Gizmo::onRender2D(ImDrawList* drawList)
 {
 	if (camera == NULL)
 		return;
@@ -978,7 +952,7 @@ void Gizmo::onRender2D()
 	//ImGui::SetWindowSize(ImVec2(camera.size.x, camera.size.y));
 	//ImGui::SetWindowPos(windowPos);
 
-	ImDrawList* list = drawList;
+	ImDrawList* list = drawList ? drawList : this->drawList;
 	list->PushClipRect(windowPos, { windowPos.x + camera.size.x, windowPos.y + camera.size.y });
 	Matrix4f pvm = camera.getProjectionMatrix() * camera.getViewMatrix();
 	Vector3f camDir = camera.getForward(WORLD);

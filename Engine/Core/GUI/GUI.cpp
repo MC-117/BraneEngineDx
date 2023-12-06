@@ -1,6 +1,7 @@
 #include "GUI.h"
 #include "UIWindow.h"
 #include "Gizmo.h"
+#include "GUISurface.h"
 #include "../Camera.h"
 #include "../Engine.h"
 #include "../WUI/WUIMainWindow.h"
@@ -9,7 +10,7 @@
 bool GUI::mouseOnUI = false;
 bool GUI::anyItemFocus = false;
 
-GUI::GUI() : gizmo("_default_gizmo_")
+GUI::GUI()// : gizmo("_default_gizmo_")
 {
 	//ImGuiStyle& style = ImGui::GetStyle();
 	//style.WindowPadding = { 0, 0 };
@@ -17,6 +18,12 @@ GUI::GUI() : gizmo("_default_gizmo_")
 
 GUI::~GUI()
 {
+}
+
+GUI& GUI::get()
+{
+	static GUI gui;
+	return gui;
 }
 
 bool GUI::isMouseOnUI()
@@ -42,7 +49,7 @@ void GUI::onGUI(RenderInfo& info)
 			throw runtime_error("Vendor ImGui new frame failed");
 	}
 
-	GUIRenderInfo _info = { viewSize, sceneBlurTex, info.sceneData, info.renderGraph, *this, info.camera };
+	GUIRenderInfo _info = { viewSize, sceneBlurTex, info.sceneData, info.renderGraph, *this, info.camera, &GUISurface::getMainGUISurface().gizmo };
 
 	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++)
 		b->second->onPreAction(_info);
@@ -130,9 +137,9 @@ void GUI::onGUI(RenderInfo& info)
 		UIWindow* windoiw = dynamic_cast<UIWindow*>(mainControl);
 		ImGui::BeginChild(windoiw->name.c_str());
 		if (windoiw)
-			windoiw->onRenderWindow(_info);
+			windoiw->onWindowGUI(_info);
 		else
-			mainControl->render(_info);
+			mainControl->onGUI(_info);
 		ImGui::EndChild();
 	}
 	else {
@@ -149,21 +156,21 @@ void GUI::onGUI(RenderInfo& info)
 	ImGui::End();
 	ImGui::PopStyleVar(3);
 
-	gizmo.begineWindow();
-	gizmo.onGUI(Engine::getCurrentWorld());
-	gizmo.endWindow();
+	// gizmo.begineWindow();
+	// gizmo.onGUI(Engine::getCurrentWorld());
+	// gizmo.endWindow();
 	
 	focusControl = NULL;
 
 	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++) {
 		if (b->second->show && b->second != mainControl)
-			b->second->render(_info);
+			b->second->onGUI(_info);
 		UIWindow* win = dynamic_cast<UIWindow*>(b->second);
 		if (win->isFocus())
 			focusControl = win;
 	}
 
-	gizmo.onRender2D();
+	//gizmo.onRender2D();
 
 	GUIPostInfo postInfo = { focusControl, *this };
 
@@ -175,14 +182,19 @@ void GUI::onGUI(RenderInfo& info)
 
 	//ImGui::ShowDemoWindow();
 
-	gizmo.reset();
+	//gizmo.reset();
 
 	//ImGuiIO& io = ImGui::GetIO();
 }
 
 void GUI::render(RenderInfo& info)
 {
-	gizmo.onRender3D(info);
+	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++) {
+		if (b->second->show)
+			b->second->onRender(info);
+	}
+	
+	//gizmo.onRender3D(info);
 	ImGui::Render();
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -193,9 +205,9 @@ void GUI::render(RenderInfo& info)
 		info.renderGraph->setImGuiDrawData(ImGui::GetDrawData());
 }
 
-void GUI::onSceneResize(Unit2Di size)
+void GUI::onSceneResize(const Vector2i& size)
 {
-	viewSize = size;
+	viewSize = { size.x(), size.y() };
 	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++)
 		b->second->onSceneResize(size);
 }
@@ -318,51 +330,4 @@ GUI & GUI::operator+=(UIControl * uc)
 {
 	addUIControl(*uc);
 	return *this;
-}
-
-GUIEngineLoop::GUIEngineLoop(GUI& gui)
-	: gui(gui)
-{
-}
-
-bool GUIEngineLoop::willQuit()
-{
-	return false;
-}
-
-void GUIEngineLoop::init()
-{
-	
-}
-
-void GUIEngineLoop::loop(float deltaTime)
-{
-	RenderInfo info;
-	info.camera = NULL;
-	info.renderGraph = NULL;
-	info.sceneData = NULL;
-	gui.onGUI(info);
-	gui.render(info);
-	
-	ImGui::Render();
-	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		ImGui::UpdatePlatformWindows();
-	}
-
-	IDeviceSurface* surface = Engine::getMainDeviceSurface();
-	if (surface == NULL)
-		throw runtime_error("MainDeviceSurface not initialized");
-
-	surface->bindSurface();
-	surface->clearColor(Color(0, 0, 0));
-
-	IVendor& Vendor = VendorManager::getInstance().getVendor();
-	Vendor.imGuiDrawFrame(Engine::engineConfig, Engine::windowContext);
-
-	surface->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
-}
-
-void GUIEngineLoop::release()
-{
 }

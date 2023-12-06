@@ -68,7 +68,7 @@ void MaterialWindow::onMaterialPreview(GUIRenderInfo& info)
 	ImGui::EndChild();
 }
 
-void MaterialWindow::onRenderWindow(GUIRenderInfo & info)
+void MaterialWindow::onWindowGUI(GUIRenderInfo & info)
 {
 	if (material == NULL)
 		return;

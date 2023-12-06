@@ -65,7 +65,7 @@ public:
 	AnimationConverter(string name = "AnimationConverter", bool defaultShow = false);
 	~AnimationConverter();
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 
 	void showFBXLoad();
 	void showVmdLoad();

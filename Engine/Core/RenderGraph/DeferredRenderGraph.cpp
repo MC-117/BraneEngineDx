@@ -42,7 +42,7 @@ DeferredSurfaceBuffer::DeferredSurfaceBuffer()
 
 void DeferredSurfaceBuffer::create(CameraRender* cameraRender)
 {
-	resolveRenderTarget.addTexture("gBufferA", *cameraRender->getSceneMap());
+	resolveRenderTarget.addTexture("gBufferA", *cameraRender->getSceneTexture());
 	resize(cameraRender->size.x, cameraRender->size.y);
 	usedFrame = Time::frames();
 }
@@ -509,10 +509,12 @@ void DeferredRenderGraph::execute(IRenderContext& context)
 
 		for (auto sceneData : sceneDatas) {
 			for (auto& cameraRenderData : sceneData->cameraRenderDatas) {
-				if (cameraRenderData->flags.has(CameraRender_DebugDraw))
-					sceneData->debugRenderData.debugDraw(context, *cameraRenderData);
-				if (cameraRenderData->flags.has(CameraRender_GizmoDraw))
-					sceneData->debugRenderData.gizmoDraw(context, *cameraRenderData);
+				if (!cameraRenderData->flags.has(CameraRender_SceneCapture)) {
+					if (cameraRenderData->flags.has(CameraRender_DebugDraw))
+						sceneData->debugRenderData.debugDraw(context, *cameraRenderData);
+					if (cameraRenderData->flags.has(CameraRender_GizmoDraw))
+						sceneData->debugRenderData.gizmoDraw(context, *cameraRenderData);
+				}
 			}
 		}
 	}

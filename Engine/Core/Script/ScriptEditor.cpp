@@ -40,7 +40,7 @@ PythonScript * ScriptEditor::getScript()
 	return currentData == NULL ? NULL : currentData->script;
 }
 
-void ScriptEditor::onRenderWindow(GUIRenderInfo & info)
+void ScriptEditor::onWindowGUI(GUIRenderInfo & info)
 {
 	if (currentData == NULL)
 		return;

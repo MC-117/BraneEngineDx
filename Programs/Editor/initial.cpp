@@ -11,6 +11,7 @@
 #include "Core\GUI\PhysicsDebug.h"
 #include "Core\GUI\ShaderManagerWindow.h"
 #include "Core\GUI\UVViewer.h"
+#include "Core\GUI\UIViewport.h"
 #include "Core\Timeline\TimelineWindow.h"
 #include "Core\Timeline\AnimationTrack.h"
 #include "Core\Graph\GraphWindow.h"
@@ -175,6 +176,8 @@ public:
 		//world += cloth;
 		//cloth.setPosition(0, 0, 300);
 
+		GUISurface::getMainViewportGUISurface().bindCamera(&world.defaultCamera);
+
 		DebugCamera& debugCamera = *new DebugCamera();
 		world += debugCamera;
 		world.switchCamera(debugCamera);
@@ -205,42 +208,6 @@ public:
 			}
 		});*/
 
-		ESCMenu& escMenu = *new ESCMenu("ESCMenu", true);
-		world += escMenu;
-
-		EditorWindow& editorWindow = *new EditorWindow(world, Material::nullMaterial, "Editor", false);
-		editorWindow.blurBackground = true;
-		editorWindow.showCloseButton = false;
-		world += editorWindow;
-
-		DebugLogWindow& debugLogWindow = *new DebugLogWindow("DebugLogWindow", true);
-		world += debugLogWindow;
-		debugLogWindow.show = true;
-
-		CMDWindow& cmdWindow = *new CMDWindow("CMDWindow");
-		world += cmdWindow;
-
-		MatBranchModifier& matBranchModifier = *new MatBranchModifier("MatBranchModifier", false);
-		world += matBranchModifier;
-
-		PhysicsDebug& physicsDebug = *new PhysicsDebug("PhysicsDebug");
-		world += physicsDebug;
-
-		TimelineWindow& timelineWindow = *new TimelineWindow("Timeline");
-		world += timelineWindow;
-
-		//GraphWindow& graphWindow = *new GraphWindow("Graph");
-		//world += graphWindow;
-
-		ShaderManagerWindow& shaderManagerWindow = *new ShaderManagerWindow("ShaderManagerWindow");
-		world += shaderManagerWindow;
-
-		UVViewer& uvViewer = *new UVViewer("UVViewer");
-		world += uvViewer;
-
-		MidiInstrumentWindow& midiInstrumentWindow = *new MidiInstrumentWindow("MidiInstrumentWindow");
-		world += midiInstrumentWindow;
-
 		SerializationInfo* info = getAssetByPath<SerializationInfo>(Engine::engineConfig.startMapPath);
 		if (info == NULL) {
 			Console::error("Can not load map '%s'", Engine::engineConfig.startMapPath.c_str());
@@ -255,6 +222,48 @@ public:
 		// 	dirLight.setRotation(0, -45, -45);
 		// 	world += dirLight;
 		// }
+	}
+	
+	virtual void initializeGUILayout(GUI& gui)
+	{
+		//ESCMenu& escMenu = *new ESCMenu("ESCMenu", true);
+		//gui += escMenu;
+
+		UIViewport& mainViewport = *new UIViewport("MainViewport", true);
+		gui += mainViewport;
+
+		EditorWindow& editorWindow = *new EditorWindow(*Engine::getCurrentWorld(), Material::nullMaterial, "Editor", true);
+		editorWindow.blurBackground = true;
+		editorWindow.showCloseButton = false;
+		gui += editorWindow;
+
+		DebugLogWindow& debugLogWindow = *new DebugLogWindow("DebugLogWindow", true);
+		gui += debugLogWindow;
+		debugLogWindow.show = true;
+
+		CMDWindow& cmdWindow = *new CMDWindow("CMDWindow");
+		gui += cmdWindow;
+
+		MatBranchModifier& matBranchModifier = *new MatBranchModifier("MatBranchModifier", false);
+		gui += matBranchModifier;
+
+		PhysicsDebug& physicsDebug = *new PhysicsDebug("PhysicsDebug");
+		gui += physicsDebug;
+
+		TimelineWindow& timelineWindow = *new TimelineWindow("Timeline");
+		gui += timelineWindow;
+
+		//GraphWindow& graphWindow = *new GraphWindow("Graph");
+		//world += graphWindow;
+
+		ShaderManagerWindow& shaderManagerWindow = *new ShaderManagerWindow("ShaderManagerWindow");
+		gui += shaderManagerWindow;
+
+		UVViewer& uvViewer = *new UVViewer("UVViewer");
+		gui += uvViewer;
+
+		MidiInstrumentWindow& midiInstrumentWindow = *new MidiInstrumentWindow("MidiInstrumentWindow");
+		gui += midiInstrumentWindow;
 	}
 };
 

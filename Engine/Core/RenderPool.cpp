@@ -3,15 +3,15 @@
 #include "Console.h"
 #include "IVendor.h"
 #include "Engine.h"
+#include "GUI/GUISurface.h"
 #include "Profile/ProfileCore.h"
 #include "RenderGraph/ForwardRenderGraph.h"
 #include "RenderGraph/DeferredRenderGraph.h"
 #include "Profile/RenderProfile.h"
 
-RenderPool::RenderPool(Camera & defaultCamera)
-	: defaultCamera(defaultCamera), renderThread(renderThreadLoop, this)
+RenderPool::RenderPool()
+	: renderThread(renderThreadLoop, this)
 {
-	camera = &defaultCamera;
 	renderFrame = Time::frames();
 	sceneData = new SceneRenderData();
 	renderGraph = Engine::engineConfig.guiOnly ? (RenderGraph*)new ForwardRenderGraph() : (RenderGraph*)new DeferredRenderGraph();
@@ -30,31 +30,23 @@ RenderPool::~RenderPool()
 	renderGraph = NULL;
 }
 
+RenderPool& RenderPool::get()
+{
+	static RenderPool renderPool;
+	return renderPool;
+}
+
 void RenderPool::start()
 {
 	renderFrame = Time::frames();
 	renderThread.detach();
 }
 
-void RenderPool::setViewportSize(Unit2Di size)
+void RenderPool::setViewportSize(const Vector2i& size)
 {
 	gameFence();
-	if (camera == NULL)
-		defaultCamera.setSize(size);
-	else
-		camera->setSize(size);
-	gui.onSceneResize(size);
-}
-
-void RenderPool::switchToDefaultCamera()
-{
-	camera = NULL;
-}
-
-void RenderPool::switchCamera(Camera & camera)
-{
-	this->camera = &camera;
-	camera.cameraRender.getRenderTarget().setMultisampleLevel(Engine::engineConfig.msaa);
+	GUISurface::getFullScreenGUISurface().setSize(size);
+	//gui.onSceneResize(size);
 }
 
 void RenderPool::add(Render & render)
@@ -108,20 +100,21 @@ void RenderPool::render(bool guiOnly)
 
 	IVendor& vendor = VendorManager::getInstance().getVendor();
 
-	Camera& currentCamera = (camera == NULL ? defaultCamera : *camera);
+	Camera* currentCamera = GUISurface::getMainGUISurface().getCamera();
+	
 	PreRenderInfo preInfo;
 	preInfo.sceneData = sceneData;
-	preInfo.camera = &currentCamera;
+	preInfo.camera = currentCamera;
 	RenderInfo info;
 	info.sceneData = sceneData;
 	info.renderGraph = renderGraph;
-	info.camera = &currentCamera;
+	info.camera = currentCamera;
 	renderGraph->sceneDatas.insert(sceneData);
 
-	gui.onGUI(info);
-	timer.record("GUI");
+	// gui.onGUI(info);
+	// timer.record("GUI");
 
-	if (!guiOnly) {
+	if (!guiOnly && currentCamera) {
 		// for (auto lightB = prePool.begin(), lightE = prePool.end(); lightB != lightE; lightB++) {
 		// 	(*(lightB))->preRender(preInfo);
 		// }
@@ -142,16 +135,16 @@ void RenderPool::render(bool guiOnly)
 
 		timer.record("Objects");
 
-		gui.setSceneBlurTex(currentCamera.cameraRender.getSceneBlurTex());
+		// gui.setSceneBlurTex(currentCamera->cameraRender.getSceneBlurTex());
 	}
 	else {
 		IRenderContext& context = *vendor.getDefaultRenderContext();
 		context.bindSurface(Engine::getMainDeviceSurface());
-		context.clearFrameColor(currentCamera.clearColor);
+		context.clearFrameColor(currentCamera->clearColor);
 	}
 
-	gui.render(info);
-	timer.record("RenderUI");
+	// gui.render(info);
+	// timer.record("RenderUI");
 
 	renderGraph->prepare();
 	timer.record("PrepareRenderGraph");

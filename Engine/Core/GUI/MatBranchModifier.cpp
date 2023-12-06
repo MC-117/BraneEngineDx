@@ -9,7 +9,7 @@ MatBranchModifier::MatBranchModifier(string name, bool defaultShow)
 {
 }
 
-void MatBranchModifier::onRenderWindow(GUIRenderInfo& info)
+void MatBranchModifier::onWindowGUI(GUIRenderInfo& info)
 {
 	Object* obj = targetObject;
 	ImGui::ObjectCombo("Object", obj, Engine::getCurrentWorld(), objectFilterName);

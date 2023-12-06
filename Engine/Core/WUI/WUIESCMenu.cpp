@@ -44,11 +44,8 @@ WUIESCMenu::WUIESCMenu()
 void WUIESCMenu::play()
 {
 	hide();
-	World* world = Engine::getCurrentWorld();
-	if (world == NULL)
-		return;
-	if (!world->renderPool.gui.isShowUIControl("Editor"))
-	Engine::getInput().setCursorHidden(true);
+	if (!GUI::get().isShowUIControl("Editor"))
+		Engine::getInput().setCursorHidden(true);
 }
 
 void WUIESCMenu::help()
@@ -80,7 +77,7 @@ void WUIESCMenu::editor()
 	World* world = Engine::getCurrentWorld();
 	if (world == NULL)
 		return;
-	UIControl* uc = world->renderPool.gui.getUIControl("Editor");
+	UIControl* uc = GUI::get().getUIControl("Editor");
 	bool b = false;
 	if (uc != NULL) {
 		EditorWindow* win = dynamic_cast<EditorWindow*>(uc);
@@ -94,7 +91,7 @@ void WUIESCMenu::editor()
 		b = true;
 	if (b) {
 		EditorWindow* win = new EditorWindow(*world, Material::nullMaterial, "Editor", true);
-		(*world) += win;
+		GUI::get() += win;
 	}
 }
 

@@ -10,7 +10,7 @@ public:
 	virtual ~ESCMenu();
 
 	virtual void onPreAction(GUIRenderInfo& info);
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 };
 
 #endif // !_ESCMENU_H_

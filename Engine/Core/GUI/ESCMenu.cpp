@@ -45,7 +45,7 @@ void TextCenter(std::string text) {
 	ImGui::Text(text.c_str());
 }
 
-void ESCMenu::onRenderWindow(GUIRenderInfo& info)
+void ESCMenu::onWindowGUI(GUIRenderInfo& info)
 {
 	ImVec2 ws = { 200, 252 };
 	ImVec2 pos = ImGui::GetMainViewport()->WorkPos;
@@ -145,9 +145,9 @@ void ESCMenu::onRenderWindow(GUIRenderInfo& info)
 			b = true;
 		if (b) {
 			EditorWindow* win = new EditorWindow(*world, Material::nullMaterial, "Editor", true);
-			(*world) += win;
+			GUI::get() += win;
 		}
-		info.gui.gizmo.setEnableGUI(true);
+		info.gizmo->setEnableGUI(true);
 	}
 	if (ImGui::Button("Toggle Fullscreen", size)) {
 		Engine::toggleFullscreen();

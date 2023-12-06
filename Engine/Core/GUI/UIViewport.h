@@ -1,5 +1,6 @@
 #pragma once
 #include "UIWindow.h"
+#include "GUISurface.h"
 
 class ENGINE_API UIViewport : public UIWindow
 {
@@ -8,10 +9,13 @@ public:
 
 	void setCamera(Camera* camera);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
+	virtual void onPostAction(GUIPostInfo& info);
+	virtual void onRender(RenderInfo& info);
 protected:
-	Ref<Camera> camera;
-	Vector2i size;
+	GUISurface surface;
 
-	virtual void resize(int width, int height);
+	virtual void resize(const Vector2i& size);
+
+	GUISurface& getTargetSurface();
 };

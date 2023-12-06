@@ -13,7 +13,7 @@ public:
 
 	void setTargetMeshPart(Mesh* mesh);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	Texture2D uvTexture = Texture2D(128, 128, 4, false, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
 	RenderTarget renderTarget = RenderTarget(128, 128, 4);

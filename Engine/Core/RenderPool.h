@@ -10,20 +10,17 @@ using namespace std;
 class ENGINE_API RenderPool
 {
 public:
-	Camera& defaultCamera;
-	Camera* camera = NULL;
-	GUI gui;
 	SceneRenderData* sceneData = NULL;
 	RenderGraph* renderGraph = NULL;
 
-	RenderPool(Camera& defaultCamera);
+	RenderPool();
 	virtual ~RenderPool();
+
+	static RenderPool& get();
 
 	void start();
 
-	void setViewportSize(Unit2Di size);
-	void switchToDefaultCamera();
-	void switchCamera(Camera& camera);
+	void setViewportSize(const Vector2i& size);
 	void add(Render& render);
 	void remove(Render& render);
 

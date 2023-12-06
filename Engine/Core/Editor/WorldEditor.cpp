@@ -23,7 +23,7 @@ void WorldEditor::onWorldGUI(EditorInfo& info)
 	}
 	ImGui::Checkbox("VSnyc", &Engine::engineConfig.vsnyc);
 	if (ImGui::CollapsingHeader("RenderGraph")) {
-		Editor* editor = EditorManager::getEditor(*world->renderPool.renderGraph);
+		Editor* editor = EditorManager::getEditor(*RenderPool::get().renderGraph);
 		if (editor)
 			editor->onGUI(info);
 	}

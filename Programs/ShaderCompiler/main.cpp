@@ -3,6 +3,7 @@
 #include "resource.h"
 #include "Core/Application.h"
 #include "Core/Engine.h"
+#include "Core/EngineLoop/GUIEngineLoop.h"
 #include "Core/Importer/Importer.h"
 #include "Core/GUI/ShaderManagerWindow.h"
 #include "Core/WUI/WUIControl.h"
@@ -26,12 +27,11 @@ public:
 	
 	virtual void initializeEngineLoop()
 	{
-		gui.setMainControl(&window);
-		engine.setEngineLoop(*new GUIEngineLoop(gui));
+		GUI::get().setMainControl(&window);
+		engine.setEngineLoop(*new GUIOnlyEngineLoop(GUI::get()));
 		Engine::get().getEngineLoop()->init();
 	}
 protected:
-	GUI gui;
 	ShaderManagerWindow window;
 };
 

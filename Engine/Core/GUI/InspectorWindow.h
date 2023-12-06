@@ -13,7 +13,7 @@ public:
 
 	InspectorWindow(Object& object, string name = "Inspector", bool defaultShow = false);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	/*void showMaterial(Material* mat, Render* render);
 	void showMaterial(multimap<string, unsigned int>& meshPartNames, vector<Material*>& materials, GUI& gui);*/

@@ -45,7 +45,7 @@ string getNextName(Object& root, const string& name)
 	return newName;
 }
 
-void EditorWindow::onRenderWindow(GUIRenderInfo& info)
+void EditorWindow::onWindowGUI(GUIRenderInfo& info)
 {
 	Object* selectedObj = EditorManager::getSelectedObject();
 	World* w = dynamic_cast<World*>(&object);
@@ -101,7 +101,7 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 			b = true;
 		if (b) {
 			ConsoleWindow* win = new ConsoleWindow(world, "Console", true);
-			world += win;
+			GUI::get() += win;
 		}
 		//world.saveTransform("Save.world");
 		/*CFileDialog dialog(false, _T("*.world"), NULL, 6UL, _T("World(*.world)|*.world|All Files(*.*)|*.*"));
@@ -126,7 +126,7 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 		if (b) {
 			AssetBrowser* win = new AssetBrowser(world, "Engine Browser", true);
 			win->setCurrentPath("Engine");
-			world += win;
+			GUI::get() += win;
 		}
 	}
 	ImGui::SameLine();
@@ -146,14 +146,14 @@ void EditorWindow::onRenderWindow(GUIRenderInfo& info)
 		if (b) {
 			AssetBrowser* win = new AssetBrowser(world, "Content Browser", true);
 			win->setCurrentPath("Content");
-			world += win;
+			GUI::get() += win;
 		}
 	}
 	if (!alwaysShow) {
 		if (ImGui::Button("Hide UI", size)) {
 			Engine::getInput().setCursorHidden(true);
 			gui.hideAllUIControl();
-			gui.gizmo.setEnableGUI(false);
+			info.gizmo->setEnableGUI(false);
 		}
 		ImGui::SameLine();
 	}
@@ -332,7 +332,7 @@ void EditorWindow::select(Object * obj, GUI& gui)
 	InspectorWindow* ipw = dynamic_cast<InspectorWindow*>(gui.getUIControl("Inspector"));
 	if (ipw == NULL) {
 		ipw = new InspectorWindow(world, "Inspector", true);
-		world += ipw;
+		GUI::get() += ipw;
 	}
 	ipw->show = true;
 	EditorManager::selectObject(obj);

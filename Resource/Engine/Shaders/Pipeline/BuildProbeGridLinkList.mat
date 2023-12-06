@@ -112,12 +112,17 @@ void main(uint3 gridIndex : SV_DispatchThreadID)
 				if (nextLink < probeMaxLinkListLength) {
 					outProbeGridLinkList[nextLink] = uint2(linkHead, i);
 					linkHead = nextLink;
+					#ifdef DEBUG_SHADER_FEATURE
+					if (getDebugProbeIndex() == i) {
+						debugDrawTransformedAABB(viewTileCenter, viewTileExtend, camData.vmatInv, IntToColor(getProbeGridFlatIndex(gridIndex)), DEBUG_NONE_FLAG);
+					}
+					#endif
 				}
             }
         }
 
 #ifdef DEBUG_SHADER_FEATURE
-        if (linkHead != 0) {
+        if (linkHead != 0 && getDebugProbeIndex() < 0) {
         //if (gridIndex.z == 0) {
             debugDrawTransformedAABB(viewTileCenter, viewTileExtend, camData.vmatInv, IntToColor(getProbeGridFlatIndex(gridIndex)), DEBUG_PERSISTENT_FLAG);
         }

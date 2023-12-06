@@ -127,7 +127,7 @@ void ObjectPreviewWindow::onSceneGUI(GUIRenderInfo& info, float width, float hei
 	}
 }
 
-void ObjectPreviewWindow::onRenderWindow(GUIRenderInfo& info)
+void ObjectPreviewWindow::onWindowGUI(GUIRenderInfo& info)
 {
 	float splitterSize = 3;
 	float height = ImGui::GetWindowContentRegionMax().y - ImGui::GetWindowContentRegionMin().y - splitterSize;
@@ -168,7 +168,7 @@ void ObjectPreviewWindow::onRenderWindow(GUIRenderInfo& info)
 	onInspectorBarGUI(info);
 	ImGui::EndChild();
 
-	gizmo.onRender2D();
+	gizmo.onRender2D(drawList);
 	gizmo.reset();
 	RenderInfo renderInfo;
 	renderInfo.sceneData = editorWorld.getSceneRenderData();

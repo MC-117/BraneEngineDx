@@ -13,7 +13,7 @@ void SerializationEditor::setSerializtionInfo(SerializationInfo & info)
 	this->serializationInfo = &info;
 }
 
-void SerializationEditor::onRenderWindow(GUIRenderInfo & info)
+void SerializationEditor::onWindowGUI(GUIRenderInfo & info)
 {
 	drawInfo(serializationInfo);
 }

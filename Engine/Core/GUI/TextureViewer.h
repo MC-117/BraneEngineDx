@@ -13,7 +13,7 @@ public:
 	
 	void setTexture(Texture& tex);
 	
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 
 	static void showTexture(GUI& gui, Texture& tex);
 protected:

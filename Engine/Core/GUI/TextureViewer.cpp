@@ -12,7 +12,7 @@ void TextureViewer::setTexture(Texture & tex)
 	texture = &tex;
 }
 
-void TextureViewer::onRenderWindow(GUIRenderInfo & info)
+void TextureViewer::onWindowGUI(GUIRenderInfo & info)
 {
 	if (texture != NULL) {
 		ImGui::Checkbox("Invert", &invert);

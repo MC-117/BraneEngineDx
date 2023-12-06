@@ -11,7 +11,7 @@ public:
 	void setTimeline(Timeline* timeline);
 	void setTimelinePlayer(TimelinePlayer* player);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 
 	static void showTimeline(GUI& gui, Timeline* timeline);
 protected:

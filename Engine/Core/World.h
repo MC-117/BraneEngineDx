@@ -3,7 +3,6 @@
 #define _WORLD_H_
 #include "Input.h"
 #include "IWorld.h"
-#include "EngineLoop.h"
 #include "Transform.h"
 #include "Audio/AudioSource.h"
 #include "Camera.h"
@@ -28,7 +27,6 @@ public:
 #endif // AUDIO_USE_OPENAL
 
 	Camera defaultCamera;
-	RenderPool renderPool = RenderPool(defaultCamera);
 
 	World();
 	virtual ~World();
@@ -36,6 +34,7 @@ public:
 	virtual void begin();
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
+	virtual void prerender(SceneRenderData& sceneData);
 	virtual void end();
 	void quit(int code = 0);
 	void setPause(bool pause);
@@ -51,10 +50,6 @@ public:
 
 	void setGUIOnly(bool value);
 	bool getGUIOnly();
-	void addUIControl(UIControl& uc);
-	void addUIControl(UIControl* uc);
-
-	void bindUI(void(*uiDraw)(GUI&));
 
 	Camera& getCurrentCamera();
 	Camera& getDefaultCamera();
@@ -66,7 +61,6 @@ public:
 	void setMainVolume(float v);
 #endif // AUDIO_USE_OPENAL
 	
-	void setViewportSize(int width, int height);
 	int64_t getEngineTime();
 	int64_t getSystemTime();
 
@@ -75,9 +69,6 @@ public:
 
 	World& operator+=(Object& object);
 	World& operator+=(Object* object);
-
-	World& operator+=(UIControl& uc);
-	World& operator+=(UIControl* uc);
 
 	void loadWorld(const SerializationInfo& from);
 
@@ -94,22 +85,6 @@ protected:
 	vector<Object*> destroyList;
 
 	int64_t getCurrentTime();
-};
-
-class WorldEngineLoop : public EngineLoop
-{
-public:
-	WorldEngineLoop(Ref<World> world);
-
-	void setWorld(Ref<World> world);
-
-	virtual bool willQuit();
-	
-	virtual void init();
-	virtual void loop(float deltaTime);
-	virtual void release();
-protected:
-	Ref<World> world;
 };
 
 #endif // !_WORLD_H_

@@ -74,7 +74,7 @@ void markPage(uint vsmID
 	uint pageOffset = calcPageOffset(vsmID, mipLevel, pageAddress);
 	markPageAddress(pageOffset, flags);
 	#if defined(DEBUG_SHADER_FEATURE)
-	outDebugBuffer[pixel] = float4(IntToColor(mipLevel), 1.0f);
+	outDebugBuffer[pixel] = float4(IntToColor(pageOffset), 1.0f);
 	#endif
 
 	if (usePageDilation)

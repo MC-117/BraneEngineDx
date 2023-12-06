@@ -116,7 +116,7 @@ AnimationConverter::~AnimationConverter()
 		delete vmdInfo;
 }
 
-void AnimationConverter::onRenderWindow(GUIRenderInfo & info)
+void AnimationConverter::onWindowGUI(GUIRenderInfo & info)
 {
 	if (stage == 0) {
 		showVmdLoad();

@@ -11,7 +11,7 @@ public:
 
 	void setGraph(Graph* graph);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 
 	static void showGraph(GUI& gui, Graph* graph);
 protected:

@@ -12,7 +12,7 @@ void MidiInstrumentWindow::setMidiInstrument(MidiInstrument* instrument)
 	this->instrument = instrument;
 }
 
-void MidiInstrumentWindow::onRenderWindow(GUIRenderInfo& info)
+void MidiInstrumentWindow::onWindowGUI(GUIRenderInfo& info)
 {
 	if (instrument == NULL) {
 		ImGui::BeginHorizontal("H");
@@ -35,7 +35,7 @@ void MidiInstrumentWindow::onRenderWindow(GUIRenderInfo& info)
 		EditorInfo eidorInfo;
 		eidorInfo.destroy = false;
 		eidorInfo.gui = &info.gui;
-		eidorInfo.gizmo = &info.gui.gizmo;
+		eidorInfo.gizmo = info.gizmo;
 		eidorInfo.camera = info.camera;
 		eidorInfo.world = Engine::getCurrentWorld();
 		editor->onGUI(eidorInfo);

@@ -14,7 +14,7 @@ ConsoleWindow::ConsoleWindow(Object & object, string name, bool defaultShow) : U
 	textEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::Python());
 }
 
-void ConsoleWindow::onRenderWindow(GUIRenderInfo & info)
+void ConsoleWindow::onWindowGUI(GUIRenderInfo & info)
 {
 	if (ImGui::BeginTabBar("ConsoleTab")) {
 		if (ImGui::BeginTabItem("Engine")) {

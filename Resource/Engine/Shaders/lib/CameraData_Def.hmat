@@ -33,6 +33,8 @@ cbuffer CameraDataBuf : register(CAM_BIND_INDEX)
     uint probeGridCellCount;
     uint probeMaxCountPerCell;
     uint probeMaxLinkListLength;
+    int debugProbeIndex;
+    int3 probePad;
 };
 
 float2 clipToUV(float2 clip)

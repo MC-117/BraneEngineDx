@@ -17,7 +17,7 @@ public:
 	void setScript(PythonScript& script);
 	PythonScript* getScript();
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	struct CodeTempData
 	{

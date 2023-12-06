@@ -19,7 +19,7 @@ void GraphWindow::setGraph(Graph* graph)
 	graphInfo.setGraph(graph);
 }
 
-void GraphWindow::onRenderWindow(GUIRenderInfo& info)
+void GraphWindow::onWindowGUI(GUIRenderInfo& info)
 {
 	float splitterSize = 3;
 	ImVec2 contentPos = ImGui::GetWindowContentRegionMin();
@@ -35,7 +35,7 @@ void GraphWindow::onRenderWindow(GUIRenderInfo& info)
 		inspectViewWidthRadio = inspectViewWidth / viewWidth;
 	}
 
-	EditorInfo editorInfo = { &info.gui, &info.gui.gizmo, info.camera, Engine::getCurrentWorld() };
+	EditorInfo editorInfo = { &info.gui, info.gizmo, info.camera, Engine::getCurrentWorld() };
 
 	Graph* pGraph = graph;
 

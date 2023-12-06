@@ -42,7 +42,7 @@ DefaultVertexOut VERTEX_MAIN
     sca = dist / camData.viewSize.x;
     DefaultVertexOut vout;
     vout.TransMat = fm;
-    vout.LocalPos = _pos + borderWidth * 200 * sca * normalize(_norm);
+    vout.LocalPos = _pos + borderWidth * 200 * sca * normalize(_norm) / getWorldScale(fm);
     float4 _WorldPos = mul(float4(vout.LocalPos, 1.0), fm);
     vout.LocalNormal = _norm;
     vout.Normal = normalize(mul(float4(_norm, 0.0), fm).xyz);

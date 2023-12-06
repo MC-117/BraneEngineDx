@@ -9,7 +9,7 @@ public:
 
 	void setMidiInstrument(MidiInstrument* instrument);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	Ref<MidiInstrument> instrument;
 	string newInstrumentName = "Unnamed";

@@ -33,7 +33,7 @@ public:
 
 	void setBlendSpaceAnimation(BlendSpaceAnimation& animation);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	BlendSpaceGridContext context;
 	BlendSpaceAnimation* blendSpace = NULL;

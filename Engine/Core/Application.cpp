@@ -169,5 +169,6 @@ void WorldApplication::initializeEngineLoop()
     World* world = new World();
     Engine::get().changeWorld(world);
     initializeWorld();
+    initializeGUILayout(GUI::get());
     Engine::get().getEngineLoop()->init();
 }

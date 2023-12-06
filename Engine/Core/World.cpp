@@ -4,24 +4,18 @@
 #include "Utility/Utility.h"
 #include "Console.h"
 #include "Engine.h"
+#include "GUI/GUISurface.h"
 
 SerializeInstance(World);
 
 Timer timer;
-
-void renderTick(World* w)
-{
-	while (!w->willQuit())
-		if (w != NULL)
-			w->renderPool.render();
-}
 
 World::World() : Transform("RootWorld")
 {
 	if (defaultCamera.parent == NULL)
 		*this += defaultCamera;
 	defaultCamera.setActive(true);
-	renderPool.switchToDefaultCamera();
+	//CameraSurface::getMainCameraSurface().bindCamera(&defaultCamera);
 }
 
 World::~World()
@@ -35,7 +29,7 @@ void World::begin()
 	iter.reset();
 	while (iter.next())
 		iter.current().begin();
-	renderPool.start();
+	//renderPool.start();
 }
 
 void World::tick(float deltaTime)
@@ -55,7 +49,7 @@ void World::tick(float deltaTime)
 			obj.end();
 			destroyList.push_back(&obj);
 			for (int i = 0; i < rds.size(); i++)
-				renderPool.remove(*rds[i]);
+				RenderPool::get().remove(*rds[i]);
 #if ENABLE_PHYSICS
 			obj.releasePhysics(physicalWorld);
 #endif
@@ -66,28 +60,28 @@ void World::tick(float deltaTime)
 		else {
 			for (int i = 0; i < rds.size(); i++)
 				if (rds[i]->renderPool == NULL)
-					renderPool.add(*rds[i]);
+					RenderPool::get().add(*rds[i]);
 #if ENABLE_PHYSICS
 			obj.setupPhysics(physicalWorld);
 #endif
 			if (!obj.isinitialized())
 				obj.begin();
 			if (!pause) {
-				if (doseWarmUp)
+				//if (doseWarmUp)
 					obj.tick(deltaTime);
-				else
+				//else
 					doseWarmUp = true;
 			}
 		}
 	}
 
-	if (Engine::getInput().getCursorHidden()) {
-		renderPool.gui.gizmo.setCameraControl(Gizmo::CameraControlMode::None);
-	}
-	else {
-		renderPool.gui.gizmo.setCameraControl(Gizmo::CameraControlMode::Free);
-	}
-	renderPool.gui.gizmo.onUpdate(getCurrentCamera());
+	// if (Engine::getInput().getCursorHidden()) {
+	// 	renderPool.gui.gizmo.setCameraControl(Gizmo::CameraControlMode::None);
+	// }
+	// else {
+	// 	renderPool.gui.gizmo.setCameraControl(Gizmo::CameraControlMode::Free);
+	// }
+	// renderPool.gui.gizmo.onUpdate(getCurrentCamera());
 	for (auto b = destroyList.rbegin(), e = destroyList.rend(); b != e; b++)
 		delete *b;
 	timer.record("Tick");
@@ -107,19 +101,31 @@ void World::afterTick()
 #ifdef AUDIO_USE_OPENAL
 	updateListener();
 #endif // AUDIO_USE_OPENAL
-	iter.reset();
+	// iter.reset();
+	//
+	// renderPool.beginRender();
+	// timer.record("Fence");
+	//
+	// if (!guiOnly) {
+	// 	while (iter.next())
+	// 		iter.current().prerender(*renderPool.sceneData);
+	// 	timer.record("PreRender");
+	// }
+	//
+	// renderPool.render(guiOnly);
+	// timer.record("Render");
+	// Console::getTimer("Game") = timer;
+}
 
-	renderPool.beginRender();
-	timer.record("Fence");
-
+void World::prerender(SceneRenderData& sceneData)
+{
+	Transform::prerender(sceneData);
 	if (!guiOnly) {
+		iter.reset();
 		while (iter.next())
-			iter.current().prerender(*renderPool.sceneData);
+			iter.current().prerender(*RenderPool::get().sceneData);
 		timer.record("PreRender");
 	}
-
-	renderPool.render(guiOnly);
-	timer.record("Render");
 	Console::getTimer("Game") = timer;
 }
 
@@ -172,7 +178,7 @@ string World::addObject(Object & object)
 	object.getRenders(rds);
 	for (int i = 0; i < rds.size(); i++)
 		if (rds[i]->renderPool == NULL)
-			renderPool.add(*rds[i]);
+			RenderPool::get().add(*rds[i]);
 	return object.name;
 }
 
@@ -183,7 +189,7 @@ string World::addObject(Object * object)
 	object->getRenders(rds);
 	for (int i = 0; i < rds.size(); i++)
 		if (rds[i]->renderPool == NULL)
-			renderPool.add(*rds[i]);
+			RenderPool::get().add(*rds[i]);
 	return object->name;
 }
 
@@ -220,16 +226,6 @@ bool World::getGUIOnly()
 	return guiOnly;
 }
 
-void World::addUIControl(UIControl & uc)
-{
-	renderPool.gui += uc;
-}
-
-void World::addUIControl(UIControl * uc)
-{
-	renderPool.gui += uc;
-}
-
 Camera & World::getCurrentCamera()
 {
 	if (camera == NULL)
@@ -242,15 +238,14 @@ Camera & World::getDefaultCamera()
 	return defaultCamera;
 }
 
-void World::switchCamera(Camera & camera)
+void World::switchCamera(Camera & newCamera)
 {
-	if (this->camera != NULL)
-		this->camera->setActive(false);
-	this->camera = &camera;
-	camera.setActive(true);
-	camera.cameraRender.setMainCameraRender();
-	camera.setSize(screenSize);
-	renderPool.switchCamera(camera);
+	if (camera != NULL)
+		camera->setActive(false);
+	camera = &newCamera;
+	newCamera.setActive(true);
+	newCamera.cameraRender.getRenderTarget().setMultisampleLevel(Engine::engineConfig.msaa);
+	GUISurface::getMainGUISurface().bindCamera(&newCamera);
 }
 
 void World::switchToDefaultCamera()
@@ -259,9 +254,7 @@ void World::switchToDefaultCamera()
 		camera->setActive(false);
 	camera = &defaultCamera;
 	camera->setActive(true);
-	camera->cameraRender.setMainCameraRender();
-	defaultCamera.setSize(screenSize);
-	renderPool.switchToDefaultCamera();
+	GUISurface::getMainGUISurface().bindCamera(camera);
 }
 
 #ifdef AUDIO_USE_OPENAL
@@ -283,12 +276,6 @@ void World::setMainVolume(float v)
 	audioListener.setVolume(v);
 }
 #endif // AUDIO_USE_OPENAL
-
-void World::setViewportSize(int width, int height)
-{
-	screenSize = { width, height };
-	renderPool.setViewportSize(screenSize);
-}
 
 int64_t World::getEngineTime()
 {
@@ -372,18 +359,6 @@ World & World::operator+=(Object * object)
 	return *this;
 }
 
-World & World::operator+=(UIControl & uc)
-{
-	addUIControl(uc);
-	return *this;
-}
-
-World & World::operator+=(UIControl * uc)
-{
-	addUIControl(uc);
-	return *this;
-}
-
 void World::loadWorld(const SerializationInfo & from)
 {
 	ChildrenInstantiateObject(from, this, IR_ExistUniqueName);
@@ -413,41 +388,4 @@ bool World::serialize(SerializationInfo & to)
 int64_t World::getCurrentTime()
 {
 	return Time::now().toNanosecond();
-}
-
-WorldEngineLoop::WorldEngineLoop(Ref<World> world)
-{
-	setWorld(world);
-}
-
-void WorldEngineLoop::setWorld(Ref<World> world)
-{
-	this->world = world;
-}
-
-bool WorldEngineLoop::willQuit()
-{
-	return world->willQuit();
-}
-
-void WorldEngineLoop::init()
-{
-	if (!world)
-		return;
-	world->begin();
-}
-
-void WorldEngineLoop::loop(float deltaTime)
-{
-	if (!world)
-		return;
-	world->tick(deltaTime);
-	world->afterTick();
-}
-
-void WorldEngineLoop::release()
-{
-	if (!world)
-		return;
-	world->end();
 }

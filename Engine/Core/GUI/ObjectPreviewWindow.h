@@ -21,7 +21,7 @@ public:
 	virtual void onInspectorBarGUI(GUIRenderInfo& info);
 	virtual void onSceneGUI(GUIRenderInfo& info, float width, float height);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 
 	static void showObject(GUI& gui, const SerializationInfo& info);
 	static void showObject(GUI& gui, Asset& asset);

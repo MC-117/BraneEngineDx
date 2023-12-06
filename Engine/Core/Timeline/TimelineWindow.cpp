@@ -16,7 +16,7 @@ void TimelineWindow::setTimelinePlayer(TimelinePlayer* player)
 	editor.setPlayer(player);
 }
 
-void TimelineWindow::onRenderWindow(GUIRenderInfo& info)
+void TimelineWindow::onWindowGUI(GUIRenderInfo& info)
 {
 	Object* selectObject = EditorManager::getSelectedObject();
 	TimelinePlayer* player = dynamic_cast<TimelinePlayer*>(selectObject);
@@ -25,7 +25,7 @@ void TimelineWindow::onRenderWindow(GUIRenderInfo& info)
 		editor.setPlayer(player);
 	}
 
-	EditorInfo editorInfo = { &info.gui, &info.gui.gizmo, info.camera, Engine::getCurrentWorld() };
+	EditorInfo editorInfo = { &info.gui, info.gizmo, info.camera, Engine::getCurrentWorld() };
 	editor.onTimelineGUI(editorInfo);
 }
 

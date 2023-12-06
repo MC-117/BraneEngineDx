@@ -16,7 +16,7 @@ DebugLogWindow::DebugLogWindow(string name, bool defaultShow)
 		ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar);
 }
 
-void DebugLogWindow::onRenderWindow(GUIRenderInfo & info)
+void DebugLogWindow::onWindowGUI(GUIRenderInfo & info)
 {
 	ImGui::SetWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_Always);
 	Time time = Time::duration() - Time(chrono::seconds(10));

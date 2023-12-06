@@ -65,6 +65,11 @@ uint getProbeCount()
 	return probeCount;
 }
 
+int getDebugProbeIndex()
+{
+	return debugProbeIndex;
+}
+
 uint getProbeGridFlatIndex(uint3 gridIndex)
 {
 	return (gridIndex.z * probeGridSize.y +

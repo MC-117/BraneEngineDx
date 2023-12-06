@@ -13,7 +13,7 @@ public:
 
 	void setSerializtionInfo(SerializationInfo& info);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 
 	static void showSerializationInfo(GUI& gui, SerializationInfo& info);
 protected:

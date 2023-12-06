@@ -79,7 +79,7 @@ void AssetBrowser::onAttech(GUI & gui)
 	//updatePath(curFolder, true);
 }
 
-void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
+void AssetBrowser::onWindowGUI(GUIRenderInfo & info)
 {
 	if (pathChain.size() > 8)
 		ImGui::Text("Path: ... ");
@@ -376,7 +376,7 @@ void AssetBrowser::onRenderWindow(GUIRenderInfo & info)
 					GraphWindow::showGraph(info.gui, graph);
 				}
 				ImGui::Separator();
-				EditorInfo editorInfo = { &info.gui, &info.gui.gizmo, info.camera, Engine::getCurrentWorld() };
+				EditorInfo editorInfo = { &info.gui, info.gizmo, info.camera, Engine::getCurrentWorld() };
 				for (int i = 0; i < graph->getInputCount(); i++) {
 					GraphPin* pin = graph->getInput(i);
 					GraphPinEditor* editor = dynamic_cast<GraphPinEditor*>(EditorManager::getEditor(*pin));

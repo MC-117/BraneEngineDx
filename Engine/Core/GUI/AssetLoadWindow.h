@@ -24,7 +24,7 @@ public:
 	bool willLoad = false;
 
 	AssetLoadWindow(Object& object, string name = "LoadAsset", bool defaultShow = false);
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 };
 
 #endif // !_ASSETLOADWINDOW_H_

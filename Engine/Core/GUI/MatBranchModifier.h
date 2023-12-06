@@ -13,7 +13,7 @@ public:
 
 	MatBranchModifier(string name = "MatBranchModifier", bool defaultShow = false);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	Ref<Object> targetObject;
 	string objectFilterName;

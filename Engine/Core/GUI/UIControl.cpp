@@ -16,7 +16,7 @@ void UIControl::onPreAction(GUIRenderInfo& info)
 {
 }
 
-void UIControl::render(GUIRenderInfo& info)
+void UIControl::onGUI(GUIRenderInfo& info)
 {
 }
 
@@ -24,10 +24,14 @@ void UIControl::onPostAction(GUIPostInfo& info)
 {
 }
 
-void UIControl::onSceneResize(Unit2Di size)
+void UIControl::onSceneResize(const Vector2i& size)
 {
 }
 
 void UIControl::onAttech(GUI& gui)
+{
+}
+
+void UIControl::onRender(RenderInfo& info)
 {
 }

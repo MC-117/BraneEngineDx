@@ -1,8 +1,10 @@
 #include "CameraRender.h"
+
+#include "Camera.h"
+#include "GUI/GUISurface.h"
 #include "RenderCore/RenderCore.h"
 
 int CameraRender::cameraRenderNextID = 1;
-CameraRender* CameraRender::mainCameraRender = NULL;
 
 CameraRender::CameraRender()
 	: flags(CameraRender_GizmoDraw)
@@ -20,8 +22,6 @@ CameraRender::CameraRender(RenderTarget& renderTarget)
 
 CameraRender::~CameraRender()
 {
-	if (mainCameraRender == this)
-		mainCameraRender = NULL;
 	if (graph) {
 		delete graph;
 		graph = NULL;
@@ -47,12 +47,7 @@ CameraRender::~CameraRender()
 
 bool CameraRender::isMainCameraRender() const
 {
-	return mainCameraRender == this;
-}
-
-void CameraRender::setMainCameraRender()
-{
-	mainCameraRender = this;
+	return GUISurface::getMainGUISurface().getCameraRender() == this;
 }
 
 void CameraRender::setCameraRenderFlags(Enum<CameraRenderFlags> flags)
@@ -72,6 +67,9 @@ void CameraRender::createDefaultPostProcessGraph()
 	graph = new PostProcessGraph();
 	graph->addDefaultPasses();
 	graph->resize(size);
+	graph->resource.depthTexture = renderTarget->getInternalDepthTexture();
+	graph->resource.screenTexture = renderTarget->getTexture(0);
+	graph->resource.screenRenderTarget = renderTarget;
 }
 
 void CameraRender::triggerScreenHit(const Vector2u& hitPosition)
@@ -92,7 +90,7 @@ bool CameraRender::fetchScreenHit(ScreenHitInfo& hitInfo) const
 	return true;
 }
 
-Texture* CameraRender::getSceneMap()
+Texture* CameraRender::getSceneTexture()
 {
 	return graph ? graph->resource.screenTexture : (renderTarget ? renderTarget->getTexture(0) : NULL);
 }
@@ -114,8 +112,12 @@ void CameraRender::setSize(Unit2Di size)
 	IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
 	context.clearFrameBindings();
 	renderTarget->resize(size.x, size.y);
-	if (graph)
+	if (graph) {
 		graph->resize(size);
+		graph->resource.depthTexture = renderTarget->getInternalDepthTexture();
+		graph->resource.screenTexture = renderTarget->getTexture(0);
+		graph->resource.screenRenderTarget = renderTarget;
+	}
 	this->size = size;
 }
 
@@ -170,11 +172,6 @@ CameraRenderData* CameraRender::getRenderData()
 void CameraRender::setDebugProbeIndex(int probeIndex)
 {
 	debugProbeIndex = probeIndex;
-}
-
-CameraRender* CameraRender::getMainCameraRender()
-{
-	return mainCameraRender;
 }
 
 void CameraRender::createInternalRenderTarget()

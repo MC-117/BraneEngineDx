@@ -133,7 +133,7 @@ public:
 
 	virtual void onUpdate(Camera& camera);
 
-	virtual void onRender2D();
+	virtual void onRender2D(ImDrawList* drawList = NULL);
 	virtual void onRender3D(RenderInfo& info);
 protected:
 	string name;

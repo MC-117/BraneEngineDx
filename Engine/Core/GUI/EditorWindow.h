@@ -14,7 +14,7 @@ public:
 	Object* parentObj = NULL;
 
 	EditorWindow(Object& object, Material& baseMat, string name = "Editor", bool defaultShow = false);
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 	virtual void onPostAction(GUIPostInfo& info);
 protected:
 	void traverse(Object& obj, GUI& gui, Object*& dragObj, Object*& targetObj);

@@ -12,7 +12,7 @@ PhysicsDebug::~PhysicsDebug()
 {
 }
 
-void PhysicsDebug::onRenderWindow(GUIRenderInfo& info)
+void PhysicsDebug::onWindowGUI(GUIRenderInfo& info)
 {
 	ImGui::SetWindowSize(ImGui::GetWindowViewport()->WorkSize);
 	ImGui::SetWindowPos(ImGui::GetWindowViewport()->WorkPos);

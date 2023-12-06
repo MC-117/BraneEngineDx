@@ -6,7 +6,7 @@ public:
 	CMDWindow(string name = "CMDWindow", bool defaultShow = false);
 	virtual ~CMDWindow();
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	struct History
 	{

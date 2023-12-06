@@ -3,36 +3,57 @@
 
 UIViewport::UIViewport(const string& name, bool defaultShow)
 	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
+	, surface(name)
 {
 }
 
 void UIViewport::setCamera(Camera* camera)
 {
-	size.x() = camera->size.x;
-	size.y() = camera->size.y;
+	surface.bindCamera(camera);
 }
 
-void UIViewport::onRenderWindow(GUIRenderInfo& info)
+void UIViewport::onWindowGUI(GUIRenderInfo& info)
 {
 	ImVec2 imSize = ImGui::GetWindowSize();
-	Vector2i currentSize(imSize.x, imSize.y);
-	if (currentSize != size) {
-		resize(currentSize.x(), currentSize.y());
-	}
+	resize({ (int)imSize.x, (int)imSize.y });
 
 	ImDrawList* drawList = ImGui::GetWindowDrawList();
-	Texture* sceneMap = camera->cameraRender.getSceneMap();
-	if (sceneMap) {
+	GUISurface& targetSurface = getTargetSurface();
+	Camera* targetCamera = targetSurface.getCamera();
+	if (targetCamera == NULL)
+		return;
+	Texture* sceneTexture = targetCamera->cameraRender.getSceneTexture();
+	if (sceneTexture) {
 		ImVec2 winPos = ImGui::GetWindowPos();
-		drawList->AddImage(ImTextureID(sceneMap->getTextureID()),
+		drawList->AddImage(ImTextureID(sceneTexture->getTextureID()),
 			winPos, { winPos.x + imSize.x, winPos.y + imSize.y });
+
+		targetSurface.gizmoFrame(drawList, targetCamera->getRoot());
 	}
 }
 
-void UIViewport::resize(int width, int height)
+void UIViewport::onPostAction(GUIPostInfo& info)
 {
-	if (camera) {
-		camera->setSize({ width, height });
-		size = { width, height };
-	}
+	UIWindow::onPostAction(info);
+	GUISurface& targetSurface = getTargetSurface();
+	if (show && targetSurface.isValid())
+		targetSurface.gizmoRender2D();
+}
+
+void UIViewport::onRender(RenderInfo& info)
+{
+	UIWindow::onRender(info);
+	GUISurface& targetSurface = getTargetSurface();
+	if (targetSurface.isValid())
+		targetSurface.gizmoRender3D(info);
+}
+
+void UIViewport::resize(const Vector2i& size)
+{
+	getTargetSurface().setSize(size);
+}
+
+GUISurface& UIViewport::getTargetSurface()
+{
+	return surface.isValid() ? surface : GUISurface::getMainViewportGUISurface();
 }

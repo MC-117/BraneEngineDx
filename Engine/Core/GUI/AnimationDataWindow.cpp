@@ -13,7 +13,7 @@ void AnimationDataWindow::setAnimationData(AnimationClipData* data)
 	this->data = data;
 }
 
-void AnimationDataWindow::onRenderWindow(GUIRenderInfo& info)
+void AnimationDataWindow::onWindowGUI(GUIRenderInfo& info)
 {
 	float splitterSize = 3;
 	ImVec2 contentPos = ImGui::GetWindowContentRegionMin();

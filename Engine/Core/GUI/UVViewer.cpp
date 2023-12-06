@@ -26,7 +26,7 @@ void UVViewer::setTargetMeshPart(Mesh* mesh)
 		selectMeshPart = &mesh->meshParts[0];
 }
 
-void UVViewer::onRenderWindow(GUIRenderInfo& info)
+void UVViewer::onWindowGUI(GUIRenderInfo& info)
 {
 	if (ImGui::AssetCombo("Mesh", meshAsset, "Mesh;SkeletonMesh")) {
 		setTargetMeshPart((Mesh*)meshAsset->load());

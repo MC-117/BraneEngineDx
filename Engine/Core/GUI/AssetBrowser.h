@@ -18,7 +18,7 @@ public:
 	Asset* getSelectedAsset();
 
 	virtual void onAttech(GUI& gui);
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 protected:
 	string curFolder = "";
 	vector<string> pathChain;

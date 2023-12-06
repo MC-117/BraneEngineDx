@@ -4,7 +4,7 @@
 
 #include "UIControl.h"
 #include "Gizmo.h"
-#include "Core/EngineLoop.h"
+#include "../EngineLoop/EngineLoop.h"
 
 class Gizmo;
 
@@ -15,17 +15,17 @@ public:
 	map<string, void*> parameters;
 	Texture2D* sceneBlurTex = NULL;
 	Unit2Di viewSize = { 1280, 720 };
-	Gizmo gizmo;
 
 	GUI();
 	virtual ~GUI();
 
+	static GUI& get();
 	static bool isMouseOnUI();
 	static bool isAnyItemFocus();
 
 	virtual void onGUI(RenderInfo& info);
 	virtual void render(RenderInfo& info);
-	virtual void onSceneResize(Unit2Di size);
+	virtual void onSceneResize(const Vector2i& size);
 
 	void setSceneBlurTex(Texture2D* tex);
 	void setMainControl(UIControl* uc);
@@ -53,20 +53,6 @@ protected:
 	static bool anyItemFocus;
 	UIControl* mainControl = NULL;
 	UIControl* focusControl = NULL;
-};
-
-class ENGINE_API GUIEngineLoop : public EngineLoop
-{
-public:
-	GUIEngineLoop(GUI& gui);
-	
-	virtual bool willQuit();
-	
-	virtual void init();
-	virtual void loop(float deltaTime);
-	virtual void release();
-protected:
-	GUI& gui;
 };
 
 #endif // !_GUI_H_

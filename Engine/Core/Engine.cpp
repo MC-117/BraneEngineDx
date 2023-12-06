@@ -18,6 +18,7 @@
 #include "../ThirdParty/ImGui/imgui_internal.h"
 #include "../ThirdParty/ImGui/ImGuiIconHelp.h"
 #include "../ThirdParty/ImGui/ImPlot/implot.h"
+#include "EngineLoop/WorldEngineLoop.h"
 #include "GUI/GUIUtility.h"
 
 void (*pInitialWorldFunc)() = NULL;
@@ -98,8 +99,8 @@ void Engine::setViewportSize(const Unit2Di& size)
 {
 	if (!windowContext.fullscreen)
 		windowContext.screenSize = size;
-	if (get().currentWorld)
-		get().currentWorld->setViewportSize(size.x, size.y);
+	if (getCurrentWorld())
+		RenderPool::get().setViewportSize({ size.x, size.y });
 	/*----- Vendor resize window -----*/
 	{
 		if (!VendorManager::getInstance().getVendor().resizeWindow(Engine::engineConfig, Engine::windowContext, size.x, size.y))
@@ -413,7 +414,7 @@ void Engine::releaseBaseFramework()
 void Engine::changeWorld(World* world)
 {
 	currentWorld = world;
-	setEngineLoop(*new WorldEngineLoop(world));
+	setEngineLoop(*new WorldRenderEngineLoop(world, GUI::get(), RenderPool::get()));
 }
 
 // void Engine::setup()

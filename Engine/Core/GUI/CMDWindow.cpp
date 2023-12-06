@@ -23,7 +23,7 @@ T& getListNode(list<T>& l, unsigned int index) {
 	throw overflow_error("out of range when access list");
 }
 
-void CMDWindow::onRenderWindow(GUIRenderInfo& info)
+void CMDWindow::onWindowGUI(GUIRenderInfo& info)
 {
 	if (historyWinSize == 0 && commandWinSize == 0) {
 		float height = ImGui::GetWindowHeight();

@@ -15,7 +15,7 @@ public:
 
 	ConsoleWindow(Object& object, string name = "Console", bool defaultShow = false);
 
-	virtual void onRenderWindow(GUIRenderInfo& info);
+	virtual void onWindowGUI(GUIRenderInfo& info);
 
 protected:
 	struct Tag
