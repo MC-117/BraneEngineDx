@@ -2,17 +2,10 @@
 
 #include "../Base.h"
 #include <stack>
+#include "../CodeGeneration/CodeGenerationInterface.h"
 
 class GraphNode;
-
-class ENGINE_API GraphCategoryAttribute : public Attribute
-{
-public:
-	string category;
-	GraphCategoryAttribute(const string& category);
-
-	virtual void resolve(Attribute* conflict);
-};
+class GraphCodeGenerationContext;
 
 class ENGINE_API GraphContext
 {
@@ -57,6 +50,7 @@ public:
 	virtual bool disconnect(GraphPin* pin);
 
 	virtual bool process(GraphContext& context);
+	virtual bool generate(GraphCodeGenerationContext& context);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
@@ -85,6 +79,7 @@ public:
 	virtual bool connect(GraphPin* pin);
 
 	virtual bool process(GraphContext& context);
+	virtual bool generate(GraphCodeGenerationContext& context);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 };
@@ -122,8 +117,13 @@ public:
 	virtual bool solveInput(GraphContext& context);
 	virtual bool flowControl(GraphContext& context);
 	virtual bool solveState(GraphContext& context);
-
 	virtual bool process(GraphContext& context);
+
+	virtual Name getFunctionName() const;
+	virtual bool generateParameter(GraphCodeGenerationContext& context);
+	virtual bool solveAndGenerateOutput(GraphCodeGenerationContext& context);
+	virtual bool generateStatement(GraphCodeGenerationContext& context);
+	virtual bool generate(GraphCodeGenerationContext& context);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);

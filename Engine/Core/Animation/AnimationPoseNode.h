@@ -34,6 +34,9 @@ public:
 	void setContext(const AnimationContext& context);
 	const AnimationContext& getContext() const;
 
+	virtual Name getVariableType() const;
+	virtual bool generateDefaultVariable(GraphCodeGenerationContext& context);
+
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:
 	AnimationContext animationContext;

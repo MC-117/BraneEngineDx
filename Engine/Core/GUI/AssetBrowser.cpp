@@ -2,7 +2,7 @@
 #include "../Asset.h"
 #include "../Engine.h"
 #include "../Editor/Editor.h"
-#include "../Script/ScriptEditor.h"
+#include "../Script/ScriptWindow.h"
 #include "../../ThirdParty/ImGui/imgui_internal.h"
 #include "MaterialWindow.h"
 #include "TextureViewer.h"
@@ -275,7 +275,7 @@ void AssetBrowser::onWindowGUI(GUIRenderInfo & info)
 			if (canPreview) {
 				PythonScript* script = (PythonScript*)assets[i]->load();
 				if (script != NULL)
-					ScriptEditor::OpenScript(info.gui, *script);
+					ScriptWindow::OpenScript(*script);
 			}
 		}
 		else if (assets[i]->assetInfo.type == "AssetFile") {

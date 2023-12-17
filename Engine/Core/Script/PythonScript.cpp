@@ -4,6 +4,8 @@
 #include "../Console.h"
 #include "../Asset.h"
 
+SerializeInstance(PythonScript);
+
 PythonScript::PythonScript()
 {
 }
@@ -13,7 +15,7 @@ PythonScript::PythonScript(const string & file)
 	load(file);
 }
 
-bool PythonScript::isValid()
+bool PythonScript::isValid() const
 {
 	return pytype != NULL;
 }
@@ -73,17 +75,17 @@ bool PythonScript::ErrorFetch(const char * funcName)
 	return occurred;
 }
 
-string PythonScript::getName()
+const string& PythonScript::getName() const
 {
 	return name;
 }
 
-string PythonScript::getCodePath()
+const string& PythonScript::getCodePath() const
 {
 	return codePath;
 }
 
-string PythonScript::getSourceCode()
+const string& PythonScript::getSourceCode() const
 {
 	return sourceCode;
 }
@@ -169,6 +171,11 @@ PyObject * PythonScript::construct(void* ptr)
 	if (obj == NULL || !PyObject_TypeCheck(obj, pytype))
 		return NULL;
 	return obj;
+}
+
+Serializable* PythonScript::instantiate(const SerializationInfo& from)
+{
+	return new PythonScript();
 }
 
 PythonRuntimeObject::PythonRuntimeObject()

@@ -73,13 +73,20 @@ void ImPlot::PlotRenderFrameProfile(ImPlotRenderFrameProfileContext& context, co
         float plotLeftLimit = ImPlot::GetPlotPos().x;
         float plotRightLimit = ImPlot::GetPlotPos().x + ImPlot::GetPlotSize().x;
 
+        double plotStartTime = ImPlot::PixelsToPlot(plotLeftLimit, 0).x;
+        double plotEndTime = ImPlot::PixelsToPlot(plotRightLimit, 0).x;
+
         auto DrawScope = [&](const string& scopeName, const string& desc, const Time& stime, const Time& etime, int depth)
         {
-            double sMs = stime.toMillisecond();
-            double eMs = etime.toMillisecond();
+            double sMs = stime.toMillisecond() - startTime;
+            double eMs = etime.toMillisecond() - startTime;
+
+            if (eMs <= plotStartTime || plotEndTime <= sMs)
+                return;
+            
             ImU32 col = (ImU32)std::hash<string>()(scopeName) | 0xFF000000U;
-            ImPlotPoint pp0 = { sMs - startTime, 0 };
-            ImPlotPoint pp1 = { eMs - startTime, 0 };
+            ImPlotPoint pp0 = { sMs, 0 };
+            ImPlotPoint pp1 = { eMs, 0 };
             ImVec2 p0 = ImPlot::PlotToPixels(pp0);
             ImVec2 p1 = ImPlot::PlotToPixels(pp1);
             p0.y += depth * barHeight + 1;

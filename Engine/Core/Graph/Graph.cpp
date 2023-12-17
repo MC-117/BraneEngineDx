@@ -1,4 +1,6 @@
 #include "Graph.h"
+
+#include "GraphCodeGeneration.h"
 #include "../Console.h"
 
 SerializeInstance(GraphProxy);
@@ -238,6 +240,91 @@ bool Graph::process(GraphContext& context)
 			}
 		}
 	}
+	return success;
+}
+
+bool Graph::generateParameter(GraphCodeGenerationContext& context)
+{
+	return true;
+}
+
+bool Graph::solveAndGenerateOutput(GraphCodeGenerationContext& context)
+{
+	return true;
+}
+
+bool Graph::generate(GraphCodeGenerationContext& context)
+{
+	bool success = true;
+	ICodeScopeBackend& backend = context.getBackend();
+	CodeFunctionSignature signature(getFunctionName());
+	for (int i = 0; i < getInputCount(); i++) {
+		ValuePin* pin = dynamic_cast<ValuePin*>(entryNode->getOutput(i));
+		if (pin) {
+			CodeSymbolDefinition& definition = signature.parameters.emplace_back();
+			definition.type = pin->getVariableType();
+			Name pinName = pin->getName();
+			context.assignParameter(pin, pinName);
+			definition.name = pinName;
+		}
+	}
+
+	int valueOutputCount = 0;
+	ValuePin* firstValuePin = NULL;
+	for (int i = 0; i < getOutputCount(); i++) {
+		if (ValuePin* pin = dynamic_cast<ValuePin*>(getOutput(i))) {
+			if (firstValuePin == NULL)
+				firstValuePin = pin;
+			valueOutputCount++;
+		}
+	}
+
+	if (valueOutputCount) {
+		if (valueOutputCount == 1) {
+			if (firstValuePin) {
+				CodeSymbolDefinition& definition = signature.outputs.emplace_back();
+				definition.type = firstValuePin->getVariableType();
+				Name pinName = firstValuePin->getName();
+				definition.name = pinName;
+			}
+		}
+		else {
+			for (int i = 0; i < getOutputCount(); i++) {
+				if (ValuePin* pin = dynamic_cast<ValuePin*>(getOutput(i))) {
+					CodeSymbolDefinition& definition = signature.outputs.emplace_back();
+					definition.type = pin->getVariableType();
+					Name pinName = pin->getName();
+					context.assignParameter(pin, pinName);
+					definition.name = pinName;
+				}
+			}
+		}
+	}
+
+	ICodeScopeBackend* funcScope = backend.declareFunction(signature);
+
+	context.pushSubscopeBackend(funcScope);
+	
+	for (auto variable : variables) {
+		success &= variable->generate(context);
+	}
+
+	for (auto subgraph : subgraphes) {
+		subgraph->generateStatement(context);
+	}
+	
+	if (entryNode && flag == Flag::Statment) {
+		context.generateCodeFromNode(entryNode);
+	}
+	else if (returnNodes.size() == 1) {
+		context.generateCodeFromNode(returnNodes[0]);
+	}
+	else {
+		success = false;
+	}
+
+	context.popSubscopeBackend(funcScope);
+	
 	return success;
 }
 

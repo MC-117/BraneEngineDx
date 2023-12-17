@@ -42,7 +42,7 @@ TransformData & TransformData::add(const TransformData & data)
 TransformData & TransformData::mutiply(float value)
 {
 	position *= value;
-	Quaternionf q0 = Quaternionf(1, 0, 0, 0);
+	Quaternionf q0 = Quaternionf(0, 0, 0, 1);
 	float c = q0.dot(rotation);
 	if (c < 0.0f)
 		(Vector4f&)rotation = -(Vector4f&)rotation;

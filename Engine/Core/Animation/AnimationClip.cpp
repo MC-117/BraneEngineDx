@@ -1364,7 +1364,7 @@ void TransformAnimationData::read(istream & in)
 		in.read((char*)&outTangent, sizeof(float_t));
 		float_t outRate;
 		in.read((char*)&outRate, sizeof(float_t));
-		CurveValue<Quaternionf> value = CurveValue<Quaternionf>((CurveValue<Quaternionf>::KeySmoothMode)mode, Quaternionf(rot[3], rot[0], rot[1], rot[2]));
+		CurveValue<Quaternionf> value = CurveValue<Quaternionf>((CurveValue<Quaternionf>::KeySmoothMode)mode, Quaternionf(rot[0], rot[1], rot[2], rot[3]));
 		value.inTangent = inTangent;
 		value.inRate = inRate;
 		value.outTangent = outTangent;

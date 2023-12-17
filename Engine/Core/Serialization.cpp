@@ -210,6 +210,17 @@ void Serializable::serializeInit(const Serializable* serializable, Serialization
 	to.type = serializable->getSerialization().type;
 }
 
+NamespaceAttribute::NamespaceAttribute(const string& nameSpace)
+	: Attribute("GraphCategory", true), nameSpace(nameSpace)
+{
+}
+
+void NamespaceAttribute::resolve(const Attribute& conflict)
+{
+	const NamespaceAttribute* attr = conflict.cast<NamespaceAttribute>();
+	nameSpace += "." + attr->nameSpace;
+}
+
 map<filesystem::path, SerializationInfo*> Serialization::serializationInfoByPath;
 
 Serialization* Serialization::getBaseSerialization()
@@ -276,19 +287,21 @@ int Serialization::getAttributeCount() const
 {
 	return attributes.size();
 }
-Attribute* Serialization::getAttribute(int index) const
+
+const Attribute* Serialization::getAttribute(int index) const
 {
 	if (index >= attributes.size())
 		return NULL;
 	return attributes[index];
 }
 
-Attribute* Serialization::getAttribute(const string& name) const
+const Attribute* Serialization::getAttribute(const Name& name) const
 {
-	auto iter = attributeNameMap.find(name);
-	if (iter == attributeNameMap.end())
-		return NULL;
-	return iter->second;
+	for (auto& attr : attributes) {
+		if (attr->name == name)
+			return attr;
+	}
+	return NULL;
 }
 
 bool Serialization::addInfo(SerializationInfo & info, bool overwrite)
@@ -380,42 +393,9 @@ Serialization Serialization::serialization("Serialization", "");
 
 Serialization::~Serialization()
 {
-	for each (auto attr in attributes)
-	{
+	for (auto attr : attributes)
 		delete attr;
-	}
 	attributes.clear();
-}
-
-void Serialization::init()
-{
-	SerializationScope* scope = SerializationScope::getScope();
-	if (scope)
-		scope->serializationConstuction(this);
-}
-
-void Serialization::addAttribute(const vector<Attribute*>& list)
-{
-	for each (auto attr in list)
-	{
-		Attribute* raw = getAttribute(attr->name);
-		if (raw) {
-			raw->resolve(attr);
-			delete attr;
-		}
-		else {
-			attributeNameMap[attr->name] = attr;
-			attributes.push_back(attr);
-		}
-	}
-}
-
-Serialization::Serialization(const string& type, const string& baseType) : type(type), baseType(baseType)
-{
-	auto iter = SerializationManager::serializationList->find(type);
-	if (iter == SerializationManager::serializationList->end())
-		SerializationManager::serializationList->insert(pair<string, Serialization*>(type, this));
-	init();
 }
 
 Serialization::Serialization(const char* type, const char* baseType) : type(type), baseType(baseType)
@@ -423,7 +403,40 @@ Serialization::Serialization(const char* type, const char* baseType) : type(type
 	auto iter = SerializationManager::serializationList->find(type);
 	if (iter == SerializationManager::serializationList->end())
 		SerializationManager::serializationList->insert(pair<string, Serialization*>(type, this));
-	init();
+
+	SerializationScope* scope = SerializationScope::getScope();
+	if (scope)
+		scope->serializationConstuction(this);
+}
+
+Attribute* Serialization::getAttribute(const Name& name)
+{
+	for (auto& attr : attributes) {
+		if (attr->name == name)
+			return attr;
+	}
+	return NULL;
+}
+
+void Serialization::addAttribute(initializer_list<Attribute*> list)
+{
+	for (auto b = attributes.begin(); b != attributes.end();) {
+		if (!(*b)->canInherit) {
+			b = attributes.erase(b);
+			continue;
+		}
+		++b;
+	}
+	for (const auto& attr : list)
+	{
+		if (Attribute* raw = getAttribute(attr->name)) {
+			raw->resolve(*attr);
+			delete attr;
+		}
+		else {
+			attributes.push_back(attr);
+		}
+	}
 }
 
 SerializationInfoParser::SerializationInfoParser(istream & is, const string& path)
@@ -1000,6 +1013,60 @@ SVector3f::operator Vector3f() const
 	return Vector3f(x, y, z);
 }
 
+SerializeInstance(SVector4f);
+
+SVector4f::SVector4f(float x, float y, float z, float w)
+	: x(x), y(y), z(z), w(w)
+{
+}
+
+SVector4f::SVector4f(const Vector4f& vec)
+	: x(vec[0]), y(vec[1]), z(vec[2]), w(vec[3])
+{
+}
+
+bool SVector4f::deserialize(const SerializationInfo & from)
+{
+	if (!from.get<float>(Path("x"), x))
+		return false;
+	if (!from.get<float>(Path("y"), y))
+		return false;
+	if (!from.get<float>(Path("z"), z))
+		return false;
+	if (!from.get<float>(Path("w"), w))
+		return false;
+	return true;
+}
+
+bool SVector4f::serialize(SerializationInfo & to)
+{
+	serializeInit(this, to);
+	to.set("x", x);
+	to.set("y", y);
+	to.set("z", z);
+	to.set("w", w);
+	return true;
+}
+
+SVector4f & SVector4f::operator=(const Vector4f& v)
+{
+	x = v[0];
+	y = v[1];
+	z = v[2];
+	w = v[3];
+	return *this;
+}
+
+SVector4f::operator Vector4f()
+{
+	return Vector4f(x, y, z, w);
+}
+
+SVector4f::operator Vector4f() const
+{
+	return Vector4f(x, y, z, w);
+}
+
 SerializeInstance(SQuaternionf);
 
 SQuaternionf::SQuaternionf(float x, float y, float z, float w)
@@ -1046,12 +1113,12 @@ SQuaternionf & SQuaternionf::operator=(const Quaternionf & v)
 
 SQuaternionf::operator Quaternionf()
 {
-	return Quaternionf(w, x, y, z);
+	return Quaternionf(x, y, z, w);
 }
 
 SQuaternionf::operator Quaternionf() const
 {
-	return Quaternionf(w, x, y, z);
+	return Quaternionf(x, y, z, w);
 }
 
 SerializeInstance(SColor);

@@ -1276,7 +1276,7 @@ Matrix4f::operator Block() const
 	return Block((float*)this, 4, 4, 0, 0, 4, 4);
 }
 
-Quaternionf::Quaternionf(float w, float x, float y, float z) : Vector4f(x, y, z, w)
+Quaternionf::Quaternionf(float x, float y, float z, float w) : Vector4f(x, y, z, w)
 {
 }
 
@@ -1295,7 +1295,7 @@ Quaternionf::Quaternionf(const Matrix3f& m)
 
 Quaternionf Quaternionf::Identity()
 {
-	return Quaternionf(1, 0, 0, 0);
+	return Quaternionf(0, 0, 0, 1);
 }
 
 Quaternionf Quaternionf::FromEularAngles(const Vector3f& rollPicthYaw)

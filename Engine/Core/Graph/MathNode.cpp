@@ -1,6 +1,8 @@
 #include "MathNode.h"
 
-SerializeInstance(MathOperationNode);
+#include "GraphCodeGeneration.h"
+
+SerializeInstance(MathOperationNode, DEF_ATTR(Namespace, "Math"));
 
 MathOperationNode::MathOperationNode()
 {
@@ -172,6 +174,11 @@ bool NotNode::process(GraphContext& context)
     return true;
 }
 
+Name NotNode::getFunctionName() const
+{
+    return Code::not_op;
+}
+
 Serializable* NotNode::instantiate(const SerializationInfo& from)
 {
     return new NotNode();
@@ -210,7 +217,7 @@ Serializable* SteppingNode::instantiate(const SerializationInfo& from)
     return new SteppingNode();
 }
 
-SerializeInstance(Vector2fMakeNode);
+SerializeInstance(Vector2fMakeNode, DEF_ATTR(CodeFunctionName, Code::Vector2f_t));
 
 Vector2fMakeNode::Vector2fMakeNode()
 {
@@ -235,7 +242,7 @@ Serializable* Vector2fMakeNode::instantiate(const SerializationInfo& from)
     return new Vector2fMakeNode();
 }
 
-SerializeInstance(Vector3fMakeNode);
+SerializeInstance(Vector3fMakeNode, DEF_ATTR(CodeFunctionName, Code::Vector3f_t));
 
 Vector3fMakeNode::Vector3fMakeNode()
 {
@@ -262,7 +269,7 @@ Serializable* Vector3fMakeNode::instantiate(const SerializationInfo& from)
     return new Vector3fMakeNode();
 }
 
-SerializeInstance(QuaternionfMakeNode);
+SerializeInstance(QuaternionfMakeNode, DEF_ATTR(CodeFunctionName, Code::Quaternionf_t));
 
 QuaternionfMakeNode::QuaternionfMakeNode()
 {
@@ -282,8 +289,12 @@ QuaternionfMakeNode::QuaternionfMakeNode()
 
 bool QuaternionfMakeNode::process(GraphContext& context)
 {
-    outputPin->setValue(Quaternionf{ inputPin[3]->getValue(), inputPin[0]->getValue(),
-        inputPin[1]->getValue(), inputPin[2]->getValue() });
+    outputPin->setValue(Quaternionf {
+        inputPin[0]->getValue(),
+        inputPin[1]->getValue(),
+        inputPin[2]->getValue(),
+        inputPin[3]->getValue()
+    });
     return true;
 }
 
@@ -314,6 +325,20 @@ bool Vector2fBreakNode::process(GraphContext& context)
     return true;
 }
 
+bool Vector2fBreakNode::generate(GraphCodeGenerationContext& context)
+{
+    bool ok = true;
+    if (outputPin[0]->getConnectedPin())
+        ok &= context.getBackend().invoke(
+            CodeFunctionInvocation("x")
+            .out(context.getParameter(outputPin[0]).symbol()));
+    if (outputPin[1]->getConnectedPin())
+        ok &= context.getBackend().invoke(
+            CodeFunctionInvocation("y")
+            .out(context.getParameter(outputPin[1]).symbol()));
+    return ok;
+}
+
 Serializable* Vector2fBreakNode::instantiate(const SerializationInfo& from)
 {
     return new Vector2fBreakNode();
@@ -342,6 +367,24 @@ bool Vector3fBreakNode::process(GraphContext& context)
     outputPin[1]->setValue(vec.y());
     outputPin[2]->setValue(vec.z());
     return true;
+}
+
+bool Vector3fBreakNode::generate(GraphCodeGenerationContext& context)
+{
+    bool ok = true;
+    if (outputPin[0]->getConnectedPin())
+        ok &= context.getBackend().invoke(
+            CodeFunctionInvocation("x")
+            .out(context.getParameter(outputPin[0]).symbol()));
+    if (outputPin[1]->getConnectedPin())
+        ok &= context.getBackend().invoke(
+            CodeFunctionInvocation("y")
+            .out(context.getParameter(outputPin[1]).symbol()));
+    if (outputPin[2]->getConnectedPin())
+        ok &= context.getBackend().invoke(
+            CodeFunctionInvocation("z")
+            .out(context.getParameter(outputPin[2]).symbol()));
+    return ok;
 }
 
 Serializable* Vector3fBreakNode::instantiate(const SerializationInfo& from)
@@ -377,12 +420,30 @@ bool QuaternionfBreakNode::process(GraphContext& context)
     return true;
 }
 
+bool QuaternionfBreakNode::generate(GraphCodeGenerationContext& context)
+{
+    bool ok = true;
+    if (outputPin[0]->getConnectedPin())
+        ok &= context.getBackend().invoke(
+            CodeFunctionInvocation("x")
+            .out(context.getParameter(outputPin[0]).symbol()));
+    if (outputPin[1]->getConnectedPin())
+        ok &= context.getBackend().invoke(
+            CodeFunctionInvocation("y")
+            .out(context.getParameter(outputPin[1]).symbol()));
+    if (outputPin[2]->getConnectedPin())
+        ok &= context.getBackend().invoke(
+            CodeFunctionInvocation("z")
+            .out(context.getParameter(outputPin[2]).symbol()));
+    return ok;
+}
+
 Serializable* QuaternionfBreakNode::instantiate(const SerializationInfo& from)
 {
     return new QuaternionfBreakNode();
 }
 
-SerializeInstance(Vector2fNormalizeNode);
+SerializeInstance(Vector2fNormalizeNode, DEF_ATTR(CodeFunctionName, "normalize"));
 
 Vector2fNormalizeNode::Vector2fNormalizeNode()
 {
@@ -407,7 +468,7 @@ Serializable* Vector2fNormalizeNode::instantiate(const SerializationInfo& from)
     return new Vector2fNormalizeNode();
 }
 
-SerializeInstance(Vector3fNormalizeNode);
+SerializeInstance(Vector3fNormalizeNode, DEF_ATTR(CodeFunctionName, "normalize"));
 
 Vector3fNormalizeNode::Vector3fNormalizeNode()
 {
@@ -432,7 +493,7 @@ Serializable* Vector3fNormalizeNode::instantiate(const SerializationInfo& from)
     return new Vector3fNormalizeNode();
 }
 
-SerializeInstance(QuaternionfNormalizeNode);
+SerializeInstance(QuaternionfNormalizeNode, DEF_ATTR(CodeFunctionName, "normalize"));
 
 QuaternionfNormalizeNode::QuaternionfNormalizeNode()
 {
@@ -511,7 +572,7 @@ Serializable* Vector3fScaleNode::instantiate(const SerializationInfo& from)
     return new Vector3fScaleNode();
 }
 
-SerializeInstance(Vector2fDotNode);
+SerializeInstance(Vector2fDotNode, DEF_ATTR(CodeFunctionName, "dot"));
 
 Vector2fDotNode::Vector2fDotNode()
 {
@@ -538,7 +599,7 @@ Serializable* Vector2fDotNode::instantiate(const SerializationInfo& from)
     return new Vector2fDotNode();
 }
 
-SerializeInstance(Vector3fDotNode);
+SerializeInstance(Vector3fDotNode, DEF_ATTR(CodeFunctionName, "dot"));
 
 Vector3fDotNode::Vector3fDotNode()
 {
@@ -565,7 +626,7 @@ Serializable* Vector3fDotNode::instantiate(const SerializationInfo& from)
     return new Vector3fDotNode();
 }
 
-SerializeInstance(Vector2fCrossNode);
+SerializeInstance(Vector2fCrossNode, DEF_ATTR(CodeFunctionName, "cross"));
 
 Vector2fCrossNode::Vector2fCrossNode()
 {
@@ -592,7 +653,7 @@ Serializable* Vector2fCrossNode::instantiate(const SerializationInfo& from)
     return new Vector2fCrossNode();
 }
 
-SerializeInstance(Vector3fCrossNode);
+SerializeInstance(Vector3fCrossNode, DEF_ATTR(CodeFunctionName, "cross"));
 
 Vector3fCrossNode::Vector3fCrossNode()
 {

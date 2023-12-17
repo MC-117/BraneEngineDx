@@ -1,7 +1,7 @@
 #include "AnimationPoseGraph.h"
 #include "../SkeletonMeshActor.h"
 
-SerializeInstance(AnimationPoseGraph);
+SerializeInstance(AnimationPoseGraph, DEF_ATTR(Namespace, "Animation"));
 
 AnimationPoseGraph::AnimationPoseGraph()
 {

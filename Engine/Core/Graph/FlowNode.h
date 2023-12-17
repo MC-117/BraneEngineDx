@@ -8,6 +8,11 @@ public:
 	Serialize(EntryNode, GraphNode);
 
 	EntryNode() = default;
+
+	virtual bool generateParameter(GraphCodeGenerationContext& context);
+	virtual bool solveAndGenerateOutput(GraphCodeGenerationContext& context);
+	virtual bool generate(GraphCodeGenerationContext& context);
+	
 	static Serializable* instantiate(const SerializationInfo& from);
 };
 
@@ -17,6 +22,9 @@ public:
 	Serialize(ReturnNode, GraphNode);
 
 	ReturnNode() = default;
+	
+	virtual bool generate(GraphCodeGenerationContext& context);
+	
 	static Serializable* instantiate(const SerializationInfo& from);
 };
 
@@ -49,6 +57,8 @@ public:
 	void init(GraphVariable* variable);
 
 	virtual bool process(GraphContext& context);
+	
+	virtual bool generate(GraphCodeGenerationContext& context);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
@@ -80,6 +90,9 @@ public:
 	BranchNode();
 
 	virtual bool flowControl(GraphContext& context);
+	
+	virtual bool solveAndGenerateOutput(GraphCodeGenerationContext& context);
+	virtual bool generate(GraphCodeGenerationContext& context);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:
@@ -97,6 +110,9 @@ public:
 	LoopNode();
 
 	virtual bool flowControl(GraphContext& context);
+	
+	virtual bool solveAndGenerateOutput(GraphCodeGenerationContext& context);
+	virtual bool generate(GraphCodeGenerationContext& context);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:
@@ -113,6 +129,8 @@ public:
 	BreakNode();
 
 	virtual bool flowControl(GraphContext& context);
+	
+	virtual bool generate(GraphCodeGenerationContext& context);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:
@@ -127,6 +145,9 @@ public:
 	ForLoopNode();
 
 	virtual bool flowControl(GraphContext& context);
+	
+	virtual bool solveAndGenerateOutput(GraphCodeGenerationContext& context);
+	virtual bool generate(GraphCodeGenerationContext& context);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:

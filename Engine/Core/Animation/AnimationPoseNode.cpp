@@ -2,7 +2,7 @@
 #include "../Asset.h"
 #include "../SkeletonMeshActor.h"
 
-SerializeInstance(AnimationPosePin);
+SerializeInstance(AnimationPosePin, DEF_ATTR(Namespace, "Animation"));
 
 AnimationPosePin::AnimationPosePin(const string& name) : ValuePin(name)
 {
@@ -66,12 +66,23 @@ const AnimationContext& AnimationPosePin::getContext() const
     return animationContext;
 }
 
+Name AnimationPosePin::getVariableType() const
+{
+    static const Name varType = "AnimationPose";
+    return varType;
+}
+
+bool AnimationPosePin::generateDefaultVariable(GraphCodeGenerationContext& context)
+{
+    return ValuePin::generateDefaultVariable(context);
+}
+
 Serializable* AnimationPosePin::instantiate(const SerializationInfo& from)
 {
     return new AnimationPosePin(from.name);
 }
 
-SerializeInstance(AnimationPoseSourceNode);
+SerializeInstance(AnimationPoseSourceNode, DEF_ATTR(Namespace, "Animation"));
 
 AnimationPoseSourceNode::AnimationPoseSourceNode() : GraphNode(), actorPin("Target"), poseOutputPin("Out")
 {
@@ -135,7 +146,7 @@ bool AnimationPoseSourceNode::serialize(SerializationInfo& to)
     return GraphNode::serialize(to);
 }
 
-SerializeInstance(AnimationPoseResultNode);
+SerializeInstance(AnimationPoseResultNode, DEF_ATTR(Namespace, "Animation"));
 
 AnimationPoseResultNode::AnimationPoseResultNode() : ReturnNode(), poseInputPin("Result")
 {
@@ -168,7 +179,7 @@ bool AnimationPoseResultNode::serialize(SerializationInfo& to)
     return GraphNode::serialize(to);
 }
 
-SerializeInstance(AnimationPoseApplyNode);
+SerializeInstance(AnimationPoseApplyNode, DEF_ATTR(Namespace, "Animation"));
 
 AnimationPoseApplyNode::AnimationPoseApplyNode() : poseInputPin("Pose")
 {
@@ -199,7 +210,7 @@ Serializable* AnimationPoseApplyNode::instantiate(const SerializationInfo& from)
     return new AnimationPoseApplyNode();
 }
 
-SerializeInstance(AnimationBaseNode);
+SerializeInstance(AnimationBaseNode, DEF_ATTR(Namespace, "Animation"));
 
 void AnimationBaseNode::setContext(const AnimationContext& context)
 {
@@ -467,7 +478,7 @@ bool BlendSpaceNode::serialize(SerializationInfo& to)
     return true;
 }
 
-SerializeInstance(AnimationPoseLerpNode);
+SerializeInstance(AnimationPoseLerpNode, DEF_ATTR(Namespace, "Animation"));
 
 AnimationPoseLerpNode::AnimationPoseLerpNode() : poseAPin("PoseA"), poseBPin("PoseB"), valuePin("Value"), poseOutPin("Out")
 {

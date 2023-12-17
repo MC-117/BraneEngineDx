@@ -88,8 +88,8 @@ void TwoBoneIKConstraint::solve()
     float a = float(0.5f) * (angleAC - angleAD);
     float sin_a = sin(a);
     float cos_a = cos(a);
-    Quaternionf q = Quaternionf(cos_a, axis.x() * sin_a,
-        axis.y() * sin_a, axis.z() * sin_a);
+    Quaternionf q = Quaternionf(axis.x() * sin_a,
+        axis.y() * sin_a, axis.z() * sin_a, cos_a);
 
     bBone->setRotation((q * qwB).normalized(), WORLD);
 

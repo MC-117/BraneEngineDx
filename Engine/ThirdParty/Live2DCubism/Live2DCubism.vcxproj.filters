@@ -1,76 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="include\Live2DCubism\Effect">
-      <UniqueIdentifier>{A0BE4B70-5E06-EF55-2EE2-492EFEE30BE2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="include\Live2DCubism\Physics">
-      <UniqueIdentifier>{8767FD96-BBC4-DDF4-4C6A-2DC5A35CC418}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="include\Live2DCubism\Model">
-      <UniqueIdentifier>{F412C3F6-7CB6-6652-E335-8FF6231E1607}</UniqueIdentifier>
-    </Filter>
     <Filter Include="include\Live2DCubism\Type">
       <UniqueIdentifier>{7BEE9C65-840F-F740-E9C9-2C28D9206AA0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="include">
-      <UniqueIdentifier>{D436EB0F-D9DE-10B5-4A82-8CE6435F7E81}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="include\Live2DCubism\Utils">
-      <UniqueIdentifier>{C83254F9-5E27-C4C8-B448-5D2E96BE5E67}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\Live2DCubism">
       <UniqueIdentifier>{0BA7F38B-85C7-DE55-2118-59C27C89D784}</UniqueIdentifier>
     </Filter>
-    <Filter Include="include\Live2DCubism\Id">
-      <UniqueIdentifier>{B2D6B50C-D7FB-2371-452E-387857CD125A}</UniqueIdentifier>
+    <Filter Include="include\Live2DCubism\Motion">
+      <UniqueIdentifier>{015F060A-7B5E-C52D-B675-9F4040208DD1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{D436EB0F-D9DE-10B5-4A82-8CE6435F7E81}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\Live2DCubism\Math">
       <UniqueIdentifier>{D2E8B6F7-7909-5C41-E7C3-D0CF9CAE2C64}</UniqueIdentifier>
     </Filter>
-    <Filter Include="include\Live2DCubism\Motion">
-      <UniqueIdentifier>{015F060A-7B5E-C52D-B675-9F4040208DD1}</UniqueIdentifier>
+    <Filter Include="include\Live2DCubism\Effect">
+      <UniqueIdentifier>{A0BE4B70-5E06-EF55-2EE2-492EFEE30BE2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Live2DCubism\Id">
+      <UniqueIdentifier>{B2D6B50C-D7FB-2371-452E-387857CD125A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Live2DCubism\Physics">
+      <UniqueIdentifier>{8767FD96-BBC4-DDF4-4C6A-2DC5A35CC418}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Live2DCubism\Utils">
+      <UniqueIdentifier>{C83254F9-5E27-C4C8-B448-5D2E96BE5E67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Live2DCubism\Model">
+      <UniqueIdentifier>{F412C3F6-7CB6-6652-E335-8FF6231E1607}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include/Live2DCubism/Model/CubismModel.hpp">
-      <Filter>include\Live2DCubism\Model</Filter>
+    <ClInclude Include="include/Live2DCubism/CubismCdiJson.hpp">
+      <Filter>include\Live2DCubism</Filter>
     </ClInclude>
     <ClInclude Include="include/Live2DCubism/Effect/CubismEyeBlink.hpp">
       <Filter>include\Live2DCubism\Effect</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Utils/CubismJson.hpp">
-      <Filter>include\Live2DCubism\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Motion/CubismMotionQueueEntry.hpp">
-      <Filter>include\Live2DCubism\Motion</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/ICubismAllocator.hpp">
+    <ClInclude Include="include/Live2DCubism/CubismFrameworkConfig.hpp">
       <Filter>include\Live2DCubism</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Utils/CubismString.hpp">
-      <Filter>include\Live2DCubism\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Motion/CubismExpressionMotion.hpp">
-      <Filter>include\Live2DCubism\Motion</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Type/csmMap.hpp">
-      <Filter>include\Live2DCubism\Type</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Model/CubismMoc.hpp">
-      <Filter>include\Live2DCubism\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Live2DCubismCore.h">
-      <Filter>include\Live2DCubism</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/ICubismModelSetting.hpp">
-      <Filter>include\Live2DCubism</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Utils/CubismDebug.hpp">
-      <Filter>include\Live2DCubism\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Math/CubismMath.hpp">
-      <Filter>include\Live2DCubism\Math</Filter>
     </ClInclude>
     <ClInclude Include="include/Live2DCubism/Motion/CubismMotionQueueManager.hpp">
       <Filter>include\Live2DCubism\Motion</Filter>
@@ -78,50 +48,23 @@
     <ClInclude Include="include/Live2DCubism/CubismFramework.hpp">
       <Filter>include\Live2DCubism</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Motion/CubismMotion.hpp">
-      <Filter>include\Live2DCubism\Motion</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Motion/CubismMotionJson.hpp">
-      <Filter>include\Live2DCubism\Motion</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Physics/CubismPhysicsInternal.hpp">
-      <Filter>include\Live2DCubism\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Motion/CubismMotionInternal.hpp">
-      <Filter>include\Live2DCubism\Motion</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Physics/CubismPhysics.hpp">
-      <Filter>include\Live2DCubism\Physics</Filter>
-    </ClInclude>
     <ClInclude Include="include/Live2DCubism/Motion/ACubismMotion.hpp">
       <Filter>include\Live2DCubism\Motion</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Id/CubismId.hpp">
-      <Filter>include\Live2DCubism\Id</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Type/csmVector.hpp">
-      <Filter>include\Live2DCubism\Type</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Math/CubismModelMatrix.hpp">
+    <ClInclude Include="include/Live2DCubism/Math/CubismVector2.hpp">
       <Filter>include\Live2DCubism\Math</Filter>
     </ClInclude>
     <ClInclude Include="include/Live2DCubism/CubismDefaultParameterId.hpp">
       <Filter>include\Live2DCubism</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/CubismCdiJson.hpp">
+    <ClInclude Include="include/Live2DCubism/Live2DCubismCore.hpp">
       <Filter>include\Live2DCubism</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Id/CubismIdManager.hpp">
-      <Filter>include\Live2DCubism\Id</Filter>
+    <ClInclude Include="include/Live2DCubism/Utils/CubismJson.hpp">
+      <Filter>include\Live2DCubism\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Math/CubismTargetPoint.hpp">
-      <Filter>include\Live2DCubism\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Math/CubismViewMatrix.hpp">
-      <Filter>include\Live2DCubism\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Math/CubismMatrix44.hpp">
-      <Filter>include\Live2DCubism\Math</Filter>
+    <ClInclude Include="include/Live2DCubism/Model/CubismModel.hpp">
+      <Filter>include\Live2DCubism\Model</Filter>
     </ClInclude>
     <ClInclude Include="include/Live2DCubism/Physics/CubismPhysicsJson.hpp">
       <Filter>include\Live2DCubism\Physics</Filter>
@@ -129,109 +72,151 @@
     <ClInclude Include="include/Live2DCubism/Effect/CubismBreath.hpp">
       <Filter>include\Live2DCubism\Effect</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Effect/CubismPose.hpp">
-      <Filter>include\Live2DCubism\Effect</Filter>
+    <ClInclude Include="include/Live2DCubism/Math/CubismMatrix44.hpp">
+      <Filter>include\Live2DCubism\Math</Filter>
     </ClInclude>
     <ClInclude Include="include/Live2DCubism/Motion/CubismMotionManager.hpp">
       <Filter>include\Live2DCubism\Motion</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/CubismFrameworkConfig.hpp">
+    <ClInclude Include="include/Live2DCubism/Type/csmRectF.hpp">
+      <Filter>include\Live2DCubism\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Id/CubismIdManager.hpp">
+      <Filter>include\Live2DCubism\Id</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Live2DCubismCore.h">
       <Filter>include\Live2DCubism</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Effect/CubismPose.hpp">
+      <Filter>include\Live2DCubism\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Motion/CubismMotionJson.hpp">
+      <Filter>include\Live2DCubism\Motion</Filter>
     </ClInclude>
     <ClInclude Include="include/Live2DCubism/Type/csmString.hpp">
       <Filter>include\Live2DCubism\Type</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Type/CubismBasicType.hpp">
-      <Filter>include\Live2DCubism\Type</Filter>
+    <ClInclude Include="include/Live2DCubism/Physics/CubismPhysics.hpp">
+      <Filter>include\Live2DCubism\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Live2DCubismCore.hpp">
+    <ClInclude Include="include/Live2DCubism/Motion/CubismExpressionMotion.hpp">
+      <Filter>include\Live2DCubism\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/ICubismAllocator.hpp">
       <Filter>include\Live2DCubism</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/CubismModelSettingJson.hpp">
-      <Filter>include\Live2DCubism</Filter>
+    <ClInclude Include="include/Live2DCubism/Motion/CubismMotion.hpp">
+      <Filter>include\Live2DCubism\Motion</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Model/CubismModelUserDataJson.hpp">
-      <Filter>include\Live2DCubism\Model</Filter>
+    <ClInclude Include="include/Live2DCubism/ICubismModelSetting.hpp">
+      <Filter>include\Live2DCubism</Filter>
     </ClInclude>
     <ClInclude Include="include/Live2DCubism/Model/CubismModelUserData.hpp">
       <Filter>include\Live2DCubism\Model</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Math/CubismVector2.hpp">
+    <ClInclude Include="include/Live2DCubism/Math/CubismViewMatrix.hpp">
       <Filter>include\Live2DCubism\Math</Filter>
     </ClInclude>
-    <ClInclude Include="include/Live2DCubism/Type/csmRectF.hpp">
+    <ClInclude Include="include/Live2DCubism/Model/CubismMoc.hpp">
+      <Filter>include\Live2DCubism\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Model/CubismModelUserDataJson.hpp">
+      <Filter>include\Live2DCubism\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Utils/CubismDebug.hpp">
+      <Filter>include\Live2DCubism\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Math/CubismModelMatrix.hpp">
+      <Filter>include\Live2DCubism\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Type/CubismBasicType.hpp">
       <Filter>include\Live2DCubism\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Motion/CubismMotionInternal.hpp">
+      <Filter>include\Live2DCubism\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Id/CubismId.hpp">
+      <Filter>include\Live2DCubism\Id</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Motion/CubismMotionQueueEntry.hpp">
+      <Filter>include\Live2DCubism\Motion</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Type/csmVector.hpp">
+      <Filter>include\Live2DCubism\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Math/CubismMath.hpp">
+      <Filter>include\Live2DCubism\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Utils/CubismString.hpp">
+      <Filter>include\Live2DCubism\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Type/csmMap.hpp">
+      <Filter>include\Live2DCubism\Type</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/CubismModelSettingJson.hpp">
+      <Filter>include\Live2DCubism</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Math/CubismTargetPoint.hpp">
+      <Filter>include\Live2DCubism\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include/Live2DCubism/Physics/CubismPhysicsInternal.hpp">
+      <Filter>include\Live2DCubism\Physics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include/Live2DCubism/Type/csmRectF.cpp">
-      <Filter>include\Live2DCubism\Type</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Motion/CubismMotionManager.cpp">
-      <Filter>include\Live2DCubism\Motion</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/CubismFramework.cpp">
-      <Filter>include\Live2DCubism</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Math/CubismMath.cpp">
-      <Filter>include\Live2DCubism\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Effect/CubismEyeBlink.cpp">
-      <Filter>include\Live2DCubism\Effect</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Model/CubismMoc.cpp">
-      <Filter>include\Live2DCubism\Model</Filter>
-    </ClCompile>
     <ClCompile Include="include/Live2DCubism/Physics/CubismPhysics.cpp">
       <Filter>include\Live2DCubism\Physics</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Motion/CubismMotionQueueEntry.cpp">
-      <Filter>include\Live2DCubism\Motion</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Utils/CubismDebug.cpp">
-      <Filter>include\Live2DCubism\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Effect/CubismBreath.cpp">
-      <Filter>include\Live2DCubism\Effect</Filter>
     </ClCompile>
     <ClCompile Include="include/Live2DCubism/Effect/CubismPose.cpp">
       <Filter>include\Live2DCubism\Effect</Filter>
     </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Model/CubismModel.cpp">
-      <Filter>include\Live2DCubism\Model</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Utils/CubismJson.cpp">
-      <Filter>include\Live2DCubism\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Id/CubismId.cpp">
-      <Filter>include\Live2DCubism\Id</Filter>
+    <ClCompile Include="include/Live2DCubism/Math/CubismTargetPoint.cpp">
+      <Filter>include\Live2DCubism\Math</Filter>
     </ClCompile>
     <ClCompile Include="include/Live2DCubism/Math/CubismModelMatrix.cpp">
       <Filter>include\Live2DCubism\Math</Filter>
     </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Math/CubismMatrix44.cpp">
-      <Filter>include\Live2DCubism\Math</Filter>
+    <ClCompile Include="include/Live2DCubism/Id/CubismIdManager.cpp">
+      <Filter>include\Live2DCubism\Id</Filter>
     </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Model/CubismModelUserData.cpp">
-      <Filter>include\Live2DCubism\Model</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/CubismDefaultParameterId.cpp">
-      <Filter>include\Live2DCubism</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/CubismModelSettingJson.cpp">
-      <Filter>include\Live2DCubism</Filter>
+    <ClCompile Include="include/Live2DCubism/Type/csmRectF.cpp">
+      <Filter>include\Live2DCubism\Type</Filter>
     </ClCompile>
     <ClCompile Include="include/Live2DCubism/Motion/CubismMotionQueueManager.cpp">
       <Filter>include\Live2DCubism\Motion</Filter>
     </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Motion/CubismMotion.cpp">
-      <Filter>include\Live2DCubism\Motion</Filter>
+    <ClCompile Include="include/Live2DCubism/Effect/CubismBreath.cpp">
+      <Filter>include\Live2DCubism\Effect</Filter>
     </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Utils/CubismString.cpp">
+    <ClCompile Include="include/Live2DCubism/Utils/CubismDebug.cpp">
       <Filter>include\Live2DCubism\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Id/CubismIdManager.cpp">
+    <ClCompile Include="include/Live2DCubism/Model/CubismMoc.cpp">
+      <Filter>include\Live2DCubism\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Math/CubismViewMatrix.cpp">
+      <Filter>include\Live2DCubism\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Motion/CubismExpressionMotion.cpp">
+      <Filter>include\Live2DCubism\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/CubismDefaultParameterId.cpp">
+      <Filter>include\Live2DCubism</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Id/CubismId.cpp">
       <Filter>include\Live2DCubism\Id</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Physics/CubismPhysicsJson.cpp">
+      <Filter>include\Live2DCubism\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Model/CubismModelUserDataJson.cpp">
+      <Filter>include\Live2DCubism\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Motion/CubismMotionManager.cpp">
+      <Filter>include\Live2DCubism\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Motion/CubismMotionQueueEntry.cpp">
+      <Filter>include\Live2DCubism\Motion</Filter>
     </ClCompile>
     <ClCompile Include="include/Live2DCubism/Motion/CubismMotionJson.cpp">
       <Filter>include\Live2DCubism\Motion</Filter>
@@ -239,35 +224,50 @@
     <ClCompile Include="include/Live2DCubism/CubismCdiJson.cpp">
       <Filter>include\Live2DCubism</Filter>
     </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Motion/ACubismMotion.cpp">
-      <Filter>include\Live2DCubism\Motion</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Math/CubismTargetPoint.cpp">
-      <Filter>include\Live2DCubism\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Model/CubismModelUserDataJson.cpp">
-      <Filter>include\Live2DCubism\Model</Filter>
-    </ClCompile>
     <ClCompile Include="include/Live2DCubism/Type/csmString.cpp">
       <Filter>include\Live2DCubism\Type</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Model/CubismModelUserData.cpp">
+      <Filter>include\Live2DCubism\Model</Filter>
     </ClCompile>
     <ClCompile Include="include/Live2DCubism/Math/CubismVector2.cpp">
       <Filter>include\Live2DCubism\Math</Filter>
     </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Physics/CubismPhysicsJson.cpp">
-      <Filter>include\Live2DCubism\Physics</Filter>
-    </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Motion/CubismExpressionMotion.cpp">
+    <ClCompile Include="include/Live2DCubism/Motion/ACubismMotion.cpp">
       <Filter>include\Live2DCubism\Motion</Filter>
     </ClCompile>
-    <ClCompile Include="include/Live2DCubism/Math/CubismViewMatrix.cpp">
+    <ClCompile Include="include/Live2DCubism/Motion/CubismMotion.cpp">
+      <Filter>include\Live2DCubism\Motion</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/CubismModelSettingJson.cpp">
+      <Filter>include\Live2DCubism</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Utils/CubismString.cpp">
+      <Filter>include\Live2DCubism\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Math/CubismMath.cpp">
       <Filter>include\Live2DCubism\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Model/CubismModel.cpp">
+      <Filter>include\Live2DCubism\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Effect/CubismEyeBlink.cpp">
+      <Filter>include\Live2DCubism\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Math/CubismMatrix44.cpp">
+      <Filter>include\Live2DCubism\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/CubismFramework.cpp">
+      <Filter>include\Live2DCubism</Filter>
+    </ClCompile>
+    <ClCompile Include="include/Live2DCubism/Utils/CubismJson.cpp">
+      <Filter>include\Live2DCubism\Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Live2DCubism.Module.py">
-    </None>
     <None Include="Live2DCubism.Target.py">
+    </None>
+    <None Include="Live2DCubism.Module.py">
     </None>
   </ItemGroup>
 </Project>

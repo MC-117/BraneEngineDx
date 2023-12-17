@@ -14,24 +14,37 @@ public:
 	virtual void assign(const ValuePin* other);
 	virtual void castFrom(const ValuePin* other);
 
+	virtual Name getVariableType() const;
+	virtual bool generateDefaultVariable(GraphCodeGenerationContext& context);
+	virtual bool generate(GraphCodeGenerationContext& context);
+
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
 protected:
 	ValuePin(const string& name);
+
+	virtual Name generateTempVariable(GraphCodeGenerationContext& context, const CodeParameter& defaultParameter);
 };
 
 class ENGINE_API ValueCasterManager
 {
 public:
 	typedef void(*CastFunction)(const ValuePin* from, ValuePin* to);
+	typedef bool(*CastCodeGenFunction)(GraphCodeGenerationContext& context, const ValuePin* from, const ValuePin* to);
 
-	void addCaster(Serialization& fromType, Serialization& toType, CastFunction caster);
+	void addCaster(Serialization& fromType, Serialization& toType, CastFunction caster, CastCodeGenFunction codeGen = NULL);
 	void doCast(const ValuePin* from, ValuePin* to);
+	bool generate(GraphCodeGenerationContext& context, const ValuePin* from, const ValuePin* to);
 
 	static ValueCasterManager& get();
 protected:
-	unordered_map<size_t, CastFunction> casters;
+	struct CastInfo
+	{
+		CastFunction castFunction = NULL;
+		CastCodeGenFunction castCodeGenFunction = NULL;
+	};
+	unordered_map<size_t, CastInfo> casters;
 };
 
 #define REGIST_VALUE_PIN_CAST_FUNC(FromPinType, ToPinType, ToBaseType)						\
@@ -53,21 +66,21 @@ protected:																					\
 };																							\
 FromPinType##To##ToPinType##ValueCaster FromPinType##To##ToPinType##ValueCaster::instance;
 
+#define PIN_TYPE(type) type##Pin
+#define PIN_TYPE_SER(type, base) Serialize(type##Pin, base)
+#define PIN_TYPE_IMP(type, base, ...) SerializeInstance(type##Pin, __VA_ARGS__)
 
-#define DEC_VALUE_PIN(BaseType, PinType, PinColor) \
-class PinType : public ValuePin \
+#define DEC_VALUE_PIN(BaseType, PinType) \
+class PIN_TYPE(PinType) : public ValuePin \
 { \
 public: \
-	Serialize(PinType, ValuePin); \
+	PIN_TYPE_SER(PinType, ValuePin); \
  \
-	PinType(const string& name) : ValuePin(name) \
+	PIN_TYPE(PinType)(const string& name) : ValuePin(name) \
 	{ \
 	} \
  \
-	virtual Color getPinColor() const  \
-	{ \
-		return PinColor; \
-	} \
+	virtual Color getPinColor() const; \
  \
 	BaseType getValue() const \
 	{ \
@@ -84,6 +97,11 @@ public: \
 		this->value = value; \
 	} \
  \
+	void setDefaultValue(BaseType value) \
+	{ \
+		this->defaultValue = value; \
+	} \
+ \
 	virtual void resetToDefault() \
 	{ \
 		value = defaultValue; \
@@ -91,7 +109,7 @@ public: \
  \
 	virtual void assign(const ValuePin* other) \
 	{ \
-		const PinType* pin = dynamic_cast<const PinType*>(other); \
+		const PIN_TYPE(PinType)* pin = dynamic_cast<const PIN_TYPE(PinType)*>(other); \
 		if (pin == NULL) \
 			return; \
 		setValue(pin->getValue()); \
@@ -101,21 +119,26 @@ public: \
 	{ \
 		if (!isOutput) { \
 			GraphPin* pin = connectedPin; \
-			if (pin != NULL) \
-				value = ((PinType*)pin)->getValue(); \
+			if (pin) \
+				value = ((PIN_TYPE(PinType)*)pin)->getValue(); \
+			else \
+				resetToDefault(); \
 		} \
 		return true; \
 	} \
  \
+	virtual Name getVariableType() const; \
+ \
+	virtual bool generateDefaultVariable(GraphCodeGenerationContext& context); \
+ \
 	static Serializable* instantiate(const SerializationInfo& from) \
 	{ \
-		return new PinType(from.name); \
+		return new PIN_TYPE(PinType)(from.name); \
 	} \
  \
 	virtual bool deserialize(const SerializationInfo& from) \
 	{ \
 		ValuePin::deserialize(from); \
-		from.get("value", value); \
 		from.get("defaultValue", defaultValue); \
 		return true; \
 	} \
@@ -123,43 +146,44 @@ public: \
 	virtual bool serialize(SerializationInfo& to) \
 	{ \
 		ValuePin::serialize(to); \
-		to.set("value", value); \
 		to.set("defaultValue", defaultValue); \
 		return true; \
 	} \
 protected: \
-	BaseType value; \
-	BaseType defaultValue; \
+	BaseType value = BaseType(); \
+	BaseType defaultValue = BaseType(); \
 };
 
-#define DEC_OBJECT_VALUE_PIN(BaseType, PinType, PinColor, DesFunc, SerFunc) \
-class PinType : public ValuePin \
+#define DEC_OBJECT_VALUE_PIN(ObjType) \
+class PIN_TYPE(ObjType) : public ValuePin \
 { \
 public: \
-	Serialize(PinType, ValuePin); \
+	PIN_TYPE_SER(ObjType, ValuePin); \
  \
-	PinType(const string& name) : ValuePin(name) \
+	PIN_TYPE(ObjType)(const string& name) : ValuePin(name) \
 	{ \
 	} \
  \
-	virtual Color getPinColor() const  \
-	{ \
-		return PinColor; \
-	} \
+	virtual Color getPinColor() const; \
  \
-	BaseType getValue() const \
+	ObjType getValue() const \
 	{ \
 		return value; \
 	} \
  \
-	BaseType getDefaultValue() const \
+	ObjType getDefaultValue() const \
 	{ \
 		return defaultValue; \
 	} \
  \
-	void setValue(BaseType value) \
+	void setValue(ObjType value) \
 	{ \
 		this->value = value; \
+	} \
+ \
+	void setDefaultValue(ObjType value) \
+	{ \
+		this->defaultValue = value; \
 	} \
  \
 	virtual void resetToDefault() \
@@ -169,7 +193,7 @@ public: \
  \
 	virtual void assign(const ValuePin* other) \
 	{ \
-		const PinType* pin = dynamic_cast<const PinType*>(other); \
+		const PIN_TYPE(ObjType)* pin = dynamic_cast<const PIN_TYPE(ObjType)*>(other); \
 		if (pin == NULL) \
 			return; \
 		setValue(pin->getValue()); \
@@ -179,22 +203,26 @@ public: \
 	{ \
 		if (!isOutput) { \
 			GraphPin* pin = connectedPin; \
-			if (pin != NULL) \
-				value = ((PinType*)pin)->getValue(); \
+			if (pin) \
+				value = ((PIN_TYPE(ObjType)*)pin)->getValue(); \
+			else \
+				resetToDefault(); \
 		} \
 		return true; \
 	} \
  \
+	virtual Name getVariableType() const; \
+ \
+	virtual bool generateDefaultVariable(GraphCodeGenerationContext& context); \
+ \
 	static Serializable* instantiate(const SerializationInfo& from) \
 	{ \
-		return new PinType(from.name); \
+		return new PIN_TYPE(ObjType)(from.name); \
 	} \
  \
 	virtual bool deserialize(const SerializationInfo& from) \
 	{ \
 		ValuePin::deserialize(from); \
-		const SerializationInfo* valueInfo = from.get("value"); \
-		deserializeValue(*valueInfo, value); \
 		const SerializationInfo* defaultValueInfo = from.get("defaultValue"); \
 		deserializeValue(*defaultValueInfo, defaultValue); \
 		return true; \
@@ -203,76 +231,72 @@ public: \
 	virtual bool serialize(SerializationInfo& to) \
 	{ \
 		ValuePin::serialize(to); \
-		SerializationInfo* valueInfo = to.add("value"); \
-		serializeValue(*valueInfo, value); \
 		SerializationInfo* defaultValueInfo = to.add("defaultValue"); \
 		serializeValue(*defaultValueInfo, defaultValue); \
 		return true; \
 	} \
 protected: \
-	BaseType value; \
-	BaseType defaultValue; \
+	ObjType value; \
+	ObjType defaultValue; \
  \
-	void deserializeValue(const SerializationInfo& info, BaseType& value) \
-	{ \
-		DesFunc \
-	} \
- \
-	void serializeValue(SerializationInfo& info, BaseType& value) \
-	{ \
-		SerFunc \
-	} \
+	void deserializeValue(const SerializationInfo& info, ObjType& value); \
+	void serializeValue(SerializationInfo& info, ObjType& value); \
 };
 
-#define IMP_VALUE_PIN(BaseType, PinType) SerializeInstance(PinType);
+#define IMP_VALUE_PIN(BaseType, PinType, PinColor, DefaultSymbolValue) \
+PIN_TYPE_IMP(PinType); \
+Color PIN_TYPE(PinType)::getPinColor() const  \
+{ \
+	return PinColor; \
+} \
+Name PIN_TYPE(PinType)::getVariableType() const \
+{ \
+	return Code::BaseType##_t; \
+} \
+\
+bool PIN_TYPE(PinType)::generateDefaultVariable(GraphCodeGenerationContext& context) \
+{ \
+	generateTempVariable(context, DefaultSymbolValue); \
+	return true; \
+} \
+\
 
-DEC_VALUE_PIN(float, FloatPin, Color(147, 226, 74));
-DEC_VALUE_PIN(int, IntPin, Color(68, 201, 156));
-DEC_VALUE_PIN(bool, BoolPin, Color(220, 48, 48));
-DEC_VALUE_PIN(string, StringPin, Color(124, 21, 153));
-DEC_VALUE_PIN(int, CharPin, Color(98, 16, 176));
-DEC_VALUE_PIN(int, KeyCodePin, Color(203, 217, 22));
+#define IMP_OBJECT_VALUE_PIN(ObjType, PinColor, DefaultSymbolValue, DesFunc, SerFunc) \
+PIN_TYPE_IMP(ObjType); \
+Color PIN_TYPE(ObjType)::getPinColor() const  \
+{ \
+	return PinColor; \
+} \
+Name PIN_TYPE(ObjType)::getVariableType() const \
+{ \
+	return Code::ObjType##_t; \
+} \
+\
+bool PIN_TYPE(ObjType)::generateDefaultVariable(GraphCodeGenerationContext& context) \
+{ \
+	DefaultSymbolValue \
+} \
+\
+void PIN_TYPE(ObjType)::deserializeValue(const SerializationInfo& info, ObjType& value) \
+{ \
+	DesFunc \
+} \
+\
+void PIN_TYPE(ObjType)::serializeValue(SerializationInfo& info, ObjType& value) \
+{ \
+	SerFunc \
+} \
+\
 
-DEC_OBJECT_VALUE_PIN(Vector2f, Vector2fPin, Color(92, 179, 34),
-{
-	SVector2f vec;
-	vec.deserialize(info);
-	value = vec;
-},
-{
-	SVector2f vec = value;
-	vec.serialize(info);
-});
+DEC_VALUE_PIN(float, Float);
+DEC_VALUE_PIN(int, Int);
+DEC_VALUE_PIN(bool, Bool);
+DEC_VALUE_PIN(string, String);
+DEC_VALUE_PIN(int, Char);
+DEC_VALUE_PIN(int, KeyCode);
 
-DEC_OBJECT_VALUE_PIN(Vector3f, Vector3fPin, Color(92, 179, 34),
-{
-	SVector3f vec;
-	vec.deserialize(info);
-	value = vec;
-},
-{
-	SVector3f vec = value;
-	vec.serialize(info);
-});
-
-DEC_OBJECT_VALUE_PIN(Quaternionf, QuaternionfPin, Color(92, 179, 34),
-{
-	SQuaternionf quat;
-	quat.deserialize(info);
-	value = quat;
-},
-{
-	SQuaternionf quat = value;
-	quat.serialize(info);
-});
-
-DEC_OBJECT_VALUE_PIN(Color, ColorPin, Color(3, 76, 173),
-{
-	SColor color;
-	color.deserialize(info);
-	value = color;
-},
-{
-	SColor color = value;
-	color.serialize(info);
-});
+DEC_OBJECT_VALUE_PIN(Vector2f);
+DEC_OBJECT_VALUE_PIN(Vector3f);
+DEC_OBJECT_VALUE_PIN(Vector4f);
+DEC_OBJECT_VALUE_PIN(Quaternionf);
+DEC_OBJECT_VALUE_PIN(Color);

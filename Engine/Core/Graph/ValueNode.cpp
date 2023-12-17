@@ -52,6 +52,11 @@ bool CastToNode::process(GraphContext& context)
     return true;
 }
 
+bool CastToNode::generate(GraphCodeGenerationContext& context)
+{
+    return ValueCasterManager::get().generate(context, fromPin, toPin);
+}
+
 Serializable* CastToNode::instantiate(const SerializationInfo& from)
 {
     CastToNode* node = new CastToNode();

@@ -929,7 +929,7 @@ struct ENGINE_API Matrix4f : protected DirectX::XMFLOAT4X4
 
 struct ENGINE_API Quaternionf : public Vector4f
 {
-	Quaternionf(float w = 0, float x = 0, float y = 0, float z = 0);
+	Quaternionf(float x = 0, float y = 0, float z = 0, float w = 0);
 	Quaternionf(const Quaternionf& q);
 	Quaternionf(const DirectX::XMFLOAT4& xmf4);
 	Quaternionf(const Matrix3f& m);

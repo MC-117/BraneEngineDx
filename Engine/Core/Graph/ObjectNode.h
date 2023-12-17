@@ -27,6 +27,8 @@ public:
 
 	virtual bool process(GraphContext& context);
 
+	virtual bool generateDefaultVariable(GraphCodeGenerationContext& context);
+
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:
 	RefPin(const string& name);
@@ -49,6 +51,9 @@ public:																\
 	virtual Serialization& getRefSerialization() const;				\
 	virtual void castFromInternal(Base* base);						\
 	virtual Base* getBase() const;									\
+																	\
+	virtual Name getVariableType() const;							\
+																	\
 	static Serializable* instantiate(const SerializationInfo& from);\
 																	\
 	virtual bool deserialize(const SerializationInfo& from);		\
@@ -94,6 +99,12 @@ Base* PinType::getBase() const									  \
 Serializable* PinType::instantiate(const SerializationInfo& from) \
 {																  \
 	return new PinType(from.name);								  \
+}																  \
+																  \
+Name PinType::getVariableType() const							  \
+{																  \
+	static const Name varType = "Ref<"#BaseType">";				  \
+	return varType;												  \
 }																  \
 																  \
 bool PinType::deserialize(const SerializationInfo& from)		  \
@@ -282,8 +293,8 @@ DEC_REF_PIN(Object, ObjectRefPin);
 DEC_REF_VAR_CLASS(Base, BaseRefVariable, BaseRefPin);
 DEC_REF_VAR_CLASS(Object, ObjectRefVariable, ObjectRefPin);
 
-DEC_MATH_COMPARE_NODE(BaseRefPin, BaseRefEqualNode, ==);
-DEC_MATH_COMPARE_NODE(BaseRefPin, BaseRefNotEqualNode, !=);
+DEC_MATH_COMPARE_NODE(BaseRefPin, BaseRefEqualNode, ==, Code::eq_op);
+DEC_MATH_COMPARE_NODE(BaseRefPin, BaseRefNotEqualNode, !=, Code::notEq_op);
 
 class ObjectGetNameNode : public GraphNode
 {

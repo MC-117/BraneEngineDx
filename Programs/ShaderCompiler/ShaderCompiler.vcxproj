@@ -83,22 +83,22 @@
       <EnableDpiAwareness>True</EnableDpiAwareness>
     </Manifest>
     <CustomBuildStep>
-      <Command>echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\OneTBB\bin\x64\tbb12.dll" "$(TargetDir)tbb12.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll" "$(TargetDir)renderdoc.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Python37\python37.dll" "$(TargetDir)python37.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXCommon_64.dll" "$(TargetDir)PhysXCommon_64.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll" "$(TargetDir)python3.dll" /y /d
+      <Command>echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXCommon_64.dll" "$(TargetDir)PhysXCommon_64.dll" /y /d
 echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXCooking_64.dll" "$(TargetDir)PhysXCooking_64.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXGpu_64.dll" "$(TargetDir)PhysXGpu_64.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll" "$(TargetDir)NvCloth_x64.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXFoundation_64.dll" "$(TargetDir)PhysXFoundation_64.dll" /y /d
 echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\OpenAlSoft\dll\OpenAL32.dll" "$(TargetDir)OpenAL32.dll" /y /d
 echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysX_64.dll" "$(TargetDir)PhysX_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXGpu_64.dll" "$(TargetDir)PhysXGpu_64.dll" /y /d
 echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXDevice64.dll" "$(TargetDir)PhysXDevice64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXFoundation_64.dll" "$(TargetDir)PhysXFoundation_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Python37\python37.dll" "$(TargetDir)python37.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll" "$(TargetDir)NvCloth_x64.dll" /y /d
 echo f|xcopy "$(ProjectDir)..\..\Binaries\Win64\Release\Engine\Engine.dll" "$(TargetDir)Engine.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\OneTBB\bin\x64\tbb12.dll" "$(TargetDir)tbb12.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll" "$(TargetDir)renderdoc.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll" "$(TargetDir)python3.dll" /y /d
 </Command>
-      <Inputs>$(ProjectDir)..\..\Engine\ThirdParty\OneTBB\bin\x64\tbb12.dll;$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python37.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXCommon_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXCooking_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXGpu_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXFoundation_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\OpenAlSoft\dll\OpenAL32.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysX_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXDevice64.dll;$(ProjectDir)..\..\Binaries\Win64\Release\Engine\Engine.dll</Inputs>
-      <Outputs>$(TargetDir)tbb12.dll;$(TargetDir)renderdoc.dll;$(TargetDir)python37.dll;$(TargetDir)PhysXCommon_64.dll;$(TargetDir)python3.dll;$(TargetDir)PhysXCooking_64.dll;$(TargetDir)PhysXGpu_64.dll;$(TargetDir)NvCloth_x64.dll;$(TargetDir)PhysXFoundation_64.dll;$(TargetDir)OpenAL32.dll;$(TargetDir)PhysX_64.dll;$(TargetDir)PhysXDevice64.dll;$(TargetDir)Engine.dll</Outputs>
+      <Inputs>$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXCommon_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXCooking_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\OpenAlSoft\dll\OpenAL32.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysX_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXGpu_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXDevice64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Release\PhysXFoundation_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python37.dll;$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll;$(ProjectDir)..\..\Binaries\Win64\Release\Engine\Engine.dll;$(ProjectDir)..\..\Engine\ThirdParty\OneTBB\bin\x64\tbb12.dll;$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll</Inputs>
+      <Outputs>$(TargetDir)PhysXCommon_64.dll;$(TargetDir)PhysXCooking_64.dll;$(TargetDir)OpenAL32.dll;$(TargetDir)PhysX_64.dll;$(TargetDir)PhysXGpu_64.dll;$(TargetDir)PhysXDevice64.dll;$(TargetDir)PhysXFoundation_64.dll;$(TargetDir)python37.dll;$(TargetDir)NvCloth_x64.dll;$(TargetDir)Engine.dll;$(TargetDir)tbb12.dll;$(TargetDir)renderdoc.dll;$(TargetDir)python3.dll</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -118,54 +118,54 @@ echo f|xcopy "$(ProjectDir)..\..\Binaries\Win64\Release\Engine\Engine.dll" "$(Ta
       <EnableDpiAwareness>True</EnableDpiAwareness>
     </Manifest>
     <CustomBuildStep>
-      <Command>echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll" "$(TargetDir)renderdoc.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXFoundation_64.dll" "$(TargetDir)PhysXFoundation_64.dll" /y /d
+      <Command>echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCommon_64.dll" "$(TargetDir)PhysXCommon_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXGpu_64.dll" "$(TargetDir)PhysXGpu_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\OpenAlSoft\dll\OpenAL32.dll" "$(TargetDir)OpenAL32.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Binaries\Win64\Debug\Engine\Engine.dll" "$(TargetDir)Engine.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCooking_64.dll" "$(TargetDir)PhysXCooking_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll" "$(TargetDir)NvCloth_x64.dll" /y /d
 echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Python37\python37.dll" "$(TargetDir)python37.dll" /y /d
 echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysX_64.dll" "$(TargetDir)PhysX_64.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXGpu_64.dll" "$(TargetDir)PhysXGpu_64.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll" "$(TargetDir)python3.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll" "$(TargetDir)NvCloth_x64.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Binaries\Win64\Debug\Engine\Engine.dll" "$(TargetDir)Engine.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\OpenAlSoft\dll\OpenAL32.dll" "$(TargetDir)OpenAL32.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\OneTBB\bin\x64\tbb12_debug.dll" "$(TargetDir)tbb12_debug.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCommon_64.dll" "$(TargetDir)PhysXCommon_64.dll" /y /d
 echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXDevice64.dll" "$(TargetDir)PhysXDevice64.dll" /y /d
-echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCooking_64.dll" "$(TargetDir)PhysXCooking_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXFoundation_64.dll" "$(TargetDir)PhysXFoundation_64.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll" "$(TargetDir)renderdoc.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\OneTBB\bin\x64\tbb12_debug.dll" "$(TargetDir)tbb12_debug.dll" /y /d
+echo f|xcopy "$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll" "$(TargetDir)python3.dll" /y /d
 </Command>
-      <Inputs>$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXFoundation_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python37.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysX_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXGpu_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll;$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll;$(ProjectDir)..\..\Binaries\Win64\Debug\Engine\Engine.dll;$(ProjectDir)..\..\Engine\ThirdParty\OpenAlSoft\dll\OpenAL32.dll;$(ProjectDir)..\..\Engine\ThirdParty\OneTBB\bin\x64\tbb12_debug.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCommon_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXDevice64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCooking_64.dll</Inputs>
-      <Outputs>$(TargetDir)renderdoc.dll;$(TargetDir)PhysXFoundation_64.dll;$(TargetDir)python37.dll;$(TargetDir)PhysX_64.dll;$(TargetDir)PhysXGpu_64.dll;$(TargetDir)python3.dll;$(TargetDir)NvCloth_x64.dll;$(TargetDir)Engine.dll;$(TargetDir)OpenAL32.dll;$(TargetDir)tbb12_debug.dll;$(TargetDir)PhysXCommon_64.dll;$(TargetDir)PhysXDevice64.dll;$(TargetDir)PhysXCooking_64.dll</Outputs>
+      <Inputs>$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCommon_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXGpu_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\OpenAlSoft\dll\OpenAL32.dll;$(ProjectDir)..\..\Binaries\Win64\Debug\Engine\Engine.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXCooking_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\NvCloth\dll\NvCloth_x64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python37.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysX_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXDevice64.dll;$(ProjectDir)..\..\Engine\ThirdParty\Physx4\dll\x64\Debug\PhysXFoundation_64.dll;$(ProjectDir)..\..\Engine\ThirdParty\RenderDoc\dll\renderdoc.dll;$(ProjectDir)..\..\Engine\ThirdParty\OneTBB\bin\x64\tbb12_debug.dll;$(ProjectDir)..\..\Engine\ThirdParty\Python37\python3.dll</Inputs>
+      <Outputs>$(TargetDir)PhysXCommon_64.dll;$(TargetDir)PhysXGpu_64.dll;$(TargetDir)OpenAL32.dll;$(TargetDir)Engine.dll;$(TargetDir)PhysXCooking_64.dll;$(TargetDir)NvCloth_x64.dll;$(TargetDir)python37.dll;$(TargetDir)PhysX_64.dll;$(TargetDir)PhysXDevice64.dll;$(TargetDir)PhysXFoundation_64.dll;$(TargetDir)renderdoc.dll;$(TargetDir)tbb12_debug.dll;$(TargetDir)python3.dll</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="../../Engine/ThirdParty/STB/stb_image_resize.h" />
     <ClInclude Include="../../Engine/ThirdParty/STB/stb_image_write.h" />
-    <ClInclude Include="../../Engine/ThirdParty/STB/stb_image.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="../../Engine/ThirdParty/STB/stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="../../Engine/Launch/Launch.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="../../Engine/Launch/Launch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ShaderCompiler.Target.py" />
-    <None Include="../../Engine/Launch/Launch.Module.py" />
-    <None Include="../../Engine/ThirdParty/Python37/Python37.Module.py" />
     <None Include="../../Engine/ThirdParty/NvCloth/NvCloth.Module.py" />
-    <None Include="../../Engine/ThirdParty/OneTBB/OneTBB.Module.py" />
-    <None Include="../../Engine/ThirdParty/MemTracer/MemTracer.Module.py" />
-    <None Include="../../Engine/ThirdParty/STB/STB.Module.py" />
     <None Include="../../Engine/ThirdParty/Live2DCubism/Live2DCubism.Module.py" />
-    <None Include="../../Engine/ThirdParty/Assimp/Assimp.Module.py" />
-    <None Include="../../Engine/Icon/Logo.ico" />
-    <None Include="../../Engine/ThirdParty/RenderDoc/RenderDoc.Module.py" />
-    <None Include="../../Engine/ThirdParty/ImGui/ImPlot/ImPlot.Module.py" />
-    <None Include="../../Engine/ThirdParty/Physx4/Physx4.Module.py" />
+    <None Include="../../Engine/ThirdParty/MemTracer/MemTracer.Module.py" />
+    <None Include="ShaderCompiler.Target.py" />
     <None Include="../../Engine/ThirdParty/OpenAlSoft/OpenAlSoft.Module.py" />
-    <None Include="../../Engine/ThirdParty/Remidi/Remidi.Module.py" />
-    <None Include="../../Engine/ThirdParty/Spine/Spine.Module.py" />
-    <None Include="../../Engine/ThirdParty/ImGui/ImGui.Module.py" />
-    <None Include="../../Engine/Engine.Module.py" />
+    <None Include="../../Engine/ThirdParty/Assimp/Assimp.Module.py" />
     <None Include="ShaderCompiler.Module.py" />
+    <None Include="../../Engine/ThirdParty/Spine/Spine.Module.py" />
+    <None Include="../../Engine/Launch/Launch.Module.py" />
+    <None Include="../../Engine/ThirdParty/ImGui/ImGui.Module.py" />
+    <None Include="../../Engine/ThirdParty/STB/STB.Module.py" />
+    <None Include="../../Engine/ThirdParty/RenderDoc/RenderDoc.Module.py" />
+    <None Include="../../Engine/Engine.Module.py" />
+    <None Include="../../Engine/ThirdParty/Python37/Python37.Module.py" />
+    <None Include="../../Engine/ThirdParty/ImGui/ImPlot/ImPlot.Module.py" />
+    <None Include="../../Engine/ThirdParty/OneTBB/OneTBB.Module.py" />
+    <None Include="../../Engine/Icon/Logo.ico" />
+    <None Include="../../Engine/ThirdParty/Remidi/Remidi.Module.py" />
+    <None Include="../../Engine/ThirdParty/Physx4/Physx4.Module.py" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ShaderCompiler.rc" />

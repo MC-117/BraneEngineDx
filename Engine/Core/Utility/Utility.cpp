@@ -195,7 +195,7 @@ Vector3f toVector3f(const PVec3& v)
 Quaternionf toQuaternionf(const PQuat& q)
 {
 #ifdef PHYSICS_USE_PHYSX
-	return Quaternionf(q.w, q.x, q.y, q.z);
+	return Quaternionf(q.x, q.y, q.z, q.w);
 #endif
 }
 

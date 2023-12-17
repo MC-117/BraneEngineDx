@@ -2,12 +2,13 @@
 
 #include "Graph.h"
 #include "GraphNodeEditor.h"
+#include "../Script/ScriptWindow.h"
 
 class ENGINE_API GraphEditor : public GraphNodeEditor
 {
 public:
 	GraphEditor() = default;
-	virtual ~GraphEditor() = default;
+	virtual ~GraphEditor();
 
 	EditorInfoMethod();
 	virtual void setInspectedObject(void* object);
@@ -44,6 +45,8 @@ protected:
 	string createSubGraphName;
 
 	bool createNewNode = true;
+
+	TempScript* tempScript = NULL;
 
 	void copyNodes(const vector<ax::NodeEditor::NodeId>& nodeIDs, SerializationInfo& info);
 	void pasteNodes(SerializationInfo& info);

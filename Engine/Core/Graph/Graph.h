@@ -37,6 +37,10 @@ public:
 
 	virtual bool process(GraphContext& context);
 
+	virtual bool generateParameter(GraphCodeGenerationContext& context);
+	virtual bool solveAndGenerateOutput(GraphCodeGenerationContext& context);
+	virtual bool generate(GraphCodeGenerationContext& context);
+
 	Flag getFlag() const;
 	void setFlag(Flag flag);
 

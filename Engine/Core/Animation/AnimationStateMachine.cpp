@@ -1,7 +1,7 @@
 #include "AnimationStateMachine.h"
 #include "../SkeletonMeshActor.h"
 
-SerializeInstance(AnimationStateMachine);
+SerializeInstance(AnimationStateMachine, DEF_ATTR(Namespace, "Animation"));
 
 AnimationStateMachine::AnimationStateMachine() : StateMachine()
 {

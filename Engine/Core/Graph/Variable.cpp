@@ -1,5 +1,7 @@
 #include "Variable.h"
 
+#include "GraphCodeGeneration.h"
+
 SerializeInstance(GraphVariable);
 
 GraphVariable::GraphVariable(const string& name) : name(name)
@@ -37,6 +39,23 @@ void GraphVariable::resetToDefault()
 {
 }
 
+Name GraphVariable::getVariableType() const
+{
+    return Name::none;
+}
+
+CodeParameter GraphVariable::getDefaultParameter() const
+{
+    return CodeParameter::none;
+}
+
+bool GraphVariable::generate(GraphCodeGenerationContext& context)
+{
+    Name varName = getName();
+    context.assignParameter(this, varName);
+    return context.getBackend().declareVariable(CodeSymbolDefinition(getVariableType(), varName), getDefaultParameter());
+}
+
 Serializable* GraphVariable::instantiate(const SerializationInfo& from)
 {
     return nullptr;
@@ -54,14 +73,14 @@ bool GraphVariable::serialize(SerializationInfo& to)
     return true;
 }
 
-IMP_VAR_CLASS(FloatVariable);
-IMP_VAR_CLASS(IntVariable);
-IMP_VAR_CLASS(BoolVariable);
-IMP_VAR_CLASS(StringVariable);
-IMP_VAR_CLASS(CharVariable);
-IMP_VAR_CLASS(KeyCodeVariable);
+IMP_VAR_CLASS(float, Float, Color(147, 226, 74), CodeParameter(getDefaultValue()));
+IMP_VAR_CLASS(int, Int, Color(68, 201, 156), CodeParameter(getDefaultValue()));
+IMP_VAR_CLASS(bool, Bool, Color(220, 48, 48), CodeParameter(CodeBool(getDefaultValue())));
+IMP_VAR_CLASS(string, String, Color(124, 21, 153), CodeParameter(getDefaultValue()));
+IMP_VAR_CLASS(int, Char, Color(98, 16, 176), CodeParameter(CodeChar(getDefaultValue())));
+IMP_VAR_CLASS(int, KeyCode, Color(203, 217, 22), CodeParameter(getDefaultValue()));
 
-IMP_OBJECT_VAR_CLASS(Vector2f, Vector2fVariable, Vector2fPin, Vector2f(),
+IMP_OBJECT_VAR_CLASS(Vector2f,
 {
     SVector2f vec;
     vec.deserialize(info);
@@ -72,7 +91,7 @@ IMP_OBJECT_VAR_CLASS(Vector2f, Vector2fVariable, Vector2fPin, Vector2f(),
     vec.serialize(info);
 },
 Color(92, 179, 34));
-IMP_OBJECT_VAR_CLASS(Vector3f, Vector3fVariable, Vector3fPin, Vector3f(),
+IMP_OBJECT_VAR_CLASS(Vector3f,
 {
     SVector3f vec;
     vec.deserialize(info);
@@ -83,7 +102,7 @@ IMP_OBJECT_VAR_CLASS(Vector3f, Vector3fVariable, Vector3fPin, Vector3f(),
     vec.serialize(info);
 },
 Color(92, 179, 34));
-IMP_OBJECT_VAR_CLASS(Quaternionf, QuaternionfVariable, QuaternionfPin, Quaternionf(),
+IMP_OBJECT_VAR_CLASS(Quaternionf,
 {
     SQuaternionf quat;
     quat.deserialize(info);
@@ -94,7 +113,7 @@ IMP_OBJECT_VAR_CLASS(Quaternionf, QuaternionfVariable, QuaternionfPin, Quaternio
     quat.serialize(info);
 },
 Color(92, 179, 34));
-IMP_OBJECT_VAR_CLASS(Color, ColorVariable, ColorPin, Color(),
+IMP_OBJECT_VAR_CLASS(Color,
 {
     SColor color;
     color.deserialize(info);
@@ -154,6 +173,20 @@ bool VariableNode::process(GraphContext& context)
     if (pVariable == NULL)
         return false;
     pVariable->assignToPin(valuePin);
+    return true;
+}
+
+bool VariableNode::solveAndGenerateOutput(GraphCodeGenerationContext& context)
+{
+    GraphVariable* pVariable = variable;
+    if (pVariable == NULL)
+        return false;
+    context.assignParameter(valuePin, context.getParameter(pVariable));
+    return true;
+}
+
+bool VariableNode::generate(GraphCodeGenerationContext& context)
+{
     return true;
 }
 

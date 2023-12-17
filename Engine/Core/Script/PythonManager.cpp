@@ -1015,8 +1015,8 @@ PyObject * QuatPy::slerp(PyObject * self, PyObject * args)
 		PyErr_SetString(PyExc_TypeError, "slerp(Quat, float)");
 		return NULL;
 	}
-	Quaternionf aq = Quaternionf(a->w, a->x, a->y, a->z);
-	Quaternionf bq = Quaternionf(b->w, b->x, b->y, b->z);
+	Quaternionf aq = Quaternionf(a->x, a->y, a->z, a->w);
+	Quaternionf bq = Quaternionf(b->x, b->y, b->z, b->w);
 	aq = aq.slerp(value, bq);
 	Quat* c = (Quat*)Type.tp_alloc(&Type, 0);
 	if (c != NULL) {
@@ -1036,7 +1036,7 @@ PyObject * QuatPy::toEular(PyObject * self, PyObject * args)
 		return NULL;
 	}
 	Quat* a = (Quat*)self;
-	Quaternionf aq = Quaternionf(a->w, a->x, a->y, a->z);
+	Quaternionf aq = Quaternionf(a->x, a->y, a->z, a->w);
 	Vector3f vec3 = aq.toRotationMatrix().eulerAngles() / PI * 180;
 	Vec3Py::Vec3* c = (Vec3Py::Vec3*)Vec3Py::Type.tp_alloc(&Vec3Py::Type, 0);
 	if (c != NULL) {

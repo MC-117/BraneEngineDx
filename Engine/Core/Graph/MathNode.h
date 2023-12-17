@@ -22,7 +22,7 @@ protected:
 	ValuePin* outputPin = NULL;
 };
 
-#define DEC_MATH_OP_NODE(PinType, NodeType, Op) \
+#define DEC_MATH_OP_NODE(PinType, NodeType, Op, OpName) \
 class NodeType : public MathOperationNode \
 { \
 public: \
@@ -50,6 +50,12 @@ public: \
 		return true; \
 	} \
  \
+	virtual Name getFunctionName() const \
+	{ \
+		static const Name funcName = OpName; \
+		return funcName; \
+	} \
+ \
 	static Serializable* instantiate(const SerializationInfo& from) \
 	{ \
 		NodeType* node = new NodeType(); \
@@ -63,25 +69,25 @@ public: \
 
 #define IMP_MATH_OP_NODE(NodeType) SerializeInstance(NodeType);
 
-DEC_MATH_OP_NODE(FloatPin, FloatAddtionNode, +);
-DEC_MATH_OP_NODE(IntPin, IntAddtionNode, +);
-DEC_MATH_OP_NODE(Vector2fPin, Vector2fAddtionNode, +);
-DEC_MATH_OP_NODE(Vector3fPin, Vector3fAddtionNode, +);
-DEC_MATH_OP_NODE(StringPin, StringAddtionNode, +);
+DEC_MATH_OP_NODE(FloatPin, FloatAddtionNode, +, Code::add_op);
+DEC_MATH_OP_NODE(IntPin, IntAddtionNode, +, Code::add_op);
+DEC_MATH_OP_NODE(Vector2fPin, Vector2fAddtionNode, +, Code::add_op);
+DEC_MATH_OP_NODE(Vector3fPin, Vector3fAddtionNode, +, Code::add_op);
+DEC_MATH_OP_NODE(StringPin, StringAddtionNode, +, Code::add_op);
 
-DEC_MATH_OP_NODE(FloatPin, FloatSubtractionNode, -);
-DEC_MATH_OP_NODE(IntPin, IntSubtractionNode, -);
-DEC_MATH_OP_NODE(Vector2fPin, Vector2fSubtractionNode, -);
-DEC_MATH_OP_NODE(Vector3fPin, Vector3fSubtractionNode, -);
+DEC_MATH_OP_NODE(FloatPin, FloatSubtractionNode, -, Code::sub_op);
+DEC_MATH_OP_NODE(IntPin, IntSubtractionNode, -, Code::sub_op);
+DEC_MATH_OP_NODE(Vector2fPin, Vector2fSubtractionNode, -, Code::sub_op);
+DEC_MATH_OP_NODE(Vector3fPin, Vector3fSubtractionNode, -, Code::sub_op);
 
-DEC_MATH_OP_NODE(FloatPin, FloatMultiplyNode, *);
-DEC_MATH_OP_NODE(IntPin, IntMultiplyNode, *);
+DEC_MATH_OP_NODE(FloatPin, FloatMultiplyNode, *, Code::mul_op);
+DEC_MATH_OP_NODE(IntPin, IntMultiplyNode, *, Code::mul_op);
 
-DEC_MATH_OP_NODE(FloatPin, FloatDivisionNode, /);
-DEC_MATH_OP_NODE(IntPin, IntDivisionNode, /);
+DEC_MATH_OP_NODE(FloatPin, FloatDivisionNode, /, Code::div_op);
+DEC_MATH_OP_NODE(IntPin, IntDivisionNode, /, Code::div_op);
 
-DEC_MATH_OP_NODE(BoolPin, BoolAndNode, &);
-DEC_MATH_OP_NODE(BoolPin, BoolOrNode, |);
+DEC_MATH_OP_NODE(BoolPin, BoolAndNode, &, Code::and_op);
+DEC_MATH_OP_NODE(BoolPin, BoolOrNode, |, Code::or_op);
 
 class ComparisonNode : public GraphNode
 {
@@ -98,7 +104,7 @@ protected:
 	BoolPin* outputPin = NULL;
 };
 
-#define DEC_MATH_COMPARE_NODE(PinType, NodeType, Op) \
+#define DEC_MATH_COMPARE_NODE(PinType, NodeType, Op, OpName) \
 class NodeType : public ComparisonNode \
 { \
 public: \
@@ -120,7 +126,13 @@ public: \
 		outputPin->setValue(aPin->getValue() Op bPin->getValue()); \
 		return true; \
 	} \
- \
+\
+	virtual Name getFunctionName() const \
+	{ \
+		static const Name funcName = OpName; \
+		return funcName; \
+	} \
+\
 	static Serializable* instantiate(const SerializationInfo& from) \
 	{ \
 		return new NodeType(); \
@@ -132,39 +144,39 @@ protected: \
 
 #define IMP_MATH_COMPARE_NODE(NodeType) SerializeInstance(NodeType);
 
-DEC_MATH_COMPARE_NODE(FloatPin, FloatLessNode, <);
-DEC_MATH_COMPARE_NODE(IntPin, IntLessNode, < );
-DEC_MATH_COMPARE_NODE(StringPin, StringLessNode, <);
+DEC_MATH_COMPARE_NODE(FloatPin, FloatLessNode, <, Code::les_op);
+DEC_MATH_COMPARE_NODE(IntPin, IntLessNode, <, Code::les_op);
+DEC_MATH_COMPARE_NODE(StringPin, StringLessNode, <, Code::les_op);
 
-DEC_MATH_COMPARE_NODE(FloatPin, FloatLessEqualNode, <=);
-DEC_MATH_COMPARE_NODE(IntPin, IntLessEqualNode, <= );
-DEC_MATH_COMPARE_NODE(StringPin, StringLessEqualNode, <=);
+DEC_MATH_COMPARE_NODE(FloatPin, FloatLessEqualNode, <=, Code::lesEq_op);
+DEC_MATH_COMPARE_NODE(IntPin, IntLessEqualNode, <=, Code::lesEq_op);
+DEC_MATH_COMPARE_NODE(StringPin, StringLessEqualNode, <=, Code::lesEq_op);
 
-DEC_MATH_COMPARE_NODE(FloatPin, FloatGreaterNode, >);
-DEC_MATH_COMPARE_NODE(IntPin, IntGreaterNode, >);
-DEC_MATH_COMPARE_NODE(StringPin, StringGreaterNode, >);
+DEC_MATH_COMPARE_NODE(FloatPin, FloatGreaterNode, >, Code::gre_op);
+DEC_MATH_COMPARE_NODE(IntPin, IntGreaterNode, >, Code::gre_op);
+DEC_MATH_COMPARE_NODE(StringPin, StringGreaterNode, >, Code::gre_op);
 
-DEC_MATH_COMPARE_NODE(FloatPin, FloatGreaterEqualNode, >=);
-DEC_MATH_COMPARE_NODE(IntPin, IntGreaterEqualNode, >=);
-DEC_MATH_COMPARE_NODE(StringPin, StringGreaterEqualNode, >=);
+DEC_MATH_COMPARE_NODE(FloatPin, FloatGreaterEqualNode, >=, Code::greEq_op);
+DEC_MATH_COMPARE_NODE(IntPin, IntGreaterEqualNode, >=, Code::greEq_op);
+DEC_MATH_COMPARE_NODE(StringPin, StringGreaterEqualNode, >=, Code::greEq_op);
 
-DEC_MATH_COMPARE_NODE(FloatPin, FloatEqualNode, ==);
-DEC_MATH_COMPARE_NODE(IntPin, IntEqualNode, == );
-DEC_MATH_COMPARE_NODE(BoolPin, BoolEqualNode, ==);
-DEC_MATH_COMPARE_NODE(StringPin, StringEqualNode, == );
+DEC_MATH_COMPARE_NODE(FloatPin, FloatEqualNode, ==, Code::eq_op);
+DEC_MATH_COMPARE_NODE(IntPin, IntEqualNode, ==, Code::eq_op);
+DEC_MATH_COMPARE_NODE(BoolPin, BoolEqualNode, ==, Code::eq_op);
+DEC_MATH_COMPARE_NODE(StringPin, StringEqualNode, ==, Code::eq_op);
 
-DEC_MATH_COMPARE_NODE(Vector2fPin, Vector2fEqualNode, == );
-DEC_MATH_COMPARE_NODE(Vector3fPin, Vector3fEqualNode, == );
-DEC_MATH_COMPARE_NODE(QuaternionfPin, QuaternionfEqualNode, ==);
+DEC_MATH_COMPARE_NODE(Vector2fPin, Vector2fEqualNode, ==, Code::eq_op);
+DEC_MATH_COMPARE_NODE(Vector3fPin, Vector3fEqualNode, ==, Code::eq_op);
+DEC_MATH_COMPARE_NODE(QuaternionfPin, QuaternionfEqualNode, ==, Code::eq_op);
 
-DEC_MATH_COMPARE_NODE(FloatPin, FloatNotEqualNode, !=);
-DEC_MATH_COMPARE_NODE(IntPin, IntNotEqualNode, !=);
-DEC_MATH_COMPARE_NODE(BoolPin, BoolNotEqualNode, != );
-DEC_MATH_COMPARE_NODE(StringPin, StringNotEqualNode, !=);
+DEC_MATH_COMPARE_NODE(FloatPin, FloatNotEqualNode, !=, Code::notEq_op);
+DEC_MATH_COMPARE_NODE(IntPin, IntNotEqualNode, !=, Code::notEq_op);
+DEC_MATH_COMPARE_NODE(BoolPin, BoolNotEqualNode, !=, Code::notEq_op);
+DEC_MATH_COMPARE_NODE(StringPin, StringNotEqualNode, !=, Code::notEq_op);
 
-DEC_MATH_COMPARE_NODE(Vector2fPin, Vector2fNotEqualNode, !=);
-DEC_MATH_COMPARE_NODE(Vector3fPin, Vector3fNotEqualNode, !=);
-DEC_MATH_COMPARE_NODE(QuaternionfPin, QuaternionfNotEqualNode, !=);
+DEC_MATH_COMPARE_NODE(Vector2fPin, Vector2fNotEqualNode, !=, Code::notEq_op);
+DEC_MATH_COMPARE_NODE(Vector3fPin, Vector3fNotEqualNode, !=, Code::notEq_op);
+DEC_MATH_COMPARE_NODE(QuaternionfPin, QuaternionfNotEqualNode, !=, Code::notEq_op);
 
 class NotNode : public GraphNode
 {
@@ -178,6 +190,8 @@ public:
 	BoolPin* getOutputPin();
 
 	virtual bool process(GraphContext& context);
+
+	virtual Name getFunctionName() const;
 
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:
@@ -261,6 +275,8 @@ public:
 
 	virtual bool process(GraphContext& context);
 
+	virtual bool generate(GraphCodeGenerationContext& context);
+
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:
 	Vector2fPin* inputPin = NULL;
@@ -277,6 +293,8 @@ public:
 
 	virtual bool process(GraphContext& context);
 
+	virtual bool generate(GraphCodeGenerationContext& context);
+
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:
 	Vector3fPin* inputPin = NULL;
@@ -292,6 +310,8 @@ public:
 	virtual ~QuaternionfBreakNode() = default;
 
 	virtual bool process(GraphContext& context);
+
+	virtual bool generate(GraphCodeGenerationContext& context);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:

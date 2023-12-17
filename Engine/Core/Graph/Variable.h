@@ -21,6 +21,11 @@ public:
 	virtual void assignFromPin(const ValuePin* pin);
 	virtual void resetToDefault();
 
+	virtual Name getVariableType() const;
+	virtual CodeParameter getDefaultParameter() const;
+
+	virtual bool generate(GraphCodeGenerationContext& context);
+
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
@@ -28,31 +33,32 @@ protected:
 	string name;
 };
 
-#define DEC_VAR_CLASS(BaseType, VarType, PinType, DefVal, DisColor)		\
-class VarType : public GraphVariable									\
+#define VAR_TYPE(type) type##Variable
+#define VAR_TYPE_SER(type, base) Serialize(type##Variable, base)
+#define VAR_TYPE_IMP(type, base, ...) SerializeInstance(type##Variable, __VA_ARGS__)
+
+#define DEC_VAR_CLASS(BaseType, VarType)								\
+class VAR_TYPE(VarType) : public GraphVariable							\
 {																		\
 	friend class Graph;													\
 public:																	\
-	Serialize(VarType, GraphVariable);									\
+	VAR_TYPE_SER(VarType, GraphVariable);								\
 																		\
-	VarType(const string& name) : GraphVariable(name)					\
+	VAR_TYPE(VarType)(const string& name) : GraphVariable(name)			\
 	{																	\
 																		\
 	}																	\
 																		\
-	virtual Color getDisplayColor() const								\
-	{																	\
-		return DisColor;												\
-	}																	\
+	virtual Color getDisplayColor() const;								\
 																		\
 	virtual ValuePin* newValuePin(const string& name) const				\
 	{																	\
-		return new PinType(name);										\
+		return new PIN_TYPE(VarType)(name);								\
 	}																	\
 																		\
 	virtual void assignToPin(ValuePin* pin)								\
 	{																	\
-		PinType* _pin = dynamic_cast<PinType*>(pin);					\
+		PIN_TYPE(VarType)* _pin = dynamic_cast<PIN_TYPE(VarType)*>(pin);\
 		if (_pin == NULL)												\
 			return;														\
 		_pin->setValue(value);											\
@@ -60,7 +66,8 @@ public:																	\
 																		\
 	virtual void assignFromPin(const ValuePin* pin)						\
 	{																	\
-		const PinType* _pin = dynamic_cast<const PinType*>(pin);		\
+		const PIN_TYPE(VarType)* _pin =									\
+			dynamic_cast<const PIN_TYPE(VarType)*>(pin);				\
 		if (_pin == NULL)												\
 			return;														\
 		value = _pin->getValue();										\
@@ -93,15 +100,23 @@ public:																	\
 																		\
 	virtual void assign(const GraphVariable* other)						\
 	{																	\
-		const VarType* otherVar = dynamic_cast<const VarType*>(other);	\
+		const VAR_TYPE(VarType)* otherVar =								\
+			dynamic_cast<const VAR_TYPE(VarType)*>(other);				\
 		if (otherVar == NULL)											\
 			return;														\
 		value = otherVar->value;										\
 	}																	\
 																		\
+	virtual Name getVariableType() const								\
+	{																	\
+		return Code::BaseType##_t;										\
+	}																	\
+																		\
+	virtual CodeParameter getDefaultParameter() const;					\
+																		\
 	static Serializable* instantiate(const SerializationInfo& from)		\
 	{																	\
-		return new VarType(from.name);									\
+		return new VAR_TYPE(VarType)(from.name);						\
 	}																	\
 																		\
 	virtual bool deserialize(const SerializationInfo& from)				\
@@ -109,6 +124,8 @@ public:																	\
 		if (!GraphVariable::deserialize(from))							\
 			return false;												\
 		from.get("value", value);										\
+		from.get("defaultValue", defaultValue);							\
+		resetToDefault();												\
 		return true;													\
 	}																	\
 																		\
@@ -117,23 +134,34 @@ public:																	\
 		if (!GraphVariable::serialize(to))								\
 			return false;												\
 		to.set("value", value);											\
+		to.set("defaultValue", defaultValue);							\
 		return true;													\
 	}																	\
 protected:																\
-	BaseType value = DefVal;											\
-	BaseType defaultValue = DefVal;										\
+	BaseType value = BaseType();										\
+	BaseType defaultValue = BaseType();									\
 };
 
-#define IMP_VAR_CLASS(VarType) SerializeInstance(VarType);
+#define IMP_VAR_CLASS(BaseType, VarType, DisColor, DefaultSymbolValue)	\
+VAR_TYPE_IMP(VarType);													\
+Color VAR_TYPE(VarType)::getDisplayColor() const						\
+{																		\
+	return DisColor;													\
+}																		\
+CodeParameter VAR_TYPE(VarType)::getDefaultParameter() const			\
+{																		\
+	return DefaultSymbolValue;											\
+}																		\
 
-#define DEC_OBJECT_VAR_CLASS(BaseType, VarType, PinType)					\
-class VarType : public GraphVariable										\
+
+#define DEC_OBJECT_VAR_CLASS(ObjType)										\
+class VAR_TYPE(ObjType) : public GraphVariable								\
 {																			\
 	friend class Graph;														\
 public:																		\
-	Serialize(VarType, GraphVariable);										\
+	VAR_TYPE_SER(ObjType, GraphVariable);									\
 																			\
-	VarType(const string& name);											\
+	VAR_TYPE(ObjType)(const string& name);									\
 																			\
 	virtual Color getDisplayColor() const;									\
 																			\
@@ -143,13 +171,13 @@ public:																		\
 																			\
 	virtual void assignFromPin(const ValuePin* pin);						\
 																			\
-	BaseType getValue() const;												\
+	ObjType getValue() const;												\
 																			\
-	BaseType getDefaultValue() const;										\
+	ObjType getDefaultValue() const;										\
 																			\
-	void setValue(const BaseType& value);									\
+	void setValue(const ObjType& value);									\
 																			\
-	void setDefaultValue(const BaseType& value);							\
+	void setDefaultValue(const ObjType& value);								\
 																			\
 	virtual void resetToDefault();											\
 																			\
@@ -161,124 +189,129 @@ public:																		\
 																			\
 	virtual bool serialize(SerializationInfo& to);							\
 protected:																	\
-	BaseType value;															\
-	BaseType defaultValue;													\
+	ObjType value;															\
+	ObjType defaultValue;													\
 																			\
-	void deserializeValue(const SerializationInfo& info, BaseType& value);	\
+	void deserializeValue(const SerializationInfo& info, ObjType& value);	\
 																			\
-	void serializeValue(SerializationInfo& info, BaseType& value);			\
+	void serializeValue(SerializationInfo& info, ObjType& value);			\
 };
 
-#define IMP_OBJECT_VAR_CLASS(BaseType, VarType, PinType, DefVal, DesFunc, SerFunc, DisColor)\
-SerializeInstance(VarType);																	\
-VarType::VarType(const string& name) : GraphVariable(name)									\
-{																							\
-																							\
-}																							\
-																							\
-Color VarType::getDisplayColor() const														\
-{																							\
-	return DisColor;																		\
-}																							\
-																							\
-ValuePin* VarType::newValuePin(const string& name) const									\
-{																							\
-	return new PinType(name);																\
-}																							\
-																							\
-void VarType::assignToPin(ValuePin* pin)													\
-{																							\
-	PinType* _pin = dynamic_cast<PinType*>(pin);											\
-	if (_pin == NULL)																		\
-		return;																				\
-	_pin->setValue(value);																	\
-}																							\
-																							\
-void VarType::assignFromPin(const ValuePin* pin)											\
-{																							\
-	const PinType* _pin = dynamic_cast<const PinType*>(pin);								\
-	if (_pin == NULL)																		\
-		return;																				\
-	value = _pin->getValue();																\
-}																							\
-																							\
-BaseType VarType::getValue() const															\
-{																							\
-	return value;																			\
-}																							\
-																							\
-BaseType VarType::getDefaultValue() const													\
-{																							\
-	return defaultValue;																	\
-}																							\
-																							\
-void VarType::setValue(const BaseType& value)												\
-{																							\
-	this->value = value;																	\
-}																							\
-																							\
-void VarType::setDefaultValue(const BaseType& value)										\
-{																							\
-	defaultValue = value;																	\
-}																							\
-																							\
-void VarType::resetToDefault()																\
-{																							\
-	value = defaultValue;																	\
-}																							\
-																							\
-void VarType::assign(const GraphVariable* other)											\
-{																							\
-	const VarType* otherVar = dynamic_cast<const VarType*>(other);							\
-	if (otherVar == NULL)																	\
-		return;																				\
-	value = otherVar->value;																\
-}																							\
-																							\
-Serializable* VarType::instantiate(const SerializationInfo& from)							\
-{																							\
-	return new VarType(from.name);															\
-}																							\
-																							\
-bool VarType::deserialize(const SerializationInfo& from)									\
-{																							\
-	if (!GraphVariable::deserialize(from))													\
-		return false;																		\
-	const SerializationInfo* info = from.get("value");										\
-	deserializeValue(*info, value);															\
-	return true;																			\
-}																							\
-																							\
-bool VarType::serialize(SerializationInfo& to)												\
-{																							\
-	if (!GraphVariable::serialize(to))														\
-		return false;																		\
-	SerializationInfo* info = to.add("value");												\
-	serializeValue(*info, value);															\
-	return true;																			\
-}																							\
-																							\
-void VarType::deserializeValue(const SerializationInfo& info, BaseType& value)				\
-{																							\
-	DesFunc																					\
-}																							\
-																							\
-void VarType::serializeValue(SerializationInfo& info, BaseType& value)						\
-{																							\
-	SerFunc																					\
+#define IMP_OBJECT_VAR_CLASS(ObjType, DesFunc, SerFunc, DisColor)						\
+VAR_TYPE_IMP(ObjType);																	\
+VAR_TYPE(ObjType)::VAR_TYPE(ObjType)(const string& name) : GraphVariable(name)			\
+{																						\
+																						\
+}																						\
+																						\
+Color VAR_TYPE(ObjType)::getDisplayColor() const										\
+{																						\
+	return DisColor;																	\
+}																						\
+																						\
+ValuePin* VAR_TYPE(ObjType)::newValuePin(const string& name) const						\
+{																						\
+	return new PIN_TYPE(ObjType)(name);													\
+}																						\
+																						\
+void VAR_TYPE(ObjType)::assignToPin(ValuePin* pin)										\
+{																						\
+	PIN_TYPE(ObjType)* _pin = dynamic_cast<PIN_TYPE(ObjType)*>(pin);					\
+	if (_pin == NULL)																	\
+		return;																			\
+	_pin->setValue(value);																\
+}																						\
+																						\
+void VAR_TYPE(ObjType)::assignFromPin(const ValuePin* pin)								\
+{																						\
+	const PIN_TYPE(ObjType)* _pin = dynamic_cast<const PIN_TYPE(ObjType)*>(pin);		\
+	if (_pin == NULL)																	\
+		return;																			\
+	value = _pin->getValue();															\
+}																						\
+																						\
+ObjType VAR_TYPE(ObjType)::getValue() const												\
+{																						\
+	return value;																		\
+}																						\
+																						\
+ObjType VAR_TYPE(ObjType)::getDefaultValue() const										\
+{																						\
+	return defaultValue;																\
+}																						\
+																						\
+void VAR_TYPE(ObjType)::setValue(const ObjType& value)									\
+{																						\
+	this->value = value;																\
+}																						\
+																						\
+void VAR_TYPE(ObjType)::setDefaultValue(const ObjType& value)							\
+{																						\
+	defaultValue = value;																\
+}																						\
+																						\
+void VAR_TYPE(ObjType)::resetToDefault()												\
+{																						\
+	value = defaultValue;																\
+}																						\
+																						\
+void VAR_TYPE(ObjType)::assign(const GraphVariable* other)								\
+{																						\
+	const VAR_TYPE(ObjType)* otherVar = dynamic_cast<const VAR_TYPE(ObjType)*>(other);	\
+	if (otherVar == NULL)																\
+		return;																			\
+	value = otherVar->value;															\
+}																						\
+																						\
+Serializable* VAR_TYPE(ObjType)::instantiate(const SerializationInfo& from)				\
+{																						\
+	return new VAR_TYPE(ObjType)(from.name);											\
+}																						\
+																						\
+bool VAR_TYPE(ObjType)::deserialize(const SerializationInfo& from)						\
+{																						\
+	if (!GraphVariable::deserialize(from))												\
+		return false;																	\
+	const SerializationInfo* info = from.get("value");									\
+	deserializeValue(*info, value);														\
+	const SerializationInfo* defaultInfo = from.get("defaultValue");					\
+	deserializeValue(*defaultInfo, defaultValue);										\
+	resetToDefault();																	\
+	return true;																		\
+}																						\
+																						\
+bool VAR_TYPE(ObjType)::serialize(SerializationInfo& to)								\
+{																						\
+	if (!GraphVariable::serialize(to))													\
+		return false;																	\
+	SerializationInfo* info = to.add("value");											\
+	serializeValue(*info, value);														\
+	SerializationInfo* defaultInfo = to.add("defaultValue");							\
+	serializeValue(*defaultInfo, defaultValue);											\
+	return true;																		\
+}																						\
+																						\
+void VAR_TYPE(ObjType)::deserializeValue(const SerializationInfo& info, ObjType& value)	\
+{																						\
+	DesFunc																				\
+}																						\
+																						\
+void VAR_TYPE(ObjType)::serializeValue(SerializationInfo& info, ObjType& value)			\
+{																						\
+	SerFunc																				\
 }
 
-DEC_VAR_CLASS(float, FloatVariable, FloatPin, 0, Color(147, 226, 74));
-DEC_VAR_CLASS(int, IntVariable, IntPin, 0, Color(68, 201, 156));
-DEC_VAR_CLASS(bool, BoolVariable, BoolPin, false, Color(220, 48, 48));
-DEC_VAR_CLASS(string, StringVariable, StringPin, "", Color(124, 21, 153));
-DEC_VAR_CLASS(int, CharVariable, CharPin, 0, Color(98, 16, 176));
-DEC_VAR_CLASS(int, KeyCodeVariable, KeyCodePin, 0, Color(203, 217, 22));
+DEC_VAR_CLASS(float, Float);
+DEC_VAR_CLASS(int, Int);
+DEC_VAR_CLASS(bool, Bool);
+DEC_VAR_CLASS(string, String);
+DEC_VAR_CLASS(int, Char);
+DEC_VAR_CLASS(int, KeyCode);
 
-DEC_OBJECT_VAR_CLASS(Vector2f, Vector2fVariable, Vector2fPin);
-DEC_OBJECT_VAR_CLASS(Vector3f, Vector3fVariable, Vector3fPin);
-DEC_OBJECT_VAR_CLASS(Quaternionf, QuaternionfVariable, QuaternionfPin);
-DEC_OBJECT_VAR_CLASS(Color, ColorVariable, ColorPin);
+DEC_OBJECT_VAR_CLASS(Vector2f);
+DEC_OBJECT_VAR_CLASS(Vector3f);
+DEC_OBJECT_VAR_CLASS(Quaternionf);
+DEC_OBJECT_VAR_CLASS(Color);
 
 class ENGINE_API VariableNode : public GraphNode
 {
@@ -296,6 +329,9 @@ public:
 	void init(GraphVariable* variable);
 
 	virtual bool process(GraphContext& context);
+
+	virtual bool solveAndGenerateOutput(GraphCodeGenerationContext& context);
+	virtual bool generate(GraphCodeGenerationContext& context);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);

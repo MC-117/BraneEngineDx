@@ -1,39 +1,34 @@
 #pragma once
-#ifndef _SCRIPTEDITOR_H_
-#define _SCRIPTEDITOR_H_
 
-#include "../GUI/UIWindow.h"
+#include "../Editor/BaseEditor.h"
 #include "PythonScript.h"
 #include "../../ThirdParty/ImGui/imgui_TextEditor.h"
 
-class ScriptEditor : public UIWindow
+class ScriptBaseEditor : public BaseEditor
 {
 public:
-	ScriptEditor(string name = "ScriptEditor", bool defaultShow = false);
-	~ScriptEditor();
+	ScriptBaseEditor() = default;
+	virtual ~ScriptBaseEditor() = default;
 
-	static void OpenScript(GUI& gui, PythonScript& script);
+	EditorInfoMethod();
+	virtual void setInspectedObject(void* object);
 
-	void setScript(PythonScript& script);
-	PythonScript* getScript();
+	TextEditor& getTextEditor();
 
-	virtual void onWindowGUI(GUIRenderInfo& info);
+	void syncCode();
+
+	bool saveCode();
+	bool applyCode();
+
+	virtual void onMenu(EditorInfo& info);
+	virtual void onStatusGUI(EditorInfo& info);
+	virtual void onTextEditor(EditorInfo& info);
+
+	virtual void onGUI(EditorInfo& info);
 protected:
-	struct CodeTempData
-	{
-		PythonRuntimeObject* runtimeObject = NULL;
-		PythonScript* script = NULL;
-		vector<PythonFunctionObject> functions;
-		TextEditor* textEditor = NULL;
+	ScriptBase* scriptBase = NULL;
+	int savedUndoIndex = 0;
+	TextEditor textEditor;
 
-		CodeTempData(PythonScript& script);
-		bool saveCode();
-		bool applyCode();
-		void release();
-	};
-
-	CodeTempData* currentData = NULL;
-	unordered_map<PythonScript*, CodeTempData> tempScripts;
+	virtual void onApplyCode();
 };
-
-#endif // !_SCRIPTEDITOR_H_

@@ -1,10 +1,18 @@
 #include "GraphEditor.h"
+
+#include "GraphCodeGeneration.h"
 #include "../GUI/GUIUtility.h"
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 #include "../Engine.h"
 #include "../Utility/EngineUtility.h"
+#include "Core/CodeGeneration/ClangGeneration.h"
 
 RegistEditor(Graph);
+
+GraphEditor::~GraphEditor()
+{
+	delete tempScript;
+}
 
 void GraphEditor::setInspectedObject(void* object)
 {
@@ -570,6 +578,24 @@ void GraphEditor::onInspectGUI(EditorInfo& info)
 		if (ImGui::Button("Run")) {
 			GraphContext context;
 			graph->solveState(context);
+		}
+	}
+	if (ImGui::CollapsingHeader("Code")) {
+		if (ImGui::Button("GenerateCode")) {
+
+			ClangWriter writer;
+			ClangScopeBackend backend(writer);
+			GraphCodeGenerationContext context;
+			context.pushSubscopeBackend(&backend);
+			graph->generateStatement(context);
+			string code;
+			writer.getString(code);
+			
+			if (tempScript == NULL)
+				tempScript = new TempScript(graph->getName() + "_GenCode.cpp");
+			tempScript->setSourceCode(code);
+
+			ScriptWindow::OpenScript(*tempScript);
 		}
 	}
 }

@@ -120,6 +120,15 @@ std::string Decimal::toString() const
 		return std::to_string(value.floatingPoint);
 }
 
+std::ostream& operator<<(std::ostream& os, const Decimal& decimal)
+{
+	switch (decimal.type) {
+	case Decimal::Int: os << decimal.value.integer; break;
+	case Decimal::Float: os << decimal.value.floatingPoint; break;
+	}
+	return os;
+}
+
 Decimal& Decimal::parse(const std::string& str)
 {
 	if (str.find('.') == std::string::npos &&

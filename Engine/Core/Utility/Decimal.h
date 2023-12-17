@@ -34,5 +34,6 @@ struct ENGINE_API Decimal
 	operator double() const;
 
 	std::string toString() const;
+	friend std::ostream& operator<<(std::ostream& os, const Decimal& decimal);
 	Decimal& parse(const std::string& str);
 };

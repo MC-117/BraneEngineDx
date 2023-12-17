@@ -18,6 +18,8 @@ public:
 
 	virtual bool process(GraphContext& context);
 
+	virtual bool generate(GraphCodeGenerationContext& context);
+
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:
 	ValuePin* fromPin = NULL;

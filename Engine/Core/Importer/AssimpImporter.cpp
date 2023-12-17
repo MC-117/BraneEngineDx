@@ -174,10 +174,10 @@ bool AssimpImporter::getAnimation(vector<AnimationClipData*> & clips, bool doMer
 				aiQuaternion& rot = nanim->mRotationKeys[k].mValue;
 				if (swapYZ)
 					tad.rotationCurve.insert(nanim->mRotationKeys[k].mTime / amin->mTicksPerSecond,
-						CurveValue<Quaternionf>(CurveValue<Quaternionf>::Linear, Quaternionf::FromTwoVectors(Vector3f(0, -1, 0), Vector3f(1, 0, 0)) * Quaternionf(rot.w, rot.x, -rot.z, rot.y)));
+						CurveValue<Quaternionf>(CurveValue<Quaternionf>::Linear, Quaternionf::FromTwoVectors(Vector3f(0, -1, 0), Vector3f(1, 0, 0)) * Quaternionf(rot.x, -rot.z, rot.y, rot.w)));
 				else
 					tad.rotationCurve.insert(nanim->mRotationKeys[k].mTime / amin->mTicksPerSecond,
-						CurveValue<Quaternionf>(CurveValue<Quaternionf>::Linear, Quaternionf(rot.w, rot.x, rot.y, rot.z)));
+						CurveValue<Quaternionf>(CurveValue<Quaternionf>::Linear, Quaternionf(rot.x, rot.y, rot.z, rot.w)));
 			}
 			tad.scaleCurve.duration = dur;
 			for (int k = 0; k < nanim->mNumScalingKeys; k++) {
@@ -221,10 +221,10 @@ bool AssimpImporter::getAnimation(vector<AnimationClipData*> & clips, bool doMer
 				aiQuaternion& rot = nanim->mRotationKeys[k].mValue;
 				if (swapYZ)
 					tad.rotationCurve.insert(nanim->mRotationKeys[k].mTime / amin->mTicksPerSecond,
-						CurveValue<Quaternionf>(CurveValue<Quaternionf>::Linear, Quaternionf::FromTwoVectors(Vector3f(0, -1, 0), Vector3f(1, 0, 0)) * Quaternionf(rot.w, rot.x, -rot.z, rot.y)));
+						CurveValue<Quaternionf>(CurveValue<Quaternionf>::Linear, Quaternionf::FromTwoVectors(Vector3f(0, -1, 0), Vector3f(1, 0, 0)) * Quaternionf(rot.x, -rot.z, rot.y, rot.w)));
 				else
 					tad.rotationCurve.insert(nanim->mRotationKeys[k].mTime / amin->mTicksPerSecond,
-						CurveValue<Quaternionf>(CurveValue<Quaternionf>::Linear, Quaternionf(rot.w, rot.x, rot.y, rot.z)));
+						CurveValue<Quaternionf>(CurveValue<Quaternionf>::Linear, Quaternionf(rot.x, rot.y, rot.z, rot.w)));
 			}
 			nanim = b->second.sca == NULL ? main : b->second.sca;
 			tad.scaleCurve.duration = dur;

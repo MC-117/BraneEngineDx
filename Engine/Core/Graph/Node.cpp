@@ -1,16 +1,6 @@
 #include "Node.h"
+#include "GraphCodeGeneration.h"
 #include "GraphNodeEditor.h"
-
-GraphCategoryAttribute::GraphCategoryAttribute(const string& category)
-    : Attribute("GraphCategory", false), category(category)
-{
-}
-
-void GraphCategoryAttribute::resolve(Attribute* conflict)
-{
-    GraphCategoryAttribute* attr = dynamic_cast<GraphCategoryAttribute*>(conflict);
-    category += "/" + attr->category;
-}
 
 void GraphContext::execute()
 {
@@ -129,6 +119,11 @@ bool GraphPin::process(GraphContext& context)
     return true;
 }
 
+bool GraphPin::generate(GraphCodeGenerationContext& context)
+{
+    return true;
+}
+
 Serializable* GraphPin::instantiate(const SerializationInfo& from)
 {
     return nullptr;
@@ -191,6 +186,16 @@ bool FlowPin::connect(GraphPin* pin)
 }
 
 bool FlowPin::process(GraphContext& context)
+{
+    if (isOutput) {
+        FlowPin* nextPin = dynamic_cast<FlowPin*>((GraphPin*)connectedPin);
+        if (nextPin && nextPin->node)
+            context.nodeStack.push(nextPin->node);
+    }
+    return true;
+}
+
+bool FlowPin::generate(GraphCodeGenerationContext& context)
 {
     if (isOutput) {
         FlowPin* nextPin = dynamic_cast<FlowPin*>((GraphPin*)connectedPin);
@@ -290,7 +295,7 @@ void GraphNode::getRootStates(unordered_set<GraphNode*>& states)
 bool GraphNode::solveInput(GraphContext& context)
 {
     bool success = true;
-    for each (auto input in inputs) {
+    for (auto input : inputs) {
         FlowPin* flowPin = dynamic_cast<FlowPin*>(input);
         if (flowPin)
             continue;
@@ -325,6 +330,65 @@ bool GraphNode::solveState(GraphContext& context)
 
 bool GraphNode::process(GraphContext& context)
 {
+    return true;
+}
+
+Name GraphNode::getFunctionName() const
+{
+    const CodeFunctionNameAttribute* attr = getSerialization().getAttribute<CodeFunctionNameAttribute>();
+    return attr ? attr->funcName : getName();
+}
+
+bool GraphNode::generateParameter(GraphCodeGenerationContext& context)
+{
+    bool success = true;
+    for (auto pin : inputs) {
+        FlowPin* flowPin = dynamic_cast<FlowPin*>(pin);
+        if (flowPin)
+            continue;
+        GraphPin* output = pin->getConnectedPin();
+        if (output != NULL && output->node != NULL) {
+            if (output->node->flag == Flag::Expression) {
+                success &= output->node->generateStatement(context);
+            }
+        }
+        success &= pin->generate(context);
+    }
+    return success;
+}
+
+bool GraphNode::solveAndGenerateOutput(GraphCodeGenerationContext& context)
+{
+    bool success = true;
+    for (int i = outputs.size() - 1; i >= 0; i--) {
+        success &= outputs[i]->generate(context);
+    }
+    return success;
+}
+
+bool GraphNode::generateStatement(GraphCodeGenerationContext& context)
+{
+    bool success = generateParameter(context);
+    success &= solveAndGenerateOutput(context);
+    success &= generate(context);
+    return success;
+}
+
+bool GraphNode::generate(GraphCodeGenerationContext& context)
+{
+    CodeFunctionInvocation invocation(getFunctionName());
+    for (auto pin : inputs) {
+        if (dynamic_cast<FlowPin*>(pin))
+            continue;
+        invocation.parameters.push_back(context.getParameter(pin));
+    }
+    for (auto pin : outputs) {
+        if (dynamic_cast<FlowPin*>(pin))
+            continue;
+        const CodeParameter& param = context.getParameter(pin);
+        invocation.outputs.push_back(param.symbol());
+    }
+    context.getBackend().invoke(invocation);
     return true;
 }
 

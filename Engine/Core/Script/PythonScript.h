@@ -4,13 +4,16 @@
 
 #include "PythonManager.h"
 #include "../Object.h"
+#include "ScriptBase.h"
 
 class PythonRuntimeObject;
 
-class ENGINE_API PythonScript
+class ENGINE_API PythonScript : public ScriptBase
 {
 	friend class PythonRuntimeObject;
 public:
+	Serialize(PythonScript, ScriptBase);
+	
 	enum Type {
 		None, Wrapper, Behavior
 	};
@@ -18,24 +21,26 @@ public:
 	PythonScript();
 	PythonScript(const string& file);
 
-	bool isValid();
-	bool load(const string& file);
+	virtual bool isValid() const;
+	virtual bool load(const string& file);
 
 	Type getType() const;
 
 	bool ErrorFetch(const char* funcName);
 
-	string getName();
-	string getCodePath();
-	string getSourceCode();
+	virtual const string& getName() const;
+	virtual const string& getCodePath() const;
+	virtual const string& getSourceCode() const;
 
-	bool setSourceCode(const string& code);
-	bool refresh();
+	virtual bool setSourceCode(const string& code);
+	virtual bool refresh();
 
-	bool saveSourceCode();
+	virtual bool saveSourceCode();
 
 	PyObject* construct();
 	PyObject* construct(void* ptr);
+
+	static Serializable* instantiate(const SerializationInfo& from);
 protected:
 	Type type = None;
 	PyTypeObject* pytype = NULL;

@@ -1,4 +1,6 @@
 #include "ObjectNode.h"
+
+#include "GraphCodeGeneration.h"
 #include "ValueNode.h"
 
 SerializeInstance(RefPin);
@@ -63,6 +65,12 @@ bool RefPin::process(GraphContext& context)
         if (pin != NULL)
             castFromInternal(((RefPin*)pin)->getBase());
     }
+    return true;
+}
+
+bool RefPin::generateDefaultVariable(GraphCodeGenerationContext& context)
+{
+    generateTempVariable(context, CodeParameter::none);
     return true;
 }
 

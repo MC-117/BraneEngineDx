@@ -4,6 +4,7 @@
 
 #include "Utility/Utility.h"
 #include "Utility/Decimal.h"
+#include "Utility/Name.h"
 #include <filesystem>
 
 class Serializable;
@@ -441,13 +442,31 @@ protected:
 class ENGINE_API Attribute
 {
 public:
-	const string name;
+	const Name name;
 	const bool canInherit;
 
-	Attribute(const string& name, bool canInherit) : name(name), canInherit(canInherit) {}
+	Attribute(const Name& name, bool canInherit) : name(name), canInherit(canInherit) {}
 	virtual ~Attribute() = default;
 
-	virtual void resolve(Attribute* conflict) { }
+	template<class A>
+	const A* cast() const;
+
+	virtual void resolve(const Attribute& conflict) { }
+};
+
+template<class A>
+inline const A* Attribute::cast() const
+{
+	return dynamic_cast<const A*>(this);
+}
+
+class ENGINE_API NamespaceAttribute : public Attribute
+{
+public:
+	string nameSpace;
+	NamespaceAttribute(const string& nameSpace);
+
+	virtual void resolve(const Attribute& conflict);
 };
 
 class ENGINE_API SerializationScope
@@ -493,10 +512,10 @@ public:
 	int getChildren(vector<Serialization*>& children) const;
 
 	int getAttributeCount() const;
-	Attribute* getAttribute(int index) const;
-	Attribute* getAttribute(const string& name) const;
-	template<class T>
-	Attribute* getAttribute() const;
+	const Attribute* getAttribute(int index) const;
+	const Attribute* getAttribute(const Name& name) const;
+	template<class A>
+	const A* getAttribute() const;
 
 	bool addInfo(SerializationInfo& info, bool overwrite = false);
 	SerializationInfo* getInfoByName(const string& name);
@@ -508,27 +527,27 @@ public:
 	static Serializable* clone(Serializable& object);
 protected:
 	Serialization* baseSerialization = NULL;
-	map<string, Attribute*> attributeNameMap;
 	vector<Attribute*> attributes;
 
-	Serialization(const string& type, const string& baseType);
 	Serialization(const char* type, const char* baseType);
 
-	virtual void init();
-	void addAttribute(const vector<Attribute*>& list);
+	Attribute* getAttribute(const Name& name);
+	void addAttribute(initializer_list<Attribute*> list);
 };
 
-template<class T>
-inline Attribute* Serialization::getAttribute() const
+template<class A>
+inline const A* Serialization::getAttribute() const
 {
-	for each (auto attr in attributes)
+	for (const auto& attr : attributes)
 	{
-		T* re = dynamic_cast<T*>(attr);
-		if (re)
+		const A* res = attr->cast<A>();
+		if (res)
 			return res;
 	}
 	return NULL;
 }
+
+#define DEF_ATTR(name, ...) (new name##Attribute(__VA_ARGS__))
 
 #define Serialize(Type, BaseType) class Type##Serialization : public BaseType##::BaseType##Serialization \
 { \
@@ -567,20 +586,18 @@ public: \
 		return object.serialize(to); \
 	} \
 protected: \
-	Type##Serialization() : BaseSerializationClass(#Type, #BaseType) {} \
-	Type##Serialization(const string& type, const string& baseType) : BaseSerializationClass(type, baseType) {} \
-	Type##Serialization(const char* type, const char* baseType) : BaseSerializationClass(type, baseType) {} \
-	virtual void init(); \
+	Type##Serialization() : BaseSerializationClass(#Type, #BaseType) { init(); } \
+	Type##Serialization(const char* type, const char* baseType) : BaseSerializationClass(type, baseType) { init(); } \
+	void init(); \
 }; \
 virtual Serialization& getSerialization() const; \
 
-#define SerializeInstance(Type, Attributes) \
+#define SerializeInstance(Type, ...) \
 Type::Type##Serialization Type::Type##Serialization::serialization; \
 void Type::Type##Serialization::init() \
 { \
-	BaseSerializationClass::init(); \
 	baseSerialization = &BaseSerializationClass::serialization; \
-	addAttribute({ Attributes }); \
+	addAttribute({ __VA_ARGS__ }); \
 } \
 Serialization& Type::getSerialization() const \
 { \
@@ -673,6 +690,23 @@ public:
 	SVector3f& operator=(const Vector3f& v);
 	operator Vector3f();
 	operator Vector3f() const;
+};
+
+class ENGINE_API SVector4f : public Serializable
+{
+public:
+	Serialize(SVector4f,);
+	float x = 0, y = 0, z = 0, w = 0;
+
+	SVector4f(float x = 0, float y = 0, float z = 0, float w = 0);
+	SVector4f(const Vector4f& vec);
+
+	virtual bool deserialize(const SerializationInfo& from);
+	virtual bool serialize(SerializationInfo& to);
+
+	SVector4f& operator=(const Vector4f& v);
+	operator Vector4f();
+	operator Vector4f() const;
 };
 
 class ENGINE_API SQuaternionf : public Serializable

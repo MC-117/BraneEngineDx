@@ -1,6 +1,29 @@
 #include "FlowNode.h"
 
+#include "Graph.h"
+#include "GraphCodeGeneration.h"
+
 SerializeInstance(EntryNode);
+
+bool EntryNode::generateParameter(GraphCodeGenerationContext& context)
+{
+    return true;
+}
+
+bool EntryNode::solveAndGenerateOutput(GraphCodeGenerationContext& context)
+{
+    bool success = true;
+    for (int i = outputs.size() - 1; i >= 0; i--) {
+        if (FlowPin* flowPin = dynamic_cast<FlowPin*>(outputs[i]))
+            success &= flowPin->generate(context);
+    }
+    return success;
+}
+
+bool EntryNode::generate(GraphCodeGenerationContext& context)
+{
+    return true;
+}
 
 Serializable* EntryNode::instantiate(const SerializationInfo& from)
 {
@@ -39,6 +62,16 @@ Serializable* EntryNode::instantiate(const SerializationInfo& from)
 }
 
 SerializeInstance(ReturnNode);
+
+bool ReturnNode::generate(GraphCodeGenerationContext& context)
+{
+    vector<CodeParameter> returnValues;
+    for (auto& pin : inputs) {
+        if (ValuePin* valuePin = dynamic_cast<ValuePin*>(pin))
+            returnValues.emplace_back(context.getParameter(valuePin));
+    }
+    return context.getBackend().output(returnValues);
+}
 
 Serializable* ReturnNode::instantiate(const SerializationInfo& from)
 {
@@ -137,6 +170,15 @@ bool SetVariableNode::process(GraphContext& context)
     return true;
 }
 
+bool SetVariableNode::generate(GraphCodeGenerationContext& context)
+{
+    GraphVariable* pVariable = variable;
+    if (pVariable == NULL)
+        return false;
+    return context.getBackend().invoke(CodeFunctionInvocation(Code::assign_op)
+        .param(context.getParameter(pVariable), context.getParameter(valuePin)));
+}
+
 Serializable* SetVariableNode::instantiate(const SerializationInfo& from)
 {
     const SerializationInfo* pinInfos = from.get("inputs");
@@ -227,6 +269,25 @@ bool BranchNode::flowControl(GraphContext& context)
     return success;
 }
 
+bool BranchNode::solveAndGenerateOutput(GraphCodeGenerationContext& context)
+{
+    return true;
+}
+
+bool BranchNode::generate(GraphCodeGenerationContext& context)
+{
+    vector<ICodeScopeBackend*> backends;
+    bool success = context.getBackend().branch({ context.getParameter(conditionPin) }, backends);
+    assert(backends.size() == 2);
+    GraphNode* falsePopNode = context.nodeStack.top();
+    context.pushSubscopeBackend(backends[1]);
+    success &= falsePin->generate(context);
+    GraphNode* truePopNode = context.nodeStack.top();
+    context.pushSubscopeBackend(backends[0]);
+    success &= truePin->generate(context);
+    return success;
+}
+
 Serializable* BranchNode::instantiate(const SerializationInfo& from)
 {
     return new BranchNode();
@@ -261,6 +322,21 @@ bool LoopNode::flowControl(GraphContext& context)
     return true;
 }
 
+bool LoopNode::solveAndGenerateOutput(GraphCodeGenerationContext& context)
+{
+    return true;
+}
+
+bool LoopNode::generate(GraphCodeGenerationContext& context)
+{
+    bool success = outPin->generate(context);
+    ICodeScopeBackend* backend = context.getBackend().loop(CodeBool(true));
+    assert(backend);
+    context.pushSubscopeBackend(backend);
+    success &= loopPin->generate(context);
+    return backend && success;
+}
+
 Serializable* LoopNode::instantiate(const SerializationInfo& from)
 {
     return new LoopNode();
@@ -279,6 +355,11 @@ bool BreakNode::flowControl(GraphContext& context)
 {
     context.loopCount = -1;
     return true;
+}
+
+bool BreakNode::generate(GraphCodeGenerationContext& context)
+{
+    return context.getBackend().jumpOut();
 }
 
 Serializable* BreakNode::instantiate(const SerializationInfo& from)
@@ -319,6 +400,34 @@ bool ForLoopNode::flowControl(GraphContext& context)
         context.loopCount++;
     }
     return true;
+}
+
+bool ForLoopNode::solveAndGenerateOutput(GraphCodeGenerationContext& context)
+{
+    return true;
+}
+
+bool ForLoopNode::generate(GraphCodeGenerationContext& context)
+{
+    bool success = indexPin->generate(context);
+    ICodeScopeBackend& backend = context.getBackend();
+    const CodeParameter& indexParameter = context.getParameter(indexPin);
+    const CodeParameter& counterParameter = context.getParameter(countPin);
+    backend.invoke(CodeFunctionInvocation(Code::assign_op)
+        .param(indexParameter, Decimal(0)));
+    ICodeScopeBackend* loopScope = backend.loop(CodeFunctionInvocation(Code::les_op)
+        .param(indexParameter, counterParameter));
+    assert(loopScope);
+    ICodeScopeBackend* subscope = loopScope->subscope();
+    assert(subscope);
+    success &= outPin->generate(context);
+    context.pushSubscopeBackend(subscope);
+    ICodeScopeBackend* countScope = loopScope->subscope();
+    assert(countScope);
+    countScope->invoke(CodeFunctionInvocation(Code::add_op)
+        .param(indexParameter, Decimal(1)).out(indexParameter.symbol()));
+    success &= loopPin->generate(context);
+    return subscope && success;
 }
 
 Serializable* ForLoopNode::instantiate(const SerializationInfo& from)

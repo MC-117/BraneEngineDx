@@ -20,9 +20,9 @@ public:																	\
 																		\
 	virtual void onInspectGUI(EditorInfo& info)							\
 	{																	\
-		BaseType value = valuePin->getValue();							\
+		BaseType value = valuePin->getDefaultValue();					\
 		if (Statement(valuePin->getDisplayName().c_str(), &value)) {	\
-			valuePin->setValue(value);									\
+			valuePin->setDefaultValue(value);							\
 		}																\
 	}																	\
 																		\
@@ -31,10 +31,10 @@ public:																	\
 		if (valuePin->getConnectedPin())								\
 			GraphPinEditor::onPinGUI(info, graphInfo);					\
 		else {															\
-			BaseType value = valuePin->getValue();						\
+			BaseType value = valuePin->getDefaultValue();				\
 			ImGui::SetNextItemWidth(100);								\
 			if (Statement(valuePin->getDisplayName().c_str(), &value))	\
-				valuePin->setValue(value);								\
+				valuePin->setDefaultValue(value);						\
 		}																\
 	}																	\
 protected:																\
@@ -57,9 +57,9 @@ public:																	\
 																		\
 	virtual void onInspectGUI(EditorInfo& info)							\
 	{																	\
-		BaseType value = valuePin->getValue();							\
+		BaseType value = valuePin->getDefaultValue();					\
 		if (Statement) {												\
-			valuePin->setValue(value);									\
+			valuePin->setDefaultValue(value);							\
 		}																\
 	}																	\
 																		\
@@ -68,10 +68,10 @@ public:																	\
 		if (valuePin->getConnectedPin())								\
 			GraphPinEditor::onPinGUI(info, graphInfo);					\
 		else {															\
-			BaseType value = valuePin->getValue();						\
+			BaseType value = valuePin->getDefaultValue();				\
 			ImGui::SetNextItemWidth(100);								\
 			if (Statement)												\
-				valuePin->setValue(value);								\
+				valuePin->setDefaultValue(value);						\
 		}																\
 	}																	\
 protected:																\
