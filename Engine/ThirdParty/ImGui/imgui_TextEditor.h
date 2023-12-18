@@ -173,6 +173,10 @@ public:
 		{
 		}
 
+		bool IsNone() const { return mName.empty(); }
+
+		static const LanguageDefinition& None();
+		static const LanguageDefinition& General();
 		static const LanguageDefinition& CPlusPlus();
 		static const LanguageDefinition& HLSL();
 		static const LanguageDefinition& GLSL();
@@ -263,6 +267,7 @@ public:
 	bool CanRedo() const;
 	void Undo(int aSteps = 1);
 	void Redo(int aSteps = 1);
+	int GetUndoIndex() const;
 
 	void ClearUndo();
 
