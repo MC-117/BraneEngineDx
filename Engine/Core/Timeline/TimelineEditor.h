@@ -37,5 +37,5 @@ protected:
 	Serialization* lastOpenTimeTrackSerialization = NULL;
 	string newTimelineTrackName;
 
-	TimelinePlayer* internalPlayer;
+	TimelinePlayer* internalPlayer = NULL;
 };

@@ -459,7 +459,7 @@ bool PhysicalWorld::init()
 		cerr << "NvClothCreateFactoryCUDA failed!" << endl;
 	}
 #else
-	nv::cloth::InitializeNvCloth(&gDefaultAllocatorCallback, &gDefaultErrorCallback, (nv::cloth::PxAssertHandler*)&PxGetAssertHandler(), PxGetProfilerCallback());
+	nv::cloth::InitializeNvCloth(&gDefaultAllocatorCallback, &gDefaultErrorCallback, nv::cloth::GetNvClothAssertHandler(), PxGetProfilerCallback());
 	gNvClothFactory = NvClothCreateFactoryCPU();
 	if (!gNvClothFactory) {
 		throw runtime_error("NvClothCreateFactoryCUDA failed!");

@@ -1,4 +1,6 @@
 #include "UIViewport.h"
+
+#include "ImGuiIconHelp.h"
 #include "../Engine.h"
 
 UIViewport::UIViewport(const string& name, bool defaultShow)
@@ -28,7 +30,12 @@ void UIViewport::onWindowGUI(GUIRenderInfo& info)
 		drawList->AddImage(ImTextureID(sceneTexture->getTextureID()),
 			winPos, { winPos.x + imSize.x, winPos.y + imSize.y });
 
-		targetSurface.gizmoFrame(drawList, targetCamera->getRoot());
+		if (ImGui::Button(gizmoEnable ? "Gizmo " ICON_FA_EYE : "Gizmo " ICON_FA_EYE_SLASH)) {
+			gizmoEnable = !gizmoEnable;
+		}
+
+		if (gizmoEnable)
+			targetSurface.gizmoFrame(drawList, targetCamera->getRoot());
 	}
 }
 

@@ -6,6 +6,10 @@ class ICodeWriter
 public:
     virtual ~ICodeWriter() = default;
 
+    virtual Name convertKeyword(const Name& keyword) = 0;
+    virtual int getOperatorParamNum(const Name& op) = 0;
+    virtual const char* getOperatorFormatter(const Name& op) = 0;
+
     virtual void write(const char* fmt_str, ...) = 0;
     virtual ICodeWriter* subscope() = 0;
     virtual void beginExpression(const char* fmt_str = NULL, ...) = 0;

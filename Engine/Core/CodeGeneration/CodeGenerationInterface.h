@@ -19,6 +19,7 @@ namespace Code
     ENGINE_API extern const Name Color_t;
 
     ENGINE_API extern const Name assign_op;
+    ENGINE_API extern const Name access_op;
     ENGINE_API extern const Name add_op;
     ENGINE_API extern const Name sub_op;
     ENGINE_API extern const Name mul_op;
@@ -98,6 +99,15 @@ class ICodeScopeBackend;
 class ENGINE_API CodeParameter
 {
 public:
+    enum Type
+    {
+        Symbol_t,
+        Number_t,
+        Bool_t,
+        Char_t,
+        String_t,
+        Expression_t,
+    };
 
     static const CodeParameter none;
 
@@ -111,6 +121,8 @@ public:
     CodeParameter(const CodeParameter& param);
     CodeParameter(CodeParameter&& param);
     ~CodeParameter();
+
+    bool isType(Type type) const;
 
     bool isValid() const;
 
@@ -142,16 +154,7 @@ public:
 
     std::ostream& write(std::ostream& os, ICodeScopeBackend& backend) const;
 protected:
-    enum Type
-    {
-        Symbol_t,
-        Number_t,
-        Bool_t,
-        Char_t,
-        String_t,
-        Expression_t,
-    } type;
-    
+    Type type;
     union
     {
         Name _symbol;
@@ -165,12 +168,12 @@ protected:
 
 struct ENGINE_API CodeFunctionInvocation
 {
-    Name name;
+    CodeParameter operation;
     bool isExpression;
     std::vector<CodeParameter> parameters;
     std::vector<Name> outputs;
 
-    CodeFunctionInvocation(const Name& name = Name::none, bool isExpression = false);
+    CodeFunctionInvocation(const CodeParameter& operation = Name::none, bool isExpression = false);
 
     template<class ... Params>
     inline CodeFunctionInvocation& param(Params ... params)

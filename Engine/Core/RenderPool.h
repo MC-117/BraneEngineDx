@@ -28,6 +28,8 @@ public:
 
 	void render(bool guiOnly = false);
 
+	void endRender();
+
 	RenderPool& operator+=(Render& render);
 	RenderPool& operator-=(Render& render);
 

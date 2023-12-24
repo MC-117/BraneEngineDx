@@ -8,7 +8,7 @@ class SpineModule(Module):
     
     def setup(self, config : TargetConfig):
         if config.plaform == PlaformType.Win64:
-            self.libPaths = [f'{self.getPath()}/lib/x64']
+            self.libPaths = [f'{self.getPath()}/lib/x64/{"Debug" if config.enableDebug else "Release"}']
             self.libFiles = ['spine-cpp.lib']
         else:
             raise NotImplementedError('Only support Win64')

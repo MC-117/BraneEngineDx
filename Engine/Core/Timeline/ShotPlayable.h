@@ -19,6 +19,9 @@ public:
 	void setAnimation(AnimationClipData * data);
 	AnimationClipData* getAnimation() const;
 
+	void setWorldScale(float worldScale);
+	float getWorldScale() const;
+
 	virtual void onBeginPlay(const PlayInfo & info);
 	virtual void onPlay(const PlayInfo & info);
 	virtual void onEndPlay(const PlayInfo & info);
@@ -31,4 +34,5 @@ public:
 protected:
 	AnimationClip clip;
 	Ref<Camera> targetCamera;
+	float worldScale = 1;
 };

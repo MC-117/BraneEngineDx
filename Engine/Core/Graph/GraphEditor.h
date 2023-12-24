@@ -47,6 +47,10 @@ protected:
 	bool createNewNode = true;
 
 	TempScript* tempScript = NULL;
+	enum GenCodeType
+	{
+		Clang, HLSL, CodeTypeNum
+	} genCodeType = Clang;
 
 	void copyNodes(const vector<ax::NodeEditor::NodeId>& nodeIDs, SerializationInfo& info);
 	void pasteNodes(SerializationInfo& info);

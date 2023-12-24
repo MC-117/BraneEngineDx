@@ -1,11 +1,6 @@
 ﻿#include "ClangGeneration.h"
 #include "Core/Console.h"
 
-Name convertClangKeyword(const Name& keyword)
-{
-    return keyword;
-}
-
 ClangWriter::ClangWriter()
 {
 }
@@ -16,6 +11,59 @@ ClangWriter::~ClangWriter()
         delete scope.scopeWriter;
 }
 
+Name ClangWriter::convertKeyword(const Name& keyword)
+{
+    return keyword;
+}
+
+const Name x_op = ".x";
+const Name y_op = ".y";
+const Name z_op = ".z";
+const Name w_op = ".w";
+
+int ClangWriter::getOperatorParamNum(const Name& op)
+{
+    if (op == x_op || op == y_op || op == z_op || op == w_op)
+        return 1;
+    return Code::getCodeOperatorNum(op);
+}
+
+const char* ClangWriter::getOperatorFormatter(const Name& op)
+{
+    static const unordered_map<Name, const char*> formatterMap = {
+        { Code::assign_op, "%s = %s" },
+        { Code::access_op, "%s.%s" },
+        { Code::add_op, "%s + %s" },
+        { Code::sub_op, "%s - %s" },
+        { Code::mul_op, "%s * %s" },
+        { Code::div_op, "%s / %s" },
+        { Code::mod_op, "%s % %s" },
+        { Code::lShift_op, "%s >> %s" },
+        { Code::rShift_op, "%s << %s" },
+        { Code::gre_op, "%s > %s" },
+        { Code::les_op, "%s < %s" },
+        { Code::eq_op, "%s == %s" },
+        { Code::notEq_op, "%s != %s" },
+        { Code::greEq_op, "%s >= %s" },
+        { Code::lesEq_op, "%s <= %s" },
+        { Code::and_op, "%s & %s" },
+        { Code::or_op, "%s | %s" },
+        { Code::xor_op, "%s ^ %s" },
+        { Code::minus_op, "-%s" },
+        { Code::not_op, "!%s" },
+        { x_op, "%s.x()" },
+        { y_op, "%s.y()" },
+        { z_op, "%s.z()" },
+        { w_op, "%s.w()" },
+        { Code::cond_op, "%s ? %s : %s" },
+    };
+
+    auto iter = formatterMap.find(op);
+    if (iter != formatterMap.end())
+        return iter->second;
+    return NULL;
+}
+
 void ClangWriter::write(const char* fmt_str, ...)
 {
     va_list ap;
@@ -24,12 +72,12 @@ void ClangWriter::write(const char* fmt_str, ...)
     va_end(ap);
 }
 
-ClangWriter* ClangWriter::subscope()
+ICodeWriter* ClangWriter::subscope()
 {
     writeIndent();
     output() << "{\n";
 
-    ClangWriter* scopeWriter = new ClangWriter();
+    ClangWriter* scopeWriter = newWriter();
     scopeWriter->indent = indent + 1;
     scopes.emplace_back().scopeWriter = scopeWriter;
 
@@ -77,7 +125,7 @@ void ClangWriter::writeInParameter(const CodeSymbolDefinition& definition)
     writeIndent();
     if (expressionCount > 0)
         output() << ", ";
-    output() << convertClangKeyword(definition.type).str() << ' ' << definition.name.str();
+    output() << convertKeyword(definition.type).str() << ' ' << definition.name.str();
     expressionCount++;
 }
 
@@ -86,7 +134,7 @@ void ClangWriter::writeOutParameter(const CodeSymbolDefinition& definition)
     writeIndent();
     if (expressionCount > 0)
         output() << ", ";
-    output() << convertClangKeyword(definition.type).str() << "& " << definition.name.str();
+    output() << convertKeyword(definition.type).str() << "& " << definition.name.str();
     expressionCount++;
 }
 
@@ -160,6 +208,11 @@ void ClangWriter::write(const char* fmt_str, va_list ap)
     output() << formatted.get();
 }
 
+ClangWriter* ClangWriter::newWriter()
+{
+    return new ClangWriter();
+}
+
 Name ClangScopeBackend::_builtin_function_type_ = "_builtin_function_type_";
 
 ClangScopeBackend::ClangScopeBackend(ICodeWriter& writer, const CodeFunctionSignature& signature)
@@ -185,7 +238,7 @@ Name ClangScopeBackend::newTempFunctionName()
 
 Name ClangScopeBackend::convertKeyword(const Name& keyword)
 {
-    return convertClangKeyword(keyword);
+    return writer.convertKeyword(keyword);
 }
 
 std::string ClangScopeBackend::convertString(const char* str)
@@ -279,47 +332,18 @@ ICodeScopeBackend* ClangScopeBackend::declareFunction(const CodeFunctionSignatur
     return funcScope;
 }
 
-const char* getClangOperatorFormatter(Name op)
-{
-    static const unordered_map<Name, const char*> formatterMap = {
-        { Code::assign_op, "%s = %s" },
-        { Code::add_op, "%s + %s" },
-        { Code::sub_op, "%s - %s" },
-        { Code::mul_op, "%s * %s" },
-        { Code::div_op, "%s / %s" },
-        { Code::mod_op, "%s % %s" },
-        { Code::lShift_op, "%s >> %s" },
-        { Code::rShift_op, "%s << %s" },
-        { Code::gre_op, "%s > %s" },
-        { Code::les_op, "%s < %s" },
-        { Code::eq_op, "%s == %s" },
-        { Code::notEq_op, "%s != %s" },
-        { Code::greEq_op, "%s >= %s" },
-        { Code::lesEq_op, "%s <= %s" },
-        { Code::and_op, "%s & %s" },
-        { Code::or_op, "%s | %s" },
-        { Code::xor_op, "%s ^ %s" },
-        { Code::minus_op, "-%s" },
-        { Code::not_op, "!%s" },
-        { Code::cond_op, "%s ? %s : %s" },
-    };
-
-    auto iter = formatterMap.find(op);
-    if (iter != formatterMap.end())
-        return iter->second;
-    return NULL;
-}
-
 bool ClangScopeBackend::invoke(const CodeFunctionInvocation& invocation)
 {
     bool ok = true;
-    const int opNum = Code::getCodeOperatorNum(invocation.name);
+    int opNum = 0;
+    if (invocation.operation.isType(CodeParameter::Symbol_t))
+        opNum = writer.getOperatorParamNum(invocation.operation.symbol());
     if (opNum == 0) {
         if (invocation.outputs.size() == 1) {
             ok &= checkSymbol(invocation.outputs[0]);
             writer.write("%s = ", invocation.outputs[0].str());
         }
-        writer.beginExpression(invocation.name.str());
+        writer.beginExpression(invocation.operation.toString(*this).c_str());
         for (auto& param : invocation.parameters) {
             ok &= checkParameter(param);
             writer.writeParameter(param, *this);
@@ -340,7 +364,7 @@ bool ClangScopeBackend::invoke(const CodeFunctionInvocation& invocation)
         for (auto& output : invocation.outputs) {
             writer.write("%s = ", output.str());
         }
-        const char* formatter = getClangOperatorFormatter(invocation.name);
+        const char* formatter = writer.getOperatorFormatter(invocation.operation.symbol().str());
         switch (opNum) {
         case 1:
             writer.write(formatter,

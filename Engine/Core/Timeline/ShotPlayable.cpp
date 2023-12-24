@@ -27,6 +27,16 @@ AnimationClipData* ShotPlayable::getAnimation() const
     return clip.animationClipData;
 }
 
+void ShotPlayable::setWorldScale(float worldScale)
+{
+    this->worldScale = worldScale;
+}
+
+float ShotPlayable::getWorldScale() const
+{
+    return worldScale;
+}
+
 void ShotPlayable::onBeginPlay(const PlayInfo& info)
 {
     clip.setTime(info.currentTime);
@@ -64,10 +74,10 @@ void ShotPlayable::updateCamera(float deltaTime)
     if (updateFlags) {
         AnimationPose pose = clip.getPose();
         TransformData& data = pose.transformData[0];
-        camera->setPosition(data.position);
+        camera->setPosition(data.position * worldScale);
         camera->setRotation(data.rotation);
         camera->fov = pose.morphTargetWeight[0];
-        camera->distance = pose.morphTargetWeight[1];
+        camera->distance = pose.morphTargetWeight[1] * worldScale;
     }
 }
 
@@ -90,6 +100,7 @@ bool ShotPlayable::deserialize(const SerializationInfo& from)
             setAnimation(data);
         }
     }
+    from.get("worldScale", worldScale);
     return true;
 }
 
@@ -104,5 +115,6 @@ bool ShotPlayable::serialize(SerializationInfo& to)
         animation = AssetInfo::getPath(clip.animationClipData);
     }
     to.set("animation", animation);
+    to.set("worldScale", worldScale);
     return true;
 }

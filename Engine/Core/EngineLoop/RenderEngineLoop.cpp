@@ -28,6 +28,7 @@ void RenderEngineLoop::loop(float deltaTime)
     onPrerender();
     renderPool.render(false);
     onPostrender();
+    renderPool.endRender();
 }
 
 void RenderEngineLoop::release()

@@ -330,11 +330,13 @@ bool Vector2fBreakNode::generate(GraphCodeGenerationContext& context)
     bool ok = true;
     if (outputPin[0]->getConnectedPin())
         ok &= context.getBackend().invoke(
-            CodeFunctionInvocation("x")
+            CodeFunctionInvocation(Name(".x"))
+                .param(context.getParameter(inputPin))
             .out(context.getParameter(outputPin[0]).symbol()));
     if (outputPin[1]->getConnectedPin())
         ok &= context.getBackend().invoke(
-            CodeFunctionInvocation("y")
+            CodeFunctionInvocation(Name(".y"))
+                .param(context.getParameter(inputPin))
             .out(context.getParameter(outputPin[1]).symbol()));
     return ok;
 }
@@ -374,15 +376,18 @@ bool Vector3fBreakNode::generate(GraphCodeGenerationContext& context)
     bool ok = true;
     if (outputPin[0]->getConnectedPin())
         ok &= context.getBackend().invoke(
-            CodeFunctionInvocation("x")
+            CodeFunctionInvocation(Name(".x"))
+                .param(context.getParameter(inputPin))
             .out(context.getParameter(outputPin[0]).symbol()));
     if (outputPin[1]->getConnectedPin())
         ok &= context.getBackend().invoke(
-            CodeFunctionInvocation("y")
+            CodeFunctionInvocation(Name(".y"))
+                .param(context.getParameter(inputPin))
             .out(context.getParameter(outputPin[1]).symbol()));
     if (outputPin[2]->getConnectedPin())
         ok &= context.getBackend().invoke(
-            CodeFunctionInvocation("z")
+            CodeFunctionInvocation(Name(".z"))
+                .param(context.getParameter(inputPin))
             .out(context.getParameter(outputPin[2]).symbol()));
     return ok;
 }
@@ -425,16 +430,24 @@ bool QuaternionfBreakNode::generate(GraphCodeGenerationContext& context)
     bool ok = true;
     if (outputPin[0]->getConnectedPin())
         ok &= context.getBackend().invoke(
-            CodeFunctionInvocation("x")
+            CodeFunctionInvocation(Name(".x"))
+                .param(context.getParameter(inputPin))
             .out(context.getParameter(outputPin[0]).symbol()));
     if (outputPin[1]->getConnectedPin())
         ok &= context.getBackend().invoke(
-            CodeFunctionInvocation("y")
+            CodeFunctionInvocation(Name(".y"))
+                .param(context.getParameter(inputPin))
             .out(context.getParameter(outputPin[1]).symbol()));
     if (outputPin[2]->getConnectedPin())
         ok &= context.getBackend().invoke(
-            CodeFunctionInvocation("z")
-            .out(context.getParameter(outputPin[2]).symbol()));
+            CodeFunctionInvocation(Name(".z"))
+                .param(context.getParameter(inputPin))
+                .out(context.getParameter(outputPin[2]).symbol()));
+    if (outputPin[3]->getConnectedPin())
+        ok &= context.getBackend().invoke(
+            CodeFunctionInvocation(Name(".w"))
+                .param(context.getParameter(inputPin))
+            .out(context.getParameter(outputPin[3]).symbol()));
     return ok;
 }
 

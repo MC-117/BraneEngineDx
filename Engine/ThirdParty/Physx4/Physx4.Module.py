@@ -1,12 +1,16 @@
 import os
 import glob
 from Core.BuildObject import Module, TargetConfig, PlaformType
-from Core.Foundation import BuildParam
+from Core.Foundation import BuildParam, Log
 
 class Physx4Module(Module):
     def __init__(self, param : BuildParam):
         Module.__init__(self, param)
         self.includePaths = [f'{self.getPath()}/include']
+
+        self.preprocessorDefinitions = [
+            "PX_PHYSX_STATIC_LIB"
+        ]
     
     def setup(self, config : TargetConfig):
         if config.plaform == PlaformType.Win64:

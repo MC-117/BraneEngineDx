@@ -25,4 +25,9 @@ void ShotPlayableEditor::onPlayableGUI(EditorInfo& info)
 			shotPlayable->setAnimation((AnimationClipData*)asset->load());
 		}
 	}
+
+	float worldScale = shotPlayable->getWorldScale();
+	if (ImGui::DragFloat("worldScale", &worldScale, 0.01)) {
+		shotPlayable->setWorldScale(worldScale);
+	}
 }

@@ -105,45 +105,45 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ImGuiNodeEditor/imgui_bezier_math.h" />
-    <ClInclude Include="imstb_rectpack.h" />
-    <ClInclude Include="ImGuiNodeEditor/Drawing.h" />
-    <ClInclude Include="imstb_textedit.h" />
-    <ClInclude Include="imgui_internal.h" />
-    <ClInclude Include="ImGuiNodeEditor/Widgets.h" />
-    <ClInclude Include="ImGuiNodeEditor/imgui_node_editor_internal.h" />
-    <ClInclude Include="imgui.h" />
-    <ClInclude Include="ImGuiNodeEditor/imgui_node_editor_internal.inl" />
-    <ClInclude Include="imstb_truetype.h" />
-    <ClInclude Include="imgui_stdlib.h" />
-    <ClInclude Include="ImGuiNodeEditor/imgui_bezier_math.inl" />
-    <ClInclude Include="ImGuiNodeEditor/imgui_extra_math.h" />
-    <ClInclude Include="ImGuiNodeEditor/imgui_node_editor.h" />
-    <ClInclude Include="imgui_TextEditor.h" />
-    <ClInclude Include="ImGuiNodeEditor/imgui_extra_math.inl" />
     <ClInclude Include="ImGuiIconHelp.h" />
-    <ClInclude Include="ImGuiNodeEditor/Builders.h" />
-    <ClInclude Include="imconfig.h" />
-    <ClInclude Include="ImGuiNodeEditor/crude_json.h" />
     <ClInclude Include="ImGuiNodeEditor/imgui_canvas.h" />
+    <ClInclude Include="imgui_TextEditor.h" />
+    <ClInclude Include="imstb_textedit.h" />
+    <ClInclude Include="ImGuiNodeEditor/imgui_node_editor_internal.inl" />
+    <ClInclude Include="ImGuiNodeEditor/imgui_bezier_math.inl" />
+    <ClInclude Include="imconfig.h" />
+    <ClInclude Include="ImGuiNodeEditor/Widgets.h" />
+    <ClInclude Include="imgui.h" />
+    <ClInclude Include="ImGuiNodeEditor/imgui_node_editor.h" />
+    <ClInclude Include="ImGuiNodeEditor/imgui_extra_math.inl" />
+    <ClInclude Include="ImGuiNodeEditor/Drawing.h" />
+    <ClInclude Include="ImGuiNodeEditor/Builders.h" />
+    <ClInclude Include="ImGuiNodeEditor/imgui_extra_math.h" />
+    <ClInclude Include="imgui_stdlib.h" />
+    <ClInclude Include="ImGuiNodeEditor/imgui_node_editor_internal.h" />
+    <ClInclude Include="ImGuiNodeEditor/imgui_bezier_math.h" />
+    <ClInclude Include="imgui_internal.h" />
     <ClInclude Include="ImGuizmo.h" />
+    <ClInclude Include="imstb_rectpack.h" />
+    <ClInclude Include="imstb_truetype.h" />
+    <ClInclude Include="ImGuiNodeEditor/crude_json.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="imgui.cpp" />
-    <ClCompile Include="ImGuiNodeEditor/imgui_canvas.cpp" />
-    <ClCompile Include="imgui_widgets.cpp" />
-    <ClCompile Include="ImGuiNodeEditor/Drawing.cpp" />
-    <ClCompile Include="ImGuiNodeEditor/imgui_node_editor_api.cpp" />
-    <ClCompile Include="ImGuiNodeEditor/crude_json.cpp" />
-    <ClCompile Include="imgui_TextEditor.cpp" />
-    <ClCompile Include="imgui_demo.cpp" />
-    <ClCompile Include="ImGuiNodeEditor/Builders.cpp" />
-    <ClCompile Include="ImGuiNodeEditor/Widgets.cpp" />
-    <ClCompile Include="ImGuizmo.cpp" />
-    <ClCompile Include="imgui_stdlib.cpp" />
-    <ClCompile Include="ImGuiNodeEditor/imgui_node_editor.cpp" />
-    <ClCompile Include="imgui_tables.cpp" />
     <ClCompile Include="imgui_draw.cpp" />
+    <ClCompile Include="ImGuiNodeEditor/imgui_node_editor.cpp" />
+    <ClCompile Include="imgui_widgets.cpp" />
+    <ClCompile Include="imgui_stdlib.cpp" />
+    <ClCompile Include="imgui.cpp" />
+    <ClCompile Include="ImGuiNodeEditor/crude_json.cpp" />
+    <ClCompile Include="ImGuizmo.cpp" />
+    <ClCompile Include="imgui_tables.cpp" />
+    <ClCompile Include="ImGuiNodeEditor/imgui_canvas.cpp" />
+    <ClCompile Include="ImGuiNodeEditor/imgui_node_editor_api.cpp" />
+    <ClCompile Include="ImGuiNodeEditor/Drawing.cpp" />
+    <ClCompile Include="imgui_demo.cpp" />
+    <ClCompile Include="ImGuiNodeEditor/Widgets.cpp" />
+    <ClCompile Include="imgui_TextEditor.cpp" />
+    <ClCompile Include="ImGuiNodeEditor/Builders.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ImGui.Target.py" />

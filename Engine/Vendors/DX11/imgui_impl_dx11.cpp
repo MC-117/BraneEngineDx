@@ -125,7 +125,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, ID3D11DeviceC
 // Render function
 void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data, ID3D11DeviceContext* device_context)
 {
-    assert(device_context & "device_context is null");
+    assert(device_context && "device_context is null");
     // Avoid rendering when minimized
     if (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f)
         return;

@@ -10,8 +10,12 @@ public:
     ClangWriter();
     virtual ~ClangWriter();
 
+    virtual Name convertKeyword(const Name& keyword);
+    virtual int getOperatorParamNum(const Name& op);
+    virtual const char* getOperatorFormatter(const Name& op);
+
     virtual void write(const char* fmt_str, ...);
-    virtual ClangWriter* subscope();
+    virtual ICodeWriter* subscope();
     virtual void beginExpression(const char* fmt_str = NULL, ...);
     virtual void endExpression(const char* ender = NULL);
     virtual void writeInParameter(const CodeSymbolDefinition& definition);
@@ -37,6 +41,7 @@ protected:
 
     virtual void writeIndent();
     virtual void write(const char* fmt_str, va_list ap);
+    virtual ClangWriter* newWriter();
 };
 
 class ENGINE_API ClangScopeBackend : public ICodeScopeBackend

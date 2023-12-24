@@ -146,10 +146,12 @@ void RenderPool::render(bool guiOnly)
 	// gui.render(info);
 	// timer.record("RenderUI");
 
-	renderGraph->prepare();
-	timer.record("PrepareRenderGraph");
-
 	Console::getTimer("Rendering") = timer;
+}
+
+void RenderPool::endRender()
+{
+	renderGraph->prepare();
 }
 
 RenderPool& RenderPool::operator+=(Render & render)

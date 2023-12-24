@@ -14,6 +14,7 @@ public:
 	virtual void onRender(RenderInfo& info);
 protected:
 	GUISurface surface;
+	bool gizmoEnable = true;
 
 	virtual void resize(const Vector2i& size);
 

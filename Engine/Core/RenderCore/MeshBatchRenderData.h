@@ -62,7 +62,7 @@ inline TCall<Data>* TMeshBatchDrawCallCollection<Key, Data, TCall>::getMeshBatch
 template<class Key, class Data, template<class T> class TCall>
 inline TCall<Data>* TMeshBatchDrawCallCollection<Key, Data, TCall>::setMeshBatchDrawCall(const Key& key, const Data& data, unsigned int instanceIndex, unsigned int instanceCount)
 {
-	auto& call = callMap[key];
+	auto& call = callMap.try_emplace(key).first->second;
 	call.addDraw(key, data, instanceIndex, instanceCount);
 	return &call;
 }
@@ -194,7 +194,7 @@ template <class K>
 void TMeshBatchDrawCall<Data>::addDraw(const K& key, const Data& data, unsigned int instanceIndex, unsigned int instanceCount)
 {
 	unsigned int commandKey = key.getDrawCommandKey();
-	PerCall& call = batches[commandKey];
+	PerCall& call = batches.try_emplace(commandKey).first->second;
 	if (call.empty())
 	{
 		key.assignDrawCommand(call.command);
@@ -207,7 +207,7 @@ void TMeshBatchDrawCall<Data>::addDraw(const K& key, const Data& data, unsigned 
 	for (; index < count; index++)
 	{
 		call.instanceData[index] = _data;
-		drawInstanceIncrease(_data);
+		_data = drawInstanceIncrease(_data);
 	}
 	call.command.instanceCount += instanceCount;
 	this->instanceCount += instanceCount;

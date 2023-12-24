@@ -17,6 +17,7 @@ namespace Code
     const Name Color_t = "Color";
 
     const Name assign_op = "_assign_op_";
+    const Name access_op = "_access_op_";
     const Name add_op = "_add_op_";
     const Name sub_op= "_sub_op_";
     const Name mul_op = "_mul_op_";
@@ -41,6 +42,7 @@ namespace Code
     {
         static const unordered_map<Name, int> formatterMap = {
             { Code::assign_op, 2 },
+            { Code::access_op, 2 },
             { Code::add_op, 2 },
             { Code::sub_op, 2 },
             { Code::mul_op, 2 },
@@ -133,7 +135,7 @@ CodeParameter::CodeParameter(const CodeFunctionInvocation& invocation)
     this->_expression->isExpression = true;
 }
 
-CodeParameter::CodeParameter(const CodeParameter& param)
+CodeParameter::CodeParameter(const CodeParameter& param) : type(Symbol_t)
 {
     assign(param);
 }
@@ -164,7 +166,7 @@ CodeParameter& CodeParameter::assign(const CodeParameter& param)
             break;
         }
     case Expression_t:
-        *_expression = *param._expression;
+        _expression = new CodeFunctionInvocation(*param._expression);
     }
     return *this;
 }
@@ -202,6 +204,11 @@ CodeParameter::~CodeParameter()
 {
     if (type == String_t)
         delete _string;
+}
+
+bool CodeParameter::isType(Type type) const
+{
+    return this->type == type;
 }
 
 bool CodeParameter::isValid() const
@@ -307,8 +314,8 @@ std::ostream& CodeParameter::write(std::ostream& os, ICodeScopeBackend& backend)
     return os;
 }
 
-CodeFunctionInvocation::CodeFunctionInvocation(const Name& name, bool isExpression)
-    : name(name), isExpression(isExpression)
+CodeFunctionInvocation::CodeFunctionInvocation(const CodeParameter& operation, bool isExpression)
+    : operation(operation), isExpression(isExpression)
 {
 }
 

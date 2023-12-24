@@ -6,6 +6,7 @@
 #include "../Engine.h"
 #include "../Utility/EngineUtility.h"
 #include "Core/CodeGeneration/ClangGeneration.h"
+#include "Core/ShaderCode/ShaderGraph/HLSLGeneration.h"
 
 RegistEditor(Graph);
 
@@ -581,18 +582,49 @@ void GraphEditor::onInspectGUI(EditorInfo& info)
 		}
 	}
 	if (ImGui::CollapsingHeader("Code")) {
+		static const char* genCodeTypeNames[] = {
+			"C", "HLSL"
+		};
+		if (ImGui::BeginCombo("CodeType", genCodeTypeNames[genCodeType])) {
+			for (int i = 0; i < CodeTypeNum; i++) {
+				if (ImGui::Selectable(genCodeTypeNames[i], genCodeType == i)) {
+					genCodeType = (GenCodeType)i;
+				}
+			}
+			ImGui::EndCombo();
+		}
 		if (ImGui::Button("GenerateCode")) {
-
-			ClangWriter writer;
-			ClangScopeBackend backend(writer);
-			GraphCodeGenerationContext context;
-			context.pushSubscopeBackend(&backend);
-			graph->generateStatement(context);
+			static const char* genCodeExts[] = {
+				"cpp", "mat"
+			};
+			
 			string code;
-			writer.getString(code);
+
+			switch (genCodeType) {
+			case Clang:
+				{
+					ClangWriter writer;
+					ClangScopeBackend backend(writer);
+					GraphCodeGenerationContext context;
+					context.pushSubscopeBackend(&backend);
+					graph->generateStatement(context);
+					writer.getString(code);
+					break;
+				}
+			case HLSL:
+				{
+					HLSLWriter writer;
+					ClangScopeBackend backend(writer);
+					GraphCodeGenerationContext context;
+					context.pushSubscopeBackend(&backend);
+					graph->generateStatement(context);
+					writer.getString(code);
+					break;
+				}
+			}
 			
 			if (tempScript == NULL)
-				tempScript = new TempScript(graph->getName() + "_GenCode.cpp");
+				tempScript = new TempScript(graph->getName() + "_GenCode." + genCodeExts[genCodeType]);
 			tempScript->setSourceCode(code);
 
 			ScriptWindow::OpenScript(*tempScript);

@@ -97,11 +97,11 @@ void MeshBatchDrawCommandArray::upload()
 
 	vector<InstanceDrawData> instanceData;
 	meshBatchDrawCallCollection.fetchInstanceData(instanceData);
-	instanceDataBuffer.uploadData(instanceCount, instanceData.data());
+	instanceDataBuffer.uploadData(instanceCount, instanceData.data(), true);
 
 	vector<DrawElementsIndirectCommand> commands;
 	meshBatchDrawCallCollection.fetchDrawCommands(commands);
-	commandBuffer.uploadData(commandCount * sizeof(DrawElementsIndirectCommand) / sizeof(unsigned int), commands.data());
+	commandBuffer.uploadData(commandCount * sizeof(DrawElementsIndirectCommand) / sizeof(unsigned int), commands.data(), true);
 }
 
 void MeshBatchDrawCommandArray::bindInstanceBuffer(IRenderContext& context)
