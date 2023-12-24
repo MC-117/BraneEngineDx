@@ -9,7 +9,7 @@
 Buffer<uint> instanceCullingResult;
 Buffer<uint2> instanceData;
 Buffer<uint> commands;
-RWBuffer<uint> prunedInstanceData;
+RWBuffer<uint2> prunedInstanceData;
 RWBuffer<uint> prunedCommands;
 
 [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
