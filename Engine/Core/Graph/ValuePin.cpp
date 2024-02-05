@@ -25,6 +25,7 @@ Name ValuePin::getVariableType() const
 
 bool ValuePin::generateDefaultVariable(GraphCodeGenerationContext& context)
 {
+    generateTempVariable(context, CodeParameter::none);
     return true;
 }
 

@@ -1,0 +1,6 @@
+struct BxDF
+{
+    float3 diffuse;
+    float3 specular;
+    float3 transmittance;
+};

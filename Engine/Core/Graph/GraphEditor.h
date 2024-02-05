@@ -54,4 +54,8 @@ protected:
 
 	void copyNodes(const vector<ax::NodeEditor::NodeId>& nodeIDs, SerializationInfo& info);
 	void pasteNodes(SerializationInfo& info);
+
+	virtual void getPinMenuTags(vector<Name>& tags);
+	virtual void getVariableMenuTags(vector<Name>& tags);
+	virtual void getNodeMenuTags(vector<Name>& tags);
 };

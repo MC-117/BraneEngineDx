@@ -2,10 +2,18 @@
 
 #include "ValuePin.h"
 
-class MathOperationNode : public GraphNode
+class MathFunctionNode : public GraphNode
 {
 public:
-	Serialize(MathOperationNode, GraphNode);
+	Serialize(MathFunctionNode, GraphNode);
+
+	static Serializable* instantiate(const SerializationInfo & from);
+};
+
+class MathOperationNode : public MathFunctionNode
+{
+public:
+	Serialize(MathOperationNode, MathFunctionNode);
 
 	MathOperationNode();
 	virtual ~MathOperationNode();
@@ -89,10 +97,10 @@ DEC_MATH_OP_NODE(IntPin, IntDivisionNode, /, Code::div_op);
 DEC_MATH_OP_NODE(BoolPin, BoolAndNode, &, Code::and_op);
 DEC_MATH_OP_NODE(BoolPin, BoolOrNode, |, Code::or_op);
 
-class ComparisonNode : public GraphNode
+class ComparisonNode : public MathFunctionNode
 {
 public:
-	Serialize(ComparisonNode, GraphNode);
+	Serialize(ComparisonNode, MathFunctionNode);
 
 	ComparisonNode();
 	virtual ~ComparisonNode() = default;
@@ -178,10 +186,10 @@ DEC_MATH_COMPARE_NODE(Vector2fPin, Vector2fNotEqualNode, !=, Code::notEq_op);
 DEC_MATH_COMPARE_NODE(Vector3fPin, Vector3fNotEqualNode, !=, Code::notEq_op);
 DEC_MATH_COMPARE_NODE(QuaternionfPin, QuaternionfNotEqualNode, !=, Code::notEq_op);
 
-class NotNode : public GraphNode
+class NotNode : public MathFunctionNode
 {
 public:
-	Serialize(NotNode, GraphNode);
+	Serialize(NotNode, MathFunctionNode);
 
 	NotNode();
 	virtual ~NotNode() = default;
@@ -199,10 +207,10 @@ protected:
 	BoolPin* outputPin = NULL;
 };
 
-class SteppingNode : public GraphNode
+class SteppingNode : public MathFunctionNode
 {
 public:
-	Serialize(SteppingNode, GraphNode);
+	Serialize(SteppingNode, MathFunctionNode);
 
 	SteppingNode();
 	virtual ~SteppingNode() = default;
@@ -217,10 +225,10 @@ protected:
 	FloatPin* outputPin = NULL;
 };
 
-class Vector2fMakeNode : public GraphNode
+class Vector2fMakeNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector2fMakeNode, GraphNode);
+	Serialize(Vector2fMakeNode, MathFunctionNode);
 
 	Vector2fMakeNode();
 	virtual ~Vector2fMakeNode() = default;
@@ -233,10 +241,10 @@ protected:
 	Vector2fPin* outputPin = NULL;
 };
 
-class Vector3fMakeNode : public GraphNode
+class Vector3fMakeNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector3fMakeNode, GraphNode);
+	Serialize(Vector3fMakeNode, MathFunctionNode);
 
 	Vector3fMakeNode();
 	virtual ~Vector3fMakeNode() = default;
@@ -249,10 +257,10 @@ protected:
 	Vector3fPin* outputPin = NULL;
 };
 
-class QuaternionfMakeNode : public GraphNode
+class QuaternionfMakeNode : public MathFunctionNode
 {
 public:
-	Serialize(QuaternionfMakeNode, GraphNode);
+	Serialize(QuaternionfMakeNode, MathFunctionNode);
 
 	QuaternionfMakeNode();
 	virtual ~QuaternionfMakeNode() = default;
@@ -265,10 +273,10 @@ protected:
 	QuaternionfPin* outputPin = NULL;
 };
 
-class Vector2fBreakNode : public GraphNode
+class Vector2fBreakNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector2fBreakNode, GraphNode);
+	Serialize(Vector2fBreakNode, MathFunctionNode);
 
 	Vector2fBreakNode();
 	virtual ~Vector2fBreakNode() = default;
@@ -283,10 +291,10 @@ protected:
 	FloatPin* outputPin[2];
 };
 
-class Vector3fBreakNode : public GraphNode
+class Vector3fBreakNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector3fBreakNode, GraphNode);
+	Serialize(Vector3fBreakNode, MathFunctionNode);
 
 	Vector3fBreakNode();
 	virtual ~Vector3fBreakNode() = default;
@@ -301,10 +309,10 @@ protected:
 	FloatPin* outputPin[3];
 };
 
-class QuaternionfBreakNode : public GraphNode
+class QuaternionfBreakNode : public MathFunctionNode
 {
 public:
-	Serialize(QuaternionfBreakNode, GraphNode);
+	Serialize(QuaternionfBreakNode, MathFunctionNode);
 
 	QuaternionfBreakNode();
 	virtual ~QuaternionfBreakNode() = default;
@@ -319,10 +327,10 @@ protected:
 	FloatPin* outputPin[4];
 };
 
-class Vector2fNormalizeNode : public GraphNode
+class Vector2fNormalizeNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector2fNormalizeNode, GraphNode);
+	Serialize(Vector2fNormalizeNode, MathFunctionNode);
 
 	Vector2fNormalizeNode();
 	virtual ~Vector2fNormalizeNode() = default;
@@ -335,10 +343,10 @@ protected:
 	Vector2fPin* outputPin = NULL;
 };
 
-class Vector3fNormalizeNode : public GraphNode
+class Vector3fNormalizeNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector3fNormalizeNode, GraphNode);
+	Serialize(Vector3fNormalizeNode, MathFunctionNode);
 
 	Vector3fNormalizeNode();
 	virtual ~Vector3fNormalizeNode() = default;
@@ -351,10 +359,10 @@ protected:
 	Vector3fPin* outputPin = NULL;
 };
 
-class QuaternionfNormalizeNode : public GraphNode
+class QuaternionfNormalizeNode : public MathFunctionNode
 {
 public:
-	Serialize(QuaternionfNormalizeNode, GraphNode);
+	Serialize(QuaternionfNormalizeNode, MathFunctionNode);
 
 	QuaternionfNormalizeNode();
 	virtual ~QuaternionfNormalizeNode() = default;
@@ -367,10 +375,10 @@ protected:
 	QuaternionfPin* outputPin = NULL;
 };
 
-class Vector2fScaleNode : public GraphNode
+class Vector2fScaleNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector2fScaleNode, GraphNode);
+	Serialize(Vector2fScaleNode, MathFunctionNode);
 
 	Vector2fScaleNode();
 	virtual ~Vector2fScaleNode() = default;
@@ -384,10 +392,10 @@ protected:
 	Vector2fPin* outputPin = NULL;
 };
 
-class Vector3fScaleNode : public GraphNode
+class Vector3fScaleNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector3fScaleNode, GraphNode);
+	Serialize(Vector3fScaleNode, MathFunctionNode);
 
 	Vector3fScaleNode();
 	virtual ~Vector3fScaleNode() = default;
@@ -401,10 +409,10 @@ protected:
 	Vector3fPin* outputPin = NULL;
 };
 
-class Vector2fDotNode : public GraphNode
+class Vector2fDotNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector2fDotNode, GraphNode);
+	Serialize(Vector2fDotNode, MathFunctionNode);
 
 	Vector2fDotNode();
 	virtual ~Vector2fDotNode() = default;
@@ -418,10 +426,10 @@ protected:
 	FloatPin* outputPin = NULL;
 };
 
-class Vector3fDotNode : public GraphNode
+class Vector3fDotNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector3fDotNode, GraphNode);
+	Serialize(Vector3fDotNode, MathFunctionNode);
 
 	Vector3fDotNode();
 	virtual ~Vector3fDotNode() = default;
@@ -435,10 +443,10 @@ protected:
 	FloatPin* outputPin = NULL;
 };
 
-class Vector2fCrossNode : public GraphNode
+class Vector2fCrossNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector2fCrossNode, GraphNode);
+	Serialize(Vector2fCrossNode, MathFunctionNode);
 
 	Vector2fCrossNode();
 	virtual ~Vector2fCrossNode() = default;
@@ -452,10 +460,10 @@ protected:
 	Vector2fPin* outputPin = NULL;
 };
 
-class Vector3fCrossNode : public GraphNode
+class Vector3fCrossNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector3fCrossNode, GraphNode);
+	Serialize(Vector3fCrossNode, MathFunctionNode);
 
 	Vector3fCrossNode();
 	virtual ~Vector3fCrossNode() = default;
@@ -469,10 +477,10 @@ protected:
 	Vector3fPin* outputPin = NULL;
 };
 
-class QuaternionfFromTwoVectorsNode : public GraphNode
+class QuaternionfFromTwoVectorsNode : public MathFunctionNode
 {
 public:
-	Serialize(QuaternionfFromTwoVectorsNode, GraphNode);
+	Serialize(QuaternionfFromTwoVectorsNode, MathFunctionNode);
 
 	QuaternionfFromTwoVectorsNode();
 	virtual ~QuaternionfFromTwoVectorsNode() = default;
@@ -486,10 +494,10 @@ protected:
 	QuaternionfPin* outputPin = NULL;
 };
 
-class EularToQuaternionfNode : public GraphNode
+class EularToQuaternionfNode : public MathFunctionNode
 {
 public:
-	Serialize(EularToQuaternionfNode, GraphNode);
+	Serialize(EularToQuaternionfNode, MathFunctionNode);
 
 	EularToQuaternionfNode();
 	virtual ~EularToQuaternionfNode() = default;
@@ -502,10 +510,10 @@ protected:
 	QuaternionfPin* quatPin = NULL;
 };
 
-class QuaternionfToEularNode : public GraphNode
+class QuaternionfToEularNode : public MathFunctionNode
 {
 public:
-	Serialize(QuaternionfToEularNode, GraphNode);
+	Serialize(QuaternionfToEularNode, MathFunctionNode);
 
 	QuaternionfToEularNode();
 	virtual ~QuaternionfToEularNode() = default;
@@ -518,10 +526,10 @@ protected:
 	Vector3fPin* eularPin = NULL;
 };
 
-class QuaternionfFromAngleAxisNode : public GraphNode
+class QuaternionfFromAngleAxisNode : public MathFunctionNode
 {
 public:
-	Serialize(QuaternionfFromAngleAxisNode, GraphNode);
+	Serialize(QuaternionfFromAngleAxisNode, MathFunctionNode);
 
 	QuaternionfFromAngleAxisNode();
 	virtual ~QuaternionfFromAngleAxisNode() = default;
@@ -535,10 +543,10 @@ protected:
 	QuaternionfPin* quatPin = NULL;
 };
 
-class QuaternionfSlerpNode : public GraphNode
+class QuaternionfSlerpNode : public MathFunctionNode
 {
 public:
-	Serialize(QuaternionfSlerpNode, GraphNode);
+	Serialize(QuaternionfSlerpNode, MathFunctionNode);
 
 	QuaternionfSlerpNode();
 	virtual ~QuaternionfSlerpNode() = default;
@@ -553,10 +561,10 @@ protected:
 	QuaternionfPin* outputPin = NULL;
 };
 
-class Vector2fProjectOnVectorNode : public GraphNode
+class Vector2fProjectOnVectorNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector2fProjectOnVectorNode, GraphNode);
+	Serialize(Vector2fProjectOnVectorNode, MathFunctionNode);
 
 	Vector2fProjectOnVectorNode();
 	virtual ~Vector2fProjectOnVectorNode() = default;
@@ -570,10 +578,10 @@ protected:
 	Vector2fPin* outputPin = NULL;
 };
 
-class Vector3fProjectOnVectorNode : public GraphNode
+class Vector3fProjectOnVectorNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector3fProjectOnVectorNode, GraphNode);
+	Serialize(Vector3fProjectOnVectorNode, MathFunctionNode);
 
 	Vector3fProjectOnVectorNode();
 	virtual ~Vector3fProjectOnVectorNode() = default;
@@ -587,10 +595,10 @@ protected:
 	Vector3fPin* outputPin = NULL;
 };
 
-class Vector3fSteppingNode : public GraphNode
+class Vector3fSteppingNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector3fSteppingNode, GraphNode);
+	Serialize(Vector3fSteppingNode, MathFunctionNode);
 
 	Vector3fSteppingNode();
 	virtual ~Vector3fSteppingNode() = default;
@@ -605,10 +613,10 @@ protected:
 	Vector3fPin* outputPin = NULL;
 };
 
-class Vector3fSteppingRotationNode : public GraphNode
+class Vector3fSteppingRotationNode : public MathFunctionNode
 {
 public:
-	Serialize(Vector3fSteppingRotationNode, GraphNode);
+	Serialize(Vector3fSteppingRotationNode, MathFunctionNode);
 
 	Vector3fSteppingRotationNode();
 	virtual ~Vector3fSteppingRotationNode() = default;
@@ -623,10 +631,10 @@ protected:
 	QuaternionfPin* outputPin = NULL;
 };
 
-class AngleToRadianNode : public GraphNode
+class AngleToRadianNode : public MathFunctionNode
 {
 public:
-	Serialize(AngleToRadianNode, GraphNode);
+	Serialize(AngleToRadianNode, MathFunctionNode);
 
 	AngleToRadianNode();
 	virtual ~AngleToRadianNode() = default;
@@ -639,10 +647,10 @@ protected:
 	FloatPin* radianPin = NULL;
 };
 
-class RadianToAngleNode : public GraphNode
+class RadianToAngleNode : public MathFunctionNode
 {
 public:
-	Serialize(RadianToAngleNode, GraphNode);
+	Serialize(RadianToAngleNode, MathFunctionNode);
 
 	RadianToAngleNode();
 	virtual ~RadianToAngleNode() = default;
@@ -655,10 +663,10 @@ protected:
 	FloatPin* anglePin = NULL;
 };
 
-class GetAngleFromTwoVector2fNode : public GraphNode
+class GetAngleFromTwoVector2fNode : public MathFunctionNode
 {
 public:
-	Serialize(GetAngleFromTwoVector2fNode, GraphNode);
+	Serialize(GetAngleFromTwoVector2fNode, MathFunctionNode);
 
 	GetAngleFromTwoVector2fNode();
 	virtual ~GetAngleFromTwoVector2fNode() = default;
@@ -672,10 +680,10 @@ protected:
 	FloatPin* anglePin = NULL;
 };
 
-class GetAngleFromTwoVector3fNode : public GraphNode
+class GetAngleFromTwoVector3fNode : public MathFunctionNode
 {
 public:
-	Serialize(GetAngleFromTwoVector3fNode, GraphNode);
+	Serialize(GetAngleFromTwoVector3fNode, MathFunctionNode);
 
 	GetAngleFromTwoVector3fNode();
 	virtual ~GetAngleFromTwoVector3fNode() = default;
@@ -690,10 +698,10 @@ protected:
 	FloatPin* anglePin = NULL;
 };
 
-class GetAngleFromToVector3fNode : public GraphNode
+class GetAngleFromToVector3fNode : public MathFunctionNode
 {
 public:
-	Serialize(GetAngleFromToVector3fNode, GraphNode);
+	Serialize(GetAngleFromToVector3fNode, MathFunctionNode);
 
 	GetAngleFromToVector3fNode();
 	virtual ~GetAngleFromToVector3fNode() = default;

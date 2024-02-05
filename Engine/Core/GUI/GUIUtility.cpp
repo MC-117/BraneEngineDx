@@ -4,6 +4,7 @@
 #include "../Object.h"
 #include "../Asset.h"
 #include "GUIUtility.h"
+#include "../Attributes/TagAttribute.h"
 
 namespace ImGui {
 
@@ -690,7 +691,7 @@ namespace ImGui {
 		static string filterName;
 		return AssetCombo(label, selectAsset, filterName, AssetType);
 	}
-	bool TypeCombo(const char* label, Serialization*& selectType, string& filterName, const Serialization& baseType)
+	bool TypeCombo(const char* label, Serialization*& selectType, string& filterName, const Serialization& baseType, const vector<Name>& tags)
 	{
 		Serialization* oldType = selectType;
 		string displayName;
@@ -703,9 +704,21 @@ namespace ImGui {
 		if (ImGui::BeginCombo(label, displayName.c_str())) {
 			ImGui::InputText("Name", &filterName);
 			ImGui::BeginChild("ScollView", { -1, 100 });
-			for each (Serialization* type in types) {
+			for (Serialization* type : types) {
 				if (!filterName.empty() && type->type.find(filterName) == string::npos)
 					continue;
+				if (!tags.empty()) {
+					bool found = false;
+					for (auto& tag : tags) {
+						const TagAttribute* tagAttr = type->getAttribute<TagAttribute>();
+						if (tagAttr && tagAttr->checkTag(tag)) {
+							found = true;
+							break;
+						}
+					}
+					if (!found)
+						continue;
+				}
 				if (ImGui::Selectable(type->type.c_str())) {
 					selectType = type;
 				}
@@ -715,9 +728,9 @@ namespace ImGui {
 		}
 		return oldType != selectType;
 	}
-	bool TypeCombo(const char* label, Serialization*& selectType, const Serialization& baseType)
+	bool TypeCombo(const char* label, Serialization*& selectType, const Serialization& baseType, const vector<Name>& tags)
 	{
 		static string filterName;
-		return TypeCombo(label, selectType, filterName, baseType);
+		return TypeCombo(label, selectType, filterName, baseType, tags);
 	}
 }

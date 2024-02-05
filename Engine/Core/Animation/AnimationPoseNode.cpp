@@ -1,8 +1,9 @@
 #include "AnimationPoseNode.h"
 #include "../Asset.h"
 #include "../SkeletonMeshActor.h"
+#include "../Attributes/TagAttribute.h"
 
-SerializeInstance(AnimationPosePin, DEF_ATTR(Namespace, "Animation"));
+SerializeInstance(AnimationPosePin, DEF_ATTR(Tag, "Animation"));
 
 AnimationPosePin::AnimationPosePin(const string& name) : ValuePin(name)
 {
@@ -82,7 +83,7 @@ Serializable* AnimationPosePin::instantiate(const SerializationInfo& from)
     return new AnimationPosePin(from.name);
 }
 
-SerializeInstance(AnimationPoseSourceNode, DEF_ATTR(Namespace, "Animation"));
+SerializeInstance(AnimationPoseSourceNode, DEF_ATTR(Tag, "Animation"));
 
 AnimationPoseSourceNode::AnimationPoseSourceNode() : GraphNode(), actorPin("Target"), poseOutputPin("Out")
 {
@@ -146,7 +147,7 @@ bool AnimationPoseSourceNode::serialize(SerializationInfo& to)
     return GraphNode::serialize(to);
 }
 
-SerializeInstance(AnimationPoseResultNode, DEF_ATTR(Namespace, "Animation"));
+SerializeInstance(AnimationPoseResultNode, DEF_ATTR(Tag, "Animation"));
 
 AnimationPoseResultNode::AnimationPoseResultNode() : ReturnNode(), poseInputPin("Result")
 {
@@ -179,7 +180,7 @@ bool AnimationPoseResultNode::serialize(SerializationInfo& to)
     return GraphNode::serialize(to);
 }
 
-SerializeInstance(AnimationPoseApplyNode, DEF_ATTR(Namespace, "Animation"));
+SerializeInstance(AnimationPoseApplyNode, DEF_ATTR(Tag, "Animation"));
 
 AnimationPoseApplyNode::AnimationPoseApplyNode() : poseInputPin("Pose")
 {
@@ -210,7 +211,7 @@ Serializable* AnimationPoseApplyNode::instantiate(const SerializationInfo& from)
     return new AnimationPoseApplyNode();
 }
 
-SerializeInstance(AnimationBaseNode, DEF_ATTR(Namespace, "Animation"));
+SerializeInstance(AnimationBaseNode);
 
 void AnimationBaseNode::setContext(const AnimationContext& context)
 {
@@ -478,7 +479,7 @@ bool BlendSpaceNode::serialize(SerializationInfo& to)
     return true;
 }
 
-SerializeInstance(AnimationPoseLerpNode, DEF_ATTR(Namespace, "Animation"));
+SerializeInstance(AnimationPoseLerpNode, DEF_ATTR(Tag, "Animation"));
 
 AnimationPoseLerpNode::AnimationPoseLerpNode() : poseAPin("PoseA"), poseBPin("PoseB"), valuePin("Value"), poseOutPin("Out")
 {

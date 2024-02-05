@@ -105,6 +105,11 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Core\Attributes\TagAttribute.h" />
+    <ClInclude Include="Core\ShaderCode\ShaderGraph\ShaderCodeGeneration.h" />
+    <ClInclude Include="Core\ShaderCode\ShaderGraph\ShaderGraph.h" />
+    <ClInclude Include="Core\ShaderCode\ShaderGraph\ShaderGraphEditor.h" />
+    <ClInclude Include="Core\ShaderCode\ShaderGraph\TextureNode.h" />
     <ClInclude Include="Vendors/DX12/DX12InputLayout.h" />
     <ClInclude Include="ThirdParty/ImGui/ImGuiNodeEditor/imgui_bezier_math.h" />
     <ClInclude Include="Core/Editor/EditorWorld.h" />
@@ -568,6 +573,12 @@
     <ClCompile Include="Core/RenderGraph/HiZPass.cpp" />
     <ClCompile Include="Core/PostProcess/BloomPass.cpp" />
     <ClCompile Include="Core/Physics/ClothMeshData.cpp" />
+    <ClCompile Include="Core\Attributes\TagAttribute.cpp" />
+    <ClCompile Include="Core\ShaderCode\ShaderGraph\ShaderCodeGeneration.cpp" />
+    <ClCompile Include="Core\ShaderCode\ShaderGraph\ShaderGraph.cpp" />
+    <ClCompile Include="Core\ShaderCode\ShaderGraph\ShaderGraphEditor.cpp" />
+    <ClCompile Include="Core\ShaderCode\ShaderGraph\ShaderNode.cpp" />
+    <ClCompile Include="Core\ShaderCode\ShaderGraph\TextureNode.cpp" />
     <ClCompile Include="ThirdParty/ImGui/ImGuiNodeEditor/imgui_node_editor_api.cpp" />
     <ClCompile Include="Core/Graph/FlowNode.cpp" />
     <ClCompile Include="Core/Timeline/AudioPlayableEditor.cpp" />

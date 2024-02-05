@@ -1,0 +1,6 @@
+#include "../lib/BxDF_Lib.hmat"
+
+BxDF OpaqueLit_BRDF(in Surface surf)
+{
+    
+}

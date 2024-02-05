@@ -1,7 +1,8 @@
 #include "AnimationPoseGraph.h"
 #include "../SkeletonMeshActor.h"
+#include "../Attributes/TagAttribute.h"
 
-SerializeInstance(AnimationPoseGraph, DEF_ATTR(Namespace, "Animation"));
+SerializeInstance(AnimationPoseGraph, DEF_ATTR(Tag, "Animation"));
 
 AnimationPoseGraph::AnimationPoseGraph()
 {

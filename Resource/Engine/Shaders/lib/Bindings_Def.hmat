@@ -80,7 +80,9 @@ Texture2DArray tex : TEX_BINDING(id);\
 SamplerState tex##Sampler : SAMPLE_BINDING(id);
 #define DEF_TEXCUBE(tex, id) \
 TextureCube tex : TEX_BINDING(id);\
-SamplerState tex##Sampler : SAMPLE_BINDING(id);
+#define DEF_TEXCUBE_AUTO(tex) \
+TextureCube tex;\
+SamplerState tex##Sampler;
 #define DEF_TEXCUBEARRAY(tex, id) \
 TextureCubeArray tex : TEX_BINDING(id);\
 SamplerState tex##Sampler : SAMPLE_BINDING(id);

@@ -25,6 +25,12 @@ struct DirectLight
     float3 color;
 };
 
+struct SplitLight
+{
+    float3 diffuse;
+    float3 specular;
+};
+
 cbuffer DirectLightBuffer : register(DIRECT_LIGHT_BIND_INDEX)
 {
     DirectLight directLight;

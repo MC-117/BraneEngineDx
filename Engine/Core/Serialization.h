@@ -15,9 +15,11 @@ class ENGINE_API SerializationManager
 public:
 	// Using StaticVar class to solve the problem that some SerializationInfo objects
 	// will be constructed before this variable constructed
-	static StaticVar<map<string, Serialization*>> serializationList;
+	static StaticVar<unordered_map<Name, Serialization*>> serializationList;
 
-	static Serialization* getSerialization(const string& type);
+	static void finalizeSerializtion();
+
+	static Serialization* getSerialization(const Name& type);
 };
 
 class ENGINE_API SerializationInfo
@@ -451,7 +453,8 @@ public:
 	template<class A>
 	const A* cast() const;
 
-	virtual void resolve(const Attribute& conflict) { }
+	virtual void resolve(Attribute* sourceAttribute, Serialization& serialization) { }
+	virtual void finalize(Serialization& serialization) { }
 };
 
 template<class A>
@@ -466,7 +469,7 @@ public:
 	string nameSpace;
 	NamespaceAttribute(const string& nameSpace);
 
-	virtual void resolve(const Attribute& conflict);
+	virtual void resolve(Attribute* sourceAttribute, Serialization& serialization);
 };
 
 class ENGINE_API SerializationScope
@@ -489,6 +492,7 @@ protected:
 
 class ENGINE_API Serialization
 {
+	friend class SerializationManager;
 public:
 	static map<filesystem::path, SerializationInfo*> serializationInfoByPath;
 
@@ -528,11 +532,14 @@ public:
 protected:
 	Serialization* baseSerialization = NULL;
 	vector<Attribute*> attributes;
+	bool finalized = false;
 
 	Serialization(const char* type, const char* baseType);
 
 	Attribute* getAttribute(const Name& name);
 	void addAttribute(initializer_list<Attribute*> list);
+
+	void finalize();
 };
 
 template<class A>

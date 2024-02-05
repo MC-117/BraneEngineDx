@@ -614,7 +614,7 @@ Serializable* Graph::instantiate(const SerializationInfo& from)
 	Graph* graph = new Graph();
 	const SerializationInfo* inputInfos = from.get("inputs");
 	if (inputInfos) {
-		for each (const auto & info in inputInfos->sublists)
+		for (const auto & info : inputInfos->sublists)
 		{
 			Serializable* serializable = info.serialization->instantiate(info);
 			if (serializable == NULL)
@@ -629,7 +629,7 @@ Serializable* Graph::instantiate(const SerializationInfo& from)
 	}
 	const SerializationInfo* outputInfos = from.get("outputs");
 	if (outputInfos) {
-		for each (const auto & info in outputInfos->sublists)
+		for (const auto & info : outputInfos->sublists)
 		{
 			Serializable* serializable = info.serialization->instantiate(info);
 			if (serializable == NULL)

@@ -5,8 +5,10 @@
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 #include "../Engine.h"
 #include "../Utility/EngineUtility.h"
-#include "Core/CodeGeneration/ClangGeneration.h"
-#include "Core/ShaderCode/ShaderGraph/HLSLGeneration.h"
+#include "../CodeGeneration/ClangGeneration.h"
+#include "../ShaderCode/ShaderGraph/HLSLGeneration.h"
+#include "../ShaderCode/ShaderGraph/HLSLGeneration.h"
+#include "../Attributes/TagAttribute.h"
 
 RegistEditor(Graph);
 
@@ -25,7 +27,9 @@ GraphPin* GraphEditor::onPinCreateGUI(const char* buttonName, string& valueName,
 {
 	ImGui::PushID(buttonName);
 	ImGui::SetNextItemWidth(100);
-	ImGui::TypeCombo("##PinTypeCombo", createPinType, GraphPin::GraphPinSerialization::serialization);
+	vector<Name> tags;
+	getPinMenuTags(tags);
+	ImGui::TypeCombo("##PinTypeCombo", createPinType, GraphPin::GraphPinSerialization::serialization, tags);
 	ImGui::SameLine();
 	ImGui::InputText("##ValueNodeName", &valueName);
 	ImGui::BeginDisabled(!nameValid);
@@ -53,7 +57,9 @@ GraphVariable* GraphEditor::onVariableCreateGUI(const char* buttonName)
 {
 	ImGui::PushID(buttonName);
 	ImGui::SetNextItemWidth(100);
-	ImGui::TypeCombo("##VariableTypeCombo", createVariableType, GraphVariable::GraphVariableSerialization::serialization);
+	vector<Name> tags;
+	getVariableMenuTags(tags);
+	ImGui::TypeCombo("##VariableTypeCombo", createVariableType, GraphVariable::GraphVariableSerialization::serialization, tags);
 	ImGui::SameLine();
 	ImGui::InputText("##VariableName", &createVariableName);
 	bool nameValid = graph->checkVariableName(createVariableName);
@@ -393,15 +399,17 @@ void GraphEditor::onCanvasContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo)
 
 	ImGui::SetNextItemOpen(true, ImGuiCond_Appearing);
 
-	if (ImGui::TreeNode("Basic")) {
-		for each (auto type in nodeTypes)
-		{
-			if (!createNodeFilter.empty() && type->type.find(createNodeFilter) == string::npos)
+	auto graphNodeItems = [&](const char* tag)
+	{
+		TagManager::Iter iter = TagManager::get().findByTag(tag, &GraphNode::GraphNodeSerialization::serialization);
+		while (iter.next()) {
+			Serialization& type = iter.get();
+			if (!createNodeFilter.empty() && type.type.find(createNodeFilter) == string::npos)
 				continue;
-			if (ImGui::MenuItem(type->type.c_str())) {
-				if (type != &EntryNode::EntryNodeSerialization::serialization) {
-					SerializationInfo info;
-					Serializable* serializable = type->instantiate(info);
+			if (ImGui::MenuItem(type.type.c_str())) {
+				if (&type != &EntryNode::EntryNodeSerialization::serialization) {
+					SerializationInfo serInfo;
+					Serializable* serializable = type.instantiate(serInfo);
 					if (serializable) {
 						node = dynamic_cast<GraphNode*>(serializable);
 						if (!node)
@@ -410,7 +418,49 @@ void GraphEditor::onCanvasContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo)
 				}
 			}
 		}
-		ImGui::TreePop();
+	};
+
+	vector<Name> tags;
+	getNodeMenuTags(tags);
+	vector<string> lastTagItems;
+	stack<pair<Name, bool>> tagStack;
+	for (auto& tag : tags) {
+		vector<string> curTagItems = split(tag.str(), '.');
+		const int lastLength = lastTagItems.size();
+		const int curLength = curTagItems.size();
+		int index = 0;
+		while (index < lastLength && index < curLength
+			&& lastTagItems[index] == curTagItems[index]) {
+			index++;
+		}
+		for (int i = lastLength; i > index; i--) {
+			const pair<Name, bool>& topTagItem = tagStack.top();
+			if (topTagItem.second) {
+				graphNodeItems(topTagItem.first.str());
+				ImGui::TreePop();
+			}
+			tagStack.pop();
+		}
+		for (; index < curLength; index++) {
+			const char* curTagCStr = curTagItems[index].c_str();
+			bool treeOpen = true;
+			if (!tagStack.empty()) {
+				treeOpen = tagStack.top().second;
+			}
+			if (treeOpen) {
+				treeOpen = ImGui::TreeNode(curTagCStr);
+			}
+			tagStack.emplace(tag, treeOpen);
+		}
+		lastTagItems = std::move(curTagItems);
+	}
+	for (int i = 0; i < lastTagItems.size(); i++) {
+		const pair<Name, bool>& tagTreeItem = tagStack.top();
+		if (tagTreeItem.second) {
+			graphNodeItems(tagTreeItem.first.str());
+			ImGui::TreePop();
+		}
+		tagStack.pop();
 	}
 
 	if (node) {
@@ -718,4 +768,17 @@ void GraphEditor::pasteNodes(SerializationInfo& info)
 				delete serializable;
 		}
 	}
+}
+
+void GraphEditor::getPinMenuTags(vector<Name>& tags)
+{
+}
+
+void GraphEditor::getVariableMenuTags(vector<Name>& tags)
+{
+}
+
+void GraphEditor::getNodeMenuTags(vector<Name>& tags)
+{
+	TagManager::get().fuzzyFindTag("Graph", tags);
 }

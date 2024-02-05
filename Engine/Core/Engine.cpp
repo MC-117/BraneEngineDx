@@ -219,6 +219,7 @@ void Engine::config(const string& workingSpace, const string& configPath)
 
 void Engine::setupBaseFramework()
 {
+	SerializationManager::finalizeSerializtion();
 	InitializationManager::instance().initialize(InitializeStage::BeforeEngineSetup);
 	if (enableMemTracer) {
 #if ENABLE_MEMTRACER

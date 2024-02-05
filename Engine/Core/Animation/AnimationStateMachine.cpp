@@ -1,7 +1,8 @@
 #include "AnimationStateMachine.h"
 #include "../SkeletonMeshActor.h"
+#include "../Attributes/TagAttribute.h"
 
-SerializeInstance(AnimationStateMachine, DEF_ATTR(Namespace, "Animation"));
+SerializeInstance(AnimationStateMachine, DEF_ATTR(Tag, "Animation"));
 
 AnimationStateMachine::AnimationStateMachine() : StateMachine()
 {

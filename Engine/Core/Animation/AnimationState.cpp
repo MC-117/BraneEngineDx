@@ -1,6 +1,7 @@
 #include "AnimationState.h"
+#include "../Attributes/TagAttribute.h"
 
-SerializeInstance(AnimationDefaultCanTransitionNode, DEF_ATTR(Namespace, "Animation"));
+SerializeInstance(AnimationDefaultCanTransitionNode, DEF_ATTR(Tag, "Animation"));
 
 AnimationDefaultCanTransitionNode::AnimationDefaultCanTransitionNode()
 {
@@ -31,7 +32,7 @@ Serializable* AnimationDefaultCanTransitionNode::instantiate(const Serialization
     return new AnimationDefaultCanTransitionNode();
 }
 
-SerializeInstance(AnimationTransition, DEF_ATTR(Namespace, "Animation"));
+SerializeInstance(AnimationTransition, DEF_ATTR(Tag, "Animation"));
 
 AnimationTransition::AnimationTransition()
 {
@@ -132,7 +133,7 @@ bool AnimationTransition::serialize(SerializationInfo& to)
     return true;
 }
 
-SerializeInstance(AnimationState, DEF_ATTR(Namespace, "Animation"));
+SerializeInstance(AnimationState, DEF_ATTR(Tag, "Animation"));
 
 void AnimationState::setName(const string& name)
 {

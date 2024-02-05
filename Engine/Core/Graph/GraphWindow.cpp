@@ -59,10 +59,29 @@ void GraphWindow::onWindowGUI(GUIRenderInfo& info)
 	ImVec2 buttonSize = { buttonHeight, buttonHeight };
 	ImGui::BeginHorizontal("ToolBarHorizontal");
 
-	if (ImGui::ButtonEx(ICON_FA_FILE, buttonSize)) {
-		pGraph = new Graph();
-		graph = pGraph;
-		setGraph(pGraph);
+	ImGui::ButtonEx(ICON_FA_FILE, buttonSize);
+	if (ImGui::BeginPopupContextItem("CreateGraphContextMenu", ImGuiPopupFlags_MouseButtonLeft)) {
+		vector<Serialization*> types = { &Graph::GraphNodeSerialization::serialization };
+		Graph::GraphSerialization::serialization.getChildren(types);
+		Serialization* selectedType = NULL;
+		for (Serialization* type : types) {
+			if (ImGui::Selectable(type->type.c_str())) {
+				selectedType = type;
+			}
+		}
+		if (selectedType) {
+			SerializationInfo graphInfo;
+			Serializable* serialiable = selectedType->instantiate(graphInfo);
+			if (serialiable) {
+				Graph* tempGraph = dynamic_cast<Graph*>(serialiable);
+				if (tempGraph) {
+					pGraph = tempGraph;
+					graph = pGraph;
+					setGraph(pGraph);
+				}
+			}
+		}
+		ImGui::EndPopup();
 	}
 	ImGui::BeginDisabled(pGraph == NULL);
 	if (ImGui::ButtonEx(ICON_FA_XMARK, buttonSize)) {

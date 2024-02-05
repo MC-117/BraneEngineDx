@@ -1,6 +1,7 @@
 #include "Node.h"
 #include "GraphCodeGeneration.h"
 #include "GraphNodeEditor.h"
+#include "../Attributes/TagAttribute.h"
 
 void GraphContext::execute()
 {
@@ -24,7 +25,7 @@ void GraphContext::executeNode(GraphNode* node)
     }
 }
 
-SerializeInstance(GraphPin);
+SerializeInstance(GraphPin, DEF_ATTR(Tag, "Graph"));
 
 string GraphPin::getName() const
 {
@@ -210,7 +211,7 @@ Serializable* FlowPin::instantiate(const SerializationInfo& from)
     return new FlowPin(from.name);
 }
 
-SerializeInstance(GraphNode);
+SerializeInstance(GraphNode, DEF_ATTR(Tag, "Graph"));
 
 GraphNode::GraphNode() : Base()
 {

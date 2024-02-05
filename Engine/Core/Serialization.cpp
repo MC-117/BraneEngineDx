@@ -1,8 +1,15 @@
 #include "Serialization.h"
 
-StaticVar<map<string, Serialization*>> SerializationManager::serializationList;
+StaticVar<unordered_map<Name, Serialization*>> SerializationManager::serializationList;
 
-Serialization* SerializationManager::getSerialization(const string& type)
+void SerializationManager::finalizeSerializtion()
+{
+	for (auto& item : *serializationList.get()) {
+		item.second->finalize();
+	}
+}
+
+Serialization* SerializationManager::getSerialization(const Name& type)
 {
 	auto iter = serializationList->find(type);
 	if (iter == serializationList->end())
@@ -211,14 +218,16 @@ void Serializable::serializeInit(const Serializable* serializable, Serialization
 }
 
 NamespaceAttribute::NamespaceAttribute(const string& nameSpace)
-	: Attribute("GraphCategory", true), nameSpace(nameSpace)
+	: Attribute("Namespace", true), nameSpace(nameSpace)
 {
 }
 
-void NamespaceAttribute::resolve(const Attribute& conflict)
+void NamespaceAttribute::resolve(Attribute* sourceAttribute, Serialization& serialization)
 {
-	const NamespaceAttribute* attr = conflict.cast<NamespaceAttribute>();
-	nameSpace += "." + attr->nameSpace;
+	if (sourceAttribute) {
+		const NamespaceAttribute* attr = sourceAttribute->cast<NamespaceAttribute>();
+		nameSpace += "." + attr->nameSpace;
+	}
 }
 
 map<filesystem::path, SerializationInfo*> Serialization::serializationInfoByPath;
@@ -427,16 +436,28 @@ void Serialization::addAttribute(initializer_list<Attribute*> list)
 		}
 		++b;
 	}
-	for (const auto& attr : list)
-	{
+	
+	for (const auto& attr : list) {
 		if (Attribute* raw = getAttribute(attr->name)) {
-			raw->resolve(*attr);
+			raw->resolve(attr, *this);
 			delete attr;
 		}
 		else {
 			attributes.push_back(attr);
+			attr->resolve(NULL, *this);
 		}
 	}
+}
+
+void Serialization::finalize()
+{
+	if (finalized)
+		return;
+	
+	for (auto attr : attributes) {
+		attr->finalize(*this);
+	}
+	finalized = true;
 }
 
 SerializationInfoParser::SerializationInfoParser(istream & is, const string& path)

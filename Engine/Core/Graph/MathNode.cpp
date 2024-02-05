@@ -1,8 +1,15 @@
 #include "MathNode.h"
-
 #include "GraphCodeGeneration.h"
+#include "../Attributes/TagAttribute.h"
 
-SerializeInstance(MathOperationNode, DEF_ATTR(Namespace, "Math"));
+SerializeInstance(MathFunctionNode, DEF_ATTR(Tag, "Math"));
+
+Serializable* MathFunctionNode::instantiate(const SerializationInfo & from)
+{
+    return NULL;
+}
+
+SerializeInstance(MathOperationNode);
 
 MathOperationNode::MathOperationNode()
 {
