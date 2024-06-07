@@ -155,6 +155,76 @@ GraphPin::GraphPin(const string& name) : Base(), name(name)
 {
 }
 
+GraphPinFactory& GraphPinFactory::get()
+{
+    static GraphPinFactory factory;
+    return factory;
+}
+
+void GraphPinFactory::registerType(const Name& type, const Serialization& serialization)
+{
+    if (type.isNone())
+        throw runtime_error("None type is invalid");
+    if (!serialization.isChildOf(GraphPin::GraphPinSerialization::serialization))
+        throw runtime_error("This is not serialization of GraphPin");
+    auto iter = codeTypeToGraphPinSerialization.find(type);
+    if (iter != codeTypeToGraphPinSerialization.end())
+        throw runtime_error("This code type already been bound with factory");
+    codeTypeToGraphPinSerialization.emplace(type, &serialization);
+    
+}
+
+const Serialization* GraphPinFactory::getFactory(const Name& type)
+{
+    auto iter = codeTypeToGraphPinSerialization.find(type);
+    if (iter == codeTypeToGraphPinSerialization.end())
+        return NULL;
+    return iter->second;
+}
+
+GraphPin* GraphPinFactory::construct(const Name& type, const string& name)
+{
+    const Serialization* factory = getFactory(type);
+    if (factory == NULL)
+        return NULL;
+    SerializationInfo info;
+    info.name = name;
+    Serializable* serializable = factory->instantiate(info);
+    GraphPin* pin = dynamic_cast<GraphPin*>(serializable);
+    if (pin == NULL)
+        delete serializable;
+    return pin;
+}
+
+GraphPinCodeTypeAttribute::GraphPinCodeTypeAttribute(const Name& type)
+    : Attribute("GraphPinCodeType", true)
+    , typeFinal(type)
+{
+}
+
+bool GraphPinCodeTypeAttribute::checkType(const Name& type) const
+{
+    return type == typeFinal;
+}
+
+const Name& GraphPinCodeTypeAttribute::getType() const
+{
+    return typeFinal;
+}
+
+void GraphPinCodeTypeAttribute::resolve(Attribute* sourceAttribute, Serialization& serialization)
+{
+    if (sourceAttribute) {
+        const GraphPinCodeTypeAttribute* attr = sourceAttribute->cast<GraphPinCodeTypeAttribute>();
+        typeFinal = attr->typeFinal;
+    }
+}
+
+void GraphPinCodeTypeAttribute::finalize(Serialization& serialization)
+{
+    GraphPinFactory::get().registerType(typeFinal, serialization);
+}
+
 SerializeInstance(FlowPin);
 
 FlowPin::FlowPin(const string& name) : GraphPin(name)
@@ -234,7 +304,7 @@ string GraphNode::getName() const
 
 string GraphNode::getDisplayName() const
 {
-    return name.empty() ? displayName : name;
+    return displayName.empty() ? name : displayName;
 }
 
 Color GraphNode::getNodeColor() const

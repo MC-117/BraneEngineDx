@@ -11,7 +11,7 @@ public:
 		ST_None, ST_Vertex, ST_Tessellation_Control, ST_Tessellation_Evalution,
 		ST_Geometry, ST_Fragment, ST_Compute, ST_Material, ST_Order, ST_Adapter,
 		ST_TwoSide, ST_CullFront, ST_CastShadow, ST_NoEarlyZ, ST_LocalSize,
-		ST_Pass, ST_Include, ST_Condition
+		ST_Pass, ST_Include, ST_Condition, ST_Node, ST_Pin
 	};
 
 	ShaderCompiler();

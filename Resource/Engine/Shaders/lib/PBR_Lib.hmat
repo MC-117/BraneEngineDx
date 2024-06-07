@@ -74,7 +74,7 @@ float3 ComputeF0(float3 albedo, float metallic)
     return lerp(F0, albedo, metallic);
 }
 
-float3 PBR_Lo(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, float metallic, float roughness)
+SplitLight PBR_Lo(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, float metallic, float roughness)
 {
     float3 H = normalize(V + L);
     
@@ -87,26 +87,32 @@ float3 PBR_Lo(float3 N, float3 V, float3 L, float3 radiance, float3 albedo, floa
     float3 kD = Float3(1.0) - kS;
     kD *= 1.0 - metallic;
 
+    float NdotL = max(dot(N, L), 0.0);
+    float NdotV = max(dot(N, V), 0.0);
+
     float3 nominator = NDF * G * F;
-    float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001; 
+    float denominator = 4 * NdotV * NdotL + 0.001;
     float3 specular = nominator / denominator;
 
-    float NdotL = max(dot(N, L), 0.0);
-    return (kD * albedo / PI + specular) * radiance * NdotL;
+    SplitLight light;
+    light.diffuse = kD * albedo * (1.0f / PI) * radiance * NdotL;
+    light.specular = specular * radiance * NdotL;
+
+    return light;
 }
 
 float3 PBR_Lo_DirectLight(in DirectLight directLight, float3 N, float3 V, float3 albedo, float metallic, float roughness)
 {
     float3 L = normalize(directLight.direction);
     float3 radiance = getLightRadiance(directLight);
-    return PBR_Lo(N, V, L, radiance, albedo, metallic, roughness);
+    return MargeSplitLight(PBR_Lo(N, V, L, radiance, albedo, metallic, roughness));
 }
 
 float3 PBR_Lo_PointLight(in PointLight pointLight, float3 worldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness)
 {
     float3 L = normalize(pointLight.pos - worldPos);
     float3 radiance = getLightRadiance(pointLight, worldPos);
-    return PBR_Lo(N, V, L, radiance, albedo, metallic, roughness);
+    return MargeSplitLight(PBR_Lo(N, V, L, radiance, albedo, metallic, roughness));
 }
 
 float3 PBR_Ambient(float3 albedo, float ao)

@@ -40,7 +40,7 @@ protected:
 
 	string objectFilterName;
 	string duplicateName;
-	Serialization* behaviorType = NULL;
+	const Serialization* behaviorType = NULL;
 	vector<Object*> objects;
 	vector<int> ints;
 	vector<float> floats;

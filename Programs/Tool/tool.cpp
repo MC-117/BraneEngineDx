@@ -6,6 +6,7 @@
 #include "Core/Timeline/TimelineWindow.h"
 #include "Core/Application.h"
 #include "Core/EngineLoop/GUIEngineLoop.h"
+#include "Core/Graph/GraphWindow.h"
 #include "Core/Importer/Importer.h"
 #include "Core/GUI/ShaderManagerWindow.h"
 #include "ImPlot/implot.h"
@@ -47,6 +48,7 @@ public:
 		toolShelf.registTool(*new AnimationConverter());
 		toolShelf.registTool(*new TimelineWindow());
 		toolShelf.registTool(*new ImPlotWindow());
+		toolShelf.registTool(*new GraphWindow());
 
 		GUI::get().setMainControl(&toolShelf);
 		engine.setEngineLoop(*new GUIOnlyEngineLoop(GUI::get()));

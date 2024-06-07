@@ -37,8 +37,8 @@ protected:
 	Graph* openingSubGraph = NULL;
 	string createNodeFilter;
 	ImVec2 popupCurserPos;
-	Serialization* createPinType = NULL;
-	Serialization* createVariableType = NULL;
+	const Serialization* createPinType = NULL;
+	const Serialization* createVariableType = NULL;
 	string createParameterName;
 	string createReturnName;
 	string createVariableName;

@@ -3,41 +3,6 @@
 
 namespace Code
 {
-    const Name float_t = "float";
-    const Name int_t = "int";
-    const Name bool_t = "bool";
-    const Name string_t = "string";
-    const Name char_t = "char";
-    const Name true_t = "true";
-    const Name false_t = "false";
-    const Name Vector2f_t = "Vector2f";
-    const Name Vector3f_t = "Vector3f";
-    const Name Vector4f_t = "Vector4f";
-    const Name Quaternionf_t = "Quaternionf";
-    const Name Color_t = "Color";
-
-    const Name assign_op = "_assign_op_";
-    const Name access_op = "_access_op_";
-    const Name add_op = "_add_op_";
-    const Name sub_op= "_sub_op_";
-    const Name mul_op = "_mul_op_";
-    const Name div_op = "_div_op_";
-    const Name mod_op = "_mod_op_";
-    const Name minus_op = "_minus_op_";
-    const Name lShift_op = "_l_shift_op_";
-    const Name rShift_op = "_r_shift_op_";
-    const Name gre_op = "_gre_op_";
-    const Name les_op = "_les_op_";
-    const Name eq_op = "_eq_op_";
-    const Name notEq_op = "_not_eq_op_";
-    const Name greEq_op = "_gre_eq_op_";
-    const Name lesEq_op = "_les_eq_op_";
-    const Name not_op = "_not_op_";
-    const Name and_op = "_and_op_";
-    const Name or_op = "_or_op_";
-    const Name xor_op = "_xor_op_";
-    const Name cond_op = "_cond_op_";
-    
     int getCodeOperatorNum(const Name& operatorType)
     {
         static const unordered_map<Name, int> formatterMap = {
@@ -124,7 +89,7 @@ CodeParameter::CodeParameter(const char* string)
 CodeParameter::CodeParameter(const std::string& string)
     : type(String_t)
 {
-    const size_t len = string.size();
+    const size_t len = string.size() + 1;
     _string = new char[len];
     strcpy_s(_string, len, string.c_str());
 }

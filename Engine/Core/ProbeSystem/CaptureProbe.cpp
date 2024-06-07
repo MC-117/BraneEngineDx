@@ -7,7 +7,7 @@ CaptureProbe::CaptureProbe(const string& name) : Transform(name)
 {
 }
 
-CaptureProbeRender* CaptureProbe::createCaptureProbeRender(Serialization& serialization)
+CaptureProbeRender* CaptureProbe::createCaptureProbeRender(const Serialization& serialization)
 {
 	if (!serialization.isChildOf(CaptureProbeRender::CaptureProbeRenderSerialization::serialization))
 		return NULL;

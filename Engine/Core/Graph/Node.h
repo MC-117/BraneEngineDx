@@ -65,6 +65,34 @@ protected:
 	Ref<GraphPin> connectedPin;
 };
 
+class GraphPinFactory
+{
+public:
+	GraphPinFactory() = default;
+
+	static GraphPinFactory& get();
+
+	void registerType(const Name& type, const Serialization& serialization);
+	const Serialization* getFactory(const Name& type);
+	GraphPin* construct(const Name& type, const string& name);
+protected:
+	unordered_map<Name, const Serialization*> codeTypeToGraphPinSerialization;
+};
+
+class GraphPinCodeTypeAttribute : public Attribute
+{
+public:
+	GraphPinCodeTypeAttribute(const Name& type);
+	
+	bool checkType(const Name& type) const;
+	const Name& getType() const;
+
+	virtual void resolve(Attribute* sourceAttribute, Serialization& serialization);
+	virtual void finalize(Serialization& serialization);
+protected:
+	Name typeFinal;
+};
+
 class ENGINE_API FlowPin : public GraphPin
 {
 	friend class GraphNode;

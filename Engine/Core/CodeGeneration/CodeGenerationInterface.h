@@ -5,40 +5,41 @@
 
 namespace Code
 {
-    ENGINE_API extern const Name float_t;
-    ENGINE_API extern const Name int_t;
-    ENGINE_API extern const Name bool_t;
-    ENGINE_API extern const Name string_t;
-    ENGINE_API extern const Name char_t;
-    ENGINE_API extern const Name true_t;
-    ENGINE_API extern const Name false_t;
-    ENGINE_API extern const Name Vector2f_t;
-    ENGINE_API extern const Name Vector3f_t;
-    ENGINE_API extern const Name Vector4f_t;
-    ENGINE_API extern const Name Quaternionf_t;
-    ENGINE_API extern const Name Color_t;
-
-    ENGINE_API extern const Name assign_op;
-    ENGINE_API extern const Name access_op;
-    ENGINE_API extern const Name add_op;
-    ENGINE_API extern const Name sub_op;
-    ENGINE_API extern const Name mul_op;
-    ENGINE_API extern const Name div_op;
-    ENGINE_API extern const Name mod_op;
-    ENGINE_API extern const Name minus_op;
-    ENGINE_API extern const Name lShift_op;
-    ENGINE_API extern const Name rShift_op;
-    ENGINE_API extern const Name gre_op;
-    ENGINE_API extern const Name les_op;
-    ENGINE_API extern const Name eq_op;
-    ENGINE_API extern const Name notEq_op;
-    ENGINE_API extern const Name greEq_op;
-    ENGINE_API extern const Name lesEq_op;
-    ENGINE_API extern const Name not_op;
-    ENGINE_API extern const Name and_op;
-    ENGINE_API extern const Name or_op;
-    ENGINE_API extern const Name xor_op;
-    ENGINE_API extern const Name cond_op;
+    static const Name float_t = "float";
+    static const Name int_t = "int";
+    static const Name bool_t = "bool";
+    static const Name string_t = "string";
+    static const Name char_t = "char";
+    static const Name KeyCode_t = "KeyCode";
+    static const Name true_t = "true";
+    static const Name false_t = "false";
+    static const Name Vector2f_t = "Vector2f";
+    static const Name Vector3f_t = "Vector3f";
+    static const Name Vector4f_t = "Vector4f";
+    static const Name Quaternionf_t = "Quaternionf";
+    static const Name Color_t = "Color";
+    
+    const Name assign_op = "_assign_op_";
+    const Name access_op = "_access_op_";
+    const Name add_op = "_add_op_";
+    const Name sub_op= "_sub_op_";
+    const Name mul_op = "_mul_op_";
+    const Name div_op = "_div_op_";
+    const Name mod_op = "_mod_op_";
+    const Name minus_op = "_minus_op_";
+    const Name lShift_op = "_l_shift_op_";
+    const Name rShift_op = "_r_shift_op_";
+    const Name gre_op = "_gre_op_";
+    const Name les_op = "_les_op_";
+    const Name eq_op = "_eq_op_";
+    const Name notEq_op = "_not_eq_op_";
+    const Name greEq_op = "_gre_eq_op_";
+    const Name lesEq_op = "_les_eq_op_";
+    const Name not_op = "_not_op_";
+    const Name and_op = "_and_op_";
+    const Name or_op = "_or_op_";
+    const Name xor_op = "_xor_op_";
+    const Name cond_op = "_cond_op_";
 
     ENGINE_API int getCodeOperatorNum(const Name& operatorType);
 };

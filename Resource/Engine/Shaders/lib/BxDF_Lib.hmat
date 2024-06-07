@@ -1,6 +1,16 @@
+#include "Surface_Def.hmat"
+
+#pin
 struct BxDF
 {
     float3 diffuse;
     float3 specular;
     float3 transmittance;
+};
+
+#pin BxDFContext
+struct BxDFContext
+{
+    Surface surf;
+    float3 V;
 };

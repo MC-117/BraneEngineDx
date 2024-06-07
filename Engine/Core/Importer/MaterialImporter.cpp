@@ -1,9 +1,11 @@
 #include "MaterialImporter.h"
 #include "../Material.h"
 #include "../Asset.h"
+#include "../ShaderCode/ShaderCompiler.h"
 
 ImporterRegister<MaterialImporter> matImporter(".mat");
 ImporterRegister<MaterialInstanceImporter> imatImporter(".imat", true);
+ImporterRegister<ShaderHeaderImporter> hmatImporter(".hmat");
 
 bool MaterialImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 {
@@ -52,4 +54,19 @@ bool MaterialInstanceImporter::loadInternal(const ImportInfo& info, ImportResult
 		result.status = ImportResult::RegisterFailed;
 		return false;
 	}
+}
+
+bool ShaderHeaderImporter::loadInternal(const ImportInfo& info, ImportResult& result)
+{
+	ShaderCompiler compiler;
+	compiler.init(info.path);
+	bool succeed = true;
+	while (compiler.compile()) {
+		succeed &= compiler.isSuccessed();
+		if (!succeed) {
+			result.status = ImportResult::LoadFailed;
+			break;
+		}
+	}
+	return succeed;
 }

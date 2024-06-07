@@ -62,14 +62,12 @@ Editor* EditorManager::getEditor(Serializable& serialzable)
 {
 	if (&serialzable == NULL)
 		return NULL;
-	Serialization* serialization = &serialzable.getSerialization();
-	Editor* editor = getEditor(serialization->type, &serialzable);
-	if (editor != NULL)
-		return editor;
-	do {
-		editor = getEditor(serialization->baseType, &serialzable);
+	const Serialization* serialization = &serialzable.getSerialization();
+	Editor* editor = NULL;
+	while (editor == NULL && serialization != NULL) {
+		editor = getEditor(serialization->type, &serialzable);
 		serialization = serialization->getBaseSerialization();
-	} while (editor == NULL && serialization != NULL);
+	}
 	return editor;
 }
 

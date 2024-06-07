@@ -197,14 +197,13 @@ void ClangWriter::write(const char* fmt_str, va_list ap)
     std::unique_ptr<char[]> formatted;
     while (1) {
         formatted.reset(new char[n]); /* Wrap the plain char array into the unique_ptr */
-        memcpy_s(&formatted[0], len, fmt_str, len);
         final_n = vsnprintf(&formatted[0], n, fmt_str, ap);
         if (final_n < 0 || final_n >= n)
             n += abs(final_n - n + 1);
         else
             break;
     }
-    formatted[final_n + 1] = '\0';
+    //formatted[final_n + 1] = '\0';
     output() << formatted.get();
 }
 
@@ -442,7 +441,7 @@ bool ClangScopeBackend::output(const std::vector<CodeParameter>& returnValues)
         writer.write("return;\n");
         break;
     case 1:
-        writer.write("return %s;\n", returnValues[0].toString(*this));
+        writer.write("return %s;\n", returnValues[0].toString(*this).c_str());
         break;
     default:
         for (int i = 0; i < outCount; i++) {

@@ -131,8 +131,32 @@ IMP_VALUE_PIN(float, Float, Color(147, 226, 74), CodeParameter(getDefaultValue()
 IMP_VALUE_PIN(int, Int, Color(68, 201, 156), CodeParameter(getDefaultValue()));
 IMP_VALUE_PIN(bool, Bool, Color(220, 48, 48), CodeParameter(CodeBool(getDefaultValue())));
 IMP_VALUE_PIN(string, String, Color(124, 21, 153), CodeParameter(getDefaultValue()));
-IMP_VALUE_PIN(int, Char, Color(98, 16, 176), CodeParameter(CodeChar(getDefaultValue())));
-IMP_VALUE_PIN(int, KeyCode, Color(203, 217, 22), CodeParameter(getDefaultValue()));
+
+IMP_CUSTOM_VALUE_PIN(char, Char, Color(98, 16, 176), CodeParameter(CodeChar(getDefaultValue())),
+{
+    int intValue = 0;
+    from.get("defaultValue", intValue);
+    defaultValue = intValue;
+	return true;
+},
+{
+    const int intValue = defaultValue;
+    to.set("defaultValue", intValue);
+	return true;
+});
+
+IMP_CUSTOM_VALUE_PIN(KeyCode, KeyCode, Color(203, 217, 22), CodeParameter(CodeChar(getDefaultValue())),
+{
+    int intValue = 0;
+    from.get("defaultValue", intValue);
+    defaultValue = intValue;
+    return true;
+},
+{
+    const int intValue = defaultValue;
+    to.set("defaultValue", intValue);
+    return true;
+});
 
 IMP_OBJECT_VALUE_PIN(Vector2f, Color(92, 179, 34),
 {

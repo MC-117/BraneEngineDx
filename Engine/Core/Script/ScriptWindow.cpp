@@ -32,7 +32,8 @@ const std::string& TempScript::getName() const
 
 const std::string& TempScript::getCodePath() const
 {
-	return "none";
+	static const string none = "none";
+	return none;
 }
 
 const std::string& TempScript::getSourceCode() const

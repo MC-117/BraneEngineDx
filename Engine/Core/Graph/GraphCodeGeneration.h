@@ -14,6 +14,7 @@ public:
     unordered_map<const GraphVariable*, CodeParameter> variableToParameterMap;
     stack<BackendInfo> backendStack;
     stack<GraphNode*> nodeStack;
+    unordered_set<GraphNode*> generatedNodes;
     CodeFunctionInvocation invocation;
     CodeFunctionSignature signature;
 

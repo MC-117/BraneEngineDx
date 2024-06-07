@@ -12,7 +12,7 @@ public:
 
 	CaptureProbe(const string& name = "CaptureProbe");
 
-	virtual CaptureProbeRender* createCaptureProbeRender(Serialization& serialization);
+	virtual CaptureProbeRender* createCaptureProbeRender(const Serialization& serialization);
 	virtual CaptureProbeRender* getCaptureProbeRender();
 
 	virtual void begin();

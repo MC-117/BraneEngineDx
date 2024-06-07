@@ -5,6 +5,9 @@ Name HLSLWriter::convertKeyword(const Name& keyword)
     static const unordered_map<Name, Name> hlslKeywordMap = {
         { ShaderCode::Texture2D_t, "Texture2D" },
         { ShaderCode::TextureCube_t, "TextureCube" },
+        { Code::Vector2f_t, "float2" },
+        { Code::Vector3f_t, "float3" },
+        { Code::Vector4f_t, "float4" },
     };
     auto iter = hlslKeywordMap.find(keyword);
     if (iter != hlslKeywordMap.end())

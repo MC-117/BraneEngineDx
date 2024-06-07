@@ -136,23 +136,53 @@ public: \
 		return new PIN_TYPE(PinType)(from.name); \
 	} \
  \
-	virtual bool deserialize(const SerializationInfo& from) \
-	{ \
-		ValuePin::deserialize(from); \
-		from.get("defaultValue", defaultValue); \
-		return true; \
-	} \
+	virtual bool deserialize(const SerializationInfo& from); \
  \
-	virtual bool serialize(SerializationInfo& to) \
-	{ \
-		ValuePin::serialize(to); \
-		to.set("defaultValue", defaultValue); \
-		return true; \
-	} \
+	virtual bool serialize(SerializationInfo& to); \
 protected: \
 	BaseType value = BaseType(); \
 	BaseType defaultValue = BaseType(); \
 };
+
+#define IMP_CUSTOM_VALUE_PIN(BaseType, PinType, PinColor, DefaultSymbolValue, DesFunc, SerFunc) \
+PIN_TYPE_IMP(PinType, BaseType, DEF_ATTR(GraphPinCodeType, Code::BaseType##_t)); \
+Color PIN_TYPE(PinType)::getPinColor() const  \
+{ \
+return PinColor; \
+} \
+Name PIN_TYPE(PinType)::getVariableType() const \
+{ \
+return Code::BaseType##_t; \
+} \
+\
+bool PIN_TYPE(PinType)::generateDefaultVariable(GraphCodeGenerationContext& context) \
+{ \
+generateTempVariable(context, DefaultSymbolValue); \
+return true; \
+} \
+bool PIN_TYPE(PinType)::deserialize(const SerializationInfo& from) \
+{ \
+	ValuePin::deserialize(from); \
+	DesFunc \
+} \
+bool PIN_TYPE(PinType)::serialize(SerializationInfo& to) \
+{ \
+	ValuePin::serialize(to); \
+	SerFunc \
+} \
+\
+
+#define IMP_VALUE_PIN(BaseType, PinType, PinColor, DefaultSymbolValue) \
+IMP_CUSTOM_VALUE_PIN(BaseType, PinType, PinColor, DefaultSymbolValue, \
+{ \
+	from.get("defaultValue", defaultValue); \
+	return true; \
+}, \
+{ \
+	to.set("defaultValue", defaultValue); \
+	return true; \
+}) \
+\
 
 #define DEC_OBJECT_VALUE_PIN(ObjType) \
 class PIN_TYPE(ObjType) : public ValuePin \
@@ -243,26 +273,8 @@ protected: \
 	void serializeValue(SerializationInfo& info, ObjType& value); \
 };
 
-#define IMP_VALUE_PIN(BaseType, PinType, PinColor, DefaultSymbolValue) \
-PIN_TYPE_IMP(PinType); \
-Color PIN_TYPE(PinType)::getPinColor() const  \
-{ \
-	return PinColor; \
-} \
-Name PIN_TYPE(PinType)::getVariableType() const \
-{ \
-	return Code::BaseType##_t; \
-} \
-\
-bool PIN_TYPE(PinType)::generateDefaultVariable(GraphCodeGenerationContext& context) \
-{ \
-	generateTempVariable(context, DefaultSymbolValue); \
-	return true; \
-} \
-\
-
 #define IMP_OBJECT_VALUE_PIN(ObjType, PinColor, DefaultSymbolValue, DesFunc, SerFunc) \
-PIN_TYPE_IMP(ObjType); \
+PIN_TYPE_IMP(ObjType, ObjType, DEF_ATTR(GraphPinCodeType, Code::ObjType##_t)); \
 Color PIN_TYPE(ObjType)::getPinColor() const  \
 { \
 	return PinColor; \
@@ -288,12 +300,14 @@ void PIN_TYPE(ObjType)::serializeValue(SerializationInfo& info, ObjType& value) 
 } \
 \
 
+typedef unsigned char KeyCode;
+
 DEC_VALUE_PIN(float, Float);
 DEC_VALUE_PIN(int, Int);
 DEC_VALUE_PIN(bool, Bool);
 DEC_VALUE_PIN(string, String);
-DEC_VALUE_PIN(int, Char);
-DEC_VALUE_PIN(int, KeyCode);
+DEC_VALUE_PIN(char, Char);
+DEC_VALUE_PIN(KeyCode, KeyCode);
 
 DEC_OBJECT_VALUE_PIN(Vector2f);
 DEC_OBJECT_VALUE_PIN(Vector3f);

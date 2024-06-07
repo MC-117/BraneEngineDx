@@ -1,6 +1,12 @@
 #include "ShaderCompiler.h"
+
+#include <array>
+
 #include "../Console.h"
 #include "../Utility/RenderUtility.h"
+#include "../CodeGeneration/CodeGenerationInterface.h"
+#include "ShaderGraph/ShaderNode.h"
+#include "../Attributes/TagAttribute.h"
 
 unordered_map<string, ShaderCompiler::ShaderToken> ShaderCompiler::keywords =
 {
@@ -21,6 +27,8 @@ unordered_map<string, ShaderCompiler::ShaderToken> ShaderCompiler::keywords =
 	{ "localsize", ST_LocalSize },
 	{ "include", ST_Include },
 	{ "condition", ST_Condition },
+	{ "node", ST_Node },
+	{ "pin", ST_Pin },
 };
 
 ShaderCompiler::ShaderCompiler() : manager(ShaderManager::getInstance())
@@ -95,6 +103,268 @@ void ShaderCompiler::setAdapaterName(const string& name)
 {
 	adapterName = name;
 }
+
+class CParser
+{
+public:
+	CParser(istream& stream)
+		: stream(stream)
+		, backupPos(stream.tellg())
+	{
+		
+	}
+
+	bool parseFunctionSignature(CodeFunctionSignature& func)
+	{
+		token = getToken();
+		if (token == T_Name) {
+			match(T_Name);
+			func.outputs.emplace_back(tokenString, Name::none);
+		}
+		else if (token != T_Void) {
+			match(T_Void);
+		}
+		else {
+			return false;
+		}
+		if (match(T_Name)) {
+			func.name = tokenString;
+		}
+		else {
+			return false;
+		}
+		if (!match(T_LPa))
+			return false;
+		while (token != T_RPa) {
+			if (parseParameter(func)) {
+				if (token == T_Comma) {
+					match(T_Comma);
+				}
+				else if (token != T_RPa) {
+					findError("find invalid character to split parameters", T_None);
+					return false;
+				}
+			}
+			else {
+				return false;
+			}
+		}
+		return match(T_RPa);
+	}
+
+	bool parseStruct(CodeFunctionSignature& constructor)
+	{
+		token = getToken();
+		if (!match(T_Struct))
+			return false;
+		if (match(T_Name)) {
+			constructor.name = tokenString;
+		}
+		else
+			return false;
+		if (!match(T_LBr))
+			return false;
+		while (token != T_RBr) {
+			string name, type;
+
+			if (match(T_Name)) {
+				type = tokenString;
+			}
+			else {
+				return false;
+			}
+
+			if (match(T_Name)) {
+				name = tokenString;
+				constructor.parameters.emplace_back(type, name);
+			}
+			else {
+				return false;
+			}
+
+			while (token == T_Comma) {
+				match(T_Comma);
+
+				if (match(T_Name)) {
+					name = tokenString;
+					constructor.parameters.emplace_back(type, name);
+				}
+				else {
+					return false;
+				}
+			}
+
+			if (!match(T_SemiColon))
+				return false;
+		}
+		return match(T_RBr);
+	}
+
+	void finalize()
+	{
+		stream.seekg(backupPos);
+	}
+protected:
+	enum State
+	{
+		S_Start, S_Name, S_Done
+	};
+	
+	enum Token
+	{
+		T_None, T_LBr, T_RBr, T_LPa, T_RPa, T_Comma, T_SemiColon, T_End, T_Name, T_Void, T_In, T_Out, T_InOut, T_Struct, T_Error
+	};
+
+	const array<const char*, 15> TokenName = {
+		"None", "{", "}", "(", ")", ",", ";", "EOF", "name", "void", "in", "out", "inout", "struct", "error"
+	};
+
+	istream& stream;
+	size_t backupPos;
+	bool foundError = false;
+	Token lastToken = T_None, token = T_None;
+	string tokenString, nextTokenString;
+
+	char getNextChar()
+	{
+		char c;
+		if (!stream.get(c))
+			return '\0';
+		return c;
+	}
+
+	void ungetChar()
+	{
+		stream.unget();
+	}
+
+	Token getToken()
+	{
+		State state = S_Start;
+		Token t = T_None;
+		while (state != S_Done) {
+			const char c = getNextChar();
+			if (c == '\0') {
+				t = T_End;
+				return t;
+			}
+			
+			bool save = true;
+
+			switch (state) {
+			case S_Start:
+				if (isspace(c))
+					continue;
+				nextTokenString = "";
+				if (isalpha(c) || c == '_')
+					state = S_Name;
+				else {
+					switch (c) {
+					case '(': t = T_LPa; break;
+					case ')': t = T_RPa; break;
+					case '{': t = T_LBr; break;
+					case '}': t = T_RBr; break;
+					case ',': t = T_Comma; break;
+					case ';': t = T_SemiColon; break;
+					default: t = T_Error; break;
+					}
+					state = S_Done;
+				}
+				break;
+			case S_Name:
+				if (!isalpha(c) && !isdigit(c) && c != '_' && c != '-')
+				{
+					ungetChar();
+					save = false;
+					state = S_Done;
+					t = T_Name;
+				}
+				break;
+			}
+
+			if (save)
+				nextTokenString += c;
+		}
+
+		if (state == S_Done && t == T_Name) {
+			if (nextTokenString == "void") {
+				t = T_Void;
+			}
+			else if (nextTokenString == "struct") {
+				t = T_Struct;
+			}
+			else if (nextTokenString == "in") {
+				t = T_In;
+			}
+			else if (nextTokenString == "out") {
+				t = T_Out;
+			}
+			else if (nextTokenString == "inout") {
+				t = T_InOut;
+			}
+		}
+
+		return t;
+	};
+
+	void findError(const string& msg, Token expected)
+	{
+		Console::error("Function parser error: current token string '%s', but '%s' is expected, %s",
+			tokenString.c_str(), TokenName[expected], msg.c_str());
+		foundError = true;
+	}
+
+	bool match(Token expected)
+	{
+		if (token == expected)
+		{
+			tokenString = nextTokenString;
+			lastToken = token;
+			token = getToken();
+		}
+		else findError("match failed", expected);
+		return !foundError;
+	}
+
+	bool parseParameter(CodeFunctionSignature& func)
+	{
+		Token paramToken = T_In;
+
+		if (token == T_In || token == T_Out) {
+			paramToken = token;
+			match(token);
+		}
+
+		string name, type;
+
+		if (match(T_Name)) {
+			type = tokenString;
+		}
+		else {
+			return false;
+		}
+
+		if (match(T_Name)) {
+			name = tokenString;
+		}
+		else {
+			return false;
+		}
+			
+		switch (paramToken) {
+		case T_In:
+			func.parameters.emplace_back(type, name);
+			break;
+		case T_Out:
+			func.outputs.emplace_back(type, name);
+			break;
+		default:
+			findError("error parameter access type", T_None);
+			return false;
+		}
+		return true;
+	}
+};
 
 bool ShaderCompiler::compile()
 {
@@ -175,6 +445,31 @@ bool ShaderCompiler::compile()
 			case ShaderCompiler::ST_Condition:
 				if (command.size() >= 2) {
 					addCondition(command);
+				}
+				break;
+			case ShaderCompiler::ST_Pin:
+				if (command.size() == 1) {
+					CParser cparser(file);
+					string structName;
+					CodeFunctionSignature constructor;
+					if (cparser.parseStruct(constructor)) {
+						REGISTER_SHADER_STRUCT_PIN(constructor.name);
+						REGISTER_SHADER_STRUCT_FUNCTION_NODES(constructor);
+					}
+					cparser.finalize();
+				}
+				if (command.size() == 2) {
+					REGISTER_SHADER_STRUCT_PIN(command[1]);
+				}
+				break;
+			case ShaderCompiler::ST_Node:
+				{
+					CParser cparser(file);
+					CodeFunctionSignature signature;
+					if (cparser.parseFunctionSignature(signature)) {
+						REGISTER_SHADER_FUNCTION_NODE(signature);
+					}
+					cparser.finalize();
 				}
 				break;
 			default:

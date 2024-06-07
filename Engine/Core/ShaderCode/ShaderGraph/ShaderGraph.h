@@ -16,5 +16,5 @@ public:
 
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:
-	ShaderBXDFPin* bxdfPin;
+	ShaderStructPin* bxdfPin;
 };

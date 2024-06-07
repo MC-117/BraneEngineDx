@@ -31,6 +31,11 @@ struct SplitLight
     float3 specular;
 };
 
+float3 MargeSplitLight(SplitLight light)
+{
+    return light.diffuse + light.specular;
+}
+
 cbuffer DirectLightBuffer : register(DIRECT_LIGHT_BIND_INDEX)
 {
     DirectLight directLight;

@@ -535,9 +535,9 @@ namespace ImGui {
 	{
 		list<Object*> objs;
 		ObjectConstIterator iter(root);
-		Serialization* serialization = SerializationManager::getSerialization(filterType);
+		const Serialization* serialization = SerializationManager::getSerialization(filterType);
 		while (iter.next()) {
-			Serialization& _serialization = iter.current().getSerialization();
+			const Serialization& _serialization = iter.current().getSerialization();
 			if ((filterType.empty() ||
 				serialization == &_serialization ||
 				(serialization != NULL && _serialization.isChildOf(*serialization))) &&
@@ -691,9 +691,9 @@ namespace ImGui {
 		static string filterName;
 		return AssetCombo(label, selectAsset, filterName, AssetType);
 	}
-	bool TypeCombo(const char* label, Serialization*& selectType, string& filterName, const Serialization& baseType, const vector<Name>& tags)
+	bool TypeCombo(const char* label, const Serialization*& selectType, string& filterName, const Serialization& baseType, const vector<Name>& tags)
 	{
-		Serialization* oldType = selectType;
+		const Serialization* oldType = selectType;
 		string displayName;
 		if (selectType == NULL)
 			displayName = "(null)";
@@ -728,7 +728,7 @@ namespace ImGui {
 		}
 		return oldType != selectType;
 	}
-	bool TypeCombo(const char* label, Serialization*& selectType, const Serialization& baseType, const vector<Name>& tags)
+	bool TypeCombo(const char* label, const Serialization*& selectType, const Serialization& baseType, const vector<Name>& tags)
 	{
 		static string filterName;
 		return TypeCombo(label, selectType, filterName, baseType, tags);

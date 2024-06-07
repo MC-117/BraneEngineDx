@@ -16,3 +16,11 @@ public:
 protected:
 	virtual bool loadInternal(const ImportInfo& info, ImportResult& result);
 };
+
+class ShaderHeaderImporter : public IImporter
+{
+public:
+	ShaderHeaderImporter() = default;
+protected:
+	virtual bool loadInternal(const ImportInfo& info, ImportResult& result);
+};

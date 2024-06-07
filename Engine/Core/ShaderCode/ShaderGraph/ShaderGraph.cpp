@@ -6,7 +6,10 @@ SerializeInstance(ShaderGraph, DEF_ATTR(Tag, "Shader"));
 ShaderGraph::ShaderGraph()
 {
     flag = Flag::Expression;
-    bxdfPin = new ShaderBXDFPin("BXDF");
+    static const Name BxDFName = "BxDF";
+    bxdfPin = castTo<ShaderStructPin>(GraphPinFactory::get().construct(BxDFName, BxDFName.str()));
+    if (bxdfPin == NULL)
+        throw runtime_error("BxDF ShaderStructPin not found");
     addReturn(bxdfPin);
     addReturnNode();
 }

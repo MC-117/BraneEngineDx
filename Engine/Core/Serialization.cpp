@@ -387,7 +387,7 @@ bool Serialization::serialize(Serializable & object, const string & path, const 
 
 Serializable * Serialization::clone(Serializable & object)
 {
-	Serialization& serialization = object.getSerialization();
+	const Serialization& serialization = object.getSerialization();
 	SerializationInfo info;
 	object.serialize(info);
 	Serializable* re = serialization.instantiate(info);

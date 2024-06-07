@@ -25,7 +25,7 @@ void CaptureProbeEditor::onHandleGizmo(GizmoInfo& info)
 
 void CaptureProbeEditor::onProbeGUI(EditorInfo& info)
 {
-	Serialization* serialization = captureProbe->captureProbeRender ?
+	const Serialization* serialization = captureProbe->captureProbeRender ?
 		&captureProbe->captureProbeRender->getSerialization() : NULL;
 	if (ImGui::TypeCombo("ProbeType", serialization,
 		CaptureProbeRender::CaptureProbeRenderSerialization::serialization)) {

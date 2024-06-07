@@ -1,6 +1,24 @@
 #include "../lib/BxDF_Lib.hmat"
+#include "../lib/PBR_Lib.hmat"
 
-BxDF OpaqueLit_BRDF(in Surface surf)
+#node
+BxDF OpaqueLit_BRDF(in BxDFContext context)
 {
-    
+    Surface surf = context.surface;
+    float3 V = context.V;
+    if (directLight.intensity != 0) {
+        float shadowFactor = getShadow(directLight, surf);
+        Lo += PBR_Lo_DirectLight(directLight, surf.Normal, V, surf.albedo.xyz,
+            surf.metallic, surf.roughness) * shadowFactor;
+    }
+
+    PointLight localLight;
+    ITER_LOCAL_LIGHT(surf.WorldPos, localLight)
+    {
+        if (localLight.intensity != 0) {
+            float shadowFactor = getShadow(localLight, surf);
+            Lo += PBR_Lo_PointLight(localLight, surf.WorldPos, surf.Normal, V,
+                surf.albedo.xyz, surf.metallic, surf.roughness) * shadowFactor;
+        }
+    }
 }

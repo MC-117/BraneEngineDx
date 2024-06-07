@@ -57,13 +57,9 @@ public:
 
 	template<class T>
 	bool get(const Path& path, T& object) const;
-	template<class T>
-	bool get(const Path& path, T& object);
 
 	template<class T>
 	bool get(const size_t i, T& object) const;
-	template<class T>
-	bool get(const size_t i, T& object);
 
 	const SerializationInfo* get(const Path& name) const;
 	SerializationInfo* get(const Path& name);
@@ -71,372 +67,13 @@ public:
 	SerializationInfo* get(const size_t i);
 };
 
-template<>
-inline bool SerializationInfo::get<float>(const Path & path, float & object) const
-{
-	if (path.empty())
-		return false;
-	if (path.size() == 1) {
-		auto iter = numFeild.find(path[0]);
-		if (iter == numFeild.end())
-			return false;
-		object = numList[iter->second];
-		return true;
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		return sublists[_iter->second].get<float>(path.popTop(), object);
-	}
-}
-
-template<>
-inline bool SerializationInfo::get<float>(const Path & path, float & object)
-{
-	if (path.empty())
-		return false;
-	if (path.size() == 1) {
-		auto iter = numFeild.find(path[0]);
-		if (iter == numFeild.end())
-			return false;
-		object = numList[iter->second];
-		return true;
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		return sublists[_iter->second].get<float>(path.popTop(), object);
-	}
-}
-
-template<>
-inline bool SerializationInfo::get<float>(const size_t i, float & object) const
-{
-	if (i < numList.size()) {
-		object = numList[i];
-		return true;
-	}
-	return false;
-}
-
-template<>
-inline bool SerializationInfo::get<float>(const size_t i, float & object)
-{
-	if (i < numList.size()) {
-		object = numList[i];
-		return true;
-	}
-	return false;
-}
-
-template<>
-inline bool SerializationInfo::get<int>(const Path& path, int& object) const
-{
-	if (path.empty())
-		return false;
-	if (path.size() == 1) {
-		auto iter = numFeild.find(path[0]);
-		if (iter == numFeild.end())
-			return false;
-		object = numList[iter->second];
-		return true;
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		return sublists[_iter->second].get<int>(path.popTop(), object);
-	}
-}
-
-template<>
-inline bool SerializationInfo::get<int>(const Path& path, int& object)
-{
-	if (path.empty())
-		return false;
-	if (path.size() == 1) {
-		auto iter = numFeild.find(path[0]);
-		if (iter == numFeild.end())
-			return false;
-		object = numList[iter->second];
-		return true;
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		return sublists[_iter->second].get<int>(path.popTop(), object);
-	}
-}
-
-template<>
-inline bool SerializationInfo::get<int>(const size_t i, int& object) const
-{
-	if (i < numList.size()) {
-		object = numList[i];
-		return true;
-	}
-	return false;
-}
-
-template<>
-inline bool SerializationInfo::get<int>(const size_t i, int& object)
-{
-	if (i < numList.size()) {
-		object = numList[i];
-		return true;
-	}
-	return false;
-}
-
-template<>
-inline bool SerializationInfo::get<long long>(const Path& path, long long& object) const
-{
-	if (path.empty())
-		return false;
-	if (path.size() == 1) {
-		auto iter = numFeild.find(path[0]);
-		if (iter == numFeild.end())
-			return false;
-		object = numList[iter->second];
-		return true;
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		return sublists[_iter->second].get<long long>(path.popTop(), object);
-	}
-}
-
-template<>
-inline bool SerializationInfo::get<long long>(const Path& path, long long& object)
-{
-	if (path.empty())
-		return false;
-	if (path.size() == 1) {
-		auto iter = numFeild.find(path[0]);
-		if (iter == numFeild.end())
-			return false;
-		object = numList[iter->second];
-		return true;
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		return sublists[_iter->second].get<long long>(path.popTop(), object);
-	}
-}
-
-template<>
-inline bool SerializationInfo::get<long long>(const size_t i, long long& object) const
-{
-	if (i < numList.size()) {
-		object = numList[i];
-		return true;
-	}
-	return false;
-}
-
-template<>
-inline bool SerializationInfo::get<long long>(const size_t i, long long& object)
-{
-	if (i < numList.size()) {
-		object = numList[i];
-		return true;
-	}
-	return false;
-}
-
-template<>
-inline bool SerializationInfo::get<string>(const Path & path, string & object) const
-{
-	if (path.empty())
-		return false;
-	if (path.size() == 1) {
-		auto iter = stringFeild.find(path[0]);
-		if (iter == stringFeild.end())
-			return false;
-		object = stringList[iter->second];
-		return true;
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		return sublists[_iter->second].get<string>(path.popTop(), object);
-	}
-}
-
-template<>
-inline bool SerializationInfo::get<string>(const Path & path, string & object)
-{
-	if (path.empty())
-		return false;
-	if (path.size() == 1) {
-		auto iter = stringFeild.find(path[0]);
-		if (iter == stringFeild.end())
-			return false;
-		object = stringList[iter->second];
-		return true;
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		return sublists[_iter->second].get<string>(path.popTop(), object);
-	}
-}
-
-template<>
-inline bool SerializationInfo::get<bool>(const Path& path, bool& object) const
-{
-	if (path.empty())
-		return false;
-	string str;
-	if (path.size() == 1) {
-		auto iter = stringFeild.find(path[0]);
-		if (iter == stringFeild.end())
-			return false;
-		str = stringList[iter->second];
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		if (!sublists[_iter->second].get<string>(path.popTop(), str))
-			return false;
-	}
-	object = str == "true";
-	return true;
-}
-
-template<>
-inline bool SerializationInfo::get<bool>(const Path& path, bool& object)
-{
-	if (path.empty())
-		return false;
-	string str;
-	if (path.size() == 1) {
-		auto iter = stringFeild.find(path[0]);
-		if (iter == stringFeild.end())
-			return false;
-		str = stringList[iter->second];
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		if (!sublists[_iter->second].get<string>(path.popTop(), str))
-			return false;
-	}
-	object = str == "true";
-	return true;
-}
-
-template<>
-inline bool SerializationInfo::get<string>(const size_t i, string & object) const
-{
-	if (i < stringList.size()) {
-		object = stringList[i];
-		return true;
-	}
-	return false;
-}
-
-template<>
-inline bool SerializationInfo::get<string>(const size_t i, string & object)
-{
-	if (i < stringList.size()) {
-		object = stringList[i];
-		return true;
-	}
-	return false;
-}
-
-template<class T>
-inline bool SerializationInfo::get(const Path & path, T & object) const
-{
-	if (path.empty())
-		return false;
-	if (path.size() == 1) {
-		auto iter = subfeilds.find(path[0]);
-		if (iter == subfeilds.end())
-			return false;
-		const SerializationInfo& sub = sublists[iter->second];
-		const Serialization* factory = sub.serialization;
-		if (factory == NULL) {
-			factory = SerializationManager::getSerialization(sub.type);
-			if (factory == NULL)
-				return false;
-		}
-		return factory->deserialize(object, sub);
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		return sublists[_iter->second].get<T>(path.popTop(), object);
-	}
-}
-
-template<class T>
-inline bool SerializationInfo::get(const Path & path, T & object)
-{
-	if (path.empty())
-		return false;
-	if (path.size() == 1) {
-		auto iter = subfeilds.find(path[0]);
-		if (iter == subfeilds.end())
-			return false;
-		SerializationInfo& sub = sublists[iter->second];
-		if (sub.serialization == NULL) {
-			sub.serialization = SerializationManager::getSerialization(sub.type);
-			if (sub.serialization == NULL)
-				return false;
-		}
-		return sub.serialization->deserialize(object, sub);
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		return sublists[_iter->second].get<T>(path.popTop(), object);
-	}
-}
-
-template<class T>
-inline bool SerializationInfo::get(const size_t i, T & object) const
-{
-	if (i < sublists.size()) {
-		if (sublists[i].serialization == NULL)
-			return false;
-		return sublists[i].serialization->deserialize(object, sublists[i]);
-	}
-	return false;
-}
-
-template<class T>
-inline bool SerializationInfo::get(const size_t i, T & object)
-{
-	if (i < sublists.size()) {
-		if (sublists[i].serialization == NULL)
-			return false;
-		return sublists[i].serialization->deserialize(object, sublists[i]);
-	}
-	return false;
-}
-
 class ENGINE_API Serializable
 {
 public:
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from) = 0;
 	virtual bool serialize(SerializationInfo& to) = 0;
-	virtual Serialization& getSerialization() const = 0;
+	virtual const Serialization& getSerialization() const = 0;
 protected:
 	static void serializeInit(const Serializable* serializable, SerializationInfo& to);
 };
@@ -490,6 +127,61 @@ protected:
 	static SerializationScope* currentScope;
 };
 
+template<class Type>
+Type* castTo(Serializable* serializable)
+{
+	static_assert(std::is_base_of_v<Serializable, Type>,
+		"Only support classes based on Serializable");
+	return dynamic_cast<Type*>(serializable);
+}
+
+template<class Type>
+const Type* castTo(const Serializable* serializable)
+{
+	static_assert(std::is_base_of_v<Serializable, Type>,
+		"Only support classes based on Serializable");
+	return dynamic_cast<const Type*>(serializable);
+}
+
+template<class Type>
+Type* castTo(Serializable& serializable)
+{
+	return castTo<Type>(&serializable);
+}
+
+template<class Type>
+const Type* castTo(const Serializable& serializable)
+{
+	return castTo<Type>(&serializable);
+}
+
+template<class Type>
+Type* instantiate(const SerializationInfo& from)
+{
+	static_assert(std::is_base_of_v<Serializable, Type>,
+		"Only support classes based on Serializable");
+	Serializable* serializable = Type::instantiate(from);
+	Type* object = castTo<Type>(serializable);
+	if (object == NULL)
+		delete serializable;
+	return object;
+}
+
+template<class Type>
+Type* deserialize(const SerializationInfo& from)
+{
+	static_assert(std::is_base_of_v<Serializable, Type>,
+		"Only support classes based on Serializable");
+	Type* object = instantiate<Type>(from);
+	if (object == NULL)
+		return NULL;
+	if (!object->deserialize(from)) {
+		delete object;
+		return NULL;
+	}
+	return object;
+}
+
 class ENGINE_API Serialization
 {
 	friend class SerializationManager;
@@ -502,10 +194,9 @@ public:
 	map<string, SerializationInfo*> serializationInfoByName;
 
 	virtual ~Serialization();
+	virtual bool isClassOf(const Serializable&) const { return false; }
 	virtual Serializable* instantiate(const SerializationInfo& from) const { return NULL; }
 	virtual Serializable* deserialize(const SerializationInfo& from) const { return NULL; }
-	virtual bool deserialize(Serializable& object, const SerializationInfo& from) const { return true; }
-	virtual bool serialize(Serializable& object, SerializationInfo& to) const { return true; }
 
 	Serialization* getBaseSerialization();
 	Serialization* getBaseSerialization() const;
@@ -556,48 +247,27 @@ inline const A* Serialization::getAttribute() const
 
 #define DEF_ATTR(name, ...) (new name##Attribute(__VA_ARGS__))
 
-#define Serialize(Type, BaseType) class Type##Serialization : public BaseType##::BaseType##Serialization \
+#define Serialize(Type, BaseType) \
+class Type##Serialization : public BaseType##::BaseType##Serialization \
 { \
 public: \
 	typedef BaseType##::BaseType##Serialization BaseSerializationClass; \
 	static Type##Serialization serialization; \
+	virtual bool isClassOf(const Serializable& serializable) const { return castTo<Type>(serializable); } \
 	virtual Serializable* instantiate(const SerializationInfo& from) const \
 	{ \
-		Type* object = dynamic_cast<Type*>(Type::instantiate(from)); \
-		return object; \
+		return ::instantiate<Type>(from); \
 	} \
 	virtual Serializable* deserialize(const SerializationInfo& from) const \
 	{ \
-		Type* object = dynamic_cast<Type*>(Type::instantiate(from)); \
-		if (object == NULL) \
-			return NULL; \
-		if (!object->deserialize(from)) { \
-			delete object; \
-			return NULL; \
-		} \
-		return object; \
-	} \
-	virtual bool deserialize(Serializable& object, const SerializationInfo& from) const \
-	{ \
-		Type* pobj = dynamic_cast<Type*>(&object); \
-		if (pobj == NULL) \
-			return false; \
-		return object.deserialize(from); \
-	} \
-	virtual bool serialize(Serializable& object, SerializationInfo& to) const \
-	{ \
-		Type* pobj = dynamic_cast<Type*>(&object); \
-		if (pobj == NULL) \
-			return false; \
-		to.type = #Type; \
-		return object.serialize(to); \
+		return ::deserialize<Type>(from); \
 	} \
 protected: \
 	Type##Serialization() : BaseSerializationClass(#Type, #BaseType) { init(); } \
 	Type##Serialization(const char* type, const char* baseType) : BaseSerializationClass(type, baseType) { init(); } \
 	void init(); \
 }; \
-virtual Serialization& getSerialization() const; \
+virtual const Serialization& getSerialization() const; \
 
 #define SerializeInstance(Type, ...) \
 Type::Type##Serialization Type::Type##Serialization::serialization; \
@@ -606,7 +276,7 @@ void Type::Type##Serialization::init() \
 	baseSerialization = &BaseSerializationClass::serialization; \
 	addAttribute({ __VA_ARGS__ }); \
 } \
-Serialization& Type::getSerialization() const \
+const Serialization& Type::getSerialization() const \
 { \
 	return Type##Serialization::serialization; \
 } \
@@ -765,6 +435,187 @@ protected:
 };
 
 template<>
+inline bool SerializationInfo::get<float>(const Path & path, float & object) const
+{
+	if (path.empty())
+		return false;
+	if (path.size() == 1) {
+		auto iter = numFeild.find(path[0]);
+		if (iter == numFeild.end())
+			return false;
+		object = numList[iter->second];
+		return true;
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		return sublists[_iter->second].get<float>(path.popTop(), object);
+	}
+}
+
+template<>
+inline bool SerializationInfo::get<float>(const size_t i, float & object) const
+{
+	if (i < numList.size()) {
+		object = numList[i];
+		return true;
+	}
+	return false;
+}
+
+template<>
+inline bool SerializationInfo::get<int>(const Path& path, int& object) const
+{
+	if (path.empty())
+		return false;
+	if (path.size() == 1) {
+		auto iter = numFeild.find(path[0]);
+		if (iter == numFeild.end())
+			return false;
+		object = numList[iter->second];
+		return true;
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		return sublists[_iter->second].get<int>(path.popTop(), object);
+	}
+}
+
+template<>
+inline bool SerializationInfo::get<int>(const size_t i, int& object) const
+{
+	if (i < numList.size()) {
+		object = numList[i];
+		return true;
+	}
+	return false;
+}
+
+template<>
+inline bool SerializationInfo::get<long long>(const Path& path, long long& object) const
+{
+	if (path.empty())
+		return false;
+	if (path.size() == 1) {
+		auto iter = numFeild.find(path[0]);
+		if (iter == numFeild.end())
+			return false;
+		object = numList[iter->second];
+		return true;
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		return sublists[_iter->second].get<long long>(path.popTop(), object);
+	}
+}
+
+template<>
+inline bool SerializationInfo::get<long long>(const size_t i, long long& object) const
+{
+	if (i < numList.size()) {
+		object = numList[i];
+		return true;
+	}
+	return false;
+}
+
+template<>
+inline bool SerializationInfo::get<string>(const Path & path, string & object) const
+{
+	if (path.empty())
+		return false;
+	if (path.size() == 1) {
+		auto iter = stringFeild.find(path[0]);
+		if (iter == stringFeild.end())
+			return false;
+		object = stringList[iter->second];
+		return true;
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		return sublists[_iter->second].get<string>(path.popTop(), object);
+	}
+}
+
+template<>
+inline bool SerializationInfo::get<bool>(const Path& path, bool& object) const
+{
+	if (path.empty())
+		return false;
+	string str;
+	if (path.size() == 1) {
+		auto iter = stringFeild.find(path[0]);
+		if (iter == stringFeild.end())
+			return false;
+		str = stringList[iter->second];
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		if (!sublists[_iter->second].get<string>(path.popTop(), str))
+			return false;
+	}
+	object = str == "true";
+	return true;
+}
+
+template<>
+inline bool SerializationInfo::get<string>(const size_t i, string & object) const
+{
+	if (i < stringList.size()) {
+		object = stringList[i];
+		return true;
+	}
+	return false;
+}
+
+template<class T>
+inline bool SerializationInfo::get(const Path & path, T & object) const
+{
+	if (path.empty())
+		return false;
+	if (path.size() == 1) {
+		auto iter = subfeilds.find(path[0]);
+		if (iter == subfeilds.end())
+			return false;
+		const SerializationInfo& sub = sublists[iter->second];
+		const Serialization* factory = sub.serialization;
+		if (factory == NULL) {
+			factory = SerializationManager::getSerialization(sub.type);
+			if (factory == NULL || !factory->isClassOf(object))
+				return false;
+		}
+		return object.deserialize(sub);
+	}
+	else {
+		auto _iter = subfeilds.find(path[0]);
+		if (_iter == subfeilds.end())
+			return false;
+		return sublists[_iter->second].get<T>(path.popTop(), object);
+	}
+}
+
+template<class T>
+inline bool SerializationInfo::get(const size_t i, T & object) const
+{
+	if (i < sublists.size()) {
+		const SerializationInfo& sub = sublists[i];
+		if (sub.serialization == NULL || !sub.serialization->isClassOf(object))
+			return false;
+		return object.deserialize(sub);
+	}
+	return false;
+}
+
+template<>
 inline bool SerializationInfo::get<SEnum>(const Path& path, SEnum& object) const
 {
 	if (path.empty())
@@ -785,37 +636,7 @@ inline bool SerializationInfo::get<SEnum>(const Path& path, SEnum& object) const
 }
 
 template<>
-inline bool SerializationInfo::get<SEnum>(const Path& path, SEnum& object)
-{
-	if (path.empty())
-		return false;
-	if (path.size() == 1) {
-		auto iter = numFeild.find(path[0]);
-		if (iter == numFeild.end())
-			return false;
-		object = numList[iter->second];
-		return true;
-	}
-	else {
-		auto _iter = subfeilds.find(path[0]);
-		if (_iter == subfeilds.end())
-			return false;
-		return sublists[_iter->second].get<SEnum>(path.popTop(), object);
-	}
-}
-
-template<>
 inline bool SerializationInfo::get<SEnum>(const size_t i, SEnum& object) const
-{
-	if (i < numList.size()) {
-		object = numList[i];
-		return true;
-	}
-	return false;
-}
-
-template<>
-inline bool SerializationInfo::get<SEnum>(const size_t i, SEnum& object)
 {
 	if (i < numList.size()) {
 		object = numList[i];

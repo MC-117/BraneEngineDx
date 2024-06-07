@@ -51,7 +51,7 @@ void CastToNodeEditor::onContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo)
 {
 	GraphNodeEditor::onContextMenuGUI(info, graphInfo);
 	ValuePin* fromPin = castToNode->getFromPin();
-	Serialization* fromType = fromPin == NULL ? NULL : &fromPin->getSerialization();
+	const Serialization* fromType = fromPin == NULL ? NULL : &fromPin->getSerialization();
 	ImGui::SetNextItemWidth(60);
 	if (ImGui::TypeCombo("FromType", fromType, ValuePin::ValuePinSerialization::serialization)) {
 		ValuePin* newPin = NULL;
@@ -67,7 +67,7 @@ void CastToNodeEditor::onContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo)
 	}
 
 	ValuePin* toPin = castToNode->getToPin();
-	Serialization* toType = toPin == NULL ? NULL : &toPin->getSerialization();
+	const Serialization* toType = toPin == NULL ? NULL : &toPin->getSerialization();
 	ImGui::SetNextItemWidth(60);
 	if (ImGui::TypeCombo("##ToType", toType, ValuePin::ValuePinSerialization::serialization)) {
 		ValuePin* newPin = NULL;
