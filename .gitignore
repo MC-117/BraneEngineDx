@@ -339,6 +339,16 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 
+# Explcitly ignore Mac DS_Store files, regardless of where they are
+.DS_Store
+
+# Ignore VS / VS Code settings directory
+.vs
+.vscode
+
+# Ignore CLion directory
+.idea/
+
 # Not ignore thirdparty library
 !/Engine/ThirdParty
 !/Engine/ThirdParty/*
@@ -347,3 +357,6 @@ healthchecksdb
 !/Engine/ThirdParty/*/*/*/*
 !/Engine/ThirdParty/*/*/*/*/*
 !/Engine/ThirdParty/*/*/*/*/*/*
+
+# Ignore intermediate folders
+Intermediate/
