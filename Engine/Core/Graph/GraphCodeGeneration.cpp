@@ -62,6 +62,24 @@ void GraphCodeGenerationContext::popSubscopeBackend(ICodeScopeBackend* checkBack
     backendStack.pop();
 }
 
+void GraphCodeGenerationContext::addIncludeFile(const Name& path)
+{
+    auto iter = std::find(includeFiles.begin(), includeFiles.end(), path);
+    if (iter == includeFiles.end())
+        includeFiles.emplace_back(path);
+}
+
+void GraphCodeGenerationContext::markNodeGenerated(GraphNode* node)
+{
+    generatedNodes.emplace(node);
+    
+}
+
+bool GraphCodeGenerationContext::isNodeGenerated(GraphNode* node) const
+{
+    return generatedNodes.find(node) != generatedNodes.end();
+}
+
 void GraphCodeGenerationContext::generateCode()
 {
     while (!nodeStack.empty()) {

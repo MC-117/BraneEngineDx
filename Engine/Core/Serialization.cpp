@@ -50,21 +50,39 @@ bool SerializationInfo::consistKey(const string & name)
 	return false;
 }
 
-bool SerializationInfo::add(const string & name, Decimal value)
-{
-	if (consistKey(name))
-		return false;
-	numFeild.insert(pair<string, size_t>(name, numList.size()));
-	numList.push_back(value);
-	return true;
-}
-
 bool SerializationInfo::add(const string & name, const string & value)
 {
 	if (consistKey(name))
 		return false;
 	stringFeild.insert(pair<string, size_t>(name, stringList.size()));
 	stringList.push_back(value);
+	return true;
+}
+
+bool SerializationInfo::add(const string & name, const char* value)
+{
+	if (consistKey(name))
+		return false;
+	stringFeild.insert(pair<string, size_t>(name, stringList.size()));
+	stringList.push_back(value);
+	return true;
+}
+
+bool SerializationInfo::add(const string & name, const Name & value)
+{
+	if (consistKey(name))
+		return false;
+	stringFeild.insert(pair<string, size_t>(name, stringList.size()));
+	stringList.push_back(value.c_str());
+	return true;
+}
+
+bool SerializationInfo::add(const string & name, Decimal value)
+{
+	if (consistKey(name))
+		return false;
+	numFeild.insert(pair<string, size_t>(name, numList.size()));
+	numList.push_back(value);
 	return true;
 }
 
@@ -101,6 +119,17 @@ SerializationInfo * SerializationInfo::push()
 	return &info;
 }
 
+void SerializationInfo::set(const string& name, const char* value)
+{
+	auto iter = stringFeild.find(name);
+	if (iter == stringFeild.end()) {
+		stringFeild.insert(pair<string, size_t>(name, stringList.size()));
+		stringList.push_back(value);
+	}
+	else
+		stringList[iter->second] = value;
+}
+
 void SerializationInfo::set(const string & name, const string & value)
 {
 	auto iter = stringFeild.find(name);
@@ -110,6 +139,17 @@ void SerializationInfo::set(const string & name, const string & value)
 	}
 	else
 		stringList[iter->second] = value;
+}
+
+void SerializationInfo::set(const string& name, const Name& value)
+{
+	auto iter = stringFeild.find(name);
+	if (iter == stringFeild.end()) {
+		stringFeild.insert(pair<string, size_t>(name, stringList.size()));
+		stringList.push_back(value.c_str());
+	}
+	else
+		stringList[iter->second] = value.c_str();
 }
 
 void SerializationInfo::set(const string & name, Decimal value)

@@ -4,6 +4,7 @@
 #include "../GUI/GUI.h"
 #include "../GUI/Gizmo.h"
 #include "../IWorld.h"
+#include "Previewer/EditorPreviewer.h"
 
 struct EditorInfo
 {
@@ -11,7 +12,11 @@ struct EditorInfo
 	Gizmo* gizmo;
 	Camera* camera;
 	IWorld* world;
+	IEditorPreviewer* previewer;
 	bool destroy;
+
+	EditorInfo(GUI* gui = NULL, Gizmo* gizmo = NULL, Camera* camera = NULL, IWorld* world = NULL, IEditorPreviewer* previewer = NULL, bool destroy = false)
+		: gui(gui), gizmo(gizmo), camera(camera), world(world), previewer(previewer), destroy(destroy) {}
 };
 
 class EditorType;

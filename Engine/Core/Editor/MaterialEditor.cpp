@@ -4,6 +4,7 @@
 #include "../Utility/RenderUtility.h"
 #include "../GUI/TextureViewer.h"
 #include "../GUI/GUIUtility.h"
+#include "../Importer/MaterialImporter.h"
 #include <thread>
 
 RegistEditor(Material);
@@ -34,7 +35,7 @@ void MaterialEditor::onMaterialGUI(EditorInfo& info)
 					desc.defFileExt = "imat";
 					desc.addToRecent = false;
 					if (openFileDlg(desc)) {
-						if (!Material::MaterialLoader::saveMaterialInstance(desc.filePath, *mat))
+						if (!MaterialLoader::saveMaterialInstance(desc.filePath, *mat))
 							MessageBox(NULL, "Save failed", "Error", MB_OK);
 						string goodPath = getGoodRelativePath(desc.filePath);
 						if (goodPath.empty()) {
@@ -50,13 +51,13 @@ void MaterialEditor::onMaterialGUI(EditorInfo& info)
 				td.detach();
 			}
 			else {
-				if (!Material::MaterialLoader::saveMaterialInstance(s, *material))
+				if (!MaterialLoader::saveMaterialInstance(s, *material))
 					MessageBox(NULL, "Save failed", "Error", MB_OK);
 			}
 		}
 	}
 	Asset* shaderAsset = NULL;
-	vector<string> shaderName = split(material->getShaderName(), '.');
+	vector<string> shaderName = split(material->getShaderName().c_str(), '.');
 	if (!shaderName.empty()) {
 		shaderAsset = AssetManager::getAsset("Material", shaderName[0]);
 	}
@@ -104,7 +105,7 @@ void MaterialEditor::onMaterialGUI(EditorInfo& info)
 		if (ImGui::DragInt(b->first.c_str(), &val, 0.01))
 			b->second.val = val;
 	}
-	static string choice;
+	static Name choice;
 	ImGui::Columns(2, "TextureColumn", false);
 	for (auto b = material->getTextureField().begin(), e = material->getTextureField().end(); b != e; b++) {
 		if (b->first == "depthMap")

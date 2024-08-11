@@ -2,6 +2,7 @@
 #ifndef _IMATERIAL_H_
 #define _IMATERIAL_H_
 
+#include "Utility/Name.h"
 #include "Texture.h"
 #include "Shader.h"
 
@@ -28,12 +29,12 @@ struct MaterialDesc
 	unsigned int passNum = 1;
 	unsigned int materialID = 0;
 	Vector3u localSize = { 1, 1, 1 };
-	map<string, MatAttribute<float>> scalarField;
-	map<string, MatAttribute<int>> countField;
-	map<string, MatAttribute<Color>> colorField;
-	map<string, MatAttribute<Matrix4f>> matrixField;
-	map<string, MatAttribute<Texture*>> textureField;
-	map<string, MatAttribute<Image>> imageField;
+	map<Name, MatAttribute<float>> scalarField;
+	map<Name, MatAttribute<int>> countField;
+	map<Name, MatAttribute<Color>> colorField;
+	map<Name, MatAttribute<Matrix4f>> matrixField;
+	map<Name, MatAttribute<Texture*>> textureField;
+	map<Name, MatAttribute<Image>> imageField;
 };
 
 class ENGINE_API IMaterial

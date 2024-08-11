@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include "Geometry.h"
+#include "ObjectUltility.h"
 #include "GUI/Gizmo.h"
 #include "Utility/MathUtility.h"
 #include "Utility/RenderUtility.h"
@@ -19,6 +20,11 @@ Camera::Camera(RenderTarget & renderTarget, string name) : Transform(name), came
 
 Camera::~Camera()
 {
+}
+
+ICameraManager* Camera::getCameraManager() const
+{
+	return manager;
 }
 
 void Camera::setAnimationClip(AnimationClipData & data)
@@ -61,6 +67,16 @@ Vector3f Camera::getFinalWorldPosition()
 bool Camera::culling(const BoundBox& bound, const Matrix4f& mat)
 {
 	return frustumCulling(cameraRender.cameraData, bound, mat);
+}
+
+void Camera::onAttacted(Object& parent)
+{
+	Transform::onAttacted(parent);
+	if (World* world = getRootWorld(parent)) {
+		ICameraManager& newManager = world->getCameraManager();
+		if (manager != &newManager)
+			newManager.setCamera(this, Name::none);
+	}
 }
 
 Color hsv2rgb(float h, float s, float v, float a = 1)
@@ -169,6 +185,16 @@ void Camera::afterTick()
 	cameraRender.cameraData.zNear = zNear;
 	cameraRender.cameraData.viewSize = { (float)size.x, (float)size.y };
 	cameraRender.clearColor = clearColor;
+}
+
+void Camera::prerender(SceneRenderData& sceneData)
+{
+	Transform::prerender(sceneData);
+	Name tag = Name::none;
+	if (manager) {
+		tag = manager->getCameraTag(this);
+	}
+	cameraRender.setCameraTag(tag);
 }
 
 Render* Camera::getRender()

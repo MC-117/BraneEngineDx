@@ -41,10 +41,10 @@ public:
 		bool isTwoSide = false;
 		bool cullFront = false;
 		bool canCastShadow = true;
-		map<string, float> scalars;
-		map<string, int> counts;
-		map<string, Color> colors;
-		map<string, string> textures;
+		map<Name, float> scalars;
+		map<Name, int> counts;
+		map<Name, Color> colors;
+		map<Name, string> textures;
 
 		MaterialInfo();
 		MaterialInfo(const Material& mat);

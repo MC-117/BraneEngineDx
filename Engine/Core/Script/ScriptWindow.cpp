@@ -1,6 +1,7 @@
 ﻿#include "ScriptWindow.h"
 #include <fstream>
 #include "../Engine.h"
+#include "Core/Utility/EngineUtility.h"
 
 SerializeInstance(TempScript);
 
@@ -87,6 +88,14 @@ TempScript& ScriptWindow::OpenTempScript(const string& name, string& text)
 	return script;
 }
 
+TempScript& ScriptWindow::OpenTempScript(const string& path)
+{
+	TempScript& script = *new TempScript(getFileName(path));
+	script.load(path);
+	OpenScript(script);
+	return script;
+}
+
 void ScriptWindow::AddScript(ScriptBase& script)
 {
 	bool found = false;
@@ -124,7 +133,7 @@ void ScriptWindow::onWindowGUI(GUIRenderInfo & info)
 			ImGui::PushID(pScript);
 			bool open = true;
 			if (ImGui::BeginTabItem(pScript->getName().c_str(), &open),
-				activeScript == pScript ? ImGuiTabItemFlags_SetSelected : 0) {
+					activeScript == pScript ? ImGuiTabItemFlags_SetSelected : 0) {
 				activeScript = pScript;
 				ImGui::EndTabItem();
 			}
@@ -141,7 +150,12 @@ void ScriptWindow::onWindowGUI(GUIRenderInfo & info)
 		}
 		ImGui::EndTabBar();
 		if (closedIndex >= 0) {
-			scripts.erase(scripts.begin()+=closedIndex);
+			auto iter = scripts.begin()+=closedIndex;
+			TempScript* tempScript = castTo<TempScript>(iter->get());
+			if (tempScript) {
+				delete tempScript;
+			}
+			scripts.erase(iter);
 		}
 	}
 

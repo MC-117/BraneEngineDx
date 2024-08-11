@@ -199,6 +199,8 @@ void RenderPool::renderThreadMain()
 
 void RenderPool::renderThreadLoop(RenderPool* pool)
 {
+	registerCurrentThread(NamedThread::Render);
 	while (!pool->destory)
 		pool->renderThreadMain();
+	unregisterCurrentThread();
 }

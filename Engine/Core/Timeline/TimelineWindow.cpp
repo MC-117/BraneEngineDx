@@ -25,7 +25,11 @@ void TimelineWindow::onWindowGUI(GUIRenderInfo& info)
 		editor.setPlayer(player);
 	}
 
-	EditorInfo editorInfo = { &info.gui, info.gizmo, info.camera, Engine::getCurrentWorld() };
+	EditorInfo editorInfo;
+	editorInfo.gui = &info.gui;
+	editorInfo.gizmo = info.gizmo;
+	editorInfo.camera = info.camera;
+	editorInfo.world = Engine::getCurrentWorld();
 	editor.onTimelineGUI(editorInfo);
 }
 

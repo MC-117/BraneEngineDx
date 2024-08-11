@@ -20,7 +20,7 @@ public:
 
 	virtual int getStateCount() const;
 	virtual StateNode* getState(int index) const;
-	virtual StateNode* getState(const string& name) const;
+	virtual StateNode* getState(const Name& name) const;
 
 	StateNode* getCurrentState() const;
 	StateTransition* getActiveTransition() const;
@@ -31,7 +31,7 @@ public:
 
 	static Serializable* instantiate(const SerializationInfo& from);
 protected:
-	map<string, StateNode*> stateNameMap;
+	map<Name, StateNode*> stateNameMap;
 	StateNode* currentState = NULL;
 	StateTransition* activeTransition = NULL;
 

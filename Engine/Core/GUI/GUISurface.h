@@ -1,4 +1,6 @@
-﻿#include "../Camera.h"
+﻿#pragma once
+
+#include "../Camera.h"
 #include "Gizmo.h"
 
 class ENGINE_API GUISurface

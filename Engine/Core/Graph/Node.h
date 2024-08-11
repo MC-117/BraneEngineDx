@@ -43,7 +43,8 @@ public:
 	void setName(const string& name);
 	void setDisplayName(const string& name);
 
-	virtual bool isConnectable(GraphPin* pin) const;
+	virtual bool isWildcard() const;
+	virtual bool isConnectable(const GraphPin* pin) const;
 	virtual GraphPin* getConnectedPin();
 	virtual Ref<GraphPin>& getConnectedPinRef();
 	virtual bool connect(GraphPin* pin);
@@ -63,6 +64,8 @@ protected:
 	bool isOutput = false;
 	bool autoDelete = false;
 	Ref<GraphPin> connectedPin;
+
+	virtual bool isWildcardAcceptable(const GraphPin* pin) const;
 };
 
 class GraphPinFactory
@@ -91,6 +94,18 @@ public:
 	virtual void finalize(Serialization& serialization);
 protected:
 	Name typeFinal;
+};
+
+class GraphCodeHeaderFileAttribute : public Attribute
+{
+public:
+	GraphCodeHeaderFileAttribute(const Name& path);
+	
+	const Name& getPath() const;
+
+	virtual void resolve(Attribute* sourceAttribute, Serialization& serialization);
+protected:
+	Name path;
 };
 
 class ENGINE_API FlowPin : public GraphPin
@@ -127,9 +142,9 @@ public:
 	GraphNode();
 	virtual ~GraphNode();
 
-	virtual void setName(const string& name);
-	string getName() const;
-	virtual string getDisplayName() const;
+	virtual void setName(const Name& name);
+	virtual Name getName() const;
+	virtual Name getDisplayName() const;
 	virtual Color getNodeColor() const;
 
 	int getInputCount() const;
@@ -157,8 +172,8 @@ public:
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
 protected:
-	string name;
-	string displayName;
+	Name name;
+	Name displayName;
 	Flag flag = Flag::Statment;
 	Color nodeColor = { 128, 128, 128 };
 	vector<GraphPin*> inputs;

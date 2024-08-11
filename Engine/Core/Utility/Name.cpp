@@ -50,16 +50,28 @@ Name::Name()
 
 Name::Name(const char* str)
 {
-    const std::pair<NameHash, const char*> pair = NamePool::get().registerString(str);
-    hash = pair.first;
-    ptr = pair.second;
+    if (strlen(str) == 0) {
+        hash = 0;
+        ptr = NULL;
+    }
+    else {
+        const std::pair<NameHash, const char*> pair = NamePool::get().registerString(str);
+        hash = pair.first;
+        ptr = pair.second;
+    }
 }
 
 Name::Name(const std::string& str)
 {
-    const std::pair<NameHash, const char*> pair = NamePool::get().registerString(str.c_str());
-    hash = pair.first;
-    ptr = pair.second;
+    if (str.empty()) {
+        hash = 0;
+        ptr = NULL;
+    }
+    else {
+        const std::pair<NameHash, const char*> pair = NamePool::get().registerString(str.c_str());
+        hash = pair.first;
+        ptr = pair.second;
+    }
 }
 
 bool Name::isNone() const
@@ -67,9 +79,19 @@ bool Name::isNone() const
     return hash == 0;
 }
 
+bool Name::empty() const
+{
+    return isNone();
+}
+
 bool Name::operator==(const Name& name) const
 {
     return hash == name.hash;
+}
+
+bool Name::operator<(const Name& name) const
+{
+    return hash < name.hash;
 }
 
 NameHash Name::getHash() const
@@ -77,7 +99,32 @@ NameHash Name::getHash() const
     return hash;
 }
 
-const char* Name::str() const
+const char* Name::c_str() const
 {
-    return ptr;
+    return ptr == NULL ? "" : ptr;
+}
+
+inline std::string operator+(const Name& name, const char* c_str)
+{
+    return std::string(name.c_str()) + c_str;
+}
+
+inline std::string operator+(const char* c_str, const Name& name)
+{
+    return c_str + std::string(name.c_str());
+}
+
+inline std::string operator+(const Name& name, const std::string& str)
+{
+    return name.c_str() + str;
+}
+
+inline std::string operator+(const std::string& str, const Name& name)
+{
+    return str + name.c_str();
+}
+
+Name operator ""_N(const char* c_str, size_t)
+{
+    return Name(c_str);
 }

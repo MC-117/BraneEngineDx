@@ -78,80 +78,44 @@ Enum<ShaderFeature> ShaderMatchRule::operator()(ShaderStageType stageType, const
 	}
 }
 
-Shader Shader::nullShader("__Null", 0);
-
-Shader::Shader()
+unsigned int Shader::getCurrentProgramId()
 {
+	return ShaderProgram::getCurrentProgramID();
 }
 
-Shader::Shader(const Shader & s)
-{
-	name = s.name;
-	renderOrder = s.renderOrder;
-	shaderIds = s.shaderIds;
-}
-
-Shader::Shader(Shader && s)
-{
-	name = s.name;
-	renderOrder = s.renderOrder;
-	shaderIds = s.shaderIds;
-	s.shaderIds.clear();
-}
-
-Shader::Shader(const string& name, unsigned int renderOrder)
-{
-	this->name = name;
-	this->renderOrder = renderOrder;
-}
-
-Shader::~Shader()
-{
-}
-
-void Shader::shift(Shader & shader)
-{
-	shader.name = name;
-	shader.renderOrder = renderOrder;
-	shader.shaderAdapters = shaderAdapters;
-	shader.shaderPrograms = shaderPrograms;
-	shaderAdapters.clear();
-	shaderPrograms.clear();
-}
-
-bool Shader::isNull() const
+bool ShaderCore::isNull() const
 {
 	return shaderAdapters.empty();
 }
 
-bool Shader::isValid() const
+bool ShaderCore::isValid() const
 {
 	auto enditer = shaderAdapters.end();
 	switch (meshStageType)
 	{
 	case Vertex_Shader_Stage:
-	{
-		auto viter = shaderAdapters.find(Vertex_Shader_Stage);
-		auto fiter = shaderAdapters.find(Fragment_Shader_Stage);
-		return viter != enditer && fiter != enditer;
-	}
+		{
+			auto viter = shaderAdapters.find(Vertex_Shader_Stage);
+			auto fiter = shaderAdapters.find(Fragment_Shader_Stage);
+			return viter != enditer && fiter != enditer;
+		}
 	case Compute_Shader_Stage:
-	{
-		auto iter = shaderAdapters.find(Compute_Shader_Stage);
-		return iter != enditer;
-	}
+		{
+			auto iter = shaderAdapters.find(Compute_Shader_Stage);
+			return iter != enditer;
+		}
 	default:
 		return false;
 	}
 	return false;
 }
 
-bool Shader::isComputable() const
+bool ShaderCore::isComputable() const
 {
 	return meshStageType == Compute_Shader_Stage && shaderAdapters.size() == 1;
 }
 
-bool Shader::setMeshStageAdapter(ShaderAdapter & adapter)
+bool ShaderCore::setMeshStageAdapter(ShaderAdapter& adapter)
 {
 	if (meshStageType == None_Shader_Stage)
 		meshStageType = adapter.stageType;
@@ -160,21 +124,21 @@ bool Shader::setMeshStageAdapter(ShaderAdapter & adapter)
 	return addShaderAdapter(adapter);
 }
 
-ShaderAdapter * Shader::getMeshStageAdapter()
+ShaderAdapter* ShaderCore::getMeshStageAdapter()
 {
 	if (meshStageType == None_Shader_Stage)
 		return NULL;
 	return getShaderAdapter(meshStageType);
 }
 
-bool Shader::addShaderAdapter(ShaderAdapter & adapter)
+bool ShaderCore::addShaderAdapter(ShaderAdapter& adapter)
 {
 	auto iter = shaderAdapters.find(adapter.stageType);
 	if (iter == shaderAdapters.end()) {
 		if (meshStageType == None_Shader_Stage) {
 			if (adapter.stageType == Vertex_Shader_Stage ||
 				adapter.stageType == Compute_Shader_Stage)
-				meshStageType = adapter.stageType;
+					meshStageType = adapter.stageType;
 		}
 		shaderAdapters.insert(make_pair(adapter.stageType, &adapter));
 		return true;
@@ -182,7 +146,7 @@ bool Shader::addShaderAdapter(ShaderAdapter & adapter)
 	return false;
 }
 
-ShaderAdapter * Shader::getShaderAdapter(ShaderStageType stageType)
+ShaderAdapter* ShaderCore::getShaderAdapter(ShaderStageType stageType)
 {
 	auto iter = shaderAdapters.find(stageType);
 	if (iter != shaderAdapters.end())
@@ -190,7 +154,7 @@ ShaderAdapter * Shader::getShaderAdapter(ShaderStageType stageType)
 	return NULL;
 }
 
-ShaderProgram * Shader::getProgram(const Enum<ShaderFeature>& feature, const ShaderMatchRule& rule)
+ShaderProgram* ShaderCore::getProgram(const Enum<ShaderFeature>& feature, const ShaderMatchRule& rule)
 {
 	if (!isValid())
 		return NULL;
@@ -245,7 +209,96 @@ ShaderProgram * Shader::getProgram(const Enum<ShaderFeature>& feature, const Sha
 	return program;
 }
 
-unsigned int Shader::getCurrentProgramId()
+GenericShader::GenericShader()
 {
-	return ShaderProgram::getCurrentProgramID();
+}
+
+GenericShader::GenericShader(const string& name, unsigned int renderOrder)
+{
+	core.name = name;
+	core.renderOrder = renderOrder;
+}
+
+GenericShader::~GenericShader()
+{
+}
+
+// void GenericShader::shift(GenericShader & shader)
+// {
+// 	shader.name = name;
+// 	shader.renderOrder = renderOrder;
+// 	shader.shaderAdapters = shaderAdapters;
+// 	shader.shaderPrograms = shaderPrograms;
+// 	shaderAdapters.clear();
+// 	shaderPrograms.clear();
+// }
+
+void GenericShader::setName(const Name& name)
+{
+	core.name = name;
+}
+
+void GenericShader::setRenderOrder(int renderOrder)
+{
+	core.renderOrder = renderOrder;
+}
+
+Name GenericShader::getName() const
+{
+	return core.name;
+}
+
+void GenericShader::setBaseMaterial(Material* baseMaterial)
+{
+	core.baseMaterial = baseMaterial;
+}
+
+Material* GenericShader::getBaseMaterial() const
+{
+	return core.baseMaterial;
+}
+
+int GenericShader::getRenderOrder() const
+{
+	return core.renderOrder;
+}
+
+bool GenericShader::isNull() const
+{
+	return core.isNull();
+}
+
+bool GenericShader::isValid() const
+{
+	return core.isValid();
+}
+
+bool GenericShader::isComputable() const
+{
+	return core.isComputable();
+}
+
+bool GenericShader::setMeshStageAdapter(ShaderAdapter & adapter)
+{
+	return core.setMeshStageAdapter(adapter);
+}
+
+ShaderAdapter * GenericShader::getMeshStageAdapter()
+{
+	return core.getMeshStageAdapter();
+}
+
+bool GenericShader::addShaderAdapter(ShaderAdapter & adapter)
+{
+	return core.addShaderAdapter(adapter);
+}
+
+ShaderAdapter * GenericShader::getShaderAdapter(ShaderStageType stageType)
+{
+	return core.getShaderAdapter(stageType);
+}
+
+ShaderProgram * GenericShader::getProgram(const Enum<ShaderFeature>& feature, const ShaderMatchRule& rule)
+{
+	return core.getProgram(feature, rule);
 }

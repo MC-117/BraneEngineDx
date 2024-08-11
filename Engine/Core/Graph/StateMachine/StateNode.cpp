@@ -87,7 +87,7 @@ void StateGraphTransition::init(StateNode* fromNode, StateNode* toNode)
 {
 	StateTransition::init(fromNode, toNode);
 	if (fromNode && toNode)
-		transitionGraph.setName(fromNode->getName() + "To" + toNode->getName());
+		transitionGraph.setName(fromNode->getName()  + "To" + toNode->getName().c_str());
 }
 
 Graph* StateGraphTransition::getGraph()

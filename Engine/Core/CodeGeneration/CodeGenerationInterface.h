@@ -2,6 +2,7 @@
 #include <vector>
 #include "../Utility/Name.h"
 #include "../Utility/Decimal.h"
+#include "../Utility/Utility.h"
 
 namespace Code
 {
@@ -44,13 +45,19 @@ namespace Code
     ENGINE_API int getCodeOperatorNum(const Name& operatorType);
 };
 
+enum CodeQualifierFlags
+{
+    CQF_None = 0, CQF_Const = 1 << 0, CQF_Static = 1 << 1, CQF_Uniform = 1 << 2, CQF_In = 1 << 3, CQF_Out = 1 << 4, CQF_Ref = CQF_In | CQF_Out, CQF_Context = 1 << 5
+};
+
 struct ENGINE_API CodeSymbolDefinition
 {
     Name type;
     Name name;
+    Enum<CodeQualifierFlags> qualifiers = CQF_None;
 
     CodeSymbolDefinition() = default;
-    CodeSymbolDefinition(const Name& type, const Name& name);
+    CodeSymbolDefinition(const Name& type, const Name& name, Enum<CodeQualifierFlags> qualifiers = CQF_None);
 };
 
 struct ENGINE_API CodeFunctionSignature
@@ -204,6 +211,7 @@ public:
     virtual std::string convertCharacter(char character) = 0;
     virtual std::string convertExpression(const CodeFunctionInvocation& invocation) = 0;
 
+    virtual void write(const char* fmt_str, ...) = 0;
     virtual ICodeScopeBackend* subscope() = 0;
     virtual bool declareVariable(const CodeSymbolDefinition& definition, const CodeParameter& defaultValue = CodeParameter::none) = 0;
     virtual ICodeScopeBackend* declareFunction(const CodeFunctionSignature& signature) = 0;
@@ -211,7 +219,7 @@ public:
     virtual bool branch(const std::vector<CodeParameter>& conditionParams, std::vector<ICodeScopeBackend*>& scopes) = 0;
     virtual ICodeScopeBackend* loop(const CodeParameter& conditionParam) = 0;
     virtual bool jumpOut() = 0;
-    virtual bool output(const std::vector<CodeParameter>& returnValues) = 0;
+    virtual bool output(const std::vector<CodeParameter>& returnValues, bool doCheck = true) = 0;
 };
 
 #include "../Serialization.h"

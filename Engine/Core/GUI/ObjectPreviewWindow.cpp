@@ -7,11 +7,12 @@
 
 ObjectPreviewWindow::ObjectPreviewWindow(string name, bool defaultShow)
 	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
+	, editorWorld(name)
 {
 	editorWorld.camera.clearColor = Color(88, 88, 88, 255);
 	//editorWorld.camera.renderTarget.setMultisampleLevel(4);
+	editorWorld.getGizmo().setCameraControl(Gizmo::CameraControlMode::Turn);
 	editorWorld.begin();
-	gizmo.setCameraControl(Gizmo::CameraControlMode::Turn);
 	this->styleVars.insert(make_pair(ImGuiStyleVar_WindowPadding, ImVec2{ 0, 0 }));
 }
 
@@ -49,9 +50,7 @@ void ObjectPreviewWindow::setAsset(Asset& asset)
 void ObjectPreviewWindow::onUpdateScene(RenderGraph& renderGraph, float width, float height)
 {
 	editorWorld.setViewportSize((int)width, (int)height);
-
 	editorWorld.update();
-	editorWorld.render(renderGraph);
 }
 
 void ObjectPreviewWindow::onToolBarGUI(GUIRenderInfo& info)
@@ -62,7 +61,7 @@ void ObjectPreviewWindow::onInspectorBarGUI(GUIRenderInfo& info)
 {
 	if (targetObject == NULL)
 		return;
-	EditorInfo editorInfo = { &info.gui, &gizmo, &editorWorld.camera, &editorWorld, false };
+	EditorInfo editorInfo = { &info.gui, &editorWorld.getGizmo(), &editorWorld.camera, &editorWorld, false };
 
 	if (ImGui::BeginTabBar("InspectorTab")) {
 
@@ -95,8 +94,10 @@ void ObjectPreviewWindow::onSceneGUI(GUIRenderInfo& info, float width, float hei
 	if (editor != NULL) {
 		texture = editor->getPreviewTexture({ width, height });
 	}
-	if (texture == NULL)
-		texture = editorWorld.getSceneTexture();
+	if (texture == NULL) {
+		GUISurface& guiSurface = editorWorld.getGUISurface();
+		texture = guiSurface.getSceneTexture();
+	}
 	if (texture != NULL) {
 		texture->bind();
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0);
@@ -124,6 +125,7 @@ void ObjectPreviewWindow::onSceneGUI(GUIRenderInfo& info, float width, float hei
 			list->AddImage((ImTextureID)id, { pos.x + padding + hpw, pos.y + padding + hph },
 				{ pos.x + padding + hpw + tw, pos.y + padding + hph + th });
 		ImGui::PopStyleVar(2);
+		editorWorld.onGUI(list);
 	}
 }
 
@@ -152,14 +154,9 @@ void ObjectPreviewWindow::onWindowGUI(GUIRenderInfo& info)
 	}
 
 	onUpdateScene(*info.renderGraph, screenWidth, screenHeight);
-	gizmo.onUpdate(editorWorld.camera);
 
 	ImGui::BeginChild("Scene", ImVec2(screenWidth, screenHeight));
-	auto drawList = ImGui::GetWindowDrawList();
-	gizmo.beginFrame(drawList);
 	onSceneGUI(info, screenWidth, screenHeight);
-	gizmo.onGUI(&editorWorld);
-	gizmo.endFrame();
 	ImGui::EndChild();
 
 	ImGui::SameLine();
@@ -167,16 +164,14 @@ void ObjectPreviewWindow::onWindowGUI(GUIRenderInfo& info)
 	ImGui::BeginChild("Inspector", ImVec2(inspectorSize - splitterSize, screenHeight));
 	onInspectorBarGUI(info);
 	ImGui::EndChild();
-
-	gizmo.onRender2D(drawList);
-	gizmo.reset();
-	RenderInfo renderInfo;
-	renderInfo.sceneData = editorWorld.getSceneRenderData();
-	renderInfo.renderGraph = info.renderGraph;
-	renderInfo.camera = &editorWorld.camera;
-	gizmo.onRender3D(renderInfo);
-
+	
 	ImGui::EndChild();
+}
+
+void ObjectPreviewWindow::onRender(RenderInfo& info)
+{
+	UIWindow::onRender(info);
+	editorWorld.render(*info.renderGraph);
 }
 
 void ObjectPreviewWindow::showObject(GUI& gui, const SerializationInfo& info)

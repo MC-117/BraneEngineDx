@@ -14,11 +14,6 @@ TextureParameterPin::TextureParameterPin(const string& name)
 {
 }
 
-bool TextureParameterPin::generate(GraphCodeGenerationContext& context)
-{
-    return true;
-}
-
 Serializable* TextureParameterPin::instantiate(const SerializationInfo& from)
 {
     return NULL;
@@ -52,16 +47,35 @@ TextureParameterVariable::TextureParameterVariable(const string& name)
 {
 }
 
+bool TextureParameterVariable::isGlobalVariable() const
+{
+    return true;
+}
+
+Texture* TextureParameterVariable::getValue() const
+{
+    return defaultTexture;
+}
+
 Texture* TextureParameterVariable::getDefaultValue() const
 {
     return defaultTexture;
 }
 
+void TextureParameterVariable::setValue(Texture* const& value)
+{
+    defaultTexture = value;
+}
+
+void TextureParameterVariable::setDefaultValue(Texture* const& value)
+{
+    defaultTexture = value;
+}
+
 bool TextureParameterVariable::generate(GraphCodeGenerationContext& context)
 {
-    return context.getBackend().invoke(
-        CodeFunctionInvocation(getVariableType())
-        .param(name));
+    context.assignParameter(this, Name(name));
+    return true;
 }
 
 Serializable* TextureParameterVariable::instantiate(const SerializationInfo& from)
@@ -83,7 +97,7 @@ bool TextureParameterVariable::serialize(SerializationInfo& to)
 {
     GraphVariable::serialize(to);
     if (defaultTexture) {
-        string path = AssetInfo::getPath(defaultTexture);
+        string path = AssetInfo::getPath((void*)defaultTexture);
         to.set("defaultValue", path);
     }
     return true;
@@ -94,8 +108,9 @@ IMP_TEX_PARAM_CLASS(TextureCube, Color(255, 139, 139));
 
 SerializeInstance(Texture2DSampleNode);
 
-Texture2DSampleNode::Texture2DSampleNode()
+Texture2DSampleNode::Texture2DSampleNode() : ShaderNode()
 {
+    flag = Flag::Expression;
     displayName = "Texture2DSample";
     texPin = new Texture2DParameterPin("Tex");
     coordPin = new Vector2fPin("Coord");
@@ -112,7 +127,32 @@ Serializable* Texture2DSampleNode::instantiate(const SerializationInfo& from)
 
 bool Texture2DSampleNode::generate(GraphCodeGenerationContext& context)
 {
-    return context.getBackend().invoke(CodeFunctionInvocation(Name("SAMPLE_TEX"))
+    context.getBackend().write("#ifndef LIGHTING_SHADER_FEATURE\n");
+    bool re = context.getBackend().invoke(CodeFunctionInvocation(Name("SAMPLE_TEX"))
         .param(context.getParameter(texPin), context.getParameter(coordPin))
         .out(context.getParameter(colorPin).symbol()));
+    context.getBackend().write("#endif\n");
+    return re;
+}
+
+SerializeInstance(TexCoordsNode);
+
+TexCoordsNode::TexCoordsNode() : ShaderNode()
+{
+    flag = Flag::Expression;
+    displayName = "TexCoords";
+    coordPin = new Vector2fPin("Coord");
+    addOutput(*coordPin);
+}
+
+bool TexCoordsNode::generate(GraphCodeGenerationContext& context)
+{
+    context.assignParameter(coordPin, CodeFunctionInvocation(Code::access_op).param("context"_N,
+        CodeFunctionInvocation(Code::access_op).param("surf"_N, "TexCoords"_N)));
+    return true;
+}
+
+Serializable* TexCoordsNode::instantiate(const SerializationInfo& from)
+{
+    return new TexCoordsNode();
 }

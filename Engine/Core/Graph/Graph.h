@@ -39,6 +39,7 @@ public:
 
 	virtual bool generateParameter(GraphCodeGenerationContext& context);
 	virtual bool solveAndGenerateOutput(GraphCodeGenerationContext& context);
+	virtual bool generateGlobalVariables(GraphCodeGenerationContext& context);
 	virtual bool generate(GraphCodeGenerationContext& context);
 
 	Flag getFlag() const;
@@ -49,12 +50,12 @@ public:
 
 	virtual bool addVariable(GraphVariable* variable);
 	int getVariableCount() const;
-	GraphVariable* getVariable(const string& name) const;
+	GraphVariable* getVariable(const Name& name) const;
 	GraphVariable* getVariable(int index) const;
 
 	virtual bool addSubGraph(Graph* graph);
 	int getSubGraphCount() const;
-	Graph* getSubGraph(const string& name) const;
+	Graph* getSubGraph(const Name& name) const;
 	Graph* getSubGraph(int index) const;
 
 	bool setEntryNode();
@@ -92,11 +93,13 @@ protected:
 	vector<GraphNode*> nodes;
 	EntryNode* entryNode = NULL;
 	vector<ReturnNode*> returnNodes;
-	unordered_map<string, GraphVariable*> variableNameMap;
+	unordered_map<Name, GraphVariable*> variableNameMap;
 	vector<GraphVariable*> variables;
-	unordered_map<string, Graph*> subgraphNameMap;
+	unordered_map<Name, Graph*> subgraphNameMap;
 	vector<Graph*> subgraphes;
 
 	virtual void addInput(GraphPin& input);
 	virtual void addOutput(GraphPin& output);
+
+	virtual void generateSignature(GraphCodeGenerationContext& context, CodeFunctionSignature& signature);
 };

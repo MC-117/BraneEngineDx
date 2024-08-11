@@ -2,6 +2,7 @@
 #include "GraphCodeGeneration.h"
 #include "GraphNodeEditor.h"
 #include "../Attributes/TagAttribute.h"
+#include "../Utility/NameUtility.h"
 
 void GraphContext::execute()
 {
@@ -67,11 +68,26 @@ void GraphPin::setDisplayName(const string& name)
     displayName = name;
 }
 
-bool GraphPin::isConnectable(GraphPin* pin) const
+bool GraphPin::isWildcard() const
 {
-    return pin != NULL && pin->isOutput != isOutput &&
-        pin->node != node &&
-        &getSerialization() == &pin->getSerialization();
+    return false;
+}
+
+bool GraphPin::isConnectable(const GraphPin* pin) const
+{
+    bool connectable = pin != NULL && pin->isOutput != isOutput && pin->node != node;
+    bool this_Wildcard = isWildcard();
+    bool that_Wildcard = pin->isWildcard();
+    if (this_Wildcard) {
+        connectable &= isWildcardAcceptable(pin);
+    }
+    if (that_Wildcard) {
+        connectable &= pin->isWildcardAcceptable(this);
+    }
+    if (!this_Wildcard && !that_Wildcard) {
+        connectable = &getSerialization() == &pin->getSerialization();
+    }
+    return connectable;
 }
 
 GraphPin* GraphPin::getConnectedPin()
@@ -155,6 +171,11 @@ GraphPin::GraphPin(const string& name) : Base(), name(name)
 {
 }
 
+bool GraphPin::isWildcardAcceptable(const GraphPin* pin) const
+{
+    return true;
+}
+
 GraphPinFactory& GraphPinFactory::get()
 {
     static GraphPinFactory factory;
@@ -225,6 +246,25 @@ void GraphPinCodeTypeAttribute::finalize(Serialization& serialization)
     GraphPinFactory::get().registerType(typeFinal, serialization);
 }
 
+GraphCodeHeaderFileAttribute::GraphCodeHeaderFileAttribute(const Name& path)
+    : Attribute("GraphCodeHeaderFile", true)
+    , path(path)
+{
+}
+
+const Name& GraphCodeHeaderFileAttribute::getPath() const
+{
+    return path;
+}
+
+void GraphCodeHeaderFileAttribute::resolve(Attribute* sourceAttribute, Serialization& serialization)
+{
+    if (sourceAttribute) {
+        const GraphCodeHeaderFileAttribute* attr = sourceAttribute->cast<GraphCodeHeaderFileAttribute>();
+        path = attr->path;
+    }
+}
+
 SerializeInstance(FlowPin);
 
 FlowPin::FlowPin(const string& name) : GraphPin(name)
@@ -292,17 +332,17 @@ GraphNode::~GraphNode()
     clearPins();
 }
 
-void GraphNode::setName(const string& name)
+void GraphNode::setName(const Name& name)
 {
     this->name = name;
 }
 
-string GraphNode::getName() const
+Name GraphNode::getName() const
 {
     return name;
 }
 
-string GraphNode::getDisplayName() const
+Name GraphNode::getDisplayName() const
 {
     return displayName.empty() ? name : displayName;
 }
@@ -439,9 +479,14 @@ bool GraphNode::solveAndGenerateOutput(GraphCodeGenerationContext& context)
 
 bool GraphNode::generateStatement(GraphCodeGenerationContext& context)
 {
+    if (context.isNodeGenerated(this))
+        return true;
     bool success = generateParameter(context);
     success &= solveAndGenerateOutput(context);
     success &= generate(context);
+    context.markNodeGenerated(this);
+    if (const GraphCodeHeaderFileAttribute* headerFile = getSerialization().getAttribute<GraphCodeHeaderFileAttribute>())
+        context.addIncludeFile(headerFile->getPath());
     return success;
 }
 
@@ -503,6 +548,7 @@ bool GraphNode::deserialize(const SerializationInfo& from)
 {
     Base::deserialize(from);
     from.get("name", name);
+    setName(name);
     const SerializationInfo* inputInfos = from.get("inputs");
     if (inputInfos) {
         for each (const auto & info in inputInfos->sublists)

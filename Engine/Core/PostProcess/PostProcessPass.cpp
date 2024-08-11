@@ -3,6 +3,7 @@
 #include "../Asset.h"
 #include "../Console.h"
 #include "../GUI/UIControl.h"
+#include "../Importer/MaterialImporter.h"
 
 SerializeInstance(PostProcessPass);
 
@@ -116,7 +117,7 @@ void PostProcessPass::render(RenderInfo & info)
 		return;
 	ShaderProgram* program = material->getShader()->getProgram(Shader_Postprocess);
 	if (program == NULL) {
-		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName());
+		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName().c_str());
 		return;
 	}
 	if (program->isComputable()) {
@@ -171,7 +172,7 @@ bool PostProcessPass::deserialize(const SerializationInfo & from)
 	enable = enableStr != "false";
 	if (from.get("material", code) && !code.empty()) {
 		stringstream codeStream(code);
-		material = Material::MaterialLoader::loadMaterialInstance(codeStream, "Memory");
+		material = MaterialLoader::loadMaterialInstance(codeStream, "Memory");
 	}
 	return true;
 }
@@ -184,7 +185,7 @@ bool PostProcessPass::serialize(SerializationInfo & to)
 	if (material == NULL)
 		return true;
 	string code;
-	if (Material::MaterialLoader::saveMaterialInstanceToString(code, *material) && !code.empty())
+	if (MaterialLoader::saveMaterialInstanceToString(code, *material) && !code.empty())
 		to.set("material", code);
 	return true;
 }

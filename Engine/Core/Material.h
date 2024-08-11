@@ -9,6 +9,7 @@
 class ENGINE_API Material
 {
 	friend class MaterialRenderData;
+	friend class MaterialLoader;
 public:
 	bool isTwoSide = false;
 	bool cullFront = false;
@@ -16,12 +17,13 @@ public:
 	bool isDeferred = false;
 	uint16_t renderOrder = 0;
 
+	static GenericShader nullShader;
 	static Material nullMaterial;
-	static Shader defaultShader;
+	static GenericShader defaultShader;
 	static Material defaultMaterial;
-	static Shader defaultParticleShader;
+	static GenericShader defaultParticleShader;
 	static Material defaultParticleMaterial;
-	static Shader defaultDepthShader;
+	static GenericShader defaultDepthShader;
 	static Material defaultDepthMaterial;
 
 	Material(Shader& shader);
@@ -34,7 +36,7 @@ public:
 	bool isNull() const;
 
 	Shader* getShader() const;
-	string getShaderName() const;
+	Name getShaderName() const;
 
 	bool setBaseColor(const Color& color);
 	Color getBaseColor();
@@ -43,41 +45,42 @@ public:
 	void setTwoSide(bool b);
 	void setPassNum(unsigned int num);
 	void setPass(unsigned int pass);
-	bool setScalar(const string& name, const float value);
-	bool setCount(const string& name, const int value);
-	bool setColor(const string& name, const Color& value);
-	bool setMatrix(const string& name, const Matrix4f& value);
-	bool setTexture(const string& name, Texture& value);
-	bool setImage(const string& name, const Image& value);
+	bool setScalar(const Name& name, const float value);
+	bool setCount(const Name& name, const int value);
+	bool setColor(const Name& name, const Color& value);
+	bool setMatrix(const Name& name, const Matrix4f& value);
+	bool setTexture(const Name& name, Texture& value);
+	bool setImage(const Name& name, const Image& value);
 	unsigned int getPassNum();
 	Vector3u getLocalSize();
-	float* getScaler(const string& name);
-	int* getCount(const string& name);
-	Color* getColor(const string& name);
-	Matrix4f* getMatrix(const string& name);
-	Texture** getTexture(const string& name);
-	Image* getImage(const string& name);
+	float* getScaler(const Name& name);
+	int* getCount(const Name& name);
+	Color* getColor(const Name& name);
+	Matrix4f* getMatrix(const Name& name);
+	Texture** getTexture(const Name& name);
+	Image* getImage(const Name& name);
 
-	map<string, MatAttribute<float>>& getScalarField();
-	map<string, MatAttribute<int>>& getCountField();
-	map<string, MatAttribute<Color>>& getColorField();
-	map<string, MatAttribute<Matrix4f>>& getMatrixField();
-	map<string, MatAttribute<Texture*>>& getTextureField();
-	map<string, MatAttribute<Image>>& getImageField() ;
+	map<Name, MatAttribute<float>>& getScalarField();
+	map<Name, MatAttribute<int>>& getCountField();
+	map<Name, MatAttribute<Color>>& getColorField();
+	map<Name, MatAttribute<Matrix4f>>& getMatrixField();
+	map<Name, MatAttribute<Texture*>>& getTextureField();
+	map<Name, MatAttribute<Image>>& getImageField() ;
 
-	const map<string, MatAttribute<float>>& getScalarField() const;
-	const map<string, MatAttribute<int>>& getCountField() const;
-	const map<string, MatAttribute<Color>>& getColorField() const;
-	const map<string, MatAttribute<Matrix4f>>& getMatrixField() const;
-	const map<string, MatAttribute<Texture*>>& getTextureField() const;
-	const map<string, MatAttribute<Image>>& getImageField() const;
+	const map<Name, MatAttribute<float>>& getScalarField() const;
+	const map<Name, MatAttribute<int>>& getCountField() const;
+	const map<Name, MatAttribute<Color>>& getColorField() const;
+	const map<Name, MatAttribute<Matrix4f>>& getMatrixField() const;
+	const map<Name, MatAttribute<Texture*>>& getTextureField() const;
+	const map<Name, MatAttribute<Image>>& getImageField() const;
 
-	void addScalar(const pair<string, MatAttribute<float>>& attr);
-	void addCount(const pair<string, MatAttribute<int>>& attr);
-	void addColor(const pair<string, MatAttribute<Color>>& attr);
-	void addMatrix(const pair<string, MatAttribute<Matrix4f>>& attr);
-	void addDefaultTexture(const pair<string, MatAttribute<string>>& attr);
-	void addDefaultImage(const pair<string, unsigned int>& attr);
+	void addScalar(const pair<Name, MatAttribute<float>>& attr);
+	void addCount(const pair<Name, MatAttribute<int>>& attr);
+	void addColor(const pair<Name, MatAttribute<Color>>& attr);
+	void addMatrix(const pair<Name, MatAttribute<Matrix4f>>& attr);
+	void addDefaultTexture(const pair<Name, MatAttribute<string>>& attr);
+	void addDefaultTexture(const pair<Name, MatAttribute<Texture*>>& attr);
+	void addDefaultImage(const pair<Name, unsigned int>& attr);
 
 	void preprocess();
 	void processBaseData();
@@ -94,23 +97,7 @@ public:
 
 	IRenderData* getRenderData();
 
-	static class MaterialLoader
-	{
-	public:
-		static bool loadMaterial(Material& material, const string& file);
-		static Material* loadMaterialInstance(istream& is, const string& matName);
-		static Material* loadMaterialInstance(const string& file);
-		static bool saveMaterialInstanceToString(string& text, Material& material);
-		static bool saveMaterialInstance(const string& file, Material& material);
-	protected:
-		static pair<string, MatAttribute<float>> parseScalar(const string& src);
-		static pair<string, MatAttribute<int>> parseCount(const string& src);
-		static pair<string, MatAttribute<Color>> parseColor(const string& src);
-		static pair<string, MatAttribute<Matrix4f>> parseMatrix(const string& src);
-		static pair<string, MatAttribute<string>> parseTexture(const string& src);
-		static pair<string, unsigned int> parseImage(const string& src);
-		static bool parseMaterialAttribute(Material& material, const string& line);
-	};
+	
 protected:
 	MaterialDesc desc;
 	IMaterial* vendorMaterial = NULL;

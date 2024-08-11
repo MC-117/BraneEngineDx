@@ -9,9 +9,30 @@
 #include "RenderTarget.h"
 #include "RenderCore/CameraData.h"
 
+class Camera;
+class GUISurface;
+
+namespace CameraTag
+{
+	static const Name main = "main";
+}
+
+class ENGINE_API ICameraManager
+{
+public:
+	virtual void setCamera(Camera* camera, const Name& tag) = 0;
+	virtual Camera* getCamera(const Name& tag) const = 0;
+	virtual Name getCameraTag(Camera* camera) const = 0;
+
+	virtual void removeCamera(Camera* camera) = 0;
+
+	virtual void setGUISurface(GUISurface* guiSurface) = 0;
+	virtual GUISurface* getGUISurface() const = 0;
+};
+
 class ENGINE_API Camera : public Transform
 {
-	friend class GUISurface;
+	friend class CameraManager;
 public:
 	Serialize(Camera, Transform);
 	enum CameraMode {
@@ -36,6 +57,8 @@ public:
 	Camera(string name = "Camera");
 	Camera(RenderTarget& renderTarget, string name = "Camera");
 	virtual ~Camera();
+	
+	ICameraManager* getCameraManager() const;
 
 	void setAnimationClip(AnimationClipData& data);
 
@@ -47,8 +70,11 @@ public:
 
 	bool culling(const BoundBox& bound, const Matrix4f& mat);
 
+	virtual void onAttacted(Object& parent);
+
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
+	virtual void prerender(SceneRenderData& sceneData);
 
 	virtual Render* getRender();
 	virtual unsigned int getRenders(vector<Render*>& renders);
@@ -68,7 +94,7 @@ public:
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
 protected:
-	GUISurface* guiSurface = NULL;
+	ICameraManager* manager = nullptr;
 };
 
 #endif // !_CAMERA_H_

@@ -3,6 +3,7 @@
 #include "../Engine.h"
 #include "GUIUtility.h"
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
+#include "../Importer/MaterialImporter.h"
 
 MatBranchModifier::MatBranchModifier(string name, bool defaultShow)
 	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
@@ -45,7 +46,7 @@ void MatBranchModifier::onWindowGUI(GUIRenderInfo& info)
 				continue;
 			string path = AssetInfo::getPath(mat);
 			if (!path.empty()) {
-				Material::MaterialLoader::saveMaterialInstance(path, *mat);
+				MaterialLoader::saveMaterialInstance(path, *mat);
 			}
 		}
 	}

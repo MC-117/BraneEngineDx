@@ -1,8 +1,9 @@
 #include "Variable.h"
 
 #include "GraphCodeGeneration.h"
+#include "../Attributes/TagAttribute.h"
 
-SerializeInstance(GraphVariable);
+SerializeInstance(GraphVariable, DEF_ATTR(Tag, "Graph"));
 
 GraphVariable::GraphVariable(const string& name) : name(name)
 {
@@ -16,6 +17,11 @@ string GraphVariable::getName() const
 Color GraphVariable::getDisplayColor() const
 {
     return Color(128, 128, 128);
+}
+
+bool GraphVariable::isGlobalVariable() const
+{
+    return false;
 }
 
 ValuePin* GraphVariable::newValuePin(const string& name) const

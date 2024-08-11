@@ -344,7 +344,7 @@ bool ParticleEmitter::serialize(SerializationInfo & to)
 			pathType = "path";
 		}
 		if (path.empty()) {
-			path = material->getShaderName();
+			path = material->getShaderName().c_str();
 			pathType = "name";
 		}
 		minfo->add("path", path);

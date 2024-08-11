@@ -27,11 +27,13 @@ struct ENGINE_API Name
     Name(const std::string& str);
 
     bool isNone() const;
+    bool empty() const;
 
     bool operator==(const Name& name) const;
+    bool operator<(const Name& name) const;
 
     NameHash getHash() const;
-    const char* str() const;
+    const char* c_str() const;
 protected:
     NameHash hash;
     const char* ptr;
@@ -45,3 +47,10 @@ struct ENGINE_API std::hash<Name>
         return name.getHash();
     }
 };
+
+ENGINE_API std::string operator+(const Name& name, const char* c_str);
+ENGINE_API std::string operator+(const char* c_str, const Name& name);
+ENGINE_API std::string operator+(const Name& name, const std::string& str);
+ENGINE_API std::string operator+(const std::string& str, const Name& name);
+
+ENGINE_API Name operator ""_N(const char* c_str, size_t);

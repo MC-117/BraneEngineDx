@@ -70,7 +70,7 @@ TagManager::Iter TagManager::findByTag(const Name& tag, Serialization* baseSeria
 
 void TagManager::registerTag(const Name& name, Serialization& serialization)
 {
-    tagSet.emplace(name.str());
+    tagSet.emplace(name.c_str());
     taggedSerialization.emplace(name, &serialization);
 }
 

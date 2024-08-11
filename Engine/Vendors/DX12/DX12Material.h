@@ -21,7 +21,7 @@ public:
 	DX12Material(DX12Context& context, MaterialDesc& desc);
 	virtual ~DX12Material();
 
-	void uploadAttribute(DX12ShaderProgram* program, const string& name, unsigned int size, void* data);
+	void uploadAttribute(DX12ShaderProgram* program, const Name& name, unsigned int size, void* data);
 
 	virtual void preprocess();
 	virtual void processBaseData();
@@ -35,7 +35,7 @@ public:
 
 	void release();
 protected:
-	string lastShaderName = "__Null";
+	Name lastShaderName = "__Null";
 };
 
 #endif // VENDOR_USE_DX12

@@ -55,22 +55,31 @@ const char* HLSLWriter::getOperatorFormatter(const Name& op)
     return ClangWriter::getOperatorFormatter(op);
 }
 
-void HLSLWriter::writeInParameter(const CodeSymbolDefinition& definition)
+void HLSLWriter::writeSymbolDefinition(const CodeSymbolDefinition& definition, Enum<CodeQualifierFlags> extraQualifier)
 {
     writeIndent();
     if (expressionCount > 0)
         output() << ", ";
-    write("in %s %s", convertKeyword(definition.type).str(), definition.name.str());
-    expressionCount++;
-}
-
-void HLSLWriter::writeOutParameter(const CodeSymbolDefinition& definition)
-{
-    writeIndent();
-    if (expressionCount > 0)
-        output() << ", ";
-    write("out %s %s", convertKeyword(definition.type).str(), definition.name.str());
-    expressionCount++;
+    Enum<CodeQualifierFlags> qualifier = definition.qualifiers | extraQualifier;
+    if (qualifier.has(CQF_Ref)) {
+        output() << "inout ";
+    }
+    else if (qualifier.has(CQF_In)) {
+        output() << "in ";
+    }
+    else if (qualifier.has(CQF_Out)) {
+        output() << "out ";
+    }
+    if (qualifier.has(CQF_Uniform)) {
+        output() << "uniform ";
+    }
+    if (qualifier.has(CQF_Static)) {
+        output() << "static ";
+    }
+    if (qualifier.has(CQF_Const)) {
+        output() << "const ";
+    }
+    output() << convertKeyword(definition.type).c_str() << ' ' << definition.name.c_str();
 }
 
 ClangWriter* HLSLWriter::newWriter()

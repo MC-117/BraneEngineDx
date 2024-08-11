@@ -15,11 +15,12 @@ public:
     virtual const char* getOperatorFormatter(const Name& op);
 
     virtual void write(const char* fmt_str, ...);
-    virtual ICodeWriter* subscope();
+    virtual void write(const char* fmt_str, va_list ap);
+    virtual ICodeWriter* subscope(ScopeType type);
     virtual void beginExpression(const char* fmt_str = NULL, ...);
     virtual void endExpression(const char* ender = NULL);
-    virtual void writeInParameter(const CodeSymbolDefinition& definition);
-    virtual void writeOutParameter(const CodeSymbolDefinition& definition);
+    virtual void writeSymbolDefinition(const CodeSymbolDefinition& definition, Enum<CodeQualifierFlags> extraQualifier = CQF_None);
+    virtual void writeParameterDefinition(const CodeSymbolDefinition& definition, Enum<CodeQualifierFlags> extraQualifier = CQF_None);
     virtual void writeParameter(const CodeParameter& param, ICodeScopeBackend& backend);
 
     virtual void getString(std::string& str);
@@ -40,7 +41,6 @@ protected:
     std::stringstream& output();
 
     virtual void writeIndent();
-    virtual void write(const char* fmt_str, va_list ap);
     virtual ClangWriter* newWriter();
 };
 
@@ -58,6 +58,7 @@ public:
     virtual std::string convertCharacter(char character);
     virtual std::string convertExpression(const CodeFunctionInvocation& invocation);
 
+    virtual void write(const char* fmt_str, ...);
     virtual ICodeScopeBackend* subscope();
     virtual bool declareVariable(const CodeSymbolDefinition& definition, const CodeParameter& defaultValue = CodeParameter::none);
     virtual ICodeScopeBackend* declareFunction(const CodeFunctionSignature& signature);
@@ -65,7 +66,7 @@ public:
     virtual bool branch(const std::vector<CodeParameter>& conditionParams, std::vector<ICodeScopeBackend*>& scopes);
     virtual ICodeScopeBackend* loop(const CodeParameter& conditionParam);
     virtual bool jumpOut();
-    virtual bool output(const std::vector<CodeParameter>& returnValues);
+    virtual bool output(const std::vector<CodeParameter>& returnValues, bool doCheck = true);
 protected:
     static Name _builtin_function_type_;
     ICodeWriter& writer;

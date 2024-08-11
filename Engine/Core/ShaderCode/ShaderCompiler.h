@@ -3,6 +3,55 @@
 #include "../ShaderStage.h"
 #include <fstream>
 
+class IShaderCodeReader
+{
+public:
+	virtual ~IShaderCodeReader() = default;
+
+	virtual bool open(const char* path) = 0;
+	virtual void close() = 0;
+
+	virtual bool isOpen() const = 0;
+	
+	virtual const char* getPath() const = 0;
+	virtual const char* getEnvPath() const = 0;
+	virtual const char* getName() const = 0;
+
+	virtual bool readLine(string& line) = 0;
+	virtual bool readChar(char& out) = 0;
+	virtual void unreadChar() = 0;
+
+	virtual size_t getPos() = 0;
+	virtual void setPos(size_t pos) = 0;
+};
+
+class ShaderCodeFileReader : public IShaderCodeReader
+{
+public:
+	virtual ~ShaderCodeFileReader();
+	
+	virtual bool open(const char* path);
+	virtual void close();
+
+	virtual bool isOpen() const;
+	
+	virtual const char* getPath() const;
+	virtual const char* getEnvPath() const;
+	virtual const char* getName() const;
+
+	virtual bool readLine(string& line);
+	virtual bool readChar(char& out);
+	virtual void unreadChar();
+
+	virtual size_t getPos();
+	virtual void setPos(size_t pos);
+protected:
+	ifstream file;
+	string path;
+	string envPath;
+	string name;
+};
+
 class ENGINE_API ShaderCompiler
 {
 public:
@@ -16,12 +65,13 @@ public:
 
 	ShaderCompiler();
 
-	bool init(const string& path);
+	bool init(IShaderCodeReader& reader);
+	void setIterateHeaders(bool value);
 	void reset();
 
 	bool isSuccessed() const;
 
-	const string& getName() const;
+	const char* getName() const;
 	ShaderToken getToken() const;
 	ShaderToken getScopeToken() const;
 	const vector<string>& getCommand() const;
@@ -39,10 +89,10 @@ protected:
 		vector<string> commands;
 	};
 
-	string path;
-	ifstream file;
-	string clip, line, name, envPath, adapterName;
+	IShaderCodeReader* reader;
+	string clip, line, adapterName;
 	ShaderFile* shaderFile = NULL;
+	bool iterateHeaders = true;
 	bool successed = true;
 	bool isCommand = false;
 	bool noEarlyZ = false;
@@ -60,6 +110,8 @@ protected:
 	ShaderManager& manager;
 
 	static unordered_map<string, ShaderToken> keywords;
+
+	istream& getStream();
 
 	void getTokenInternal(const string& str);
 	ShaderAdapter* getAdapterInternal(ShaderStageType type);

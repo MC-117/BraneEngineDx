@@ -1,5 +1,5 @@
 #pragma once
-#include <iostream>
+#include "Utility/Name.h"
 
 enum TexDimension
 {
@@ -263,31 +263,21 @@ struct ENGINE_API RenderMode
 	operator uint32_t() const;
 };
 
-struct ENGINE_API ShaderPropertyName
+struct ENGINE_API ShaderPropertyName : public Name
 {
-	size_t hash;
-
 	ShaderPropertyName(const char* name);
 	ShaderPropertyName(const std::string& name);
-
-	static size_t calHash(const char* name);
-
-	size_t getHash() const;
-
-	bool operator==(const ShaderPropertyName& name) const;
+	ShaderPropertyName(const Name& name);
 };
 
-namespace std
+template<>
+struct ENGINE_API std::hash<ShaderPropertyName>
 {
-	template<>
-	struct hash<ShaderPropertyName>
+	size_t operator()(const ShaderPropertyName& name) const noexcept
 	{
-		size_t operator()(const ShaderPropertyName& name) const
-		{
-			return name.getHash();
-		}
-	};
-}
+		return name.getHash();
+	}
+};
 
 struct ShaderProperty
 {
@@ -302,10 +292,12 @@ struct ShaderProperty
 		Image
 	};
 	Type type = None;
-	std::string name;
+	ShaderPropertyName name;
 	int offset;
 	int size;
 	int meta;
+
+	ShaderProperty(const ShaderPropertyName& name) : name(name), offset(0), size(0), meta(0) {}
 };
 
 enum CameraRenderFlags : unsigned int

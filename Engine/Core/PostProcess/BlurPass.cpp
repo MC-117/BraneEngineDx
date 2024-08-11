@@ -33,7 +33,7 @@ void BlurPass::render(RenderInfo& info)
 		return;
 	ShaderProgram* program = material->getShader()->getProgram(Shader_Postprocess);
 	if (program == NULL || !program->init()) {
-		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName());
+		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName().c_str());
 		return;
 	}
 	if (program->isComputable()) {

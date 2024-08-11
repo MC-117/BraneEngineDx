@@ -117,7 +117,7 @@ void VolumetricLightPass::render(RenderInfo& info)
 		return;
 	program = material->getShader()->getProgram(Shader_Postprocess);
 	if (program == NULL) {
-		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName());
+		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName().c_str());
 		return;
 	}
 	if (!program->isComputable()) {

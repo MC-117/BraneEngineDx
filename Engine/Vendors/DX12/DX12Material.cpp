@@ -13,7 +13,7 @@ DX12Material::~DX12Material()
 	release();
 }
 
-void DX12Material::uploadAttribute(DX12ShaderProgram* program, const string& name, unsigned int size, void* data)
+void DX12Material::uploadAttribute(DX12ShaderProgram* program, const Name& name, unsigned int size, void* data)
 {
 	if (matInsBufHost == NULL || program == NULL)
 		return;

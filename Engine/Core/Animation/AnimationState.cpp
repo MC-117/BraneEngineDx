@@ -135,7 +135,7 @@ bool AnimationTransition::serialize(SerializationInfo& to)
 
 SerializeInstance(AnimationState, DEF_ATTR(Tag, "Animation"));
 
-void AnimationState::setName(const string& name)
+void AnimationState::setName(const Name& name)
 {
     StateNode::setName(name);
     poseGraph.setName(name + "Graph");

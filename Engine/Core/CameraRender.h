@@ -23,6 +23,8 @@ public:
 	CameraRender(RenderTarget& renderTarget);
 	virtual ~CameraRender();
 
+	void setCameraTag(const Name& tag);
+
 	virtual bool isMainCameraRender() const;
 
 	void setCameraRenderFlags(Enum<CameraRenderFlags> flags);
@@ -50,6 +52,7 @@ protected:
 	static int cameraRenderNextID;
 	int cameraRenderID = 0;
 	int debugProbeIndex = -1;
+	Name tag;
 	Enum<CameraRenderFlags> flags;
 	CameraRenderData* renderData = NULL;
 	Texture2D* internalTexture = NULL;

@@ -1482,7 +1482,7 @@ AnimationConverter::MaterialInfo::MaterialInfo()
 
 AnimationConverter::MaterialInfo::MaterialInfo(const Material & mat) : baseMat(&mat)
 {
-	vector<string> name = split(mat.getShaderName(), '.');
+	vector<string> name = split(mat.getShaderName().c_str(), '.');
 	if (name.empty()) {
 		Asset* shd = AssetManager::getAsset("Material", name[0]);
 		if (shd != NULL)

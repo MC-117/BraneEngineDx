@@ -12,7 +12,7 @@ DX11Material::~DX11Material()
 	release();
 }
 
-void DX11Material::uploadAttribute(const string& name, unsigned int size, void* data)
+void DX11Material::uploadAttribute(const Name& name, unsigned int size, void* data)
 {
 	if (matInsBufHost == NULL || program == NULL)
 		return;
@@ -25,14 +25,14 @@ void DX11Material::uploadAttribute(const string& name, unsigned int size, void* 
 	memcpy_s(matInsBufHost + prop->offset, prop->size, data, size);
 }
 
-void DX11Material::uploadTexture(const string& name, ComPtr<ID3D11ShaderResourceView> tex, ComPtr<ID3D11SamplerState> sample)
+void DX11Material::uploadTexture(const Name& name, ComPtr<ID3D11ShaderResourceView> tex, ComPtr<ID3D11SamplerState> sample)
 {
 	if (program == NULL || tex == NULL)
 		return;
 	((DX11ShaderProgram*)program)->bindSRVWithSampler(dxContext.deviceContext, name, tex, sample);
 }
 
-void DX11Material::uploadImage(const string& name, ComPtr<ID3D11UnorderedAccessView> tex)
+void DX11Material::uploadImage(const Name& name, ComPtr<ID3D11UnorderedAccessView> tex)
 {
 	if (program == NULL || tex == NULL)
 		return;

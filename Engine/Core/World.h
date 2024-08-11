@@ -6,6 +6,7 @@
 #include "Transform.h"
 #include "Audio/AudioSource.h"
 #include "Camera.h"
+#include "CameraManager.h"
 #include "RenderPool.h"
 
 #if ENABLE_PHYSICS
@@ -51,6 +52,9 @@ public:
 	void setGUIOnly(bool value);
 	bool getGUIOnly();
 
+	ICameraManager& getCameraManager();
+	const ICameraManager& getCameraManager() const;
+
 	Camera& getCurrentCamera();
 	Camera& getDefaultCamera();
 	void switchCamera(Camera& camera);
@@ -81,7 +85,7 @@ protected:
 	bool doseWarmUp = false;
 	int quitCode = 0;
 	ObjectIterator iter = ObjectIterator(this);
-	Camera* camera = &defaultCamera;
+	CameraManager cameraManager;
 	vector<Object*> destroyList;
 
 	int64_t getCurrentTime();

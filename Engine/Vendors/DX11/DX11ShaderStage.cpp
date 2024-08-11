@@ -36,7 +36,7 @@ unsigned int DX11ShaderStage::compile(const ShaderMacroSet& macroSet, const stri
 	if (!filesystem::exists(shdtmp))
 		filesystem::create_directory(shdtmp);
 	string rootPath = Engine::windowContext.workingPath;
-	string shaderPath = rootPath + '/' + shdtmp + name + "_" + getShaderFeatureNames(this->shaderFeature) + getShaderExtension(stageType);
+	string shaderPath = rootPath + '/' + shdtmp + name.c_str() + "_" + getShaderFeatureNames(this->shaderFeature) + getShaderExtension(stageType);
 	ofstream f = ofstream(shaderPath);
 	if (f.fail()) {
 		if (FAILED(D3DCompile(this->code.c_str(), this->code.size() * sizeof(char), name.c_str(), NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE,
@@ -78,10 +78,9 @@ unsigned int DX11ShaderStage::compile(const ShaderMacroSet& macroSet, const stri
 	for (int i = 0; i < shaderDesc.BoundResources; i++) {
 		D3D11_SHADER_INPUT_BIND_DESC desc = { 0 };
 		dx11ShaderReflector->GetResourceBindingDesc(i, &desc);
-		size_t nameHash = ShaderPropertyName::calHash(desc.Name);
+		ShaderPropertyName shaderPropertyName = desc.Name;
 		ShaderProperty& shaderProperty = properties.insert(make_pair(
-			nameHash, ShaderProperty())).first->second;
-		shaderProperty.name = desc.Name;
+			shaderPropertyName, ShaderProperty(shaderPropertyName))).first->second;
 		switch (desc.Type)
 		{
 		case D3D_SIT_CBUFFER:
@@ -116,18 +115,18 @@ unsigned int DX11ShaderStage::compile(const ShaderMacroSet& macroSet, const stri
 			D3D11_SHADER_BUFFER_DESC bufDesc = { 0 };
 			if (SUCCEEDED(constantBuffer->GetDesc(&bufDesc))) {
 				shaderProperty.size = bufDesc.Size;
-				if (nameHash == materialParameterBufferName.getHash()) {
+				if (shaderPropertyName == materialParameterBufferName) {
 					for (int i = 0; i < bufDesc.Variables; i++) {
 						ID3D11ShaderReflectionVariable* variable = constantBuffer->GetVariableByIndex(i);
 						D3D11_SHADER_VARIABLE_DESC desc = { 0 };
 						variable->GetDesc(&desc);
-						ShaderProperty& shaderProperty = properties.insert(make_pair(
-							ShaderPropertyName::calHash(desc.Name), ShaderProperty())).first->second;
-						shaderProperty.name = desc.Name;
-						shaderProperty.type = ShaderProperty::Parameter;
-						shaderProperty.offset = desc.StartOffset;
-						shaderProperty.size = desc.Size;
-						shaderProperty.meta = 0;
+						ShaderPropertyName paramName = desc.Name;
+						ShaderProperty& param = properties.insert(make_pair(
+							paramName, ShaderProperty(paramName))).first->second;
+						param.type = ShaderProperty::Parameter;
+						param.offset = desc.StartOffset;
+						param.size = desc.Size;
+						param.meta = 0;
 					}
 				}
 			}

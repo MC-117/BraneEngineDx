@@ -72,18 +72,38 @@ void ClangWriter::write(const char* fmt_str, ...)
     va_end(ap);
 }
 
-ICodeWriter* ClangWriter::subscope()
+void ClangWriter::write(const char* fmt_str, va_list ap)
 {
     writeIndent();
-    output() << "{\n";
+    int len = strlen(fmt_str);
+    int final_n, n = len * 2; /* Reserve two times as much as the length of the fmt_str */
+    std::unique_ptr<char[]> formatted;
+    while (1) {
+        formatted.reset(new char[n]); /* Wrap the plain char array into the unique_ptr */
+        final_n = vsnprintf(&formatted[0], n, fmt_str, ap);
+        if (final_n < 0 || final_n >= n)
+            n += abs(final_n - n + 1);
+        else
+            break;
+    }
+    //formatted[final_n + 1] = '\0';
+    output() << formatted.get();
+}
 
+ICodeWriter* ClangWriter::subscope(ScopeType type)
+{
     ClangWriter* scopeWriter = newWriter();
-    scopeWriter->indent = indent + 1;
-    scopes.emplace_back().scopeWriter = scopeWriter;
-
-    writeIndent();
-    output() << "}\n";
-    
+    if (type == BlankScope) {
+        scopes.emplace_back().scopeWriter = scopeWriter;
+    }
+    else {
+        writeIndent();
+        output() << "{\n";
+        scopes.emplace_back().scopeWriter = scopeWriter;
+        scopeWriter->indent = indent + 1;
+        writeIndent();
+        output() << "}\n";
+    }
     return scopeWriter;
 }
 
@@ -120,21 +140,29 @@ void ClangWriter::endExpression(const char* ender)
         output() << ender;
 }
 
-void ClangWriter::writeInParameter(const CodeSymbolDefinition& definition)
+void ClangWriter::writeSymbolDefinition(const CodeSymbolDefinition& definition, Enum<CodeQualifierFlags> extraQualifier)
 {
     writeIndent();
-    if (expressionCount > 0)
-        output() << ", ";
-    output() << convertKeyword(definition.type).str() << ' ' << definition.name.str();
-    expressionCount++;
+    Enum<CodeQualifierFlags> qualifier = definition.qualifiers | extraQualifier;
+    if (qualifier.has(CQF_Static)) {
+        output() << "static ";
+    }
+    if (qualifier.has(CQF_Const)) {
+        output() << "const ";
+    }
+    output() << convertKeyword(definition.type).c_str();
+    if (qualifier.enumValue & CQF_Out) {
+        output() << '&';
+    }
+    output() << ' ' << definition.name.c_str();
 }
 
-void ClangWriter::writeOutParameter(const CodeSymbolDefinition& definition)
+void ClangWriter::writeParameterDefinition(const CodeSymbolDefinition& definition, Enum<CodeQualifierFlags> extraQualifier)
 {
     writeIndent();
     if (expressionCount > 0)
         output() << ", ";
-    output() << convertKeyword(definition.type).str() << "& " << definition.name.str();
+    writeSymbolDefinition(definition, extraQualifier);
     expressionCount++;
 }
 
@@ -187,24 +215,6 @@ void ClangWriter::writeIndent()
     }
     for (int i = 0; i < indent; i++)
         stream << "    ";
-}
-
-void ClangWriter::write(const char* fmt_str, va_list ap)
-{
-    writeIndent();
-    int len = strlen(fmt_str);
-    int final_n, n = len * 2; /* Reserve two times as much as the length of the fmt_str */
-    std::unique_ptr<char[]> formatted;
-    while (1) {
-        formatted.reset(new char[n]); /* Wrap the plain char array into the unique_ptr */
-        final_n = vsnprintf(&formatted[0], n, fmt_str, ap);
-        if (final_n < 0 || final_n >= n)
-            n += abs(final_n - n + 1);
-        else
-            break;
-    }
-    //formatted[final_n + 1] = '\0';
-    output() << formatted.get();
 }
 
 ClangWriter* ClangWriter::newWriter()
@@ -260,6 +270,14 @@ std::string ClangScopeBackend::convertExpression(const CodeFunctionInvocation& i
     return result;
 }
 
+void ClangScopeBackend::write(const char* fmt_str, ...)
+{
+    va_list ap;
+    va_start(ap, fmt_str);
+    writer.write(fmt_str, ap);
+    va_end(ap);
+}
+
 ICodeScopeBackend* ClangScopeBackend::subscope()
 {
     return subscope(scopeSignature);
@@ -269,11 +287,11 @@ bool ClangScopeBackend::declareVariable(const CodeSymbolDefinition& definition, 
 {
     if (!registerSymbol(definition))
         return false;
-    const char* typeName = convertKeyword(definition.type).str();
+    writer.writeSymbolDefinition(definition);
     if (defaultValue.isValid())
-        writer.write("%s %s = %s;\n", typeName, definition.name.str(), defaultValue.toString(*this).c_str());
+        writer.write(" = %s;\n", defaultValue.toString(*this).c_str());
     else
-        writer.write("%s %s;\n", typeName, definition.name.str());
+        writer.write(";\n");
     return true;
 }
 
@@ -286,29 +304,29 @@ ICodeScopeBackend* ClangScopeBackend::declareFunction(const CodeFunctionSignatur
     const bool onlyOneOutput = signature.outputs.size() == 1;
 
     if (inFunction) {
-        writer.beginExpression("auto %s = [&] ", signature.name.str());
+        writer.beginExpression("auto %s = [&] ", signature.name.c_str());
     }
     else if (onlyOneOutput) {
-        writer.beginExpression("%s %s", signature.outputs[0].type.str(), signature.name.str());
+        writer.beginExpression("%s %s", signature.outputs[0].type.c_str(), signature.name.c_str());
     }
     else {
-        writer.beginExpression("void %s", signature.name.str());
+        writer.beginExpression("void %s", signature.name.c_str());
     }
     
     for (auto& symbol : signature.parameters) {
-        writer.writeInParameter(symbol);
+        writer.writeParameterDefinition(symbol, CQF_In);
     }
 
     if (signature.outputs.size() > 1) {
         for (auto& symbol : signature.outputs) {
-            writer.writeOutParameter(symbol);
+            writer.writeParameterDefinition(symbol, CQF_Out);
         }
     }
     
     writer.endExpression();
 
     if (inFunction && onlyOneOutput) {
-        writer.write(" -> %s\n", signature.outputs[0].type.str());
+        writer.write(" -> %s\n", signature.outputs[0].type.c_str());
     }
     else {
         writer.write("\n");
@@ -340,7 +358,7 @@ bool ClangScopeBackend::invoke(const CodeFunctionInvocation& invocation)
     if (opNum == 0) {
         if (invocation.outputs.size() == 1) {
             ok &= checkSymbol(invocation.outputs[0]);
-            writer.write("%s = ", invocation.outputs[0].str());
+            writer.write("%s = ", invocation.outputs[0].c_str());
         }
         writer.beginExpression(invocation.operation.toString(*this).c_str());
         for (auto& param : invocation.parameters) {
@@ -361,9 +379,9 @@ bool ClangScopeBackend::invoke(const CodeFunctionInvocation& invocation)
             return false;
         }
         for (auto& output : invocation.outputs) {
-            writer.write("%s = ", output.str());
+            writer.write("%s = ", output.c_str());
         }
-        const char* formatter = writer.getOperatorFormatter(invocation.operation.symbol().str());
+        const char* formatter = writer.getOperatorFormatter(invocation.operation.symbol().c_str());
         switch (opNum) {
         case 1:
             writer.write(formatter,
@@ -428,12 +446,14 @@ bool ClangScopeBackend::jumpOut()
     return true;
 }
 
-bool ClangScopeBackend::output(const std::vector<CodeParameter>& returnValues)
+bool ClangScopeBackend::output(const std::vector<CodeParameter>& returnValues, bool doCheck)
 {
-    if (!scopeSignature.isValid())
-        return false;
-    if (scopeSignature.outputs.size() != returnValues.size())
-        return false;
+    if (doCheck) {
+        if (!scopeSignature.isValid())
+            return false;
+        if (scopeSignature.outputs.size() != returnValues.size())
+            return false;
+    }
     const int outCount = returnValues.size();
     bool ok = true;
     switch (outCount) {
@@ -475,7 +495,7 @@ bool ClangScopeBackend::registerSymbol(const CodeSymbolDefinition& symbol)
         symbolTable.insert({ symbol.name, symbol });
         return true;
     }
-    Console::error("Symbol redefine: %s %s", symbol.type.str(), symbol.name.str());
+    Console::error("Symbol redefine: %s %s", symbol.type.c_str(), symbol.name.c_str());
     return false;
 }
 
@@ -495,7 +515,7 @@ bool ClangScopeBackend::checkSymbol(const Name& name)
     }
     if (symbolTable.find(name) != symbolTable.end())
         return true;
-    Console::error("Symbol not found: %s", name.str());
+    Console::error("Symbol not found: %s", name.c_str());
     return false;
 }
 
@@ -506,7 +526,7 @@ bool ClangScopeBackend::checkParameter(const CodeParameter& param)
 
 ICodeScopeBackend* ClangScopeBackend::subscope(const CodeFunctionSignature& signature)
 {
-    ClangScopeBackend* subscope = new ClangScopeBackend(*writer.subscope(), signature);
+    ClangScopeBackend* subscope = new ClangScopeBackend(*writer.subscope(ICodeWriter::FunctionScope), signature);
     subscope->symbolTable = symbolTable;
     subscope->funcitonTable = funcitonTable;
     subscopes.push_back(subscope);

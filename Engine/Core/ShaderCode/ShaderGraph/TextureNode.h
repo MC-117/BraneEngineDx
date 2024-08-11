@@ -16,7 +16,6 @@ public:
     TextureParameterPin(const string& name);
 
     virtual Name getVariableType() const = 0;
-    virtual bool generate(GraphCodeGenerationContext& context);
 
     static Serializable* instantiate(const SerializationInfo& from);
     virtual bool deserialize(const SerializationInfo& from);
@@ -25,16 +24,20 @@ protected:
     Texture* defaultTexture;
 };
 
-class TextureParameterVariable : public GraphVariable
+class TextureParameterVariable : public GraphVariable, public IGraphVariableValueAccessor<Texture*>
 {
 public:
     Serialize(TextureParameterVariable, GraphVariable);
     
     TextureParameterVariable(const string& name);
-    
-    virtual Name getVariableType() const = 0;
 
-    Texture* getDefaultValue() const;
+    virtual bool isGlobalVariable() const;
+
+    virtual Texture* getValue() const;
+    virtual Texture* getDefaultValue() const;
+
+    virtual void setValue(Texture* const& value);
+    virtual void setDefaultValue(Texture* const& value);
 
     virtual bool generate(GraphCodeGenerationContext& context);
 
@@ -56,8 +59,6 @@ public: \
     virtual Color getPinColor() const; \
     virtual Name getVariableType() const; \
  \
-    void setDefaultValue(TexClass* tex); \
- \
     static Serializable* instantiate(const SerializationInfo& from); \
 }; \
  \
@@ -70,6 +71,7 @@ public: \
  \
     virtual Color getDisplayColor() const; \
     virtual Name getVariableType() const; \
+    virtual ValuePin* newValuePin(const string& name) const; \
  \
     void setDefaultValue(TexClass* tex); \
  \
@@ -92,11 +94,6 @@ Name TexClass##ParameterPin::getVariableType() const \
     return ShaderCode::TexClass##_t; \
 } \
  \
-void TexClass##ParameterPin::setDefaultValue(TexClass* tex) \
-{ \
-    defaultTexture = tex; \
-} \
- \
 Serializable* TexClass##ParameterPin::instantiate(const SerializationInfo& from) \
 { \
     return new TexClass##ParameterPin(from.name); \
@@ -115,6 +112,11 @@ Color TexClass##ParameterVariable::getDisplayColor() const \
 Name TexClass##ParameterVariable::getVariableType() const \
 { \
     return ShaderCode::TexClass##_t; \
+} \
+ \
+ValuePin* TexClass##ParameterVariable::newValuePin(const string& name) const \
+{ \
+    return new TexClass##ParameterPin(name); \
 } \
  \
 void TexClass##ParameterVariable::setDefaultValue(TexClass* tex) \
@@ -144,4 +146,18 @@ protected:
     Texture2DParameterPin* texPin;
     Vector2fPin* coordPin;
     Vector4fPin* colorPin;
+};
+
+class TexCoordsNode : public ShaderNode
+{
+public:
+    Serialize(TexCoordsNode, ShaderNode);
+
+    TexCoordsNode();
+
+    virtual bool generate(GraphCodeGenerationContext& context);
+
+    static Serializable* instantiate(const SerializationInfo & from);
+protected:
+    Vector2fPin* coordPin;
 };

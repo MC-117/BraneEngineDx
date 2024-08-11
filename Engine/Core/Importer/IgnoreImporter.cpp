@@ -2,7 +2,6 @@
 
 ImporterRegister<IgnoreImporter> ttfImporter(".ttf");
 ImporterRegister<IgnoreImporter> iniImporter(".ini");
-ImporterRegister<IgnoreImporter> hmatImporter(".hmat");
 ImporterRegister<IgnoreImporter> shadapterImporter(".shadapter");
 ImporterRegister<IgnoreImporter> jsonImporter(".json");
 

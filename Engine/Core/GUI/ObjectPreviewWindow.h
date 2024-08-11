@@ -22,12 +22,12 @@ public:
 	virtual void onSceneGUI(GUIRenderInfo& info, float width, float height);
 
 	virtual void onWindowGUI(GUIRenderInfo& info);
+	virtual void onRender(RenderInfo& info);
 
 	static void showObject(GUI& gui, const SerializationInfo& info);
 	static void showObject(GUI& gui, Asset& asset);
 protected:
 	EditorWorld editorWorld;
-	Gizmo gizmo;
 	Object* targetObject = NULL;
 
 	float toolBarSizeRate = 0.15f;

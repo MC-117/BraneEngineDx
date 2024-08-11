@@ -2,6 +2,7 @@
 
 #include "../GUI/UIWindow.h"
 #include "GraphEditor.h"
+#include "../Editor/Previewer//MaterialPreviewer.h"
 
 class ENGINE_API GraphWindow : public UIWindow
 {
@@ -12,9 +13,11 @@ public:
 	void setGraph(Graph* graph);
 
 	virtual void onWindowGUI(GUIRenderInfo& info);
+	virtual void onRender(RenderInfo& info);
 
 	static void showGraph(GUI& gui, Graph* graph);
 protected:
+	MaterialPreviewer previewer;
 	GraphInfo graphInfo;
 	Ref<Graph> graph = NULL;
 	Graph* targetGraph = NULL;

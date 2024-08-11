@@ -55,7 +55,7 @@ StateNode* StateMachine::getState(int index) const
     return dynamic_cast<StateNode*>(getNode(index));
 }
 
-StateNode* StateMachine::getState(const string& name) const
+StateNode* StateMachine::getState(const Name& name) const
 {
     auto iter = stateNameMap.find(name);
     if (iter == stateNameMap.end())

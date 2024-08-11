@@ -9,8 +9,7 @@ public:
     virtual int getOperatorParamNum(const Name& op);
     virtual const char* getOperatorFormatter(const Name& op);
 
-    virtual void writeInParameter(const CodeSymbolDefinition& definition);
-    virtual void writeOutParameter(const CodeSymbolDefinition& definition);
+    virtual void writeSymbolDefinition(const CodeSymbolDefinition& definition, Enum<CodeQualifierFlags> extraQualifier = CQF_None);
 protected:
     virtual ClangWriter* newWriter();
 };

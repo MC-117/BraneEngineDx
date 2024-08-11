@@ -85,11 +85,18 @@ Serializable* ShaderStructPin::ShaderStructPinSerialization::deserialize(const S
     return pin;
 }
 
-ShaderStructPin::ShaderStructPinSerialization::ShaderStructPinSerialization(const char* type)
-    : ValuePinSerialization((string(type) + "ShaderStructPin").c_str(), "ValuePin")
+ShaderStructPin::ShaderStructPinSerialization::ShaderStructPinSerialization(const char* shaderPinType)
+    : ValuePinSerialization((string(shaderPinType) + "ShaderStructPin").c_str(), "ValuePin")
 {
     baseSerialization = &BaseSerializationClass::serialization;
-    addAttribute({ DEF_ATTR(GraphPinCodeType, type), DEF_ATTR(Tag, "Shader") });
+    addAttribute({ DEF_ATTR(GraphPinCodeType, shaderPinType), DEF_ATTR(Tag, "Shader") });
+}
+
+ShaderStructPin::ShaderStructPinSerialization::ShaderStructPinSerialization(const char* shaderPinType, const char* type, const char* baseType)
+    : ValuePinSerialization(type, baseType)
+{
+    baseSerialization = &BaseSerializationClass::serialization;
+    addAttribute({ DEF_ATTR(GraphPinCodeType, shaderPinType), DEF_ATTR(Tag, "Shader") });
 }
 
 Name shaderCodeconvertKeyword(const Name& keyword)
@@ -107,8 +114,8 @@ Name shaderCodeconvertKeyword(const Name& keyword)
 
 Serialization* registerShaderStructPin(const Name& structName, std::initializer_list<Attribute*> attributes)
 {
-    Console::log("Register ShaderStruct %s", structName.str());
-    ShaderStructPin::ShaderStructPinSerialization* serialization = new ShaderStructPin::ShaderStructPinSerialization(structName.str());
+    Console::log("Register ShaderStruct %s", structName.c_str());
+    ShaderStructPin::ShaderStructPinSerialization* serialization = new ShaderStructPin::ShaderStructPinSerialization(structName.c_str());
     serialization->addAttribute(attributes);
     serialization->finalize();
     return serialization;
@@ -147,7 +154,7 @@ ShaderOutputNode::ShaderOutputNode()
 {
     displayName = "ShaderOutput";
     static const Name BxDFName = "BxDF";
-    bxdfPin = castTo<ShaderStructPin>(GraphPinFactory::get().construct(BxDFName, BxDFName.str()));
+    bxdfPin = castTo<ShaderStructPin>(GraphPinFactory::get().construct(BxDFName, BxDFName.c_str()));
     if (bxdfPin == NULL)
         throw runtime_error("BxDF ShaderStructPin not found");
     addOutput(*bxdfPin);
@@ -186,7 +193,7 @@ Serializable* ShaderFunctionNode::ShaderFunctionNodeSerialization::deserialize(c
 }
 
 ShaderFunctionNode::ShaderFunctionNodeSerialization::ShaderFunctionNodeSerialization(const CodeFunctionSignature& signature)
-    : ShaderNodeSerialization((string(signature.name.str()) + "ShaderFunctionNode").c_str(), "ShaderNode")
+    : ShaderNodeSerialization((signature.name + "ShaderFunctionNode").c_str(), "ShaderNode")
     , signature(signature)
 {
     baseSerialization = &BaseSerializationClass::serialization;
@@ -220,6 +227,33 @@ Name ShaderFunctionNode::getFunctionName() const
     return signature.name;
 }
 
+bool ShaderFunctionNode::generate(GraphCodeGenerationContext& context)
+{
+    CodeFunctionInvocation invocation(signature.name);
+    
+    for (int index = 0; index < signature.parameters.size(); index++) {
+        int finalIndex = parameterMap[index];
+        if (finalIndex == -1) {
+            invocation.parameters.emplace_back("context"_N);
+        }
+        else {
+            GraphPin* pin = getInput(finalIndex);
+            invocation.parameters.emplace_back(context.getParameter(pin));
+        }
+    }
+    for (int index = 0; index < signature.outputs.size(); index++) {
+        int finalIndex = returnMap[index];
+        if (finalIndex == -1) {
+        }
+        else {
+            GraphPin* pin = getOutput(finalIndex);
+            invocation.outputs.emplace_back(context.getParameter(pin).symbol());
+        }
+    }
+    context.getBackend().invoke(invocation);
+    return true;
+}
+
 Serializable* ShaderFunctionNode::instantiate(const SerializationInfo& from)
 {
     return new ShaderFunctionNode();
@@ -238,9 +272,9 @@ void ShaderFunctionNode::initialize(const CodeFunctionSignature& signature,
     this->serialization = &serialization;
     this->signature = signature;
     error = false;
-    name = signature.name.str();
+    name = signature.name.c_str();
     
-    int index = signature.parameters.size() - 1;
+    int numberedNameIndex = signature.parameters.size() - 1;
 
     auto toPinName = [] (const char* defaultName, const char* name, int index) -> string
     {
@@ -250,32 +284,39 @@ void ShaderFunctionNode::initialize(const CodeFunctionSignature& signature,
         else
             return name + to_string(index);
     };
-    
+
     for (auto& input : signature.parameters) {
-        GraphPin* pin = GraphPinFactory::get().construct(input.type, toPinName(input.type.str(), input.name.str(), index));
-        if (pin == NULL) {
-            error = true;
-            continue;
+        if (input.qualifiers.has(CQF_Context)) {
+            parameterMap.emplace_back(-1);
         }
-        addInput(*pin);
-        --index;
+        else {
+            GraphPin* pin = GraphPinFactory::get().construct(input.type, toPinName(input.type.c_str(), input.name.c_str(), numberedNameIndex));
+            if (pin == NULL) {
+                error = true;
+                continue;
+            }
+            parameterMap.emplace_back(inputs.size());
+            addInput(*pin);
+            --numberedNameIndex;
+        }
     }
     
-    index = signature.outputs.size() - 1;
+    numberedNameIndex = signature.outputs.size() - 1;
     for (auto& output : signature.outputs) {
-        GraphPin* pin = GraphPinFactory::get().construct(output.type, toPinName(output.type.str(), output.name.str(), index));
+        GraphPin* pin = GraphPinFactory::get().construct(output.type, toPinName(output.type.c_str(), output.name.c_str(), numberedNameIndex));
         if (pin == NULL) {
             error = true;
             continue;
         }
+        returnMap.emplace_back(outputs.size());
         addOutput(*pin);
-        --index;
+        --numberedNameIndex;
     }
 }
 
 Serialization* registerShaderFunctionNode(const CodeFunctionSignature& signature, std::initializer_list<Attribute*> attributes)
 {
-    Console::log("Register ShaderFunction %s", signature.name.str());
+    Console::log("Register ShaderFunction %s", signature.name.c_str());
     CodeFunctionSignature convertedSignature = signature;
     for (auto& param : convertedSignature.parameters) {
         param.type = shaderCodeconvertKeyword(param.type);
@@ -290,6 +331,16 @@ Serialization* registerShaderFunctionNode(const CodeFunctionSignature& signature
 }
 
 SerializeInstanceShaderFunctionNode(ShaderMakeStructNode);
+
+bool ShaderMakeStructNode::generate(GraphCodeGenerationContext& context)
+{
+    for (auto input : inputs) {
+        context.getBackend().invoke(CodeFunctionInvocation(Code::assign_op).param(
+            CodeFunctionInvocation(Code::access_op).param(context.getParameter(getOutStructPin()), Name(input->getName())),
+            context.getParameter(input)));
+    }
+    return true;
+}
 
 Serializable* ShaderMakeStructNode::instantiate(const SerializationInfo& from)
 {
@@ -306,10 +357,20 @@ void ShaderMakeStructNode::initialize(const CodeFunctionSignature& signature,
 
     ShaderFunctionNode::initialize(makeSignature, serialization);
     
-    displayName = string("Make ") + signature.name.str();
+    displayName = string("Make ") + signature.name.c_str();
+}
+
+GraphPin* ShaderMakeStructNode::getOutStructPin()
+{
+    return outputs.front();
 }
 
 SerializeInstanceShaderFunctionNode(ShaderBreakStructNode);
+
+bool ShaderBreakStructNode::solveAndGenerateOutput(GraphCodeGenerationContext& context)
+{
+    return true;
+}
 
 bool ShaderBreakStructNode::generate(GraphCodeGenerationContext& context)
 {
@@ -338,26 +399,144 @@ void ShaderBreakStructNode::initialize(const CodeFunctionSignature& signature,
 
     ShaderFunctionNode::initialize(breakSignature, serialization);
     
-    displayName = string("Break ") + signature.name.str();
+    displayName = string("Break ") + signature.name.c_str();
 
     structPin = castTo<ShaderStructPin>(*inputs.begin());
 }
 
-void registerShaderStructFunctionNodes(const CodeFunctionSignature& structConstruction, std::initializer_list<Attribute*> attributes)
+void registerShaderStructFunctionNodes(const CodeFunctionSignature& definition, std::initializer_list<Attribute*> attributes)
 {
-    CodeFunctionSignature convertedStructConstruction = structConstruction;
-    for (auto& param : convertedStructConstruction.parameters) {
-        param.type = shaderCodeconvertKeyword(param.type);
-    }
-    for (auto& output : convertedStructConstruction.outputs) {
-        output.type = shaderCodeconvertKeyword(output.type);
-    }
+    if (definition.isValid()) {
+        CodeFunctionSignature convertedDefinition = definition;
+        for (auto& param : convertedDefinition.parameters) {
+            param.type = shaderCodeconvertKeyword(param.type);
+        }
+        for (auto& output : convertedDefinition.outputs) {
+            output.type = shaderCodeconvertKeyword(output.type);
+        }
 
-    ShaderMakeStructNode::ShaderMakeStructNodeSerialization* makeSerialization = new ShaderMakeStructNode::ShaderMakeStructNodeSerialization(convertedStructConstruction);
-    makeSerialization->addAttribute(attributes);
-    makeSerialization->finalize();
+        ShaderBreakStructNode::ShaderBreakStructNodeSerialization* breakSerialization = new ShaderBreakStructNode::ShaderBreakStructNodeSerialization(convertedDefinition);
+        breakSerialization->addAttribute(attributes);
+        breakSerialization->finalize();
+    
+        ShaderMakeStructNode::ShaderMakeStructNodeSerialization* makeSerialization = new ShaderMakeStructNode::ShaderMakeStructNodeSerialization(convertedDefinition);
+        makeSerialization->addAttribute(attributes);
+        makeSerialization->finalize();
+    }
+}
 
-    ShaderBreakStructNode::ShaderBreakStructNodeSerialization* breakSerialization = new ShaderBreakStructNode::ShaderBreakStructNodeSerialization(convertedStructConstruction);
-    breakSerialization->addAttribute(attributes);
-    breakSerialization->finalize();
+SerializeInstance(SwizzlePin, DEF_ATTR(Tag, "Shader"));
+
+SwizzlePin::SwizzlePin(const string& name) : ValuePin(name)
+{
+}
+
+bool SwizzlePin::isWildcard() const
+{
+    return true;
+}
+
+Serializable* SwizzlePin::instantiate(const SerializationInfo& from)
+{
+    return new SwizzlePin(from.name);
+}
+
+bool SwizzlePin::isWildcardAcceptable(const GraphPin* pin) const
+{
+    return isClassOf<const Vector2fPin>(pin) || isClassOf<const Vector3fPin>(pin) || isClassOf<const Vector4fPin>(pin);
+}
+
+SerializeInstance(SwizzleNode);
+
+array<char, 5> getSwizzleString(const SwizzleNode::Components& components)
+{
+    array<char, 5> swizzle;
+    for (int i = 0; i < 4; i++) {
+        char& s = swizzle[i];
+        switch (components[i]) {
+        case SwizzleNode::X: s = 'x'; break;
+        case SwizzleNode::Y: s = 'y'; break;
+        case SwizzleNode::Z: s = 'z'; break;
+        case SwizzleNode::W: s = 'w'; break;
+        }
+    }
+    swizzle[4] = '\0';
+    return swizzle;
+}
+
+bool parseSwizzleString(SwizzleNode::Components& components, const string& swizzle)
+{
+    const int count = min(swizzle.length(), components.size());
+    for (int i = 0; i < count; i++) {
+        SwizzleNode::ComponentType& type = components[i];
+        switch (swizzle[i]) {
+        case 'x': type = SwizzleNode::X; break;
+        case 'y': type = SwizzleNode::Y; break;
+        case 'z': type = SwizzleNode::Z; break;
+        case 'w': type = SwizzleNode::W; break;
+        default: return false;
+        }
+    }
+    return true;
+}
+
+SwizzleNode::SwizzleNode()
+    : ShaderNode()
+    , components({ X, Y, Z, W })
+{
+    flag = Flag::Expression;
+    displayName = "Swizzle";
+    swizzleInPin = new SwizzlePin("Vec");
+    vec2OutPin = new Vector2fPin("Vec2");
+    vec3OutPin = new Vector3fPin("Vec3");
+    vec4OutPin = new Vector4fPin("Vec4");
+    addInput(*swizzleInPin);
+    addOutput(*vec2OutPin);
+    addOutput(*vec3OutPin);
+    addOutput(*vec4OutPin);
+}
+
+bool SwizzleNode::generate(GraphCodeGenerationContext& context)
+{
+    array<char, 5> vec4Swizzle = getSwizzleString(components);
+    array<char, 3> vec2Swizzle = { vec4Swizzle[0], vec4Swizzle[1], '\0' };
+    array<char, 4> vec3Swizzle = { vec4Swizzle[0], vec4Swizzle[1], vec4Swizzle[2], '\0' };
+    context.assignParameter(vec2OutPin, CodeFunctionInvocation(Code::access_op).param(
+    context.getParameter(swizzleInPin), Name(vec2Swizzle.data())));
+    context.assignParameter(vec3OutPin, CodeFunctionInvocation(Code::access_op).param(
+    context.getParameter(swizzleInPin), Name(vec3Swizzle.data())));
+    context.assignParameter(vec4OutPin, CodeFunctionInvocation(Code::access_op).param(
+        context.getParameter(swizzleInPin), Name(vec4Swizzle.data())));
+    return true;
+}
+
+SwizzleNode::Components SwizzleNode::getComponents() const
+{
+    return components;
+}
+
+void SwizzleNode::setComponents(const Components& components)
+{
+    this->components = components;
+}
+
+Serializable* SwizzleNode::instantiate(const SerializationInfo& from)
+{
+    return new SwizzleNode();
+}
+
+bool SwizzleNode::deserialize(const SerializationInfo& from)
+{
+    ShaderNode::deserialize(from);
+    string swizzle;
+    from.get("components", swizzle);
+    return parseSwizzleString(components, swizzle);
+}
+
+bool SwizzleNode::serialize(SerializationInfo& to)
+{
+    ShaderNode::serialize(to);
+    const array<char, 5> swizzle = getSwizzleString(components);
+    to.set("components", swizzle.data());
+    return true;
 }

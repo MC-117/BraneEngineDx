@@ -176,7 +176,7 @@ public:
 		//world += cloth;
 		//cloth.setPosition(0, 0, 300);
 
-		GUISurface::getMainViewportGUISurface().bindCamera(&world.defaultCamera);
+		world.getCameraManager().setGUISurface(&GUISurface::getMainViewportGUISurface());
 
 		DebugCamera& debugCamera = *new DebugCamera();
 		world += debugCamera;
@@ -253,8 +253,8 @@ public:
 		TimelineWindow& timelineWindow = *new TimelineWindow("Timeline");
 		gui += timelineWindow;
 
-		//GraphWindow& graphWindow = *new GraphWindow("Graph");
-		//world += graphWindow;
+		GraphWindow& graphWindow = *new GraphWindow("Graph");
+		gui += graphWindow;
 
 		ShaderManagerWindow& shaderManagerWindow = *new ShaderManagerWindow("ShaderManagerWindow");
 		gui += shaderManagerWindow;

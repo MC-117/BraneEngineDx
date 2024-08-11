@@ -3,24 +3,25 @@
 #define _SHADERSTAGE_H_
 
 #include "Utility/Utility.h"
+#include "Utility/Name.h"
 #include "GraphicType.h"
 
 struct ShaderStageDesc
 {
 	ShaderStageType stageType;
 	Enum<ShaderFeature> feature;
-	const string& name;
+	const Name& name;
 };
 
 struct ENGINE_API ShaderMacroSet
 {
-	unordered_map<ShaderPropertyName, string> shaderMacros;
+	unordered_set<Name> shaderMacros;
 	size_t hash = 0;
 
-	void add(const string& macro);
+	void add(const Name& macro);
 	void append(const ShaderMacroSet& set);
 	void clear();
-	bool has(const ShaderPropertyName& macro) const;
+	bool has(const Name& macro) const;
 	size_t getHash() const;
 
 	string getDefineCode() const;
@@ -49,15 +50,15 @@ public:
 	const ShaderMacroSet& getShaderMacroSet() const;
 
 	const ShaderProperty* getProperty(const ShaderPropertyName& name) const;
-	const unordered_map<size_t, ShaderProperty>& getProperties() const;
+	const unordered_map<ShaderPropertyName, ShaderProperty>& getProperties() const;
 
 	static const char* enumShaderStageType(ShaderStageType stageType);
 	static ShaderStageType enumShaderStageType(const string& type);
 protected:
-	string name;
+	Name name;
 	ShaderStageType stageType;
 	Enum<ShaderFeature> shaderFeature = Shader_Default;
-	unordered_map<size_t, ShaderProperty> properties;
+	unordered_map<ShaderPropertyName, ShaderProperty> properties;
 	ShaderMacroSet shaderMacroSet;
 	string code;
 	unsigned long long shaderId = 0;
@@ -72,16 +73,16 @@ public:
 	{
 		vector<pair<ShaderStageType, const ShaderProperty*>> properties;
 
-		string getName() const;
+		const ShaderPropertyName& getName() const;
 		const ShaderProperty* getParameter() const;
 		const ShaderProperty* getConstantBuffer() const;
 	};
-	string name;
+	Name name;
 	unsigned int renderOrder = 0;
 
 	Enum<ShaderFeature> shaderType;
 	map<ShaderStageType, ShaderStage*> shaderStages;
-	unordered_map<size_t, AttributeDesc> attributes;
+	unordered_map<ShaderPropertyName, AttributeDesc> attributes;
 
 	ShaderProgram();
 	ShaderProgram(ShaderStage& meshStage);

@@ -42,15 +42,19 @@ public:
 	bool isArrayOf(const string& type);
 	bool consistKey(const string& name);
 
-	bool add(const string& name, Decimal value);
+	bool add(const string& name, const char* value);
 	bool add(const string& name, const string& value);
+	bool add(const string& name, const Name& value);
+	bool add(const string& name, Decimal value);
 	SerializationInfo* add(const string& name);
 
 	void push(Decimal value);
 	void push(const string& value);
 	SerializationInfo* push();
 
+	void set(const string& name, const char* value);
 	void set(const string& name, const string& value);
+	void set(const string& name, const Name& value);
 	void set(const string& name, Decimal value);
 	void set(const SerializationInfo& value);
 	void set(const string& name, Serializable& value);

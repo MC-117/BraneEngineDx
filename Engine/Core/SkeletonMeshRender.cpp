@@ -3,6 +3,7 @@
 #include "Console.h"
 #include "Camera.h"
 #include "RenderCore/RenderCore.h"
+#include "Importer/MaterialImporter.h"
 
 SkeletonMeshRender::SkeletonMeshRender() : MeshRender()
 {
@@ -131,7 +132,7 @@ bool SkeletonMeshRender::deserialize(const SerializationInfo& from)
 						outline->get("material", imat);
 						if (!imat.empty()) {
 							istringstream stream = istringstream(imat);
-							outlineMaterials[i] = Material::MaterialLoader::loadMaterialInstance(stream, "Outline");
+							outlineMaterials[i] = MaterialLoader::loadMaterialInstance(stream, "Outline");
 						}
 						string boolString;
 						outline->get("enable", boolString);
@@ -147,7 +148,7 @@ bool SkeletonMeshRender::deserialize(const SerializationInfo& from)
 					Material* outlineMaterial = NULL;
 					if (!imat.empty()) {
 						istringstream stream = istringstream(imat);
-						outlineMaterial = Material::MaterialLoader::loadMaterialInstance(stream, "Outline");
+						outlineMaterial = MaterialLoader::loadMaterialInstance(stream, "Outline");
 					}
 					string boolString;
 					outline.get("enable", boolString);
@@ -250,7 +251,7 @@ bool SkeletonMeshRender::serialize(SerializationInfo& to)
 					string imat;
 					Material* outlineMaterial = outlineMaterials[i];
 					if (outlineMaterial != NULL)
-						Material::MaterialLoader::saveMaterialInstanceToString(imat, *outlineMaterial);
+						MaterialLoader::saveMaterialInstanceToString(imat, *outlineMaterial);
 					outline->set("material", imat);
 					outline->set("enable", outlineEnable[i] ? "true" : "false");
 				}
@@ -278,7 +279,7 @@ bool SkeletonMeshRender::serialize(SerializationInfo& to)
 				pathType = "path";
 			}
 			if (path.empty()) {
-				path = mat->getShaderName();
+				path = mat->getShaderName().c_str();
 				pathType = "name";
 			}
 			info.add("path", path);

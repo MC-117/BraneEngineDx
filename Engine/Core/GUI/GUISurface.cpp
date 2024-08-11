@@ -8,14 +8,10 @@ GUISurface::GUISurface(const string& name) : gizmo(name + "Gizmo")
 
 GUISurface::~GUISurface()
 {
-    if (camera)
-        camera->guiSurface = NULL;
 }
 
 void GUISurface::bindCamera(Camera* newCamera)
 {
-    if (camera)
-        camera->guiSurface = NULL;
     camera = newCamera;
     if (newCamera && surfaceSize.x() * surfaceSize.y())
         newCamera->setSize({ surfaceSize.x(), surfaceSize.y() });

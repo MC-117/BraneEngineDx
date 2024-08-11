@@ -16,6 +16,7 @@
 #include "../MeshActor.h"
 #include "../SkeletonMeshActor.h"
 #include "../../Spine2D/Spine2DActor.h"
+#include "Core/ShaderCode/ShaderGraph/ShaderGraph.h"
 
 AssetBrowser::AssetBrowser(Object & object, string name, bool defaultShow)
 	: UIWindow(object, name, defaultShow)
@@ -26,6 +27,10 @@ AssetBrowser::AssetBrowser(Object & object, string name, bool defaultShow)
 	modelTex = modelTex == NULL ? &Texture2D::blackRGBDefaultTex : modelTex;
 	materialTex = getAssetByPath<Texture2D>("Engine/Icons/Material_Icon.png");
 	materialTex = materialTex == NULL ? &Texture2D::blackRGBDefaultTex : materialTex;
+	genericShaderTex = getAssetByPath<Texture2D>("Engine/Icons/GenericShader_Icon.png");
+	genericShaderTex = genericShaderTex == NULL ? &Texture2D::blackRGBDefaultTex : genericShaderTex;
+	shaderGraphTex = getAssetByPath<Texture2D>("Engine/Icons/ShaderGraph_Icon.png");
+	shaderGraphTex = shaderGraphTex == NULL ? &Texture2D::blackRGBDefaultTex : shaderGraphTex;
 	skeletonMeshTex = getAssetByPath<Texture2D>("Engine/Icons/SkeletonMesh_Icon.png");
 	skeletonMeshTex = skeletonMeshTex == NULL ? &Texture2D::blackRGBDefaultTex : skeletonMeshTex;
 	animationTex = getAssetByPath<Texture2D>("Engine/Icons/Animation_Icon.png");
@@ -45,11 +50,12 @@ AssetBrowser::AssetBrowser(Object & object, string name, bool defaultShow)
 			*handle = ((AssetBrowser*)browser)->getSelectedAsset();
 	});
 	vector<AssetTypeInfo> assetTypeList = {
-		{ "Mesh", modelTex }, { "SkeletonMesh", skeletonMeshTex },
-		{ "AnimationClipData", animationTex }, { "Material", materialTex },
-		{ "AudioData", audioTex }, { "AssetFile", assetFileTex },
-		{ "PythonScript", pythonTex }, { "Live2DModel", modelTex }, { "Spine2DModel", modelTex },
-		{ "Texture2D", NULL }, { "Timeline", timelineTex }, { "Graph", graphTex }
+		{ MeshType, modelTex }, { SkeletonMeshType, skeletonMeshTex },
+		{ AnimationClipDataType, animationTex }, { MaterialType, materialTex },
+		{ GenericShaderType, genericShaderTex }, { ShaderGraphType, shaderGraphTex },
+		{ AudioDataType, audioTex }, { AssetFileType, assetFileTex },
+		{ PythonScriptType, pythonTex }, { Live2DModelType, modelTex }, { Spine2DModelType, modelTex },
+		{ Texture2DType, NULL }, { TimelineType, timelineTex }, { GraphType, graphTex }
 	};
 	for (int i = 0; i < assetTypeList.size(); i++) {
 		AssetTypeInfo& info = assetTypeList[i];
@@ -176,7 +182,9 @@ void AssetBrowser::onWindowGUI(GUIRenderInfo & info)
 		ImGui::EndPopup();
 	}
 	for (int i = 0; i < assets.size(); i++, index++) {
-		auto iter = assetTypes.find(assets[i]->assetInfo.type);
+		Asset* asset = assets[i];
+		Name typeName = getAssetTypeName(asset);
+		auto iter = assetTypes.find(typeName);
 		if (iter == assetTypes.end())
 			continue;
 		if (!(assetTypeFilter & iter->typeID)) {
@@ -184,25 +192,28 @@ void AssetBrowser::onWindowGUI(GUIRenderInfo & info)
 				seletedIndex = -1;
 			continue;
 		}
-		Texture2D* tex = iter->typeTex == NULL ? (Texture2D*)assets[i]->load() : iter->typeTex;
+		void* assetPtr = asset->load();
+		if (assetPtr == NULL)
+			continue;
+		Texture2D* tex = typeName == Texture2DType ? (Texture2D*)asset->load() : iter->typeTex;
 		if (tex == NULL)
 			continue;
 		ImGui::PushID(index);
 		if (Item(assets[i]->name, *tex, 18, seletedIndex == index)) {
 			seletedIndex = index;
-			Asset* asset = getSelectedAsset();
-			if (asset != NULL)
-				EditorManager::selectAsset(asset);
+			Asset* selectedAsset = getSelectedAsset();
+			if (selectedAsset != NULL)
+				EditorManager::selectAsset(selectedAsset);
 		}
 		bool canPreview = isFocus() && ImGui::IsMouseDoubleClicked(0) && seletedIndex == index;
-		if (assets[i]->assetInfo.type == "Mesh" || assets[i]->assetInfo.type == "SkeletonMesh") {
+		if (typeName == MeshType || typeName == SkeletonMeshType) {
 			if (ImGui::BeginPopupContextItem("MeshContext")) {
 				static char name[100];
 				static Material* selectedMat = NULL;
 
 				ImGui::Text("Mesh: %s", assets[i]->name.c_str());
 				Asset* selectedAsset = MaterialAssetInfo::assetInfo.getAsset(selectedMat);
-				if (ImGui::AssetCombo("Base Material", selectedAsset, "Material")) {
+				if (ImGui::AssetCombo("Base Material", selectedAsset, MaterialType.c_str())) {
 					selectedMat = (Material*)(selectedAsset->load());
 				}
 				static bool twoSides = false;
@@ -216,7 +227,7 @@ void AssetBrowser::onWindowGUI(GUIRenderInfo & info)
 				ImGui::Combo("Physical Type", &phyMatCT, "Static\0Dynamic\0NoCollision\0");
 				ImGui::InputFloat("Mass", &mass, 0.01);
 				static bool simple = true;
-				if (assets[i]->assetInfo.type == "Mesh")
+				if (typeName == MeshType)
 					ImGui::Checkbox("Use Simple Collision", &simple);
 				static float pos[3] = { 0, 0, 0 };
 				ImGui::DragFloat3("Postion", pos, 0.1);
@@ -230,7 +241,7 @@ void AssetBrowser::onWindowGUI(GUIRenderInfo & info)
 					if (ImGui::Button("Load", size)) {
 						if (selectedMat)
 							selectedMat->setTwoSide(twoSides);
-						if (assets[i]->assetInfo.type == "Mesh") {
+						if (typeName == MeshType) {
 							Mesh* mesh = (Mesh*)assets[i]->load();
 							MeshActor* a = new MeshActor(name);
 							a->meshRender.setMesh(mesh);
@@ -244,7 +255,7 @@ void AssetBrowser::onWindowGUI(GUIRenderInfo & info)
 							a->setRotation(rot[0], rot[1], rot[2]);
 							object.addChild(*a);
 						}
-						else if (assets[i]->assetInfo.type == "SkeletonMesh") {
+						else if (typeName == SkeletonMeshType) {
 							SkeletonMesh* mesh = (SkeletonMesh*)assets[i]->load();
 							SkeletonMeshActor* a = new SkeletonMeshActor(name);
 							a->addSkeletonMesh(*mesh);
@@ -260,25 +271,43 @@ void AssetBrowser::onWindowGUI(GUIRenderInfo & info)
 				ImGui::EndPopup();
 			}
 		}
-		else if (assets[i]->assetInfo.type == "Material") {
+		else if (typeName == MaterialType) {
 			if (canPreview) {
+				Material* material = (Material*)assetPtr;
 				MaterialWindow *win = dynamic_cast<MaterialWindow*>(info.gui.getUIControl("MaterialWindow"));
 				if (win == NULL) {
 					win = new MaterialWindow();
 					info.gui.addUIControl(*win);
 				}
 				win->show = true;
-				win->setMaterial(*(Material*)assets[i]->load());
+				win->setMaterial(*material);
 			}
 		}
-		else if (assets[i]->assetInfo.type == "PythonScript") {
+		else if (typeName == GenericShaderType) {
+			if (canPreview) {
+				Material* material = (Material*)assetPtr;
+				GenericShader* shader = dynamic_cast<GenericShader*>(material->getShader());
+				if (shader) {
+					ScriptWindow::OpenTempScript(asset->path);
+				}
+			}
+		}
+		else if (typeName == ShaderGraphType) {
+			if (canPreview) {
+				Material* material = (Material*)assetPtr;
+				ShaderGraph* shaderGraph = dynamic_cast<ShaderGraph*>(material->getShader());
+				if (shaderGraph)
+					GraphWindow::showGraph(info.gui, shaderGraph);
+			}
+		}
+		else if (typeName == PythonScriptType) {
 			if (canPreview) {
 				PythonScript* script = (PythonScript*)assets[i]->load();
 				if (script != NULL)
 					ScriptWindow::OpenScript(*script);
 			}
 		}
-		else if (assets[i]->assetInfo.type == "AssetFile") {
+		else if (typeName == AssetFileType) {
 			if (canPreview) {
 				SerializationInfo* sinfo = (SerializationInfo*)assets[i]->load();
 				if (sinfo != NULL && sinfo->serialization != NULL && sinfo->serialization->type != "World")
@@ -313,12 +342,12 @@ void AssetBrowser::onWindowGUI(GUIRenderInfo & info)
 				ImGui::EndPopup();
 			}
 		}
-		else if (assets[i]->assetInfo.type == "Live2DModel") {
+		else if (typeName == Live2DModelType) {
 			if (canPreview) {
 				ObjectPreviewWindow::showObject(info.gui, *assets[i]);
 			}
 		}
-		else if (assets[i]->assetInfo.type == "Spine2DModel") {
+		else if (typeName == Spine2DModelType) {
 			if (canPreview) {
 				ObjectPreviewWindow::showObject(info.gui, *assets[i]);
 			}
@@ -351,22 +380,22 @@ void AssetBrowser::onWindowGUI(GUIRenderInfo & info)
 				ImGui::EndPopup();
 			}
 		}
-		else if (assets[i]->assetInfo.type == "Texture2D") {
+		else if (typeName == Texture2DType) {
 			if (canPreview) {
 				TextureViewer::showTexture(info.gui, *(Texture2D*)assets[i]->load());
 			}
 		}
-		else if (assets[i]->assetInfo.type == "Timeline") {
+		else if (typeName == TimelineType) {
 			if (canPreview) {
 				TimelineWindow::showTimeline(info.gui, (Timeline*)assets[i]->load());
 			}
 		}
-		else if (assets[i]->assetInfo.type == "AnimationClipData") {
+		else if (typeName == AnimationClipDataType) {
 			if (canPreview) {
 				AnimationDataWindow::showAnimationData(info.gui, (AnimationClipData*)assets[i]->load());
 			}
 		}
-		else if (assets[i]->assetInfo.type == "Graph") {
+		else if (typeName == GraphType) {
 			Graph* graph = (Graph*)assets[i]->load();
 			if (canPreview) {
 				GraphWindow::showGraph(info.gui, graph);
@@ -428,6 +457,24 @@ bool AssetBrowser::updatePath(const string & path, bool force)
 		}
 	}
 	return true;
+}
+
+Name AssetBrowser::getAssetTypeName(Asset* asset)
+{
+	Name name = asset->assetInfo.type;
+	if (name == MaterialType) {
+		Material* material = (Material*)asset->load();
+		if (isBaseMaterial(*material)) {
+			Shader* shader = material->getShader();
+			if (isClassOf<GenericShader>(shader))
+				name = GenericShaderType;
+			else if (isClassOf<ShaderGraph>(shader))
+				name = ShaderGraphType;
+			else
+				name = Name::none;
+		}
+	}
+	return name;
 }
 
 bool AssetBrowser::Item(const string & name, Texture2D & tex, float pad, bool isSelected)

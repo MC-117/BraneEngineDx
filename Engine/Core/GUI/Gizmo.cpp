@@ -695,10 +695,16 @@ void Gizmo::controlTurnCamera(float transitionSensitivity, float distanceSensiti
 	deep *= deltaTime * distanceSensitivity;
 	cameraDeltaDistance += deep;
 
-	if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
+	if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
 		ImVec2 m = ImGui::GetMouseDragDelta();
 		cameraDeltaRollPitchYaw.z() += m.x * -rotationSensitivity;
 		cameraDeltaRollPitchYaw.y() += m.y * rotationSensitivity;
+		isUsing = true;
+	}
+
+	if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
+		ImVec2 m = ImGui::GetMouseDragDelta();
+		cameraDeltaDistance += m.y;
 		isUsing = true;
 	}
 }

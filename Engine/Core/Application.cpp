@@ -1,4 +1,6 @@
 ﻿#include "Application.h"
+
+#include "Utility/Parallel.h"
 #include "WUI/LoadingUI.h"
 #include "WUI/WUIMainWindow.h"
 
@@ -59,6 +61,7 @@ EngineApplication::EngineApplication(Engine& engine, NativeIconHandle iconHandle
 
 void EngineApplication::main()
 {
+    registerCurrentThread(NamedThread::Main);
     string workingSpace;
     if (AppArguments::get().size() > 1)
         workingSpace = AppArguments::get()[1];
@@ -81,6 +84,7 @@ void EngineApplication::main()
     engine.releaseRenderFramework();
     engine.releaseGUIFramework();
     engine.releaseBaseFramework();
+    unregisterCurrentThread();
 }
 
 WUIMainWindow* EngineWindowApplication::WindowEngineContext::getMainWindow()

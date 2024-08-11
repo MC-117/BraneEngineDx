@@ -22,3 +22,8 @@ Object* findFirst(const Object& root, const Serialization& serialization)
     }
     return NULL;
 }
+
+World* getRootWorld(const Object& object)
+{
+    return castTo<World>(object.getRoot());
+}

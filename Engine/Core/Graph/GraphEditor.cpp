@@ -23,6 +23,135 @@ void GraphEditor::setInspectedObject(void* object)
 	GraphNodeEditor::setInspectedObject(graph);
 }
 
+void GraphEditor::onInspectGUI(EditorInfo& info)
+{
+	if (graph == NULL)
+		return;
+	if (showFlags.has(Show_Details)) {
+		onDetailsGUI(info);
+	}
+	if (showFlags.has(Show_CreateParameters)) {
+		onCreateParametersGUI(info);
+	}
+	if (showFlags.has(Show_CreateReturns)) {
+		onCreateReturnsGUI(info);
+	}
+	if (showFlags.has(Show_CreateVariables)) {
+		onCreateVariablesGUI(info);
+	}
+	if (showFlags.has(Show_CreateSubgraphs)) {
+		onCreateSubgraphGUI(info);
+	}
+	if (showFlags.has(Show_Execution)) {
+		onExecutionGUI(info);
+	}
+	if (showFlags.has(Show_CreateSubgraphs)) {
+		onGenerationGUI(info);
+	}
+	onCustomGUI(info);
+}
+
+void GraphEditor::onGraphGUI(EditorInfo& info, GraphInfo& graphInfo)
+{
+	if (graphInfo.isTargetGraph(graph)) {
+		onGraphAction(info, graphInfo);
+		onGraphCanvasGUI(info, graphInfo);
+		if (openingSubGraph) {
+			graphInfo.openGraph(openingSubGraph);
+			openingSubGraph = NULL;
+		}
+	}
+	else {
+		onGraphNodeGUI(info, graphInfo);
+	}
+}
+
+void GraphEditor::onContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo)
+{
+	if (graphInfo.isTargetGraph(graph)) {
+		onCanvasContextMenuGUI(info, graphInfo);
+	}
+	else {
+		onNodeContextMenuGUI(info, graphInfo);
+	}
+}
+
+void GraphEditor::copyNodes(const vector<ax::NodeEditor::NodeId>& nodeIDs, SerializationInfo& info)
+{
+	info.type = "CopyGraphNode";
+	int i = 0;
+	for each (auto nodeID in nodeIDs)
+	{
+		GraphNode* node = getGraphNode(nodeID);
+		ReturnNode* returnNode = dynamic_cast<ReturnNode*>(node);
+		EntryNode* entryNode = dynamic_cast<EntryNode*>(node);
+		if (node == NULL || returnNode || entryNode)
+			continue;
+		SerializationInfo* nodeInfo = info.add(to_string(i).c_str());
+		if (nodeInfo)
+			node->serialize(*nodeInfo);
+		i++;
+	}
+}
+
+void GraphEditor::pasteNodes(SerializationInfo& info)
+{
+	namespace ne = ax::NodeEditor;
+	if (graph == NULL || info.type != "CopyGraphNode")
+		return;
+	map<Guid, Guid> guidMap;
+	newSerializationInfoGuid(info, guidMap);
+	replaceSerializationInfoGuid(info, guidMap);
+	set<Guid> guidSet;
+	for each (const auto & item in guidMap)
+	{
+		guidSet.insert(item.second);
+	}
+	ne::ClearSelection();
+	for (auto b = info.sublists.begin(), e = info.sublists.end(); b != e; b++) {
+		if (b->serialization &&
+			(b->serialization == &GraphNode::GraphNodeSerialization::serialization ||
+				b->serialization->isChildOf(GraphNode::GraphNodeSerialization::serialization))) {
+			Serializable* serializable = b->serialization->instantiate(*b);
+			GraphNode* node = dynamic_cast<GraphNode*>(serializable);
+			if (node) {
+				node->deserialize(*b);
+				for (int i = 0; i < node->getInputCount(); i++) {
+					GraphPin* pin = node->getInput(i);
+					Ref<GraphPin>& ref = pin->getConnectedPinRef();
+					if (!ref.guid.isDefault() && guidSet.find(ref.guid) == guidSet.end()) {
+						ref = NULL;
+					}
+				}
+				for (int i = 0; i < node->getOutputCount(); i++) {
+					GraphPin* pin = node->getOutput(i);
+					Ref<GraphPin>& ref = pin->getConnectedPinRef();
+					if (!ref.guid.isDefault() && guidSet.find(ref.guid) == guidSet.end()) {
+						ref = NULL;
+					}
+				}
+				graph->addNode(node);
+				ne::SelectNode(node->getInstanceID(), true);
+			}
+			else
+				delete serializable;
+		}
+	}
+}
+
+void GraphEditor::getPinMenuTags(vector<Name>& tags)
+{
+}
+
+void GraphEditor::getVariableMenuTags(vector<Name>& tags)
+{
+}
+
+void GraphEditor::getNodeMenuTags(vector<Name>& tags)
+{
+	TagManager::get().fuzzyFindTag("Graph", tags);
+}
+
 GraphPin* GraphEditor::onPinCreateGUI(const char* buttonName, string& valueName, bool nameValid)
 {
 	ImGui::PushID(buttonName);
@@ -139,7 +268,8 @@ GraphNode* GraphEditor::onGraphMemberGUI(EditorInfo& info, GraphInfo& graphInfo)
 		for (int i = 0; i < graph->getSubGraphCount(); i++)
 		{
 			Graph* subgraph = graph->getSubGraph(i);
-			if (!createNodeFilter.empty() && subgraph->getName().find(createNodeFilter) == string::npos)
+			string subgraphName = subgraph->getName().c_str();
+			if (!createNodeFilter.empty() && subgraphName.find(createNodeFilter) == string::npos)
 				continue;
 			if (ImGui::MenuItem(subgraph->getName().c_str())) {
 				GraphProxy* proxy = new GraphProxy();
@@ -425,7 +555,7 @@ void GraphEditor::onCanvasContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo)
 	vector<string> lastTagItems;
 	stack<pair<Name, bool>> tagStack;
 	for (auto& tag : tags) {
-		vector<string> curTagItems = split(tag.str(), '.');
+		vector<string> curTagItems = split(tag.c_str(), '.');
 		const int lastLength = lastTagItems.size();
 		const int curLength = curTagItems.size();
 		int index = 0;
@@ -436,7 +566,7 @@ void GraphEditor::onCanvasContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo)
 		for (int i = lastLength; i > index; i--) {
 			const pair<Name, bool>& topTagItem = tagStack.top();
 			if (topTagItem.second) {
-				graphNodeItems(topTagItem.first.str());
+				graphNodeItems(topTagItem.first.c_str());
 				ImGui::TreePop();
 			}
 			tagStack.pop();
@@ -457,7 +587,7 @@ void GraphEditor::onCanvasContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo)
 	for (int i = 0; i < lastTagItems.size(); i++) {
 		const pair<Name, bool>& tagTreeItem = tagStack.top();
 		if (tagTreeItem.second) {
-			graphNodeItems(tagTreeItem.first.str());
+			graphNodeItems(tagTreeItem.first.c_str());
 			ImGui::TreePop();
 		}
 		tagStack.pop();
@@ -514,12 +644,38 @@ void GraphEditor::onGraphAction(EditorInfo& info, GraphInfo& graphInfo)
 	}
 }
 
-void GraphEditor::onInspectGUI(EditorInfo& info)
+void GraphEditor::onGenerateCode(ScriptBase& script)
 {
-	if (graph == NULL)
-		return;
+	string code;
+	switch (genCodeType) {
+	case Clang:
+		{
+			ClangWriter writer;
+			ClangScopeBackend backend(writer);
+			GraphCodeGenerationContext context;
+			context.pushSubscopeBackend(&backend);
+			graph->generateStatement(context);
+			writer.getString(code);
+			break;
+		}
+	case HLSL:
+		{
+			HLSLWriter writer;
+			ClangScopeBackend backend(writer);
+			GraphCodeGenerationContext context;
+			context.pushSubscopeBackend(&backend);
+			graph->generateStatement(context);
+			writer.getString(code);
+			break;
+		}
+	}
 
-	string graphName = graph->getName();
+	tempScript->setSourceCode(code);
+}
+
+void GraphEditor::onDetailsGUI(EditorInfo& info)
+{
+	string graphName = graph->getName().c_str();
 	if (ImGui::InputText("Name", &graphName)) {
 		graph->setName(graphName);
 	}
@@ -532,6 +688,10 @@ void GraphEditor::onInspectGUI(EditorInfo& info)
 		}
 		ImGui::EndCombo();
 	}
+}
+
+void GraphEditor::onCreateParametersGUI(EditorInfo& info)
+{
 	if (ImGui::CollapsingHeader("Parameters")) {
 		GraphPin* pin = onPinCreateGUI("AddParameter", createParameterName,
 			graph->checkParameterName(createParameterName));
@@ -558,6 +718,10 @@ void GraphEditor::onInspectGUI(EditorInfo& info)
 			ImGui::PopID();
 		}
 	}
+}
+
+void GraphEditor::onCreateReturnsGUI(EditorInfo& info)
+{
 	if (ImGui::CollapsingHeader("Returns")) {
 		GraphPin* pin = onPinCreateGUI("AddReturn", createReturnName,
 			graph->checkReturnName(createReturnName));
@@ -582,6 +746,10 @@ void GraphEditor::onInspectGUI(EditorInfo& info)
 			ImGui::PopID();
 		}
 	}
+}
+
+void GraphEditor::onCreateVariablesGUI(EditorInfo& info)
+{
 	if (ImGui::CollapsingHeader("Variables")) {
 		GraphVariable* variable = onVariableCreateGUI("AddVariable");
 		if (variable) {
@@ -605,6 +773,10 @@ void GraphEditor::onInspectGUI(EditorInfo& info)
 			ImGui::PopID();
 		}
 	}
+}
+
+void GraphEditor::onCreateSubgraphGUI(EditorInfo& info)
+{
 	if (ImGui::CollapsingHeader("SubGraphes")) {
 		Graph* subgraph = onSubGraphCreateGUI("AddSubGraph");
 		if (subgraph) {
@@ -625,13 +797,21 @@ void GraphEditor::onInspectGUI(EditorInfo& info)
 			ImGui::PopID();
 		}
 	}
+}
+
+void GraphEditor::onExecutionGUI(EditorInfo& info)
+{
 	if (ImGui::CollapsingHeader("Execution")) {
 		if (ImGui::Button("Run")) {
 			GraphContext context;
 			graph->solveState(context);
 		}
 	}
-	if (ImGui::CollapsingHeader("Code")) {
+}
+
+void GraphEditor::onGenerationGUI(EditorInfo& info)
+{
+	if (ImGui::CollapsingHeader("Generation")) {
 		static const char* genCodeTypeNames[] = {
 			"C", "HLSL"
 		};
@@ -648,137 +828,16 @@ void GraphEditor::onInspectGUI(EditorInfo& info)
 				"cpp", "mat"
 			};
 			
-			string code;
-
-			switch (genCodeType) {
-			case Clang:
-				{
-					ClangWriter writer;
-					ClangScopeBackend backend(writer);
-					GraphCodeGenerationContext context;
-					context.pushSubscopeBackend(&backend);
-					graph->generateStatement(context);
-					writer.getString(code);
-					break;
-				}
-			case HLSL:
-				{
-					HLSLWriter writer;
-					ClangScopeBackend backend(writer);
-					GraphCodeGenerationContext context;
-					context.pushSubscopeBackend(&backend);
-					graph->generateStatement(context);
-					writer.getString(code);
-					break;
-				}
-			}
-			
 			if (tempScript == NULL)
 				tempScript = new TempScript(graph->getName() + "_GenCode." + genCodeExts[genCodeType]);
-			tempScript->setSourceCode(code);
-
+			
+			onGenerateCode(*tempScript);
+			
 			ScriptWindow::OpenScript(*tempScript);
 		}
 	}
 }
 
-void GraphEditor::onGraphGUI(EditorInfo& info, GraphInfo& graphInfo)
+void GraphEditor::onCustomGUI(EditorInfo& info)
 {
-	if (graphInfo.isTargetGraph(graph)) {
-		onGraphAction(info, graphInfo);
-		onGraphCanvasGUI(info, graphInfo);
-		if (openingSubGraph) {
-			graphInfo.openGraph(openingSubGraph);
-			openingSubGraph = NULL;
-		}
-	}
-	else {
-		onGraphNodeGUI(info, graphInfo);
-	}
-}
-
-void GraphEditor::onContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo)
-{
-	if (graphInfo.isTargetGraph(graph)) {
-		onCanvasContextMenuGUI(info, graphInfo);
-	}
-	else {
-		onNodeContextMenuGUI(info, graphInfo);
-	}
-}
-
-void GraphEditor::copyNodes(const vector<ax::NodeEditor::NodeId>& nodeIDs, SerializationInfo& info)
-{
-	info.type = "CopyGraphNode";
-	int i = 0;
-	for each (auto nodeID in nodeIDs)
-	{
-		GraphNode* node = getGraphNode(nodeID);
-		ReturnNode* returnNode = dynamic_cast<ReturnNode*>(node);
-		EntryNode* entryNode = dynamic_cast<EntryNode*>(node);
-		if (node == NULL || returnNode || entryNode)
-			continue;
-		SerializationInfo* nodeInfo = info.add(to_string(i).c_str());
-		if (nodeInfo)
-			node->serialize(*nodeInfo);
-		i++;
-	}
-}
-
-void GraphEditor::pasteNodes(SerializationInfo& info)
-{
-	namespace ne = ax::NodeEditor;
-	if (graph == NULL || info.type != "CopyGraphNode")
-		return;
-	map<Guid, Guid> guidMap;
-	newSerializationInfoGuid(info, guidMap);
-	replaceSerializationInfoGuid(info, guidMap);
-	set<Guid> guidSet;
-	for each (const auto & item in guidMap)
-	{
-		guidSet.insert(item.second);
-	}
-	ne::ClearSelection();
-	for (auto b = info.sublists.begin(), e = info.sublists.end(); b != e; b++) {
-		if (b->serialization &&
-			(b->serialization == &GraphNode::GraphNodeSerialization::serialization ||
-				b->serialization->isChildOf(GraphNode::GraphNodeSerialization::serialization))) {
-			Serializable* serializable = b->serialization->instantiate(*b);
-			GraphNode* node = dynamic_cast<GraphNode*>(serializable);
-			if (node) {
-				node->deserialize(*b);
-				for (int i = 0; i < node->getInputCount(); i++) {
-					GraphPin* pin = node->getInput(i);
-					Ref<GraphPin>& ref = pin->getConnectedPinRef();
-					if (!ref.guid.isDefault() && guidSet.find(ref.guid) == guidSet.end()) {
-						ref = NULL;
-					}
-				}
-				for (int i = 0; i < node->getOutputCount(); i++) {
-					GraphPin* pin = node->getOutput(i);
-					Ref<GraphPin>& ref = pin->getConnectedPinRef();
-					if (!ref.guid.isDefault() && guidSet.find(ref.guid) == guidSet.end()) {
-						ref = NULL;
-					}
-				}
-				graph->addNode(node);
-				ne::SelectNode(node->getInstanceID(), true);
-			}
-			else
-				delete serializable;
-		}
-	}
-}
-
-void GraphEditor::getPinMenuTags(vector<Name>& tags)
-{
-}
-
-void GraphEditor::getVariableMenuTags(vector<Name>& tags)
-{
-}
-
-void GraphEditor::getNodeMenuTags(vector<Name>& tags)
-{
-	TagManager::get().fuzzyFindTag("Graph", tags);
 }

@@ -15,6 +15,7 @@ public:
     stack<BackendInfo> backendStack;
     stack<GraphNode*> nodeStack;
     unordered_set<GraphNode*> generatedNodes;
+    vector<Name> includeFiles;
     CodeFunctionInvocation invocation;
     CodeFunctionSignature signature;
 
@@ -31,6 +32,9 @@ public:
     virtual void pushSubscopeBackend(ICodeScopeBackend* backend, GraphNode* popNode);
     virtual void pushSubscopeBackend(ICodeScopeBackend* backend);
     virtual void popSubscopeBackend(ICodeScopeBackend* checkBackend = NULL);
+    virtual void addIncludeFile(const Name& path);
+    virtual void markNodeGenerated(GraphNode* node);
+    virtual bool isNodeGenerated(GraphNode* node) const;
     virtual void generateCode();
     virtual void generateCodeFromNode(GraphNode* node);
 };

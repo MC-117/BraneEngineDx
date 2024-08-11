@@ -6,6 +6,8 @@
 #include "../Camera.h"
 #include "../DirectLight.h"
 #include "../RenderPool.h"
+#include "../GUI/GUISurface.h"
+#include "../CameraManager.h"
 
 #if ENABLE_PHYSICS
 #include "../Physics/PhysicalWorld.h"
@@ -21,7 +23,7 @@ public:
 	PhysicalWorld physicalWorld;
 #endif
 
-	EditorWorld();
+	EditorWorld(const string& name);
 	virtual ~EditorWorld();
 
 	virtual void begin();
@@ -29,13 +31,15 @@ public:
 	virtual void afterTick();
 	virtual void prerender(SceneRenderData& sceneData);
 	virtual void render(RenderGraph& renderGraph);
+	virtual void onGUI(ImDrawList* drawList);
 	virtual void end();
 
 	virtual Object* find(const string& name) const;
 	virtual Object* getObject() const;
 
 	virtual void update();
-	virtual Texture* getSceneTexture();
+	virtual GUISurface& getGUISurface();
+	virtual Gizmo& getGizmo();
 	virtual SceneRenderData* getSceneRenderData();
 
 	void setViewportSize(int width, int height);
@@ -43,6 +47,8 @@ public:
 protected:
 	Time lastTime, currentTime, startTime;
 	float deltaTime = 0;
+	CameraManager cameraManager;
+	GUISurface guiSurface;
 	ObjectIterator iter = ObjectIterator(this);
 	SceneRenderData* sceneRenderData = NULL;
 	bool updatePhysics = false;

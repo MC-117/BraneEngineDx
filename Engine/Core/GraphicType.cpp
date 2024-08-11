@@ -1,48 +1,22 @@
 #include "GraphicType.h"
 #include "Utility/hash.h"
 
-ShaderPropertyName::ShaderPropertyName(const char* name)
+ShaderPropertyName::ShaderPropertyName(const char* name) : Name(name)
 {
 	if (name == NULL)
 		throw std::runtime_error("Empty string is invalid");
-	hash = calHash(name);
 }
 
-ShaderPropertyName::ShaderPropertyName(const std::string& name)
+ShaderPropertyName::ShaderPropertyName(const std::string& name) : Name(name)
 {
 	if (name.empty())
 		throw std::runtime_error("Empty string is invalid");
-	hash = calHash(name.c_str());
 }
 
-size_t ShaderPropertyName::calHash(const char* name)
+ShaderPropertyName::ShaderPropertyName(const Name& name) : Name(name)
 {
-	const char* ptr = name;
-	size_t hash = 0;
-	while (true) {
-		size_t data = 0;
-		int len = 0;
-		for (; len < sizeof(size_t); len++) {
-			if (ptr[len] == '\0')
-				break;
-		}
-		memcpy(&data, ptr, len);
-		hash_combine(hash, data);
-		if (len < sizeof(size_t))
-			break;
-		ptr += sizeof(size_t);
-	}
-	return hash;
-}
-
-size_t ShaderPropertyName::getHash() const
-{
-	return hash;
-}
-
-bool ShaderPropertyName::operator==(const ShaderPropertyName& name) const
-{
-	return hash == name.hash;
+	if (name.isNone())
+		throw std::runtime_error("Empty string is invalid");
 }
 
 RenderMode::RenderMode(uint16_t renderStage, uint8_t blendMode, uint16_t subOrder)

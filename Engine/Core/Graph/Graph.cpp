@@ -253,21 +253,22 @@ bool Graph::solveAndGenerateOutput(GraphCodeGenerationContext& context)
 	return true;
 }
 
+bool Graph::generateGlobalVariables(GraphCodeGenerationContext& context)
+{
+	bool success = true;
+	for (auto variable : variables) {
+		if (variable->isGlobalVariable())
+			success &= variable->generate(context);
+	}
+	return success;
+}
+
 bool Graph::generate(GraphCodeGenerationContext& context)
 {
 	bool success = true;
 	ICodeScopeBackend& backend = context.getBackend();
 	CodeFunctionSignature signature(getFunctionName());
-	for (int i = 0; i < getInputCount(); i++) {
-		ValuePin* pin = dynamic_cast<ValuePin*>(entryNode->getOutput(i));
-		if (pin) {
-			CodeSymbolDefinition& definition = signature.parameters.emplace_back();
-			definition.type = pin->getVariableType();
-			Name pinName = pin->getName();
-			context.assignParameter(pin, pinName);
-			definition.name = pinName;
-		}
-	}
+	generateSignature(context, signature);
 
 	int valueOutputCount = 0;
 	ValuePin* firstValuePin = NULL;
@@ -277,6 +278,15 @@ bool Graph::generate(GraphCodeGenerationContext& context)
 				firstValuePin = pin;
 			valueOutputCount++;
 		}
+	}
+			
+	for (auto pin : inputs) {
+		if (const GraphCodeHeaderFileAttribute* headerFile = pin->getSerialization().getAttribute<GraphCodeHeaderFileAttribute>())
+			context.addIncludeFile(headerFile->getPath());
+	}
+	for (auto pin : outputs) {
+		if (const GraphCodeHeaderFileAttribute* headerFile = pin->getSerialization().getAttribute<GraphCodeHeaderFileAttribute>())
+			context.addIncludeFile(headerFile->getPath());
 	}
 
 	if (valueOutputCount) {
@@ -301,12 +311,15 @@ bool Graph::generate(GraphCodeGenerationContext& context)
 		}
 	}
 
+	generateGlobalVariables(context);
+
 	ICodeScopeBackend* funcScope = backend.declareFunction(signature);
 
 	context.pushSubscopeBackend(funcScope);
 	
 	for (auto variable : variables) {
-		success &= variable->generate(context);
+		if (!variable->isGlobalVariable())
+			success &= variable->generate(context);
 	}
 
 	for (auto subgraph : subgraphes) {
@@ -362,7 +375,7 @@ int Graph::getVariableCount() const
 	return variables.size();
 }
 
-GraphVariable* Graph::getVariable(const string& name) const
+GraphVariable* Graph::getVariable(const Name& name) const
 {
 	auto iter = variableNameMap.find(name);
 	if (iter == variableNameMap.end())
@@ -389,7 +402,7 @@ int Graph::getSubGraphCount() const
 	return subgraphes.size();
 }
 
-Graph* Graph::getSubGraph(const string& name) const
+Graph* Graph::getSubGraph(const Name& name) const
 {
 	auto iter = subgraphNameMap.find(name);
 	if (iter == subgraphNameMap.end())
@@ -800,7 +813,7 @@ bool Graph::serialize(SerializationInfo& to)
 	if (subgraphInfos) {
 		for each (auto subgraph in subgraphes)
 		{
-			SerializationInfo* info = subgraphInfos->add(subgraph->getName());
+			SerializationInfo* info = subgraphInfos->add(subgraph->getName().c_str());
 			if (info) {
 				subgraph->serialize(*info);
 			}
@@ -838,5 +851,19 @@ void Graph::addOutput(GraphPin& output)
 			throw runtime_error("clone failed");
 		}
 		node->addInput(*pin);
+	}
+}
+
+void Graph::generateSignature(GraphCodeGenerationContext& context, CodeFunctionSignature& signature)
+{
+	for (int i = 0; i < getInputCount(); i++) {
+		ValuePin* pin = dynamic_cast<ValuePin*>(entryNode->getOutput(i));
+		if (pin) {
+			CodeSymbolDefinition& definition = signature.parameters.emplace_back();
+			definition.type = pin->getVariableType();
+			Name pinName = pin->getName();
+			context.assignParameter(pin, pinName);
+			definition.name = pinName;
+		}
 	}
 }

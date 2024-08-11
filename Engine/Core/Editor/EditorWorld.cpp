@@ -1,14 +1,18 @@
 #include "EditorWorld.h"
 #include "../RenderCore/RenderCore.h"
 
-EditorWorld::EditorWorld()
-	: directLight("directLight"),
-	camera("camera")
+EditorWorld::EditorWorld(const string& name)
+	: camera("camera")
+	, directLight("directLight")
+	, guiSurface(name)
 {
+	cameraManager.setGUISurface(&guiSurface);
 	sceneRenderData = new SceneRenderData();
+	directLight.intensity = 5;
 	directLight.setRotation(0, -45, -45);
 	this->addChild(directLight);
 	this->addChild(camera);
+	cameraManager.setCamera(&camera, CameraTag::main);
 	camera.setActive(true);
 	camera.cameraRender.createDefaultPostProcessGraph();
 	camera.cameraRender.graph->removePostProcessPass("SSAO");
@@ -20,8 +24,7 @@ EditorWorld::EditorWorld()
 
 EditorWorld::~EditorWorld()
 {
-	if (sceneRenderData)
-		delete sceneRenderData;
+	delete sceneRenderData;
 	sceneRenderData = NULL;
 }
 
@@ -82,7 +85,6 @@ void EditorWorld::afterTick()
 	iter.reset();
 	while (iter.next())
 		iter.current().afterTick();
-
 }
 
 void EditorWorld::prerender(SceneRenderData& sceneData)
@@ -135,6 +137,14 @@ void EditorWorld::render(RenderGraph& renderGraph)
 
 	for (auto& renderer : renders)
 		renderer->render(info);
+
+	guiSurface.gizmoRender3D(info);
+}
+
+void EditorWorld::onGUI(ImDrawList* drawList)
+{
+	guiSurface.gizmoFrame(drawList, this);
+	guiSurface.gizmoRender2D(drawList);
 }
 
 void EditorWorld::end()
@@ -167,11 +177,17 @@ void EditorWorld::update()
 {
 	tick(0);
 	afterTick();
+	guiSurface.gizmoUpdate();
 }
 
-Texture* EditorWorld::getSceneTexture()
+GUISurface& EditorWorld::getGUISurface()
 {
-	return camera.cameraRender.getSceneTexture();
+	return guiSurface;
+}
+
+Gizmo& EditorWorld::getGizmo()
+{
+	return guiSurface.gizmo;
 }
 
 SceneRenderData* EditorWorld::getSceneRenderData()
@@ -183,7 +199,7 @@ void EditorWorld::setViewportSize(int width, int height)
 {
 	if (width == 0 || height == 0)
 		return;
-	camera.setSize({ width, height });
+	guiSurface.setSize({ width, height });
 }
 
 float EditorWorld::getDeltaTime() const

@@ -6,7 +6,9 @@
 
 GraphWindow::GraphWindow(string name, bool defaultShow)
 	: UIWindow(*(Object*)NULL, name, defaultShow)
+	, previewer(name)
 {
+	previewer.init(NULL);
 }
 
 GraphWindow::~GraphWindow()
@@ -35,7 +37,12 @@ void GraphWindow::onWindowGUI(GUIRenderInfo& info)
 		inspectViewWidthRadio = inspectViewWidth / viewWidth;
 	}
 
-	EditorInfo editorInfo = { &info.gui, info.gizmo, info.camera, Engine::getCurrentWorld() };
+	EditorInfo editorInfo;
+	editorInfo.gui = &info.gui;
+	editorInfo.gizmo = info.gizmo;
+	editorInfo.camera = info.camera;
+	editorInfo.world = Engine::getCurrentWorld();
+	editorInfo.previewer = &previewer;
 
 	Graph* pGraph = graph;
 
@@ -123,7 +130,7 @@ void GraphWindow::onWindowGUI(GUIRenderInfo& info)
 	for each (auto g in graphInfo.graphList)
 	{
 		ImGui::PushID(i);
-		string name = i == 0 ? "Self" : g->getDisplayName();
+		string name = i == 0 ? "Self" : g->getDisplayName().c_str();
 		if (ImGui::Button(name.c_str())) {
 			graphInfo.openGraph(g);
 			ImGui::PopID();
@@ -140,6 +147,12 @@ void GraphWindow::onWindowGUI(GUIRenderInfo& info)
 		graphInfo.tickClear();
 	}
 	ImGui::EndChild();
+}
+
+void GraphWindow::onRender(RenderInfo& info)
+{
+	UIWindow::onRender(info);
+	previewer.onRender(info);
 }
 
 void GraphWindow::showGraph(GUI& gui, Graph* graph)

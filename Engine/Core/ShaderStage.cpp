@@ -7,18 +7,18 @@
 #include "Utility/hash.h"
 #include "ShaderCode/ShaderAdapterCompiler.h"
 
-void ShaderMacroSet::add(const string& macro)
+void ShaderMacroSet::add(const Name& macro)
 {
-	if (macro.empty())
+	if (macro.isNone())
 		return;
-	shaderMacros.insert(make_pair(ShaderPropertyName(macro), macro));
+	shaderMacros.emplace(macro);
 	recomputeHash();
 }
 
 void ShaderMacroSet::append(const ShaderMacroSet& set)
 {
 	for (auto& item : set.shaderMacros) {
-		shaderMacros.insert(item);
+		shaderMacros.emplace(item);
 	}
 	recomputeHash();
 }
@@ -29,7 +29,7 @@ void ShaderMacroSet::clear()
 	hash = 0;
 }
 
-bool ShaderMacroSet::has(const ShaderPropertyName& macro) const
+bool ShaderMacroSet::has(const Name& macro) const
 {
 	return shaderMacros.find(macro) != shaderMacros.end();
 }
@@ -43,7 +43,7 @@ string ShaderMacroSet::getDefineCode() const
 {
 	string code;
 	for (auto& item : shaderMacros) {
-		code += "#define " + item.second + "\n";
+		code += string("#define ") + item.c_str() + "\n";
 	}
 	return code;
 }
@@ -52,7 +52,7 @@ void ShaderMacroSet::recomputeHash()
 {
 	hash = 0;
 	for (auto& item : shaderMacros) {
-		hash_combine(hash, item.first.getHash());
+		hash_combine(hash, item.getHash());
 	}
 }
 
@@ -104,11 +104,11 @@ const ShaderMacroSet& ShaderStage::getShaderMacroSet() const
 
 const ShaderProperty* ShaderStage::getProperty(const ShaderPropertyName& name) const
 {
-	auto iter = properties.find(name.getHash());
+	auto iter = properties.find(name);
 	return iter == properties.end() ? NULL : &iter->second;
 }
 
-const unordered_map<size_t, ShaderProperty>& ShaderStage::getProperties() const
+const unordered_map<ShaderPropertyName, ShaderProperty>& ShaderStage::getProperties() const
 {
 	return properties;
 }
@@ -152,7 +152,7 @@ ShaderStageType ShaderStage::enumShaderStageType(const string & type)
 		return None_Shader_Stage;
 }
 
-string ShaderProgram::AttributeDesc::getName() const
+const ShaderPropertyName& ShaderProgram::AttributeDesc::getName() const
 {
 	return properties.front().second->name;
 }
@@ -276,7 +276,7 @@ unsigned int ShaderProgram::getProgramID()
 
 const ShaderProgram::AttributeDesc* ShaderProgram::getAttributeOffset(const ShaderPropertyName& name) const
 {
-	auto iter = attributes.find(name.getHash());
+	auto iter = attributes.find(name);
 	if (iter == attributes.end())
 		return NULL;
 	return &iter->second;
@@ -431,8 +431,13 @@ bool ShaderManager::ProgramStageLink::operator<(const ProgramStageLink& link) co
 
 ShaderFile::ShaderFile(const string& path) : path(path)
 {
-	lastWriteTime = Time(chrono::duration_cast<chrono::steady_clock::duration>
-		(filesystem::last_write_time(path).time_since_epoch()));
+	if (filesystem::exists(filesystem::u8path(path))) {
+		lastWriteTime = Time(chrono::duration_cast<chrono::steady_clock::duration>
+			(filesystem::last_write_time(path).time_since_epoch()));
+	}
+	else {
+		lastWriteTime = Time::now();
+	}
 }
 
 bool ShaderFile::checkDirty() const
@@ -448,8 +453,13 @@ void ShaderFile::reset()
 {
 	adapters.clear();
 	includeFiles.clear();
-	lastWriteTime = Time(chrono::duration_cast<chrono::steady_clock::duration>
-		(filesystem::last_write_time(path).time_since_epoch()));
+	if (filesystem::exists(filesystem::u8path(path))) {
+		lastWriteTime = Time(chrono::duration_cast<chrono::steady_clock::duration>
+			(filesystem::last_write_time(path).time_since_epoch()));
+	}
+	else {
+		lastWriteTime = Time::now();
+	}
 }
 
 ShaderStage* ShaderManager::screenShaderStage = NULL;

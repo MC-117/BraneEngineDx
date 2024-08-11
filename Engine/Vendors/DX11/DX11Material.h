@@ -22,9 +22,9 @@ public:
 	DX11Material(DX11Context& context, MaterialDesc& desc);
 	virtual ~DX11Material();
 
-	virtual void uploadAttribute(const string& name, unsigned int size, void* data);
-	virtual void uploadTexture(const string& name, ComPtr<ID3D11ShaderResourceView> tex, ComPtr<ID3D11SamplerState> sample);
-	virtual void uploadImage(const string& name, ComPtr<ID3D11UnorderedAccessView> tex);
+	virtual void uploadAttribute(const Name& name, unsigned int size, void* data);
+	virtual void uploadTexture(const Name& name, ComPtr<ID3D11ShaderResourceView> tex, ComPtr<ID3D11SamplerState> sample);
+	virtual void uploadImage(const Name& name, ComPtr<ID3D11UnorderedAccessView> tex);
 
 	virtual void preprocess();
 	virtual void processBaseData();

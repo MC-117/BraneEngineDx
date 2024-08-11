@@ -1,30 +1,23 @@
 #include "MaterialWindow.h"
 #include "InspectorWindow.h"
 #include "../Engine.h"
+#include "../Importer/MaterialImporter.h"
 
 MaterialWindow::MaterialWindow(Material * material, string name, bool defaultShow)
-	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow), material(material), meshActor("PreviewMeshActor")
+	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
+	, material(material)
+	, previewer(name)
 {
 	events.registerFunc("setMaterial", [](void* win, void* mat) {
 		((MaterialWindow*)win)->material = (Material*)mat;
 	});
-	Mesh* mesh = getAssetByPath<Mesh>("Engine/Shapes/UnitSphere.fbx");
-	meshActor.setMesh(mesh);
-	if (material)
-		meshActor.meshRender.setMaterial(0, *material);
-	meshActor.setScale({ 10, 10, 10 });
-	editorWorld.camera.distance = 15;
-	editorWorld.addChild(meshActor);
-	editorWorld.camera.clearColor = Color(88, 88, 88, 255);
-	//editorWorld.camera.renderTarget.setMultisampleLevel(4);
-	editorWorld.begin();
-	gizmo.setCameraControl(Gizmo::CameraControlMode::Turn, 0, 1, 100);
+	previewer.init(material);
 }
 
 void MaterialWindow::setMaterial(Material & material)
 {
 	this->material = &material;
-	meshActor.meshRender.setMaterial(0, material);
+	previewer.setMaterial(&material);
 }
 
 Material * MaterialWindow::getMaterial()
@@ -32,53 +25,20 @@ Material * MaterialWindow::getMaterial()
 	return material;
 }
 
-void MaterialWindow::onMaterialPreview(GUIRenderInfo& info)
-{
-	float width = ImGui::GetWindowContentRegionWidth();
-
-	editorWorld.setViewportSize((int)width, (int)width);
-
-	editorWorld.update();
-	editorWorld.render(*info.renderGraph);
-
-	gizmo.onUpdate(editorWorld.camera);
-
-	ImGui::BeginChild("Scene", ImVec2(width, width));
-	auto drawList = ImGui::GetWindowDrawList();
-	gizmo.beginFrame(drawList);
-
-	Texture* texture = editorWorld.getSceneTexture();
-	if (texture != NULL) {
-		texture->bind();
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0);
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 0 });
-
-		auto list = ImGui::GetWindowDrawList();
-		float padding = 0;
-		ImVec2 pos = ImGui::GetWindowPos();
-		unsigned long long id = texture->getTextureID();
-		if (id != 0)
-			list->AddImage((ImTextureID)id, { pos.x + padding, pos.y + padding },
-				{ pos.x + padding + width, pos.y + padding + width });
-		ImGui::PopStyleVar(2);
-	}
-
-	gizmo.onGUI(&editorWorld);
-	gizmo.endFrame();
-	ImGui::EndChild();
-}
-
 void MaterialWindow::onWindowGUI(GUIRenderInfo & info)
 {
 	if (material == NULL)
 		return;
 
-	onMaterialPreview(info);
+	float width = ImGui::GetWindowContentRegionWidth();
+	previewer.onGUI("PreviewScene", width, width);
+
+	ImGui::BeginChild("Details", ImVec2(-1, -1));
 
 	if (ImGui::Button("Save Material", { -1, 36 })) {
 		string s = AssetInfo::getPath(material);
 		if (!s.empty()) {
-			if (!Material::MaterialLoader::saveMaterialInstance(s, *material))
+			if (!MaterialLoader::saveMaterialInstance(s, *material))
 #ifdef UNICODE
 				MessageBox(NULL, L"Save failed", L"Error", MB_OK);
 #else
@@ -99,7 +59,7 @@ void MaterialWindow::onWindowGUI(GUIRenderInfo & info)
 		if (ImGui::DragFloat(b->first.c_str(), &val, 0.01))
 			b->second.val = val;
 	}
-	static string choice;
+	static Name choice;
 	ImGui::Columns(2, "TextureColumn", false);
 	for (auto b = material->getTextureField().begin(), e = material->getTextureField().end(); b != e; b++) {
 		if (b->first == "depthMap")
@@ -141,4 +101,12 @@ void MaterialWindow::onWindowGUI(GUIRenderInfo & info)
 		}
 		ImGui::EndPopup();
 	}
+
+	ImGui::EndChild();
+}
+
+void MaterialWindow::onRender(RenderInfo& info)
+{
+	UIWindow::onRender(info);
+	previewer.onRender(info);
 }

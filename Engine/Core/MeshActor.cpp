@@ -3,6 +3,7 @@
 #include "Asset.h"
 #include "Console.h"
 #include "RenderCore/RenderCore.h"
+#include "Importer/MaterialImporter.h"
 
 SerializeInstance(MeshActor);
 
@@ -113,7 +114,7 @@ bool MeshActor::deserialize(const SerializationInfo & from)
 					outline->get("material", imat);
 					if (!imat.empty()) {
 						istringstream stream = istringstream(imat);
-						meshRender.outlineMaterials[i] = Material::MaterialLoader::loadMaterialInstance(stream, "Outline");
+						meshRender.outlineMaterials[i] = MaterialLoader::loadMaterialInstance(stream, "Outline");
 					}
 					string boolString;
 					outline->get("enable", boolString);
@@ -191,7 +192,7 @@ bool MeshActor::serialize(SerializationInfo & to)
 						string imat;
 						Material* outlineMaterial = meshRender.outlineMaterials[i];
 						if (outlineMaterial != NULL)
-							Material::MaterialLoader::saveMaterialInstanceToString(imat, *outlineMaterial);
+							MaterialLoader::saveMaterialInstanceToString(imat, *outlineMaterial);
 						outline->set("material", imat);
 						outline->set("enable", meshRender.outlineEnable[i] ? "true" : "false");
 					}
@@ -221,7 +222,7 @@ bool MeshActor::serialize(SerializationInfo & to)
 					pathType = "path";
 				}
 				if (path.empty()) {
-					path = meshRender.materials[i]->getShaderName();
+					path = meshRender.materials[i]->getShaderName().c_str();
 					pathType = "name";
 				}
 				info.add("path", path);

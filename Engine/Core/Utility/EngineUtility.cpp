@@ -14,7 +14,7 @@ string getEngineFolder()
 
 string getGoodRelativePath(const string& path)
 {
-	filesystem::path p = filesystem::u8path(path);
+	filesystem::path p = absolute(filesystem::u8path(path));
 	filesystem::path ep = filesystem::u8path(Engine::windowContext.workingPath);
 	string filename = p.filename().string();
 	vector<string> ps = split(p.relative_path().make_preferred().remove_filename().string(), '\\');
@@ -169,4 +169,10 @@ void newSerializationInfoGuid(SerializationInfo& info)
     map<Guid, Guid> guidMap;
     newSerializationInfoGuid(info, guidMap);
     replaceSerializationInfoGuid(info, guidMap);
+}
+
+bool isBaseMaterial(const Material& material)
+{
+    Shader* shader = material.getShader();
+    return shader && shader->getBaseMaterial() == &material;
 }

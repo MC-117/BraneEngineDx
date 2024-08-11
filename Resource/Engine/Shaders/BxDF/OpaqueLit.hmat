@@ -1,11 +1,41 @@
 #include "../lib/BxDF_Lib.hmat"
 #include "../lib/PBR_Lib.hmat"
+#include "../lib/Shadow_Lib.hmat"
 
-#node
-BxDF OpaqueLit_BRDF(in BxDFContext context)
+#pin
+struct PBRParameter
 {
-    Surface surf = context.surface;
-    float3 V = context.V;
+    float3 albedo;
+    float opacity;
+    float3 normal;
+    float roughness;
+    float metallic;
+    float specular;
+    float3 emission;
+    float ao;
+};
+
+void fillSurface(inout Surface surf, PBRParameter param)
+{
+    float3x3 TBN = cotangent(surf.Normal, surf.WorldPos, surf.TexCoords);
+    float3 tN = normalize(param.normal * 2 - 1);
+    surf.Normal = normalize(mul(tN, TBN));
+    surf.albedo.rgb = param.albedo;
+    surf.albedo.a = param.opacity;
+    //surf.albedo.rgb = pow(surf.albedo.rgb, 2.2);
+    surf.roughness = param.roughness;
+    surf.metallic = param.metallic;
+    surf.ao = param.ao;
+    surf.radiosity = float4(param.emission, 1.0f);
+    surf.mask |= REFLECTION_MASK;
+}
+
+#ifndef DEFERRED_SHADER_FEATURE
+float3 PBRLit_Lo(inout Surface surf, PBRParameter param)
+{
+    float3 V = normalize(camData.camPos - surf.WorldPos);
+    float3 Lo = Float3(0.0);
+
     if (directLight.intensity != 0) {
         float shadowFactor = getShadow(directLight, surf);
         Lo += PBR_Lo_DirectLight(directLight, surf.Normal, V, surf.albedo.xyz,
@@ -21,4 +51,30 @@ BxDF OpaqueLit_BRDF(in BxDFContext context)
                 surf.albedo.xyz, surf.metallic, surf.roughness) * shadowFactor;
         }
     }
+    return Lo;
+}
+#endif
+
+#node
+BxDF PBRLit_BRDF(CONTEXT BxDFContext context, PBRParameter param)
+{
+    #ifdef DEPTH_SHADER_FEATURE
+    context.surf.albedo.a = param.opacity;
+    #endif
+
+    #ifndef LIGHTING_SHADER_FEATURE
+    fillSurface(context.surf, param);
+    #endif
+
+    BxDF result;
+    initBxDF(result);
+    result.opacity = param.opacity;
+
+    #ifndef DEFERRED_SHADER_FEATURE
+    result.diffuse = PBRLit_Lo(context.surf, param);
+    result.ambient = PBR_Ambient(context.surf.WorldPos, context.surf.Normal, context.surf.albedo.xyz, context.surf.ao);
+    result.emission = context.surf.radiosity;
+    #endif
+
+    return result;
 }

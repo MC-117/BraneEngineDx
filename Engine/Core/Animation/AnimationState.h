@@ -78,7 +78,7 @@ public:
 	AnimationState() = default;
 	virtual ~AnimationState() = default;
 
-	virtual void setName(const string& name);
+	virtual void setName(const Name& name);
 
 	AnimationPoseGraph* getGraph();
 	const AnimationPoseGraph* getGraph() const;

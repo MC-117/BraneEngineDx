@@ -8,7 +8,6 @@
 
 #define REFLECTION_MASK 1
 
-
 struct Surface
 {
     float4 albedo;

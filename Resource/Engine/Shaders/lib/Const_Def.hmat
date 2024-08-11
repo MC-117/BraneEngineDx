@@ -17,3 +17,5 @@ float4 Float4(float x) { return float4(x, x, x, x); }
 #define DRAW_ELEMENT_INDIRECT_BASE_VTX_IDX 3
 #define DRAW_ARRAY_INDIRECT_BASE_INS_IDX 3
 #define DRAW_ELEMENT_INDIRECT_BASE_INS_IDX 4
+
+#define CONTEXT inout

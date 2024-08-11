@@ -45,9 +45,14 @@ CameraRender::~CameraRender()
 	}
 }
 
+void CameraRender::setCameraTag(const Name& tag)
+{
+	this->tag = tag;
+}
+
 bool CameraRender::isMainCameraRender() const
 {
-	return GUISurface::getMainGUISurface().getCameraRender() == this;
+	return tag == CameraTag::main;
 }
 
 void CameraRender::setCameraRenderFlags(Enum<CameraRenderFlags> flags)

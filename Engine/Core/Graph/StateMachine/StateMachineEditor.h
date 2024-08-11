@@ -12,6 +12,12 @@ public:
 
 	EditorInfoMethod();
 	virtual void setInspectedObject(void* object);
+protected:
+	StateMachine* stateMachine = NULL;
+
+	string stateName;
+	GraphPin* linkFromPin = NULL;
+	GraphPin* linkToPin = NULL;
 
 	virtual void onExtraContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo);
 	virtual void onCreateLink(GraphPin* fromPin, GraphPin* toPin);
@@ -19,10 +25,4 @@ public:
 	virtual void onGraphCanvasGUI(EditorInfo& info, GraphInfo& graphInfo);
 
 	virtual void onCanvasContextMenuGUI(EditorInfo& info, GraphInfo& graphInfo);
-protected:
-	StateMachine* stateMachine = NULL;
-
-	string stateName;
-	GraphPin* linkFromPin = NULL;
-	GraphPin* linkToPin = NULL;
 };

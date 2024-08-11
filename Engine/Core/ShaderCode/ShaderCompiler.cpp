@@ -8,6 +8,71 @@
 #include "ShaderGraph/ShaderNode.h"
 #include "../Attributes/TagAttribute.h"
 
+ShaderCodeFileReader::~ShaderCodeFileReader()
+{
+	close();
+}
+
+bool ShaderCodeFileReader::open(const char* path)
+{
+	filesystem::path u8path = filesystem::u8path(path);
+	this->path = u8path.generic_u8string();
+	this->name = u8path.filename().generic_u8string();
+	this->envPath = u8path.parent_path().generic_u8string();
+	file.open(path);
+	return file.is_open();
+}
+
+void ShaderCodeFileReader::close()
+{
+	file.close();
+}
+
+bool ShaderCodeFileReader::isOpen() const
+{
+	return file.is_open();
+}
+
+const char* ShaderCodeFileReader::getPath() const
+{
+	return path.c_str();
+}
+
+const char* ShaderCodeFileReader::getEnvPath() const
+{
+	return envPath.c_str();
+}
+
+const char* ShaderCodeFileReader::getName() const
+{
+	return name.c_str();
+}
+
+bool ShaderCodeFileReader::readLine(string& line)
+{
+	return (bool)getline(file, line);
+}
+
+bool ShaderCodeFileReader::readChar(char& out)
+{
+	return (bool)file.get(out);
+}
+
+void ShaderCodeFileReader::unreadChar()
+{
+	file.unget();
+}
+
+size_t ShaderCodeFileReader::getPos()
+{
+	return file.tellg();
+}
+
+void ShaderCodeFileReader::setPos(size_t pos)
+{
+	file.seekg(pos);
+}
+
 unordered_map<string, ShaderCompiler::ShaderToken> ShaderCompiler::keywords =
 {
 	{ "vertex", ST_Vertex },
@@ -36,34 +101,31 @@ ShaderCompiler::ShaderCompiler() : manager(ShaderManager::getInstance())
 
 }
 
-bool ShaderCompiler::init(const string& path)
+bool ShaderCompiler::init(IShaderCodeReader& reader)
 {
+	if (!reader.isOpen())
+		return false;
 	reset();
-	this->path = path;
-	filesystem::path _path = filesystem::u8path(path);
-	name = _path.filename().generic_u8string();
-	adapterName = name;
-	envPath = _path.parent_path().generic_u8string();
+	this->reader = &reader;
+	adapterName = reader.getName();
 	stageType = None_Shader_Stage;
 	feature = Shader_Default;
 	unordered_set<ShaderFile*> headFiles;
 
-	shaderFile = manager.getShaderFile(path);
-
-	file.open(_path);
-	if (!file) {
-		successed = false;
-	}
-
+	shaderFile = manager.getShaderFile(reader.getPath());
 	return successed;
+}
+
+void ShaderCompiler::setIterateHeaders(bool value)
+{
+	iterateHeaders = value;
 }
 
 void ShaderCompiler::reset()
 {
+	reader = NULL;
 	clip.clear();
 	line.clear();
-	name.clear();
-	envPath.clear();
 	adapterName.clear();
 	stageType = None_Shader_Stage;
 	feature = Shader_Default;
@@ -107,19 +169,19 @@ void ShaderCompiler::setAdapaterName(const string& name)
 class CParser
 {
 public:
-	CParser(istream& stream)
-		: stream(stream)
-		, backupPos(stream.tellg())
+	CParser(IShaderCodeReader& reader)
+		: reader(reader)
+		, backupPos(reader.getPos())
 	{
 		
 	}
 
-	bool parseFunctionSignature(CodeFunctionSignature& func)
+	bool parseFunctionSignature(CodeFunctionSignature& func, bool isConstructor = false)
 	{
 		token = getToken();
 		if (token == T_Name) {
 			match(T_Name);
-			func.outputs.emplace_back(tokenString, Name::none);
+			func.outputs.emplace_back(tokenString, "Out"_N);
 		}
 		else if (token != T_Void) {
 			match(T_Void);
@@ -152,13 +214,13 @@ public:
 		return match(T_RPa);
 	}
 
-	bool parseStruct(CodeFunctionSignature& constructor)
+	bool parseStruct(CodeFunctionSignature& definition)
 	{
 		token = getToken();
 		if (!match(T_Struct))
 			return false;
 		if (match(T_Name)) {
-			constructor.name = tokenString;
+			definition.name = tokenString;
 		}
 		else
 			return false;
@@ -176,7 +238,7 @@ public:
 
 			if (match(T_Name)) {
 				name = tokenString;
-				constructor.parameters.emplace_back(type, name);
+				definition.parameters.emplace_back(type, name);
 			}
 			else {
 				return false;
@@ -187,7 +249,7 @@ public:
 
 				if (match(T_Name)) {
 					name = tokenString;
-					constructor.parameters.emplace_back(type, name);
+					definition.parameters.emplace_back(type, name);
 				}
 				else {
 					return false;
@@ -202,7 +264,7 @@ public:
 
 	void finalize()
 	{
-		stream.seekg(backupPos);
+		reader.setPos(backupPos);
 	}
 protected:
 	enum State
@@ -212,14 +274,14 @@ protected:
 	
 	enum Token
 	{
-		T_None, T_LBr, T_RBr, T_LPa, T_RPa, T_Comma, T_SemiColon, T_End, T_Name, T_Void, T_In, T_Out, T_InOut, T_Struct, T_Error
+		T_None, T_LBr, T_RBr, T_LPa, T_RPa, T_Comma, T_SemiColon, T_End, T_Name, T_Void, T_In, T_Out, T_InOut, T_Context, T_Struct, T_Error
 	};
 
 	const array<const char*, 15> TokenName = {
 		"None", "{", "}", "(", ")", ",", ";", "EOF", "name", "void", "in", "out", "inout", "struct", "error"
 	};
 
-	istream& stream;
+	IShaderCodeReader& reader;
 	size_t backupPos;
 	bool foundError = false;
 	Token lastToken = T_None, token = T_None;
@@ -228,14 +290,14 @@ protected:
 	char getNextChar()
 	{
 		char c;
-		if (!stream.get(c))
+		if (!reader.readChar(c))
 			return '\0';
 		return c;
 	}
 
 	void ungetChar()
 	{
-		stream.unget();
+		reader.unreadChar();
 	}
 
 	Token getToken()
@@ -302,6 +364,9 @@ protected:
 			else if (nextTokenString == "inout") {
 				t = T_InOut;
 			}
+			else if (nextTokenString == "CONTEXT") {
+				t = T_Context;
+			}
 		}
 
 		return t;
@@ -330,7 +395,13 @@ protected:
 	{
 		Token paramToken = T_In;
 
-		if (token == T_In || token == T_Out) {
+		bool isContextParam = false;
+		if (token == T_Context) {
+			isContextParam = true;
+			match(token);
+		}
+
+		if (token == T_In || token == T_Out || token == T_InOut) {
 			paramToken = token;
 			match(token);
 		}
@@ -353,7 +424,7 @@ protected:
 			
 		switch (paramToken) {
 		case T_In:
-			func.parameters.emplace_back(type, name);
+			func.parameters.emplace_back(type, name, isContextParam ? CQF_Context : CQF_None);
 			break;
 		case T_Out:
 			func.outputs.emplace_back(type, name);
@@ -372,7 +443,7 @@ bool ShaderCompiler::compile()
 	command.clear();
 	bool continueRead = true;
 	while (continueRead) {
-		continueRead = (bool)getline(file, line);
+		continueRead = reader->readLine(line);
 		if (!continueRead)
 			break;
 		if (line.empty())
@@ -438,8 +509,10 @@ bool ShaderCompiler::compile()
 				}
 				break;
 			case ShaderCompiler::ST_Include:
-				if (!readHeadFile(envPath)) {
-					successed = false;
+				if (iterateHeaders) {
+					if (!readHeadFile(reader->getEnvPath())) {
+						successed = false;
+					}
 				}
 				break;
 			case ShaderCompiler::ST_Condition:
@@ -449,25 +522,26 @@ bool ShaderCompiler::compile()
 				break;
 			case ShaderCompiler::ST_Pin:
 				if (command.size() == 1) {
-					CParser cparser(file);
+					CParser cparser(*reader);
 					string structName;
-					CodeFunctionSignature constructor;
-					if (cparser.parseStruct(constructor)) {
-						REGISTER_SHADER_STRUCT_PIN(constructor.name);
-						REGISTER_SHADER_STRUCT_FUNCTION_NODES(constructor);
+					CodeFunctionSignature definition;
+					if (cparser.parseStruct(definition)) {
+						// TODO add shaderfile to the shader pin and shader node
+						REGISTER_SHADER_STRUCT_PIN(definition.name, DEF_ATTR(GraphCodeHeaderFile, path));
+						REGISTER_SHADER_STRUCT_FUNCTION_NODES(definition, DEF_ATTR(GraphCodeHeaderFile, reader->getPath()));
 					}
 					cparser.finalize();
 				}
 				if (command.size() == 2) {
-					REGISTER_SHADER_STRUCT_PIN(command[1]);
+					REGISTER_SHADER_STRUCT_PIN(command[1], path);
 				}
 				break;
 			case ShaderCompiler::ST_Node:
 				{
-					CParser cparser(file);
+					CParser cparser(*reader);
 					CodeFunctionSignature signature;
 					if (cparser.parseFunctionSignature(signature)) {
-						REGISTER_SHADER_FUNCTION_NODE(signature);
+						REGISTER_SHADER_FUNCTION_NODE(signature, DEF_ATTR(GraphCodeHeaderFile, reader->getPath()));
 					}
 					cparser.finalize();
 				}
@@ -544,20 +618,35 @@ Enum<ShaderFeature> ShaderCompiler::getFeatureInternal(const vector<string>& com
 	return _feature;
 }
 
-const string& ShaderCompiler::getName() const
+const char* ShaderCompiler::getName() const
 {
-	return name;
+	return reader->getName();
 }
 
 bool ShaderCompiler::readHeadFile(const string& envPath)
 {
-	const string includeStr = "#include";
-	size_t tpos = line.find(includeStr);
-	if (tpos == -1) {
+	static const string includeStr = "#include";
+	static const std::array<const char*, 2> ignoreTokens= {
+		"#node", "#pin"
+	};
+	size_t loc = line.find(includeStr);
+	bool foundInclude = loc != string::npos;
+	bool needWriteLine = !foundInclude;
+	if (needWriteLine) {
+		for (const char* token : ignoreTokens) {
+			if (line.find(token) != string::npos) {
+				needWriteLine = false;
+				break;
+			}
+		}
+	}
+	if (needWriteLine) {
 		clip += line + '\n';
+	}
+	if (!foundInclude) {
 		return true;
 	}
-	string filePath = line.substr(tpos + includeStr.length());
+	string filePath = line.substr(loc + includeStr.length());
 	trim(filePath, " <>\"");
 
 	string pwd;
@@ -581,8 +670,8 @@ bool ShaderCompiler::readHeadFile(const string& envPath)
 	if (shaderFile != NULL && localHeadFiles.find(shaderFile) != localHeadFiles.end())
 		return true;
 
-	ifstream f = ifstream(filePath);
-	if (!f.is_open()) {
+	ShaderCodeFileReader headReader;
+	if (!headReader.open(filePath.c_str())) {
 		Console::error("Head file \"%s\" open failed", filePath.c_str());
 		return false;
 	}
@@ -596,17 +685,15 @@ bool ShaderCompiler::readHeadFile(const string& envPath)
 	globalHeadFiles.insert(shaderFile);
 
 	while (1) {
-		if (!getline(f, line))
+		if (!headReader.readLine(line))
 			break;
 		if (line.empty())
 			continue;
 		filesystem::path p = filePath;
 		if (!readHeadFile(p.parent_path().generic_u8string())) {
-			f.close();
 			return false;
 		}
 	}
-	f.close();
 	return true;
 }
 
@@ -636,7 +723,7 @@ void ShaderCompiler::compileAdapter()
 	if (stageType != None_Shader_Stage && !clip.empty()) {
 		adapter = getAdapterInternal(stageType);
 		if (adapter == NULL) {
-			adapter = ShaderManager::getInstance().addShaderAdapter(name, path, stageType, adapterName);
+			adapter = ShaderManager::getInstance().addShaderAdapter(getName(), reader->getPath(), stageType, adapterName);
 			if (adapter == NULL) {
 				return;
 			}
@@ -670,7 +757,7 @@ ShaderAdapter* ShaderCompiler::useAdapter(ShaderStageType stageType, const vecto
 		adapter = ShaderManager::getInstance().getShaderAdapterByPath(adapterTag, stageType);
 	if (adapter == NULL) {
 		if (forceExist) {
-			Console::error("Not found adapter %s, when load \"%s\" at %s", adapterTag.c_str(), path.c_str(), ShaderStage::enumShaderStageType(stageType));
+			Console::error("Not found adapter %s, when load \"%s\" at %s", adapterTag.c_str(), reader->getPath(), ShaderStage::enumShaderStageType(stageType));
 			successed = false;
 		}
 	}
@@ -716,8 +803,8 @@ void ShaderCompiler::finalize()
 {
 	if (successed) {
 		if (shaderFile == NULL) {
-			shaderFile = new ShaderFile(path);
-			manager.shaderFiles.insert(make_pair(path, shaderFile));
+			shaderFile = new ShaderFile(reader->getPath());
+			manager.shaderFiles.insert(make_pair(reader->getPath(), shaderFile));
 		}
 		shaderFile->reset();
 		for (auto b = adapters.begin(), e = adapters.end(); b != e; b++) {
@@ -727,6 +814,6 @@ void ShaderCompiler::finalize()
 			shaderFile->includeFiles.insert(*b);
 		}
 	}
-	if (file)
-		file.close();
+	if (reader)
+		reader->close();
 }

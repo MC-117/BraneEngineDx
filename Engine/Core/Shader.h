@@ -25,37 +25,85 @@ struct ENGINE_API ShaderMatchRule
 	Enum<ShaderFeature> operator()(ShaderStageType stageType, const Enum<ShaderFeature>& feature) const;
 };
 
+class Material;
+
 class ENGINE_API Shader
 {
 public:
-	string name = "__Default";
-	map<ShaderStageType, ShaderAdapter*> shaderAdapters;
-	map<Enum<ShaderFeature>, ShaderProgram*> shaderPrograms;
-	map<unsigned int, unsigned int> shaderIds;
-	unsigned int renderOrder = 0;
+	virtual void setName(const Name& name) = 0;
+	virtual Name getName() const = 0;
 
-	static Shader nullShader;
+	virtual void setBaseMaterial(Material* baseMaterial) = 0;
+	virtual Material* getBaseMaterial() const = 0;
+
+	virtual void setRenderOrder(int renderOrder) = 0;
+	virtual int getRenderOrder() const = 0;
 	
-	Shader();
-	Shader(const Shader& s);
-	Shader(Shader&& s);
-	Shader(const string& name, unsigned int renderOrder);
-	virtual ~Shader();
+	virtual bool isNull() const = 0;
+	virtual bool isValid() const = 0;
+	virtual bool isComputable() const = 0;
+	
+	virtual bool addShaderAdapter(ShaderAdapter& adapter) = 0;
+	virtual ShaderAdapter* getShaderAdapter(ShaderStageType stageType) = 0;
+	virtual ShaderProgram* getProgram(const Enum<ShaderFeature>& feature, const ShaderMatchRule& rule = ShaderMatchRule()) = 0;
+	
+	static unsigned int getCurrentProgramId();
+};
 
-	void shift(Shader& shader);
+class ENGINE_API ShaderCore
+{
+public:
+	Name name = "__Default";
+	unsigned int renderOrder = 0;
+	Material* baseMaterial = NULL;
 
-	bool isNull() const;
-	bool isValid() const;
-	bool isComputable() const;
+	virtual bool isNull() const;
+	virtual bool isValid() const;
+	virtual bool isComputable() const;
 
 	bool setMeshStageAdapter(ShaderAdapter& adapter);
 	ShaderAdapter* getMeshStageAdapter();
-	bool addShaderAdapter(ShaderAdapter& adapter);
-	ShaderAdapter* getShaderAdapter(ShaderStageType stageType);
-	ShaderProgram* getProgram(const Enum<ShaderFeature>& feature, const ShaderMatchRule& rule = ShaderMatchRule());
-	static unsigned int getCurrentProgramId();
+	virtual bool addShaderAdapter(ShaderAdapter& adapter);
+	virtual ShaderAdapter* getShaderAdapter(ShaderStageType stageType);
+	virtual ShaderProgram* getProgram(const Enum<ShaderFeature>& feature, const ShaderMatchRule& rule = ShaderMatchRule());
 protected:
 	ShaderStageType meshStageType = None_Shader_Stage;
+	map<ShaderStageType, ShaderAdapter*> shaderAdapters;
+	map<Enum<ShaderFeature>, ShaderProgram*> shaderPrograms;
+	map<unsigned int, unsigned int> shaderIds;
+};
+
+class ENGINE_API GenericShader : public Shader
+{
+public:
+	GenericShader();
+	GenericShader(const GenericShader& s);
+	GenericShader(GenericShader&& s);
+	GenericShader(const string& name, unsigned int renderOrder);
+	virtual ~GenericShader();
+
+	void shift(GenericShader& shader);
+	
+	virtual void setName(const Name& name);
+	virtual Name getName() const;
+
+	virtual void setBaseMaterial(Material* baseMaterial);
+	virtual Material* getBaseMaterial() const;
+	
+	virtual void setRenderOrder(int renderOrder);
+	virtual int getRenderOrder() const;
+
+	virtual bool isNull() const;
+	virtual bool isValid() const;
+	virtual bool isComputable() const;
+
+	bool setMeshStageAdapter(ShaderAdapter& adapter);
+	ShaderAdapter* getMeshStageAdapter();
+	virtual bool addShaderAdapter(ShaderAdapter& adapter);
+	virtual ShaderAdapter* getShaderAdapter(ShaderStageType stageType);
+	virtual ShaderProgram* getProgram(const Enum<ShaderFeature>& feature, const ShaderMatchRule& rule = ShaderMatchRule());
+protected:
+	ShaderCore core;
 };
 
 #endif // !_SHADER_H_

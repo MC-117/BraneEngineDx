@@ -94,6 +94,8 @@ void VirtualShadowMapDepthPass::prepare()
 void VirtualShadowMapDepthPass::execute(IRenderContext& context)
 {
 	for (auto sceneData : renderGraph->sceneDatas) {
+		if (sceneData->cameraRenderDatas.empty())
+			continue;
 		RENDER_SCOPE(VSMDepth);
 		VirtualShadowMapRenderData& renderData = sceneData->virtualShadowMapRenderData;
 

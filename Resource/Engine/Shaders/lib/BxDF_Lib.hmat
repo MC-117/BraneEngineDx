@@ -5,12 +5,30 @@ struct BxDF
 {
     float3 diffuse;
     float3 specular;
+    float3 ambient;
+    float3 emission;
     float3 transmittance;
+    float opacity;
 };
 
 #pin BxDFContext
 struct BxDFContext
 {
     Surface surf;
-    float3 V;
 };
+
+void initBxDF(inout BxDF bxDF)
+{
+    bxDF.diffuse = 0;
+    bxDF.specular = 0;
+    bxDF.ambient = 0;
+    bxDF.emission = 0;
+    bxDF.transmittance = 0;
+    bxDF.opacity = 1;
+}
+
+float4 resolveBxDF(in BxDF bxdf)
+{
+    return float4(bxdf.diffuse + bxdf.specular + bxdf.ambient +
+        bxdf.emission + bxdf.transmittance, bxdf.opacity);
+}

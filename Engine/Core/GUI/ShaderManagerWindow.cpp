@@ -92,7 +92,7 @@ void ShaderManagerWindow::onShaderStageGUI(const ShaderStage& stage)
 	ImGui::Text("Stage: %s", ShaderStage::enumShaderStageType(stage.getShaderStageType()));
 	ImGui::Text("Feature: %s", featureName.c_str());
 	ImGui::Text("ShaderID: %lld", stage.getShaderID());
-	const unordered_map<size_t, ShaderProperty>& properties = stage.getProperties();
+	const unordered_map<ShaderPropertyName, ShaderProperty>& properties = stage.getProperties();
 	if (properties.empty())
 		return;
 	ImGui::Columns(5, "Properties");

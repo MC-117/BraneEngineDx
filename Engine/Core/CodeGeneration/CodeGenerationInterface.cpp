@@ -36,8 +36,8 @@ namespace Code
     }
 }
 
-CodeSymbolDefinition::CodeSymbolDefinition(const Name& type, const Name& name)
-    : type(type), name(name)
+CodeSymbolDefinition::CodeSymbolDefinition(const Name& type, const Name& name, Enum<CodeQualifierFlags> qualifiers)
+    : type(type), name(name), qualifiers(qualifiers)
 {
 }
 
@@ -256,9 +256,9 @@ const CodeFunctionInvocation& CodeParameter::expression() const
 std::string CodeParameter::toString(ICodeScopeBackend& backend) const
 {
     switch (type) {
-    case Symbol_t: return backend.convertKeyword(_symbol).str();
+    case Symbol_t: return backend.convertKeyword(_symbol).c_str();
     case Number_t: return _number.toString();
-    case Bool_t: return backend.convertKeyword(_boolean ? Code::true_t : Code::false_t).str();
+    case Bool_t: return backend.convertKeyword(_boolean ? Code::true_t : Code::false_t).c_str();
     case Char_t: return backend.convertCharacter(_character);
     case String_t: return backend.convertString(_string);
     case Expression_t: return backend.convertExpression(*_expression);
@@ -269,9 +269,9 @@ std::string CodeParameter::toString(ICodeScopeBackend& backend) const
 std::ostream& CodeParameter::write(std::ostream& os, ICodeScopeBackend& backend) const
 {
     switch (type) {
-    case Symbol_t: os << backend.convertKeyword(_symbol).str(); break;
+    case Symbol_t: os << backend.convertKeyword(_symbol).c_str(); break;
     case Number_t: os << _number; break;
-    case Bool_t: os << backend.convertKeyword(_boolean ? Code::true_t : Code::false_t).str(); break;
+    case Bool_t: os << backend.convertKeyword(_boolean ? Code::true_t : Code::false_t).c_str(); break;
     case Char_t: os << backend.convertCharacter(_character); break;
     case String_t: os << backend.convertString(_string); break;
     case Expression_t: os << toString(backend);

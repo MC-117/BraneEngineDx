@@ -15,6 +15,7 @@ World::World() : Transform("RootWorld")
 	if (defaultCamera.parent == NULL)
 		*this += defaultCamera;
 	defaultCamera.setActive(true);
+	cameraManager.setCamera(&defaultCamera, CameraTag::main);
 	//CameraSurface::getMainCameraSurface().bindCamera(&defaultCamera);
 }
 
@@ -226,11 +227,24 @@ bool World::getGUIOnly()
 	return guiOnly;
 }
 
+ICameraManager& World::getCameraManager()
+{
+	return cameraManager;
+}
+
+const ICameraManager& World::getCameraManager() const
+{
+	return cameraManager;
+}
+
 Camera & World::getCurrentCamera()
 {
-	if (camera == NULL)
+	Camera* mainCamera = cameraManager.getCamera(CameraTag::main);
+	if (mainCamera == NULL) {
 		switchToDefaultCamera();
-	return *camera;
+		mainCamera = &defaultCamera;
+	}
+	return *mainCamera;
 }
 
 Camera & World::getDefaultCamera()
@@ -240,33 +254,25 @@ Camera & World::getDefaultCamera()
 
 void World::switchCamera(Camera & newCamera)
 {
-	if (camera != NULL)
-		camera->setActive(false);
-	camera = &newCamera;
 	newCamera.setActive(true);
 	newCamera.cameraRender.getRenderTarget().setMultisampleLevel(Engine::engineConfig.msaa);
-	GUISurface::getMainGUISurface().bindCamera(&newCamera);
+	cameraManager.setCamera(&newCamera, CameraTag::main);
 }
 
 void World::switchToDefaultCamera()
 {
-	if (camera != NULL)
-		camera->setActive(false);
-	camera = &defaultCamera;
-	camera->setActive(true);
-	GUISurface::getMainGUISurface().bindCamera(camera);
+	cameraManager.setCamera(&defaultCamera, CameraTag::main);
 }
 
 #ifdef AUDIO_USE_OPENAL
 void World::updateListener()
 {
-	if (camera != NULL) {
-		audioListener.setPoseture(
-			camera->getPosition(WORLD),
-			camera->getForward(WORLD),
-			camera->getUpward(WORLD));
-		audioListener.update();
-	}
+	Camera& camera = getCurrentCamera();
+	audioListener.setPoseture(
+		camera.getPosition(WORLD),
+		camera.getForward(WORLD),
+		camera.getUpward(WORLD));
+	audioListener.update();
 }
 #endif // AUDIO_USE_OPENAL
 

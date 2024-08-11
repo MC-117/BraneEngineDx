@@ -33,6 +33,7 @@ public:
 
     static void OpenScript(ScriptBase& script);
     static TempScript& OpenTempScript(const string& name, string& text);
+    static TempScript& OpenTempScript(const string& path);
 
     virtual void AddScript(ScriptBase& script);
     virtual void AddOrSelectScript(ScriptBase& script);
