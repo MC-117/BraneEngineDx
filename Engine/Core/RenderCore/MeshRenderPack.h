@@ -36,6 +36,6 @@ struct MeshDataRenderPack : public IRenderPack
 	MeshDataRenderPack(LightRenderData& lightDataPack);
 
 	virtual bool setRenderCommand(const IRenderCommand& command);
-	virtual void excute(IRenderContext& context, RenderTaskContext& taskContext);
+	virtual void excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext);
 	virtual void reset();
 };

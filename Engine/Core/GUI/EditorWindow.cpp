@@ -8,7 +8,7 @@
 #include "../../ThirdParty/ImGui/imgui_stdlib.h"
 #include "GUIUtility.h"
 #include "../Utility/EngineUtility.h"
-#include "../GrassMeshActor.h"
+#include "../InstancedMeshActor.h"
 #include "../DirectLight.h"
 #include "../PointLight.h"
 #include "../ObjectUltility.h"
@@ -488,14 +488,15 @@ void EditorWindow::objectContextMenu(Object * obj)
 				meshCombo();
 				materialCombo();
 				if (ImGui::DragFloat("Density", &grassDensity)) {
-					grassDensity = max(0, grassDensity);
+					grassDensity = std::max(0.0f, grassDensity);
 				}
 				if (ImGui::DragFloat2("Boundry", grassBound.data())) {
-					grassBound.x() = max(0, grassBound.x());
-					grassBound.y() = max(0, grassBound.y());
+					grassBound.x() = std::max(0.0f, grassBound.x());
+					grassBound.y() = std::max(0.0f, grassBound.y());
 				}
 				if (selectedMesh != NULL && selectedMaterial != NULL && ImGui::Button("Create", { -1, 36 })) {
-					GrassMeshActor* t = new GrassMeshActor(*selectedMesh, *selectedMaterial, newObjectName);
+					InstancedMeshActor* t = new InstancedMeshActor(newObjectName);
+					t->addMesh(*selectedMesh)->setMaterial(0, *selectedMaterial);
 					t->set(grassDensity, grassBound);
 					target.addChild(*t);
 				}
@@ -511,14 +512,14 @@ void EditorWindow::objectContextMenu(Object * obj)
 			ImGui::InputText("Name", &newObjectName);
 			if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
 				if (ImGui::DragFloat("GridUnit", &terrainUnit)) {
-					terrainUnit = max(0, terrainUnit);
+					terrainUnit = std::max(0.0f, terrainUnit);
 				}
 				if (ImGui::DragFloat("Height", &terrainHeight)) {
-					terrainHeight = max(0, terrainHeight);
+					terrainHeight = std::max(0.0f, terrainHeight);
 				}
 				if (ImGui::DragInt2("Grid", (int*)terrainGrid.data(), 1.0f, 1, 128)) {
-					terrainGrid.x() = max(1, terrainGrid.x());
-					terrainGrid.y() = max(1, terrainGrid.y());
+					terrainGrid.x() = std::max(1u, terrainGrid.x());
+					terrainGrid.y() = std::max(1u, terrainGrid.y());
 				}
 				if (ImGui::Button("Create", { -1, 36 })) {
 					TerrainActor* t = new TerrainActor(newObjectName);

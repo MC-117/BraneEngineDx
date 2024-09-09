@@ -1,16 +1,17 @@
 #include "MeshRenderPack.h"
 #include "RenderCommandList.h"
+#include "RenderCoreUtility.h"
 #include "../Profile/RenderProfile.h"
 #include "Core/Asset.h"
 
 MeshBatchDrawKey MeshRenderCommand::getMeshBatchDrawKey() const
 {
-	return MeshBatchDrawKey(mesh, material, reverseCullMode);
+	return MeshBatchDrawKey(mesh, materialRenderData, reverseCullMode);
 }
 
 bool MeshRenderCommand::isValid() const
 {
-	return sceneData && batchDrawData.isValid() && material && !material->isNull() && mesh != NULL && mesh->isValid();
+	return sceneData && batchDrawData.isValid() && materialRenderData && materialRenderData->isValid() && mesh != NULL && mesh->isValid();
 }
 
 Enum<ShaderFeature> MeshRenderCommand::getShaderFeature() const
@@ -31,12 +32,12 @@ Enum<ShaderFeature> MeshRenderCommand::getShaderFeature() const
 
 RenderMode MeshRenderCommand::getRenderMode() const
 {
-	return RenderMode(material->getRenderOrder(), 0, 0);
+	return RenderMode(materialRenderData->renderOrder, 0, 0);
 }
 
 bool MeshRenderCommand::canCastShadow() const
 {
-	return material->canCastShadow && hasShadow;
+	return materialRenderData->canCastShadow && hasShadow;
 }
 
 IRenderPack* MeshRenderCommand::createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const
@@ -55,7 +56,7 @@ bool MeshDataRenderPack::setRenderCommand(const IRenderCommand& command)
 	if (meshRenderCommand == NULL)
 		return false;
 
-	materialData = dynamic_cast<MaterialRenderData*>(command.material->getRenderData());
+	materialData = command.materialRenderData;
 	if (materialData == NULL)
 		return false;
 
@@ -68,18 +69,18 @@ bool MeshDataRenderPack::setRenderCommand(const IRenderCommand& command)
 	return true;
 }
 
-void MeshDataRenderPack::excute(IRenderContext& context, RenderTaskContext& taskContext)
+void MeshDataRenderPack::excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext)
 {
 	if (meshBatchDrawCalls.empty())
 		return;
 
 	static const ShaderPropertyName depthMapName = "depthMap";
 
-	if (taskContext.materialData != materialData) {
-		taskContext.materialData = materialData;
+	if (taskContext.materialVariant != task.materialVariant) {
+		taskContext.materialVariant = task.materialVariant;
 
-		materialData->bindCullMode(context, false);
-		materialData->bind(context);
+		bindMaterialCullMode(context, task.materialVariant, false);
+		bindMaterial(context, task.materialVariant);
 		if (lightDataPack.shadowTarget == NULL)
 			context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), depthMapName);
 		else
@@ -89,7 +90,7 @@ void MeshDataRenderPack::excute(IRenderContext& context, RenderTaskContext& task
 	for (auto& item : meshBatchDrawCalls)
 	{
 		if (item->reverseCullMode) {
-			materialData->bindCullMode(context, true);
+			bindMaterialCullMode(context, task.materialVariant, true);
 		}
 		for (int passIndex = 0; passIndex < materialData->desc.passNum; passIndex++) {
 			materialData->desc.currentPass = passIndex;
@@ -103,7 +104,7 @@ void MeshDataRenderPack::excute(IRenderContext& context, RenderTaskContext& task
 			}
 		}
 		if (item->reverseCullMode) {
-			materialData->bindCullMode(context, false);
+			bindMaterialCullMode(context, task.materialVariant, false);
 		}
 	}
 }

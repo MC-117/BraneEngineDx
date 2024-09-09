@@ -53,6 +53,8 @@ public:
 	virtual void bindShapeWithContext(IRenderContext& context);
 };
 
+struct MeshTransformData;
+
 class ENGINE_API TerrainGeometry : public Shape
 {
 public:

@@ -6,14 +6,14 @@
 #include "../Console.h"
 #include "../Engine.h"
 
-MeshBatchDrawKey::MeshBatchDrawKey(MeshPart* meshPart, Material* material, bool negativeScale)
-	: meshPart(meshPart), material(material), negativeScale(negativeScale)
+MeshBatchDrawKey::MeshBatchDrawKey(MeshPart* meshPart, IRenderData* materialRenderData, bool negativeScale)
+	: meshPart(meshPart), materialRenderData(materialRenderData), negativeScale(negativeScale)
 {
 }
 
 bool MeshBatchDrawKey::isValid() const
 {
-	return meshPart != NULL && meshPart->meshData != NULL && material != NULL;
+	return meshPart != NULL && meshPart->meshData != NULL && materialRenderData != NULL;
 }
 
 void MeshBatchDrawKey::assignDrawCommand(DrawElementsIndirectCommand& command) const
@@ -34,9 +34,9 @@ bool MeshBatchDrawKey::operator<(const MeshBatchDrawKey& key) const
 		return true;
 	else if (meshPart->meshData == key.meshPart->meshData)
 	{
-		if (material < key.material)
+		if (materialRenderData < key.materialRenderData)
 			return true;
-		else if (material == key.material)
+		else if (materialRenderData == key.materialRenderData)
 			return negativeScale < key.negativeScale;
 	}
 	return false;
@@ -45,14 +45,14 @@ bool MeshBatchDrawKey::operator<(const MeshBatchDrawKey& key) const
 bool MeshBatchDrawKey::operator==(const MeshBatchDrawKey& key) const
 {
 	return meshPart->meshData == key.meshPart->meshData
-	&& material == key.material
+	&& materialRenderData == key.materialRenderData
 	&& negativeScale == key.negativeScale;
 }
 
 std::size_t hash<MeshBatchDrawKey>::operator()(const MeshBatchDrawKey& key) const
 {
 	size_t hash = (size_t)key.meshPart->meshData;
-	hash_combine(hash, (size_t)key.material);
+	hash_combine(hash, (size_t)key.materialRenderData);
 	hash_combine(hash, key.negativeScale ? 1 : 0);
 	return hash;
 }
@@ -79,6 +79,16 @@ MeshBatchDrawCall* MeshBatchDrawCommandArray::setMeshBatchDrawCall(const MeshBat
 	MeshBatchDrawCall* call = meshBatchDrawCallCollection.setMeshBatchDrawCall(key, data, instanceIndex, instanceCount);
 	call->reverseCullMode = key.negativeScale;
 	return call;
+}
+
+void MeshBatchDrawCommandArray::updateMainThread()
+{
+	create();
+}
+
+void MeshBatchDrawCommandArray::updateRenderThread()
+{
+	upload();
 }
 
 void MeshBatchDrawCommandArray::create()
@@ -136,5 +146,5 @@ void MeshBatchDrawCommandArray::clean()
 
 void MeshBatchDrawCommandArray::cleanPart(MeshPart* meshPart, Material* material)
 {
-	meshBatchDrawCallCollection.cleanByKey(MeshBatchDrawKey(meshPart, material));
+	meshBatchDrawCallCollection.cleanByKey(MeshBatchDrawKey(meshPart, material->getRenderData()));
 }

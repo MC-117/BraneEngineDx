@@ -43,14 +43,26 @@ void ReflectionCaptureProbeRender::render(RenderInfo& info)
 {
 	if (reflectionCubeMap == NULL)
 		return;
-	probeIndex = info.sceneData->setReflectionCapture(this);
 	if (update) {
 		sceneCaptureCube.setTexture(*reflectionCubeMap);
 		sceneCaptureCube.setSize({ resolution, resolution });
 		sceneCaptureCube.render(info);
-		info.sceneData->reflectionProbeDataPack.cubeMapPool.markRefreshCubeMap(reflectionCubeMap);
 		update = false;
 	}
+	ReflectionProbeUpdateData updateData;
+	updateData.cubeMap = getProbeCubeMap();
+	updateData.position = getWorldPosition();
+	updateData.radius = getWorldRadius();
+	updateData.tintColor = tintColor;
+	updateData.falloff = falloff;
+	updateData.cutoff = cutoff;
+	RENDER_THREAD_ENQUEUE_TASK(ReflectionCaptureProbeUpdate, ([this, update = update, updateData] (RenderThreadContext& context)
+	{
+		if (update) {
+			context.sceneRenderData->reflectionProbeDataPack.cubeMapPool.markRefreshCubeMap(updateData.cubeMap);
+		}
+		probeIndex = context.sceneRenderData->setReflectionCapture(updateData);
+	}));
 }
 
 Serializable* ReflectionCaptureProbeRender::instantiate(const SerializationInfo& from)

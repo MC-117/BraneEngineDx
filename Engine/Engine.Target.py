@@ -8,6 +8,7 @@ class EngineTarget(Target):
         releaseConfig = TargetConfig(self, 'Release', PlaformType.Win64)
         debugConfig = TargetConfig(self, 'Debug', PlaformType.Win64)
         debugConfig.enableDebug = True
+        debugConfig.additionalOptions = ['bigobj']
         
         self.configs = [releaseConfig, debugConfig]
         self.moduleDependencies = ['Engine']

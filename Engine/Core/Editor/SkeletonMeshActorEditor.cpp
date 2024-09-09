@@ -4,6 +4,7 @@
 #include "../Skeleton/BoneConstraintEditor.h"
 #include "../GUI/BlendSpaceWindow.h"
 #include "../Utility/MathUtility.h"
+#include "../RenderCore/SkeletonRenderData.h"
 
 RegistEditor(SkeletonMeshActor);
 
@@ -298,6 +299,29 @@ void SkeletonMeshActorEditor::onSkeletonPhysicsGUI(EditorInfo& info)
 			}
 			default:
 				break;
+			}
+		}
+	}
+}
+
+void SkeletonMeshActorEditor::onPersistentGizmo(GizmoInfo& info)
+{
+	ActorEditor::onPersistentGizmo(info);
+
+	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+		for (auto render : skeletonMeshActor->skeletonMeshRenders) {
+			Mesh* mesh = render->getMesh();
+			for (auto& meshPart : mesh->meshParts) {
+				list<IRenderData*> bindings;
+				bool hasMorphWeights = render->morphWeights.getMorphCount();
+				IRenderData* renderData = render->getRenderData();
+				IRenderData* morphWeightsRenderData = render->morphWeights.getRenderData();
+
+				bindings.push_back(renderData);
+				if (hasMorphWeights)
+					bindings.push_back(morphWeightsRenderData);
+				
+				info.gizmo->doScreenHit(meshPart, render->getInstancedTransformRenderDataHandle(), bindings);
 			}
 		}
 	}

@@ -127,10 +127,10 @@ inline bool TMeshBatchDrawCallCollection<Key, Data, TCall>::cleanByKey(const Key
 struct MeshBatchDrawKey : MeshBatchDrawKeyBase
 {
 	MeshPart* meshPart = NULL;
-	Material* material = NULL;
+	IRenderData* materialRenderData = NULL;
 	bool negativeScale = false;
 
-	MeshBatchDrawKey(MeshPart* meshPart, Material* material, bool negativeScale = false);
+	MeshBatchDrawKey(MeshPart* meshPart, IRenderData* materialRenderData, bool negativeScale = false);
 	bool isValid() const;
 	void assignDrawCommand(DrawElementsIndirectCommand& command) const;
 	unsigned int getDrawCommandKey() const;
@@ -289,11 +289,12 @@ typedef TMeshBatchDrawCallCollection<MeshBatchDrawKey, InstanceDrawData, TMeshBa
 
 struct IMeshBatchDrawCommandArray : IBatchDrawCommandArray
 {
+	virtual IUpdateableRenderData* getUpdateableRenderData() { return NULL; }
 	virtual MeshBatchDrawCall* getMeshBatchDrawCall(const MeshBatchDrawKey& key) = 0;
 	virtual MeshBatchDrawCall* setMeshBatchDrawCall(const MeshBatchDrawKey& key, unsigned int instanceIndex, unsigned int instanceCount = 1) = 0;
 };
 
-struct MeshBatchDrawCommandArray : IMeshBatchDrawCommandArray
+struct MeshBatchDrawCommandArray : IUpdateableRenderData, IMeshBatchDrawCommandArray
 {
 	GPUBuffer instanceDataBuffer;
 	GPUBuffer commandBuffer;
@@ -304,6 +305,11 @@ struct MeshBatchDrawCommandArray : IMeshBatchDrawCommandArray
 	
 	virtual MeshBatchDrawCall* getMeshBatchDrawCall(const MeshBatchDrawKey& key);
 	virtual MeshBatchDrawCall* setMeshBatchDrawCall(const MeshBatchDrawKey& key, unsigned int instanceIndex, unsigned int instanceCount = 1);
+
+	virtual void updateMainThread();
+	virtual void updateRenderThread();
+
+	virtual IUpdateableRenderData* getUpdateableRenderData() { return this; }
 
 	virtual void create();
 	virtual void release();
@@ -317,4 +323,4 @@ struct MeshBatchDrawCommandArray : IMeshBatchDrawCommandArray
 	void cleanPart(MeshPart* meshPart, Material* material);
 };
 
-typedef TBatchDrawData<MeshTransformRenderData, MeshBatchDrawCommandArray> MeshBatchDrawData;
+typedef TBatchDrawData<MeshTransformRenderData, IMeshBatchDrawCommandArray> MeshBatchDrawData;

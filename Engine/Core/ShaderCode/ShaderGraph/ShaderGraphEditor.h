@@ -23,4 +23,6 @@ protected:
     virtual void onCompileGUI(EditorInfo& info);
 
     virtual void onCustomGUI(EditorInfo& info);
+
+    virtual void onVariableChanged(EditorInfo& info, GraphVariable& variable);
 };

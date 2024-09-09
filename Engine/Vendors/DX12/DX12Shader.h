@@ -47,7 +47,7 @@ public:
 	unsigned int matInsBufSize = 0;
 	DrawInfo drawInfo;
 	ComPtr<ID3D12Resource> drawInfoBuf;
-	unordered_map<string, AttributeDesc> attributes;
+	unordered_map<string, ShaderPropertyDesc> attributes;
 	DX12RootSignatureDesc rootSignatureDesc;
 
 	DX12ShaderProgram(DX12Context& context);
@@ -59,9 +59,7 @@ public:
 	virtual bool dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ);
 	virtual void memoryBarrier(unsigned int bitEnum);
 	virtual void uploadDrawInfo();
-	virtual void uploadData();
 
-	virtual void uploadAttribute(const string& name, unsigned int size, void* data);
 	virtual void uploadTexture(const string& name, DX12Descriptor tex, DX12Descriptor sample);
 	virtual void uploadImage(const string& name, DX12Descriptor tex);
 

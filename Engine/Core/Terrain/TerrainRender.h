@@ -14,6 +14,10 @@ public:
 	void setGeometry(TerrainGeometry* geometry);
 	TerrainGeometry* getGeometry() const;
 
+	virtual void setInstanceInfo(unsigned int instanceID, unsigned int instanceCount);
+
+	virtual void getMeshTransformData(MeshTransformData* data) const;
+
 	virtual void preRender(PreRenderInfo& info);
 	virtual void render(RenderInfo& info);
 	virtual Matrix4f getTransformMatrix() const;
@@ -21,5 +25,10 @@ public:
 	virtual Shape* getShape() const;
 	virtual Material* getMaterial(unsigned int index = 0);
 	virtual bool getMaterialEnable(unsigned int index = 0);
+	virtual unsigned int getInstanceID() const;
+	virtual unsigned int getInstanceCount() const;
 	virtual Shader* getShader() const;
+protected:
+	unsigned int instanceID = -1;
+	unsigned int instanceCount = -1;
 };

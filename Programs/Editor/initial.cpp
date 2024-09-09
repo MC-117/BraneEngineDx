@@ -23,6 +23,7 @@
 #include "Actors\ClothActor.h"
 #include "Core/Application.h"
 #include "Midi/MidiInstrumentWindow.h"
+#include <mimalloc-new-delete.h>
 
 VehicleActor* loadCubeVehicle(float unit = 2)
 {

@@ -99,6 +99,10 @@ class IWaitable
 {
 public:
     virtual ~IWaitable() = default;
+    virtual bool canCancel() = 0;
+    virtual bool isPending() = 0;
+    virtual bool isCompleted() = 0;
+    virtual bool isCancel() = 0;
     virtual bool wait() = 0;
     virtual void cancel() = 0;
 };
@@ -113,6 +117,10 @@ public:
     WaitHandle(WaitHandle&& handle);
     
     bool isValid() const;
+    virtual bool canCancel();
+    virtual bool isPending();
+    virtual bool isCompleted();
+    virtual bool isCancel();
     bool wait() const;
     void cancel() const;
 
@@ -131,6 +139,9 @@ WaitHandle asyncRun(Func&& func)
     {
     public:
         tbb::task_group* tg;
+        bool pending = true;
+        bool completed = false;
+        bool canceled = false;
 
         TaskWaitHandle() : tg(new tbb::task_group())
         {
@@ -143,6 +154,31 @@ WaitHandle asyncRun(Func&& func)
             catch(...) { }
         }
 
+        void run(Func&& func)
+        {
+            tg->run([this, func]() { pending = false; func(); completed = true; });
+        }
+        
+        virtual bool canCancel()
+        {
+            return !pending;
+        }
+        
+        virtual bool isPending()
+        {
+            return pending;
+        }
+        
+        virtual bool isCompleted()
+        {
+            return completed;
+        }
+
+        virtual bool isCancel()
+        {
+            return canceled;
+        }
+
         virtual bool wait()
         {
             return tg->wait() == tbb::complete;
@@ -151,9 +187,12 @@ WaitHandle asyncRun(Func&& func)
         virtual void cancel()
         {
             tg->cancel();
+            canceled = pending;
+            completed |= canceled;
+            pending = !canceled;
         }
     };
     auto handle = std::make_shared<TaskWaitHandle>();
-    handle->tg->run(func);
+    handle->run(std::move(func));
     return handle;
 }

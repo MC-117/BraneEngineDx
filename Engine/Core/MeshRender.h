@@ -4,35 +4,109 @@
 
 #include "Mesh.h"
 #include "Render.h"
+#include "RenderCore/MeshBatchRenderData.h"
+#include "RenderCore/InstancedTransformData.h"
 
-struct MeshTransformData;
+struct MeshRenderCommand;
+struct InstancedTransformRenderDataHandle;
+
+class ENGINE_API MeshMaterialCollection
+{
+public:
+	struct DispatchData
+	{
+		bool hidden = false;
+		bool isStatic = false;
+		bool canCastShadow = false;
+		bool hasPrePass = false;
+		MeshBatchDrawData meshBatchDrawData;
+		Delegate<void(MeshRenderCommand&)> renderDelegate;
+	};
+	MeshMaterialCollection();
+	virtual ~MeshMaterialCollection() = default;
+
+	void setNeedCacheMeshCommand(bool value);
+	void markCachedMeshCommandDirty();
+
+	bool isCachedMeshCommandDirty() const;
+	bool getNeedUpdate() const;
+
+	virtual Mesh* getMesh() const;
+	virtual void setMesh(Mesh* mesh);
+	virtual int getMaterialCount() const;
+	virtual Material* getMaterial(const string& name) const;
+	virtual pair<string, Material*> getMaterial(int index) const;
+	virtual bool getPartEnable(const string& name) const;
+	virtual bool getPartEnable(int index) const;
+	virtual bool setMaterial(const string& name, Material& material, bool all = false);
+	virtual bool setMaterial(int index, Material& material);
+	virtual bool setPartEnable(const string& name, bool enable, bool all = false);
+	virtual bool setPartEnable(int index, bool enable);
+
+	virtual void fillMaterialsByDefault();
+
+	virtual void getMeshTransformData(MeshTransformData* data) const;
+
+	virtual void setInstanceInfo(unsigned int instanceID, unsigned int instanceCount);
+
+	virtual void gatherInstanceInfo(InstancedTransformRenderDataHandle& handle) const;
+
+	virtual void dispatchMeshDraw(const DispatchData& data);
+
+	virtual void deserialize(const SerializationInfo & from);
+	virtual void serialize(SerializationInfo& to) const;
+protected:
+	Mesh* mesh = NULL;
+	vector<Material*> materials;
+	vector<bool> meshPartsEnable;
+	vector<char> cachedMeshCommandBytes;
+	bool useCachedMeshCommand = false;
+	bool meshCommandDirty = true;
+	unsigned int instanceID = -1;
+	unsigned int instanceCount = 0;
+	virtual void remapMaterial();
+
+	void resizeCachedMeshCommands(size_t newSize);
+	MeshRenderCommand* accessCachedMeshCommand(size_t index);
+};
+
+class ENGINE_API OutlineMeshMaterialCollection : public MeshMaterialCollection
+{
+public:
+	OutlineMeshMaterialCollection() = default;
+
+	virtual void fillMaterialsByDefault();
+
+	virtual void deserialize(const SerializationInfo & from);
+	virtual void serialize(SerializationInfo& to) const;
+};
+
+struct InstancedTransformRenderDataHandle
+{
+	BatchDrawData batchDrawData;
+	unsigned int instanceID = 0;
+	unsigned int instanceCount = 0;
+
+	bool isValid() const;
+};
 
 class ENGINE_API MeshRender : public Render
 {
 public:
-	Mesh* mesh;
+	MeshMaterialCollection collection;
+	OutlineMeshMaterialCollection outlineCollection;
 	bool frustumCulling = true;
 	bool hasPrePass = false;
-	vector<Material*> materials;
-	vector<Material*> outlineMaterials;
-	vector<bool> meshPartsEnable;
-	vector<bool> outlineEnable;
 
 	MeshRender();
 	MeshRender(Mesh& mesh, Material& material);
 	virtual ~MeshRender();
 
+	virtual Mesh* getMesh() const;
 	virtual void setMesh(Mesh* mesh);
-	virtual void setBaseColor(Color color);
-	virtual Color getBaseColor();
-	virtual Material* getMaterial(const string& name);
-	virtual pair<string, Material*> getMaterial(int index);
-	virtual bool getPartEnable(const string& name);
-	virtual bool getPartEnable(int index);
-	virtual bool setMaterial(const string& name, Material& material, bool all = false);
 	virtual bool setMaterial(int index, Material& material);
-	virtual bool setPartEnable(const string& name, bool enable, bool all = false);
-	virtual bool setPartEnable(int index, bool enable);
+
+	virtual void setInstanceInfo(unsigned int instanceID, unsigned int instanceCount);
 
 	virtual void getMeshTransformData(MeshTransformData* data) const;
 
@@ -46,8 +120,7 @@ public:
 	virtual Material* getMaterial(unsigned int index = 0);
 	virtual bool getMaterialEnable(unsigned int index = 0);
 	virtual Shader* getShader() const;
-protected:
-	virtual void remapMaterial();
+	virtual InstancedTransformRenderDataHandle getInstancedTransformRenderDataHandle() const;
 };
 
 #endif // !_MESHRENDER_H_

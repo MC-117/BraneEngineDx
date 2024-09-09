@@ -30,6 +30,20 @@ public:
     static Serializable* instantiate(const SerializationInfo & from);
 };
 
+class Material;
+
+class ShaderVariable : public GraphVariable
+{
+public:
+    Serialize(ShaderVariable, GraphVariable);
+
+    ShaderVariable(const string& name);
+
+    static Serializable* instantiate(const SerializationInfo & from);
+
+    virtual void applyToMaterial(Material& material);
+};
+
 class ShaderStructPin : public ValuePin
 {
 public:

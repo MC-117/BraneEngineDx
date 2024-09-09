@@ -3,6 +3,11 @@
 
 SerializeInstance(ForwardRenderGraph);
 
+bool ForwardRenderGraph::loadDefaultResource()
+{
+	return true;
+}
+
 ISurfaceBuffer* ForwardRenderGraph::newSurfaceBuffer()
 {
 	return nullptr;
@@ -13,7 +18,7 @@ bool ForwardRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 	if (cmd.sceneData)
 		sceneDatas.insert(cmd.sceneData);
 	shadowDepthPass.setRenderCommand(cmd);
-	return meshPass.commandList.setRenderCommand(cmd, renderDataCollector);
+	return meshPass.commandList.setRenderCommand(cmd, renderDataCollectorRenderThread);
 }
 
 void ForwardRenderGraph::setImGuiDrawData(ImDrawData* drawData)
@@ -39,9 +44,9 @@ void ForwardRenderGraph::prepare()
 	imGuiPass.prepare();
 }
 
-void ForwardRenderGraph::execute(IRenderContext& context)
+void ForwardRenderGraph::execute(IRenderContext& context, long long renderFrame)
 {
-	renderDataCollector.upload();
+	renderDataCollectorRenderThread.updateRenderThread(renderFrame);
 	for (auto sceneData : sceneDatas)
 		sceneData->upload();
 	shadowDepthPass.execute(context);
@@ -59,7 +64,8 @@ void ForwardRenderGraph::execute(IRenderContext& context)
 
 void ForwardRenderGraph::reset()
 {
-	renderDataCollector.clear();
+	renderDataCollectorMainThread.clear();
+	renderDataCollectorRenderThread.clear();
 	for (auto sceneData : sceneDatas)
 		sceneData->reset();
 	sceneDatas.clear();
@@ -75,9 +81,14 @@ void ForwardRenderGraph::reset()
 	passes.clear();
 }
 
-IRenderDataCollector* ForwardRenderGraph::getRenderDataCollector()
+IRenderDataCollector* ForwardRenderGraph::getRenderDataCollectorMainThread()
 {
-	return &renderDataCollector;
+	return &renderDataCollectorMainThread;
+}
+
+IRenderDataCollector* ForwardRenderGraph::getRenderDataCollectorRenderThread()
+{
+	return &renderDataCollectorRenderThread;
 }
 
 Serializable* ForwardRenderGraph::instantiate(const SerializationInfo& from)

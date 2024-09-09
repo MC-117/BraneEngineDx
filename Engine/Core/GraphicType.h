@@ -1,5 +1,7 @@
 #pragma once
 #include "Utility/Name.h"
+#include <vector>
+#include <unordered_map>
 
 enum TexDimension
 {
@@ -298,6 +300,30 @@ struct ShaderProperty
 	int meta;
 
 	ShaderProperty(const ShaderPropertyName& name) : name(name), offset(0), size(0), meta(0) {}
+};
+
+struct ShaderPropertyDesc
+{
+	std::vector<std::pair<ShaderStageType, const ShaderProperty*>> properties;
+
+	const ShaderPropertyName& getName() const;
+	const ShaderProperty* getParameter() const;
+	const ShaderProperty* getConstantBuffer() const;
+};
+
+class ShaderPropertyLayout
+{
+public:
+	ShaderPropertyLayout() = default;
+	size_t getBufferSize() const;
+	const ShaderPropertyDesc* getLayout(const ShaderPropertyName& name) const;
+
+	void setBufferSize(size_t size);
+	ShaderPropertyDesc& emplaceLayout(const ShaderPropertyName& name);
+	void clear();
+protected:
+	size_t bufferSize = 0;
+	std::unordered_map<ShaderPropertyName, ShaderPropertyDesc> propertyDesces;
 };
 
 enum CameraRenderFlags : unsigned int

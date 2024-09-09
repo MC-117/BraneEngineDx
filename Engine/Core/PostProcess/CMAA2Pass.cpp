@@ -1,6 +1,7 @@
 #include "CMAA2Pass.h"
 #include "../Asset.h"
 #include "../Console.h"
+#include "../RenderCore/RenderThread.h"
 
 CMAA2Pass::CMAA2Pass(const string& name, Material* material) : PostProcessPass(name, material)
 {
@@ -10,6 +11,35 @@ CMAA2Pass::CMAA2Pass(const string& name, Material* material) : PostProcessPass(n
 
 void CMAA2Pass::prepare()
 {
+	edgesColor2x2Program = edgesColor2x2Material->getShader()->getProgram(Shader_Default);
+	processCandidatesProgram = processCandidatesMaterial->getShader()->getProgram(Shader_Default);
+	computeDispatchArgsProgram = computeDispatchArgsMaterial->getShader()->getProgram(Shader_Default);
+	deferredColorApply2x2Program = deferredColorApply2x2Material->getShader()->getProgram(Shader_Default);
+	debugDrawEdgesProgram = debugDrawEdgesMaterial->getShader()->getProgram(Shader_Default);
+
+	if (edgesColor2x2Program == NULL || processCandidatesProgram == NULL ||
+		computeDispatchArgsProgram == NULL || deferredColorApply2x2Program == NULL ||
+		debugDrawEdgesProgram == NULL) {
+		Console::error("PostProcessPass: Shader_Default not found in CMAA2 shaders");
+		throw runtime_error("ShaderVariant not found");
+		return;
+	}
+
+	if (edgesColor2x2Program->isComputable() &&
+		processCandidatesProgram->isComputable() &&
+		computeDispatchArgsProgram->isComputable() &&
+		deferredColorApply2x2Program->isComputable() &&
+		debugDrawEdgesProgram->isComputable()) {
+		edgesColor2x2Program->init();
+		processCandidatesProgram->init();
+		computeDispatchArgsProgram->init();
+		deferredColorApply2x2Program->init();
+		debugDrawEdgesProgram->init();
+	}
+	else {
+		throw runtime_error("Shader type mismatch");
+		return;
+	}
 }
 
 void CMAA2Pass::execute(IRenderContext& context)
@@ -72,7 +102,7 @@ void CMAA2Pass::execute(IRenderContext& context)
 	context.clearOutputBufferBindings();
 }
 
-bool CMAA2Pass::mapMaterialParameter(RenderInfo& info)
+bool CMAA2Pass::loadDefaultResource()
 {
 	if (edgesColor2x2Material == NULL)
 		edgesColor2x2Material = getAssetByPath<Material>("Engine/Shaders/PostProcess/CMAA2/CMAA2_EdgesColor2x2.mat");
@@ -96,38 +126,14 @@ void CMAA2Pass::render(RenderInfo& info)
 {
 	if (!enable)
 		return;
-	if (!mapMaterialParameter(info))
-		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-
-	edgesColor2x2Program = edgesColor2x2Material->getShader()->getProgram(Shader_Default);
-	processCandidatesProgram = processCandidatesMaterial->getShader()->getProgram(Shader_Default);
-	computeDispatchArgsProgram = computeDispatchArgsMaterial->getShader()->getProgram(Shader_Default);
-	deferredColorApply2x2Program = deferredColorApply2x2Material->getShader()->getProgram(Shader_Default);
-	debugDrawEdgesProgram = debugDrawEdgesMaterial->getShader()->getProgram(Shader_Default);
-
-	if (edgesColor2x2Program == NULL || processCandidatesProgram == NULL ||
-		computeDispatchArgsProgram == NULL || deferredColorApply2x2Program == NULL ||
-		debugDrawEdgesProgram == NULL) {
-		Console::error("PostProcessPass: Shader_Default not found in CMAA2 shaders");
+	if (!loadDefaultResource())
 		return;
-	}
-
-	if (edgesColor2x2Program->isComputable() &&
-		processCandidatesProgram->isComputable() &&
-		computeDispatchArgsProgram->isComputable() &&
-		deferredColorApply2x2Program->isComputable() &&
-		debugDrawEdgesProgram->isComputable()) {
-
-		edgesColor2x2Program->init();
-		processCandidatesProgram->init();
-		computeDispatchArgsProgram->init();
-		deferredColorApply2x2Program->init();
-		debugDrawEdgesProgram->init();
-
-		info.renderGraph->addPass(*this);
-	}
+	RENDER_THREAD_ENQUEUE_TASK(AddCMAA2Pass, ([this] (RenderThreadContext& context)
+	{
+		context.renderGraph->addPass(*this);
+	}));
 }
 
 void CMAA2Pass::onGUI(EditorInfo& info)

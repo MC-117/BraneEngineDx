@@ -21,7 +21,7 @@ public:
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);
 
-	virtual bool mapMaterialParameter(RenderInfo& info);
+	virtual bool loadDefaultResource();
 	virtual void render(RenderInfo& info);
 	virtual void onGUI(EditorInfo& info);
 	virtual void resize(const Unit2Di& size);

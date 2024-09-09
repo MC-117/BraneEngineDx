@@ -7,21 +7,31 @@
 #include "../RenderCore/SceneRenderData.h"
 #include "../GUI/GUISurface.h"
 
-Material* BlitPass::material = NULL;
-ShaderProgram* BlitPass::program = NULL;
-bool BlitPass::isInited = false;
+MaterialRenderData* BlitPass::materialRenderData = NULL;
+IMaterial* BlitPass::materialVariant = NULL;
+
+bool BlitPass::loadDefaultResource()
+{
+	if (materialRenderData == NULL) {
+		Material* material = getAssetByPath<Material>("Engine/Shaders/PostProcess/BlitPass.mat");
+		if (material)
+			materialRenderData = material->getMaterialRenderData();
+	}
+	if (materialRenderData)
+		renderGraph->getRenderDataCollectorMainThread()->add(*materialRenderData);
+	return materialRenderData;
+}
 
 void BlitPass::prepare()
 {
-	loadDefaultResource();
 	const CameraRender* cameraRender = GUISurface::getFullScreenGUISurface().getCameraRender();
 	if (cameraRender == NULL)
 		return;
-	program->init();
-
-	materialRenderData = (MaterialRenderData*)material->getRenderData();
-	materialRenderData->program = program;
-	materialRenderData->create();
+	
+	materialVariant = materialRenderData->getVariant(Shader_Postprocess);
+	if (materialVariant == NULL)
+		throw runtime_error("Load Engine/Shaders/PostProcess/BlitPass.mat failed");
+	materialVariant->init();
 }
 
 void BlitPass::execute(IRenderContext& context)
@@ -40,9 +50,9 @@ void BlitPass::execute(IRenderContext& context)
 
 		context.clearFrameBindings();
 
-		context.bindShaderProgram(program);
+		context.bindShaderProgram(materialVariant->program);
 
-		context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
+		context.bindMaterialBuffer(materialVariant);
 
 		SceneRenderData* sceneRenderData  = *renderGraph->sceneDatas.begin();
 		sceneRenderData->cameraRenderDatas[0]->bind(context);
@@ -70,14 +80,4 @@ void BlitPass::getOutputTextures(vector<pair<string, Texture*>>& textures)
 	if (sceneTexture == NULL)
 		return;
 	textures.push_back({ "ScreenMap", sceneTexture });
-}
-
-void BlitPass::loadDefaultResource()
-{
-	if (isInited)
-		return;
-	material = getAssetByPath<Material>("Engine/Shaders/PostProcess/BlitPass.mat");
-	//material = getAssetByPath<Material>("Engine/Shaders/Editor/VisualProbeGrid.mat");
-	program = material->getShader()->getProgram(Shader_Postprocess);
-	isInited = true;
 }

@@ -25,6 +25,8 @@ struct MaterialBaseInfo
 struct MaterialDesc
 {
 	Shader* shader = NULL;
+	bool isTwoSide = false;
+	bool cullFront = false;
 	unsigned int currentPass = 0;
 	unsigned int passNum = 1;
 	unsigned int materialID = 0;
@@ -44,6 +46,9 @@ public:
 	ShaderProgram* program;
 
 	IMaterial(MaterialDesc& desc);
+
+	virtual bool init();
+	virtual bool isComputable() const;
 
 	virtual void preprocess();
 	virtual void processBaseData();

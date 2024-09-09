@@ -3,21 +3,24 @@
 #include "../Asset.h"
 #include "../Utility/MathUtility.h"
 
-void BuildProbeGridPass::prepare()
+bool BuildProbeGridPass::loadDefaultResource()
 {
-	if (renderGraph == NULL)
-		return;
-
 	if (buildMaterial == NULL)
 		buildMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/BuildProbeGridLinkList.mat");
+	if (compactMaterial == NULL)
+		compactMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/CompactProbeGrid.mat");
+	return buildMaterial && compactMaterial;
+}
+
+void BuildProbeGridPass::prepare()
+{
 	if (buildMaterial) {
 		buildProgram = buildMaterial->getShader()->getProgram(Shader_Default);
 		buildProgram->init();
 		buildDebugProgram = buildMaterial->getShader()->getProgram(Shader_Debug);
 		buildDebugProgram->init();
 	}
-	if (compactMaterial == NULL)
-		compactMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/CompactProbeGrid.mat");
+	
 	if (compactMaterial) {
 		compactProgram = compactMaterial->getShader()->getProgram(Shader_Default);
 		compactProgram->init();

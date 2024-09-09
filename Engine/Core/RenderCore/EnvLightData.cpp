@@ -59,10 +59,10 @@ Material* EnvLightProbeRenderData::material = NULL;
 ShaderProgram* EnvLightProbeRenderData::program = NULL;
 bool EnvLightProbeRenderData::isInited = false;
 
-int EnvLightProbeRenderData::setLightCapture(EnvLightCaptureProbeRender* capture)
+int EnvLightProbeRenderData::setLightCapture(const EnvLightProbeData& data)
 {
-	captures.push_back(capture);
-	return captures.size() - 1;
+	datas.push_back(data);
+	return datas.size() - 1;
 }
 
 void EnvLightProbeRenderData::create()
@@ -89,12 +89,12 @@ void EnvLightProbeRenderData::bind(IRenderContext& context)
 
 void EnvLightProbeRenderData::clean()
 {
-	captures.clear();
+	datas.clear();
 }
 
-void EnvLightProbeRenderData::computeEnvLight(IRenderContext& context, EnvLightCaptureProbeRender& capture)
+void EnvLightProbeRenderData::computeEnvLight(IRenderContext& context, EnvLightProbeData& data)
 {
-	TextureCube* cubeMap = capture.getLightCubeMap();
+	TextureCube* cubeMap = data.lightCubeMap;
 	if (cubeMap == NULL)
 		return;
 
@@ -115,7 +115,7 @@ void EnvLightProbeRenderData::computeEnvLight(IRenderContext& context, EnvLightC
 	context.copyBufferData(envSHDataBuffer.getVendorGPUBuffer(), readBackBuffer.getVendorGPUBuffer());
 	readBackBuffer.readData(envSHdata);
 
-	SHCoeff3RGB& shCoeff3RGB = capture.shCoeff3RGB;
+	SHCoeff3RGB& shCoeff3RGB = *data.shCoeff3RGB;
 	for (int c = 0; c < SHCoeff3::CoeffCount; c++) {
 		Vector4f rgbaCoeff = Vector4f(0, 0, 0, 0);
 		for (int f = 0; f < CF_Faces; f++) {
@@ -131,11 +131,9 @@ void EnvLightProbeRenderData::computeEnvLight(IRenderContext& context, EnvLightC
 
 void EnvLightProbeRenderData::computeEnvLights(IRenderContext& context)
 {
-	for (EnvLightCaptureProbeRender* capture : captures)
+	for (auto& data : datas)
 	{
-		if (capture == NULL)
-			continue;
-		computeEnvLight(context, *capture);
+		computeEnvLight(context, data);
 	}
 }
 
@@ -156,20 +154,20 @@ EnvLightRenderData::EnvLightRenderData(ProbePoolRenderData& probePool) : probePo
 {
 }
 
-int EnvLightRenderData::setLightData(EnvLightCaptureProbeRender* capture)
+int EnvLightRenderData::setLightData(const EnvLightUpdateData& updateData)
 {
 	int probeIndex = -1;
 	EnvLightData& data = probePool.emplace(ProbeType::ProbeType_Env, probeIndex).envLightData;
-	data.tintColor = Vector3f(capture->tintColor.r, capture->tintColor.g, capture->tintColor.b);
+	data.tintColor = updateData.tintColor;
 	data.reverseIndex = 0;
-	data.position = capture->getWorldPosition();
-	data.radius = capture->getWorldRadius();
-	data.cutoff = capture->cutoff;
-	data.falloff = capture->falloff;
+	data.position = updateData.position;
+	data.radius = updateData.radius;
+	data.cutoff = updateData.cutoff;
+	data.falloff = updateData.falloff;
 	data.shDataOffset = envLightSHData.size();
 	probeIndices.push_back(probeIndex);
 	EnvLightSHData& shData = envLightSHData.emplace_back();
-	shData.set(capture->shCoeff3RGB);
+	shData.set(updateData.shCoeff3RGB);
 	return probeIndex;
 }
 

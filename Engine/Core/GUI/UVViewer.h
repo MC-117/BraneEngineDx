@@ -14,6 +14,7 @@ public:
 	void setTargetMeshPart(Mesh* mesh);
 
 	virtual void onWindowGUI(GUIRenderInfo& info);
+	virtual void onRender(RenderInfo& info);
 protected:
 	Texture2D uvTexture = Texture2D(128, 128, 4, false, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
 	RenderTarget renderTarget = RenderTarget(128, 128, 4);

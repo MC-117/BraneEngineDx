@@ -47,7 +47,10 @@ void MaterialWindow::onWindowGUI(GUIRenderInfo & info)
 		}
 	}
 	ImGui::Text("Shader: %s", material->getShaderName().c_str());
-	ImGui::Checkbox("TwoSide", &material->isTwoSide);
+	bool isTwoSide = material->getTwoSide();
+	if (ImGui::Checkbox("TwoSide", &isTwoSide)) {
+		material->setTwoSide(isTwoSide);
+	}
 	ImGui::Checkbox("CastShadow", &material->canCastShadow);
 	for (auto b = material->getColorField().begin(), e = material->getColorField().end(); b != e; b++) {
 		Color color = b->second.val;

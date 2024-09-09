@@ -10,9 +10,10 @@ public:
 
 	virtual bool setRenderCommand(const IRenderCommand& cmd);
 
+	virtual bool loadDefaultResource();
 	virtual void execute(IRenderContext& context);
 	virtual void reset();
 protected:
-	Material* material;
+	MaterialRenderData* materialRenderData = NULL;
 	unordered_set<ScreenHitData*> hitDatas;
 };

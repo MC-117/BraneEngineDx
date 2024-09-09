@@ -10,7 +10,9 @@ struct TransformData
     float3 localExtent;
     uint flag;
     uint updateFrame;
-    uint3 pad;
+    uint objectIDHigh;
+    uint objectIDLow;
+    uint pad;
 };
 
 StructuredBuffer<TransformData> Transforms : register(TRANS_BIND_INDEX);

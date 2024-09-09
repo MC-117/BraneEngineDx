@@ -30,7 +30,7 @@ public:
 	virtual void tick(float deltaTime);
 	virtual void afterTick();
 	virtual void prerender(SceneRenderData& sceneData);
-	virtual void render(RenderGraph& renderGraph);
+	virtual void render(RenderInfo& info);
 	virtual void onGUI(ImDrawList* drawList);
 	virtual void end();
 

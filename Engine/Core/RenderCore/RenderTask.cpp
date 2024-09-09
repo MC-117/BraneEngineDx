@@ -13,10 +13,11 @@ size_t RenderTask::Hasher::operator()(const RenderTask& t) const
 {
 	size_t hash = (size_t)t.sceneData;
 	hash_combine(hash, (size_t)t.batchDrawData.transformData);
+	hash_combine(hash, (size_t)t.batchDrawData.batchDrawCommandArray);
 	hash_combine(hash, (size_t)t.shaderProgram);
 	hash_combine(hash, (size_t)t.surface.renderTarget);
 	hash_combine(hash, (size_t)t.cameraData->cameraRender);
-	hash_combine(hash, (size_t)t.materialData->material);
+	hash_combine(hash, (size_t)t.materialVariant);
 	hash_combine(hash, (size_t)t.meshData);
 	for (auto data : t.extraData)
 		hash_combine(hash, (size_t)data);
@@ -59,7 +60,7 @@ bool RenderTask::ExecutionOrder::operator()(const RenderTask& t0, const RenderTa
 									if (t0.meshData < t1.meshData)
 										return true;
 									if (t0.meshData == t1.meshData)
-										return t0.materialData < t1.materialData;
+										return t0.materialVariant < t1.materialVariant;
 								}
 							}
 						}
@@ -177,7 +178,7 @@ void RenderTask::execute(RenderTaskParameter& parameter)
 			context.bindMeshData(meshData);
 	}
 
-	renderPack->excute(context, taskContext);
+	renderPack->excute(context, *this, taskContext);
 
 	//execTime = execTime + Time::now() - t;
 }

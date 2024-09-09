@@ -20,8 +20,6 @@ void GUIOnlyEngineLoop::loop(float deltaTime)
 {
     RenderInfo info;
     info.camera = NULL;
-    info.renderGraph = NULL;
-    info.sceneData = NULL;
     gui.onGUI(info);
     gui.render(info);
 	

@@ -16,6 +16,10 @@ class VSTargetConfig:
         def getDebugMacro(enableDebug : bool):
             return '_DEBUG' if enableDebug else 'NDEBUG'
         
+        def getAdditionalOption(option : str):
+            if option == 'bigobj':
+                return '/bigobj'
+        
         self.name : str = config.name
         self.plaform : PlaformType = config.plaform
         self.plaformName : str = getPlaformName(config.plaform)
@@ -44,6 +48,13 @@ class VSTargetConfig:
             moduleDefines.extend(module.preprocessorDefinitions)
             moduleDefines.append(f'{module.name.upper()}_API={apiDefine}')
         self.preprocessorDefinitionStr = ';'.join(moduleDefines) + ';'
+        additionalOptions = []
+        for option in config.additionalOptions:
+            option = getAdditionalOption(option)
+            if option:
+                additionalOptions.append(option)
+        additionalOptions.append('%(AdditionalOptions)')
+        self.additionalOptionStr = ' '.join(additionalOptions)
 
         self.includeFiles : list[str] = config.includeFiles
         self.sourceFiles : list[str] = config.sourceFiles
@@ -352,6 +363,7 @@ f'''
                 w.wl(f'<PreprocessorDefinitions>{config.preprocessorDefinitionStr}{targetPreprocessorDefinitionStr}%(PreprocessorDefinitions)</PreprocessorDefinitions>')
                 w.wl(f'<ConformanceMode>{self.conformanceMode}</ConformanceMode>')
                 w.wl(f'<LanguageStandard>{cppStandardName}</LanguageStandard>')
+                w.wl(f'<AdditionalOptions>{config.additionalOptionStr}</AdditionalOptions>')
                 w.se('</ClCompile>')
 
                 w.ss('<Link>')

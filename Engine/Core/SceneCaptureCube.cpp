@@ -1,5 +1,6 @@
 #include "SceneCaptureCube.h"
 #include "RenderCore/RenderCore.h"
+#include "RenderCore/RenderCoreUtility.h"
 #include "Utility/RenderUtility.h"
 
 SceneCaptureCube::SceneCaptureCube()
@@ -11,6 +12,10 @@ SceneCaptureCube::SceneCaptureCube()
 	topCameraRender(topRenderTarget),
 	bottomCameraRender(bottomRenderTarget)
 {
+	for (int i = 0; i < CF_Faces; i++) {
+		CameraRender* cameraRender = cameraRenders[i];
+		cameraRender->setCameraRenderFlags(CameraRender_SceneCapture);
+	}
 }
 
 SceneCaptureCube::SceneCaptureCube(TextureCube& texture)
@@ -22,6 +27,10 @@ SceneCaptureCube::SceneCaptureCube(TextureCube& texture)
 	topCameraRender(topRenderTarget),
 	bottomCameraRender(bottomRenderTarget)
 {
+	for (int i = 0; i < CF_Faces; i++) {
+		CameraRender* cameraRender = cameraRenders[i];
+		cameraRender->setCameraRenderFlags(CameraRender_SceneCapture);
+	}
 	setTexture(texture);
 }
 
@@ -49,6 +58,7 @@ void SceneCaptureCube::render(RenderInfo& info)
 {
 	Matrix4f promat = getProjectionMatrix();
 	Matrix4f promatInv = promat.inverse();
+	std::array<CameraRenderData*, CF_Faces> cameraRenderDatas;
 	for (int i = 0; i < CF_Faces; i++) {
 		CameraRender* cameraRender = cameraRenders[i];
 		cameraRender->cameraData.projectionMat = promat;
@@ -73,14 +83,18 @@ void SceneCaptureCube::render(RenderInfo& info)
 		cameraRender->cameraData.fovy = 90;
 		cameraRender->cameraData.aspect = 1;
 		cameraRender->clearColor = clearColor;
-		CameraRenderData* cameraRenderData = cameraRender->getRenderData();
-		if (cameraRenderData->surfaceBuffer == NULL) {
-			cameraRenderData->surfaceBuffer = info.renderGraph->newSurfaceBuffer();
-			cameraRenderData->surfaceBuffer->resize(cameraRender->size.x, cameraRender->size.y);
-		}
-		cameraRenderData->flags = CameraRender_SceneCapture;
-		info.sceneData->setCamera(cameraRender);
+		cameraRenderDatas[i] = cameraRender->getRenderData();
 	}
+
+	RENDER_THREAD_ENQUEUE_TASK(SceneCaptureCubeUpdateCameraRenderData, ([this, cameraRenderDatas, mainFrame = Time::frames()] (RenderThreadContext& context)
+	{
+		for (int i = 0; i < CF_Faces; i++) {
+			CameraRenderData* cameraRenderData = cameraRenderDatas[i];
+			cameraRenderData->updateSurfaceBuffer(context.renderGraph);
+			updateRenderDataMainThread(cameraRenderData, Time::frames());
+			context.sceneRenderData->setCamera(cameraRenderData);
+		}
+	}));
 }
 
 const Matrix4f& SceneCaptureCube::getProjectionMatrix()

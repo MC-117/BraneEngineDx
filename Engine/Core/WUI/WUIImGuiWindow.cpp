@@ -1,6 +1,7 @@
 #include "WUIImGuiWindow.h"
 #include "../Engine.h"
 #include "../GUI/GUIUtility.h"
+#include "../RenderCore/RenderThread.h"
 
 static void ImGui_ImplWin32_GetWin32StyleFromViewportFlags(ImGuiViewportFlags flags, DWORD* out_style, DWORD* out_ex_style)
 {
@@ -189,10 +190,20 @@ void WUIImGuiWindow::onImGuiRender()
 void WUIImGuiWindow::onLoop()
 {
     if (deviceSurface) {
-        IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
-        context.bindSurface(deviceSurface);
-        onImGuiRender();
-        deviceSurface->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
+        RenderThreadContext context;
+        context.renderGraph = RenderPool::get().renderGraph;
+        context.cameraRenderData = RenderPool::get().sceneData->cameraRenderDatas.front();
+        context.sceneRenderData = RenderPool::get().sceneData;
+
+        RENDER_CONTEXT_SCOPE(context);
+        
+        RENDER_THREAD_ENQUEUE_TASK(DrawImGUI, ([this] (RenderThreadContext& context)
+        {
+            IRenderContext& renderContext = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
+            renderContext.bindSurface(deviceSurface);
+            onImGuiRender();
+            deviceSurface->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
+        }));
     }
     WUIWindow::onLoop();
 }

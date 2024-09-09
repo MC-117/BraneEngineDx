@@ -8,6 +8,7 @@
 #include "Core/GUI/ShaderManagerWindow.h"
 #include "Core/WUI/WUIControl.h"
 #include "Core/WUI/WUIMainWindow.h"
+#include <mimalloc-new-delete.h>
 
 class ShaderApplication : public EngineWindowApplication
 {

@@ -210,7 +210,7 @@ void TimelineEditor::onClipScrollBarGUI(EditorInfo& info)
 	if (activeA && drag)
 	{
 		viewStartNorm += ImGui::GetIO().MouseDelta.x / size.x;
-		viewStartNorm = max(viewStartNorm, 0);
+		viewStartNorm = std::max(viewStartNorm, 0.0f);
 		viewSizeNorm = viewEndNorm - viewStartNorm;
 		if (viewSizeNorm < 0) {
 			viewSizeNorm = 0;
@@ -229,7 +229,7 @@ void TimelineEditor::onClipScrollBarGUI(EditorInfo& info)
 	if (activeB && drag)
 	{
 		viewEndNorm += ImGui::GetIO().MouseDelta.x / size.x;
-		viewEndNorm = min(viewEndNorm, 1);
+		viewEndNorm = std::min(viewEndNorm, 1.0f);
 		viewSizeNorm = viewEndNorm - viewStartNorm;
 		if (viewSizeNorm < 0) {
 			viewSizeNorm = 0;
@@ -248,9 +248,9 @@ void TimelineEditor::onClipScrollBarGUI(EditorInfo& info)
 	{
 		float delta = ImGui::GetIO().MouseDelta.x / size.x;
 		viewStartNorm += delta;
-		viewStartNorm = max(viewStartNorm, 0);
+		viewStartNorm = std::max(viewStartNorm, 0.0f);
 		viewEndNorm = viewStartNorm + viewSizeNorm;
-		viewEndNorm = min(viewEndNorm, 1);
+		viewEndNorm = std::min(viewEndNorm, 1.0f);
 		viewStartNorm = viewEndNorm - viewSizeNorm;
 	}
 	a = pos;

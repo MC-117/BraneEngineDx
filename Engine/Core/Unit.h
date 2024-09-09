@@ -402,9 +402,9 @@ inline T* Sampler<T>::toArray(bool atStack)
 {
 	T* array = NULL;
 	if (atStack)
-		array = (T*)alloca(sizeof(T) * sample.size());
+		array = (T*)mi_alloca(sizeof(T) * sample.size());
 	else
-		array = (T*)malloc(sizeof(T) * sample.size());
+		array = (T*)mi_malloc(sizeof(T) * sample.size());
 	int i = 0;
 	for (auto b = sample.begin(), e = sample.end(); b != e; b++, i++)
 		array[i] = *b;

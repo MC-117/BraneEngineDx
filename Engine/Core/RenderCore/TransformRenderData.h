@@ -9,6 +9,25 @@ struct TMeshTransformDataArray
 {
 	using DataType = T;
 
+	struct ReservedData
+	{
+		friend struct TMeshTransformDataArray;
+	public:
+		static ReservedData none;
+		bool isValid() { return sourceArray && count && data; }
+		unsigned int getBaseIndex() { return baseIndex; }
+		unsigned int getCount() { return count; }
+		T* beginModify() { return updateData ? updateData : data; }
+		void endModify() { if (updateData) { memcpy(data, updateData, sizeof(T) * count); } }
+	private:
+		ReservedData() = default;
+		TMeshTransformDataArray* sourceArray = NULL;
+		unsigned int baseIndex = 0;
+		unsigned int count = 0;
+		T* data = NULL;
+		T* updateData = NULL;
+	};
+
 	vector<T> transformDatas;
 	vector<T> uploadTransformDatas;
 	vector<unsigned int> uploadIndices;
@@ -24,12 +43,15 @@ struct TMeshTransformDataArray
 	void resize(unsigned int size, bool onlyResizeBatch);
 	const T& getMeshTransform(unsigned int transformIndex) const;
 	unsigned int setMeshTransform(const T& transformData);
-	unsigned int setMeshTransform(const vector<T>& transformDatas);
+	ReservedData addMeshTransform(unsigned int count);
 	bool updataMeshTransform(const T& transformData, unsigned int base);
 	bool updataMeshTransform(const vector<T>& transformDatas, unsigned int base);
 	void clean();
 	bool clean(unsigned int base, unsigned int count);
 };
+
+template<class T, class Op>
+typename TMeshTransformDataArray<T, Op>::ReservedData TMeshTransformDataArray<T, Op>::ReservedData::none;
 
 template<class T, class Op>
 inline TMeshTransformDataArray<T, Op>::TMeshTransformDataArray()
@@ -97,30 +119,34 @@ inline unsigned int TMeshTransformDataArray<T, Op>::setMeshTransform(const T& da
 	return batchCount - 1;
 }
 
-template<class T, class Op>
-inline unsigned int TMeshTransformDataArray<T, Op>::setMeshTransform(const vector<T>& datas)
+template <class T, class Op>
+typename TMeshTransformDataArray<T, Op>::ReservedData TMeshTransformDataArray<T, Op>::addMeshTransform(unsigned int count)
 {
-	unsigned int size = batchCount + datas.size();
+	unsigned int size = batchCount + count;
 	if (size > transformDatas.size()) {
 		transformDatas.resize(size);
 		resetUpload();
 		updateAll = true;
 	}
-	for (int i = batchCount; i < size; i++) {
-		T& mat = transformDatas[i];
-		T newMat = Op()(datas[i - batchCount]);
-		if (updateAll) {
-			mat = newMat;
-		}
-		else if (mat != newMat) {
-			mat = newMat;
-			uploadTransformDatas.push_back(newMat);
+	ReservedData reserved;
+	reserved.sourceArray = this;
+	reserved.baseIndex = batchCount;
+	reserved.count = count;
+	reserved.data = &transformDatas[batchCount];
+	if (updateAll) {
+		reserved.updateData = NULL;
+	}
+	else {
+		unsigned int baseUpdateIndex = uploadTransformDatas.size();
+		uploadTransformDatas.resize(uploadTransformDatas.size() + count);
+		uploadIndices.reserve(uploadIndices.size() + count);
+		for (int i = batchCount; i < size; i++) {
 			uploadIndices.push_back(i);
 		}
+		reserved.updateData = &uploadTransformDatas[baseUpdateIndex];
 	}
-	unsigned int id = batchCount;
 	batchCount = size;
-	return id;
+	return reserved;
 }
 
 template<class T, class Op>
@@ -213,7 +239,7 @@ struct MeshTransformRenderData : public IRenderData
 	unsigned int getTransformCount() const;
 	const MeshTransformDataArray::DataType& getMeshTransform(unsigned int transformIndex) const;
 	unsigned int setMeshTransform(const MeshTransformDataArray::DataType& data);
-	unsigned int setMeshTransform(const vector<MeshTransformDataArray::DataType>& datas);
+	MeshTransformDataArray::ReservedData addMeshTransform(unsigned int count);
 
 	static void loadDefaultResource();
 

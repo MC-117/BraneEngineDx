@@ -37,17 +37,17 @@ bool MipFileHeader::isValid() const
 
 unsigned char* mallocTexture(size_t size)
 {
-	return (unsigned char*)malloc(size);
+	return (unsigned char*)mi_malloc(size);
 }
 
 unsigned char* reallocTexture(unsigned char* data, size_t size)
 {
-	return (unsigned char*)realloc(data, size);
+	return (unsigned char*)mi_realloc(data, size);
 }
 
 void freeTexture(void* data)
 {
-	free(data);
+	mi_free(data);
 }
 
 unsigned char* rgb2rgba(unsigned char* data, unsigned char* dst, unsigned int pixles, bool discard)

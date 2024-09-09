@@ -37,15 +37,19 @@ void PointLight::preRender(PreRenderInfo& info)
 
 void PointLight::render(RenderInfo & info)
 {
-	localLightIndex = info.sceneData->setLocalLight(this);
-	probeIndex = info.sceneData->lightDataPack.getProbeIndexByLocalLightIndex(localLightIndex);
-	if (VirtualShadowMapConfig::isEnable()) {
-		virtualShadowMapLightEntry = info.sceneData->virtualShadowMapRenderData.newLocalLightShadow(
-			localLightIndex, index);
-		info.sceneData->lightDataPack.addVirtualShadowMapLocalShadow(*virtualShadowMapLightEntry);
-	}
-	else
-		virtualShadowMapLightEntry = NULL;
+	bool isVSMEnable = VirtualShadowMapConfig::isEnable();
+	RENDER_THREAD_ENQUEUE_TASK(PointLightUpdate, ([this, isVSMEnable] (RenderThreadContext& context)
+	{
+		localLightIndex = context.sceneRenderData->setLocalLight(this);
+		probeIndex = context.sceneRenderData->lightDataPack.getProbeIndexByLocalLightIndex(localLightIndex);
+		if (isVSMEnable) {
+			virtualShadowMapLightEntry = context.sceneRenderData->virtualShadowMapRenderData.newLocalLightShadow(
+				localLightIndex, index);
+			context.sceneRenderData->lightDataPack.addVirtualShadowMapLocalShadow(*virtualShadowMapLightEntry);
+		}
+		else
+			virtualShadowMapLightEntry = NULL;
+	}));
 }
 
 Serializable* PointLight::instantiate(const SerializationInfo& from)

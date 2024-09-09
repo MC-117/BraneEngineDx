@@ -39,6 +39,8 @@ void LightRenderData::setMainLight(Light* light)
 		shadowCameraRenderData.surface.clearColors.resize(1);
 		shadowCameraRenderData.surface.clearColors[0] = Color();
 		shadowCameraRenderData.renderOrder = 0;
+
+		shadowCameraRenderData.create();
 	}
 }
 

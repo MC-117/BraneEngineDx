@@ -18,8 +18,7 @@ struct DeferredLightingTask
 	SurfaceData surface;
 	RenderTarget* gBufferRT = NULL;
 	CameraRenderData* cameraRenderData = NULL;
-	Material* material = NULL;
-	MaterialRenderData* materialRenderData = NULL;
+	IMaterial* materialVariant = NULL;
 };
 
 class DeferredLightingPass : public RenderPass
@@ -28,6 +27,8 @@ public:
 	set<DeferredLightingTask*, DeferredLightingTask::ExecutionOrder> lightingTask;
 	list<MaterialRenderData*> materialRenderDatas;
 
+	virtual bool loadDefaultResource();
+
 	virtual bool addTask(DeferredLightingTask& task);
 
 	virtual void prepare();
@@ -35,11 +36,8 @@ public:
 	virtual void reset();
 protected:
 	Timer timer;
-	static bool isInit;
 	static ShaderProgram* blitProgram;
 	static ShaderStage* blitFragmentShader;
-
-	static void LoadDefaultShader();
 
 	void blitSceneColor(IRenderContext& context, Texture* gBufferA, Texture* gBufferB);
 };

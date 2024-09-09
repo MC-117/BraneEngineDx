@@ -130,6 +130,34 @@ bool WaitHandle::isValid() const
     return ptr.get();
 }
 
+bool WaitHandle::canCancel()
+{
+    if (isValid())
+        return ptr->canCancel();
+    return false;
+}
+
+bool WaitHandle::isPending()
+{
+    if (isValid())
+        return ptr->isPending();
+    return false;
+}
+
+bool WaitHandle::isCompleted()
+{
+    if (isValid())
+        return ptr->isCompleted();
+    return false;
+}
+
+bool WaitHandle::isCancel()
+{
+    if (isValid())
+        return ptr->isCancel();
+    return false;
+}
+
 bool WaitHandle::wait() const
 {
     if (!isValid())

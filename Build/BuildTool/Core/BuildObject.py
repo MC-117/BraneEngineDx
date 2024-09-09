@@ -105,6 +105,7 @@ class TargetConfig:
         self.optimize : bool = True
         self.enableDebug : bool  = False
         self.needDebugInfo : bool  = True
+        self.additionalOptions : list[str] = []
         self.intermediatePath : str = ''
         self.outputPath : str = ''
         self.outputName : str = ''
@@ -239,7 +240,7 @@ class Target(BuildObject):
                 config.modules.append(instance)
             config.autoFill()
             for module in config.modules:
-                if module.buildTarget:
+                if module.buildTarget != '':
                     buildTarget = targetCollector.get(module.buildTarget)
                     if buildTarget is None:
                         errStr = f'Build Target "{module.buildTarget}" not found in Module "{module.name}"'

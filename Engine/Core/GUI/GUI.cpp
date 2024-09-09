@@ -6,6 +6,7 @@
 #include "../Engine.h"
 #include "../WUI/WUIMainWindow.h"
 #include "GUIUtility.h"
+#include "../RenderCore/RenderThread.h"
 
 bool GUI::mouseOnUI = false;
 bool GUI::anyItemFocus = false;
@@ -49,7 +50,7 @@ void GUI::onGUI(RenderInfo& info)
 			throw runtime_error("Vendor ImGui new frame failed");
 	}
 
-	GUIRenderInfo _info = { viewSize, sceneBlurTex, info.sceneData, info.renderGraph, *this, info.camera, &GUISurface::getMainGUISurface().gizmo };
+	GUIRenderInfo _info = { viewSize, sceneBlurTex, *this, info.camera, &GUISurface::getMainGUISurface().gizmo };
 
 	for (auto b = uiControls.begin(), e = uiControls.end(); b != e; b++)
 		b->second->onPreAction(_info);
@@ -201,8 +202,12 @@ void GUI::render(RenderInfo& info)
 	{
 		ImGui::UpdatePlatformWindows();
 	}
-	if (info.renderGraph)
-		info.renderGraph->setImGuiDrawData(ImGui::GetDrawData());
+	if (info.camera) {
+		RENDER_THREAD_ENQUEUE_TASK(RenderImGui, [] (RenderThreadContext& context)
+		{
+			context.renderGraph->setImGuiDrawData(ImGui::GetDrawData());
+		});
+	}
 }
 
 void GUI::onSceneResize(const Vector2i& size)

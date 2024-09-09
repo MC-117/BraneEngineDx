@@ -34,12 +34,6 @@ void GUISurface::gizmoUpdate()
     Camera* pCamera = camera;
     if (pCamera == NULL)
         return;
-    if (Engine::getInput().getCursorHidden()) {
-        gizmo.setCameraControl(Gizmo::CameraControlMode::None);
-    }
-    else {
-        gizmo.setCameraControl(Gizmo::CameraControlMode::Free);
-    }
     gizmo.onUpdate(*pCamera);
 }
 

@@ -78,10 +78,8 @@ bool ParticleSystem::serialize(SerializationInfo & to)
 {
 	if (!Actor::serialize(to))
 		return false;
-	SerializationInfo* pesI = to.add("emitters");
+	SerializationInfo* pesI = to.addArray("emitters", "ParticleEmitter");
 	if (pesI != NULL) {
-		pesI->type = "Array";
-		pesI->arrayType = "ParticleEmitter";
 		for (auto b = particleRender.particleEmtters.begin(), e = particleRender.particleEmtters.end(); b != e; b++) {
 			b->serialize(*pesI->push());
 		}

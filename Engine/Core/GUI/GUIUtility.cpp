@@ -5,13 +5,27 @@
 #include "../Asset.h"
 #include "GUIUtility.h"
 #include "../Attributes/TagAttribute.h"
+#include "../Mesh.h"
+#include "../MeshRender.h"
+#include "../Editor/Editor.h"
 
 namespace ImGui {
+
+	void* MiMallocWarpper(size_t size, void*)
+	{
+		return mi_malloc(size);
+	}
+
+	void MiFreeWarpper(void* ptr, void*)
+	{
+		mi_free(ptr);
+	}
 
 	void Setup()
 	{
 		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
+		ImGui::SetAllocatorFunctions(MiMallocWarpper, MiFreeWarpper);
 		ImGui::CreateContext();
 		ImPlot::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
@@ -732,5 +746,121 @@ namespace ImGui {
 	{
 		static string filterName;
 		return TypeCombo(label, selectType, filterName, baseType, tags);
+	}
+
+	void MeshMaterialGUI(EditorInfo& info, MeshMaterialCollection& collection)
+	{
+		Mesh* mesh = collection.getMesh();
+		if (mesh == NULL)
+			return;
+		for (int i = 0; i < collection.getMaterialCount(); i++) {
+			ImGui::PushID(i);
+			auto pair = collection.getMaterial(i);
+			bool enable = collection.getPartEnable(i);
+			if (ImGui::Checkbox("##EnableMaterial", &enable)) {
+				collection.setPartEnable(i, enable);
+			}
+			ImGui::SameLine();
+			if (ImGui::TreeNode(pair.first.c_str())) {
+				bool create = false;
+				if (ImGui::Button("Assign Selected Material", { -1, 36 })) {
+					Asset* assignAsset = EditorManager::getSelectedAsset();
+					if (assignAsset != NULL && assignAsset->assetInfo.type == "Material") {
+						collection.setMaterial(i, *(Material*)assignAsset->load());
+					}
+				}
+				if (ImGui::Button("Assign Material", { -1, 36 })) {
+					ImGui::OpenPopup("MatSelectPopup");
+					create = false;
+				}
+				if (ImGui::Button("Create Material", { -1, 36 })) {
+					ImGui::OpenPopup("MatSelectPopup");
+					create = true;
+				}
+
+				if (ImGui::BeginPopup("MatSelectPopup")) {
+					for (auto _b = MaterialAssetInfo::assetInfo.assets.begin(), _e = MaterialAssetInfo::assetInfo.assets.end();
+						_b != _e; _b++) {
+						if (ImGui::Selectable(_b->first.c_str(), false, 0, { 0, 20 })) {
+							if (create)
+								collection.setMaterial(i, ((Material*)_b->second->load())->instantiate());
+							else
+								collection.setMaterial(i, *(Material*)_b->second->load());
+						}
+					}
+					ImGui::EndPopup();
+				}
+
+				Material* material = pair.second;
+				if (material == NULL) {
+					ImGui::Text("No Material");
+				}
+				else {
+					Editor* editor = EditorManager::getEditor("Material", material);
+					editor->onGUI(info);
+				}
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
+		}
+	}
+	
+	void OutlineMeshMaterialGUI(OutlineMeshMaterialCollection& collection)
+	{
+		Mesh* mesh = collection.getMesh();
+		if (mesh == NULL)
+			return;
+		if (ImGui::Button("Enable All", { -1, 36 })) {
+			collection.fillMaterialsByDefault();
+			for (int i = 0; i < collection.getMaterialCount(); i++) {
+				collection.setPartEnable(i, true);
+			}
+		}
+		if (ImGui::Button("Disable All", { -1, 36 })) {
+			for (int i = 0; i < collection.getMaterialCount(); i++) {
+				collection.setPartEnable(i, false);
+			}
+		}
+		for (int i = 0; i < collection.getMaterialCount(); i++) {
+			ImGui::PushID(i);
+			auto pair = collection.getMaterial(i);
+			Material* outlineMaterial = pair.second;
+			bool enable = collection.getPartEnable(i);
+			if (ImGui::Checkbox("##EnableOutlineMaterial", &enable)) {
+				collection.setPartEnable(i, enable);
+			}
+			ImGui::SameLine();
+			if (ImGui::TreeNode((pair.first + " Outline").c_str())) {
+				if (outlineMaterial == NULL && ImGui::Button("Set Outline Material")) {
+					outlineMaterial = getAssetByPath<Material>("Engine/Shaders/Outline.mat");
+					if (outlineMaterial != NULL) {
+						outlineMaterial = &outlineMaterial->instantiate();
+						collection.setMaterial(i, *outlineMaterial);
+					}
+				}
+				if (outlineMaterial != NULL) {
+					for (auto b = outlineMaterial->getColorField().begin(), e = outlineMaterial->getColorField().end(); b != e; b++) {
+						Color color = b->second.val;
+						if (ImGui::ColorEdit4(b->first.c_str(), (float*)&color))
+							b->second.val = color;
+					}
+					for (auto b = outlineMaterial->getScalarField().begin(), e = outlineMaterial->getScalarField().end(); b != e; b++) {
+						float val = b->second.val;
+						if (ImGui::DragFloat(b->first.c_str(), &val, 0.01))
+							b->second.val = val;
+					}
+					for (auto b = outlineMaterial->getTextureField().begin(), e = outlineMaterial->getTextureField().end(); b != e; b++) {
+						unsigned long long id = b->second.val->getTextureID();
+						if (id == 0)
+							id = Texture2D::blackRGBDefaultTex.getTextureID();
+						ImGui::Image((ImTextureID)id, { 64, 64 }, { 0, 1 }, { 1, 0 });
+						ImGui::SameLine();
+						ImGui::Text(b->first.c_str());
+					}
+				}
+				ImGui::TreePop();
+			}
+			ImGui::PopID();
+		}
 	}
 }

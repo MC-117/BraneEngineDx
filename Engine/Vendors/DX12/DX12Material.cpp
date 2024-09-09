@@ -17,7 +17,7 @@ void DX12Material::uploadAttribute(DX12ShaderProgram* program, const Name& name,
 {
 	if (matInsBufHost == NULL || program == NULL)
 		return;
-	const DX12ShaderProgram::AttributeDesc* desc = program->getAttributeOffset(name);
+	const ShaderPropertyDesc* desc = program->getAttributeOffset(name);
 	if (desc == NULL)
 		return;
 	const ShaderProperty* prop = desc->getParameter();
@@ -106,7 +106,7 @@ void DX12Material::processTextureData()
 		if (b->second.val == NULL || b->second.val->bind() == 0)
 			continue;
 		DX12Texture2D* tex = (DX12Texture2D*)b->second.val->getVendorTexture();
-		const DX12ShaderProgram::AttributeDesc* desc = program->getAttributeOffset(b->first);
+		const ShaderPropertyDesc* desc = program->getAttributeOffset(b->first);
 		if (desc == NULL)
 			continue;
 		for (auto& prop : desc->properties) {
@@ -132,7 +132,7 @@ void DX12Material::processImageData()
 		if (b->second.val.texture->bind() == 0)
 			continue;
 		DX12Texture2D* tex = (DX12Texture2D*)b->second.val.texture->getVendorTexture();
-		const DX12ShaderProgram::AttributeDesc* desc = program->getAttributeOffset(b->first);
+		const ShaderPropertyDesc* desc = program->getAttributeOffset(b->first);
 		if (desc == NULL)
 			continue;
 		for (auto& prop : desc->properties) {

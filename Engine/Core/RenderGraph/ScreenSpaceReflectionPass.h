@@ -10,6 +10,8 @@ public:
 	bool enable = true;
 	SSRBinding ssrBinding;
 
+	virtual bool loadDefaultResource();
+
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);
 	virtual void reset();
@@ -21,9 +23,8 @@ protected:
 
 	bool useComputeShader = false;
 
-	Material* computeMaterial = NULL;
-	ShaderProgram* computeProgram = NULL;
-	MaterialRenderData computeMaterialRenderData;
+	MaterialRenderData* computeMaterialRenderData;
+	IMaterial* computeMaterialVariant;
 
 	Material* traceMaterial = NULL;
 	ShaderProgram* traceProgram = NULL;

@@ -55,11 +55,11 @@ unsigned int MeshTransformRenderData::setMeshTransform(const MeshTransformDataAr
 	return meshTransformDataArray.setMeshTransform(data);
 }
 
-unsigned int MeshTransformRenderData::setMeshTransform(const vector<MeshTransformDataArray::DataType>& datas)
+MeshTransformDataArray::ReservedData MeshTransformRenderData::addMeshTransform(unsigned int count)
 {
 	if (!needUpdate)
-		return -1;
-	return meshTransformDataArray.setMeshTransform(datas);
+		return MeshTransformDataArray::ReservedData::none;
+	return meshTransformDataArray.addMeshTransform(count);
 }
 
 void MeshTransformRenderData::loadDefaultResource()

@@ -27,6 +27,30 @@ SMAAPass::SMAAPass(const string& name, Material* material) : PostProcessPass(nam
 
 void SMAAPass::prepare()
 {
+	edgeDetectionProgram = edgeDetectionMaterial->getShader()->getProgram(Shader_Default);
+	blendingWeightCalculationProgram = blendingWeightCalculationMaterial->getShader()->getProgram(Shader_Default);
+	neighborhoodBlendingProgram = neighborhoodBlendingMaterial->getShader()->getProgram(Shader_Default);
+	
+	if (edgeDetectionProgram == NULL ||
+		blendingWeightCalculationProgram == NULL ||
+		neighborhoodBlendingProgram == NULL) {
+		Console::error("PostProcessPass: Shader_Default not found in SMAA shaders");
+		throw runtime_error("ShaderVariant not found");
+		return;
+	}
+
+	if (!edgeDetectionProgram->isComputable() &&
+		!blendingWeightCalculationProgram->isComputable() &&
+		!neighborhoodBlendingProgram->isComputable()) {
+		edgeDetectionProgram->init();
+		blendingWeightCalculationProgram->init();
+		neighborhoodBlendingProgram->init();
+	}
+	else {
+		throw runtime_error("Shader type mismatch");
+		return;
+	}
+	
 	areaTexture.bind();
 	searchTexture.bind();
 	screenTexture.bind();
@@ -80,7 +104,7 @@ void SMAAPass::execute(IRenderContext& context)
 	context.clearFrameBindings();
 }
 
-bool SMAAPass::mapMaterialParameter(RenderInfo& info)
+bool SMAAPass::loadDefaultResource()
 {
 	if (edgeDetectionMaterial == NULL)
 		edgeDetectionMaterial = getAssetByPath<Material>("Engine/Shaders/PostProcess/SMAA/SMAA_EdgeDetection.mat");
@@ -102,32 +126,15 @@ void SMAAPass::render(RenderInfo& info)
 {
 	if (!enable)
 		return;
-	if (!mapMaterialParameter(info))
-		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-
-	edgeDetectionProgram = edgeDetectionMaterial->getShader()->getProgram(Shader_Default);
-	blendingWeightCalculationProgram = blendingWeightCalculationMaterial->getShader()->getProgram(Shader_Default);
-	neighborhoodBlendingProgram = neighborhoodBlendingMaterial->getShader()->getProgram(Shader_Default);
-	
-	if (edgeDetectionProgram == NULL ||
-		blendingWeightCalculationProgram == NULL ||
-		neighborhoodBlendingProgram == NULL) {
-		Console::error("PostProcessPass: Shader_Default not found in SMAA shaders");
+	if (!loadDefaultResource())
 		return;
-	}
 
-	if (!edgeDetectionProgram->isComputable() &&
-		!blendingWeightCalculationProgram->isComputable() &&
-		!neighborhoodBlendingProgram->isComputable()) {
-
-		edgeDetectionProgram->init();
-		blendingWeightCalculationProgram->init();
-		neighborhoodBlendingProgram->init();
-
-		info.renderGraph->addPass(*this);
-	}
+	RENDER_THREAD_ENQUEUE_TASK(AddSMAAPass, ([this] (RenderThreadContext& context)
+	{
+		context.renderGraph->addPass(*this);
+	}));
 }
 
 void SMAAPass::onGUI(EditorInfo& info)

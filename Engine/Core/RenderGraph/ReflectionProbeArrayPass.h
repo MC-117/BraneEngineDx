@@ -5,6 +5,7 @@
 class ReflectionProbeArrayPass : public RenderPass
 {
 public:
+	virtual bool loadDefaultResource();
 
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);
@@ -14,6 +15,4 @@ public:
 protected:
 	Timer timer;
 	vector<pair<string, Texture*>> outputTextures;
-
-	
 };

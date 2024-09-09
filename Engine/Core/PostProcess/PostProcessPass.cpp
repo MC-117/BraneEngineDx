@@ -8,8 +8,7 @@
 SerializeInstance(PostProcessPass);
 
 PostProcessResource::PostProcessResource()
-	: sceneRenderData(NULL)
-	, cameraRenderData(NULL)
+	: cameraRenderData(NULL)
 	, screenTexture(NULL)
 	, screenRenderTarget(NULL)
 	, depthTexture(NULL)
@@ -48,7 +47,6 @@ Texture * PostProcessResource::getTexture(const string & name)
 
 void PostProcessResource::reset()
 {
-	sceneRenderData = NULL;
 	cameraRenderData = NULL;
 	screenTexture = NULL;
 	screenRenderTarget = NULL;
@@ -102,7 +100,7 @@ string PostProcessPass::getName()
 	return name;
 }
 
-bool PostProcessPass::mapMaterialParameter(RenderInfo & info)
+bool PostProcessPass::loadDefaultResource()
 {
 	return material != NULL;
 }
@@ -111,7 +109,7 @@ void PostProcessPass::render(RenderInfo & info)
 {
 	if (!enable)
 		return;
-	if (!mapMaterialParameter(info))
+	if (!loadDefaultResource())
 		return;
 	if (size.x == 0 || size.y == 0)
 		return;

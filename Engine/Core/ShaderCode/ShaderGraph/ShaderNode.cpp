@@ -63,6 +63,21 @@ Serializable* ShaderNode::instantiate(const SerializationInfo& from)
     return NULL;
 }
 
+SerializeInstance(ShaderVariable, DEF_ATTR(Tag, "Shader"))
+
+ShaderVariable::ShaderVariable(const string& name) : GraphVariable(name)
+{
+}
+
+Serializable* ShaderVariable::instantiate(const SerializationInfo& from)
+{
+    return NULL;
+}
+
+void ShaderVariable::applyToMaterial(Material& material)
+{
+}
+
 bool ShaderStructPin::ShaderStructPinSerialization::isClassOf(const Serializable& serializable) const
 {
     return castTo<ShaderStructPin>(serializable);

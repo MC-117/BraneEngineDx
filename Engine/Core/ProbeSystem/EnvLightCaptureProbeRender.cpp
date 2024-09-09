@@ -51,11 +51,27 @@ void EnvLightCaptureProbeRender::render(RenderInfo& info)
 			sceneCaptureCube.setTexture(*lightCubeMap);
 			sceneCaptureCube.setSize({ resolution, resolution });
 			sceneCaptureCube.render(info);
-			captureIndex = info.sceneData->setEnvLightCapture(this);
+			EnvLightProbeData data;
+			data.lightCubeMap = getLightCubeMap();
+			data.shCoeff3RGB = &shCoeff3RGB;
+			RENDER_THREAD_ENQUEUE_TASK(EnvLightProbeRenderDataUpdate, ([this, data] (RenderThreadContext& context)
+			{
+				captureIndex = context.sceneRenderData->setEnvLightCapture(data);
+			}));
 		}
 		update = false;
 	}
-	lightDataIndex = info.sceneData->setEnvLightData(this);
+	EnvLightUpdateData updateData;
+	updateData.tintColor = Vector3f(tintColor.r, tintColor.g, tintColor.b);
+	updateData.position = getWorldPosition();
+	updateData.radius = getWorldRadius();
+	updateData.cutoff = cutoff;
+	updateData.falloff = falloff;
+	updateData.shCoeff3RGB = shCoeff3RGB;
+	RENDER_THREAD_ENQUEUE_TASK(EnvLightDataUpdate, ([this, updateData] (RenderThreadContext& context)
+	{
+		lightDataIndex = context.sceneRenderData->setEnvLightData(updateData);
+	}));
 }
 
 Serializable* EnvLightCaptureProbeRender::instantiate(const SerializationInfo& from)

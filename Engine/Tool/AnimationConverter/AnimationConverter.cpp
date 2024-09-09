@@ -1072,9 +1072,6 @@ void AnimationConverter::showVMDMorph(const vmd::VmdMotion * vmdMotion)
 
 void AnimationConverter::serializeNodeAnimation(SerializationInfo & info, const aiNodeAnim & data, float tickPerSec)
 {
-	info.name = data.mNodeName.C_Str();
-	info.type = "Array";
-	info.arrayType = "BoneFrame";
 	struct Frame
 	{
 		aiVectorKey* pos;
@@ -1119,7 +1116,7 @@ void AnimationConverter::serializeBoneAnimation(SerializationInfo & info, const 
 	info.type = "Frames";
 	for (int i = 0; i < data.mNumChannels; i++) {
 		aiNodeAnim& nodeAnim = *data.mChannels[i];
-		serializeNodeAnimation(*info.add(nodeAnim.mNodeName.C_Str()), nodeAnim, data.mTicksPerSecond);
+		serializeNodeAnimation(*info.addArray(nodeAnim.mNodeName.C_Str(), "BoneFrame"), nodeAnim, data.mTicksPerSecond);
 	}
 }
 
@@ -1133,9 +1130,7 @@ void AnimationConverter::serializeMorphAnimation(SerializationInfo & info, const
 		SerializationInfo* mfs = info.get(face_name);
 		SerializationInfo* mf;
 		if (mfs == NULL) {
-			mfs = info.add(face_name);
-			mfs->type = "Array";
-			mfs->arrayType = "MorphFrame";
+			mfs = info.addArray(face_name, "MorphFrame");
 			mf = mfs->push();
 		}
 		else {
@@ -1488,8 +1483,8 @@ AnimationConverter::MaterialInfo::MaterialInfo(const Material & mat) : baseMat(&
 		if (shd != NULL)
 			baseMatPath = shd->path;
 	}
-	isTwoSide = mat.isTwoSide;
-	cullFront = mat.cullFront;
+	isTwoSide = mat.getTwoSide();
+	cullFront = mat.getCullFront();
 	canCastShadow = mat.canCastShadow;
 	auto scalarField = mat.getScalarField();
 	for (auto b = scalarField.begin(), e = scalarField.end(); b != e; b++) {

@@ -1,5 +1,10 @@
 #include "MeshPass.h"
 
+bool MeshPass::loadDefaultResource()
+{
+	return true;
+}
+
 void MeshPass::prepare()
 {
 	outputTextures.clear();

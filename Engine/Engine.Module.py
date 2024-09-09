@@ -23,6 +23,7 @@ class EngineModule(Module):
         ]
 
         self.moduleDependencies = [
+            'Mimalloc',
             'Assimp',
             'ImGui',
             'ImPlot',

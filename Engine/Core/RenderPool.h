@@ -4,6 +4,7 @@
 
 #include "Camera.h"
 #include "GUI/GUI.h"
+#include "Utility/Parallel.h"
 
 using namespace std;
 
@@ -36,17 +37,11 @@ public:
 protected:
 	set<Render*> prePool;
 	set<Render*> pool;
-	thread renderThread;
-
-	atomic_ullong renderFrame = 0;
+	
 	bool destory = false;
+	WaitHandle renderThreadWaitHandle;
 
-	void gameFence();
 	void renderFence();
-
-	void renderThreadMain();
-
-	static void renderThreadLoop(RenderPool* pool);
 };
 
 #endif // !_RENDER_POOL_H_

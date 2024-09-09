@@ -5,6 +5,7 @@
 #include "../../Texture2D.h"
 #include "../../TextureCube.h"
 #include "../../Attributes/TagAttribute.h"
+#include "../../Material.h"
 
 SerializeInstance(TextureParameterPin, DEF_ATTR(Tag, "Shader"));
 
@@ -39,10 +40,10 @@ bool TextureParameterPin::serialize(SerializationInfo& to)
     return true;
 }
 
-SerializeInstance(TextureParameterVariable, DEF_ATTR(Tag, "Shader"));
+SerializeInstance(TextureParameterVariable);
 
 TextureParameterVariable::TextureParameterVariable(const string& name)
-    : GraphVariable(name)
+    : ShaderVariable(name)
     , defaultTexture(NULL)
 {
 }
@@ -76,6 +77,15 @@ bool TextureParameterVariable::generate(GraphCodeGenerationContext& context)
 {
     context.assignParameter(this, Name(name));
     return true;
+}
+
+void TextureParameterVariable::applyToMaterial(Material& material)
+{
+    ShaderVariable::applyToMaterial(material);
+    const Name& name = getName();
+    if (!name.isNone() && defaultTexture) {
+        material.setTexture(name, *defaultTexture);
+    }
 }
 
 Serializable* TextureParameterVariable::instantiate(const SerializationInfo& from)

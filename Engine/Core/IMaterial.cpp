@@ -4,6 +4,20 @@ IMaterial::IMaterial(MaterialDesc& desc) : desc(desc)
 {
 }
 
+bool IMaterial::init()
+{
+    if (program)
+        return program->init();
+    return false;
+}
+
+bool IMaterial::isComputable() const
+{
+    if (program)
+        return program->isComputable();
+    return false;
+}
+
 void IMaterial::preprocess()
 {
 }

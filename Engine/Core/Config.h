@@ -5,6 +5,7 @@
 //#define AUDIO_USE_OPENAL
 #define ENABLE_PHYSICS 1
 
+#include <mimalloc.h>
 #include "StaticVar.h"
 #include <iostream>
 #include <vector>

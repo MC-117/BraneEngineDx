@@ -2,6 +2,11 @@
 #include "../Console.h"
 #include "../Utility/RenderUtility.h"
 
+bool ReflectionProbeArrayPass::loadDefaultResource()
+{
+	return true;
+}
+
 void ReflectionProbeArrayPass::prepare()
 {
 	

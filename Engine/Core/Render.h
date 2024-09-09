@@ -14,8 +14,6 @@ class RenderGraph;
 
 struct RenderInfo
 {
-	SceneRenderData* sceneData = NULL;
-	RenderGraph* renderGraph = NULL;
 	Camera* camera = NULL;
 };
 
@@ -35,8 +33,6 @@ public:
 	bool isStatic = false;
 	bool canCastShadow = false;
 	bool customTransformSubmit = false;
-	unsigned int instanceID = -1;
-	unsigned int instanceCount = 1;
 	Matrix4f transformMat;
 
 	Render();
@@ -57,8 +53,6 @@ public:
 	virtual Shader* getShader() const;
 	virtual RenderTarget* getShadowRenderTarget() const;
 	virtual bool getCanCastShadow() const;
-	virtual unsigned int getInstanceID() const;
-	virtual unsigned int getInstanceCount() const;
 	virtual void* getRender() const;
 };
 

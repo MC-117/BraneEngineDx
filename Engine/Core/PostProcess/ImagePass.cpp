@@ -1,6 +1,7 @@
 #include "ImagePass.h"
 #include "../Asset.h"
 #include "../RenderCore/RenderCore.h"
+#include "../Console.h"
 
 ImagePass::ImagePass(const string& name, Material* material) : PostProcessPass(name, material)
 {
@@ -10,20 +11,26 @@ ImagePass::ImagePass(const string& name, Material* material) : PostProcessPass(n
 
 void ImagePass::prepare()
 {
+	materialVaraint = materialRenderData->getVariant(Shader_Postprocess);
+	if (materialVaraint == NULL) {
+		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", materialRenderData->getShaderName().c_str());
+		throw runtime_error("ShaderVariant not found");
+		return;
+	}
+
+	materialVaraint->init();
+	
 	Texture2D* sceneMap = dynamic_cast<Texture2D*>(resource->screenTexture);
 	if (sceneMap)
 		screenMap.setTextureInfo(sceneMap->getTextureInfo());
 	screenRenderTarget.init();
-	MaterialRenderData* materialRenderData = (MaterialRenderData*)this->materialRenderData;
-	materialRenderData->program = program;
-	materialRenderData->create();
 }
 
 void ImagePass::execute(IRenderContext& context)
 {
-	context.bindShaderProgram(program);
+	context.bindShaderProgram(materialVaraint->program);
 	context.bindFrame(screenRenderTarget.getVendorRenderTarget());
-	context.bindMaterialTextures(((MaterialRenderData*)materialRenderData)->vendorMaterial);
+	context.bindMaterialTextures(materialVaraint);
 	context.setRenderPostState();
 	context.postProcessCall();
 	context.clearFrameBindings();
@@ -31,14 +38,14 @@ void ImagePass::execute(IRenderContext& context)
 	resource->screenRenderTarget = &screenRenderTarget;
 }
 
-bool ImagePass::mapMaterialParameter(RenderInfo& info)
+bool ImagePass::loadDefaultResource()
 {
 	if (material == NULL)
 		material = getAssetByPath<Material>("Engine/Shaders/Editor/ImagePPTest.mat");
 	if (material == NULL || resource == NULL || resource->screenTexture == NULL)
 		return false;
 	image = *material->getTexture("image");
-	materialRenderData = material->getRenderData();
+	materialRenderData = material->getMaterialRenderData();
 	return image && materialRenderData;
 }
 
@@ -46,18 +53,17 @@ void ImagePass::render(RenderInfo& info)
 {
 	if (!enable)
 		return;
-	if (!mapMaterialParameter(info))
-		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-	program = material->getShader()->getProgram(Shader_Postprocess);
-	if (program == NULL) {
+	if (!loadDefaultResource())
 		return;
-	}
-
-	program->init();
-
-	info.renderGraph->addPass(*this);
+	
+	RENDER_THREAD_ENQUEUE_TASK(AddImagePass, ([this, materialRenderData = materialRenderData] (RenderThreadContext& context)
+	{
+		context.renderGraph->addPass(*this);
+		if (materialRenderData)
+			renderGraph->getRenderDataCollectorMainThread()->add(*materialRenderData);
+	}));
 }
 
 void ImagePass::resize(const Unit2Di& size)

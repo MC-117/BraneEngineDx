@@ -47,9 +47,6 @@ public:
 	static unsigned int nextProgramID;
 	static DX11ShaderProgram* currentDx11Program;
 	DX11Context& dxContext;
-	ComPtr<ID3D11Buffer> matInsBuf = NULL;
-	unsigned char* matInsBufHost = NULL;
-	unsigned int matInsBufSize = 0;
 	DrawInfo drawInfo;
 	ComPtr<ID3D11Buffer> drawInfoBuf = NULL;
 
@@ -59,13 +56,9 @@ public:
 	virtual bool init();
 
 	virtual unsigned int bind();
-	virtual int getMaterialBufferSize();
 	virtual bool dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ);
 	virtual void memoryBarrier(unsigned int bitEnum);
 	virtual void uploadDrawInfo();
-	virtual void uploadData();
-
-	virtual void uploadAttribute(const string& name, unsigned int size, void* data);
 
 	bool unbindBuffer(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name) const;
 	bool bindCBV(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11Buffer> buffer) const;

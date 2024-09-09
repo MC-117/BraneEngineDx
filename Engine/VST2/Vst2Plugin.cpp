@@ -524,7 +524,7 @@ void Vst2Plugin::onFetchMidiMessage(MidiMessageType type, const MidiMessage& msg
     midiEvent.type = VstEventTypes::kVstMidiType;
     midiEvent.byteSize = sizeof(VstMidiEvent);
     midiEvent.flags = VstMidiEventFlags::kVstMidiEventIsRealtime;
-    int midiBytes = min(msg.bytes.size(), 3);
+    int midiBytes = std::min(msg.bytes.size(), 3llu);
     memcpy(midiEvent.midiData, msg.bytes.data(), midiBytes);
     midiEvent.deltaFrames = round(Time(Time::now() - loopTime).toNanosecond() * 0.0000000001 / Vst2Config::get().sampleRate);
     {
@@ -548,7 +548,7 @@ void Vst2Plugin::onThreadLoop(Time loopTime)
     }
     if (!midiEventList.empty()) {
         int size = sizeof(VstInt32) + sizeof(VstIntPtr) + (midiEventList.size() + 1) * sizeof(VstEvent*);
-        events = (VstEvents*)malloc(size);
+        events = (VstEvents*)mi_malloc(size);
         memset(events, 0, size);
         events->numEvents = midiEventList.size();
         int i = 0;
@@ -570,7 +570,7 @@ void Vst2Plugin::onThreadLoop(Time loopTime)
     if (streamSource.getState() != AudioSource::Playing)
         streamSource.play();
     if (events)
-        free(events);
+        mi_free(events);
 }
 
 Vst2PluginManger& Vst2PluginManger::instance()

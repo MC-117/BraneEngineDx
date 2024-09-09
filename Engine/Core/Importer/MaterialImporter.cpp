@@ -42,11 +42,11 @@ bool MaterialLoader::loadMaterial(Material& material, const string& file)
 			break;
 		case ShaderCompiler::ST_TwoSide:
 			if (command.size() == 2)
-				material.isTwoSide = command[1] == "true";
+				material.setTwoSide(command[1] == "true");
 			break;
 		case ShaderCompiler::ST_CullFront:
 			if (command.size() == 2)
-				material.cullFront = command[1] == "true";
+				material.setCullFront(command[1] == "true");
 			break;
 		case ShaderCompiler::ST_CastShadow:
 			if (command.size() == 2)
@@ -225,8 +225,8 @@ Material * MaterialLoader::loadMaterialInstance(istream & is, const string & mat
 	}
 	if (order >= 0)
 		material->renderOrder = order;
-	material->isTwoSide = twoSide;
-	material->cullFront = cullFront;
+	material->setTwoSide(twoSide);
+	material->setCullFront(cullFront);
 	material->canCastShadow = castShadow;
 	material->desc.passNum = passNum;
 	if (!success && material != NULL) {
@@ -255,8 +255,8 @@ bool MaterialLoader::saveMaterialInstanceToString(string & text, Material& mater
 	text += "#material " + shd->path + '\n';
 	text += "#order " + to_string(material.getRenderOrder()) + '\n';
 	text += "#twoside ";
-	text += (material.isTwoSide ? "true\n" : "false\n");
-	if (material.cullFront)
+	text += (material.getTwoSide() ? "true\n" : "false\n");
+	if (material.getCullFront())
 		text += "#cullfront true\n";
 	text += "#castshadow ";
 	text += (material.canCastShadow ? "true\n" : "false\n");

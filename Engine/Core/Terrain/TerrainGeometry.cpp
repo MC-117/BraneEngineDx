@@ -2,6 +2,7 @@
 #ifdef PHYSICS_USE_PHYSX
 #include "../Physics/PhysicalWorld.h"
 #endif
+#include "../RenderCore/RenderCore.h"
 
 TerrainPatchMeshData::TerrainPatchMeshData()
 {

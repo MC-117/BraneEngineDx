@@ -4,6 +4,7 @@
 #include "../Camera.h"
 #include "../GUI/UIControl.h"
 #include "../RenderCore/RenderTask.h"
+#include "../RenderCore/RenderThread.h"
 
 SSAOPass::SSAOPass(const string & name, Material * material)
 	: PostProcessPass(name, material)
@@ -16,14 +17,28 @@ SSAOPass::SSAOPass(const string & name, Material * material)
 
 void SSAOPass::prepare()
 {
+	materialVaraint = materialRenderData->getVariant(Shader_Postprocess);
+	if (materialVaraint == NULL) {
+		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", materialRenderData->getShaderName().c_str());
+		throw runtime_error("ShaderVariant not found");
+		return;
+	}
+	if (materialVaraint->isComputable()) {
+		throw runtime_error("Shader type mismatch");
+		return;
+	}
+	
+	materialVaraint->init();
+	cameraRenderData = resource->cameraRenderData;
+	if (cameraRenderData == NULL) {
+		throw runtime_error("cameraRenderData is invalid");
+		return;
+	}
 	Texture2D* sceneMap = dynamic_cast<Texture2D*>(resource->screenTexture);
 	if (sceneMap)
 		screenMap.setTextureInfo(sceneMap->getTextureInfo());
 	gtaoRenderTarget.init();
 	screenRenderTarget.init();
-	MaterialRenderData* materialRenderData = (MaterialRenderData*)this->materialRenderData;
-	materialRenderData->program = program;
-	materialRenderData->create();
 	Texture2D::whiteRGBADefaultTex.bind();
 }
 
@@ -33,14 +48,14 @@ void SSAOPass::execute(IRenderContext& context)
 	static const ShaderPropertyName ssaoMapName = "ssaoMap";
 	static const ShaderPropertyName screenMapName = "screenMap";
 
-	Unit2Di ssaoSize = { size.x * screenScale, size.y * screenScale };
+	Unit2Di ssaoSize = { (int)(size.x * screenScale), (int)(size.y * screenScale) };
 
 	materialRenderData->upload();
 
-	context.bindShaderProgram(program);
+	context.bindShaderProgram(materialVaraint->program);
 	cameraRenderData->bind(context);
 
-	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
+	context.bindMaterialBuffer(materialVaraint);
 
 	context.bindTexture((ITexture*)resource->depthTexture->getVendorTexture(), depthMapName);
 
@@ -75,14 +90,14 @@ void SSAOPass::execute(IRenderContext& context)
 	resource->screenTexture = &screenMap;
 }
 
-bool SSAOPass::mapMaterialParameter(RenderInfo & info)
+bool SSAOPass::loadDefaultResource()
 {
 	if (material == NULL)
 		material = getAssetByPath<Material>("Engine/Shaders/PostProcess/SSAOPassFS.mat");
 	if (material == NULL || resource == NULL ||
 		resource->screenTexture == NULL || resource->depthTexture == NULL)
 		return false;
-	materialRenderData = material->getRenderData();
+	materialRenderData = material->getMaterialRenderData();
 	return materialRenderData;
 }
 
@@ -91,24 +106,17 @@ void SSAOPass::render(RenderInfo & info)
 	resource->ssaoTexture = NULL;
 	if (!enable)
 		return;
-	if (!mapMaterialParameter(info))
-		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-	program = material->getShader()->getProgram(Shader_Postprocess);
-	if (program == NULL) {
-		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName().c_str());
+	if (!loadDefaultResource())
 		return;
-	}
-	if (!program->isComputable()) {
-		program->init();
 
-		cameraRenderData = resource->cameraRenderData;
-		if (cameraRenderData == NULL)
-			return;
-
-		info.renderGraph->addPass(*this);
-	}
+	RENDER_THREAD_ENQUEUE_TASK(AddSSAOPass, ([this, materialRenderData = materialRenderData] (RenderThreadContext& context)
+	{
+		context.renderGraph->addPass(*this);
+		if (materialRenderData)
+			renderGraph->getRenderDataCollectorMainThread()->add(*materialRenderData);
+	}));
 }
 
 void SSAOPass::resize(const Unit2Di& size)

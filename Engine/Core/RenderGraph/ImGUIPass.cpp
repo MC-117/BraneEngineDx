@@ -1,6 +1,11 @@
 #include "ImGUIPass.h"
 #include "../IRenderContext.h"
 
+bool ImGuiPass::loadDefaultResource()
+{
+	return true;
+}
+
 void ImGuiPass::setDrawData(ImDrawData* pDrawData)
 {
 	drawData = pDrawData;

@@ -1,13 +1,14 @@
 #include "ParticleRenderPack.h"
 #include "RenderCommandList.h"
+#include "RenderCoreUtility.h"
 #include "../SkeletonMesh.h"
 
-ParticleData* ParticleRenderData::setParticles(Material* material, const list<Particle>& particles)
+ParticleData* ParticleRenderData::setParticles(IRenderData* materialRenderData, const list<Particle>& particles)
 {
-	auto miter = this->particles.find(material);
+	auto miter = this->particles.find(materialRenderData);
 	ParticleData* pd;
 	if (miter == this->particles.end()) {
-		pd = &this->particles.emplace(pair<Material*, ParticleData>(material, ParticleData())).first->second;
+		pd = &this->particles.emplace(pair<IRenderData*, ParticleData>(materialRenderData, ParticleData())).first->second;
 	}
 	else {
 		pd = &miter->second;
@@ -24,12 +25,12 @@ ParticleData* ParticleRenderData::setParticles(Material* material, const list<Pa
 	return pd;
 }
 
-ParticleData* ParticleRenderData::setParticles(Material* material, const vector<Particle>& particles)
+ParticleData* ParticleRenderData::setParticles(IRenderData* materialRenderData, const vector<Particle>& particles)
 {
-	auto miter = this->particles.find(material);
+	auto miter = this->particles.find(materialRenderData);
 	ParticleData* pd;
 	if (miter == this->particles.end()) {
-		pd = &this->particles.emplace(pair<Material*, ParticleData>(material, ParticleData())).first->second;
+		pd = &this->particles.emplace(pair<IRenderData*, ParticleData>(materialRenderData, ParticleData())).first->second;
 	}
 	else {
 		pd = &miter->second;
@@ -84,7 +85,7 @@ void ParticleRenderData::clean()
 
 bool ParticleRenderCommand::isValid() const
 {
-	return sceneData && material && !material->isNull() && particles && (mesh == NULL || (mesh && mesh->isValid()));
+	return sceneData && materialRenderData && materialRenderData->isValid() && particles && (mesh == NULL || (mesh && mesh->isValid()));
 }
 
 Enum<ShaderFeature> ParticleRenderCommand::getShaderFeature() const
@@ -96,7 +97,7 @@ Enum<ShaderFeature> ParticleRenderCommand::getShaderFeature() const
 
 RenderMode ParticleRenderCommand::getRenderMode() const
 {
-	return RenderMode(material->getRenderOrder(), 0, 0);
+	return RenderMode(materialRenderData->renderOrder, 0, 0);
 }
 
 bool ParticleRenderCommand::canCastShadow() const
@@ -117,20 +118,21 @@ ParticleRenderPack::ParticleRenderPack(ParticleRenderData& particleRenderData)
 bool ParticleRenderPack::setRenderCommand(const IRenderCommand& command)
 {
 	const ParticleRenderCommand* particleRenderCommand = dynamic_cast<const ParticleRenderCommand*>(&command);
-	materialData = dynamic_cast<MaterialRenderData*>(command.material->getRenderData());
-	particleData = particleRenderData.setParticles(particleRenderCommand->material, *particleRenderCommand->particles);
+	materialData = command.materialRenderData;
+	particleData = particleRenderData.setParticles(materialData, *particleRenderCommand->particles);
 	return particleData;
 }
 
-void ParticleRenderPack::excute(IRenderContext& context, RenderTaskContext& taskContext)
+void ParticleRenderPack::excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext)
 {
 	if (particleData == NULL || particleData->batchCount == 0)
 		return;
 
-	if (taskContext.materialData != materialData) {
-		taskContext.materialData = materialData;
-		materialData->bindCullMode(context, false);
-		materialData->bind(context);
+	if (taskContext.materialVariant != task.materialVariant) {
+		taskContext.materialVariant = task.materialVariant;
+		
+		bindMaterialCullMode(context, task.materialVariant, false);
+		bindMaterial(context, task.materialVariant);
 	}
 
 	cmd.first = 0;

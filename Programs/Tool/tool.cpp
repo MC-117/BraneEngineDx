@@ -10,6 +10,7 @@
 #include "Core/Importer/Importer.h"
 #include "Core/GUI/ShaderManagerWindow.h"
 #include "ImPlot/implot.h"
+#include <mimalloc-new-delete.h>
 
 class ImPlotWindow : public UIWindow
 {

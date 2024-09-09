@@ -235,9 +235,6 @@ DX11ShaderProgram::DX11ShaderProgram(DX11Context& context) : dxContext(context)
 
 DX11ShaderProgram::~DX11ShaderProgram()
 {
-	if (matInsBuf != NULL) {
-		matInsBuf.Reset();
-	}
 	if (currentDx11Program == this)
 		currentDx11Program = NULL;
 }
@@ -249,9 +246,10 @@ bool DX11ShaderProgram::init()
 	if (!dirty)
 		return true;
 	ShaderProgram::init();
-	if (const AttributeDesc* desc = getAttributeOffset(DX11ShaderStage::materialParameterBufferName))
-		if (const ShaderProperty* prop = desc->getConstantBuffer())
-			matInsBufSize = prop->size;
+	if (const ShaderPropertyDesc* desc = getAttributeOffset(DX11ShaderStage::materialParameterBufferName))
+		if (const ShaderProperty* prop = desc->getConstantBuffer()) {
+			shaderPropertyLayout.setBufferSize(prop->size);
+		}
 	dirty = false;
 	return true;
 }
@@ -262,9 +260,7 @@ unsigned int DX11ShaderProgram::bind()
 		if (currentProgram == programId)
 			currentProgram = 0;
 		drawInfoBuf.Reset();
-		matInsBuf.Reset();
-		attributes.clear();
-		matInsBufSize = 0;
+		shaderPropertyLayout.clear();
 	}
 	if (currentProgram == programId)
 		return programId;
@@ -316,11 +312,6 @@ bool DX11ShaderProgram::dispatchCompute(unsigned int dimX, unsigned int dimY, un
 	return true;
 }
 
-int DX11ShaderProgram::getMaterialBufferSize()
-{
-	return matInsBufSize;
-}
-
 void DX11ShaderProgram::memoryBarrier(unsigned int bitEnum)
 {
 }
@@ -335,32 +326,9 @@ void DX11ShaderProgram::uploadDrawInfo()
 	dxContext.deviceContext->Unmap(drawInfoBuf.Get(), 0);
 }
 
-void DX11ShaderProgram::uploadData()
-{
-	if (matInsBuf == NULL || matInsBufHost == NULL || matInsBufSize == 0)
-		return;
-	D3D11_MAPPED_SUBRESOURCE mpd;
-	dxContext.deviceContext->Map(matInsBuf.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mpd);
-	memcpy_s(mpd.pData, matInsBufSize, matInsBufHost, matInsBufSize);
-	dxContext.deviceContext->Unmap(matInsBuf.Get(), 0);
-}
-
-void DX11ShaderProgram::uploadAttribute(const string& name, unsigned int size, void* data)
-{
-	if (matInsBufHost == NULL)
-		return;
-	const AttributeDesc* desc = getAttributeOffset(name);
-	if (desc == NULL)
-		return;
-	const ShaderProperty* prop = desc->getParameter();
-	if (prop == NULL)
-		return;
-	memcpy_s(matInsBufHost + prop->offset, prop->size, data, size);
-}
-
 bool DX11ShaderProgram::unbindBuffer(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name) const
 {
-	const AttributeDesc* desc = getAttributeOffset(name);
+	const ShaderPropertyDesc* desc = getAttributeOffset(name);
 	if (desc == NULL)
 		return false;
 	for (auto& prop : desc->properties) {
@@ -441,7 +409,7 @@ bool DX11ShaderProgram::unbindBuffer(ComPtr<ID3D11DeviceContext> deviceContext, 
 
 bool DX11ShaderProgram::bindCBV(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11Buffer> buffer) const
 {
-	const AttributeDesc* desc = getAttributeOffset(name);
+	const ShaderPropertyDesc* desc = getAttributeOffset(name);
 	if (desc == NULL)
 		return false;
 	for (auto& prop : desc->properties) {
@@ -472,7 +440,7 @@ bool DX11ShaderProgram::bindCBV(ComPtr<ID3D11DeviceContext> deviceContext, const
 
 bool DX11ShaderProgram::bindSRV(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11ShaderResourceView> srv) const
 {
-	const AttributeDesc* desc = getAttributeOffset(name);
+	const ShaderPropertyDesc* desc = getAttributeOffset(name);
 	if (desc == NULL)
 		return false;
 	for (auto& prop : desc->properties) {
@@ -506,7 +474,7 @@ bool DX11ShaderProgram::bindSRV(ComPtr<ID3D11DeviceContext> deviceContext, const
 
 bool DX11ShaderProgram::bindSRVWithSampler(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11ShaderResourceView> srv, ComPtr<ID3D11SamplerState> sampler) const
 {
-	const AttributeDesc* desc = getAttributeOffset(name);
+	const ShaderPropertyDesc* desc = getAttributeOffset(name);
 	if (desc == NULL)
 		return false;
 	for (auto& prop : desc->properties) {
@@ -553,7 +521,7 @@ bool DX11ShaderProgram::bindSRVWithSampler(ComPtr<ID3D11DeviceContext> deviceCon
 
 bool DX11ShaderProgram::bindUAV(ComPtr<ID3D11DeviceContext> deviceContext, const ShaderPropertyName& name, ComPtr<ID3D11UnorderedAccessView> uav) const
 {
-	const AttributeDesc* desc = getAttributeOffset(name);
+	const ShaderPropertyDesc* desc = getAttributeOffset(name);
 	if (desc == NULL)
 		return false;
 	for (auto& prop : desc->properties) {

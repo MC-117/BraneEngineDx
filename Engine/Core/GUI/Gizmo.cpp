@@ -5,6 +5,8 @@
 #include "../Editor/CameraEditor.h"
 #include "../Mesh.h"
 #include "../RenderCore/RenderCore.h"
+#include "../RenderCore/RenderCoreUtility.h"
+#include "../MeshRender.h"
 
 Gizmo::Gizmo()
 {
@@ -126,8 +128,8 @@ void Gizmo::drawSphere(const Vector3f& p, float radius, const Matrix4f& transfor
 
 		int seg = segment * pixelSize * 0.02;
 
-		segment = max(segment, seg);
-		segment = min(segment, 60);
+		segment = std::max(segment, (float)seg);
+		segment = std::min(segment, 60.0f);
 	}
 	drawCircleX(p, radius, transformMat, color, segment);
 	drawCircleY(p, radius, transformMat, color, segment);
@@ -692,19 +694,19 @@ void Gizmo::controlTurnCamera(float transitionSensitivity, float distanceSensiti
 	cameraDeltaTransition.z() += up;
 
 	float deep = ImGui::GetIO().MouseWheel;
-	deep *= deltaTime * distanceSensitivity;
+	deep *= distanceSensitivity;
 	cameraDeltaDistance += deep;
 
 	if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-		ImVec2 m = ImGui::GetMouseDragDelta();
+		ImVec2 m = ImGui::GetIO().MouseDelta;
 		cameraDeltaRollPitchYaw.z() += m.x * -rotationSensitivity;
 		cameraDeltaRollPitchYaw.y() += m.y * rotationSensitivity;
 		isUsing = true;
 	}
 
 	if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
-		ImVec2 m = ImGui::GetMouseDragDelta();
-		cameraDeltaDistance += m.y;
+		ImVec2 m = ImGui::GetIO().MouseDelta;
+		cameraDeltaDistance += m.y * distanceSensitivity;
 		isUsing = true;
 	}
 }
@@ -760,10 +762,9 @@ bool Gizmo::drawMesh(MeshPart& meshPart, Material& material, const Matrix4f& tra
 	return true;
 }
 
-void Gizmo::doScreenHit(InstanceID objectInstanceID, MeshPart& meshPart, int instanceBase, int instanceCount)
+void Gizmo::doScreenHit(MeshPart& meshPart, const InstancedTransformRenderDataHandle& handle, list<IRenderData*> bindings)
 {
-	screenHits.push_back({ &meshPart, instanceBase, instanceCount });
-	objectIDToInstanceID[instanceBase] = objectInstanceID;
+	screenHits.push_back({ &meshPart, handle.batchDrawData, (int)handle.instanceID, (int)handle.instanceCount, bindings });
 }
 
 void Gizmo::setCameraControl(CameraControlMode mode, float transitionSensitivity, float rotationSensitivity, float distanceSensitivity)
@@ -799,15 +800,10 @@ void Gizmo::beginFrame(ImDrawList* drawList)
 
 	ScreenHitInfo hitInfo;
 	if (camera->cameraRender.fetchScreenHit(hitInfo)) {
-		auto iter = objectIDToInstanceID.find(hitInfo.hitInstanceID);
-		if (iter != objectIDToInstanceID.end()) {
-			picked = true;
-			Object* object = (Object*)Brane::getPtrByInsID(iter->second);
-			EditorManager::selectObject(object);
-		}
+		picked = true;
+		Object* object = (Object*)Brane::getPtrByInsID(hitInfo.hitObjectIDHigh << 16 | hitInfo.hitObjectIDLow);
+		EditorManager::selectObject(object);
 	}
-
-	objectIDToInstanceID.clear();
 
 	if (ImGui::IsWindowHovered()) {
 		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)) {
@@ -926,7 +922,7 @@ void Gizmo::onUpdate(Camera& camera)
 
 	if (cameraDeltaDistance != 0) {
 		camera.distance += cameraDeltaDistance;
-		camera.distance = max(0, camera.distance);
+		camera.distance = std::max(0.0f, camera.distance);
 		cameraDeltaDistance = 0;
 	}
 }
@@ -1117,54 +1113,59 @@ void Gizmo::onRender2D(ImDrawList* drawList)
 
 void Gizmo::onRender3D(RenderInfo& info)
 {
-	if (info.sceneData == NULL || info.camera == NULL || info.renderGraph == NULL)
-		return;
-	info.sceneData->debugRenderData.updateLineData = std::move(lines);
-	ViewCulledMeshBatchDrawData batchDrawData = info.sceneData->getViewCulledBatchDrawData(info.camera->getRender(), false);
+	RENDER_THREAD_ENQUEUE_TASK(ReflectionCaptureProbeUpdate, ([
+		lines = std::move(lines), meshes = std::move(meshes), screenHits = std::move(screenHits)] (RenderThreadContext& context)
+	{
+		context.sceneRenderData->debugRenderData.updateLineData = std::move(lines);
+		ViewCulledMeshBatchDrawData batchDrawData = context.sceneRenderData->getViewCulledBatchDrawData(context.cameraRenderData, false);
 	
-	for (auto& draw : meshes) {
-		if (draw.instanceID < 0) {
-			MeshTransformData data;
-			data.localToWorld = draw.transformMat;
-			Vector3f pos, sca;
-			Quaternionf rot;
-			draw.transformMat.decompose(pos, rot, sca);
-			data.worldScale = sca;
-			const BoundBox& bound = draw.meshPart->bound;
-			data.localCenter = bound.getCenter();
-			data.localExtent = bound.getExtent();
-			data.localRadius = data.localExtent.norm();
-			data.flag = 0;
-			draw.instanceID = info.sceneData->setMeshTransform(data);
-			draw.instanceCount = 1;
-		}
-		MeshRenderCommand cmd;
-		cmd.mesh = draw.meshPart;
-		cmd.material = draw.material;
-		cmd.sceneData = info.sceneData;
-		cmd.instanceID = draw.instanceID;
-		cmd.instanceIDCount = draw.instanceCount;
-		cmd.hasShadow = false;
-		cmd.batchDrawData = batchDrawData;
-		MeshBatchDrawKey renderKey(draw.meshPart, draw.material, batchDrawData.transformData->getMeshTransform(draw.instanceID).isNegativeScale());
-		cmd.meshBatchDrawCall = batchDrawData.batchDrawCommandArray->setMeshBatchDrawCall(renderKey, draw.instanceID);
-		cmd.reverseCullMode = renderKey.negativeScale;
-		info.renderGraph->setRenderCommand(cmd);
-	}
+		for (auto draw : meshes) {
+			if (draw.instanceID < 0) {
+				MeshTransformData data;
+				data.localToWorld = draw.transformMat;
+				Vector3f pos, sca;
+				Quaternionf rot;
+				draw.transformMat.decompose(pos, rot, sca);
+				data.worldScale = sca;
+				const BoundBox& bound = draw.meshPart->bound;
+				data.localCenter = bound.getCenter();
+				data.localExtent = bound.getExtent();
+				data.localRadius = data.localExtent.norm();
+				data.flag = 0;
+				draw.instanceID = context.sceneRenderData->setMeshTransform(data);
+				draw.instanceCount = 1;
+			}
+			MeshRenderCommand cmd;
+			cmd.mesh = draw.meshPart;
+			cmd.materialRenderData = draw.material->getMaterialRenderData();
+			cmd.sceneData = context.sceneRenderData;
+			cmd.instanceID = draw.instanceID;
+			cmd.instanceIDCount = draw.instanceCount;
+			cmd.hasShadow = false;
+			cmd.batchDrawData = batchDrawData;
+			MeshBatchDrawKey renderKey(draw.meshPart, cmd.materialRenderData, batchDrawData.transformData->getMeshTransform(draw.instanceID).isNegativeScale());
+			cmd.meshBatchDrawCall = batchDrawData.batchDrawCommandArray->setMeshBatchDrawCall(renderKey, draw.instanceID);
+			cmd.reverseCullMode = renderKey.negativeScale;
 
-	for (auto& hit : screenHits) {
-		if (hit.instanceID < 0 || hit.instanceCount <= 0) {
-			continue;
+			collectRenderDataInCommand(context.renderGraph, cmd);
+			context.renderGraph->setRenderCommand(cmd);
 		}
-		ScreenHitRenderCommand cmd;
-		cmd.mesh = hit.meshPart;
-		cmd.sceneData = info.sceneData;
-		cmd.instanceID = hit.instanceID;
-		cmd.instanceIDCount = hit.instanceCount;
-		cmd.batchDrawData = batchDrawData;
-		cmd.reverseCullMode = batchDrawData.transformData->getMeshTransform(hit.instanceID).isNegativeScale();
-		info.renderGraph->setRenderCommand(cmd);
-	}
-	meshes.clear();
-	screenHits.clear();
+
+		for (auto& hit : screenHits) {
+			if (hit.instanceID < 0 || hit.instanceCount <= 0) {
+				continue;
+			}
+			ScreenHitRenderCommand cmd;
+			cmd.mesh = hit.meshPart;
+			cmd.sceneData = context.sceneRenderData;
+			cmd.instanceID = hit.instanceID;
+			cmd.instanceIDCount = hit.instanceCount;
+			cmd.batchDrawData = hit.batchDrawData.isValid() ? hit.batchDrawData : batchDrawData;
+			cmd.reverseCullMode = batchDrawData.transformData->getMeshTransform(hit.instanceID).isNegativeScale();
+			cmd.bindings = hit.bindings;
+
+			collectRenderDataInCommand(context.renderGraph, cmd);
+			context.renderGraph->setRenderCommand(cmd);
+		}
+	}));
 }

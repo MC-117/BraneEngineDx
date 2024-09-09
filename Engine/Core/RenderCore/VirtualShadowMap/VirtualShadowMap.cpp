@@ -10,6 +10,7 @@
 #include "../../InitializationManager.h"
 #include "../DebugRenderData.h"
 #include "../../Profile/RenderProfile.h"
+#include "../RenderCoreUtility.h"
 
 SerializeInstance(VirtualShadowMapConfig);
 
@@ -308,7 +309,7 @@ bool VSMInstanceDrawResource::ExecutionOrder::operator()(const VSMInstanceDrawRe
 			if (t0.meshData < t1.meshData)
 				return true;
 			if (t0.meshData == t1.meshData)
-				return t0.materialData < t1.materialData;
+				return t0.materialVariant < t1.materialVariant;
 		}
 	}
 	return false;
@@ -319,14 +320,14 @@ bool VSMInstanceDrawResource::ExecutionOrder::operator()(const VSMInstanceDrawRe
 	return (*this)(*t0, *t1);
 }
 
-VSMMeshBatchDrawKey::VSMMeshBatchDrawKey(MeshPart* meshPart, Material* material, bool negativeScale)
-	: MeshBatchDrawKey(meshPart, material, negativeScale)
+VSMMeshBatchDrawKey::VSMMeshBatchDrawKey(MeshPart* meshPart, IRenderData* materialRenderData, bool negativeScale)
+	: MeshBatchDrawKey(meshPart, materialRenderData, negativeScale)
 {
 }
 
 bool VSMMeshBatchDrawKey::isValid() const
 {
-	return meshPart != NULL && meshPart->meshData != NULL && material != NULL;
+	return meshPart != NULL && meshPart->meshData != NULL && materialRenderData != NULL;
 }
 
 bool VSMMeshBatchDrawKey::operator<(const VSMMeshBatchDrawKey& key) const
@@ -335,9 +336,9 @@ bool VSMMeshBatchDrawKey::operator<(const VSMMeshBatchDrawKey& key) const
 		return true;
 	else if (meshPart == key.meshPart)
 	{
-		if (material < key.material)
+		if (materialRenderData < key.materialRenderData)
 			return true;
-		else if (material == key.material)
+		else if (materialRenderData == key.materialRenderData)
 			return negativeScale < key.negativeScale;
 	}
 	return false;
@@ -346,14 +347,14 @@ bool VSMMeshBatchDrawKey::operator<(const VSMMeshBatchDrawKey& key) const
 bool VSMMeshBatchDrawKey::operator==(const VSMMeshBatchDrawKey& key) const
 {
 	return meshPart == key.meshPart
-	&& material == key.material
+	&& materialRenderData == key.materialRenderData
 	&& negativeScale == key.negativeScale;
 }
 
 std::size_t hash<VSMMeshBatchDrawKey>::operator()(const VSMMeshBatchDrawKey& key) const
 {
 	size_t hash = (size_t)key.meshPart;
-	hash_combine(hash, (size_t)key.material);
+	hash_combine(hash, (size_t)key.materialRenderData);
 	hash_combine(hash, key.negativeScale ? 1 : 0);
 	return hash;
 }
@@ -493,11 +494,11 @@ void VirtualShadowMapManager::LightEntry::addMeshCommand(const VSMMeshBatchDrawC
 	indirectCmd.baseInstance = 0;
 
 	VSMInstanceDrawResource& resource = batch->resources.emplace_back();
-	resource.materialData = dynamic_cast<MaterialRenderData*>(callItem.first.material->getRenderData());
 	resource.meshData = mesh->meshData;
 	resource.reverseCullMode = key.negativeScale;
 	resource.transformData = call.transformData;
-	resource.shaderProgram = call.shaderProgram;
+	resource.shaderProgram = call.materialVariant->program;
+	resource.materialVariant = call.materialVariant;
 	resource.extraData = call.bindings;
 }
 
@@ -1071,7 +1072,8 @@ void VirtualShadowMapArray::render(IRenderContext& context, const LightRenderDat
 		RENDER_DESC_SCOPE(DrawBatch, "View: %d, Ins: %d, Cmd: %d", batchInfo->data.viewCount, batchInfo->data.instanceCount, cmdCount);
 		for (int cmdIndex = 0; cmdIndex < cmdCount; cmdIndex++) {
 			VSMInstanceDrawResource& resource = batch->resources[cmdIndex];
-			RENDER_DESC_SCOPE(IndirectDrawMesh, "Material(%s)", AssetInfo::getPath(resource.materialData->material).c_str());
+			// RENDER_DESC_SCOPE(IndirectDrawMesh, "Material(%s)", AssetInfo::getPath(resource.materialData->material).c_str());
+			RENDER_DESC_SCOPE(IndirectDrawMesh, "Material");
 			bool shaderSwitch = false;
 
 			if (resourceContext.shaderProgram != resource.shaderProgram) {
@@ -1099,16 +1101,16 @@ void VirtualShadowMapArray::render(IRenderContext& context, const LightRenderDat
 				context.bindMeshData(resource.meshData);
 			}
 
-			if (shaderSwitch || resourceContext.materialData != resource.materialData) {
-				resourceContext.materialData = resource.materialData;
+			if (shaderSwitch || resourceContext.materialVariant != resource.materialVariant) {
+				resourceContext.materialVariant = resource.materialVariant;
 				resourceContext.reverseCullMode = resource.reverseCullMode;
-				
-				resource.materialData->bindCullMode(context, resource.reverseCullMode);
-				resource.materialData->bind(context);
+
+				bindMaterialCullMode(context, resource.materialVariant, resource.reverseCullMode);
+				bindMaterial(context, resource.materialVariant);
 			}
 			else if (resourceContext.reverseCullMode != resource.reverseCullMode) {
 				resourceContext.reverseCullMode = resource.reverseCullMode;
-				resource.materialData->bindCullMode(context, resource.reverseCullMode);
+				bindMaterialCullMode(context, resource.materialVariant, resource.reverseCullMode);
 			}
 
 			if (shaderSwitch || cmdIndex == 0) {

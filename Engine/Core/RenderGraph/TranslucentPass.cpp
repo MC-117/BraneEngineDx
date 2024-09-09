@@ -37,7 +37,11 @@ bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 {
 	const bool enableVSMDepthPass = VirtualShadowMapConfig::isEnable();
 
-	ShaderProgram* shader = NULL;
+	MaterialRenderData* materialRenderData = command.materialRenderData;
+	if (materialRenderData == NULL)
+		return false;
+
+	IMaterial* materialVariant = NULL;
 	Enum<ShaderFeature> shaderFeature = command.getShaderFeature();
 	if (enableVSMDepthPass) {
 		ShaderMatchRule matchRule;
@@ -45,43 +49,25 @@ bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 		matchRule.fragmentFlag = ShaderMatchFlag::Best;
 		Enum<ShaderFeature> vsmShaderFeature = shaderFeature;
 		vsmShaderFeature |= Shader_VSM;
-		shader = command.material->getShader()->getProgram(vsmShaderFeature, matchRule);
-		if (shader && !shader->shaderType.has(Shader_VSM))
-			shader = NULL;
+		materialVariant = materialRenderData->getVariant(vsmShaderFeature, matchRule);
+		if (materialVariant && !materialVariant->program->shaderType.has(Shader_VSM))
+			materialVariant = NULL;
 	}
-	if (shader == NULL) {
-		shader = command.material->getShader()->getProgram(shaderFeature);
-		if (shader == NULL) {
+	if (materialVariant == NULL) {
+		materialVariant = materialRenderData->getVariant(shaderFeature);
+		if (materialVariant == NULL) {
 			Console::warn("Shader %s don't have mode %s",
-				command.material->getShaderName().c_str(),
+				materialRenderData->getShaderName().c_str(),
 				getShaderFeatureNames(shaderFeature).c_str());
 			return false;
 		}
 	}
 
-	if (!shader->init())
+	if (!materialVariant->init())
 		return false;
 
 	static const ShaderPropertyName& ssrName = "SSR";
-	const bool needSSR = shader->getShaderMacroSet().has(ssrName);
-
-	MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(command.material->getRenderData());
-	if (materialRenderData == NULL)
-		return false;
-	if (materialRenderData->usedFrame < (long long)Time::frames()) {
-		materialRenderData->program = shader;
-		materialRenderData->create();
-		renderGraph->getRenderDataCollector()->add(*materialRenderData);
-		materialRenderData->usedFrame = Time::frames();
-	}
-
-	for (auto binding : command.bindings) {
-		if (binding->usedFrame < (long long)Time::frames()) {
-			binding->create();
-			renderGraph->getRenderDataCollector()->add(*binding);
-			binding->usedFrame = Time::frames();
-		}
-	}
+	const bool needSSR = materialVariant->program->getShaderMacroSet().has(ssrName);
 
 	MeshData* meshData = command.mesh == NULL ? NULL : command.mesh->meshData;
 	if (meshData)
@@ -91,9 +77,9 @@ bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 	task.age = 0;
 	task.sceneData = command.sceneData;
 	task.batchDrawData = command.batchDrawData;
-	task.shaderProgram = shader;
+	task.shaderProgram = materialVariant->program;
+	task.materialVariant = materialVariant;
 	task.renderMode = command.getRenderMode();
-	task.materialData = materialRenderData;
 	task.meshData = meshData;
 	task.extraData = command.bindings;
 
@@ -113,6 +99,11 @@ bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 		}
 	}
 
+	return true;
+}
+
+bool TranslucentPass::loadDefaultResource()
+{
 	return true;
 }
 
@@ -181,10 +172,7 @@ TranslucentSSRBinding* TranslucentPass::getSSRBinding(const SceneRenderData& sce
 	ssrBinding->ssrInfo.hiZMaxStep = 48;
 	ssrBinding->ssrInfo.hiZUVScale = hiZUVScale;
 
-	if (ssrBinding->usedFrame < (long long)Time::frames()) {
-		ssrBinding->create();
-		renderGraph->getRenderDataCollector()->add(*ssrBinding);
-		ssrBinding->usedFrame = Time::frames();
-	}
+	ssrBinding->create();
+	renderGraph->getRenderDataCollectorRenderThread()->add(*ssrBinding);
 	return ssrBinding.get();
 }

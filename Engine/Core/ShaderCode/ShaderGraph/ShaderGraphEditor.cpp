@@ -1,6 +1,7 @@
 #include "ShaderGraphEditor.h"
 
 #include "HLSLGeneration.h"
+#include "TextureNode.h"
 #include "../../Attributes/TagAttribute.h"
 #include "../../CodeGeneration/ClangGeneration.h"
 #include "../../Importer/MaterialImporter.h"
@@ -100,4 +101,16 @@ void ShaderGraphEditor::onCustomGUI(EditorInfo& info)
 {
 	GraphEditor::onCustomGUI(info);
 	onCompileGUI(info);
+}
+
+void ShaderGraphEditor::onVariableChanged(EditorInfo& info, GraphVariable& variable)
+{
+	GraphEditor::onVariableChanged(info, variable);
+	Material* baseMaterial = shaderGraph->getBaseMaterial();
+	if (baseMaterial) {
+		ShaderVariable* shaderVariable = castTo<ShaderVariable>(variable);
+		if (shaderVariable) {
+			shaderVariable->applyToMaterial(*baseMaterial);
+		}
+	}
 }

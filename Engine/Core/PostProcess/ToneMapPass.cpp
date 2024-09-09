@@ -13,19 +13,24 @@ ToneMapPass::ToneMapPass(const string & name, Material * material)
 
 void ToneMapPass::prepare()
 {
-	MaterialRenderData* materialRenderData = (MaterialRenderData*)this->materialRenderData;
-	materialRenderData->program = program;
-	materialRenderData->create();
+	materialVaraint = materialRenderData->getVariant(Shader_Postprocess);
+	if (materialVaraint == NULL) {
+		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", materialRenderData->getShaderName().c_str());
+		throw runtime_error("ShaderVariant not found");
+		return;
+	}
+	materialVaraint->init();
 }
 
 void ToneMapPass::execute(IRenderContext& context)
 {
 	materialRenderData->upload();
 
+	ShaderProgram* program = materialVaraint->program;
 	context.bindShaderProgram(program);
 
-	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
-	context.bindMaterialTextures(((MaterialRenderData*)materialRenderData)->vendorMaterial);
+	context.bindMaterialBuffer(materialVaraint);
+	context.bindMaterialTextures(materialVaraint);
 
 	if (program->isComputable()) {
 		static const ShaderPropertyName imageMapName = "imageMap";
@@ -60,13 +65,13 @@ void ToneMapPass::execute(IRenderContext& context)
 	}
 }
 
-bool ToneMapPass::mapMaterialParameter(RenderInfo & info)
+bool ToneMapPass::loadDefaultResource()
 {
 	if (material == NULL)
 		material = getAssetByPath<Material>("Engine/Shaders/PostProcess/ToneMapPassFS.mat");
 	if (material == NULL || resource == NULL || resource->screenTexture == NULL)
 		return false;
-	materialRenderData = material->getRenderData();
+	materialRenderData = material->getMaterialRenderData();
 	return materialRenderData;
 }
 
@@ -74,17 +79,17 @@ void ToneMapPass::render(RenderInfo & info)
 {
 	if (!enable)
 		return;
-	if (!mapMaterialParameter(info))
-		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-	program = material->getShader()->getProgram(Shader_Postprocess);
-	if (program == NULL) {
-		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName().c_str());
+	if (!loadDefaultResource())
 		return;
-	}
-	program->init();
-	info.renderGraph->addPass(*this);
+
+	RENDER_THREAD_ENQUEUE_TASK(AddToneMapPass, ([this, materialRenderData = materialRenderData] (RenderThreadContext& context)
+	{
+		context.renderGraph->addPass(*this);
+		if (materialRenderData)
+			renderGraph->getRenderDataCollectorMainThread()->add(*materialRenderData);
+	}));
 }
 
 void ToneMapPass::resize(const Unit2Di& size)

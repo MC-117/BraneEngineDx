@@ -737,10 +737,7 @@ bool Transform::serialize(SerializationInfo & to)
 
 		pinfo->set("physicalMaterial", rigidBody->material);
 
-		SerializationInfo* cinfos = pinfo->add("colliders");
-		cinfos->type = "Array";
-		cinfos->arrayType = "Collider";
-
+		SerializationInfo* cinfos = pinfo->addArray("colliders", "Collider");
 		for (int i = 0; i < rigidBody->getColliderCount(); i++) {
 			PhysicalCollider* collider = rigidBody->getCollider(i);
 
@@ -784,6 +781,8 @@ void Transform::getMeshTransformData(MeshTransformData* data)
 	MeshTransformFlags negativeScaleFlag = (worldScale.x() * worldScale.y() * worldScale.z()) < 0 ? MeshTransform_NegScale : MeshTransform_None;
 	MeshTransformFlags dynamicFlag = (rigidBody != NULL && rigidBody->material.physicalType == PhysicalType::DYNAMIC) ? MeshTransform_None : MeshTransform_Dynamic;
 	data->flag = negativeScaleFlag | dynamicFlag;
+	data->objectIDHigh = instanceID >> 16;
+	data->objectIDLow = instanceID & 0xFFFFFFFFu;
 }
 
 Transform* Transform::getParentTransform()

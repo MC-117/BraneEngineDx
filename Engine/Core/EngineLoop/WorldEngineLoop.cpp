@@ -1,5 +1,6 @@
 ﻿#include "WorldEngineLoop.h"
 #include "../GUI/GUISurface.h"
+#include "../Engine.h"
 
 WorldEngineLoop::WorldEngineLoop(Ref<World> world)
 {
@@ -76,6 +77,12 @@ void WorldRenderEngineLoop::onTick(float deltaTime)
         return;
     pWorld->tick(deltaTime);
     GUISurface& surface = GUISurface::getMainGUISurface();
+    if (Engine::get().getInput().getCursorHidden()) {
+        surface.gizmo.setCameraControl(Gizmo::CameraControlMode::None);
+    }
+    else {
+        surface.gizmo.setCameraControl(Gizmo::CameraControlMode::Free);
+    }
     surface.gizmoUpdate();
     GUIEngineLoop::onTick(deltaTime);
     pWorld->afterTick();
@@ -86,6 +93,6 @@ void WorldRenderEngineLoop::onPrerender()
     World* pWorld = world;
     if (!pWorld)
         return;
-    pWorld->prerender(*renderPool.sceneData);
     GUIEngineLoop::onPrerender();
+    pWorld->prerender(*renderPool.sceneData);
 }

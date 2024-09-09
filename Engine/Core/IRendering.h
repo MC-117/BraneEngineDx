@@ -23,8 +23,6 @@ public:
 	virtual Shader* getShader() const = 0;
 	virtual RenderTarget* getShadowRenderTarget() const = 0;
 	virtual bool getCanCastShadow() const = 0;
-	virtual unsigned int getInstanceID() const = 0;
-	virtual unsigned int getInstanceCount() const = 0;
 	virtual void* getRender() const = 0;
 };
 

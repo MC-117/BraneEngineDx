@@ -11,8 +11,6 @@ class ENGINE_API Material
 	friend class MaterialRenderData;
 	friend class MaterialLoader;
 public:
-	bool isTwoSide = false;
-	bool cullFront = false;
 	bool canCastShadow = true;
 	bool isDeferred = false;
 	uint16_t renderOrder = 0;
@@ -43,6 +41,7 @@ public:
 	int getRenderOrder();
 
 	void setTwoSide(bool b);
+	void setCullFront(bool b);
 	void setPassNum(unsigned int num);
 	void setPass(unsigned int pass);
 	bool setScalar(const Name& name, const float value);
@@ -51,6 +50,8 @@ public:
 	bool setMatrix(const Name& name, const Matrix4f& value);
 	bool setTexture(const Name& name, Texture& value);
 	bool setImage(const Name& name, const Image& value);
+	bool getTwoSide() const;
+	bool getCullFront() const;
 	unsigned int getPassNum();
 	Vector3u getLocalSize();
 	float* getScaler(const Name& name);
@@ -97,11 +98,12 @@ public:
 
 	IRenderData* getRenderData();
 
+	MaterialRenderData* getMaterialRenderData();
 	
 protected:
 	MaterialDesc desc;
 	IMaterial* vendorMaterial = NULL;
-	IRenderData* renderData = NULL;
+	MaterialRenderData* renderData = NULL;
 
 	static unsigned int nextMaterialID;
 	static bool isLoadDefaultMaterial;

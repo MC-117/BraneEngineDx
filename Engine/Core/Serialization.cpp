@@ -97,6 +97,29 @@ SerializationInfo * SerializationInfo::add(const string & name)
 	return &info;
 }
 
+SerializationInfo* SerializationInfo::addArray(const string& name, const string& type)
+{
+	if (consistKey(name))
+		return NULL;
+	subfeilds.insert(pair<string, size_t>(name, sublists.size()));
+	SerializationInfo& info = sublists.emplace_back();
+	info.name = name;
+	info.path = path;
+	info.type = "Array";
+	info.arrayType = type;
+	return &info;
+}
+
+SerializationInfo* SerializationInfo::addStringArray(const string& name)
+{
+	return addArray(name, "String");
+}
+
+SerializationInfo* SerializationInfo::addNumberArray(const string& name)
+{
+	return addArray(name, "Number");
+}
+
 void SerializationInfo::push(Decimal value)
 {
 	numFeild.insert(pair<string, size_t>(to_string(numFeild.size()), numFeild.size()));

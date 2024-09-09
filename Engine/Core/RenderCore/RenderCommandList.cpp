@@ -264,34 +264,20 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataC
 		return false;
 	Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
 	shaderFeature |= extraFeature;
-	ShaderProgram* shader = cmd.material->getShader()->getProgram(shaderFeature);
-	if (shader == NULL) {
+	IMaterial* materialVariant = cmd.materialRenderData->getVariant(shaderFeature);
+	if (materialVariant == NULL) {
 		Console::warn("Shader %s don't have mode %s",
-			cmd.material->getShaderName().c_str(),
+			cmd.materialRenderData->getShaderName().c_str(),
 			getShaderFeatureNames(shaderFeature).c_str());
 		return false;
 	}
 
-	if (!shader->init())
+	if (!materialVariant->init())
 		return false;
 
-	MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(cmd.material->getRenderData());
+	MaterialRenderData* materialRenderData = cmd.materialRenderData;
 	if (materialRenderData == NULL)
 		return false;
-	if (materialRenderData->usedFrame < (long long)Time::frames()) {
-		materialRenderData->program = shader;
-		materialRenderData->create();
-		collector.add(*materialRenderData);
-		materialRenderData->usedFrame = Time::frames();
-	}
-
-	for (auto binding : cmd.bindings) {
-		if (binding->usedFrame < (long long)Time::frames()) {
-			binding->create();
-			collector.add(*binding);
-			binding->usedFrame = Time::frames();
-		}
-	}
 
 	MeshData* meshData = cmd.mesh == NULL ? NULL : cmd.mesh->meshData;
 	if (meshData)
@@ -301,9 +287,9 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataC
 	task.age = 0;
 	task.sceneData = cmd.sceneData;
 	task.batchDrawData = cmd.batchDrawData;
-	task.shaderProgram = shader;
+	task.shaderProgram = materialVariant->program;
+	task.materialVariant = materialVariant;
 	task.renderMode = cmd.getRenderMode();
-	task.materialData = materialRenderData;
 	task.meshData = meshData;
 	task.extraData = cmd.bindings;
 
@@ -323,14 +309,6 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataC
 	if (!cmd.isValid())
 		return false;
 
-	for (auto binding : cmd.bindings) {
-		if (binding->usedFrame < (long long)Time::frames()) {
-			binding->create();
-			collector.add(*binding);
-			binding->usedFrame = Time::frames();
-		}
-	}
-
 	MeshData* meshData = cmd.mesh == NULL ? NULL : cmd.mesh->meshData;
 	if (meshData)
 		meshData->init();
@@ -340,37 +318,31 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataC
 	for (auto extraFeature : extraFeatures) {
 		Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
 		shaderFeature |= extraFeature;
-		ShaderProgram* shader = cmd.material->getShader()->getProgram(shaderFeature);
-		if (shader == NULL) {
-			Console::warn("Shader %s don't have mode %d", cmd.material->getShaderName().c_str(), shaderFeature.enumValue);
+		IMaterial* materialVariant = cmd.materialRenderData->getVariant(shaderFeature);
+		if (materialVariant == NULL) {
+			Console::warn("Shader %s don't have mode %d", cmd.materialRenderData->getShaderName().c_str(), shaderFeature.enumValue);
 			success &= false;
 			continue;
 		}
 
-		if (!shader->init()) {
+		if (!materialVariant->init()) {
 			success &= false;
 			continue;
 		}
 
-		MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(cmd.material->getRenderData());
+		MaterialRenderData* materialRenderData = cmd.materialRenderData;
 		if (materialRenderData == NULL) {
 			success &= false;
 			continue;
-		}
-		if (materialRenderData->usedFrame < (long long)Time::frames()) {
-			materialRenderData->program = shader;
-			materialRenderData->create();
-			collector.add(*materialRenderData);
-			materialRenderData->usedFrame = Time::frames();
 		}
 
 		RenderTask task;
 		task.age = 0;
 		task.sceneData = cmd.sceneData;
 		task.batchDrawData = cmd.batchDrawData;
-		task.shaderProgram = shader;
+		task.shaderProgram = materialVariant->program;
+		task.materialVariant = materialVariant;
 		task.renderMode = cmd.getRenderMode();
-		task.materialData = materialRenderData;
 		task.meshData = meshData;
 		task.extraData = cmd.bindings;
 

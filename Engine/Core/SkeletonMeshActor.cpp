@@ -208,26 +208,28 @@ void SkeletonMeshActor::prerender(SceneRenderData& sceneData)
 	data.localCenter = bound.getCenter();
 	data.localExtent = bound.getExtent();
 	data.localRadius = data.localExtent.norm();
-	objectID = sceneData.setMeshTransform(data);
-	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
-		Skeleton::SkeletonInfo& skeletonInfo = *skeleton.getSkeleton(i);
-		SkeletonMeshRender& render = *skeletonMeshRenders[i];
-		render.transformMat = transformMat;
-		render.instanceID = objectID;
-		render.instanceCount = 1;
-		render.resetBoneTransform();
-		for (int j = 0; j < render.getBoneCount(); j++) {
-			int index = skeletonInfo.boneRemapIndex[j];
-			if (index < 0) {
-				render.setBoneTransform(j, skeletonInfo.data->getBoneData(j)->transformMatrix);
-			}
-			else {
-				Skeleton::BoneInfo& boneInfo = *skeleton.getBone(index);
-				Matrix4f t = boneInfo.bone->getTransformMat();
-				render.setBoneTransform(j, t * boneInfo.data->offsetMatrix);
+	RENDER_THREAD_ENQUEUE_TASK(MeshActorUpdateTransform, ([this, data] (RenderThreadContext& context)
+	{
+		unsigned int renderInstanceID = context.sceneRenderData->setMeshTransform(data);
+		for (int i = 0; i < skeletonMeshRenders.size(); i++) {
+			Skeleton::SkeletonInfo& skeletonInfo = *skeleton.getSkeleton(i);
+			SkeletonMeshRender& render = *skeletonMeshRenders[i];
+			render.transformMat = transformMat;
+			render.setInstanceInfo(renderInstanceID, 1);
+			render.resetBoneTransform();
+			for (int j = 0; j < render.getBoneCount(); j++) {
+				int index = skeletonInfo.boneRemapIndex[j];
+				if (index < 0) {
+					render.setBoneTransform(j, skeletonInfo.data->getBoneData(j)->transformMatrix);
+				}
+				else {
+					Skeleton::BoneInfo& boneInfo = *skeleton.getBone(index);
+					Matrix4f t = boneInfo.bone->getTransformMat();
+					render.setBoneTransform(j, t * boneInfo.data->offsetMatrix);
+				}
 			}
 		}
-	}
+	}));
 }
 
 Render * SkeletonMeshActor::getRender()
@@ -384,9 +386,7 @@ bool SkeletonMeshActor::serialize(SerializationInfo & to) {
 	if (!Actor::serialize(to))
 		return false;
 	
-	SerializationInfo& renderInfos = *to.add("renders");
-	renderInfos.type = "Array";
-	renderInfos.arrayType = "SkeletonMeshRender";
+	SerializationInfo& renderInfos = *to.addArray("renders", "SkeletonMeshRender");
 	for (int i = 0; i < skeletonMeshRenders.size(); i++) {
 		SerializationInfo& renderInfo = *renderInfos.push();
 		skeletonMeshRenders[i]->serialize(renderInfo);
@@ -412,9 +412,7 @@ bool SkeletonMeshActor::serialize(SerializationInfo & to) {
 		}
 	}
 
-	SerializationInfo& animInfo = *to.add("animationClips");
-	animInfo.type = "Array";
-	animInfo.arrayType = "String";
+	SerializationInfo& animInfo = *to.addStringArray("animationClips");
 	SerializationInfo& blendSpaceInfo = *to.add("blendSpaces");
 	for (auto b = animationClipList.begin(), e = animationClipList.end(); b != e; b++) {
 		AnimationBase* ab = animationClips[b->second];

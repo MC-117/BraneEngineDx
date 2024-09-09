@@ -1072,9 +1072,7 @@ bool BlendSpaceAnimation::serialize(SerializationInfo & to)
 {
 	AnimationBase::serialize(to);
 	to.set("name", name);
-	SerializationInfo* clipWrapInfo = to.add("clipWrap");
-	clipWrapInfo->type = "Array";
-	clipWrapInfo->arrayType = "Clip";
+	SerializationInfo* clipWrapInfo = to.addArray("clipWrap", "Clip");
 	for (auto b = animationClipWrap.begin(), e = animationClipWrap.end(); b != e; b++) {
 		SerializationInfo* data = clipWrapInfo->push();
 		data->set("pos", (SVector2f)b->first);

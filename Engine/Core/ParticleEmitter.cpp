@@ -2,6 +2,7 @@
 #include "Asset.h"
 #include "Engine.h"
 #include "RenderCore/RenderCore.h"
+#include "RenderCore/RenderCoreUtility.h"
 
 SerializeInstance(ParticleEmitter);
 
@@ -450,12 +451,18 @@ void ParticleRender::render(RenderInfo & info)
 {
 	for (auto b = particleEmtters.begin(), e = particleEmtters.end(); b != e; b++)
 		if (b->material != NULL) {
-			ParticleRenderCommand command;
-			command.sceneData = info.sceneData;
-			command.material = b->material;
-			command.mesh = NULL;
-			command.particles = &b->particles;
-			info.renderGraph->setRenderCommand(command);
+			list<Particle>* particles = &b->particles;
+			RENDER_THREAD_ENQUEUE_TASK(ParticleRenderUpdate, ([this, particles,
+				materialRenderData = b->material->getMaterialRenderData()] (RenderThreadContext& context)
+			{
+				ParticleRenderCommand command;
+				command.sceneData = context.sceneRenderData;
+				command.materialRenderData = materialRenderData;
+				command.mesh = NULL;
+				command.particles = particles;
+				collectRenderDataInCommand(context.renderGraph, command);
+				context.renderGraph->setRenderCommand(command);
+			}));
 		}
 }
 

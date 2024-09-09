@@ -139,13 +139,17 @@ void DirectLight::preRender(PreRenderInfo& info)
 
 void DirectLight::render(RenderInfo& info)
 {
-	info.sceneData->setMainLight(this);
-	if (VirtualShadowMapConfig::isEnable()) {
-		if (virtualShadowMapClipmap)
-			delete virtualShadowMapClipmap;
-		virtualShadowMapClipmap = info.sceneData->virtualShadowMapRenderData.newClipmap(info.camera->cameraRender);
-		info.sceneData->lightDataPack.addVirtualShadowMapClipmap(*virtualShadowMapClipmap);
-	}
+	bool isVSMEnable = VirtualShadowMapConfig::isEnable();
+	RENDER_THREAD_ENQUEUE_TASK(DirectLightUpdate, ([this, isVSMEnable] (RenderThreadContext& context)
+	{
+		context.sceneRenderData->setMainLight(this);
+		if (isVSMEnable) {
+			if (virtualShadowMapClipmap)
+				delete virtualShadowMapClipmap;
+			virtualShadowMapClipmap = context.sceneRenderData->virtualShadowMapRenderData.newClipmap(context.cameraRenderData);
+			context.sceneRenderData->lightDataPack.addVirtualShadowMapClipmap(*virtualShadowMapClipmap);
+		}
+	}));
 }
 
 Serializable* DirectLight::instantiate(const SerializationInfo& from)

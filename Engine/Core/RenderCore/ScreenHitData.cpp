@@ -1,6 +1,7 @@
 #include "ScreenHitData.h"
 #include "../RenderTarget.h"
 #include "RenderCommandList.h"
+#include "RenderCoreUtility.h"
 
 void ScreenHitData::resize(unsigned int width, unsigned int height)
 {
@@ -64,7 +65,7 @@ Enum<ShaderFeature> ScreenHitRenderCommand::getShaderFeature() const
 
 RenderMode ScreenHitRenderCommand::getRenderMode() const
 {
-	return RenderMode(material->getRenderOrder(), 0, 0);
+	return RenderMode(materialRenderData->renderOrder, 0, 0);
 }
 
 bool ScreenHitRenderCommand::canCastShadow() const
@@ -87,7 +88,7 @@ bool ScreenHitRenderPack::setRenderCommand(const IRenderCommand& command)
 	if (meshRenderCommand == NULL)
 		return false;
 
-	materialData = dynamic_cast<MaterialRenderData*>(command.material->getRenderData());
+	materialData = command.materialRenderData;
 	if (materialData == NULL)
 		return false;
 
@@ -100,16 +101,16 @@ bool ScreenHitRenderPack::setRenderCommand(const IRenderCommand& command)
 	return true;
 }
 
-void ScreenHitRenderPack::excute(IRenderContext& context, RenderTaskContext& taskContext)
+void ScreenHitRenderPack::excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext)
 {
 	if (meshBatchDrawCalls.empty())
 		return;
 
-	if (taskContext.materialData != materialData) {
-		taskContext.materialData = materialData;
-
-		materialData->bindCullMode(context, false);
-		materialData->bind(context);
+	if (taskContext.materialVariant != task.materialVariant) {
+		taskContext.materialVariant = task.materialVariant;
+		
+		bindMaterialCullMode(context, task.materialVariant, false);
+		bindMaterial(context, task.materialVariant);
 	}
 
 	CameraRenderData* cameraRenderData = dynamic_cast<CameraRenderData*>(taskContext.cameraData);
@@ -119,7 +120,7 @@ void ScreenHitRenderPack::excute(IRenderContext& context, RenderTaskContext& tas
 	for (auto& item : meshBatchDrawCalls)
 	{
 		if (item->reverseCullMode) {
-			materialData->bindCullMode(context, true);
+			bindMaterialCullMode(context, task.materialVariant, true);
 		}
 		for (int passIndex = 0; passIndex < materialData->desc.passNum; passIndex++) {
 			materialData->desc.currentPass = passIndex;
@@ -132,7 +133,7 @@ void ScreenHitRenderPack::excute(IRenderContext& context, RenderTaskContext& tas
 			}
 		}
 		if (item->reverseCullMode) {
-			materialData->bindCullMode(context, false);
+			bindMaterialCullMode(context, task.materialVariant, false);
 		}
 	}
 }

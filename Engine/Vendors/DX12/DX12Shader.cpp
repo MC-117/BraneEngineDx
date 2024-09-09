@@ -215,7 +215,7 @@ bool DX12ShaderProgram::init()
 	if (!dirty)
 		return true;
 	ShaderProgram::init();
-	if (const AttributeDesc* desc = getAttributeOffset(DX12ShaderStage::materialParameterBufferName))
+	if (const ShaderPropertyDesc* desc = getAttributeOffset(DX12ShaderStage::materialParameterBufferName))
 		if (const ShaderProperty* prop = desc->getConstantBuffer())
 			matInsBufSize = prop->size;
 	dirty = false;
@@ -294,14 +294,6 @@ void DX12ShaderProgram::memoryBarrier(unsigned int bitEnum)
 }
 
 void DX12ShaderProgram::uploadDrawInfo()
-{
-}
-
-void DX12ShaderProgram::uploadData()
-{
-}
-
-void DX12ShaderProgram::uploadAttribute(const string& name, unsigned int size, void* data)
 {
 }
 

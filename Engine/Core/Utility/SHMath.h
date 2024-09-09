@@ -16,6 +16,8 @@ struct ENGINE_API SHCoeff3
 
 	SHCoeff3();
 	SHCoeff3(const SHCoeff3& sh);
+
+	SHCoeff3& operator=(const SHCoeff3& sh);
 };
 
 struct ENGINE_API SHCoeff3RGB

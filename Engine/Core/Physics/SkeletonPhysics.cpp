@@ -177,17 +177,13 @@ void SkeletonPhysics::D6ConstraintInfo::deserialize(const SerializationInfo& inf
 void SkeletonPhysics::SkeletonPhysicsInfo::serialize(SerializationInfo& info)
 {
 	info.type = "SkeletonPhysics";
-	SerializationInfo& rigidbodiesInfo = *info.add("rigidbodies");
-	rigidbodiesInfo.type = "Array";
-	rigidbodiesInfo.arrayType = "RigidBodyInfo";
+	SerializationInfo& rigidbodiesInfo = *info.addArray("rigidbodies", "RigidBodyInfo");
 	for (auto b = rigidbodies.begin(), e = rigidbodies.end(); b != e; b++) {
 		SerializationInfo& rinfo = *rigidbodiesInfo.push();
 		b->serialize(rinfo);
 	}
 
-	SerializationInfo& constraintsInfo = *info.add("constraints");
-	constraintsInfo.type = "Array";
-	constraintsInfo.arrayType = "D6ConstraintInfo";
+	SerializationInfo& constraintsInfo = *info.addArray("constraints", "D6ConstraintInfo");
 	for (auto b = constraints.begin(), e = constraints.end(); b != e; b++) {
 		SerializationInfo& cinfo = *constraintsInfo.push();
 		b->serialize(cinfo);

@@ -11,12 +11,12 @@ using namespace Csm;
 
 void* Live2DAllocator::Allocate(const csmSizeType  size)
 {
-    return malloc(size);
+    return mi_malloc(size);
 }
 
 void Live2DAllocator::Deallocate(void* memory)
 {
-    free(memory);
+    mi_free(memory);
 }
 
 void* Live2DAllocator::AllocateAligned(const csmSizeType size, const csmUint32 alignment)

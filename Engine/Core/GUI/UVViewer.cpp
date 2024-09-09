@@ -4,6 +4,7 @@
 #include "../Editor/Editor.h"
 #include "../GUI/GUIUtility.h"
 #include "../RenderCore/RenderCore.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
 UVViewer::UVViewer(string name, bool defaultShow)
 	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
@@ -123,11 +124,21 @@ void UVViewer::onWindowGUI(GUIRenderInfo& info)
 		list->AddImage((ImTextureID)id, { pos.x + padding + hpw, pos.y + padding + hph },
 			{ pos.x + padding + hpw + tw, pos.y + padding + hph + th });
 	ImGui::PopStyleVar(2);
+}
 
-	MeshRenderCommand command;
-	command.sceneData = info.sceneData;
-	command.material = uvMaterial;
-	command.mesh = selectMeshPart;
+void UVViewer::onRender(RenderInfo& info)
+{
+	UIWindow::onRender(info);
 
-	info.renderGraph->setRenderCommand(command);
+	RENDER_THREAD_ENQUEUE_TASK(DrawUVMesh, ([materialRenderData = uvMaterial->getMaterialRenderData(),
+		selectMeshPart = selectMeshPart] (RenderThreadContext& context)
+	{
+		MeshRenderCommand command;
+		command.sceneData = context.sceneRenderData;
+		command.materialRenderData = materialRenderData;
+		command.mesh = selectMeshPart;
+
+		collectRenderDataInCommand(context.renderGraph, command);
+		context.renderGraph->setRenderCommand(command);
+	}));
 }

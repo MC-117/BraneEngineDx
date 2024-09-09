@@ -36,7 +36,7 @@ struct RenderTask
 	CameraRenderData* cameraData = NULL;
 	SurfaceData surface;
 	ShaderProgram* shaderProgram = NULL;
-	MaterialRenderData* materialData = NULL;
+	IMaterial* materialVariant = NULL;
 	MeshData* meshData = NULL;
 	list<IRenderData*> extraData;
 	IRenderPack* renderPack = NULL;

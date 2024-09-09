@@ -1,8 +1,10 @@
 #include "Spine2DRenderPack.h"
 
+#include "../Core/RenderCore/RenderTask.h"
+
 bool Spine2DRenderCommand::isValid() const
 {
-	return material && !material->isNull() && mesh != NULL && mesh->isValid();
+	return materialRenderData && materialRenderData->isValid() && mesh != NULL && mesh->isValid();
 }
 
 Enum<ShaderFeature> Spine2DRenderCommand::getShaderFeature() const
@@ -35,7 +37,7 @@ bool Spine2DRenderPack::setRenderCommand(const IRenderCommand& command)
 	if (spine2dCommand == NULL)
 		return false;
 
-	materialData = dynamic_cast<MaterialRenderData*>(command.material->getRenderData());
+	materialData = command.materialRenderData;
 	if (materialData == NULL)
 		return false;
 
@@ -52,20 +54,20 @@ bool Spine2DRenderPack::setRenderCommand(const IRenderCommand& command)
 	return true;
 }
 
-void Spine2DRenderPack::excute(IRenderContext& context, RenderTaskContext& taskContext)
+void Spine2DRenderPack::excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext)
 {
 	for (const auto& draw : drawList) {
 		context.setCullState(draw.resource.cullType);
 
-		auto iter = materialData->desc.colorField.find("baseColor");
-		if (iter != materialData->desc.colorField.end()) {
+		auto iter = task.materialVariant->desc.colorField.find("baseColor");
+		if (iter != task.materialVariant->desc.colorField.end()) {
 			iter->second.val = draw.resource.color;
 		}
 
 		static const ShaderPropertyName mainTextureName = "mainTexture";
 
 		context.bindTexture((ITexture*)draw.resource.texture->getVendorTexture(), mainTextureName);
-		context.bindMaterialBuffer(materialData->vendorMaterial);
+		context.bindMaterialBuffer(task.materialVariant);
 
 		context.meshDrawCall(draw.meshPartDesc);
 	}

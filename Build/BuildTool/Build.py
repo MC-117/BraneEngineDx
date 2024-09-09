@@ -16,6 +16,7 @@ class Solution:
     def __init__(self, rootPath):
         self.moduleCollector : BuildObjectCollector[Module] = BuildObjectCollector()
         self.targetCollector : BuildObjectCollector[Target] = BuildObjectCollector()
+        self.sortedTargets = []
         self.rootPath = Path(os.path.normpath(rootPath)).absolute().as_posix()
         os.chdir(self.rootPath)
         Log.log(f'Set working folder to "{self.rootPath}"')
@@ -57,6 +58,8 @@ class Solution:
                 pendingTargets.pop()
                 workingTargets.pop()
                 finishedTargets.add(target)
+                if not target in self.sortedTargets:
+                    self.sortedTargets.append(target)
                 Log.log(f'Target "{target.name}" resolved')
                 continue
 
@@ -72,6 +75,8 @@ class Solution:
             if len(target.targetDependencies) == 0:
                 pendingTargets.pop()
                 finishedTargets.add(target)
+                if not target in self.sortedTargets:
+                    self.sortedTargets.append(target)
                 Log.log(f'Target "{target.name}" resolved')
                 continue
             else:
@@ -87,7 +92,7 @@ class Solution:
                 Log.log(f'Resolving dependencies of Target "{target.name}"')
     
     def setup(self):
-        for target in self.targetCollector:
+        for target in self.sortedTargets:
             target.setupModules(self.moduleCollector, self.targetCollector)
     
     def generateProject(self, generatorName : str, solutionName : str):

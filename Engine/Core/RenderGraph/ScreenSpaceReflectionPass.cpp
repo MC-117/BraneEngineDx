@@ -1,29 +1,41 @@
 #include "ScreenSpaceReflectionPass.h"
 #include "../Asset.h"
 
-void ScreenSpaceReflectionPass::prepare()
+bool ScreenSpaceReflectionPass::loadDefaultResource()
 {
-	if (!enable)
-		return;
 	if (useComputeShader) {
-		if (computeMaterial == NULL) {
-			computeMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/SSRPass.mat");
-		}
-		if (computeMaterial) {
-			computeProgram = computeMaterial->getShader()->getProgram(Shader_Default);
-			computeProgram->init();
+		if (computeMaterialRenderData == NULL) {
+			Material* computeMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/SSRPass.mat");
+			if (computeMaterial)
+				computeMaterialRenderData = computeMaterial->getMaterialRenderData();
+			return computeMaterialRenderData;
 		}
 	}
 	else {
 		if (traceMaterial == NULL) {
 			traceMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/SSRTracePassFS.mat");
 		}
+		if (resolveMaterial == NULL) {
+			resolveMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/SSRResolvePassFS.mat");
+		}
+		return traceMaterial && resolveMaterial;
+	}
+}
+
+void ScreenSpaceReflectionPass::prepare()
+{
+	if (!enable)
+		return;
+	if (useComputeShader) {
+		if (computeMaterialRenderData) {
+			computeMaterialVariant = computeMaterialRenderData->getVariant(Shader_Default);
+			computeMaterialVariant->init();
+		}
+	}
+	else {
 		if (traceMaterial) {
 			traceProgram = traceMaterial->getShader()->getProgram(Shader_Postprocess);
 			traceProgram->init();
-		}
-		if (resolveMaterial == NULL) {
-			resolveMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/SSRResolvePassFS.mat");
 		}
 		if (resolveMaterial) {
 			resolveProgram = resolveMaterial->getShader()->getProgram(Shader_Postprocess);
@@ -38,7 +50,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 	if (!enable)
 		return;
 	if (useComputeShader) {
-		if (computeProgram == NULL)
+		if (computeMaterialVariant == NULL)
 			return;
 
 		static const ShaderPropertyName inTexture0Name = "inTexture0";
@@ -96,19 +108,19 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				int hiZWidth = hiZMap->getWidth();
 				int hiZHeight = hiZMap->getHeight();
 				Color hiZUVScale = { width * 0.5f / hiZWidth, height * 0.5f / hiZHeight, 2.0f / width, 2.0f / height };
-				Vector3u localSize = computeMaterial->getLocalSize();
+				Vector3u localSize = computeMaterialVariant->desc.localSize;
 				int dimX = ceilf(width / float(localSize.x())) * localSize.x();
 				int dimY = ceilf(height / float(localSize.y())) * localSize.y();
 
-				context.bindShaderProgram(computeProgram);
+				context.bindShaderProgram(computeMaterialVariant->program);
 
 				sceneData->bind(context);
 
 				cameraData->bind(context);
 
-				computeMaterialRenderData.vendorMaterial->desc.colorField["hiZUVScale"].val = hiZUVScale;
-				computeMaterialRenderData.upload();
-				context.bindMaterialBuffer(computeMaterialRenderData.vendorMaterial);
+				computeMaterialVariant->desc.colorField["hiZUVScale"].val = hiZUVScale;
+				computeMaterialRenderData->upload();
+				context.bindMaterialBuffer(computeMaterialVariant);
 				context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferASlot);
 				context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBSlot);
 				context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCSlot);

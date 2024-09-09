@@ -95,10 +95,16 @@ void EditorWorld::prerender(SceneRenderData& sceneData)
 		iter.current().prerender(sceneData);
 }
 
-void EditorWorld::render(RenderGraph& renderGraph)
+void EditorWorld::render(RenderInfo& outerInfo)
 {
 	if (camera.size.x == 0 || camera.size.y == 0)
 		return;
+
+	RenderThreadContext context = RenderThread::get().getTopStack();
+	context.sceneRenderData = sceneRenderData;
+	context.cameraRenderData = camera.cameraRender.getRenderData();
+
+	RENDER_CONTEXT_SCOPE(context);
 
 	prerender(*sceneRenderData);
 
@@ -106,10 +112,7 @@ void EditorWorld::render(RenderGraph& renderGraph)
 	vector<Render*> renders;
 
 	RenderInfo info;
-	info.sceneData = sceneRenderData;
-	info.renderGraph = &renderGraph;
 	info.camera = &camera;
-	renderGraph.sceneDatas.insert(sceneRenderData);
 
 	iter.reset();
 	while (iter.next()) {

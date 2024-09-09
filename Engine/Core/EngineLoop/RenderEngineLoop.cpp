@@ -1,6 +1,7 @@
 ﻿#include "RenderEngineLoop.h"
 
 #include "../GUI/GUISurface.h"
+#include "Core/RenderCore/RenderThread.h"
 
 RenderEngineLoop::RenderEngineLoop(RenderPool& renderPool)
     : renderPool(renderPool)
@@ -20,10 +21,15 @@ void RenderEngineLoop::init()
 void RenderEngineLoop::loop(float deltaTime)
 {
     onTick(deltaTime);
-    renderPool.beginRender();
+    
     Camera* currentCamera = GUISurface::getMainGUISurface().getCamera();
-    renderInfo.sceneData = renderPool.sceneData;
-    renderInfo.renderGraph = renderPool.renderGraph;
+    RenderThreadContext context;
+    context.renderGraph = renderPool.renderGraph;
+    context.sceneRenderData = renderPool.sceneData;
+    context.cameraRenderData = currentCamera->cameraRender.getRenderData();
+
+    RENDER_CONTEXT_SCOPE(context);
+    renderPool.beginRender();
     renderInfo.camera = currentCamera;
     onPrerender();
     renderPool.render(false);

@@ -297,8 +297,8 @@ struct VSMInstanceDrawResource
 
 	bool reverseCullMode = false;
 	IRenderData* transformData = NULL;
-	MaterialRenderData* materialData = NULL;
 	ShaderProgram* shaderProgram = NULL;
+	IMaterial* materialVariant = NULL;
 	MeshData* meshData = NULL;
 	list<IRenderData*> extraData;
 };
@@ -312,7 +312,7 @@ struct TVSMMeshBatchDrawCall : TDrawCallBase<Data>
 
 	bool reverseCullMode = false;
 	IRenderData* transformData = NULL;
-	ShaderProgram* shaderProgram = NULL;
+	IMaterial* materialVariant = NULL;
 	list<IRenderData*> bindings;
 	
 	template<class K>
@@ -401,13 +401,13 @@ void TVSMMeshBatchDrawCall<Data>::clean()
 	
 	reverseCullMode = false;
 	transformData = NULL;
-	shaderProgram = NULL;
+	materialVariant = NULL;
 	bindings.clear();
 }
 
 struct VSMMeshBatchDrawKey : MeshBatchDrawKey
 {
-	VSMMeshBatchDrawKey(MeshPart* meshPart, Material* material, bool negativeScale = false);
+	VSMMeshBatchDrawKey(MeshPart* meshPart, IRenderData* materialRenderData, bool negativeScale = false);
 	bool isValid() const;
 	bool operator<(const VSMMeshBatchDrawKey& key) const;
 	bool operator==(const VSMMeshBatchDrawKey& key) const;

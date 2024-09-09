@@ -15,13 +15,19 @@ BloomPass::BloomPass(const string & name, Material * material)
 
 void BloomPass::prepare()
 {
+	materialVaraint = materialRenderData->getVariant(Shader_Postprocess);
+	if (materialVaraint == NULL) {
+		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", materialRenderData->getShaderName().c_str());
+		throw runtime_error("ShaderVariant not found");
+		return;
+	}
+
+	materialVaraint->init();
+	
 	for (int i = 0; i < bloomLevel; i++) {
 		bloomRenderTargets[i]->init();
 		screenRenderTargets[i]->init();
 	}
-	MaterialRenderData* materialRenderData = (MaterialRenderData*)this->materialRenderData;
-	materialRenderData->program = program;
-	materialRenderData->create();
 }
 
 void BloomPass::execute(IRenderContext& context)
@@ -30,8 +36,11 @@ void BloomPass::execute(IRenderContext& context)
 	static const ShaderPropertyName imageMapName = "imageMap";
 
 	materialRenderData->upload();
+
+	ShaderProgram* program = materialVaraint->program;
+	
 	context.bindShaderProgram(program);
-	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
+	context.bindMaterialBuffer(materialVaraint);
 
 	if (program->isComputable()) {
 		Vector3u localSize = material->getLocalSize();
@@ -125,7 +134,7 @@ void BloomPass::execute(IRenderContext& context)
 	}
 }
 
-bool BloomPass::mapMaterialParameter(RenderInfo & info)
+bool BloomPass::loadDefaultResource()
 {
 	if (material == NULL)
 		material = getAssetByPath<Material>("Engine/Shaders/PostProcess/BloomPassFS.mat");
@@ -134,7 +143,7 @@ bool BloomPass::mapMaterialParameter(RenderInfo & info)
 	material->setCount("bloomLevel", bloomLevel);
 	material->setScalar("width", size.x);
 	material->setScalar("height", size.y);
-	materialRenderData = material->getRenderData();
+	materialRenderData = material->getMaterialRenderData();
 	return materialRenderData;
 }
 
@@ -142,19 +151,17 @@ void BloomPass::render(RenderInfo& info)
 {
 	if (!enable)
 		return;
-	if (!mapMaterialParameter(info))
-		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-	program = material->getShader()->getProgram(Shader_Postprocess);
-	if (program == NULL) {
-		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName().c_str());
+	if (!loadDefaultResource())
 		return;
-	}
 
-	program->init();
-
-	info.renderGraph->addPass(*this);
+	RENDER_THREAD_ENQUEUE_TASK(AddBloomPass, ([this, materialRenderData = materialRenderData] (RenderThreadContext& context)
+	{
+		context.renderGraph->addPass(*this);
+		if (materialRenderData)
+			renderGraph->getRenderDataCollectorMainThread()->add(*materialRenderData);
+	}));
 }
 
 void BloomPass::resize(const Unit2Di & size)

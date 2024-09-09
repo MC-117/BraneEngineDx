@@ -174,7 +174,7 @@ public:
 		return remove(handle);
 	}
 
-	void operator()(Args... args)
+	void operator()(Args... args) const
 	{
 		for (auto b = funcs.begin(), e = funcs.end(); b != e; b++)
 			b->second(args...);

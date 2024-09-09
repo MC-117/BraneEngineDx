@@ -8,7 +8,7 @@ BlurPass::BlurPass(const string& name, Material* material)
 {
 }
 
-bool BlurPass::mapMaterialParameter(RenderInfo& info)
+bool BlurPass::loadDefaultResource()
 {
 	if (material == NULL)
 		material = getAssetByPath<Material>("Engine/Shaders/PostProcess/BlurPass.mat");
@@ -27,7 +27,7 @@ void BlurPass::render(RenderInfo& info)
 {
 	if (!enable)
 		return;
-	if (!mapMaterialParameter(info))
+	if (!loadDefaultResource())
 		return;
 	if (size.x == 0 || size.y == 0)
 		return;

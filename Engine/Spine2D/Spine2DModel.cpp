@@ -187,6 +187,7 @@ void Spine2DModel::TextureLoader::unload(void* texture)
 }
 
 ImporterRegister<Spine2DModelImporter> spine2djsonImporter(".spine2djson", true);
+ImporterRegister<Spine2DModelImporter> spine2dbinImporter(".spine2dbin", true);
 
 bool Spine2DModelImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 {
@@ -197,7 +198,7 @@ bool Spine2DModelImporter::loadInternal(const ImportInfo& info, ImportResult& re
         return false;
     }
 
-    Asset* asset = new Asset(&PythonScriptAssetInfo::assetInfo, info.filename, info.path);
+    Asset* asset = new Asset(&Spine2DModelAssetInfo::assetInfo, info.filename, info.path);
     asset->asset[0] = model;
     if (AssetManager::registAsset(*asset)) {
         result.assets.push_back(asset);

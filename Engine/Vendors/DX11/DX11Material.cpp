@@ -16,7 +16,7 @@ void DX11Material::uploadAttribute(const Name& name, unsigned int size, void* da
 {
 	if (matInsBufHost == NULL || program == NULL)
 		return;
-	const DX11ShaderProgram::AttributeDesc* desc = program->getAttributeOffset(name);
+	const ShaderPropertyDesc* desc = program->getAttributeOffset(name);
 	if (desc == NULL)
 		return;
 	const ShaderProperty* prop = desc->getParameter();

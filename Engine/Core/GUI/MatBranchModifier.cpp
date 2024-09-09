@@ -30,8 +30,9 @@ void MatBranchModifier::onWindowGUI(GUIRenderInfo& info)
 	ImGui::InputText("Scalar Name", &scalarName);
 	if (!scalarName.empty())
 		scalarE = ImGui::DragFloat(scalarName.c_str(), &scalar);
-	for (int i = 0; i < meshRender->materials.size(); i++) {
-		Material* mat = meshRender->materials[i];
+	MeshMaterialCollection& collection = meshRender->collection;
+	for (int i = 0; i < collection.getMaterialCount(); i++) {
+		Material* mat = collection.getMaterial(i).second;
 		if (mat == NULL)
 			continue;
 		if (colorE)
@@ -40,8 +41,8 @@ void MatBranchModifier::onWindowGUI(GUIRenderInfo& info)
 			mat->setScalar(scalarName, scalar);
 	}
 	if (ImGui::Button("Save All")) {
-		for (int i = 0; i < meshRender->materials.size(); i++) {
-			Material* mat = meshRender->materials[i];
+		for (int i = 0; i < collection.getMaterialCount(); i++) {
+		Material* mat = collection.getMaterial(i).second;
 			if (mat == NULL)
 				continue;
 			string path = AssetInfo::getPath(mat);

@@ -9,7 +9,6 @@ Color lightDirection: 0.000000, 0.000000, 0.000000, 0.000000
 Scalar cloudOpacity: 1.000000
 Scalar starBrightness: 0.000000
 Scalar radius: 3276800.000000
-Scalar time: 199.198853
 Scalar sunBrightness: 2.000000
 Scalar sunHeight: 1.000000
 Scalar sunRadius: 0.000300
@@ -43,7 +42,6 @@ uniform float sunBrightness;
 uniform float sunHeight;
 uniform float sunRadius;
 uniform float radius;
-uniform float time;
 uniform float cloudSpeed;
 uniform float lowNoisePower;
 uniform float highNoisePower;
@@ -91,7 +89,7 @@ FragmentOut SURFACE_MAIN
     float cutoff = clamp(dot(cameraVector, float3(0, 0, 1)), 0, 1);
     float3 objectPos = getPosition(fin.TransMat);
     float cloudAlpha = cloudOpacity * (1 - clamp(fin.LocalPos.z / (4096 * -0.05), 0, 1));
-    float offset = time * cloudSpeed * 0.1;
+    float offset = gameTime * cloudSpeed * 0.001;
     float cloud = SAMPLE_TEX(cloudNoiseMap, float2(offset + fin.TexCoords.x, fin.TexCoords.y)).r;
     float sky = SAMPLE_TEX(skyMap, float2(offset + fin.TexCoords.x, fin.TexCoords.y)).r;
     cloudAlpha = lerp(0, lerp(sky, cloud, cutoff), cloudAlpha);

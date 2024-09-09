@@ -1,4 +1,7 @@
 #include "SceneRenderData.h"
+
+#include "RenderCoreUtility.h"
+#include "RenderThread.h"
 #include "../Camera.h"
 #include "../Render.h"
 #include "../DirectLight.h"
@@ -16,17 +19,14 @@ SceneRenderData::SceneRenderData()
 	staticMeshTransformRenderData.setFrequentUpdate(false);
 }
 
-void SceneRenderData::setCamera(Render* cameraRender)
+void SceneRenderData::setCamera(CameraRenderData* cameraRenderData)
 {
-	CameraRender* _cameraRender = dynamic_cast<CameraRender*>(cameraRender);
-	if (_cameraRender) {
-		CameraRenderData* cameraRenderData = _cameraRender->getRenderData();
-		if (_cameraRender->isMainCameraRender())
+	if (cameraRenderData) {
+		if (cameraRenderData->isMainCamera)
 			cameraRenderDatas.insert(cameraRenderDatas.begin(), cameraRenderData);
 		else
 			cameraRenderDatas.push_back(cameraRenderData);
 		cameraRenderData->probeGrid.probePool = &probePoolPack;
-		cameraRenderData->create();
 		cameraRenderData->cullingContext.setSourceBatchDrawCommandArray(&meshBatchDrawCommandArray);
 		cameraRenderData->staticCullingContext.setSourceBatchDrawCommandArray(&staticMeshBatchDrawCommandArray);
 	}
@@ -45,19 +45,19 @@ int SceneRenderData::setLocalLight(Render* lightRender)
 	return -1;
 }
 
-int SceneRenderData::setReflectionCapture(Render* captureRender)
+int SceneRenderData::setReflectionCapture(const ReflectionProbeUpdateData& updateData)
 {
-	return reflectionProbeDataPack.setProbe(dynamic_cast<ReflectionCaptureProbeRender*>(captureRender));
+	return reflectionProbeDataPack.setProbe(updateData);
 }
 
-int SceneRenderData::setEnvLightCapture(Render* captureRender)
+int SceneRenderData::setEnvLightCapture(const EnvLightProbeData& envLightProbeData)
 {
-	return envLightProbeDataPack.setLightCapture(dynamic_cast<EnvLightCaptureProbeRender*>(captureRender));
+	return envLightProbeDataPack.setLightCapture(envLightProbeData);
 }
 
-int SceneRenderData::setEnvLightData(Render* captureRender)
+int SceneRenderData::setEnvLightData(const EnvLightUpdateData& updateData)
 {
-	return envLightDataPack.setLightData(dynamic_cast<EnvLightCaptureProbeRender*>(captureRender));
+	return envLightDataPack.setLightData(updateData);
 }
 
 unsigned int SceneRenderData::setMeshTransform(const MeshTransformData& data)
@@ -65,9 +65,9 @@ unsigned int SceneRenderData::setMeshTransform(const MeshTransformData& data)
 	return meshTransformRenderData.setMeshTransform(data);
 }
 
-unsigned int SceneRenderData::setMeshTransform(const vector<MeshTransformData>& datas)
+MeshTransformDataArray::ReservedData SceneRenderData::addMeshTransform(unsigned int count)
 {
-	return meshTransformRenderData.setMeshTransform(datas);
+	return meshTransformRenderData.addMeshTransform(count);
 }
 
 inline Guid makeGuid(void* ptr0, void* ptr1)
@@ -91,11 +91,6 @@ MeshBatchDrawCall* SceneRenderData::setMeshPartTransform(const MeshBatchDrawKey&
 unsigned int SceneRenderData::setStaticMeshTransform(const MeshTransformData& data)
 {
 	return staticMeshTransformRenderData.setMeshTransform(data);
-}
-
-unsigned int SceneRenderData::setStaticMeshTransform(const vector<MeshTransformData>& datas)
-{
-	return staticMeshTransformRenderData.setMeshTransform(datas);
 }
 
 MeshBatchDrawCall* SceneRenderData::getStaticMeshPartTransform(const MeshBatchDrawKey& key)
@@ -136,12 +131,10 @@ MeshBatchDrawData SceneRenderData::getBatchDrawData(bool isStatic)
 	return batchDrawData;
 }
 
-ViewCulledMeshBatchDrawData SceneRenderData::getViewCulledBatchDrawData(Render* cameraRender, bool isStatic)
+ViewCulledMeshBatchDrawData SceneRenderData::getViewCulledBatchDrawData(CameraRenderData* cameraRenderData, bool isStatic)
 {
 	ViewCulledMeshBatchDrawData batchDrawData;
-	CameraRender* _cameraRender = dynamic_cast<CameraRender*>(cameraRender);
-	if (_cameraRender) {
-		CameraRenderData* cameraRenderData = _cameraRender->getRenderData();
+	if (cameraRenderData) {
 		batchDrawData.transformData = isStatic ? &staticMeshTransformRenderData : &meshTransformRenderData;
 		batchDrawData.batchDrawCommandArray = isStatic
 			? &cameraRenderData->staticCullingContext
@@ -233,9 +226,10 @@ void SceneRenderData::upload()
 	reflectionProbeDataPack.upload();
 	envLightDataPack.upload();
 	for (auto& cameraRenderData : cameraRenderDatas) {
-		if (cameraRenderData->usedFrame < (long long)Time::frames()) {
+		updateRenderDataRenderThread(cameraRenderData, RenderThread::get().getRenderFrame());
+		if (cameraRenderData->usedFrameRenderThread < (long long)Time::frames()) {
 			cameraRenderData->upload();
-			cameraRenderData->usedFrame = Time::frames();
+			cameraRenderData->usedFrameRenderThread = Time::frames();
 		}
 	}
 	virtualShadowMapRenderData.upload();

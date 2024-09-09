@@ -764,6 +764,7 @@ void GraphEditor::onCreateVariablesGUI(EditorInfo& info)
 			if (editor) {
 				if (ImGui::BeginHeaderBox(variable->getName().c_str())) {
 					editor->onInspectGUI(info);
+					onVariableChanged(info, *variable);
 				}
 				else {
 					graph->removeVariable(variable);
@@ -839,5 +840,9 @@ void GraphEditor::onGenerationGUI(EditorInfo& info)
 }
 
 void GraphEditor::onCustomGUI(EditorInfo& info)
+{
+}
+
+void GraphEditor::onVariableChanged(EditorInfo& info, GraphVariable& variable)
 {
 }

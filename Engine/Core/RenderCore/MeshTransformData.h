@@ -20,7 +20,9 @@ struct MeshTransformData
 	Vector3f localExtent;
 	unsigned int flag;
 	unsigned int updateFrame;
-	unsigned int pad[3];
+	unsigned int objectIDHigh;
+	unsigned int objectIDLow;
+	unsigned int pad;
 
 	MeshTransformData();
 

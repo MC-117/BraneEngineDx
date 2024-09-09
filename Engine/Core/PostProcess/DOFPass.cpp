@@ -13,13 +13,24 @@ DOFPass::DOFPass(const string & name, Material * material)
 
 void DOFPass::prepare()
 {
+	materialVaraint = materialRenderData->getVariant(Shader_Postprocess);
+	if (materialVaraint == NULL) {
+		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", materialRenderData->getShaderName().c_str());
+		throw runtime_error("ShaderVariant not found");
+		return;
+	}
+
+	if (materialVaraint->isComputable()) {
+		throw runtime_error("Shader type mismatch");
+		return;
+	}
+
+	materialVaraint->init();
+	
 	Texture2D* sceneMap = dynamic_cast<Texture2D*>(resource->screenTexture);
 	if (sceneMap)
 		dofMap.setTextureInfo(sceneMap->getTextureInfo());
 	dofRenderTarget.init();
-	MaterialRenderData* materialRenderData = (MaterialRenderData*)this->materialRenderData;
-	materialRenderData->program = program;
-	materialRenderData->create();
 }
 
 void DOFPass::execute(IRenderContext& context)
@@ -29,9 +40,10 @@ void DOFPass::execute(IRenderContext& context)
 
 	materialRenderData->upload();
 
+	ShaderProgram* program = materialVaraint->program;
 	context.bindShaderProgram(program);
 
-	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
+	context.bindMaterialBuffer(materialVaraint);
 	cameraRenderData->bind(context);
 
 	context.bindFrame(dofRenderTarget.getVendorRenderTarget());
@@ -51,7 +63,7 @@ void DOFPass::execute(IRenderContext& context)
 	resource->screenRenderTarget = &dofRenderTarget;
 }
 
-bool DOFPass::mapMaterialParameter(RenderInfo & info)
+bool DOFPass::loadDefaultResource()
 {
 	if (material == NULL)
 		material = getAssetByPath<Material>("Engine/Shaders/PostProcess/DOFPassFS.mat");
@@ -59,7 +71,7 @@ bool DOFPass::mapMaterialParameter(RenderInfo & info)
 	if (material == NULL || resource == NULL || cameraRenderData == NULL ||
 		resource->screenTexture == NULL || resource->depthTexture == NULL)
 		return false;
-	materialRenderData = material->getRenderData();
+	materialRenderData = material->getMaterialRenderData();
 	if (autoFocus) {
 		CameraRenderData* data = dynamic_cast<CameraRenderData*>(cameraRenderData);
 		material->setScalar("focusDistance", data->data.distance + focusLengthOffset);
@@ -71,21 +83,17 @@ void DOFPass::render(RenderInfo & info)
 {
 	if (!enable)
 		return;
-	if (!mapMaterialParameter(info))
-		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-	program = material->getShader()->getProgram(Shader_Postprocess);
-	if (program == NULL) {
-		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName().c_str());
+	if (!loadDefaultResource())
 		return;
-	}
 
-	if (!program->isComputable()) {
-		program->init();
-
-		info.renderGraph->addPass(*this);
-	}
+	RENDER_THREAD_ENQUEUE_TASK(AddDOFPass, ([this, materialRenderData = materialRenderData] (RenderThreadContext& context)
+	{
+		context.renderGraph->addPass(*this);
+		if (materialRenderData)
+			renderGraph->getRenderDataCollectorMainThread()->add(*materialRenderData);
+	}));
 }
 
 void DOFPass::onGUI(EditorInfo& info)

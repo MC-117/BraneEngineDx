@@ -9,7 +9,7 @@ public:
 	Texture2D blurYMap = Texture2D(size.x, size.y, 4, false, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear });
 	BlurPass(const string& name = "Blur", Material* material = NULL);
 
-	virtual bool mapMaterialParameter(RenderInfo& info);
+	virtual bool loadDefaultResource();
 	virtual void render(RenderInfo& info);
 	virtual void resize(const Unit2Di& size);
 protected:

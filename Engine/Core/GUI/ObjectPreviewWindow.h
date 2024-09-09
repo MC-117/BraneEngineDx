@@ -15,7 +15,7 @@ public:
 	virtual void setSerializable(const SerializationInfo& info);
 	virtual void setAsset(Asset& asset);
 
-	virtual void onUpdateScene(RenderGraph& renderGraph, float width, float height);
+	virtual void onUpdateScene(float width, float height);
 
 	virtual void onToolBarGUI(GUIRenderInfo& info);
 	virtual void onInspectorBarGUI(GUIRenderInfo& info);

@@ -1,9 +1,10 @@
 #include "DirectShadowRenderPack.h"
 #include "RenderCommandList.h"
+#include "RenderCoreUtility.h"
 
 bool DirectShadowRenderCommand::isValid() const
 {
-	return sceneData && material && !material->isNull() && mesh != NULL && mesh->isValid();
+	return sceneData && materialRenderData && materialRenderData->isValid() && mesh != NULL && mesh->isValid();
 }
 
 Enum<ShaderFeature> DirectShadowRenderCommand::getShaderFeature() const
@@ -24,7 +25,7 @@ Enum<ShaderFeature> DirectShadowRenderCommand::getShaderFeature() const
 
 RenderMode DirectShadowRenderCommand::getRenderMode() const
 {
-	return RenderMode(material->getRenderOrder(), 0, 0);
+	return RenderMode(materialRenderData->renderOrder, 0, 0);
 }
 
 bool DirectShadowRenderCommand::canCastShadow() const
@@ -47,7 +48,7 @@ bool DirectShadowRenderPack::setRenderCommand(const IRenderCommand& command)
 	if (directShadowRenderCommand == NULL || directShadowRenderCommand->meshBatchDrawCall == NULL)
 		return false;
 
-	materialData = dynamic_cast<MaterialRenderData*>(command.material->getRenderData());
+	materialData = command.materialRenderData;
 	if (materialData == NULL)
 		return false;
 
@@ -60,22 +61,22 @@ bool DirectShadowRenderPack::setRenderCommand(const IRenderCommand& command)
 	return true;
 }
 
-void DirectShadowRenderPack::excute(IRenderContext& context, RenderTaskContext& taskContext)
+void DirectShadowRenderPack::excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext)
 {
 	if (meshBatchDrawCalls.empty())
 		return;
 
-	if (taskContext.materialData != materialData) {
-		taskContext.materialData = materialData;
+	if (taskContext.materialVariant != task.materialVariant) {
+		taskContext.materialVariant = task.materialVariant;
 
-		materialData->bindCullMode(context, false);
-		materialData->bind(context);
+		bindMaterialCullMode(context, task.materialVariant, false);
+		bindMaterial(context, task.materialVariant);
 	}
 
 	for (auto& item : meshBatchDrawCalls)
 	{
 		if (item->reverseCullMode) {
-			materialData->bindCullMode(context, true);
+			bindMaterialCullMode(context, task.materialVariant, true);
 		}
 		for (int passIndex = 0; passIndex < materialData->desc.passNum; passIndex++) {
 			materialData->desc.currentPass = passIndex;
@@ -88,7 +89,7 @@ void DirectShadowRenderPack::excute(IRenderContext& context, RenderTaskContext& 
 			}
 		}
 		if (item->reverseCullMode) {
-			materialData->bindCullMode(context, false);
+			bindMaterialCullMode(context, task.materialVariant, false);
 		}
 	}
 }

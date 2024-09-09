@@ -22,20 +22,26 @@ struct RGBASHCoeff3Data
 	RGBASHCoeff3Data& operator+=(const RGBASHCoeff3Data& v);
 };
 
+struct EnvLightProbeData
+{
+	SHCoeff3RGB* shCoeff3RGB = NULL;
+	TextureCube* lightCubeMap = NULL;
+};
+
 struct EnvLightProbeRenderData : public IRenderData
 {
-	vector<EnvLightCaptureProbeRender*> captures;
+	vector<EnvLightProbeData> datas;
 	GPUBuffer envSHDataBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(RGBASHCoeff3Data), GAF_ReadWrite, CAF_None);
 	GPUBuffer readBackBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(RGBASHCoeff3Data), GAF_ReadWrite, CAF_Read);
 
-	int setLightCapture(EnvLightCaptureProbeRender* capture);
+	int setLightCapture(const EnvLightProbeData& data);
 	virtual void create();
 	virtual void release();
 	virtual void upload();
 	virtual void bind(IRenderContext& context);
 	void clean();
 
-	void computeEnvLight(IRenderContext& context, EnvLightCaptureProbeRender& capture);
+	void computeEnvLight(IRenderContext& context, EnvLightProbeData& data);
 	void computeEnvLights(IRenderContext& context);
 protected:
 	static Material* material;
@@ -43,6 +49,16 @@ protected:
 	static bool isInited;
 
 	static void loadDefaultResource();
+};
+
+struct EnvLightUpdateData
+{
+	Vector3f position;
+	float radius = 0;
+	Vector3f tintColor;
+	float falloff = 0;
+	float cutoff = 0;
+	SHCoeff3RGB shCoeff3RGB;
 };
 
 struct EnvLightRenderData : public IRenderData
@@ -54,7 +70,7 @@ struct EnvLightRenderData : public IRenderData
 
 	EnvLightRenderData(ProbePoolRenderData& probePool);
 
-	int setLightData(EnvLightCaptureProbeRender* capture);
+	int setLightData(const EnvLightUpdateData& data);
 	virtual void create();
 	virtual void release();
 	virtual void upload();

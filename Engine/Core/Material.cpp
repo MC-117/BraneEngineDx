@@ -33,8 +33,6 @@ Material::Material(const Material & material)
 	desc.materialID = nextMaterialID;
 	nextMaterialID++;
 	desc.currentPass = 0;
-	isTwoSide = material.isTwoSide;
-	cullFront = material.cullFront;
 	canCastShadow = material.canCastShadow;
 	isDeferred = material.isDeferred;
 	renderOrder = material.renderOrder;
@@ -91,8 +89,6 @@ void Material::instantiateFrom(const Material& material)
 	desc.currentPass = 0;
 	desc.materialID = nextMaterialID;
 	nextMaterialID++;
-	isTwoSide = material.isTwoSide;
-	cullFront = material.cullFront;
 	canCastShadow = material.canCastShadow;
 	isDeferred = material.isDeferred;
 	renderOrder = material.renderOrder;
@@ -149,7 +145,12 @@ int Material::getRenderOrder()
 
 void Material::setTwoSide(bool b)
 {
-	isTwoSide = b;
+	desc.isTwoSide = b;
+}
+
+void Material::setCullFront(bool b)
+{
+	desc.cullFront = b;
 }
 
 void Material::setPassNum(unsigned int num)
@@ -214,6 +215,16 @@ bool Material::setImage(const Name & name, const Image & value)
 		return false;
 	iter->second.val = value;
 	return true;
+}
+
+bool Material::getTwoSide() const
+{
+	return desc.isTwoSide;
+}
+
+bool Material::getCullFront() const
+{
+	return desc.cullFront;
 }
 
 unsigned int Material::getPassNum()
@@ -475,10 +486,16 @@ bool Material::loadDefaultMaterial()
 
 IRenderData* Material::getRenderData()
 {
+	return getMaterialRenderData();
+}
+
+MaterialRenderData* Material::getMaterialRenderData()
+{
 	if (renderData)
 		return renderData;
 	MaterialRenderData* materialRenderData = new MaterialRenderData();
 	materialRenderData->material = this;
+	materialRenderData->desc.shader = getShader();
 	renderData = materialRenderData;
 	return renderData;
 }

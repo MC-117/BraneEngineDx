@@ -17,6 +17,12 @@ SHCoeff3::SHCoeff3(const SHCoeff3& sh)
 	memcpy(this, &sh, sizeof(SHCoeff3));
 }
 
+SHCoeff3& SHCoeff3::operator=(const SHCoeff3& sh)
+{
+	memcpy(this, &sh, sizeof(SHCoeff3));
+	return *this;
+}
+
 bool SHCoeff3RGB::isZero() const
 {
 	return memcmp(this, &zero, sizeof(SHCoeff3RGB)) == 0;

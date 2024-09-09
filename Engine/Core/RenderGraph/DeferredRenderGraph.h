@@ -43,7 +43,7 @@ struct DeferredSurfaceBuffer
 
 	DeferredSurfaceBuffer();
 
-	virtual void create(CameraRender* cameraRender);
+	virtual void create(CameraRenderData* cameraRenderData);
 	virtual void resize(unsigned int width, unsigned int height);
 	virtual void bind(IRenderContext& context);
 
@@ -83,9 +83,10 @@ public:
 	SurfaceData defaultGeometrySurfaceData;
 	SurfaceData defaultLightingSurfaceData;
 
-	Material* preDepthMaterial;
+	MaterialRenderData* preDepthMaterialRenderData;
 
-	BaseRenderDataCollector renderDataCollector;
+	BaseRenderDataCollector renderDataCollectorMainThread;
+	BaseRenderDataCollector renderDataCollectorRenderThread;
 
 	ScreenHitPass screenHitPass;
 	MeshPass preDepthPass;
@@ -110,18 +111,21 @@ public:
 
 	DeferredRenderGraph();
 
+	virtual bool loadDefaultResource();
+
 	virtual ISurfaceBuffer* newSurfaceBuffer();
 	virtual bool setRenderCommand(const IRenderCommand& cmd);
 	virtual void setImGuiDrawData(ImDrawData* drawData);
 	virtual void addPass(RenderPass& pass);
 	virtual void prepare();
-	virtual void execute(IRenderContext& context);
+	virtual void execute(IRenderContext& context, long long renderFrame);
 	virtual void reset();
 
 	void triggerPersistentDebugDraw();
 
 	virtual void getPasses(vector<pair<string, RenderPass*>>& passes);
-	virtual IRenderDataCollector* getRenderDataCollector();
+	virtual IRenderDataCollector* getRenderDataCollectorMainThread();
+	virtual IRenderDataCollector* getRenderDataCollectorRenderThread();
 
 	static Serializable* instantiate(const SerializationInfo& from);
 };

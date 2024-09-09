@@ -152,27 +152,6 @@ ShaderStageType ShaderStage::enumShaderStageType(const string & type)
 		return None_Shader_Stage;
 }
 
-const ShaderPropertyName& ShaderProgram::AttributeDesc::getName() const
-{
-	return properties.front().second->name;
-}
-
-const ShaderProperty* ShaderProgram::AttributeDesc::getParameter() const
-{
-	for (auto& prop : properties)
-		if (prop.second->type == ShaderProperty::Parameter)
-			return prop.second;
-	return NULL;
-}
-
-const ShaderProperty* ShaderProgram::AttributeDesc::getConstantBuffer() const
-{
-	for (auto& prop : properties)
-		if (prop.second->type == ShaderProperty::ConstantBuffer)
-			return prop.second;
-	return NULL;
-}
-
 unsigned int ShaderProgram::currentProgram = 0;
 
 ShaderProgram::ShaderProgram()
@@ -239,17 +218,12 @@ bool ShaderProgram::addShaderStage(ShaderStage & stage)
 bool ShaderProgram::init()
 {
 	shaderMacroSet.clear();
-	attributes.clear();
+	shaderPropertyLayout.clear();
 	for (const auto& stage : shaderStages) {
 		shaderMacroSet.append(stage.second->getShaderMacroSet());
 		for (const auto& prop : stage.second->properties) {
-			auto iter = attributes.find(prop.first);
-			AttributeDesc* desc;
-			if (iter == attributes.end())
-				desc = &attributes.insert(make_pair(prop.first, AttributeDesc())).first->second;
-			else
-				desc = &iter->second;
-			desc->properties.push_back(make_pair(stage.first, &prop.second));
+			auto& desc = shaderPropertyLayout.emplaceLayout(prop.first);
+			desc.properties.push_back(make_pair(stage.first, &prop.second));
 		}
 	}
 	return true;
@@ -258,6 +232,16 @@ bool ShaderProgram::init()
 unsigned int ShaderProgram::bind()
 {
 	return programId;
+}
+
+const ShaderPropertyDesc* ShaderProgram::getAttributeOffset(const ShaderPropertyName& name) const
+{
+	return shaderPropertyLayout.getLayout(name);
+}
+
+int ShaderProgram::getMaterialBufferSize()
+{
+	return shaderPropertyLayout.getBufferSize();
 }
 
 bool ShaderProgram::dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ)
@@ -274,29 +258,12 @@ unsigned int ShaderProgram::getProgramID()
 	return programId;
 }
 
-const ShaderProgram::AttributeDesc* ShaderProgram::getAttributeOffset(const ShaderPropertyName& name) const
-{
-	auto iter = attributes.find(name);
-	if (iter == attributes.end())
-		return NULL;
-	return &iter->second;
-}
-
-int ShaderProgram::getMaterialBufferSize()
-{
-	return 0;
-}
-
 unsigned int ShaderProgram::getCurrentProgramID()
 {
 	return currentProgram;
 }
 
 void ShaderProgram::memoryBarrier(unsigned int bitEnum)
-{
-}
-
-void ShaderProgram::uploadData()
 {
 }
 

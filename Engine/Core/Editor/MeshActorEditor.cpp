@@ -13,12 +13,14 @@ void MeshActorEditor::setInspectedObject(void* object)
 void MeshActorEditor::onPersistentGizmo(GizmoInfo& info)
 {
 	Camera* camera = dynamic_cast<Camera*>(EditorManager::getSelectedObject());
+	Mesh* mesh = meshActor->meshRender.getMesh();
+	MeshMaterialCollection& collection = meshActor->meshRender.collection;
 	if (camera) {
-		for (int i = 0; i < meshActor->meshRender.materials.size(); i++) {
-			Material* material = meshActor->meshRender.materials[i];
-			if (material == NULL || !meshActor->meshRender.meshPartsEnable[i])
+		for (int i = 0; i < collection.getMaterialCount(); i++) {
+			Material* material = collection.getMaterial(i).second;
+			if (material == NULL || !collection.getPartEnable(i))
 				continue;
-			MeshPart* part = &meshActor->meshRender.mesh->meshParts[i];
+			MeshPart* part = &mesh->meshParts[i];
 
 			if (!camera->culling(part->bound, meshActor->meshRender.transformMat)) {
 				info.gizmo->drawAABB(part->bound, meshActor->meshRender.transformMat, { 255, 0, 0 });
@@ -26,8 +28,8 @@ void MeshActorEditor::onPersistentGizmo(GizmoInfo& info)
 		}
 	}
 	if (ImGui::IsWindowFocused() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-		for (auto& meshPart : meshActor->meshRender.mesh->meshParts) {
-			info.gizmo->doScreenHit(meshActor->getInstanceID(), meshPart, meshActor->meshRender.instanceID, meshActor->meshRender.instanceCount);
+		for (auto& meshPart : mesh->meshParts) {
+			info.gizmo->doScreenHit(meshPart, meshActor->meshRender.getInstancedTransformRenderDataHandle());
 		}
 	}
 }
@@ -35,19 +37,21 @@ void MeshActorEditor::onPersistentGizmo(GizmoInfo& info)
 void MeshActorEditor::onHandleGizmo(GizmoInfo& info)
 {
 	ActorEditor::onHandleGizmo(info);
-	if (meshActor->meshRender.mesh == NULL)
+	Mesh* mesh = meshActor->meshRender.getMesh();
+	if (mesh == NULL)
 		return;
-	info.gizmo->drawAABB(meshActor->meshRender.mesh->bound,
+	info.gizmo->drawAABB(mesh->bound,
 		meshActor->meshRender.transformMat, Color(0.0f, 0.0f, 1.0f));
 }
 
 void MeshActorEditor::onRenderersGUI(EditorInfo& info)
 {
-	if (meshActor->meshRender.mesh == NULL) {
+	Mesh* mesh = meshActor->meshRender.getMesh();
+	if (mesh) {
 		ImGui::Text("No mesh");
 	}
 	else {
-		string meshPath = MeshAssetInfo::getPath(meshActor->meshRender.mesh);
+		string meshPath = MeshAssetInfo::getPath(mesh);
 		ImGui::Text(meshPath.c_str());
 	}
 

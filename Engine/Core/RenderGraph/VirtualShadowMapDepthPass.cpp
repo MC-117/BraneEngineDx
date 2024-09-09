@@ -5,12 +5,10 @@
 #include "../Profile/RenderProfile.h"
 #include "../Utility/RenderUtility.h"
 
-Material* VirtualShadowMapDepthPass::vsmMaterial = NULL;
+MaterialRenderData* VirtualShadowMapDepthPass::vsmMaterialRenderData = NULL;
 
 bool VirtualShadowMapDepthPass::setRenderCommand(const IRenderCommand& cmd)
 {
-	loadDefaultResource();
-
 	const MeshRenderCommand* meshCmd = dynamic_cast<const MeshRenderCommand*>(&cmd);
 	if (meshCmd == NULL || !cmd.isValid())
 		return false;
@@ -19,37 +17,23 @@ bool VirtualShadowMapDepthPass::setRenderCommand(const IRenderCommand& cmd)
 
 	ShaderMatchRule matchRule;
 	matchRule.fragmentFlag = ShaderMatchFlag::Best;
-	Material* material = cmd.material;
-	ShaderProgram* program = NULL;
+	MaterialRenderData* materialRenderData = cmd.materialRenderData;
+	
+	if (materialRenderData == NULL)
+		return false;
+	
+	IMaterial* materialVariant = NULL;
 	
 	Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
 	const RenderStage stage = enumRenderStage(cmd.getRenderMode().getRenderStage());
 	if (stage == RS_Aplha || stage == RS_Transparent)
-		program = material->getShader()->getProgram((unsigned int)shaderFeature | ShaderFeature::Shader_Depth | ShaderFeature::Shader_VSM, matchRule);
+		materialVariant = materialRenderData->getVariant((unsigned int)shaderFeature | ShaderFeature::Shader_Depth | ShaderFeature::Shader_VSM, matchRule);
 
-	if (program == NULL || !program->init()) {
-		material = vsmMaterial;
-		program = material->getShader()->getProgram(shaderFeature);
-		if (program == NULL || !program->init())
+	if (materialVariant == NULL || !materialVariant->init()) {
+		materialRenderData = vsmMaterialRenderData;
+		materialVariant = materialRenderData->getVariant(shaderFeature);
+		if (materialVariant == NULL || !materialVariant->init())
 			return false;
-	}
-
-	MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(material->getRenderData());
-	if (materialRenderData == NULL)
-		return false;
-	if (materialRenderData->usedFrame < (long long)Time::frames()) {
-		materialRenderData->program = program;
-		materialRenderData->create();
-		renderGraph->getRenderDataCollector()->add(*materialRenderData);
-		materialRenderData->usedFrame = Time::frames();
-	}
-
-	for (auto binding : cmd.bindings) {
-		if (binding->usedFrame < (long long)Time::frames()) {
-			binding->create();
-			renderGraph->getRenderDataCollector()->add(*binding);
-			binding->usedFrame = Time::frames();
-		}
 	}
 
 	MeshData* meshData = cmd.mesh == NULL ? NULL : cmd.mesh->meshData;
@@ -63,13 +47,28 @@ bool VirtualShadowMapDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	data.baseVertex = meshCmd->mesh->vertexFirst;
 
 	VSMMeshBatchDrawCall* call = sceneData.virtualShadowMapRenderData.meshBatchDrawCallCollection.setMeshBatchDrawCall(
-		VSMMeshBatchDrawKey(meshCmd->mesh, meshCmd->material, meshCmd->reverseCullMode),
+		VSMMeshBatchDrawKey(meshCmd->mesh, meshCmd->materialRenderData, meshCmd->reverseCullMode),
 		data, meshCmd->instanceID, meshCmd->instanceIDCount);
-	call->shaderProgram = program;
+	call->materialVariant = materialVariant;
 	call->transformData = meshCmd->batchDrawData.transformData;
 	call->bindings = meshCmd->bindings;
 
 	return true;
+}
+
+bool VirtualShadowMapDepthPass::loadDefaultResource()
+{
+	if (vsmMaterialRenderData == NULL) {
+		Material* vsmMaterial = getAssetByPath<Material>("Engine/Shaders/VSMDepth.mat");
+		if (vsmMaterial == NULL) {
+			throw runtime_error("Load Engine/Shaders/VSMDepth.mat failed");
+		}
+		vsmMaterialRenderData = vsmMaterial->getMaterialRenderData();
+	}
+	if (vsmMaterialRenderData) {
+		renderGraph->getRenderDataCollectorRenderThread()->add(*vsmMaterialRenderData);
+	}
+	return vsmMaterialRenderData;
 }
 
 void VirtualShadowMapDepthPass::prepare()
@@ -117,14 +116,4 @@ void VirtualShadowMapDepthPass::reset()
 void VirtualShadowMapDepthPass::getOutputTextures(vector<pair<string, Texture*>>& textures)
 {
 	textures = outputTextures;
-}
-
-void VirtualShadowMapDepthPass::loadDefaultResource()
-{
-	if (vsmMaterial)
-		return;
-	vsmMaterial = getAssetByPath<Material>("Engine/Shaders/VSMDepth.mat");
-	if (vsmMaterial == NULL) {
-		throw runtime_error("Load Engine/Shaders/VSMDepth.mat failed");
-	}
 }

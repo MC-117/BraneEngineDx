@@ -8,6 +8,16 @@
 
 class ReflectionCaptureProbeRender;
 
+struct ReflectionProbeUpdateData
+{
+	TextureCube* cubeMap;
+	Vector3f position;
+	float radius = 0;
+	Color tintColor;
+	float falloff = 5;
+	float cutoff = 0;
+};
+
 struct ReflectionProbeRenderData : public IRenderData
 {
 	ProbePoolRenderData& probePool;
@@ -17,7 +27,7 @@ struct ReflectionProbeRenderData : public IRenderData
 
 	ReflectionProbeRenderData(ProbePoolRenderData& probePool);
 
-	int setProbe(ReflectionCaptureProbeRender* capture);
+	int setProbe(const ReflectionProbeUpdateData& updateData);
 	virtual void create();
 	virtual void release();
 	virtual void upload();

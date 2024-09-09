@@ -24,6 +24,8 @@ public:
 	Enum<ClearFlags> minusClearFlags = Clear_None;
 
 	virtual bool setRenderCommand(const IRenderCommand& command);
+
+	virtual bool loadDefaultResource();
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);
 	virtual void reset();

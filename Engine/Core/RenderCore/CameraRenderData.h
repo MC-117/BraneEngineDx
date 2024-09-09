@@ -30,6 +30,7 @@ struct CameraRenderData : public IRenderData
 		ProbeGridInfo probeGridInfo;
 	};
 	int cameraRenderID = 0;
+	bool isMainCamera = false;
 	CameraRender* cameraRender = NULL;
 	CameraData data;
 	ProbeGridInfo probeGridInfo;
@@ -39,9 +40,12 @@ struct CameraRenderData : public IRenderData
 	ScreenHitData* hitData = NULL;
 	ISurfaceBuffer* surfaceBuffer = NULL;
 	SurfaceData surface;
+	Texture* sceneTexture = NULL;
 	ViewCullingContext cullingContext;
 	ViewCullingContext staticCullingContext;
 	GPUBuffer buffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(CameraUploadData));
+
+	void updateSurfaceBuffer(RenderGraph* renderGraph);
 
 	void setDebugProbeIndex(int probeIndex);
 	int getDebugProbeIndex() const;

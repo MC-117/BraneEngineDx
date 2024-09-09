@@ -15,7 +15,8 @@ public:
 	virtual void onSkeletonGUI(EditorInfo& info);
 	virtual void onAnimationGUI(EditorInfo& info);
 	virtual void onSkeletonPhysicsGUI(EditorInfo& info);
-
+	
+	virtual void onPersistentGizmo(GizmoInfo& info);
 	virtual void onHandleGizmo(GizmoInfo& info);
 
 	virtual void onSkeletonMeshActorGUI(EditorInfo& info);

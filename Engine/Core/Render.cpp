@@ -77,16 +77,6 @@ bool Render::getCanCastShadow() const
 	return canCastShadow;
 }
 
-unsigned int Render::getInstanceID() const
-{
-	return instanceID;
-}
-
-unsigned int Render::getInstanceCount() const
-{
-	return instanceCount;
-}
-
 void * Render::getRender() const
 {
 	return (void*)this;

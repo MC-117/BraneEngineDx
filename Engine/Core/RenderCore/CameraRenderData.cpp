@@ -23,6 +23,13 @@ void SurfaceData::bind(IRenderContext& context, Enum<ClearFlags> plusClearFlags,
 		context.clearFrameStencil(clearStencil);
 }
 
+void CameraRenderData::updateSurfaceBuffer(RenderGraph* renderGraph)
+{
+	if (surfaceBuffer == NULL) {
+		surfaceBuffer = renderGraph->newSurfaceBuffer();
+	}
+}
+
 void CameraRenderData::setDebugProbeIndex(int probeIndex)
 {
 	probeGridInfo.debugProbeIndex = probeIndex;
@@ -40,6 +47,8 @@ void CameraRenderData::create()
 	}
 	data = cameraRender->cameraData;
 
+	isMainCamera = cameraRender->isMainCameraRender();
+
 	hitData = cameraRender->getTriggeredScreenHitData();
 
 	setDebugProbeIndex(cameraRender->debugProbeIndex);
@@ -47,6 +56,7 @@ void CameraRenderData::create()
 	flags = cameraRender->getCameraRenderFlags();
 
 	renderOrder = cameraRender->renderOrder;
+	sceneTexture = cameraRender->getSceneTexture();
 	surface.clearFlags = Clear_All;
 	surface.renderTarget = &cameraRender->getRenderTarget();
 
@@ -63,7 +73,7 @@ void CameraRenderData::create()
 	}
 
 	if (surfaceBuffer) {
-		surfaceBuffer->create(cameraRender);
+		surfaceBuffer->create(this);
 	}
 
 	cullingContext.init();

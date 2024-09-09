@@ -8,7 +8,6 @@ struct EditorInfo;
 
 struct PostProcessResource
 {
-	SceneRenderData* sceneRenderData;
 	CameraRenderData* cameraRenderData;
 
 	Texture* screenTexture;
@@ -58,7 +57,7 @@ public:
 
 	string getName();
 
-	virtual bool mapMaterialParameter(RenderInfo& info);
+	virtual bool loadDefaultResource();
 	virtual void render(RenderInfo& info);
 	virtual void resize(const Unit2Di& size);
 
@@ -73,8 +72,8 @@ protected:
 	PostProcessResource* resource = NULL;
 	string name;
 	Material* material = NULL;
-	ShaderProgram* program = NULL;
-	IRenderData* materialRenderData = NULL;
+	MaterialRenderData* materialRenderData = NULL;
+	IMaterial* materialVaraint = NULL;
 	IRenderData* cameraRenderData = NULL;
 	bool enable = false;
 };

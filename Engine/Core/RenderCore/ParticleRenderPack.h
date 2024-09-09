@@ -14,11 +14,11 @@ struct ParticleData
 struct ParticleRenderData : public IRenderData
 {
 	unsigned int totalParticleCount = 0;
-	map<Material*, ParticleData> particles;
+	map<IRenderData*, ParticleData> particles;
 	GPUBuffer particleBuffer = GPUBuffer(GB_Storage, GBF_Struct, sizeof(Particle));
 
-	ParticleData* setParticles(Material* material, const list<Particle>& particles);
-	ParticleData* setParticles(Material* material, const vector<Particle>& particles);
+	ParticleData* setParticles(IRenderData* materialRenderData, const list<Particle>& particles);
+	ParticleData* setParticles(IRenderData* materialRenderData, const vector<Particle>& particles);
 	virtual void create();
 	virtual void release();
 	virtual void upload();
@@ -48,6 +48,6 @@ struct ParticleRenderPack : public IRenderPack
 	ParticleRenderPack(ParticleRenderData& particleRenderData);
 
 	virtual bool setRenderCommand(const IRenderCommand& command);
-	virtual void excute(IRenderContext& context, RenderTaskContext& taskContext);
+	virtual void excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext);
 	virtual void reset();
 };

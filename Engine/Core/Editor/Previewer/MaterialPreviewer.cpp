@@ -19,7 +19,7 @@ void MaterialPreviewer::init(Material* material)
     editorWorld.addChild(meshActor);
     editorWorld.camera.clearColor = Color(88, 88, 88, 255);
     editorWorld.getGizmo().setEnableGUI(false);
-    editorWorld.getGizmo().setCameraControl(Gizmo::CameraControlMode::Turn, 0, 1, 100);
+    editorWorld.getGizmo().setCameraControl(Gizmo::CameraControlMode::Turn, 0, 1, 1);
     //editorWorld.camera.renderTarget.setMultisampleLevel(4);
     editorWorld.begin();
 }
@@ -81,7 +81,7 @@ void MaterialPreviewer::onGUI(const char* name, int width, int height)
 void MaterialPreviewer::onRender(RenderInfo& info)
 {
     if (needRender) {
-        editorWorld.render(*info.renderGraph);
+        editorWorld.render(info);
         needRender = false;
     }
 }

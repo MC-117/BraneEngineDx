@@ -24,10 +24,10 @@ protected:
     Texture* defaultTexture;
 };
 
-class TextureParameterVariable : public GraphVariable, public IGraphVariableValueAccessor<Texture*>
+class TextureParameterVariable : public ShaderVariable, public IGraphVariableValueAccessor<Texture*>
 {
 public:
-    Serialize(TextureParameterVariable, GraphVariable);
+    Serialize(TextureParameterVariable, ShaderVariable);
     
     TextureParameterVariable(const string& name);
 
@@ -40,6 +40,8 @@ public:
     virtual void setDefaultValue(Texture* const& value);
 
     virtual bool generate(GraphCodeGenerationContext& context);
+
+    virtual void applyToMaterial(Material& material);
 
     static Serializable* instantiate(const SerializationInfo& from);
     virtual bool deserialize(const SerializationInfo& from);

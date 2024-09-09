@@ -12,8 +12,6 @@ struct GUIRenderInfo
 {
 	Unit2Di viewSize;
 	Texture* sceneBlurTex;
-	SceneRenderData* sceneData;
-	RenderGraph* renderGraph;
 	GUI& gui;
 	Camera* camera;
 	Gizmo* gizmo;

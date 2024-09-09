@@ -84,7 +84,10 @@ void MaterialEditor::onMaterialGUI(EditorInfo& info)
 		}
 		ImGui::EndCombo();
 	}
-	ImGui::Checkbox("TwoSide", &material->isTwoSide);
+	bool isTwoSide = material->getTwoSide();
+	if (ImGui::Checkbox("TwoSide", &isTwoSide)) {
+		material->setTwoSide(isTwoSide);
+	}
 	ImGui::Checkbox("CastShadow", &material->canCastShadow);
 	int passNum = material->getPassNum();
 	if (ImGui::DragInt("PassNum", &passNum)) {

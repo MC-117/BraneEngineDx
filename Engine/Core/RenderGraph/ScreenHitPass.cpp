@@ -3,16 +3,11 @@
 
 bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 {
-	if (material == NULL) {
-		material = getAssetByPath<Material>("Engine/Shaders/Editor/ScreenHit.mat");
-	}
-	if (material == NULL)
-		return false;
 	const ScreenHitRenderCommand* screenHitRenderCommand = dynamic_cast<const ScreenHitRenderCommand*>(&cmd);
 	if (screenHitRenderCommand == NULL)
 		return false;
 	IMeshBatchDrawCommandArray* drawCommandArray = dynamic_cast<IMeshBatchDrawCommandArray*>(screenHitRenderCommand->batchDrawData.batchDrawCommandArray);
-	const MeshBatchDrawKey renderKey(screenHitRenderCommand->mesh, material, screenHitRenderCommand->reverseCullMode);
+	const MeshBatchDrawKey renderKey(screenHitRenderCommand->mesh, materialRenderData, screenHitRenderCommand->reverseCullMode);
 	MeshBatchDrawCall* batchDrawCall = drawCommandArray->setMeshBatchDrawCall(renderKey, screenHitRenderCommand->instanceID, screenHitRenderCommand->instanceIDCount);
 
 	ScreenHitRenderCommand command;
@@ -21,32 +16,14 @@ bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 	command.reverseCullMode = screenHitRenderCommand->reverseCullMode;
 	command.sceneData = cmd.sceneData;
 	command.batchDrawData = cmd.batchDrawData;
-	command.material = material;
+	command.materialRenderData = materialRenderData;
 	command.mesh = screenHitRenderCommand->mesh;
 	command.meshBatchDrawCall = batchDrawCall;
 	command.bindings = cmd.bindings;
 
-	ShaderProgram* program = material->getShader()->getProgram(cmd.getShaderFeature());
-	if (program == NULL || !program->init())
+	IMaterial* materialVariant = materialRenderData->getVariant(cmd.getShaderFeature());
+	if (materialVariant == NULL || !materialVariant->init())
 		return false;
-
-	MaterialRenderData* materialRenderData = dynamic_cast<MaterialRenderData*>(material->getRenderData());
-	if (materialRenderData == NULL)
-		return false;
-	if (materialRenderData->usedFrame < (long long)Time::frames()) {
-		materialRenderData->program = program;
-		materialRenderData->create();
-		renderGraph->getRenderDataCollector()->add(*materialRenderData);
-		materialRenderData->usedFrame = Time::frames();
-	}
-
-	for (auto binding : command.bindings) {
-		if (binding->usedFrame < (long long)Time::frames()) {
-			binding->create();
-			renderGraph->getRenderDataCollector()->add(*binding);
-			binding->usedFrame = Time::frames();
-		}
-	}
 
 	MeshData* meshData = command.mesh == NULL ? NULL : command.mesh->meshData;
 	if (meshData)
@@ -56,18 +33,13 @@ bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 	task.age = 0;
 	task.sceneData = command.sceneData;
 	task.batchDrawData = command.batchDrawData;
-	task.shaderProgram = program;
+	task.shaderProgram = materialVariant->program;
+	task.materialVariant = materialVariant;
 	task.renderMode = command.getRenderMode();
-	task.materialData = materialRenderData;
 	task.meshData = meshData;
 	task.extraData = command.bindings;
 
 	for (CameraRenderData* cameraRenderData : command.sceneData->cameraRenderDatas) {
-		if (cameraRenderData->usedFrame < (long long)Time::frames()) {
-			cameraRenderData->create();
-			cameraRenderData->usedFrame = Time::frames();
-		}
-
 		if (cameraRenderData->hitData == NULL)
 			continue;
 
@@ -82,6 +54,19 @@ bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 	}
 
 	return true; 
+}
+
+bool ScreenHitPass::loadDefaultResource()
+{
+	if (materialRenderData == NULL) {
+		Material* material = getAssetByPath<Material>("Engine/Shaders/Editor/ScreenHit.mat");
+		materialRenderData = material->getMaterialRenderData();
+	}
+	if (materialRenderData) {
+		renderGraph->getRenderDataCollectorMainThread()->add(*materialRenderData);
+		renderGraph->getRenderDataCollectorRenderThread()->add(*materialRenderData);
+	}
+	return materialRenderData;
 }
 
 void ScreenHitPass::execute(IRenderContext& context)

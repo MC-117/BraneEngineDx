@@ -16,26 +16,42 @@ VolumetricLightPass::VolumetricLightPass(const string& name, Material* material)
 
 void VolumetricLightPass::prepare()
 {
+	materialVaraint = materialRenderData->getVariant(Shader_Postprocess);
+	if (materialVaraint == NULL) {
+		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", materialRenderData->getShaderName().c_str());
+		throw runtime_error("ShaderVariant not found");
+		return;
+	}
+	if (materialVaraint->isComputable()) {
+		throw runtime_error("Shader type mismatch");
+		return;
+	}
+	
+	materialVaraint->init();
+	cameraRenderData = resource->cameraRenderData;
+	if (cameraRenderData == NULL) {
+		throw runtime_error("cameraRenderData is invalid");
+		return;
+	}
 	passARenderTarget.init();
 	passBRenderTarget.init();
-
-	MaterialRenderData* materialRenderData = (MaterialRenderData*)this->materialRenderData;
-	materialRenderData->program = program;
-	materialRenderData->create();
 }
 
 void VolumetricLightPass::execute(IRenderContext& context)
 {
+	if (directShadowMap == NULL)
+		return;
+	
 	static const ShaderPropertyName temp1MapName = "temp1Map";
 	static const ShaderPropertyName temp2MapName = "temp2Map";
 
-	Unit2Di screenSize = { size.x * screenScale, size.y * screenScale };
+	Unit2Di screenSize = { int(size.x * screenScale), int(size.y * screenScale) };
 
 	materialRenderData->upload();
 
-	context.bindShaderProgram(program);
+	context.bindShaderProgram(materialVaraint->program);
 
-	context.bindMaterialBuffer(((MaterialRenderData*)materialRenderData)->vendorMaterial);
+	context.bindMaterialBuffer(materialVaraint);
 	cameraRenderData->bind(context);
 
 	// Pass 0 VolumetricLight
@@ -92,18 +108,14 @@ void VolumetricLightPass::execute(IRenderContext& context)
 	context.clearFrameBindings();
 }
 
-bool VolumetricLightPass::mapMaterialParameter(RenderInfo& info)
+bool VolumetricLightPass::loadDefaultResource()
 {
 	if (material == NULL)
 		material = getAssetByPath<Material>("Engine/Shaders/PostProcess/VolumetricLightFS.mat");
 	if (material == NULL || resource == NULL || resource->screenRenderTarget == NULL ||
-		resource->depthTexture == NULL || resource->sceneRenderData == NULL ||
-		resource->sceneRenderData->lightDataPack.shadowTarget == NULL)
+		resource->depthTexture == NULL)
 		return false;
-	directShadowMap = resource->sceneRenderData->lightDataPack.shadowTarget->getDepthTexture();
-	if (directShadowMap == NULL)
-		return false;
-	materialRenderData = material->getRenderData();
+	materialRenderData = material->getMaterialRenderData();
 	return materialRenderData;
 }
 
@@ -111,20 +123,19 @@ void VolumetricLightPass::render(RenderInfo& info)
 {
 	if (!enable)
 		return;
-	if (!mapMaterialParameter(info))
-		return;
 	if (size.x == 0 || size.y == 0)
 		return;
-	program = material->getShader()->getProgram(Shader_Postprocess);
-	if (program == NULL) {
-		Console::error("PostProcessPass: Shader_Postprocess not found in shader '%s'", material->getShaderName().c_str());
+	if (!loadDefaultResource())
 		return;
-	}
-	if (!program->isComputable()) {
-		program->init();
-		cameraRenderData = resource->cameraRenderData;
-		info.renderGraph->addPass(*this);
-	}
+
+	RENDER_THREAD_ENQUEUE_TASK(AddVolumetricLightPass, ([this, materialRenderData = materialRenderData] (RenderThreadContext& context)
+	{
+		context.renderGraph->addPass(*this);
+		if (materialRenderData)
+			renderGraph->getRenderDataCollectorMainThread()->add(*materialRenderData);
+		if (context.sceneRenderData->lightDataPack.shadowTarget)
+			directShadowMap = context.sceneRenderData->lightDataPack.shadowTarget->getDepthTexture();
+	}));
 }
 
 void VolumetricLightPass::resize(const Unit2Di& size)

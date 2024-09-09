@@ -2,6 +2,7 @@
 
 #include "../Texture2D.h"
 #include "../Utility/Boundings.h"
+#include "../RenderCore/RenderInterface.h"
 
 struct RenderInfo;
 class MeshPart;
@@ -9,6 +10,8 @@ class Material;
 class Camera;
 class Object;
 class Gizmo;
+struct MeshTransformRenderData;
+struct InstancedTransformRenderDataHandle;
 
 struct GizmoInfo
 {
@@ -59,8 +62,10 @@ public:
 	struct ScreenHit
 	{
 		MeshPart* meshPart;
+		BatchDrawData batchDrawData;
 		int instanceID;
 		int instanceCount;
+		list<IRenderData*> bindings;
 	};
 
 	enum struct HandleType
@@ -118,7 +123,7 @@ public:
 	bool drawMesh(MeshPart& meshPart, Material& material, int instanceBase, int instanceCount = 1);
 	bool drawMesh(MeshPart& meshPart, Material& material, const Matrix4f& transformMat);
 
-	void doScreenHit(InstanceID obejctInstanceID, MeshPart& meshPart, int instanceBase, int instanceCount = 1);
+	void doScreenHit(MeshPart& meshPart, const InstancedTransformRenderDataHandle& handle, list<IRenderData*> bindings = list<IRenderData*>());
 
 	void setCameraControl(CameraControlMode mode, float transitionSensitivity = 30, float rotationSensitivity = 0.1, float distanceSensitivity = 500);
 	

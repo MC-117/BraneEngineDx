@@ -8,11 +8,10 @@
 #include "RenderGraph/ForwardRenderGraph.h"
 #include "RenderGraph/DeferredRenderGraph.h"
 #include "Profile/RenderProfile.h"
+#include "RenderCore/RenderThread.h"
 
 RenderPool::RenderPool()
-	: renderThread(renderThreadLoop, this)
 {
-	renderFrame = Time::frames();
 	sceneData = new SceneRenderData();
 	renderGraph = Engine::engineConfig.guiOnly ? (RenderGraph*)new ForwardRenderGraph() : (RenderGraph*)new DeferredRenderGraph();
 	RenderCommandWorkerPool::instance().init();
@@ -21,7 +20,8 @@ RenderPool::RenderPool()
 RenderPool::~RenderPool()
 {
 	destory = true;
-	gameFence();
+	renderFence();
+	//RenderThread::get().stop();
 	if (sceneData)
 		delete sceneData;
 	sceneData = NULL;
@@ -38,13 +38,12 @@ RenderPool& RenderPool::get()
 
 void RenderPool::start()
 {
-	renderFrame = Time::frames();
-	renderThread.detach();
+	RenderThread::get().run();
 }
 
 void RenderPool::setViewportSize(const Vector2i& size)
 {
-	gameFence();
+	renderFence();
 	GUISurface::getFullScreenGUISurface().setSize(size);
 	//gui.onSceneResize(size);
 }
@@ -87,11 +86,17 @@ void RenderPool::remove(Render & render)
 
 void RenderPool::beginRender()
 {
-	gameFence();
+	renderFence();
 
-	renderGraph->reset();
-
-	ProfilerManager::instance().beginFrame();
+	RENDER_THREAD_ENQUEUE_TASK(BeginRenderGraph, ([] (RenderThreadContext& context)
+	{
+		context.renderGraph->reset();
+		if (!context.renderGraph->loadDefaultResource()) {
+			throw runtime_error("RenderGraph load default resource failed");
+		}
+		Engine::getMainDeviceSurface()->frameFence();
+		ProfilerManager::instance().beginFrame();
+	}));
 }
 
 void RenderPool::render(bool guiOnly)
@@ -103,16 +108,9 @@ void RenderPool::render(bool guiOnly)
 	Camera* currentCamera = GUISurface::getMainGUISurface().getCamera();
 	
 	PreRenderInfo preInfo;
-	preInfo.sceneData = sceneData;
 	preInfo.camera = currentCamera;
 	RenderInfo info;
-	info.sceneData = sceneData;
-	info.renderGraph = renderGraph;
 	info.camera = currentCamera;
-	renderGraph->sceneDatas.insert(sceneData);
-
-	// gui.onGUI(info);
-	// timer.record("GUI");
 
 	if (!guiOnly && currentCamera) {
 		// for (auto lightB = prePool.begin(), lightE = prePool.end(); lightB != lightE; lightB++) {
@@ -134,8 +132,6 @@ void RenderPool::render(bool guiOnly)
 		}
 
 		timer.record("Objects");
-
-		// gui.setSceneBlurTex(currentCamera->cameraRender.getSceneBlurTex());
 	}
 	else {
 		IRenderContext& context = *vendor.getDefaultRenderContext();
@@ -143,15 +139,23 @@ void RenderPool::render(bool guiOnly)
 		context.clearFrameColor(currentCamera->clearColor);
 	}
 
-	// gui.render(info);
-	// timer.record("RenderUI");
-
 	Console::getTimer("Rendering") = timer;
 }
 
 void RenderPool::endRender()
 {
-	renderGraph->prepare();
+	renderThreadWaitHandle = RENDER_THREAD_ENQUEUE_TASK(EndExecuteRenderGraph, ([] (RenderThreadContext& context)
+	{
+		IRenderContext& renderContext = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
+		{
+			RENDER_SCOPE(Frame);
+			context.renderGraph->getRenderDataCollectorMainThread()->updateMainThread(Time::frames());
+			context.renderGraph->prepare();
+			context.renderGraph->execute(renderContext, RenderThread::get().getRenderFrame());
+		}
+		ProfilerManager::instance().endFrame();
+		RenderThread::get().endFrame();
+	}));
 }
 
 RenderPool& RenderPool::operator+=(Render & render)
@@ -166,41 +170,7 @@ RenderPool & RenderPool::operator-=(Render & render)
 	return *this;
 }
 
-void RenderPool::gameFence()
-{
-	unsigned long long gameFrames = Time::frames();
-	while (gameFrames > 0 && gameFrames > renderFrame) {
-		gameFrames = Time::frames();
-		this_thread::yield();
-	}
-	if (!destory) {
-		Engine::getMainDeviceSurface()->frameFence();
-	}
-}
-
 void RenderPool::renderFence()
 {
-	while (Time::frames() <= renderFrame) {
-		this_thread::yield();
-	}
-}
-
-void RenderPool::renderThreadMain()
-{
-	renderFence();
-	{
-		RENDER_SCOPE(Frame);
-		IRenderContext& context = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
-		renderGraph->execute(context);
-	}
-	ProfilerManager::instance().endFrame();
-	renderFrame = Time::frames();
-}
-
-void RenderPool::renderThreadLoop(RenderPool* pool)
-{
-	registerCurrentThread(NamedThread::Render);
-	while (!pool->destory)
-		pool->renderThreadMain();
-	unregisterCurrentThread();
+	renderThreadWaitHandle.wait();
 }

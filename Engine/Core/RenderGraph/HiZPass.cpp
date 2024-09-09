@@ -2,11 +2,16 @@
 #include "../RenderCore/SceneRenderData.h"
 #include "../Asset.h"
 
-void HiZPass::prepare()
+bool HiZPass::loadDefaultResource()
 {
 	if (material == NULL) {
 		material = getAssetByPath<Material>("Engine/Shaders/Pipeline/GenHiZ.mat");
 	}
+	return material;
+}
+
+void HiZPass::prepare()
+{
 	if (material) {
 		program = material->getShader()->getProgram(Shader_Default);
 		program->init();

@@ -47,6 +47,11 @@ public:
 	bool add(const string& name, const Name& value);
 	bool add(const string& name, Decimal value);
 	SerializationInfo* add(const string& name);
+	SerializationInfo* addArray(const string& name, const string& type);
+	SerializationInfo* addStringArray(const string& name);
+	SerializationInfo* addNumberArray(const string& name);
+	template<class T>
+	SerializationInfo* addArray(const string& name);
 
 	void push(Decimal value);
 	void push(const string& value);
@@ -130,6 +135,14 @@ protected:
 	SerializationScope* lastScope = NULL;
 	static SerializationScope* currentScope;
 };
+
+template<class Type>
+const char* getClassName()
+{
+	static_assert(std::is_base_of_v<Serializable, Type>,
+		"Only support classes based on Serializable");
+	return Type::serialization().type.c_str();
+}
 
 template<class Type>
 Type* castTo(Serializable* serializable)
@@ -271,6 +284,12 @@ protected: \
 	Type##Serialization(const char* type, const char* baseType) : BaseSerializationClass(type, baseType) { init(); } \
 	void init(); \
 }; \
+typedef Type##Serialization ThisSerialization; \
+typedef Type##Serialization SuperSerialization; \
+inline static Serialization& serialization() \
+{ \
+	return Type##Serialization::serialization; \
+} \
 virtual const Serialization& getSerialization() const; \
 
 #define SerializeInstance(Type, ...) \
@@ -437,6 +456,12 @@ public:
 protected:
 	int* ptr;
 };
+
+template<class T>
+inline SerializationInfo* SerializationInfo::addArray(const string& name)
+{
+	return addArray(name, getClassName<T>());
+}
 
 template<>
 inline bool SerializationInfo::get<float>(const Path & path, float & object) const

@@ -4,6 +4,7 @@
 #include "../Console.h"
 #include "../Profile/RenderProfile.h"
 #include "../Asset.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
 bool DeferredLightingTask::ExecutionOrder::operator()(const DeferredLightingTask& t0, const DeferredLightingTask& t1) const
 {
@@ -19,7 +20,7 @@ bool DeferredLightingTask::ExecutionOrder::operator()(const DeferredLightingTask
 				if (t0.program < t1.program)
 					return true;
 				if (t0.program == t1.program)
-					return t0.material < t1.material;
+					return t0.materialVariant < t1.materialVariant;
 			}
 		}
 	}
@@ -31,32 +32,59 @@ bool DeferredLightingTask::ExecutionOrder::operator()(const DeferredLightingTask
 	return (*this)(*t0, *t1);
 }
 
-bool DeferredLightingPass::isInit = false;
 ShaderProgram* DeferredLightingPass::blitProgram = NULL;
 ShaderStage* DeferredLightingPass::blitFragmentShader = NULL;
+
+bool DeferredLightingPass::loadDefaultResource()
+{
+	if (blitProgram)
+		return true;
+	IVendor& vendor = VendorManager::getInstance().getVendor();
+	blitProgram = vendor.newShaderProgram();
+	static string name = "LightingBlit";
+	blitFragmentShader = vendor.newShaderStage({ Fragment_Shader_Stage, Shader_Default, name });
+	const char* blitCode = "\
+		struct ScreenVertexOut										\n\
+		{															\n\
+			float4 svPos : SV_POSITION;								\n\
+			float2 UV : TEXCOORD;									\n\
+		};															\n\
+		struct FragmentOut											\n\
+		{															\n\
+			float4 color : SV_Target;								\n\
+			float depth : SV_Depth;									\n\
+		};															\n\
+		Texture2D gBufferA : register(t7);							\n\
+		SamplerState gBufferASampler : register(s7);				\n\
+		Texture2D gBufferB : register(t8);							\n\
+		SamplerState gBufferBSampler : register(s8);				\n\
+		FragmentOut main(ScreenVertexOut fin)						\n\
+		{															\n\
+			FragmentOut fout;										\n\
+			fout.color = gBufferA.Sample(gBufferASampler, fin.UV);	\n\
+			fout.depth = gBufferB.Sample(gBufferBSampler, fin.UV).r;\n\
+			return fout;											\n\
+		}";
+	string error;
+	if (blitFragmentShader->compile(ShaderMacroSet(), blitCode, error) == 0) {
+		Console::error("Compile Blit shader error: %s", error.c_str());
+		throw runtime_error(error);
+	}
+	blitProgram->setMeshStage(*ShaderManager::getScreenVertexShader());
+	blitProgram->addShaderStage(*blitFragmentShader);
+	return blitProgram;
+}
 
 bool DeferredLightingPass::addTask(DeferredLightingTask& task)
 {
 	auto iter = lightingTask.find(&task);
-	MaterialRenderData* materialData = NULL;
 	DeferredLightingTask* pTask;
 	if (iter == lightingTask.end()) {
-		materialData = new MaterialRenderData();
-		materialData->material = task.material;
-		materialData->program = task.program;
-		task.materialRenderData = materialData;
 		pTask = new DeferredLightingTask(task);
 		lightingTask.insert(pTask);
-		materialRenderDatas.push_back(materialData);
 	}
 	else {
 		pTask = *iter;
-		materialData = pTask->materialRenderData;
-	}
-	if (materialData->usedFrame < (long long)Time::frames()) {
-		materialData->create();
-		renderGraph->getRenderDataCollector()->add(*materialData);
-		materialData->usedFrame = Time::frames();
 	}
 	pTask->age = 0;
 	return true;
@@ -64,7 +92,7 @@ bool DeferredLightingPass::addTask(DeferredLightingTask& task)
 
 void DeferredLightingPass::prepare()
 {
-	LoadDefaultShader();
+	blitProgram->init();
 }
 
 void DeferredLightingPass::execute(IRenderContext& context)
@@ -77,7 +105,8 @@ void DeferredLightingPass::execute(IRenderContext& context)
 		if (task.age > 1)
 			continue;
 
-		RENDER_DESC_SCOPE(DrawLighting, "Material(%s)", AssetInfo::getPath(task.material).c_str());
+		// RENDER_DESC_SCOPE(DrawLighting, "Material(%s)", AssetInfo::getPath(task.material).c_str());
+		RENDER_DESC_SCOPE(DrawLighting, "Material");
 
 		bool cameraDataSwitch = false;
 		bool shaderSwitch = false;
@@ -113,7 +142,7 @@ void DeferredLightingPass::execute(IRenderContext& context)
 			task.sceneData->virtualShadowMapRenderData.bindForLighting(context);
 		}
 		
-		if (taskContext.materialRenderData != task.materialRenderData) {
+		if (taskContext.materialVariant != task.materialVariant) {
 			static const ShaderPropertyName depthMapName = "depthMap";
 			static const ShaderPropertyName gBufferAName = "gBufferA";
 			static const ShaderPropertyName gBufferBName = "gBufferB";
@@ -122,9 +151,9 @@ void DeferredLightingPass::execute(IRenderContext& context)
 			static const ShaderPropertyName gBufferEName = "gBufferE";
 			static const ShaderPropertyName gBufferFName = "gBufferF";
 
-			taskContext.materialRenderData = task.materialRenderData;
-			task.materialRenderData->bindCullMode(context, false);
-			task.materialRenderData->bind(context);
+			taskContext.materialVariant = task.materialVariant;
+			bindMaterialCullMode(context, task.materialVariant, false);
+			bindMaterial(context, task.materialVariant);
 			if (task.sceneData->lightDataPack.shadowTarget == NULL)
 				context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), depthMapName);
 			else
@@ -150,7 +179,7 @@ void DeferredLightingPass::execute(IRenderContext& context)
 		}*/
 
 		context.setRenderPostState();
-		context.setDrawInfo(0, 0, task.materialRenderData->desc.materialID);
+		context.setDrawInfo(0, 0, task.materialVariant->desc.materialID);
 		context.postProcessCall();
 	}
 	context.setCullState(Cull_Back);
@@ -161,8 +190,6 @@ void DeferredLightingPass::reset()
 	for (auto b = lightingTask.begin(), e = lightingTask.end(); b != e;) {
 		DeferredLightingTask* task = *b;
 		if (task->age > 2) {
-			task->materialRenderData->release();
-			delete task->materialRenderData;
 			delete task;
 			b = lightingTask.erase(b);
 		}
@@ -170,52 +197,11 @@ void DeferredLightingPass::reset()
 	}
 }
 
-void DeferredLightingPass::LoadDefaultShader()
-{
-	if (isInit)
-		return;
-	IVendor& vendor = VendorManager::getInstance().getVendor();
-	blitProgram = vendor.newShaderProgram();
-	static string name = "LightingBlit";
-	blitFragmentShader = vendor.newShaderStage({ Fragment_Shader_Stage, Shader_Default, name });
-	const char* blitCode = "\
-		struct ScreenVertexOut										\n\
-		{															\n\
-			float4 svPos : SV_POSITION;								\n\
-			float2 UV : TEXCOORD;									\n\
-		};															\n\
-		struct FragmentOut											\n\
-		{															\n\
-			float4 color : SV_Target;								\n\
-			float depth : SV_Depth;									\n\
-		};															\n\
-		Texture2D gBufferA : register(t7);							\n\
-		SamplerState gBufferASampler : register(s7);				\n\
-		Texture2D gBufferB : register(t8);							\n\
-		SamplerState gBufferBSampler : register(s8);				\n\
-		FragmentOut main(ScreenVertexOut fin)						\n\
-		{															\n\
-			FragmentOut fout;										\n\
-			fout.color = gBufferA.Sample(gBufferASampler, fin.UV);	\n\
-			fout.depth = gBufferB.Sample(gBufferBSampler, fin.UV).r;\n\
-			return fout;											\n\
-		}";
-	string error;
-	if (blitFragmentShader->compile(ShaderMacroSet(), blitCode, error) == 0) {
-		Console::error("Compile Blit shader error: %s", error.c_str());
-		throw runtime_error(error);
-	}
-	blitProgram->setMeshStage(*ShaderManager::getScreenVertexShader());
-	blitProgram->addShaderStage(*blitFragmentShader);
-	isInit = true;
-}
-
 void DeferredLightingPass::blitSceneColor(IRenderContext& context, Texture* gBufferA, Texture* gBufferB)
 {
 	static const ShaderPropertyName gBufferAName = "gBufferA";
 	static const ShaderPropertyName gBufferBName = "gBufferB";
 
-	blitProgram->init();
 	context.bindShaderProgram(blitProgram);
 	context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
 	context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);

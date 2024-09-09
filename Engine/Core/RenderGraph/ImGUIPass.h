@@ -7,6 +7,8 @@ class ImGuiPass : public RenderPass
 public:
 	ImDrawData* drawData;
 
+	virtual bool loadDefaultResource();
+
 	void setDrawData(ImDrawData* pDrawData);
 
 	virtual void prepare();

@@ -5,14 +5,16 @@ ReflectionProbeRenderData::ReflectionProbeRenderData(ProbePoolRenderData& probeP
 {
 }
 
-int ReflectionProbeRenderData::setProbe(ReflectionCaptureProbeRender* capture)
+int ReflectionProbeRenderData::setProbe(const ReflectionProbeUpdateData& updateData)
 {
-	TextureCube* cubeMap = capture->getProbeCubeMap();
+	TextureCube* cubeMap = updateData.cubeMap;
 	int probeIndex = -1;
 	ReflectionProbeData& data = probePool.emplace(ProbeType::ProbeType_Ref, probeIndex).reflectionProbeData;
-	data.position = capture->getWorldPosition();
-	data.radius = capture->getWorldRadius();
-	data.tintColor = capture->tintColor;
+	data.position = updateData.position;
+	data.radius = updateData.radius;
+	data.tintColor = updateData.tintColor;
+	data.falloff = updateData.falloff;
+	data.cutoff = updateData.cutoff;
 	probeIndices.push_back(probeIndex);
 	cubeMaps.push_back(cubeMap);
 	return probeIndex;

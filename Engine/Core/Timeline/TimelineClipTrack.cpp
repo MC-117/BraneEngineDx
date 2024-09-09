@@ -195,9 +195,7 @@ bool TimelineClipTrack::deserialize(const SerializationInfo& from)
 bool TimelineClipTrack::serialize(SerializationInfo& to)
 {
     TimelineTrack::serialize(to);
-    SerializationInfo* info = to.add("clips");
-    info->type = "Array";
-    info->arrayType = "TimelineClip";
+    SerializationInfo* info = to.addArray<TimelineClip>("clips");
     for (int i = 0; i < clips.size(); i++) {
         TimelineClip* clip = clips[i];
         SerializationInfo* clipInfo = info->push();

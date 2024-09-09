@@ -10,7 +10,8 @@ class ForwardRenderGraph : public RenderGraph
 public:
 	Serialize(ForwardRenderGraph, RenderGraph);
 
-	BaseRenderDataCollector renderDataCollector;
+	BaseRenderDataCollector renderDataCollectorMainThread;
+	BaseRenderDataCollector renderDataCollectorRenderThread;
 
 	ShadowDepthPass shadowDepthPass;
 	MeshPass meshPass;
@@ -19,15 +20,18 @@ public:
 
 	list<RenderPass*> passes;
 
+	virtual bool loadDefaultResource();
+
 	virtual ISurfaceBuffer* newSurfaceBuffer();
 	virtual bool setRenderCommand(const IRenderCommand& cmd);
 	virtual void setImGuiDrawData(ImDrawData* drawData);
 	virtual void addPass(RenderPass& pass);
 	virtual void prepare();
-	virtual void execute(IRenderContext& context);
+	virtual void execute(IRenderContext& context, long long renderFrame);
 	virtual void reset();
 
-	virtual IRenderDataCollector* getRenderDataCollector();
+	virtual IRenderDataCollector* getRenderDataCollectorMainThread();
+	virtual IRenderDataCollector* getRenderDataCollectorRenderThread();
 
 	static Serializable* instantiate(const SerializationInfo& from);
 };

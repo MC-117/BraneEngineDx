@@ -47,7 +47,7 @@ void ObjectPreviewWindow::setAsset(Asset& asset)
 	editorWorld.addChild(*targetObject);
 }
 
-void ObjectPreviewWindow::onUpdateScene(RenderGraph& renderGraph, float width, float height)
+void ObjectPreviewWindow::onUpdateScene(float width, float height)
 {
 	editorWorld.setViewportSize((int)width, (int)height);
 	editorWorld.update();
@@ -153,7 +153,7 @@ void ObjectPreviewWindow::onWindowGUI(GUIRenderInfo& info)
 		inspectorSizeRate = inspectorSize / width;
 	}
 
-	onUpdateScene(*info.renderGraph, screenWidth, screenHeight);
+	onUpdateScene(screenWidth, screenHeight);
 
 	ImGui::BeginChild("Scene", ImVec2(screenWidth, screenHeight));
 	onSceneGUI(info, screenWidth, screenHeight);
@@ -171,7 +171,7 @@ void ObjectPreviewWindow::onWindowGUI(GUIRenderInfo& info)
 void ObjectPreviewWindow::onRender(RenderInfo& info)
 {
 	UIWindow::onRender(info);
-	editorWorld.render(*info.renderGraph);
+	editorWorld.render(info);
 }
 
 void ObjectPreviewWindow::showObject(GUI& gui, const SerializationInfo& info)

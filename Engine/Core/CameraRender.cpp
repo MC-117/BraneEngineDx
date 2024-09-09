@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "GUI/GUISurface.h"
 #include "RenderCore/RenderCore.h"
+#include "RenderCore/RenderCoreUtility.h"
 
 int CameraRender::cameraRenderNextID = 1;
 
@@ -83,7 +84,9 @@ void CameraRender::triggerScreenHit(const Vector2u& hitPosition)
 	hitData->triggerFrame = Time::frames();
 	hitData->hitFrame = 0;
 	hitData->hitInfo.hitDepth = 0;
-	hitData->hitInfo.hitInstanceID = -1;
+	hitData->hitInfo.hitObjectIDHigh = 0;
+	hitData->hitInfo.hitObjectIDLow = 0;
+	hitData->hitInfo.hitNormal = Vector3f::Zero();
 	hitData->hitInfo.hitPosition = hitPosition;
 }
 
@@ -146,7 +149,6 @@ void CameraRender::render(RenderInfo& info)
 		CameraRenderData* cameraRenderData = getRenderData();
 		if (graph) {
 			graph->resource.reset();
-			graph->resource.sceneRenderData = info.sceneData;
 			graph->resource.cameraRenderData = cameraRenderData;
 			graph->resource.depthTexture = renderTarget->getInternalDepthTexture();
 			graph->resource.screenTexture = renderTarget->getTexture(0);
@@ -154,12 +156,12 @@ void CameraRender::render(RenderInfo& info)
 			//graph->postRenderTarget.addTexture("screenMap", *graph->resource.screenTexture);
 			graph->render(info);
 		}
-		if (cameraRenderData->surfaceBuffer == NULL) {
-			cameraRenderData->surfaceBuffer = info.renderGraph->newSurfaceBuffer();
-			cameraRenderData->surfaceBuffer->resize(size.x, size.y);
-		}
-		info.sceneData->setCamera(this);
-		debugProbeIndex = -1;
+		RENDER_THREAD_ENQUEUE_TASK(CameraRenderUpdate, ([cameraRenderData] (RenderThreadContext& context)
+		{
+			cameraRenderData->updateSurfaceBuffer(context.renderGraph);
+			updateRenderDataMainThread(cameraRenderData, Time::frames());
+			context.sceneRenderData->setCamera(cameraRenderData);
+		}));
 	}
 }
 

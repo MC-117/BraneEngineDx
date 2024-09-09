@@ -93,14 +93,12 @@ void SkySphere::prerender(SceneRenderData& sceneData)
 	MeshTransformData data;
 	getMeshTransformData(&data);
 	meshRender.getMeshTransformData(&data);
-	objectID = sceneData.setMeshTransform(data);
-	meshRender.transformMat = transformMat;
-	meshRender.instanceID = objectID;
-	meshRender.instanceCount = 1;
-	Material* mat = meshRender.getMaterial();
-	if (mat != NULL) {
-		mat->setScalar("time", time);
-	}
+	RENDER_THREAD_ENQUEUE_TASK(SkySphererUpdateTransform, ([this, data] (RenderThreadContext& context)
+	{
+		unsigned int renderInstanceID = context.sceneRenderData->setMeshTransform(data);
+		meshRender.transformMat = transformMat;
+		meshRender.setInstanceInfo(renderInstanceID, 1);
+	}));
 }
 
 Render * SkySphere::getRender()

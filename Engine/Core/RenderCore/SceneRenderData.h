@@ -31,19 +31,18 @@ public:
 
 	SceneRenderData();
 
-	void setCamera(Render* cameraRender);
+	void setCamera(CameraRenderData* cameraRenderData);
 	void setMainLight(Render* lightRender);
 	int setLocalLight(Render* lightRender);
-	int setReflectionCapture(Render* captureRender);
-	int setEnvLightCapture(Render* captureRender);
-	int setEnvLightData(Render* captureRender);
+	int setReflectionCapture(const ReflectionProbeUpdateData& updateData);
+	int setEnvLightCapture(const EnvLightProbeData& envLightProbeData);
+	int setEnvLightData(const EnvLightUpdateData& updateData);
 	unsigned int setMeshTransform(const MeshTransformData& data);
-	unsigned int setMeshTransform(const vector<MeshTransformData>& datas);
+	MeshTransformDataArray::ReservedData addMeshTransform(unsigned int count);
 	MeshBatchDrawCall* getMeshPartTransform(const MeshBatchDrawKey& key);
 	MeshBatchDrawCall* setMeshPartTransform(const MeshBatchDrawKey& key, unsigned int transformIndex, unsigned int transformCount = 1);
 
 	unsigned int setStaticMeshTransform(const MeshTransformData& data);
-	unsigned int setStaticMeshTransform(const vector<MeshTransformData>& datas);
 	MeshBatchDrawCall* getStaticMeshPartTransform(const MeshBatchDrawKey& key);
 	MeshBatchDrawCall* setStaticMeshPartTransform(const MeshBatchDrawKey& key, unsigned int transformIndex, unsigned int transformCount = 1);
 	void cleanStaticMeshTransform(unsigned int base, unsigned int count);
@@ -53,7 +52,7 @@ public:
 	bool willUpdateStatic();
 
 	MeshBatchDrawData getBatchDrawData(bool isStatic);
-	ViewCulledMeshBatchDrawData getViewCulledBatchDrawData(Render* cameraRender, bool isStatic);
+	ViewCulledMeshBatchDrawData getViewCulledBatchDrawData(CameraRenderData* cameraRenderData, bool isStatic);
 
 	void executeViewCulling(IRenderContext& context);
 

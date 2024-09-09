@@ -1,5 +1,6 @@
 #include "TerrainActor.h"
 #include "../Physics/RigidBody.h"
+#include "../RenderCore/RenderCore.h"
 
 SerializeInstance(TerrainActor);
 
@@ -39,6 +40,14 @@ void TerrainActor::updateCollision()
 void TerrainActor::prerender(SceneRenderData& sceneData)
 {
     terrainRender.transformMat = transformMat;
+    MeshTransformData data;
+    getMeshTransformData(&data);
+    terrainRender.getMeshTransformData(&data);
+    RENDER_THREAD_ENQUEUE_TASK(MeshActorUpdateTransform, ([this, data] (RenderThreadContext& context)
+    {
+        unsigned int renderInstanceID = context.sceneRenderData->setMeshTransform(data);
+        terrainRender.setInstanceInfo(renderInstanceID, 1);
+    }));
 }
 
 Render* TerrainActor::getRender()

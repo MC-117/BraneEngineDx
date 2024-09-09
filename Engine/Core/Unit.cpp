@@ -1,4 +1,5 @@
 #include "Unit.h"
+#include <mimalloc-new-delete.h>
 
 Time Time::startTime = Time::now();
 Time Time::lastTime;

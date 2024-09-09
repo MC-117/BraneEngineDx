@@ -28,5 +28,7 @@ struct ScreenHitInfo
 {
 	Vector2u hitPosition;
 	unsigned int hitDepth;
-	unsigned int hitInstanceID;
+	unsigned int hitObjectIDHigh;
+	Vector3f hitNormal;
+	unsigned int hitObjectIDLow;
 };

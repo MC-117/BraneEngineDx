@@ -12,6 +12,9 @@
 
 class Asset;
 class Object;
+class MeshMaterialCollection;
+class OutlineMeshMaterialCollection;
+struct EditorInfo;
 
 namespace ImGui {
 
@@ -73,4 +76,7 @@ namespace ImGui {
 	ENGINE_API bool AssetCombo(const char* label, Asset*& selectAsset, const string& AssetType);
 	ENGINE_API bool TypeCombo(const char* label, const Serialization*& selectType, string& filterName, const Serialization& baseType, const vector<Name>& tags = {});
 	ENGINE_API bool TypeCombo(const char* label, const Serialization*& selectType, const Serialization& baseType, const vector<Name>& tags = {});
+
+	ENGINE_API void MeshMaterialGUI(EditorInfo& info, MeshMaterialCollection& collection);
+	ENGINE_API void OutlineMeshMaterialGUI(OutlineMeshMaterialCollection& collection);
 }

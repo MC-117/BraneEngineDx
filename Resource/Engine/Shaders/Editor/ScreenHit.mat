@@ -4,12 +4,15 @@
 #fragment
 #include "../lib/CameraData_Def.hmat"
 #include "../lib/Basic_FS_Lib.hmat"
+#include "../lib/TransformData_Def.hmat"
 
 struct ScreenHitData
 {
 	uint2 hitPosition;
 	uint hitDepth;
-	uint hitInstanceID;
+	uint hitObjectIDHigh;
+    float3 hitNormal;
+    uint hitObjectIDLow;
 };
 
 RWStructuredBuffer<ScreenHitData> hitData : register(u0);
@@ -23,7 +26,10 @@ void DEFAULT_FS_MAIN
         uint depth = 0xffffffff * ndcZ;
         uint oldDepth;
         InterlockedMax(hitData[0].hitDepth, depth, oldDepth);
-        if (oldDepth != hitData[0].hitDepth)
-            hitData[0].hitInstanceID = fin.InstanceID;
+        if (oldDepth != hitData[0].hitDepth){
+            TransformData data = getTransformData(fin.InstanceID);
+            hitData[0].hitObjectIDHigh = data.objectIDHigh;
+            hitData[0].hitObjectIDLow = data.objectIDLow;
+        }
     }
 }

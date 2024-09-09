@@ -1,6 +1,8 @@
 #include "Spine2DRender.h"
 #include "../Core/Camera.h"
 #include "Spine2DRenderPack.h"
+#include "../Core/RenderCore/RenderCoreUtility.h"
+#include "../Core/RenderCore/RenderThread.h"
 
 Spine2DRender::Spine2DRender()
 {
@@ -148,10 +150,7 @@ void Spine2DRender::render(RenderInfo& info)
     }*/
 
     material->setMatrix("projectMatrix", MATRIX_UPLOAD_OP(mvpMat));
-
-    Spine2DRenderCommand command;
-    command.sceneData = info.sceneData;
-    command.material = material;
+    MaterialRenderData* materialRenderData = material->getMaterialRenderData();
 
     for (int i = 0; i < partCount; i++) {
         spine::Slot* slot = skeleton->getDrawOrder()[i];
@@ -183,30 +182,41 @@ void Spine2DRender::render(RenderInfo& info)
 
         color *= tintColor * overColor;
 
-        command.mesh = meshPart;
-        command.resource.texture = texture;
-        command.resource.color = color;
-        command.resource.cullType = isCulling ? CullType::Cull_Back : CullType::Cull_Off;
+        spine::BlendMode spineBlendMode = slot->getData().getBlendMode();
+        BlendMode blendMode = BlendMode::BM_PremultiplyAlpha;
 
-        spine::BlendMode blendMode = slot->getData().getBlendMode();
-
-        switch (blendMode)
+        switch (spineBlendMode)
         {
         case spine::BlendMode_Normal:
         default:
-            command.blendMode = BlendMode::BM_PremultiplyAlpha;
+            blendMode = BlendMode::BM_PremultiplyAlpha;
             break;
 
         case spine::BlendMode_Additive:
-            command.blendMode = BlendMode::BM_Additive;
+            blendMode = BlendMode::BM_Additive;
             break;
 
         case spine::BlendMode_Multiply:
-            command.blendMode = BlendMode::BM_Multipy;
+            blendMode = BlendMode::BM_Multipy;
             break;
         }
 
-        info.renderGraph->setRenderCommand(command);
+        CullType cullType = isCulling ? CullType::Cull_Back : CullType::Cull_Off;
+
+        RENDER_THREAD_ENQUEUE_TASK(Spine2DRenderUpdate, ([meshPart, materialRenderData,
+            blendMode, texture, color, cullType] (RenderThreadContext& context)
+        {
+            Spine2DRenderCommand command;
+            command.sceneData = context.sceneRenderData;
+            command.materialRenderData = materialRenderData;
+            command.mesh = meshPart;
+            command.blendMode = blendMode;
+            command.resource.texture = texture;
+            command.resource.color = color;
+            command.resource.cullType = cullType;
+            collectRenderDataInCommand(context.renderGraph, command);
+            context.renderGraph->setRenderCommand(command);
+        }));
     }
 }
 

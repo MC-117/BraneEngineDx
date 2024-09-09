@@ -69,20 +69,13 @@ class ENGINE_API ShaderProgram
 {
 	friend class ShaderManager;
 public:
-	struct AttributeDesc
-	{
-		vector<pair<ShaderStageType, const ShaderProperty*>> properties;
-
-		const ShaderPropertyName& getName() const;
-		const ShaderProperty* getParameter() const;
-		const ShaderProperty* getConstantBuffer() const;
-	};
 	Name name;
 	unsigned int renderOrder = 0;
 
 	Enum<ShaderFeature> shaderType;
 	map<ShaderStageType, ShaderStage*> shaderStages;
-	unordered_map<ShaderPropertyName, AttributeDesc> attributes;
+	ShaderPropertyLayout shaderPropertyLayout;
+	unordered_map<ShaderPropertyName, ShaderPropertyDesc> attributes;
 
 	ShaderProgram();
 	ShaderProgram(ShaderStage& meshStage);
@@ -109,11 +102,10 @@ public:
 	virtual unsigned int bind();
 	// Get byte offset or index of shader attribute by name, which
 	// is specified by vendor implementation.
-	virtual const AttributeDesc* getAttributeOffset(const ShaderPropertyName& name) const;
+	virtual const ShaderPropertyDesc* getAttributeOffset(const ShaderPropertyName& name) const;
 	virtual int getMaterialBufferSize();
 	virtual bool dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ);
 	virtual void memoryBarrier(unsigned int bitEnum);
-	virtual void uploadData();
 	// Get unique program id of this program to specify a unqiue program.
 	unsigned int getProgramID();
 

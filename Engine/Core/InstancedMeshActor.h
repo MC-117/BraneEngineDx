@@ -1,25 +1,36 @@
 #pragma once
-#ifndef _GRASSMESHACTOR_H_
-#define _GRASSMESHACTOR_H_
 
 #include "MeshActor.h"
+#include "InstancedMeshRender.h"
 #include <random>
 
-class ENGINE_API GrassMeshActor : public MeshActor
+struct MeshTransformRenderData;
+
+class ENGINE_API InstancedMeshActor : public Actor
 {
 public:
-	Serialize(GrassMeshActor, MeshActor);
+	Serialize(InstancedMeshActor, Actor);
 
 	float density = 20;
 	Vector2f bound = { 100, 100 };
-	GrassMeshActor(Mesh& mesh, Material& material, string name = "GrassMeshActor");
+
+	InstancedMeshRender instancedMeshRender;
+	
+	InstancedMeshActor(string name = "InstancedMeshActor");
+
+	virtual MeshMaterialCollection* addMesh(Mesh& mesh);
 
 	void set(float density, Vector2f& bound);
 	void updateData();
 	virtual void begin();
-	virtual void tick(float delteTime);
 	virtual void end();
 	virtual void prerender(SceneRenderData& sceneData);
+	
+	virtual Render* getRender();
+	virtual unsigned int getRenders(vector<Render*>& renders);
+
+	virtual void setHidden(bool value);
+	virtual bool isHidden();
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
@@ -27,6 +38,5 @@ public:
 protected:
 	bool update = true;
 	unsigned int transCount = 0;
+	MeshTransformRenderData* renderData = NULL;
 };
-
-#endif // !_GRASSMESHACTOR_H_

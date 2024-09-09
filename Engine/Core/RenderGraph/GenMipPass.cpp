@@ -2,11 +2,16 @@
 #include "../RenderCore/SceneRenderData.h"
 #include "../Asset.h"
 
-void GenMipPass::prepare()
+bool GenMipPass::loadDefaultResource()
 {
 	if (material == NULL) {
 		material = getAssetByPath<Material>("Engine/Shaders/Pipeline/GenMips.mat");
 	}
+	return material;
+}
+
+void GenMipPass::prepare()
+{
 	if (material) {
 		program = material->getShader()->getProgram(Shader_Default);
 		program->init();

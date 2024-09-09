@@ -13,7 +13,7 @@ public:
 
 	VirtualShadowMapRenderData(LightRenderData& lightRenderData);
 
-	VirtualShadowMapClipmap* newClipmap(CameraRender& cameraRender);
+	VirtualShadowMapClipmap* newClipmap(CameraRenderData* cameraRenderData);
 	VirtualShadowMapLightEntry* newLocalLightShadow(int lightID, int persistentLightID);
 
 	void create();

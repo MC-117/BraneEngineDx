@@ -7,11 +7,15 @@ VirtualShadowMapRenderData::VirtualShadowMapRenderData(LightRenderData& lightRen
 	shadowMapArray.init(manager);
 }
 
-VirtualShadowMapClipmap* VirtualShadowMapRenderData::newClipmap(CameraRender& cameraRender)
+VirtualShadowMapClipmap* VirtualShadowMapRenderData::newClipmap(CameraRenderData* cameraRenderData)
 {
+	if (cameraRenderData == NULL) {
+		throw runtime_error("cameraRenderData is invalid");
+		return NULL;
+	}
 	return new VirtualShadowMapClipmap(
 		shadowMapArray,
-		*cameraRender.getRenderData(),
+		*cameraRenderData,
 		lightRenderData.mainLightData);
 }
 
