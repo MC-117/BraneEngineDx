@@ -148,7 +148,8 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, const ShaderP
 		currentProgram->bindUAV(deviceContext, name, dxBuffer->dx11BufferUAV);
 	}
 	else {
-		switch (dxBuffer->desc.type)
+		GPUBufferType type = dxBuffer->desc.type == GB_Storage && bufferOption.bindStorageAsVertex ? GB_Vertex : dxBuffer->desc.type;
+		switch (type)
 		{
 		case GB_Constant:
 			currentProgram->bindCBV(deviceContext, name, dxBuffer->dx11Buffer);
@@ -183,7 +184,8 @@ unsigned int DX11RenderContext::bindBufferBase(IGPUBuffer* buffer, unsigned int 
 		bindUAToStage(deviceContext, currentProgram, dxBuffer->dx11BufferUAV, index);
 	}
 	else {
-		switch (dxBuffer->desc.type)
+		GPUBufferType type = dxBuffer->desc.type == GB_Storage && bufferOption.bindStorageAsVertex ? GB_Vertex : dxBuffer->desc.type;
+		switch (type)
 		{
 		case GB_Constant:
 			bindCBToStage(deviceContext, currentProgram, dxBuffer->dx11Buffer, index);

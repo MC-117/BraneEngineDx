@@ -64,7 +64,7 @@ DefaultVertexOut MESH_MAIN
     float4x4 fm = getFinalMat(ins[0]);
     float4 _WorldPos = mul(float4(pos, 1.0), fm);
 
-    float2 offset = (snoise((_WorldPos.xz + time * normalize(windForce.xy)) *
+    float2 offset = (snoise((_WorldPos.xz + gameTime * normalize(windForce.xy)) *
         windDensity) - 0.5) * windForce.xy;
     
     _WorldPos.xy += offset * uv.y;
@@ -82,6 +82,7 @@ DefaultVertexOut MESH_MAIN
 #fragment
 #condition deferred
 #condition lighting
+#condition lighting.vsm
 #include "lib/Light_Def.hmat"
 #include "lib/CameraData_Def.hmat"
 #include "lib/Toon_Lib.hmat"
@@ -154,7 +155,7 @@ FragmentOut SURFACE_MAIN
     float intensity = getLightFinalIntensity(directLight);
     if (intensity != 0) {
         float shadowFactor = getShadow(directLight, surf);
-        Lo += lerp(shadowColor * intensity, directLight.color, shadowFactor);
+        Lo += lerp(directLight.color, shadowColor * intensity, shadowFactor);
     }
     
     PointLight localLight;

@@ -89,7 +89,9 @@ unsigned int DX12GPUBuffer::bindBase(unsigned int index, BufferOption bufferOpti
 	}
 	processTasks(dxContext.activeBackBufferIndex);
 	DX12SubBuffer*& dx12Buffer = dx12Buffers[dxContext.activeBackBufferIndex];
-	switch (desc.type)
+	
+	GPUBufferType type = desc.type == GB_Storage && bufferOption.bindStorageAsVertex ? GB_Vertex : desc.type;
+	switch (type)
 	{
 	case GB_Constant:
 		if (dx12Buffer == NULL)

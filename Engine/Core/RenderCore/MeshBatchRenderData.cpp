@@ -98,6 +98,8 @@ void MeshBatchDrawCommandArray::create()
 
 void MeshBatchDrawCommandArray::release()
 {
+	instanceDataBuffer.resize(0);
+	commandBuffer.resize(0);
 }
 
 void MeshBatchDrawCommandArray::upload()
@@ -116,7 +118,7 @@ void MeshBatchDrawCommandArray::upload()
 
 void MeshBatchDrawCommandArray::bindInstanceBuffer(IRenderContext& context)
 {
-	context.bindBufferBase(instanceDataBuffer.getVendorGPUBuffer(), TRANS_INDEX_BIND_INDEX);
+	context.bindBufferBase(instanceDataBuffer.getVendorGPUBuffer(), TRANS_INDEX_BIND_INDEX, { false, true });
 }
 
 IGPUBuffer* MeshBatchDrawCommandArray::getInstanceBuffer()

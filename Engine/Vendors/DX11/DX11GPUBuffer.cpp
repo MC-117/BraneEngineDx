@@ -180,7 +180,8 @@ unsigned int DX11GPUBuffer::bindBase(unsigned int index, BufferOption bufferOpti
 		dxContext.deviceContext->CSSetUnorderedAccessViews(index, 1, dx11BufferUAV.GetAddressOf(), NULL);
 	}
 	else {
-		switch (desc.type)
+		GPUBufferType type = desc.type == GB_Storage && bufferOption.bindStorageAsVertex ? GB_Vertex : desc.type;
+		switch (type)
 		{
 		case GB_Constant:
 			if (dx11Buffer == NULL)

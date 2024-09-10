@@ -85,6 +85,10 @@ void MeshTransformRenderData::create()
 
 void MeshTransformRenderData::release()
 {
+	clean();
+	transformUploadBuffer.resize(0);
+	transformUploadIndexBuffer.resize(0);
+	transformBuffer.resize(0);
 }
 
 void MeshTransformRenderData::upload()

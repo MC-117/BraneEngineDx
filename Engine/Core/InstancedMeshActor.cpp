@@ -53,7 +53,7 @@ void InstancedMeshActor::prerender(SceneRenderData& sceneData)
 	auto cleanFunc = ([this] (RenderThreadContext& context)
 	{
 		MeshBatchDrawData meshBatchDrawData = instancedMeshRender.getMeshBatchDrawData();
-		meshBatchDrawData.transformData->clean();
+		meshBatchDrawData.transformData->release();
 		meshBatchDrawData.batchDrawCommandArray->clean();
 	});
 	RENDER_THREAD_ENQUEUE_TASK(InstancedMeshActorCleanTransform, cleanFunc);
@@ -94,7 +94,7 @@ void InstancedMeshActor::prerender(SceneRenderData& sceneData)
 					m(0, 3) = i * w - hx + ((rand() / (double)RAND_MAX) - 0.5) * 2 * w;
 					m(1, 3) = j * w - hy + yo + ((rand() / (double)RAND_MAX) - 0.5) * 2 * w;
 					m.block(0, 0, 3, 3) = Quaternionf::FromAngleAxis((rand() / (double)RAND_MAX) * 2 * PI, Vector3f(0, 0, 1)).toRotationMatrix();
-					targetData.localToWorld = transformMat * m;
+					targetData.localToWorld = MATRIX_UPLOAD_OP(transformMat * m);
 					++flatIndex;
 				}
 			}

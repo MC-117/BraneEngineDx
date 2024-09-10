@@ -83,6 +83,7 @@ DefaultVertexOut MESH_MAIN
 #fragment
 #condition deferred
 #condition lighting
+#condition lighting.vsm
 #include "lib/Light_Def.hmat"
 #include "lib/CameraData_Def.hmat"
 #include "lib/Toon_Lib.hmat"

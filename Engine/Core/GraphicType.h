@@ -81,6 +81,7 @@ enum CubeFace
 struct BufferOption
 {
 	bool output = false;
+	bool bindStorageAsVertex = false;
 	unsigned int offset = 0;
 	unsigned int stride = (unsigned int)-1;
 };

@@ -1,4 +1,4 @@
-#define ENABLE_MEMTRACER 1
+#define ENABLE_MEMTRACER 0
 #define _AFXDLL
 #include <filesystem>
 #include <fstream>
