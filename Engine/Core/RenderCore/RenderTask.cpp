@@ -130,16 +130,19 @@ void RenderTask::execute(RenderTaskParameter& parameter)
 			batchDrawData.batchDrawCommandArray->bindInstanceBuffer(context);
 	}
 
-	if (taskContext.renderMode != renderMode) {
+	if (taskContext.renderMode != renderMode || taskContext.stencilValue != stencilValue) {
+		taskContext.renderMode = renderMode;
+		taskContext.stencilValue = stencilValue;
+		
 		uint16_t stage = renderMode.getRenderStage();
 		if (stage < RenderStage::RS_Opaque)
-			context.setRenderPreState();
+			context.setRenderPreState(renderMode.getDepthStencilMode(), taskContext.stencilValue);
 		else if (stage < RenderStage::RS_Aplha)
-			context.setRenderOpaqueState();
+			context.setRenderOpaqueState(renderMode.getDepthStencilMode(), taskContext.stencilValue);
 		else if (stage < RenderStage::RS_Transparent)
-			context.setRenderAlphaState();
+			context.setRenderAlphaState(renderMode.getDepthStencilMode(), taskContext.stencilValue);
 		else if (stage < RenderStage::RS_Post)
-			context.setRenderTransparentState();
+			context.setRenderTransparentState(renderMode.getDepthStencilMode(), taskContext.stencilValue);
 		else {
 			BlendMode blendMode = renderMode.getBlendMode();
 			switch (blendMode)

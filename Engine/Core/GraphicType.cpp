@@ -19,22 +19,91 @@ ShaderPropertyName::ShaderPropertyName(const Name& name) : Name(name)
 		throw std::runtime_error("Empty string is invalid");
 }
 
-RenderMode::RenderMode(uint16_t renderStage, uint8_t blendMode, uint16_t subOrder)
-	: value(subOrder
-		| ((blendMode << BM_Order_BitOffset) & BM_Order_BitMask)
-		| ((renderStage << RS_Order_BitOffset) & RS_Order_BitMask)
-	) {}
+DepthStencilMode::DepthStencilMode()
+{
+	memset(this, 0, sizeof(DepthStencilMode));
+	stencilReadMask = 0xFF;
+	stencilWriteMask = 0xFF;
+	depthTest = true;
+	depthWrite = true;
+}
 
-RenderMode::RenderMode(const RenderMode& mode) { value = mode.value; }
+DepthStencilMode::DepthStencilMode(uint64_t bits)
+{
+	memset(this, bits, sizeof(DepthStencilMode));
+}
 
-RenderMode& RenderMode::operator=(const RenderMode& mode) { value = mode.value; return *this; }
+DepthStencilMode::operator uint64_t() const
+{
+	uint64_t value;
+	memcpy(&value, this, sizeof(DepthStencilMode));
+	return value;
+}
 
-uint16_t RenderMode::getRenderStage() const { return (value & RS_Order_BitMask) >> RS_Order_BitOffset; }
-BlendMode RenderMode::getBlendMode() const { return (BlendMode)((value & BM_Order_BitMask) >> BM_Order_BitOffset); }
-uint32_t RenderMode::getOrder() const { return value & Order_BitMask; }
-uint16_t RenderMode::getSubOrder() const { return value & SubOrder_BitMask; }
+DepthStencilMode DepthStencilMode::DepthTestWritable()
+{
+	DepthStencilMode mode;
+	return mode;
+}
 
-RenderMode::operator uint32_t() const { return value; }
+DepthStencilMode DepthStencilMode::DepthTestNonWritable()
+{
+	DepthStencilMode mode;
+	mode.depthWrite = false;
+	return mode;
+}
+
+DepthStencilMode DepthStencilMode::DepthNonTestNonWritable()
+{
+	DepthStencilMode mode;
+	mode.depthTest = false;
+	mode.depthWrite = false;
+	return mode;
+}
+
+RenderMode::RenderMode()
+{
+	bits = 0;
+	mode.stencilReadMask = 0xFF;
+	mode.stencilWriteMask = 0xFF;
+	mode.depthTest = true;
+	mode.depthWrite = true;
+}
+
+RenderMode::RenderMode(uint16_t renderStage, uint8_t blendMode, DepthStencilMode stencilMode) : RenderMode()
+{
+	mode.renderStage = renderStage;
+	mode.blendMode = blendMode;
+
+	if (renderStage < 2500)
+	{
+		mode.depthTest = true;
+		mode.depthWrite = true;
+	}
+	else if (renderStage < 5000)
+	{
+		mode.depthTest = true;
+		mode.depthWrite = false;
+	}
+	else
+	{
+		mode.depthTest = false;
+		mode.depthWrite = false;
+	}
+}
+
+RenderMode::RenderMode(const RenderMode& mode) { bits = mode.bits; }
+
+RenderMode& RenderMode::operator=(const RenderMode& mode) { bits = mode.bits; return *this; }
+
+uint16_t RenderMode::getRenderStage() const { return mode.renderStage; }
+BlendMode RenderMode::getBlendMode() const { return (BlendMode)mode.blendMode; }
+
+uint64_t RenderMode::getOrder() const { return bits; }
+
+DepthStencilMode RenderMode::getDepthStencilMode() const { return mode; }
+
+RenderMode::operator uint64_t() const { return bits; }
 
 const ShaderPropertyName& ShaderPropertyDesc::getName() const
 {

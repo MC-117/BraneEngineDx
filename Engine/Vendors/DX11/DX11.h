@@ -33,8 +33,8 @@ struct DX11Context
 	ComPtr<ID3D11BlendState> blendMaskWriteOn = NULL;                  // Post
 	ComPtr<ID3D11BlendState> blendGBuffer = NULL;                      // GBuffer
 
-	ComPtr<ID3D11DepthStencilState> depthWriteOnTestOnLEqual = NULL;   //    0 - 2499
-	ComPtr<ID3D11DepthStencilState> depthWriteOffTestOnLEqual = NULL;  // 2500 - 4999
+	map<DepthStencilMode, ComPtr<ID3D11DepthStencilState>> depthStencilStateMap;
+	
 	ComPtr<ID3D11DepthStencilState> depthWriteOffTestOffLEqual = NULL; // 5000 - 
 
 	ComPtr<ID3D11InputLayout> screenInputLayout = NULL;
@@ -50,6 +50,7 @@ struct DX11Context
 	void cleanupDevice();
 	void fetchGPUFrrequency();
 	void createRenderState();
+	ComPtr<ID3D11DepthStencilState> getOrCreateDepthStencilState(DepthStencilMode mode);
 	void createInputLayout();
 	void cleanupRenderState();
 	void cleanupInputLayout();

@@ -98,11 +98,11 @@ public:
 		unsigned int boneCount, unsigned int morphVertCount, unsigned int morphCount) = 0;
 	virtual IRenderExecution* newRenderExecution() = 0;
 
-	virtual void setRenderPreState() = 0;
-	virtual void setRenderGeomtryState() = 0;
-	virtual void setRenderOpaqueState() = 0;
-	virtual void setRenderAlphaState() = 0;
-	virtual void setRenderTransparentState() = 0;
+	virtual void setRenderPreState(DepthStencilMode depthStencilMode, uint8_t stencilValue) = 0;
+	virtual void setRenderGeomtryState(DepthStencilMode depthStencilMode, uint8_t stencilValue) = 0;
+	virtual void setRenderOpaqueState(DepthStencilMode depthStencilMode, uint8_t stencilValue) = 0;
+	virtual void setRenderAlphaState(DepthStencilMode depthStencilMode, uint8_t stencilValue) = 0;
+	virtual void setRenderTransparentState(DepthStencilMode depthStencilMode, uint8_t stencilValue) = 0;
 	virtual void setRenderOverlayState() = 0;
 	virtual void setRenderPostState() = 0;
 	virtual void setRenderPostAddState() = 0;

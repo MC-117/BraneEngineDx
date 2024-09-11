@@ -228,34 +228,34 @@ IRenderExecution* DX11Vendor::newRenderExecution()
 	return new DX11RenderExecution(dxContext);
 }
 
-void DX11Vendor::setRenderPreState()
+void DX11Vendor::setRenderPreState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
 	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOff.Get(), NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual.Get(), 0);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
 }
 
-void DX11Vendor::setRenderGeomtryState()
+void DX11Vendor::setRenderGeomtryState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
 	dxContext.deviceContext->OMSetBlendState(dxContext.blendGBuffer.Get(), NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual.Get(), 0);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
 }
 
-void DX11Vendor::setRenderOpaqueState()
+void DX11Vendor::setRenderOpaqueState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
 	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual.Get(), 0);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
 }
 
-void DX11Vendor::setRenderAlphaState()
+void DX11Vendor::setRenderAlphaState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
 	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOnAlphaTest.Get(), NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOnTestOnLEqual.Get(), 0);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
 }
 
-void DX11Vendor::setRenderTransparentState()
+void DX11Vendor::setRenderTransparentState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
 	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOnLEqual.Get(), 0);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
 }
 
 void DX11Vendor::setRenderOverlayState()

@@ -205,7 +205,7 @@ void DeferredLightingPass::blitSceneColor(IRenderContext& context, Texture* gBuf
 	context.bindShaderProgram(blitProgram);
 	context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
 	context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
-	context.setRenderOpaqueState();
+	context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable(), 0);
 	context.setViewport(0, 0, gBufferA->getWidth(), gBufferA->getHeight());
 	context.postProcessCall();
 }

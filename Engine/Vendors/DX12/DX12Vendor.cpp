@@ -202,31 +202,31 @@ IRenderExecution* DX12Vendor::newRenderExecution()
 	return new DX12RenderExecution(dxContext);
 }
 
-void DX12Vendor::setRenderPreState()
+void DX12Vendor::setRenderPreState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
 	dxContext.graphicContext.setBlendFlags(DX12BlendFlags::None);
 	dxContext.graphicContext.setDepthFlags((uint8_t)DX12DepthFlags::Test | (uint8_t)DX12DepthFlags::Write);
 }
 
-void DX12Vendor::setRenderGeomtryState()
+void DX12Vendor::setRenderGeomtryState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
 	dxContext.graphicContext.setBlendFlags(DX12BlendFlags::Write);
 	dxContext.graphicContext.setDepthFlags((uint8_t)DX12DepthFlags::Test | (uint8_t)DX12DepthFlags::Write);
 }
 
-void DX12Vendor::setRenderOpaqueState()
+void DX12Vendor::setRenderOpaqueState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
 	dxContext.graphicContext.setBlendFlags((uint8_t)DX12BlendFlags::Write);
 	dxContext.graphicContext.setDepthFlags((uint8_t)DX12DepthFlags::Test | (uint8_t)DX12DepthFlags::Write);
 }
 
-void DX12Vendor::setRenderAlphaState()
+void DX12Vendor::setRenderAlphaState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
 	dxContext.graphicContext.setBlendFlags((uint8_t)DX12BlendFlags::Write | (uint8_t)DX12BlendFlags::AlphaTest);
 	dxContext.graphicContext.setDepthFlags((uint8_t)DX12DepthFlags::Test | (uint8_t)DX12DepthFlags::Write);
 }
 
-void DX12Vendor::setRenderTransparentState()
+void DX12Vendor::setRenderTransparentState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
 	dxContext.graphicContext.setBlendFlags((uint8_t)DX12BlendFlags::Write | (uint8_t)DX12BlendFlags::Blend);
 	dxContext.graphicContext.setDepthFlags((uint8_t)DX12DepthFlags::Test);

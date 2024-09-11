@@ -233,9 +233,6 @@ enum RenderStage : uint16_t
 	RS_Count = 6
 };
 
-const uint32_t RS_Order_BitMask = 0x1FFF0000;
-const uint8_t RS_Order_BitOffset = 16;
-
 enum BlendMode : uint8_t
 {
 	BM_Default = 0,
@@ -245,26 +242,87 @@ enum BlendMode : uint8_t
 	BM_Mask = 4
 };
 
-const uint32_t BM_Order_BitMask = 0xE0000000;
-const uint8_t BM_Order_BitOffset = 32 - 3;
+enum StencilOperationType : uint8_t
+{
+	SOT_Keep,
+	SOT_Zero,
+	SOT_Replace,
+	SOT_Increase_Clamp,
+	SOT_Decrease_Clamp,
+	SOT_Invert,
+	SOT_Increase,
+	SOT_Decrease,
+};
+
+enum RenderComparionType : uint8_t
+{
+	RCT_Never,
+	RCT_Less,
+	RCT_Equal,
+	RCT_LessEqual,
+	RCT_Greater,
+	RCT_GreaterEqual,
+	RCT_Always,
+};
+
+#pragma pack(push, 1)
+struct DepthStencilMode
+{
+	uint8_t stencilReadMask : 8;
+	uint8_t stencilWriteMask : 8;
+
+	StencilOperationType stencilFailedOp_front : 4;
+	StencilOperationType stencilDepthFailedOp_front : 4;
+	StencilOperationType stencilPassOp_front : 4;
+	RenderComparionType stencilComparion_front : 3;
+
+	bool stencilTest : 1;
+
+	StencilOperationType stencilFailedOp_back : 4;
+	StencilOperationType stencilDepthFailedOp_back : 4;
+	StencilOperationType stencilPassOp_back : 3;
+
+	bool depthWrite : 1;
+	
+	RenderComparionType stencilComparion_back : 3;
+
+	bool depthTest : 1;
+
+	DepthStencilMode();
+	DepthStencilMode(uint64_t bits);
+
+	operator uint64_t() const;
+
+	static DepthStencilMode DepthTestWritable();
+	static DepthStencilMode DepthTestNonWritable();
+	static DepthStencilMode DepthNonTestNonWritable();
+};
 
 struct ENGINE_API RenderMode
 {
-	const uint32_t Order_BitMask = 0x1FFFFFFF;
-	const uint32_t SubOrder_BitMask = 0xFFFF;
-	uint32_t value = 0;
-	RenderMode() = default;
-	RenderMode(uint16_t renderStage, uint8_t blendMode, uint16_t subOrder);
+	union
+	{
+		struct : DepthStencilMode
+		{
+			uint16_t renderStage : 12;
+			uint8_t blendMode : 4;
+		} mode;
+		uint64_t bits;
+	};
+	RenderMode();
+	RenderMode(uint16_t renderStage, uint8_t blendMode, DepthStencilMode stencilMode);
 	RenderMode(const RenderMode& mode);
 	RenderMode& operator=(const RenderMode& mode);
 
 	uint16_t getRenderStage() const;
 	BlendMode getBlendMode() const;
-	uint32_t getOrder() const;
-	uint16_t getSubOrder() const;
+	uint64_t getOrder() const;
 
-	operator uint32_t() const;
+	DepthStencilMode getDepthStencilMode() const;
+
+	operator uint64_t() const;
 };
+#pragma pack(pop)
 
 struct ENGINE_API ShaderPropertyName : public Name
 {

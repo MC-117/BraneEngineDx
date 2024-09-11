@@ -98,11 +98,11 @@ public:
 
 	virtual void bindMeshData(MeshData* meshData);
 
-	virtual void setRenderPreState();
-	virtual void setRenderGeomtryState();
-	virtual void setRenderOpaqueState();
-	virtual void setRenderAlphaState();
-	virtual void setRenderTransparentState();
+	virtual void setRenderPreState(DepthStencilMode depthStencilMode, uint8_t stencilValue);
+	virtual void setRenderGeomtryState(DepthStencilMode depthStencilMode, uint8_t stencilValue);
+	virtual void setRenderOpaqueState(DepthStencilMode depthStencilMode, uint8_t stencilValue);
+	virtual void setRenderAlphaState(DepthStencilMode depthStencilMode, uint8_t stencilValue);
+	virtual void setRenderTransparentState(DepthStencilMode depthStencilMode, uint8_t stencilValue);
 	virtual void setRenderOverlayState();
 	virtual void setRenderPostState();
 	virtual void setRenderPostAddState();

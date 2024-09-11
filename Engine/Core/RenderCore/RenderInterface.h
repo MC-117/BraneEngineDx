@@ -138,6 +138,7 @@ struct RenderTaskContext
 	RenderMode renderMode;
 	IMaterial* materialVariant;
 	MeshData* meshData;
+	uint8_t stencilValue;
 };
 
 struct IRenderPack

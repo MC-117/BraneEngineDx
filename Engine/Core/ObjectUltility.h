@@ -17,3 +17,11 @@ Ref<T> getInstanceRef(const SerializationInfo& from, const string& name)
 }
 
 ENGINE_API World* getRootWorld(const Object& object);
+
+template<class T>
+T* getObjectBehavior(Object& object)
+{
+	static_assert(std::is_base_of<ObjectBehavior, T>::value,
+		"Only support classes based on Base");
+	return castTo<T>(object.getBehavior(T::serialization()));
+}

@@ -1089,7 +1089,7 @@ void VirtualShadowMapArray::render(IRenderContext& context, const LightRenderDat
 				resource.transformData->bind(context);
 			}
 
-			context.setRenderOpaqueState();
+			context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable(), 0);
 
 			for (auto data : resource.extraData) {
 				data->bind(context);

@@ -196,16 +196,46 @@ void DX11Context::createRenderState()
 
 	D3D11_DEPTH_STENCIL_DESC dsDesc;
 	ZeroMemory(&dsDesc, sizeof dsDesc);
-	dsDesc.DepthEnable = true;
-	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
-	device->CreateDepthStencilState(&dsDesc, &depthWriteOnTestOnLEqual);
-
-	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	device->CreateDepthStencilState(&dsDesc, &depthWriteOffTestOnLEqual);
-
 	dsDesc.DepthEnable = false;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	device->CreateDepthStencilState(&dsDesc, &depthWriteOffTestOffLEqual);
+}
+
+ComPtr<ID3D11DepthStencilState> DX11Context::getOrCreateDepthStencilState(DepthStencilMode mode)
+{
+	auto iter = depthStencilStateMap.find(mode);
+	if (iter != depthStencilStateMap.end())
+		return iter->second;
+	
+	D3D11_DEPTH_STENCIL_DESC dsDesc;
+	ZeroMemory(&dsDesc, sizeof dsDesc);
+
+	ComPtr<ID3D11DepthStencilState> depthStencilState;
+
+	dsDesc.DepthEnable = mode.depthTest;
+	dsDesc.DepthWriteMask = mode.depthWrite ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+
+	dsDesc.StencilEnable = mode.stencilTest;
+	dsDesc.StencilReadMask = mode.stencilReadMask;
+	dsDesc.StencilWriteMask = mode.stencilWriteMask;
+	
+	dsDesc.FrontFace.StencilFailOp = (D3D11_STENCIL_OP)(mode.stencilFailedOp_front + 1);
+	dsDesc.FrontFace.StencilDepthFailOp = (D3D11_STENCIL_OP)(mode.stencilDepthFailedOp_front + 1);
+	dsDesc.FrontFace.StencilPassOp = (D3D11_STENCIL_OP)(mode.stencilPassOp_front + 1);
+	dsDesc.FrontFace.StencilFunc = (D3D11_COMPARISON_FUNC)(mode.stencilComparion_front + 1);
+	
+	dsDesc.BackFace.StencilFailOp = (D3D11_STENCIL_OP)(mode.stencilFailedOp_back + 1);
+	dsDesc.BackFace.StencilDepthFailOp = (D3D11_STENCIL_OP)(mode.stencilDepthFailedOp_back + 1);
+	dsDesc.BackFace.StencilPassOp = (D3D11_STENCIL_OP)(mode.stencilPassOp_back + 1);
+	dsDesc.BackFace.StencilFunc = (D3D11_COMPARISON_FUNC)(mode.stencilComparion_back + 1);
+
+	device->CreateDepthStencilState(&dsDesc, &depthStencilState);
+
+	depthStencilStateMap.emplace(mode, depthStencilState);
+
+	return depthStencilState;
 }
 
 void DX11Context::createInputLayout()
@@ -336,15 +366,11 @@ void DX11Context::cleanupRenderState()
 	if (blendAddWriteOn != NULL) {
 		blendAddWriteOn.Reset();
 	}
-	if (depthWriteOnTestOnLEqual != NULL) {
-		depthWriteOnTestOnLEqual.Reset();
-	}
-	if (depthWriteOffTestOnLEqual != NULL) {
-		depthWriteOffTestOnLEqual.Reset();
-	}
 	if (depthWriteOffTestOffLEqual != NULL) {
 		depthWriteOffTestOffLEqual.Reset();
 	}
+
+	depthStencilStateMap.clear();
 }
 
 void DX11Context::cleanupInputLayout()
