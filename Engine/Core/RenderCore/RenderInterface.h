@@ -123,6 +123,7 @@ struct IRenderCommand
 	virtual bool isValid() const = 0;
 	virtual Enum<ShaderFeature> getShaderFeature() const = 0;
 	virtual RenderMode getRenderMode() const = 0;
+	virtual uint8_t getStencilValue() const;
 	virtual bool canCastShadow() const = 0;
 	virtual void collectRenderData(IRenderDataCollector* collectorMainThread, IRenderDataCollector* collectorRenderThread);
 	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const = 0;

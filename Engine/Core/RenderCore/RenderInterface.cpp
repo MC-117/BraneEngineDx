@@ -32,6 +32,11 @@ bool MaterialDrawData::isValid() const
 	return shader && renderData;
 }
 
+uint8_t IRenderCommand::getStencilValue() const
+{
+	return 0;
+}
+
 void IRenderCommand::collectRenderData(IRenderDataCollector* collectorMainThread, IRenderDataCollector* collectorRenderThread)
 {
 	if (collectorMainThread) {

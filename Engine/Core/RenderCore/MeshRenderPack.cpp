@@ -35,6 +35,11 @@ RenderMode MeshRenderCommand::getRenderMode() const
 	return RenderMode(materialRenderData->renderOrder, 0, 0);
 }
 
+uint8_t MeshRenderCommand::getStencilValue() const
+{
+	return stencilValue;
+}
+
 bool MeshRenderCommand::canCastShadow() const
 {
 	return materialRenderData->canCastShadow && hasShadow;

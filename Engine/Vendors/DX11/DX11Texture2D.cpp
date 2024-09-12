@@ -22,7 +22,7 @@ DX11Texture2DInfo::DX11Texture2DInfo(const Texture2DInfo & info)
 	}
 	if (texture2DDesc.Usage != D3D11_USAGE_STAGING) {
 		texture2DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-		if (info.internalType == TIT_D32_F)
+		if (info.internalType == TIT_D32_F || info.internalType == TIT_D32_F_S8_UI)
 			texture2DDesc.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
 		else if (info.sampleCount > 1)
 			texture2DDesc.BindFlags |= D3D11_BIND_RENDER_TARGET;
@@ -63,7 +63,7 @@ DX11Texture2DInfo& DX11Texture2DInfo::operator=(const Texture2DInfo& info)
 	}
 	if (texture2DDesc.Usage != D3D11_USAGE_STAGING) {
 		texture2DDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-		if (info.internalType == TIT_D32_F)
+		if (info.internalType == TIT_D32_F || info.internalType == TIT_D32_F_S8_UI)
 			texture2DDesc.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
 		else if (info.sampleCount > 1)
 			texture2DDesc.BindFlags |= D3D11_BIND_RENDER_TARGET;
@@ -205,6 +205,12 @@ DXGI_FORMAT DX11Texture2DInfo::toDX11InternalType(const TexInternalType & type)
 		return DXGI_FORMAT_R32G32_UINT;
 	case TIT_RG32_I:
 		return DXGI_FORMAT_R32G32_SINT;
+	case TIT_D32_F_S8_UI:
+		return DXGI_FORMAT_R32G8X24_TYPELESS;
+	case TIT_R32_F_S8_X:
+		return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+	case TIT_R32_X_S8_UI:
+		return DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
 	case TIT_RGB32_F:
 		return DXGI_FORMAT_R32G32B32_FLOAT;
 	case TIT_RGB32_UI:
@@ -227,6 +233,8 @@ DXGI_FORMAT DX11Texture2DInfo::toDX11ColorType(const TexInternalType& type)
 	{
 	case TIT_D32_F:
 		return DXGI_FORMAT_R32_FLOAT;
+	case TIT_D32_F_S8_UI:
+		return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
 	default:
 		return toDX11InternalType(type);
 	}
@@ -306,7 +314,7 @@ unsigned int DX11Texture2D::bind()
 			dxContext.deviceContext->UpdateSubresource(dx11Texture2D.Get(), 0, NULL, desc.data, desc.width * desc.channel * sizeof(unsigned char),
 				desc.height * desc.width * desc.channel * desc.arrayCount * sizeof(unsigned char));
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-			srvDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
+			srvDesc.Format = DX11Texture2DInfo::toDX11ColorType(desc.info.internalType);
 			srvDesc.ViewDimension = getSrvDimension(desc.info.dimension, false);
 			srvDesc.Texture2D.MipLevels = -1;
 			srvDesc.Texture2D.MostDetailedMip = 0;
@@ -400,7 +408,7 @@ ComPtr<ID3D11ShaderResourceView> DX11Texture2D::getSRV(const MipOption& mipOptio
 
 	D3D_SRV_DIMENSION dxDimension = getSrvDimension(dimension, isMS);
 
-	srvDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
+	srvDesc.Format = DX11Texture2DInfo::toDX11ColorType(desc.info.internalType);
 	srvDesc.ViewDimension = dxDimension;
 	if (isMS) {
 		srvDesc.Texture2DMSArray.FirstArraySlice = mipOption.arrayBase;
@@ -474,7 +482,7 @@ ComPtr<ID3D11UnorderedAccessView> DX11Texture2D::getUAV(const RWOption& rwOption
 	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
 	ZeroMemory(&uavDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
 	TexDimension dimension = rwOption.dimension == TD_Default ? desc.info.dimension : rwOption.dimension;
-	uavDesc.Format = desc.info.internalType == TIT_D32_F ? DXGI_FORMAT_R32_FLOAT : info.texture2DDesc.Format;
+	uavDesc.Format = DX11Texture2DInfo::toDX11ColorType(desc.info.internalType);
 	uavDesc.ViewDimension = getUavDimension(dimension);
 	uavDesc.Texture2D.MipSlice = rwOption.mipLevel;
 	uavDesc.Texture2DArray.FirstArraySlice = rwOption.arrayBase;
@@ -496,7 +504,11 @@ ComPtr<ID3D11DepthStencilView> DX11Texture2D::getDSV(unsigned int mipLevel)
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 	ZeroMemory(&dsvDesc, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
-	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	switch (desc.info.internalType) {
+	case TIT_D32_F: dsvDesc.Format = DXGI_FORMAT_D32_FLOAT; break;
+	case TIT_D32_F_S8_UI: dsvDesc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT; break;
+	default: throw runtime_error("Invalid DSV format");
+	}
 	if (desc.info.sampleCount > 1) {
 		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
 	}

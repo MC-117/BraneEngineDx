@@ -147,7 +147,7 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 		dx11DepthTexDesc.channel = 1;
 		dx11DepthTexDesc.width = width;
 		dx11DepthTexDesc.height = height;
-		dx11DepthTexDesc.info.internalType = desc.multisampleLevel > 1 ? TIT_R32_F : TIT_D32_F;
+		dx11DepthTexDesc.info.internalType = desc.multisampleLevel > 1 ? TIT_R32_F : TIT_D32_F_S8_UI;
 		dx11DepthTexDesc.info.wrapSType = TW_Clamp;
 		dx11DepthTexDesc.info.wrapTType = TW_Clamp;
 		dx11DepthTexDesc.info.magFilterType = TF_Point;
@@ -163,7 +163,7 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 			multisampleDepthTexDesc.channel = 1;
 			multisampleDepthTexDesc.width = width;
 			multisampleDepthTexDesc.height = height;
-			multisampleDepthTexDesc.info.internalType = TIT_D32_F;
+			multisampleDepthTexDesc.info.internalType = TIT_D32_F_S8_UI;
 			multisampleDepthTexDesc.info.wrapSType = TW_Clamp;
 			multisampleDepthTexDesc.info.wrapTType = TW_Clamp;
 			multisampleDepthTexDesc.info.magFilterType = TF_Point;

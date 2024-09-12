@@ -290,6 +290,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataC
 	task.shaderProgram = materialVariant->program;
 	task.materialVariant = materialVariant;
 	task.renderMode = cmd.getRenderMode();
+	task.stencilValue = cmd.getStencilValue();
 	task.meshData = meshData;
 	task.extraData = cmd.bindings;
 
@@ -343,6 +344,7 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataC
 		task.shaderProgram = materialVariant->program;
 		task.materialVariant = materialVariant;
 		task.renderMode = cmd.getRenderMode();
+		task.stencilValue = cmd.getStencilValue();
 		task.meshData = meshData;
 		task.extraData = cmd.bindings;
 
