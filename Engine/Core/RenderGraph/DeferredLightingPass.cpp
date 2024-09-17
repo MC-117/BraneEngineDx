@@ -5,6 +5,7 @@
 #include "../Profile/RenderProfile.h"
 #include "../Asset.h"
 #include "../RenderCore/RenderCoreUtility.h"
+#include "../../Core/Utility/RenderUtility.h"
 
 bool DeferredLightingTask::ExecutionOrder::operator()(const DeferredLightingTask& t0, const DeferredLightingTask& t1) const
 {
@@ -62,7 +63,7 @@ bool DeferredLightingPass::loadDefaultResource()
 		{															\n\
 			FragmentOut fout;										\n\
 			fout.color = gBufferA.Sample(gBufferASampler, fin.UV);	\n\
-			fout.depth = gBufferB.Sample(gBufferBSampler, fin.UV).r;\n\
+			fout.depth = gBufferB.Sample(gBufferBSampler, fin.UV);	\n\
 			return fout;											\n\
 		}";
 	string error;
@@ -106,7 +107,7 @@ void DeferredLightingPass::execute(IRenderContext& context)
 			continue;
 
 		// RENDER_DESC_SCOPE(DrawLighting, "Material(%s)", AssetInfo::getPath(task.material).c_str());
-		RENDER_DESC_SCOPE(DrawLighting, "Material");
+		RENDER_DESC_SCOPE(context, DrawLighting, "Material");
 
 		bool cameraDataSwitch = false;
 		bool shaderSwitch = false;
@@ -115,7 +116,7 @@ void DeferredLightingPass::execute(IRenderContext& context)
 			taskContext.surface = task.surface;
 
 			task.surface.bind(context);
-			blitSceneColor(context, task.gBufferRT->getTexture(0), task.gBufferRT->getTexture(1));
+			blitSceneColor(context, *task.surface.renderTarget, task.gBufferRT->getTexture(0), task.gBufferRT->getTexture(1));
 			taskContext.program = blitProgram;
 		}
 
@@ -178,7 +179,15 @@ void DeferredLightingPass::execute(IRenderContext& context)
 			taskContext.gBufferRT = task.gBufferRT;
 		}*/
 
-		context.setRenderPostState();
+		DepthStencilMode depthStencilMode;
+		setDepthStateFromRenderOrder(depthStencilMode, RS_Post);
+		depthStencilMode.depthTest = task.cameraRenderData->forceStencilTest;
+		depthStencilMode.stencilWriteMask = 0;
+		depthStencilMode.stencilComparion_front = RCT_Equal;
+		depthStencilMode.stencilComparion_back = RCT_Equal;
+
+		context.setRenderPostState(depthStencilMode);
+		context.setStencilRef(task.cameraRenderData->stencilRef);
 		context.setDrawInfo(0, 0, task.materialVariant->desc.materialID);
 		context.postProcessCall();
 	}
@@ -197,7 +206,7 @@ void DeferredLightingPass::reset()
 	}
 }
 
-void DeferredLightingPass::blitSceneColor(IRenderContext& context, Texture* gBufferA, Texture* gBufferB)
+void DeferredLightingPass::blitSceneColor(IRenderContext& context, RenderTarget& target, Texture* gBufferA, Texture* gBufferB)
 {
 	static const ShaderPropertyName gBufferAName = "gBufferA";
 	static const ShaderPropertyName gBufferBName = "gBufferB";
@@ -205,7 +214,8 @@ void DeferredLightingPass::blitSceneColor(IRenderContext& context, Texture* gBuf
 	context.bindShaderProgram(blitProgram);
 	context.bindTexture((ITexture*)gBufferA->getVendorTexture(), gBufferAName);
 	context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
-	context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable(), 0);
+	context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable());
+	context.setStencilRef(0);
 	context.setViewport(0, 0, gBufferA->getWidth(), gBufferA->getHeight());
 	context.postProcessCall();
 }

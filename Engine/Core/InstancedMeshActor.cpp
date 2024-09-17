@@ -46,6 +46,7 @@ void InstancedMeshActor::end()
 
 void InstancedMeshActor::prerender(SceneRenderData& sceneData)
 {
+	Actor::prerender(sceneData);
 	const bool needUpdate = instancedMeshRender.getNeedUpdate();
 	if (!needUpdate)
 		return;

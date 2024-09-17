@@ -1,6 +1,7 @@
 ﻿#include "RenderProfile.h"
 
 #include "../GUI/GUIUtility.h"
+#include "../../Core/IRenderContext.h"
 
 RenderProfileScope::RenderProfileScope(const string& name, const char* text, ...)
 {
@@ -25,6 +26,34 @@ RenderProfileScope::RenderProfileScope(const string& name, const char* text, ...
 RenderProfileScope::~RenderProfileScope()
 {
     RenderDurationProfiler::GInstance().endScope();
+}
+
+RenderProfileScopeWithContext::RenderProfileScopeWithContext(IRenderContext& context, const string& name, const char* text, ...)
+    : context(context)
+{
+    va_list ap;
+    va_start(ap, text);
+    const int textLen = strlen(text);
+    int n = textLen * 2; /* Reserve two times as much as the length of the fmt_str */
+    std::unique_ptr<char[]> formatted;
+    while (true) {
+        formatted.reset(new char[n]); /* Wrap the plain char array into the unique_ptr */
+        memcpy_s(&formatted[0], textLen, text, textLen);
+        const int final_n = vsnprintf(&formatted[0], n, text, ap);
+        if (final_n < 0 || final_n >= n)
+            n += abs(final_n - n + 1);
+        else
+            break;
+    }
+    va_end(ap);
+    context.beginEvent((name + formatted.get()).c_str());
+    RenderDurationProfiler::GInstance().beginScope(name, formatted.get());
+}
+
+RenderProfileScopeWithContext::~RenderProfileScopeWithContext()
+{
+    RenderDurationProfiler::GInstance().endScope();
+    context.endEvent();
 }
 
 int secondFormatter(double value, char* buff, int size, void* data)

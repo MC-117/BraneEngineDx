@@ -8,22 +8,21 @@
 #include "MeshBatchRenderData.h"
 #include "ViewCullingContext.h"
 
-struct MeshRenderCommand : public IRenderCommand
+struct ENGINE_API MeshRenderCommand : public IRenderCommand
 {
 	int instanceID = 0;
 	int instanceIDCount = 0;
 	bool hasShadow = true;
 	bool hasPreDepth = false;
+	bool hasGeometryPass = true;
 	bool reverseCullMode = false;
-	uint8_t stencilValue = 0;
 	MeshBatchDrawCall* meshBatchDrawCall = NULL;
 
 	MeshBatchDrawKey getMeshBatchDrawKey() const;
 
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
-	virtual RenderMode getRenderMode() const;
-	virtual uint8_t getStencilValue() const;
+	virtual RenderMode getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const;
 	virtual bool canCastShadow() const;
 	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const;
 };

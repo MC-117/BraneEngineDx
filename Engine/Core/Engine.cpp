@@ -280,6 +280,8 @@ void Engine::setupRenderFramework()
 		if (!vendor.imGuiInit(engineConfig, windowContext))
 			throw runtime_error("Vendor ImGui init failed");
 	}
+	
+	RenderPool::get().initialize();
 }
 
 bool Engine::loadAssets(ImportContext& context)
@@ -380,6 +382,8 @@ void Engine::releasePhysicsFramework()
 void Engine::releaseRenderFramework()
 {
 	InitializationManager::instance().finalize(FinalizeStage::BeforeRenderVenderRelease);
+
+	RenderPool::get().release();
 
 	IVendor& vendor = VendorManager::getInstance().getVendor();
 

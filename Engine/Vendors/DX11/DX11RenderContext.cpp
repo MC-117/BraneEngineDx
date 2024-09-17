@@ -1,5 +1,6 @@
 #include "DX11RenderContext.h"
 #include "imgui_impl_dx11.h"
+#include "Core/Utility/EngineUtility.h"
 
 #define TEX_BINGING_REC 0
 #define INDIRECT_DRAW 0
@@ -13,6 +14,8 @@ void DX11RenderContext::init()
 {
 	if (FAILED(deviceContext->QueryInterface<ID3D11DeviceContext4>(&deviceContext4)))
 		throw runtime_error("ID3D11DeviceContext4 not support");
+	if (FAILED(deviceContext->QueryInterface<ID3DUserDefinedAnnotation>(&annotation)))
+		throw runtime_error("ID3DUserDefinedAnnotation not support");
 	if (FAILED(dxContext.device5->CreateFence(fenceValue, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence))))
 		throw runtime_error("Fence create failed");
 }
@@ -62,6 +65,18 @@ void DX11RenderContext::waitSignalCPU()
 		WaitForSingleObject(eventHandle, INFINITE);
 		CloseHandle(eventHandle);
 	}
+}
+
+void DX11RenderContext::beginEvent(const char* name)
+{
+	wstring wname;
+	charToWcharString(name, wname);
+	annotation->BeginEvent(wname.data());
+}
+
+void DX11RenderContext::endEvent()
+{
+	annotation->EndEvent();
 }
 
 void DX11RenderContext::clearVertexBindings()
@@ -920,76 +935,101 @@ void DX11RenderContext::bindMeshData(MeshData* meshData)
 	}
 }
 
-void DX11RenderContext::setRenderPreState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
+void DX11RenderContext::setStencilRef(uint8_t stencil)
+{
+	currentStencilRef = stencil;
+	deviceContext->OMSetDepthStencilState(dx11DSState.Get(), currentStencilRef);
+}
+
+void DX11RenderContext::setRenderPreState(DepthStencilMode depthStencilMode)
 {
 	deviceContext->OMSetBlendState(dxContext.blendOffWriteOff.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
+	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
+	setStencilRef(currentStencilRef);
 }
 
-void DX11RenderContext::setRenderGeomtryState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
+void DX11RenderContext::setRenderGeomtryState(DepthStencilMode depthStencilMode)
 {
 	deviceContext->OMSetBlendState(dxContext.blendGBuffer.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
+	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
+	setStencilRef(currentStencilRef);
 }
 
-void DX11RenderContext::setRenderOpaqueState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
+void DX11RenderContext::setRenderOpaqueState(DepthStencilMode depthStencilMode)
 {
 	deviceContext->OMSetBlendState(dxContext.blendOffWriteOn.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
+	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
+	setStencilRef(currentStencilRef);
 }
 
-void DX11RenderContext::setRenderAlphaState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
+void DX11RenderContext::setRenderAlphaState(DepthStencilMode depthStencilMode)
 {
 	deviceContext->OMSetBlendState(dxContext.blendOffWriteOnAlphaTest.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
+	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
+	setStencilRef(currentStencilRef);
 }
 
-void DX11RenderContext::setRenderTransparentState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
+void DX11RenderContext::setRenderTransparentState(DepthStencilMode depthStencilMode)
 {
 	deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
+	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
+	setStencilRef(currentStencilRef);
 }
 
 void DX11RenderContext::setRenderOverlayState()
 {
 	deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
+	setStencilRef(currentStencilRef);
 }
 
 void DX11RenderContext::setRenderPostState()
 {
 	deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
+	setStencilRef(currentStencilRef);
+}
+
+void DX11RenderContext::setRenderPostState(DepthStencilMode depthStencilMode)
+{
+	deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
+	setStencilRef(currentStencilRef);
 }
 
 void DX11RenderContext::setRenderPostAddState()
 {
 	deviceContext->OMSetBlendState(dxContext.blendAddWriteOn.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
+	setStencilRef(currentStencilRef);
 }
 
 void DX11RenderContext::setRenderPostPremultiplyAlphaState()
 {
 	deviceContext->OMSetBlendState(dxContext.blendPremultiplyAlphaWriteOn.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
+	setStencilRef(currentStencilRef);
 }
 
 void DX11RenderContext::setRenderPostMultiplyState()
 {
 	deviceContext->OMSetBlendState(dxContext.blendMultiplyWriteOn.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
+	setStencilRef(currentStencilRef);
 }
 
 void DX11RenderContext::setRenderPostMaskState()
 {
 	deviceContext->OMSetBlendState(dxContext.blendMaskWriteOn.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
+	setStencilRef(currentStencilRef);
 }
 
 void DX11RenderContext::setRenderPostReplaceState()
 {
 	deviceContext->OMSetBlendState(dxContext.blendOffWriteOn.Get(), NULL, 0xFFFFFFFF);
-	deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
+	setStencilRef(currentStencilRef);
 }
 
 void DX11RenderContext::setCullState(CullType type)

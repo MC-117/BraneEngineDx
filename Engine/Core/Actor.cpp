@@ -33,6 +33,7 @@ void Actor::end()
 
 void Actor::prerender(SceneRenderData& sceneData)
 {
+	Transform::prerender(sceneData);
 }
 
 void Actor::setHidden(bool value)

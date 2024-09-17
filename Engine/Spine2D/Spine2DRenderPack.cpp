@@ -12,9 +12,14 @@ Enum<ShaderFeature> Spine2DRenderCommand::getShaderFeature() const
 	return ShaderFeature::Shader_Default;
 }
 
-RenderMode Spine2DRenderCommand::getRenderMode() const
+uint16_t Spine2DRenderCommand::getRenderStage() const
 {
-	return RenderMode(RenderStage::RS_Post, blendMode, 0);
+	return RenderStage::RS_Post;
+}
+
+RenderMode Spine2DRenderCommand::getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const
+{
+	return RenderMode(RenderStage::RS_Post, blendMode);
 }
 
 bool Spine2DRenderCommand::canCastShadow() const

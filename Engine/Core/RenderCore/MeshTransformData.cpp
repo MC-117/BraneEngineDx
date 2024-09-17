@@ -39,3 +39,13 @@ bool MeshTransformData::isNegativeScale() const
 {
 	return !!(flag & MeshTransform_NegScale);
 }
+
+uint8_t MeshTransformData::getStencilValue() const
+{
+	return flag >> 24;
+}
+
+void MeshTransformData::setStencilValue(uint8_t stencil)
+{
+	flag = ((uint32_t)stencil) << 24 | (flag & 0xFFFFFF);
+}

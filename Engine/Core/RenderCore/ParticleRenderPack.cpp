@@ -1,7 +1,6 @@
 #include "ParticleRenderPack.h"
 #include "RenderCommandList.h"
 #include "RenderCoreUtility.h"
-#include "../SkeletonMesh.h"
 
 ParticleData* ParticleRenderData::setParticles(IRenderData* materialRenderData, const list<Particle>& particles)
 {
@@ -95,9 +94,24 @@ Enum<ShaderFeature> ParticleRenderCommand::getShaderFeature() const
 	return shaderFeature;
 }
 
-RenderMode ParticleRenderCommand::getRenderMode() const
+RenderMode ParticleRenderCommand::getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const
 {
-	return RenderMode(materialRenderData->renderOrder, 0, 0);
+	const int renderOrder = materialRenderData->renderOrder;
+	RenderMode renderMode = RenderMode(renderOrder, BM_Default);
+	renderMode.mode.stencilTest = materialRenderData->desc.enableStencilTest;
+
+	bool cameraForceStencilTest = cameraRenderData->forceStencilTest && (passName == "Geometry"_N || passName == "Translucent"_N);
+	
+	if (cameraForceStencilTest) {
+		renderMode.mode.stencilTest = true;
+		renderMode.mode.stencilComparion_front = cameraRenderData->stencilCompare;
+		renderMode.mode.stencilComparion_back = cameraRenderData->stencilCompare;
+	}
+	else {
+		renderMode.mode.stencilComparion_front = materialRenderData->desc.stencilCompare;
+		renderMode.mode.stencilComparion_back = materialRenderData->desc.stencilCompare;
+	}
+	return renderMode;
 }
 
 bool ParticleRenderCommand::canCastShadow() const

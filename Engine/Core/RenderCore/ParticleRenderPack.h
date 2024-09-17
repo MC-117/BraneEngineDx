@@ -11,7 +11,7 @@ struct ParticleData
 	unsigned int particleBase = 0;
 };
 
-struct ParticleRenderData : public IRenderData
+struct ENGINE_API ParticleRenderData : public IRenderData
 {
 	unsigned int totalParticleCount = 0;
 	map<IRenderData*, ParticleData> particles;
@@ -26,12 +26,12 @@ struct ParticleRenderData : public IRenderData
 	void clean();
 };
 
-struct ParticleRenderCommand : public IRenderCommand
+struct ENGINE_API ParticleRenderCommand : public IRenderCommand
 {
 	list<Particle>* particles;
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
-	virtual RenderMode getRenderMode() const;
+	virtual RenderMode getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const;
 	virtual bool canCastShadow() const;
 	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const;
 };

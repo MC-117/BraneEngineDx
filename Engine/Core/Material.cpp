@@ -34,7 +34,6 @@ Material::Material(const Material & material)
 	nextMaterialID++;
 	desc.currentPass = 0;
 	canCastShadow = material.canCastShadow;
-	isDeferred = material.isDeferred;
 	renderOrder = material.renderOrder;
 }
 
@@ -90,7 +89,6 @@ void Material::instantiateFrom(const Material& material)
 	desc.materialID = nextMaterialID;
 	nextMaterialID++;
 	canCastShadow = material.canCastShadow;
-	isDeferred = material.isDeferred;
 	renderOrder = material.renderOrder;
 	if (renderData) {
 		renderData->release();
@@ -163,6 +161,21 @@ void Material::setPass(unsigned int pass)
 	desc.currentPass = pass;
 }
 
+void Material::setStencilTest(bool enable)
+{
+	desc.enableStencilTest = enable;
+}
+
+void Material::setStencilCompare(RenderComparionType comparion)
+{
+	desc.stencilCompare = comparion;
+}
+
+void Material::setStencilValue(uint8_t value)
+{
+	desc.stencilValue = value;
+}
+
 bool Material::setScalar(const Name & name, const float value)
 {
 	auto iter = desc.scalarField.find(name);
@@ -227,9 +240,24 @@ bool Material::getCullFront() const
 	return desc.cullFront;
 }
 
-unsigned int Material::getPassNum()
+unsigned int Material::getPassNum() const
 {
 	return desc.passNum;
+}
+
+bool Material::getStencilTest() const
+{
+	return desc.enableStencilTest;
+}
+
+RenderComparionType Material::getStencilCompare() const
+{
+	return desc.stencilCompare;
+}
+
+uint8_t Material::getStencilValue() const
+{
+	return desc.stencilValue;
 }
 
 Vector3u Material::getLocalSize()

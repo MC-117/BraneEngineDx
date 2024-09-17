@@ -39,6 +39,7 @@ void TerrainActor::updateCollision()
 
 void TerrainActor::prerender(SceneRenderData& sceneData)
 {
+    Actor::prerender(sceneData);
     terrainRender.transformMat = transformMat;
     MeshTransformData data;
     getMeshTransformData(&data);

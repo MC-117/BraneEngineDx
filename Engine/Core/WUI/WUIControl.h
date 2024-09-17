@@ -98,6 +98,7 @@ protected:
 	virtual BOOL onLBTNUp();
 	virtual BOOL onLBTNDBLClick();
 	virtual void onLoop();
+	virtual void onClose();
 };
 
 #endif // !_WUICONTROL_H_

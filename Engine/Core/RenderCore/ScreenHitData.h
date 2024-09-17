@@ -4,7 +4,7 @@
 #include "CameraData.h"
 #include "MaterialRenderData.h"
 
-struct ScreenHitData : public IRenderData
+struct ENGINE_API ScreenHitData : public IRenderData
 {
 	unsigned int triggerFrame = 0;
 	unsigned int hitFrame = 0;
@@ -22,7 +22,7 @@ struct ScreenHitData : public IRenderData
 	void readBack(IRenderContext& context);
 };
 
-struct ScreenHitRenderCommand : public IRenderCommand
+struct ENGINE_API ScreenHitRenderCommand : public IRenderCommand
 {
 	int instanceID = 0;
 	int instanceIDCount = 0;
@@ -30,7 +30,7 @@ struct ScreenHitRenderCommand : public IRenderCommand
 	MeshBatchDrawCall* meshBatchDrawCall = NULL;
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
-	virtual RenderMode getRenderMode() const;
+	virtual RenderMode getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const;
 	virtual bool canCastShadow() const;
 	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const;
 };

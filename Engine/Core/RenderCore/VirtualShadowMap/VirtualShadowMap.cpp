@@ -628,7 +628,7 @@ void VirtualShadowMapManager::processInvalidations(IRenderContext& context, Mesh
 	if (prevFrameData == NULL || !transformRenderData.isUpdatedThisFrame())
 		return;
 
-	RENDER_SCOPE(VSM_ProcessInvalidations);
+	RENDER_SCOPE(context, VSM_ProcessInvalidations);
 
 	int updateCount = transformRenderData.meshTransformDataArray.getUpdateCount();
 
@@ -795,7 +795,7 @@ void VirtualShadowMapArray::buildPageAllocations(
 {
 	if (shadowMaps.empty() || cameraDatas.empty())
 		return;
-	RENDER_SCOPE(BuildPageAllocations);
+	RENDER_SCOPE(context, BuildPageAllocations);
 
 	VirtualShadowMapConfig& config = VirtualShadowMapConfig::instance();
 
@@ -919,7 +919,7 @@ void VirtualShadowMapArray::buildPageAllocations(
 		if (directLightVSMIDsUpload.empty())
 			directLightVSMIDsUpload.push_back(VSM_None_ID);
 
-		if (cameraData->cameraRender->isMainCameraRender() && config.debugViewMode == VirtualShadowMapConfig::ClipmapLevel)
+		if (cameraData->isMainCamera && config.debugViewMode == VirtualShadowMapConfig::ClipmapLevel)
 			bindDebugImage();
 
 		GPUBuffer* curDirectLightVSMIDs = directLightVSMIDs[camIndex];
@@ -1062,18 +1062,18 @@ void VirtualShadowMapArray::render(IRenderContext& context, const LightRenderDat
 	VirtualShadowMapConfig& config = VirtualShadowMapConfig::instance();
 	if (config.debugViewMode == VirtualShadowMapConfig::ClipmapLevel)
 		return;
-	RENDER_SCOPE(RenderDepth);
+	RENDER_SCOPE(context, RenderDepth);
 	cullingPasses(context, lightData);
 	VSMInstanceDrawResource resourceContext;
 	for (int i = 0; i < cullingBatchInfos.size(); i++) {
 		CullingBatchInfo* batchInfo = cullingBatchInfos[i];
 		VirtualShadowMapManager::LightEntry::Batch* batch = batchInfo->batch;
 		int cmdCount = batch->indirectCommands.size();
-		RENDER_DESC_SCOPE(DrawBatch, "View: %d, Ins: %d, Cmd: %d", batchInfo->data.viewCount, batchInfo->data.instanceCount, cmdCount);
+		RENDER_DESC_SCOPE(context, DrawBatch, "View: %d, Ins: %d, Cmd: %d", batchInfo->data.viewCount, batchInfo->data.instanceCount, cmdCount);
 		for (int cmdIndex = 0; cmdIndex < cmdCount; cmdIndex++) {
 			VSMInstanceDrawResource& resource = batch->resources[cmdIndex];
 			// RENDER_DESC_SCOPE(IndirectDrawMesh, "Material(%s)", AssetInfo::getPath(resource.materialData->material).c_str());
-			RENDER_DESC_SCOPE(IndirectDrawMesh, "Material");
+			RENDER_DESC_SCOPE(context, IndirectDrawMesh, "Material");
 			bool shaderSwitch = false;
 
 			if (resourceContext.shaderProgram != resource.shaderProgram) {
@@ -1089,7 +1089,8 @@ void VirtualShadowMapArray::render(IRenderContext& context, const LightRenderDat
 				resource.transformData->bind(context);
 			}
 
-			context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable(), 0);
+			context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable());
+			context.setStencilRef(0);
 
 			for (auto data : resource.extraData) {
 				data->bind(context);
@@ -1144,7 +1145,7 @@ void VirtualShadowMapArray::render(IRenderContext& context, const LightRenderDat
 
 void VirtualShadowMapArray::renderDebugView(IRenderContext& context, const CameraRenderData& mainCameraData)
 {
-	RENDER_SCOPE(DebugDraw);
+	RENDER_SCOPE(context, DebugDraw);
 	VirtualShadowMapConfig& config = VirtualShadowMapConfig::instance();
 	if (config.debugViewMode == VirtualShadowMapConfig::ClipmapLevel) {
 		IGBufferGetter* gBufferGetter = dynamic_cast<IGBufferGetter*>(mainCameraData.surfaceBuffer);
@@ -1197,7 +1198,7 @@ void VirtualShadowMapArray::mergeStaticPhysPages(IRenderContext& context)
 	if (!config.useStaticCache || config.debugViewMode == VirtualShadowMapConfig::ClipmapLevel)
 		return;
 	
-	RENDER_SCOPE(MergeStaticPhysPages);
+	RENDER_SCOPE(context, MergeStaticPhysPages);
 
 	mergePhysPagesIndirectArgs.resize(3);
 
@@ -1275,7 +1276,7 @@ VirtualShadowMapArray::CullingBatchInfo* VirtualShadowMapArray::fetchCullingBatc
 
 void VirtualShadowMapArray::buildCullingBatchInfos(const LightRenderData& lightData)
 {
-	RENDER_SCOPE(BuildCullingBatchInfos);
+	RENDER_SCOPE_NO_CONTEXT(BuildCullingBatchInfos);
 	auto processCullingBatchInfo = [this](unsigned int firstView, unsigned int viewCount,
 		unsigned int primaryViewCount, VirtualShadowMapManager::LightEntry* lightEntry) {
 			if (lightEntry) {
@@ -1371,7 +1372,7 @@ void VirtualShadowMapArray::cullingPasses(IRenderContext& context, const LightRe
 	buildCullingBatchInfos(lightData);
 	shadowViewInfos.uploadData(shadowViewInfosUpload.size(), shadowViewInfosUpload.data());
 	for (CullingBatchInfo* cullingBatchInfo : cullingBatchInfos) {
-		RENDER_DESC_SCOPE(CullingBatch, "View: %d, Ins: %d", cullingBatchInfo->data.viewCount, cullingBatchInfo->data.instanceCount);
+		RENDER_DESC_SCOPE(context, CullingBatch, "View: %d, Ins: %d", cullingBatchInfo->data.viewCount, cullingBatchInfo->data.instanceCount);
 		int indirectDrawCount = cullingBatchInfo->data.instanceCount;
 
 		context.bindShaderProgram(VirtualShadowMapShaders::cullPerPageDrawCommandsProgram);

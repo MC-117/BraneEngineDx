@@ -19,7 +19,8 @@ public:
 
 	static RenderPool& get();
 
-	void start();
+	void initialize();
+	void release();
 
 	void setViewportSize(const Vector2i& size);
 	void add(Render& render);

@@ -12,7 +12,6 @@ class ENGINE_API Material
 	friend class MaterialLoader;
 public:
 	bool canCastShadow = true;
-	bool isDeferred = false;
 	uint16_t renderOrder = 0;
 
 	static GenericShader nullShader;
@@ -44,6 +43,9 @@ public:
 	void setCullFront(bool b);
 	void setPassNum(unsigned int num);
 	void setPass(unsigned int pass);
+	void setStencilTest(bool enable);
+	void setStencilCompare(RenderComparionType comparion);
+	void setStencilValue(uint8_t value);
 	bool setScalar(const Name& name, const float value);
 	bool setCount(const Name& name, const int value);
 	bool setColor(const Name& name, const Color& value);
@@ -52,7 +54,10 @@ public:
 	bool setImage(const Name& name, const Image& value);
 	bool getTwoSide() const;
 	bool getCullFront() const;
-	unsigned int getPassNum();
+	unsigned int getPassNum() const;
+	bool getStencilTest() const;
+	RenderComparionType getStencilCompare() const;
+	uint8_t getStencilValue() const;
 	Vector3u getLocalSize();
 	float* getScaler(const Name& name);
 	int* getCount(const Name& name);

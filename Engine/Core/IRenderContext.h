@@ -32,6 +32,9 @@ public:
 	virtual void waitSignalGPU() = 0;
 	virtual void waitSignalCPU() = 0;
 
+	virtual void beginEvent(const char* name) = 0;
+	virtual void endEvent() = 0;
+
 	virtual void clearVertexBindings() = 0;
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, const ShaderPropertyName& name, BufferOption bufferOption = BufferOption()) = 0;
 	virtual bool unbindBufferBase(const ShaderPropertyName& name) = 0;
@@ -75,13 +78,16 @@ public:
 
 	virtual void bindMeshData(MeshData* meshData) = 0;
 
-	virtual void setRenderPreState(DepthStencilMode depthStencilMode, uint8_t stencilValue) = 0;
-	virtual void setRenderGeomtryState(DepthStencilMode depthStencilMode, uint8_t stencilValue) = 0;
-	virtual void setRenderOpaqueState(DepthStencilMode depthStencilMode, uint8_t stencilValue) = 0;
-	virtual void setRenderAlphaState(DepthStencilMode depthStencilMode, uint8_t stencilValue) = 0;
-	virtual void setRenderTransparentState(DepthStencilMode depthStencilMode, uint8_t stencilValue) = 0;
+	virtual void setStencilRef(uint8_t stencil) = 0;
+
+	virtual void setRenderPreState(DepthStencilMode depthStencilMode) = 0;
+	virtual void setRenderGeomtryState(DepthStencilMode depthStencilMode) = 0;
+	virtual void setRenderOpaqueState(DepthStencilMode depthStencilMode) = 0;
+	virtual void setRenderAlphaState(DepthStencilMode depthStencilMode) = 0;
+	virtual void setRenderTransparentState(DepthStencilMode depthStencilMode) = 0;
 	virtual void setRenderOverlayState() = 0;
 	virtual void setRenderPostState() = 0;
+	virtual void setRenderPostState(DepthStencilMode depthStencilMode) = 0;
 	virtual void setRenderPostAddState() = 0;
 	virtual void setRenderPostPremultiplyAlphaState() = 0;
 	virtual void setRenderPostMultiplyState() = 0;

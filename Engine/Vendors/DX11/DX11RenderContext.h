@@ -22,6 +22,7 @@ public:
 	ComPtr<ID3D11Buffer> drawInfoBuf = NULL;
 	ComPtr<ID3D11DeviceContext> deviceContext = NULL;
 	ComPtr<ID3D11DeviceContext4> deviceContext4 = NULL;
+	ComPtr<ID3DUserDefinedAnnotation> annotation = NULL;
 	ComPtr<ID3D11Fence> fence = NULL;
 	UINT64 fenceValue = 0;
 	
@@ -32,6 +33,9 @@ public:
 
 	vector<ComPtr<ID3D11RenderTargetView>> dx11RTVs;
 	ComPtr<ID3D11DepthStencilView> dx11DSV = NULL;
+
+	uint8_t currentStencilRef = 0;
+	ComPtr<ID3D11DepthStencilState> dx11DSState = NULL;
 
 	DX11ShaderProgram* currentProgram = NULL;
 	DX11RenderTarget* currentRenderTarget = NULL;
@@ -48,6 +52,9 @@ public:
 	virtual void setGPUSignal();
 	virtual void waitSignalGPU();
 	virtual void waitSignalCPU();
+
+	virtual void beginEvent(const char* name);
+	virtual void endEvent();
 
 	virtual void clearVertexBindings();
 	virtual unsigned int bindBufferBase(IGPUBuffer* buffer, const ShaderPropertyName& name, BufferOption bufferOption = BufferOption());
@@ -98,13 +105,16 @@ public:
 
 	virtual void bindMeshData(MeshData* meshData);
 
-	virtual void setRenderPreState(DepthStencilMode depthStencilMode, uint8_t stencilValue);
-	virtual void setRenderGeomtryState(DepthStencilMode depthStencilMode, uint8_t stencilValue);
-	virtual void setRenderOpaqueState(DepthStencilMode depthStencilMode, uint8_t stencilValue);
-	virtual void setRenderAlphaState(DepthStencilMode depthStencilMode, uint8_t stencilValue);
-	virtual void setRenderTransparentState(DepthStencilMode depthStencilMode, uint8_t stencilValue);
+	virtual void setStencilRef(uint8_t stencil);
+
+	virtual void setRenderPreState(DepthStencilMode depthStencilMode);
+	virtual void setRenderGeomtryState(DepthStencilMode depthStencilMode);
+	virtual void setRenderOpaqueState(DepthStencilMode depthStencilMode);
+	virtual void setRenderAlphaState(DepthStencilMode depthStencilMode);
+	virtual void setRenderTransparentState(DepthStencilMode depthStencilMode);
 	virtual void setRenderOverlayState();
 	virtual void setRenderPostState();
+	virtual void setRenderPostState(DepthStencilMode depthStencilMode);
 	virtual void setRenderPostAddState();
 	virtual void setRenderPostPremultiplyAlphaState();
 	virtual void setRenderPostMultiplyState();

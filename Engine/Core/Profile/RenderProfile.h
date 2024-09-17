@@ -2,6 +2,8 @@
 #include "implot.h"
 #include "RenderDurationProfiler.h"
 
+class IRenderContext;
+
 class RenderProfileScope
 {
 public:
@@ -10,8 +12,21 @@ public:
     ~RenderProfileScope();
 };
 
-#define RENDER_SCOPE(name) RenderProfileScope name##_RenderScope(#name, "");
-#define RENDER_DESC_SCOPE(name, text, ...) RenderProfileScope name##_RenderScope(#name, text, ##__VA_ARGS__);
+class RenderProfileScopeWithContext
+{
+public:
+    IRenderContext& context;
+    
+    RenderProfileScopeWithContext(IRenderContext& context, const string& name, const char* text, ...);
+    RenderProfileScopeWithContext(const RenderProfileScopeWithContext& scope) = delete;
+    ~RenderProfileScopeWithContext();
+};
+
+#define RENDER_SCOPE_NO_CONTEXT(name) RenderProfileScope name##_RenderScope(#name, "");
+#define RENDER_DESC_SCOPE_NO_CONTEXT(name, text, ...) RenderProfileScope name##_RenderScope(#name, text, ##__VA_ARGS__);
+
+#define RENDER_SCOPE(context, name) RenderProfileScopeWithContext name##_RenderScope(context, #name, "");
+#define RENDER_DESC_SCOPE(context, name, text, ...) RenderProfileScopeWithContext name##_RenderScope(context, #name, text, ##__VA_ARGS__);
 
 namespace ImPlot
 {

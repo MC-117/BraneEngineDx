@@ -9,13 +9,11 @@ SerializeInstance(MeshActor);
 
 MeshActor::MeshActor(const string& name) : Actor::Actor(name)
 {
-	meshRender.hasPrePass = true;
 }
 
 MeshActor::MeshActor(Mesh & mesh, Material & material, const string& name, const Vector3f & localScale)
 	: meshRender(mesh, material), Actor::Actor(name)
 {
-	meshRender.hasPrePass = true;
 	setScale(localScale);
 	rigidBody = new RigidBody(*this, PhysicalMaterial());
 	rigidBody->addCollider(&mesh, SIMPLE);
@@ -24,7 +22,6 @@ MeshActor::MeshActor(Mesh & mesh, Material & material, const string& name, const
 MeshActor::MeshActor(Mesh & mesh, Material & material, const PhysicalMaterial & physicalMaterial, Shape & collisionShape, const string& name, ShapeComplexType complexType, const Vector3f & localScale)
 	: meshRender(mesh, material), Actor::Actor(name)
 {
-	meshRender.hasPrePass = true;
 	setScale(localScale);
 	rigidBody = new RigidBody(*this, physicalMaterial);
 	rigidBody->addCollider(&collisionShape, complexType);
@@ -51,6 +48,7 @@ bool MeshActor::isHidden()
 
 void MeshActor::prerender(SceneRenderData& sceneData)
 {
+	Actor::prerender(sceneData);
 	meshRender.transformMat = transformMat;
 	MeshTransformData data;
 	getMeshTransformData(&data);

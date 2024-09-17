@@ -202,6 +202,7 @@ void SkeletonMeshActor::destroy(bool applyToChild)
 
 void SkeletonMeshActor::prerender(SceneRenderData& sceneData)
 {
+	Actor::prerender(sceneData);
 	MeshTransformData data;
 	getMeshTransformData(&data);
 	BoundBox bound = calLocalBound();

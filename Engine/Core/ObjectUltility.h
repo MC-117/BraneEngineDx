@@ -22,6 +22,16 @@ template<class T>
 T* getObjectBehavior(Object& object)
 {
 	static_assert(std::is_base_of<ObjectBehavior, T>::value,
-		"Only support classes based on Base");
+		"Only support classes based on ObjectBehavior");
 	return castTo<T>(object.getBehavior(T::serialization()));
+}
+
+template<class T, typename... Args>
+T* createObjectBehavior(Object& object, Args... args)
+{
+	static_assert(std::is_base_of<ObjectBehavior, T>::value,
+		"Only support classes based on ObjectBehavior");
+	T* behavior = new T(args...);
+	object.addBehavior(behavior);
+	return behavior;
 }

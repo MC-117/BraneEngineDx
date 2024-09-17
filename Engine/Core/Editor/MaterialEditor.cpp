@@ -93,6 +93,10 @@ void MaterialEditor::onMaterialGUI(EditorInfo& info)
 	if (ImGui::DragInt("PassNum", &passNum)) {
 		material->setPassNum(passNum);
 	}
+	int stencilValue = material->getStencilValue();
+	if (ImGui::DragInt("StencilValue", &stencilValue, 1, 0, 127)) {
+		material->setStencilValue(stencilValue);
+	}
 	for (auto b = material->getColorField().begin(), e = material->getColorField().end(); b != e; b++) {
 		Color color = b->second.val;
 		if (ImGui::ColorEdit4(b->first.c_str(), (float*)&color))

@@ -16,7 +16,7 @@ size_t RenderTask::Hasher::operator()(const RenderTask& t) const
 	hash_combine(hash, (size_t)t.batchDrawData.batchDrawCommandArray);
 	hash_combine(hash, (size_t)t.shaderProgram);
 	hash_combine(hash, (size_t)t.surface.renderTarget);
-	hash_combine(hash, (size_t)t.cameraData->cameraRender);
+	hash_combine(hash, (size_t)t.cameraData->cameraRenderID);
 	hash_combine(hash, (size_t)t.materialVariant);
 	hash_combine(hash, (size_t)t.meshData);
 	for (auto data : t.extraData)
@@ -74,8 +74,8 @@ bool RenderTask::ExecutionOrder::operator()(const RenderTask& t0, const RenderTa
 
 void RenderTask::execute(RenderTaskParameter& parameter)
 {
-	RENDER_SCOPE(RenderTask)
 	IRenderContext& context = *parameter.renderContext;
+	RENDER_SCOPE_NO_CONTEXT(RenderTask)
 	RenderTaskContext& taskContext = *parameter.taskContext;
 	//Time t = Time::now();
 
@@ -86,13 +86,6 @@ void RenderTask::execute(RenderTaskParameter& parameter)
 
 		IRenderTarget* renderTarget = surface.renderTarget->getVendorRenderTarget();
 		context.bindFrame(renderTarget);
-	}
-
-	if (taskContext.cameraData != cameraData) {
-		taskContext.cameraData = cameraData;
-
-		context.setViewport(0, 0, cameraData->data.viewSize.x(), cameraData->data.viewSize.y());
-		cameraData->bind(context);
 	}
 
 	if (taskContext.shaderProgram != shaderProgram) {
@@ -108,6 +101,8 @@ void RenderTask::execute(RenderTaskParameter& parameter)
 
 		context.setViewport(0, 0, cameraData->data.viewSize.x(), cameraData->data.viewSize.y());
 		cameraData->bind(context);
+		if (cameraData->forceStencilTest)
+			context.setStencilRef(cameraData->stencilRef);
 	}
 
 	if (taskContext.sceneData != sceneData || shaderSwitch) {
@@ -130,19 +125,18 @@ void RenderTask::execute(RenderTaskParameter& parameter)
 			batchDrawData.batchDrawCommandArray->bindInstanceBuffer(context);
 	}
 
-	if (taskContext.renderMode != renderMode || taskContext.stencilValue != stencilValue) {
+	if (taskContext.renderMode != renderMode) {
 		taskContext.renderMode = renderMode;
-		taskContext.stencilValue = stencilValue;
 		
 		uint16_t stage = renderMode.getRenderStage();
 		if (stage < RenderStage::RS_Opaque)
-			context.setRenderPreState(renderMode.getDepthStencilMode(), taskContext.stencilValue);
+			context.setRenderPreState(renderMode.getDepthStencilMode());
 		else if (stage < RenderStage::RS_Aplha)
-			context.setRenderOpaqueState(renderMode.getDepthStencilMode(), taskContext.stencilValue);
+			context.setRenderOpaqueState(renderMode.getDepthStencilMode());
 		else if (stage < RenderStage::RS_Transparent)
-			context.setRenderAlphaState(renderMode.getDepthStencilMode(), taskContext.stencilValue);
+			context.setRenderAlphaState(renderMode.getDepthStencilMode());
 		else if (stage < RenderStage::RS_Post)
-			context.setRenderTransparentState(renderMode.getDepthStencilMode(), taskContext.stencilValue);
+			context.setRenderTransparentState(renderMode.getDepthStencilMode());
 		else {
 			BlendMode blendMode = renderMode.getBlendMode();
 			switch (blendMode)
@@ -179,6 +173,11 @@ void RenderTask::execute(RenderTaskParameter& parameter)
 		taskContext.meshData = meshData;
 		if (meshData)
 			context.bindMeshData(meshData);
+	}
+
+	if (taskContext.materialVariant != materialVariant) {
+		if (!cameraData->forceStencilTest)
+			context.setStencilRef(materialVariant->desc.stencilValue);
 	}
 
 	renderPack->excute(context, *this, taskContext);

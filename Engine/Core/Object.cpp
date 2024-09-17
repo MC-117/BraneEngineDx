@@ -98,6 +98,10 @@ void Object::afterTick()
 
 void Object::prerender(SceneRenderData& sceneData)
 {
+	for (int i = 0; i < behaviors.size(); i++) {
+		ObjectBehavior* behavior = behaviors[i];
+		behavior->prerender(sceneData);
+	}
 }
 
 void Object::end()

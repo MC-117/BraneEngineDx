@@ -27,6 +27,9 @@ struct MaterialDesc
 	Shader* shader = NULL;
 	bool isTwoSide = false;
 	bool cullFront = false;
+	bool enableStencilTest = false;
+	RenderComparionType stencilCompare = RCT_Equal;
+	uint8_t stencilValue = 0;
 	unsigned int currentPass = 0;
 	unsigned int passNum = 1;
 	unsigned int materialID = 0;

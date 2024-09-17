@@ -28,12 +28,6 @@ WUIImGuiWindow::WUIImGuiWindow()
 
 WUIImGuiWindow::~WUIImGuiWindow()
 {
-    if (viewport) {
-        viewport->PlatformUserData = viewport->PlatformHandle = nullptr;
-        viewport->RendererUserData = nullptr;
-    }
-    if (deviceSurface)
-        delete deviceSurface;
 }
 
 void WUIImGuiWindow::initViewport(ImGuiViewport& viewport)
@@ -206,4 +200,15 @@ void WUIImGuiWindow::onLoop()
         }));
     }
     WUIWindow::onLoop();
+}
+
+void WUIImGuiWindow::onClose()
+{
+    WUIWindow::onClose();
+    if (viewport) {
+        viewport->PlatformUserData = viewport->PlatformHandle = nullptr;
+        viewport->RendererUserData = nullptr;
+    }
+    if (deviceSurface)
+        delete deviceSurface;
 }

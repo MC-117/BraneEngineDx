@@ -15,7 +15,6 @@ bool RenderEngineLoop::willQuit()
 
 void RenderEngineLoop::init()
 {
-    renderPool.start();
 }
 
 void RenderEngineLoop::loop(float deltaTime)

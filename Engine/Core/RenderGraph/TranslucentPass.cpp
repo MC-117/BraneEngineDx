@@ -79,7 +79,6 @@ bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 	task.batchDrawData = command.batchDrawData;
 	task.shaderProgram = materialVariant->program;
 	task.materialVariant = materialVariant;
-	task.renderMode = command.getRenderMode();
 	task.meshData = meshData;
 	task.extraData = command.bindings;
 
@@ -88,6 +87,7 @@ bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 	}
 
 	for (auto& cameraRenderData : command.sceneData->cameraRenderDatas) {
+		task.renderMode = command.getRenderMode("Translucent"_N, cameraRenderData);
 		task.cameraData = cameraRenderData;
 		task.surface = cameraRenderData->surface;
 		if (needSSR) {

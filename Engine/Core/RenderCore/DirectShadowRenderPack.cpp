@@ -23,9 +23,9 @@ Enum<ShaderFeature> DirectShadowRenderCommand::getShaderFeature() const
 	return shaderFeature;
 }
 
-RenderMode DirectShadowRenderCommand::getRenderMode() const
+RenderMode DirectShadowRenderCommand::getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const
 {
-	return RenderMode(materialRenderData->renderOrder, 0, 0);
+	return RenderMode(materialRenderData->renderOrder, BM_Default);
 }
 
 bool DirectShadowRenderCommand::canCastShadow() const

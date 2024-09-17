@@ -22,8 +22,9 @@ struct SurfaceData
 	void bind(IRenderContext& context, Enum<ClearFlags> plusClearFlags = Clear_None, Enum<ClearFlags> minusClearFlags = Clear_None);
 };
 
-struct CameraRenderData : public IRenderData
+class CameraRenderData : public IRenderData
 {
+public:
 	struct CameraUploadData
 	{
 		CameraData cameraData;
@@ -36,6 +37,9 @@ struct CameraRenderData : public IRenderData
 	ProbeGridInfo probeGridInfo;
 	ProbeGridRenderData probeGrid;
 	int renderOrder = 0;
+	bool forceStencilTest = false;
+	RenderComparionType stencilCompare = RCT_Equal;
+	uint8_t stencilRef = 0;
 	Enum<CameraRenderFlags> flags = CameraRender_Default;
 	ScreenHitData* hitData = NULL;
 	ISurfaceBuffer* surfaceBuffer = NULL;
@@ -45,7 +49,7 @@ struct CameraRenderData : public IRenderData
 	ViewCullingContext staticCullingContext;
 	GPUBuffer buffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(CameraUploadData));
 
-	void updateSurfaceBuffer(RenderGraph* renderGraph);
+	virtual void updateSurfaceBuffer(RenderGraph* renderGraph);
 
 	void setDebugProbeIndex(int probeIndex);
 	int getDebugProbeIndex() const;

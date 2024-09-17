@@ -292,7 +292,6 @@ struct DepthStencilMode
 	bool depthTest : 1;
 
 	DepthStencilMode();
-	DepthStencilMode(uint64_t bits);
 
 	operator uint64_t() const;
 
@@ -313,7 +312,7 @@ struct ENGINE_API RenderMode
 		uint64_t bits;
 	};
 	RenderMode();
-	RenderMode(uint16_t renderStage, uint8_t blendMode, DepthStencilMode stencilMode);
+	RenderMode(uint16_t renderStage, uint8_t blendMode);
 	RenderMode(const RenderMode& mode);
 	RenderMode& operator=(const RenderMode& mode);
 

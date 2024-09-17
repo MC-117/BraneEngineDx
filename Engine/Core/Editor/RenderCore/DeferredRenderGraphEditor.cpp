@@ -50,13 +50,13 @@ void DeferredRenderGraphEditor::onRenderGraphGUI(EditorInfo& info)
 			ImGui::EndCombo();
 		}
 		ImGui::BeginDisabled(config.debugViewMode != VirtualShadowMapConfig::DebugViewMode::Clipmap);
-		if (!deferredRenderGraph->sceneDatas.empty())
-		{
-			SceneRenderData* sceneData = NULL;
-			sceneData = *deferredRenderGraph->sceneDatas.begin();
-			int count = sceneData->virtualShadowMapRenderData.manager.getShadowMapCount();
-			ImGui::DragInt("VSMID", &config.debugVSMID, 1, 0, count);
-		}
+		// if (!deferredRenderGraph->sceneDatas.empty())
+		// {
+		// 	SceneRenderData* sceneData = NULL;
+		// 	sceneData = *deferredRenderGraph->sceneDatas.begin();
+		// 	int count = sceneData->virtualShadowMapRenderData.manager.getShadowMapCount();
+		// 	ImGui::DragInt("VSMID", &config.debugVSMID, 1, 0, count);
+		// }
 		ImGui::EndDisabled();
 		ImGui::EndGroupPanel();
 	}

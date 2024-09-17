@@ -31,4 +31,7 @@ struct MeshTransformData
 
 	bool isDynamic() const;
 	bool isNegativeScale() const;
+
+	uint8_t getStencilValue() const;
+	void setStencilValue(uint8_t stencil);
 };

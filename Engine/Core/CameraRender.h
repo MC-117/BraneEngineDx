@@ -9,7 +9,7 @@
 
 class ENGINE_API CameraRender : public Render
 {
-	friend struct CameraRenderData;
+	friend class CameraRenderData;
 public:
 	Unit2Di size = { 0, 0 };
 	RenderTarget* renderTarget = NULL;

@@ -41,6 +41,7 @@ void CaptureProbe::begin()
 
 void CaptureProbe::prerender(SceneRenderData& sceneData)
 {
+	Transform::prerender(sceneData);
 	if (captureProbeRender == NULL)
 		return;
 	Vector3f position = getPosition(WORLD);

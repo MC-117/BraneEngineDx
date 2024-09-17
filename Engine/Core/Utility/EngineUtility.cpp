@@ -94,6 +94,14 @@ string getExtension(const string& path)
     return name.substr(dotPos);
 }
 
+void charToWcharString(const char* charStr, wstring& wcharStr)
+{
+    size_t len = strlen(charStr) + 1;
+    size_t converted = 0;
+    wcharStr.resize(len);
+    mbstowcs_s(&converted, wcharStr.data(), len, charStr, len);
+}
+
 void newSerializationInfoGuid(const SerializationInfo& info, map<Guid, Guid>& guidMap)
 {
     auto newGuid = [&](const Guid& guid)

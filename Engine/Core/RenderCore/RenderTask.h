@@ -33,7 +33,6 @@ struct RenderTask
 	SceneRenderData* sceneData = NULL;
 	BatchDrawData batchDrawData;
 	RenderMode renderMode;
-	uint8_t stencilValue = 0;
 	CameraRenderData* cameraData = NULL;
 	SurfaceData surface;
 	ShaderProgram* shaderProgram = NULL;

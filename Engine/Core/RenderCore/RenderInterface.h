@@ -120,10 +120,11 @@ struct IRenderCommand
 	MaterialRenderData* materialRenderData = NULL;
 	MeshPart* mesh = NULL;
 	list<IRenderData*> bindings;
+	virtual ~IRenderCommand() = default;
 	virtual bool isValid() const = 0;
 	virtual Enum<ShaderFeature> getShaderFeature() const = 0;
-	virtual RenderMode getRenderMode() const = 0;
-	virtual uint8_t getStencilValue() const;
+	virtual uint16_t getRenderStage() const;
+	virtual RenderMode getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const = 0;
 	virtual bool canCastShadow() const = 0;
 	virtual void collectRenderData(IRenderDataCollector* collectorMainThread, IRenderDataCollector* collectorRenderThread);
 	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const = 0;

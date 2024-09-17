@@ -1,5 +1,6 @@
 #include "GraphicType.h"
 #include "Utility/hash.h"
+#include "Utility/RenderUtility.h"
 
 ShaderPropertyName::ShaderPropertyName(const char* name) : Name(name)
 {
@@ -26,11 +27,16 @@ DepthStencilMode::DepthStencilMode()
 	stencilWriteMask = 0xFF;
 	depthTest = true;
 	depthWrite = true;
-}
 
-DepthStencilMode::DepthStencilMode(uint64_t bits)
-{
-	memset(this, bits, sizeof(DepthStencilMode));
+	stencilComparion_front = RCT_Always;
+	stencilPassOp_front = SOT_Replace;
+	stencilFailedOp_front = SOT_Keep;
+	stencilDepthFailedOp_front = SOT_Keep;
+
+	stencilComparion_back = RCT_Always;
+	stencilPassOp_back = SOT_Replace;
+	stencilFailedOp_back = SOT_Keep;
+	stencilDepthFailedOp_back = SOT_Keep;
 }
 
 DepthStencilMode::operator uint64_t() const
@@ -70,26 +76,22 @@ RenderMode::RenderMode()
 	mode.depthWrite = true;
 }
 
-RenderMode::RenderMode(uint16_t renderStage, uint8_t blendMode, DepthStencilMode stencilMode) : RenderMode()
+RenderMode::RenderMode(uint16_t renderStage, uint8_t blendMode) : RenderMode()
 {
 	mode.renderStage = renderStage;
 	mode.blendMode = blendMode;
 
-	if (renderStage < 2500)
-	{
-		mode.depthTest = true;
-		mode.depthWrite = true;
-	}
-	else if (renderStage < 5000)
-	{
-		mode.depthTest = true;
-		mode.depthWrite = false;
-	}
-	else
-	{
-		mode.depthTest = false;
-		mode.depthWrite = false;
-	}
+	setDepthStateFromRenderOrder(mode, renderStage);
+
+	mode.stencilComparion_front = RCT_Always;
+	mode.stencilPassOp_front = SOT_Replace;
+	mode.stencilFailedOp_front = SOT_Keep;
+	mode.stencilDepthFailedOp_front = SOT_Keep;
+
+	mode.stencilComparion_back = RCT_Always;
+	mode.stencilPassOp_back = SOT_Replace;
+	mode.stencilFailedOp_back = SOT_Keep;
+	mode.stencilDepthFailedOp_back = SOT_Keep;
 }
 
 RenderMode::RenderMode(const RenderMode& mode) { bits = mode.bits; }

@@ -19,8 +19,26 @@ public:
 		bool isStatic = false;
 		bool canCastShadow = false;
 		bool hasPrePass = false;
+		bool hasGeometryPass = true;
+		size_t commandByteSize = 0;
 		MeshBatchDrawData meshBatchDrawData;
+		Delegate<void(void*)> constructInplaceDelegate;
+		Delegate<void(void*)> destructInplaceDelegate;
 		Delegate<void(MeshRenderCommand&)> renderDelegate;
+
+		template<class MeshRenderCommandType>
+		void init()
+		{
+			commandByteSize = sizeof(MeshRenderCommandType);
+			constructInplaceDelegate += [] (void* ptr)
+			{
+				new (ptr) MeshRenderCommandType();
+			};
+			destructInplaceDelegate += [] (void* ptr)
+			{
+				((IRenderCommand*)ptr)->~IRenderCommand();
+			};
+		}
 	};
 	MeshMaterialCollection();
 	virtual ~MeshMaterialCollection() = default;
@@ -66,8 +84,8 @@ protected:
 	unsigned int instanceCount = 0;
 	virtual void remapMaterial();
 
-	void resizeCachedMeshCommands(size_t newSize);
-	MeshRenderCommand* accessCachedMeshCommand(size_t index);
+	void resizeCachedMeshCommands(size_t newSize, const DispatchData& data);
+	MeshRenderCommand* accessCachedMeshCommand(size_t index, const DispatchData& data);
 };
 
 class ENGINE_API OutlineMeshMaterialCollection : public MeshMaterialCollection

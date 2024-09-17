@@ -31,35 +31,7 @@ void CameraEditor::onPersistentGizmo(GizmoInfo& info)
 void CameraEditor::onHandleGizmo(GizmoInfo& info)
 {
 	TransformEditor::onHandleGizmo(info);
-	float vLen = camera->zFar * tan(camera->fov * PI / 180 * 0.5f);
-	float hLen = vLen * camera->aspect;
-	Vector3f worldPos = camera->getFinalWorldPosition();
-	Vector3f upVec = camera->getUpward(WORLD);
-	Vector3f leftVec = camera->getLeftward(WORLD);
-	Vector3f forVec = camera->getForward(WORLD);
-
-	Vector3f vVec = upVec * vLen;
-	Vector3f hVec = leftVec * hLen;
-
-	Vector3f farPoint = worldPos + forVec * camera->zFar;
-	Vector3f nearPoint = worldPos + forVec * camera->zNear;
-
-	Vector3f corner[4] =
-	{
-		farPoint - vVec - hVec,
-		farPoint - vVec + hVec,
-		farPoint + vVec - hVec,
-		farPoint + vVec + hVec,
-	};
-
-	info.gizmo->drawLine(corner[0], worldPos, Color(0.0f, 1.0f, 0.0f));
-	info.gizmo->drawLine(corner[1], worldPos, Color(0.0f, 1.0f, 0.0f));
-	info.gizmo->drawLine(corner[2], worldPos, Color(0.0f, 1.0f, 0.0f));
-	info.gizmo->drawLine(corner[3], worldPos, Color(0.0f, 1.0f, 0.0f));
-	info.gizmo->drawLine(corner[0], corner[1], Color(0.0f, 1.0f, 0.0f));
-	info.gizmo->drawLine(corner[0], corner[2], Color(0.0f, 1.0f, 0.0f));
-	info.gizmo->drawLine(corner[3], corner[1], Color(0.0f, 1.0f, 0.0f));
-	info.gizmo->drawLine(corner[3], corner[2], Color(0.0f, 1.0f, 0.0f));
+	drawFrustum(*info.gizmo, camera->cameraRender.cameraData, Color(0.0f, 1.0f, 0.0f));
 }
 
 void CameraEditor::onCameraGUI(EditorInfo& info)

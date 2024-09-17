@@ -49,7 +49,7 @@ bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	task.batchDrawData = command.batchDrawData;
 	task.shaderProgram = materialVariant->program;
 	task.materialVariant = materialVariant;
-	task.renderMode = command.getRenderMode();
+	task.renderMode = command.getRenderMode("ShadowDepth"_N, &cameraRenderData);
 	task.cameraData = &cameraRenderData;
 	task.surface = cameraRenderData.surface;
 	task.meshData = meshData;

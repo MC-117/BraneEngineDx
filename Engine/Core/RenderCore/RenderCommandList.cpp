@@ -33,6 +33,14 @@ int ImmediateRenderCommandWorker::getQueuedTaskCount() const
 
 void ImmediateRenderCommandWorker::submitTask(RenderTask& task)
 {
+	if (taskContext.cameraData != task.cameraData) {
+		if (taskContext.cameraData) {
+			taskParameter.renderContext->endEvent();
+		}
+		char viewName[20];
+		sprintf_s(viewName, "%s view %d", task.cameraData->isMainCamera ? "main" : "Sub", task.cameraData->cameraRenderID);
+		taskParameter.renderContext->beginEvent(viewName);
+	}
 	task.execute(taskParameter);
 }
 
@@ -42,6 +50,9 @@ void ImmediateRenderCommandWorker::submitContext()
 
 void ImmediateRenderCommandWorker::waitForComplete()
 {
+	if (taskContext.cameraData) {
+		taskParameter.renderContext->endEvent();
+	}
 	taskContext = { 0 };
 }
 
@@ -289,14 +300,13 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataC
 	task.batchDrawData = cmd.batchDrawData;
 	task.shaderProgram = materialVariant->program;
 	task.materialVariant = materialVariant;
-	task.renderMode = cmd.getRenderMode();
-	task.stencilValue = cmd.getStencilValue();
 	task.meshData = meshData;
 	task.extraData = cmd.bindings;
 
 	bool success = true;
 
 	for (auto& cameraRenderData : cmd.sceneData->cameraRenderDatas) {
+		task.renderMode = cmd.getRenderMode(Name::none, cameraRenderData);
 		task.cameraData = cameraRenderData;
 		task.surface = cameraRenderData->surface;
 		success &= addRenderTask(cmd, task);
@@ -343,12 +353,11 @@ bool RenderCommandList::setRenderCommand(const IRenderCommand& cmd, IRenderDataC
 		task.batchDrawData = cmd.batchDrawData;
 		task.shaderProgram = materialVariant->program;
 		task.materialVariant = materialVariant;
-		task.renderMode = cmd.getRenderMode();
-		task.stencilValue = cmd.getStencilValue();
 		task.meshData = meshData;
 		task.extraData = cmd.bindings;
 
 		for (auto& cameraRenderData : cmd.sceneData->cameraRenderDatas) {
+			task.renderMode = cmd.getRenderMode(Name::none, cameraRenderData);
 			task.cameraData = cameraRenderData;
 			task.surface = cameraRenderData->surface;
 			success &= addRenderTask(cmd, task);
@@ -400,6 +409,7 @@ void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 	workerPool.submitContext();
 
 	context.setCullState(CullType::Cull_Back);
+	context.setStencilRef(0);
 
 	/*if (executionInfo.timer) {
 		executionInfo.timer->setIntervalMode(true);

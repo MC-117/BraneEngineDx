@@ -86,6 +86,7 @@ void SkeletonMeshRender::render(RenderInfo & info)
 		IRenderData* morphWeightsRenderData = morphWeights.getRenderData();
 
 		MeshMaterialCollection::DispatchData dispatchData;
+		dispatchData.init<MeshRenderCommand>();
 		dispatchData.hidden = hidden;
 		dispatchData.isStatic = isStatic;
 		dispatchData.canCastShadow = canCastShadow;

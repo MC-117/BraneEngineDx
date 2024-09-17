@@ -3,7 +3,7 @@
 #include "RenderInterface.h"
 #include "../GPUBuffer.h"
 
-struct CameraRenderData;
+class CameraRenderData;
 
 struct DebugRenderData : public IRenderData
 {

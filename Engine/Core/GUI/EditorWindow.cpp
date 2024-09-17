@@ -17,6 +17,8 @@
 #include "../SkeletonMesh.h"
 #include "../Terrain/TerrainActor.h"
 #include "../ProbeSystem/CaptureProbe.h"
+#include "../../Portal/PortalActor.h"
+#include "Portal/PortalManager.h"
 
 EditorWindow::EditorWindow(Object & object, Material& baseMat, string name, bool defaultShow) : UIWindow(object, name, defaultShow), baseMat(baseMat)
 {
@@ -507,7 +509,7 @@ void EditorWindow::objectContextMenu(Object * obj)
 			ImGui::EndMenu();
 		}
 
-		// GrassActor
+		// TerrainActor
 		if (ImGui::BeginMenu("TerrainActor")) {
 			ImGui::InputText("Name", &newObjectName);
 			if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
@@ -537,6 +539,24 @@ void EditorWindow::objectContextMenu(Object * obj)
 			if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
 				if (ImGui::Button("Create", { -1, 36 })) {
 					CaptureProbe* t = new CaptureProbe(newObjectName);
+					target.addChild(*t);
+				}
+			}
+			else {
+				ImGui::Text("Name exists");
+			}
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("PortalActor")) {
+			ImGui::InputText("Name", &newObjectName);
+			if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
+				if (ImGui::Button("Create", { -1, 36 })) {
+					World* world = Engine::getCurrentWorld();
+					if (getObjectBehavior<PortalManager>(*world) == NULL) {
+						createObjectBehavior<PortalManager>(*world);
+					}
+					PortalActor* t = new PortalActor(newObjectName);
 					target.addChild(*t);
 				}
 			}

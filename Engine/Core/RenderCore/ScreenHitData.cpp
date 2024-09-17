@@ -63,9 +63,9 @@ Enum<ShaderFeature> ScreenHitRenderCommand::getShaderFeature() const
 	return shaderFeature;
 }
 
-RenderMode ScreenHitRenderCommand::getRenderMode() const
+RenderMode ScreenHitRenderCommand::getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const
 {
-	return RenderMode(materialRenderData->renderOrder, 0, 0);
+	return RenderMode(materialRenderData->renderOrder, BM_Default);
 }
 
 bool ScreenHitRenderCommand::canCastShadow() const

@@ -369,6 +369,7 @@ LRESULT WUIControl::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_CLOSE:
 		closing = true;
+		onClose();
 		break;
 	case WM_COMMAND:
 		onCommand(wParam, lParam);
@@ -560,4 +561,8 @@ void WUIControl::onLoop()
 	}
 	for (int i = 0; i < controls.size(); i++)
 		controls[i]->onLoop();
+}
+
+void WUIControl::onClose()
+{
 }

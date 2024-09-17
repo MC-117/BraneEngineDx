@@ -2,7 +2,7 @@
 
 #include "MeshRenderPack.h"
 
-struct DirectShadowRenderCommand : public IRenderCommand
+struct ENGINE_API DirectShadowRenderCommand : public IRenderCommand
 {
 	int instanceID = 0;
 	int instanceIDCount = 0;
@@ -11,7 +11,7 @@ struct DirectShadowRenderCommand : public IRenderCommand
 	MainLightData* mainLightData = NULL;
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
-	virtual RenderMode getRenderMode() const;
+	virtual RenderMode getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const;
 	virtual bool canCastShadow() const;
 	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const;
 };

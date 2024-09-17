@@ -25,7 +25,7 @@ bool VirtualShadowMapDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	IMaterial* materialVariant = NULL;
 	
 	Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
-	const RenderStage stage = enumRenderStage(cmd.getRenderMode().getRenderStage());
+	const RenderStage stage = enumRenderStage(cmd.getRenderStage());
 	if (stage == RS_Aplha || stage == RS_Transparent)
 		materialVariant = materialRenderData->getVariant((unsigned int)shaderFeature | ShaderFeature::Shader_Depth | ShaderFeature::Shader_VSM, matchRule);
 
@@ -95,7 +95,7 @@ void VirtualShadowMapDepthPass::execute(IRenderContext& context)
 	for (auto sceneData : renderGraph->sceneDatas) {
 		if (sceneData->cameraRenderDatas.empty())
 			continue;
-		RENDER_SCOPE(VSMDepth);
+		RENDER_SCOPE(context, VSMDepth);
 		VirtualShadowMapRenderData& renderData = sceneData->virtualShadowMapRenderData;
 
 		renderData.manager.processInvalidations(context, sceneData->meshTransformRenderData);

@@ -38,3 +38,8 @@ bool isStaticTransform(in TransformData data)
 {
     return (data.flag & 1) == 1;
 }
+
+uint getStencilValue(in TransformData data)
+{
+    return data.flag >> 24;
+}

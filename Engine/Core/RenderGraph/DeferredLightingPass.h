@@ -39,5 +39,5 @@ protected:
 	static ShaderProgram* blitProgram;
 	static ShaderStage* blitFragmentShader;
 
-	void blitSceneColor(IRenderContext& context, Texture* gBufferA, Texture* gBufferB);
+	void blitSceneColor(IRenderContext& context, RenderTarget& target, Texture* gBufferA, Texture* gBufferB);
 };

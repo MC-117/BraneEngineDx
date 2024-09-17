@@ -9,6 +9,8 @@ ENGINE_API string getFileName(const string& path);
 ENGINE_API string getFileNameWithoutExt(const string& path);
 ENGINE_API string getExtension(const string& path);
 
+ENGINE_API void charToWcharString(const char* charStr, wstring& wcharStr);
+
 ENGINE_API void newSerializationInfoGuid(const SerializationInfo& info, map<Guid, Guid>& guidMap);
 ENGINE_API void replaceSerializationInfoGuid(SerializationInfo& info, const map<Guid, Guid>& guidMap, void(*externalProc)(SerializationInfo& dst) = NULL);
 ENGINE_API void newSerializationInfoGuid(SerializationInfo& info);

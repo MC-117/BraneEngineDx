@@ -34,6 +34,7 @@ void ParticleSystem::tick(float deltaTime)
 
 void ParticleSystem::prerender(SceneRenderData& sceneData)
 {
+	Actor::prerender(sceneData);
 	particleRender.update(deltaTime, getPosition(WORLD), transformMat);
 	if (autoDestroy && particleRender.isOver())
 		destroy();

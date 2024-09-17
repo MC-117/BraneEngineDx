@@ -19,15 +19,7 @@ RenderPool::RenderPool()
 
 RenderPool::~RenderPool()
 {
-	destory = true;
-	renderFence();
-	//RenderThread::get().stop();
-	if (sceneData)
-		delete sceneData;
-	sceneData = NULL;
-	if (renderGraph)
-		delete renderGraph;
-	renderGraph = NULL;
+	assert(destory);
 }
 
 RenderPool& RenderPool::get()
@@ -36,9 +28,22 @@ RenderPool& RenderPool::get()
 	return renderPool;
 }
 
-void RenderPool::start()
+void RenderPool::initialize()
 {
 	RenderThread::get().run();
+}
+
+void RenderPool::release()
+{
+	destory = true;
+	renderFence();
+	RenderThread::get().stop();
+	if (sceneData)
+		delete sceneData;
+	sceneData = NULL;
+	if (renderGraph)
+		delete renderGraph;
+	renderGraph = NULL;
 }
 
 void RenderPool::setViewportSize(const Vector2i& size)
@@ -116,9 +121,14 @@ void RenderPool::render(bool guiOnly)
 		// for (auto lightB = prePool.begin(), lightE = prePool.end(); lightB != lightE; lightB++) {
 		// 	(*(lightB))->preRender(preInfo);
 		// }
+
+		currentCamera->cameraRender.render(info);
 		
 		for (auto lightB = prePool.begin(), lightE = prePool.end(); lightB != lightE; lightB++) {
-			(*(lightB))->render(info);
+			Render* renderer = *lightB;
+			if (renderer != currentCamera->getRender()) {
+				renderer->render(info);
+			}
 		}
 
 		// for (auto b = pool.begin(), e = pool.end(); b != e; b++) {
@@ -148,7 +158,7 @@ void RenderPool::endRender()
 	{
 		IRenderContext& renderContext = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
 		{
-			RENDER_SCOPE(Frame);
+			RENDER_SCOPE(renderContext, Frame);
 			context.renderGraph->getRenderDataCollectorMainThread()->updateMainThread(Time::frames());
 			context.renderGraph->prepare();
 			context.renderGraph->execute(renderContext, RenderThread::get().getRenderFrame());

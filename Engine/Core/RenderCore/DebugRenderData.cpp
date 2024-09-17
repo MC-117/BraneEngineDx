@@ -133,7 +133,8 @@ void DebugRenderData::debugDraw(IRenderContext& context, CameraRenderData& camer
     context.setViewport(0, 0, cameraRenderData.data.viewSize.x(),  cameraRenderData.data.viewSize.y());
     context.setLineDrawContext();
     cameraRenderData.surface.bind(context, Clear_None, Clear_All);
-    context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable(), 0);
+    context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable());
+	context.setStencilRef(0);
     context.drawArrayIndirect(commandBuffer.getVendorGPUBuffer(), 0);
 
     context.unbindBufferBase(debugLinesName);
@@ -148,7 +149,8 @@ void DebugRenderData::gizmoDraw(IRenderContext& context, CameraRenderData& camer
     context.setViewport(0, 0, cameraRenderData.data.viewSize.x(),  cameraRenderData.data.viewSize.y());
     context.setLineDrawContext();
     cameraRenderData.surface.bind(context, Clear_None, Clear_All);
-    context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable(), 0);
+    context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable());
+    context.setStencilRef(0);
     DrawArraysIndirectCommand cmd;
     cmd.count = uploadLineBuffer.size();
     cmd.first = 0;

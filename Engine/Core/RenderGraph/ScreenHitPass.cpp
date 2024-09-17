@@ -35,7 +35,6 @@ bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 	task.batchDrawData = command.batchDrawData;
 	task.shaderProgram = materialVariant->program;
 	task.materialVariant = materialVariant;
-	task.renderMode = command.getRenderMode();
 	task.meshData = meshData;
 	task.extraData = command.bindings;
 
@@ -45,6 +44,7 @@ bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 
 		hitDatas.insert(cameraRenderData->hitData);
 
+		task.renderMode = command.getRenderMode("SreenHit"_N, cameraRenderData);
 		task.cameraData = cameraRenderData;
 		task.surface = cameraRenderData->surface;
 		task.surface.clearFlags = Clear_Depth;

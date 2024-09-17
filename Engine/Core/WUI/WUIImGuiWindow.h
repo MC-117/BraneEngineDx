@@ -28,4 +28,5 @@ protected:
 	virtual void onResizeExit();
 	virtual void onImGuiRender();
 	virtual void onLoop();
+	virtual void onClose();
 };

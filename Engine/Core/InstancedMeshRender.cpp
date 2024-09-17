@@ -1,4 +1,5 @@
 #include "InstancedMeshRender.h"
+#include "RenderCore/MeshRenderPack.h"
 
 InstancedMeshRender::InstancedMeshRender()
 	: meshBatchDrawData({ &meshTransformRenderData, &meshBatchDrawCommandArray })
@@ -52,6 +53,7 @@ MeshBatchDrawData& InstancedMeshRender::getMeshBatchDrawData()
 void InstancedMeshRender::render(RenderInfo& info)
 {
 	MeshMaterialCollection::DispatchData dispatchData;
+	dispatchData.init<MeshRenderCommand>();
 	dispatchData.hidden = hidden;
 	dispatchData.isStatic = isStatic;
 	dispatchData.canCastShadow = canCastShadow;

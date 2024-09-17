@@ -182,14 +182,12 @@ void MeshMaterialCollection::dispatchMeshDraw(const DispatchData& data)
 	if (mesh == NULL || data.hidden || instanceCount == 0)
 		return;
 
-	if (useCachedMeshCommand && meshCommandDirty) {
-		auto resetFunc = ([this, meshCommandCount = materials.size()] (RenderThreadContext& context)
-		{
-			resizeCachedMeshCommands(meshCommandCount);
-		});
+	auto resetFunc = ([this, meshCommandCount = materials.size(), data] (RenderThreadContext& context)
+	{
+		resizeCachedMeshCommands(meshCommandCount, data);
+	});
 
-		RENDER_THREAD_ENQUEUE_TASK(ResetMeshCommand, resetFunc);
-	}
+	RENDER_THREAD_ENQUEUE_TASK(ResetMeshCommand, resetFunc);
 
 	for (int i = 0; i < materials.size(); i++) {
 		Material* material = materials[i];
@@ -205,12 +203,7 @@ void MeshMaterialCollection::dispatchMeshDraw(const DispatchData& data)
 		auto func = ([this, part, materialRenderData, data, useCachedCommand = useCachedMeshCommand, meshCommandDirty = meshCommandDirty,
 			instanceID = instanceID, instanceCount = instanceCount, meshIndex = i] (RenderThreadContext& context)
 		{
-			MeshRenderCommand command;
-			MeshRenderCommand* cachedCommand = accessCachedMeshCommand(meshIndex);
-			
-			if (useCachedCommand && !meshCommandDirty) {
-				command = *cachedCommand;
-			}
+			MeshRenderCommand& command = *accessCachedMeshCommand(meshIndex, data);
 			
 			command.sceneData = context.sceneRenderData;
 
@@ -219,6 +212,7 @@ void MeshMaterialCollection::dispatchMeshDraw(const DispatchData& data)
 				command.mesh = part;
 				command.hasShadow = data.canCastShadow;
 				command.hasPreDepth = data.hasPrePass;
+				command.hasGeometryPass = data.hasGeometryPass;
 				command.instanceID = instanceID;
 				command.instanceIDCount = instanceCount;
 				MeshBatchDrawData batchDrawData;
@@ -240,11 +234,6 @@ void MeshMaterialCollection::dispatchMeshDraw(const DispatchData& data)
 			
 			collectRenderDataInCommand(context.renderGraph, command);
 			context.renderGraph->setRenderCommand(command);
-
-			if (useCachedCommand && meshCommandDirty) {
-				command.sceneData = NULL;
-				(*cachedCommand) = command;
-			}
 		});
 		
 		RENDER_THREAD_ENQUEUE_TASK(DispatchMeshDraw, func);
@@ -370,20 +359,25 @@ void MeshMaterialCollection::remapMaterial()
 	}
 }
 
-void MeshMaterialCollection::resizeCachedMeshCommands(size_t newSize)
+void MeshMaterialCollection::resizeCachedMeshCommands(size_t newSize, const DispatchData& data)
 {
-	const size_t CellSize = sizeof(MeshRenderCommand);
-	int oldSize = cachedMeshCommandBytes.size() / CellSize;
+	const size_t CellSize = data.commandByteSize;
+	const size_t oldSize = cachedMeshCommandBytes.size() / CellSize;
+
+	for (size_t i = newSize; i < oldSize; i++) {
+		data.destructInplaceDelegate(cachedMeshCommandBytes.data() + i * CellSize);
+	}
+	
 	cachedMeshCommandBytes.resize(newSize * CellSize);
 
-	for (int i = oldSize; i < newSize; i++) {
-		new (cachedMeshCommandBytes.data() + i * CellSize) MeshRenderCommand();
+	for (size_t i = oldSize; i < newSize; i++) {
+		data.constructInplaceDelegate(cachedMeshCommandBytes.data() + i * CellSize);
 	}
 }
 
-MeshRenderCommand* MeshMaterialCollection::accessCachedMeshCommand(size_t index)
+MeshRenderCommand* MeshMaterialCollection::accessCachedMeshCommand(size_t index, const DispatchData& data)
 {
-	size_t offset = index * sizeof(MeshRenderCommand);
+	size_t offset = index * data.commandByteSize;
 	return offset < cachedMeshCommandBytes.size() ? (MeshRenderCommand*)(cachedMeshCommandBytes.data() + offset) : NULL;
 }
 
@@ -542,6 +536,7 @@ void MeshRender::preRender(PreRenderInfo& info)
 void MeshRender::render(RenderInfo& info)
 {
 	MeshMaterialCollection::DispatchData dispatchData;
+	dispatchData.init<MeshRenderCommand>();
 	dispatchData.hidden = hidden;
 	dispatchData.isStatic = isStatic;
 	dispatchData.canCastShadow = canCastShadow;

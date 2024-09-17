@@ -32,9 +32,9 @@ bool MaterialDrawData::isValid() const
 	return shader && renderData;
 }
 
-uint8_t IRenderCommand::getStencilValue() const
+uint16_t IRenderCommand::getRenderStage() const
 {
-	return 0;
+	return materialRenderData->renderOrder;
 }
 
 void IRenderCommand::collectRenderData(IRenderDataCollector* collectorMainThread, IRenderDataCollector* collectorRenderThread)

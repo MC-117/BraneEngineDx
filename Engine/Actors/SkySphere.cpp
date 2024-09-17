@@ -90,6 +90,7 @@ void SkySphere::tick(float deltaTime)
 
 void SkySphere::prerender(SceneRenderData& sceneData)
 {
+	Actor::prerender(sceneData);
 	MeshTransformData data;
 	getMeshTransformData(&data);
 	meshRender.getMeshTransformData(&data);

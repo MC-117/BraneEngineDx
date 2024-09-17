@@ -223,68 +223,68 @@ bool isFloatPixel(TexInternalType type)
 
 bool frustumCulling(const CameraData& camData, const BoundBox& bound, const Matrix4f& mat)
 {
-	{
-		float vLen = camData.zFar * tan(camData.fovy * (0.5f * PI / 180.0f));
-		float hLen = vLen * camData.aspect;
-
-		Vector3f pos, sca;
-		Quaternionf rot;
-		mat.decompose(pos, rot, sca);
-		Vector3f _maxVal = bound.maxPoint.cwiseProduct(sca);
-		Vector3f _minVal = bound.minPoint.cwiseProduct(sca);
-		Vector3f maxVal = Math::max(_maxVal, _minVal);
-		Vector3f minVal = Math::min(_maxVal, _minVal);
-
-		Matrix4f T = Matrix4f::Identity();
-		T(0, 3) = pos.x();
-		T(1, 3) = pos.y();
-		T(2, 3) = pos.z();
-		Matrix4f R = Matrix4f::Identity();
-		R.block(0, 0, 3, 3) = rot.toRotationMatrix();;
-
-		Matrix4f worldToLocal = (T * R).inverse();
-
-		Vector3f worldPos = worldToLocal *
-			Vector4f(camData.cameraLoc, 1);
-		Vector3f upVec = worldToLocal *
-			Vector4f(camData.cameraUp, 0);
-		Vector3f rightVec = worldToLocal *
-			Vector4f(camData.cameraLeft, 0);
-		Vector3f forVec = worldToLocal *
-			Vector4f(camData.cameraDir, 0);
-
-		Vector3f vVec = upVec * vLen;
-		Vector3f hVec = rightVec * hLen;
-
-		Vector3f farPoint = worldPos + forVec * camData.zFar;
-		Vector3f nearPoint = worldPos + forVec * camData.zNear;
-
-		Vector3f corner[4] =
-		{
-			farPoint - vVec - hVec,
-			farPoint - vVec + hVec,
-			farPoint + vVec - hVec,
-			farPoint + vVec + hVec,
-		};
-
-		Vector4f planes[8] =
-		{
-			Vector4f::Plane(corner[1], corner[0], worldPos),
-			Vector4f::Plane(corner[2], corner[3], worldPos),
-			Vector4f::Plane(corner[0], corner[2], worldPos),
-			Vector4f::Plane(corner[3], corner[1], worldPos),
-			Vector4f::Plane(-forVec, farPoint),
-			Vector4f::Plane(forVec, nearPoint)
-		};
-
-		planes[6] = planes[0];
-		planes[7] = planes[0];
-
-		Vector3f extend = (maxVal - minVal) * 0.5f;
-		Vector3f center = (maxVal + minVal) * 0.5f;
-
-		return IntersectAABB8Plane(center, extend, planes);
-	}
+	// {
+	// 	float vLen = camData.zFar * tan(camData.fovy * (0.5f * PI / 180.0f));
+	// 	float hLen = vLen * camData.aspect;
+	//
+	// 	Vector3f pos, sca;
+	// 	Quaternionf rot;
+	// 	mat.decompose(pos, rot, sca);
+	// 	Vector3f _maxVal = bound.maxPoint.cwiseProduct(sca);
+	// 	Vector3f _minVal = bound.minPoint.cwiseProduct(sca);
+	// 	Vector3f maxVal = Math::max(_maxVal, _minVal);
+	// 	Vector3f minVal = Math::min(_maxVal, _minVal);
+	//
+	// 	Matrix4f T = Matrix4f::Identity();
+	// 	T(0, 3) = pos.x();
+	// 	T(1, 3) = pos.y();
+	// 	T(2, 3) = pos.z();
+	// 	Matrix4f R = Matrix4f::Identity();
+	// 	R.block(0, 0, 3, 3) = rot.toRotationMatrix();;
+	//
+	// 	Matrix4f worldToLocal = (T * R).inverse();
+	//
+	// 	Vector3f worldPos = worldToLocal *
+	// 		Vector4f(camData.cameraLoc, 1);
+	// 	Vector3f upVec = worldToLocal *
+	// 		Vector4f(camData.cameraUp, 0);
+	// 	Vector3f rightVec = worldToLocal *
+	// 		Vector4f(camData.cameraLeft, 0);
+	// 	Vector3f forVec = worldToLocal *
+	// 		Vector4f(camData.cameraDir, 0);
+	//
+	// 	Vector3f vVec = upVec * vLen;
+	// 	Vector3f hVec = rightVec * hLen;
+	//
+	// 	Vector3f farPoint = worldPos + forVec * camData.zFar;
+	// 	Vector3f nearPoint = worldPos + forVec * camData.zNear;
+	//
+	// 	Vector3f corner[4] =
+	// 	{
+	// 		farPoint - vVec - hVec,
+	// 		farPoint - vVec + hVec,
+	// 		farPoint + vVec - hVec,
+	// 		farPoint + vVec + hVec,
+	// 	};
+	//
+	// 	Vector4f planes[8] =
+	// 	{
+	// 		Vector4f::Plane(corner[1], corner[0], worldPos),
+	// 		Vector4f::Plane(corner[2], corner[3], worldPos),
+	// 		Vector4f::Plane(corner[0], corner[2], worldPos),
+	// 		Vector4f::Plane(corner[3], corner[1], worldPos),
+	// 		Vector4f::Plane(-forVec, farPoint),
+	// 		Vector4f::Plane(forVec, nearPoint)
+	// 	};
+	//
+	// 	planes[6] = planes[0];
+	// 	planes[7] = planes[0];
+	//
+	// 	Vector3f extend = (maxVal - minVal) * 0.5f;
+	// 	Vector3f center = (maxVal + minVal) * 0.5f;
+	//
+	// 	return IntersectAABB8Plane(center, extend, planes);
+	// }
 
 	Matrix4f MVP = camData.projectionViewMat * mat;
 
@@ -360,4 +360,20 @@ Matrix4f&& getCubeFaceProjectionMatrix(float zNear, float zFar)
 Matrix4f&& getCubeFaceViewMatrix(CubeFace face, const Vector3f& position)
 {
 	return std::move(Math::lookAt(position, position + getCubeFaceForwardVector(face), getCubeFaceUpwardVector(face)));
+}
+
+void setDepthStateFromRenderOrder(DepthStencilMode& mode, int renderOrder)
+{
+	if (renderOrder < 2500) {
+		mode.depthTest = true;
+		mode.depthWrite = true;
+	}
+	else if (renderOrder < 5000) {
+		mode.depthTest = true;
+		mode.depthWrite = false;
+	}
+	else {
+		mode.depthTest = false;
+		mode.depthWrite = false;
+	}
 }

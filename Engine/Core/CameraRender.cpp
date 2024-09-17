@@ -156,12 +156,13 @@ void CameraRender::render(RenderInfo& info)
 			//graph->postRenderTarget.addTexture("screenMap", *graph->resource.screenTexture);
 			graph->render(info);
 		}
-		RENDER_THREAD_ENQUEUE_TASK(CameraRenderUpdate, ([cameraRenderData] (RenderThreadContext& context)
+		auto func = ([cameraRenderData = cameraRenderData] (RenderThreadContext& context)
 		{
 			cameraRenderData->updateSurfaceBuffer(context.renderGraph);
 			updateRenderDataMainThread(cameraRenderData, Time::frames());
 			context.sceneRenderData->setCamera(cameraRenderData);
-		}));
+		});
+		RENDER_THREAD_ENQUEUE_TASK(CameraRenderUpdate, func);
 	}
 }
 

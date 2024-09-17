@@ -226,6 +226,7 @@ void Live2DActor::tick(float deltaTime)
 
 void Live2DActor::prerender(SceneRenderData& sceneData)
 {
+    Actor::prerender(sceneData);
     if (modelAsset == NULL || !modelAsset->isValid())
         return;
     live2DRender.loadDefaultMaterial();

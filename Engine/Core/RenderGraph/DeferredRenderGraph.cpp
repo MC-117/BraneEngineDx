@@ -156,9 +156,9 @@ SerializeInstance(DeferredRenderGraph);
 
 DeferredRenderGraph::DeferredRenderGraph()
 {
-	defaultPreDepthSurfaceData.clearFlags = Clear_Depth;
+	defaultPreDepthSurfaceData.clearFlags = Clear_Depth | Clear_Stencil;;
 
-	defaultGeometrySurfaceData.clearFlags = Clear_Colors | Clear_Stencil;
+	defaultGeometrySurfaceData.clearFlags = Clear_Colors;
 	defaultGeometrySurfaceData.clearColors.resize(5, { 0, 0, 0, 0 });
 	defaultGeometrySurfaceData.clearColors[1] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
@@ -239,11 +239,13 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 	ShaderMatchRule matchRule;
 	matchRule.fragmentFlag = ShaderMatchFlag::Best;
 
-	uint16_t renderStage = cmd.getRenderMode().getRenderStage();
+	uint16_t renderStage = cmd.getRenderStage();
 
 	Enum<ShaderFeature> shaderFeature = cmd.getShaderFeature();
 	Enum<ShaderFeature> deferredShaderFeature = shaderFeature;
 	deferredShaderFeature |= Shader_Deferred;
+	Enum<ShaderFeature> preDepthShaderFeature = shaderFeature;
+	preDepthShaderFeature |= Shader_Depth;
 	IMaterial* deferredMaterial = cmd.materialRenderData->getVariant(deferredShaderFeature, matchRule);
 
 	const bool enableVSMDepthPass = VirtualShadowMapConfig::isEnable();
@@ -270,10 +272,16 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		const MeshRenderCommand* meshCommand = dynamic_cast<const MeshRenderCommand*>(&cmd);
 		
 		bool hasPreDepth = enablePreDepthPass && preDepthMaterialRenderData && preDepthMaterialRenderData->isValid() && meshCommand != NULL && meshCommand->hasPreDepth;
-
+		bool hasGeometryPass = meshCommand->hasGeometryPass;
+		
 		IMaterial* preMaterial = NULL;
+		bool useSharedPreMaterial = false;
 		if (hasPreDepth) {
-			preMaterial = preDepthMaterialRenderData->getVariant(cmd.getShaderFeature());
+			preMaterial = cmd.materialRenderData->getVariant(preDepthShaderFeature, matchRule);
+			if (preMaterial == NULL) {
+				preMaterial = preDepthMaterialRenderData->getVariant(shaderFeature);
+				useSharedPreMaterial = true;
+			}
 			hasPreDepth &= preMaterial != NULL;
 			hasPreDepth = preMaterial->init();
 		}
@@ -282,20 +290,22 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		MeshRenderCommand preCommand;
 
 		if (hasPreDepth) {
-			MeshBatchDrawCall* batchDrawCall = NULL;
-			for (int j = 0; j < meshCommand->instanceIDCount; j++)
-			{
-				unsigned int transformID = meshCommand->instanceID + j;
-				IMeshBatchDrawCommandArray* drawCommandArray = dynamic_cast<IMeshBatchDrawCommandArray*>(meshCommand->batchDrawData.batchDrawCommandArray);
-				const MeshBatchDrawKey renderKey(meshCommand->mesh, preDepthMaterialRenderData, meshCommand->reverseCullMode);
-				batchDrawCall = drawCommandArray->setMeshBatchDrawCall(renderKey, transformID);
+			MeshBatchDrawCall* sharedBatchDrawCall = NULL;
+			if (useSharedPreMaterial) {
+				for (int j = 0; j < meshCommand->instanceIDCount; j++)
+				{
+					unsigned int transformID = meshCommand->instanceID + j;
+					IMeshBatchDrawCommandArray* drawCommandArray = dynamic_cast<IMeshBatchDrawCommandArray*>(meshCommand->batchDrawData.batchDrawCommandArray);
+					const MeshBatchDrawKey renderKey(meshCommand->mesh, preDepthMaterialRenderData, meshCommand->reverseCullMode);
+					sharedBatchDrawCall = drawCommandArray->setMeshBatchDrawCall(renderKey, transformID);
+				}
 			}
 
 			preCommand.sceneData = cmd.sceneData;
 			preCommand.batchDrawData = cmd.batchDrawData;
-			preCommand.materialRenderData = preDepthMaterialRenderData;
+			preCommand.materialRenderData = cmd.materialRenderData;
 			preCommand.mesh = meshCommand->mesh;
-			preCommand.meshBatchDrawCall = batchDrawCall;
+			preCommand.meshBatchDrawCall = useSharedPreMaterial ? sharedBatchDrawCall : meshCommand->meshBatchDrawCall;
 			preCommand.bindings = cmd.bindings;
 
 			preTask.age = 0;
@@ -304,7 +314,6 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 			preTask.shaderProgram = preMaterial->program;
 			preTask.materialVariant = preMaterial;
 			preTask.surface = defaultPreDepthSurfaceData;
-			preTask.renderMode = preCommand.getRenderMode();
 			preTask.meshData = meshData;
 			preTask.extraData = preCommand.bindings;
 		}
@@ -316,17 +325,19 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 		}
 
 		RenderTask geoTask;
-		geoTask.age = 0;
-		geoTask.sceneData = cmd.sceneData;
-		geoTask.batchDrawData = cmd.batchDrawData;
-		geoTask.surface = defaultGeometrySurfaceData;
-		if (!enablePreDepthPass)
-			geoTask.surface.clearFlags |= Clear_Depth;
-		geoTask.shaderProgram = deferredMaterial->program;
-		geoTask.materialVariant = deferredMaterial;
-		geoTask.renderMode = cmd.getRenderMode();
-		geoTask.meshData = meshData;
-		geoTask.extraData = cmd.bindings;
+
+		if (hasGeometryPass) {
+			geoTask.age = 0;
+			geoTask.sceneData = cmd.sceneData;
+			geoTask.batchDrawData = cmd.batchDrawData;
+			geoTask.surface = defaultGeometrySurfaceData;
+			if (!enablePreDepthPass)
+				geoTask.surface.clearFlags |= Clear_Depth;
+			geoTask.shaderProgram = deferredMaterial->program;
+			geoTask.materialVariant = deferredMaterial;
+			geoTask.meshData = meshData;
+			geoTask.extraData = cmd.bindings;
+		}
 
 		// Lighting pass
 		IMaterial* lightingMaterial = NULL;
@@ -359,15 +370,19 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 			}
 
 			if (hasPreDepth) {
+				preTask.renderMode = preCommand.getRenderMode("PreDepth"_N, cameraRenderData);
 				preTask.cameraData = cameraRenderData;
 				preTask.surface.renderTarget = &surfaceBuffer->renderTarget;
 				preDepthPass.commandList.addRenderTask(preCommand, preTask);
 			}
 
-			geoTask.cameraData = cameraRenderData;
-			geoTask.surface.renderTarget = &surfaceBuffer->renderTarget;
-			geoTask.surface.clearColors[0] = cameraRenderData->cameraRender->clearColor;
-			geometryPass.commandList.addRenderTask(cmd, geoTask);
+			if (hasGeometryPass) {
+				geoTask.renderMode = cmd.getRenderMode("Geometry"_N, cameraRenderData);
+				geoTask.cameraData = cameraRenderData;
+				geoTask.surface.renderTarget = &surfaceBuffer->renderTarget;
+				geoTask.surface.clearColors[0] = cameraRenderData->surface.clearColors[0];
+				geometryPass.commandList.addRenderTask(cmd, geoTask);
+			}
 
 			if (hasLightingPass) {
 				lightingTask.gBufferRT = &surfaceBuffer->renderTarget;
@@ -429,7 +444,7 @@ void DeferredRenderGraph::execute(IRenderContext& context, long long renderFrame
 	};
 
 	{
-		RENDER_SCOPE(WaitGPU)
+		RENDER_SCOPE(context, WaitGPU)
 		clearTexFrameBindings();
 		context.clearVertexBindings();
 
@@ -437,12 +452,12 @@ void DeferredRenderGraph::execute(IRenderContext& context, long long renderFrame
 	}
 
 	{
-		RENDER_SCOPE(RenderDataUpload)
+		RENDER_SCOPE(context, RenderDataUpload)
 		renderDataCollectorRenderThread.updateRenderThread(renderFrame);
 	}
 
 	{
-		RENDER_SCOPE(SceneDataUpload)
+		RENDER_SCOPE(context, SceneDataUpload)
 		for (auto sceneData : sceneDatas) {
 			sceneData->upload();
 			sceneData->debugRenderData.initBuffer(context, false);
@@ -450,34 +465,34 @@ void DeferredRenderGraph::execute(IRenderContext& context, long long renderFrame
 	}
 
 	{
-		RENDER_SCOPE(SceneViewCulling)
+		RENDER_SCOPE(context, SceneViewCulling)
 		for (auto sceneData : sceneDatas) {
 			sceneData->executeViewCulling(context);
 		}
 	}
 
 	{
-		RENDER_SCOPE(ScreenHit)
+		RENDER_SCOPE(context, ScreenHit)
 		screenHitPass.execute(context);
 	}
 
 	{
-		RENDER_SCOPE(PreDepth)
+		RENDER_SCOPE(context, PreDepth)
 		preDepthPass.execute(context);
 	}
 
 	{
-		RENDER_SCOPE(BuildProbeGrid)
+		RENDER_SCOPE(context, BuildProbeGrid)
 		buildProbeGridPass.execute(context);
 	}
 
 	{
-		RENDER_SCOPE(Base)
+		RENDER_SCOPE(context, Base)
 		geometryPass.execute(context);
 	}
 
 	{
-		RENDER_SCOPE(ShadowDepth)
+		RENDER_SCOPE(context, ShadowDepth)
 		// if (captureVSMTrigger)
 		// {
 		// 	ProfilerManager::instance().beginScope("VSM");
@@ -490,14 +505,14 @@ void DeferredRenderGraph::execute(IRenderContext& context, long long renderFrame
 	}
 
 	{
-		RENDER_SCOPE(Lighting)
+		RENDER_SCOPE(context, Lighting)
 		context.clearFrameBindings();
 
 		lightingPass.execute(context);
 	}
 
 	{
-		RENDER_SCOPE(HiZ)
+		RENDER_SCOPE(context, HiZ)
 		// if (captureVSMTrigger)
 		// {
 		// 	ProfilerManager::instance().endScope();
@@ -510,17 +525,17 @@ void DeferredRenderGraph::execute(IRenderContext& context, long long renderFrame
 	}
 
 	{
-		RENDER_SCOPE(GenMip)
+		RENDER_SCOPE(context, GenMip)
 		genMipPass.execute(context);
 	}
 
 	{
-		RENDER_SCOPE(SSR)
+		RENDER_SCOPE(context, SSR)
 		ssrPass.execute(context);
 	}
 
 	{
-		RENDER_SCOPE(DebugDraw)
+		RENDER_SCOPE(context, DebugDraw)
 		clearTexFrameBindings();
 
 		for (auto sceneData : sceneDatas) {
@@ -536,7 +551,7 @@ void DeferredRenderGraph::execute(IRenderContext& context, long long renderFrame
 	}
 
 	{
-		RENDER_SCOPE(Transparent)
+		RENDER_SCOPE(context, Transparent)
 		translucentPass.execute(context);
 
 		context.setGPUSignal();
@@ -544,7 +559,7 @@ void DeferredRenderGraph::execute(IRenderContext& context, long long renderFrame
 	}
 
 	{
-		RENDER_SCOPE(SceneFetch)
+		RENDER_SCOPE(context, SceneFetch)
 		for (auto sceneData : sceneDatas) {
 			for (auto& cameraRenderData : sceneData->cameraRenderDatas)
 				context.resolveMultisampleFrame(cameraRenderData->surface.renderTarget->getVendorRenderTarget());
@@ -554,19 +569,19 @@ void DeferredRenderGraph::execute(IRenderContext& context, long long renderFrame
 	}
 
 	{
-		RENDER_SCOPE(PostProcess)
+		RENDER_SCOPE(context, PostProcess)
 		for (auto pass : passes)
 			pass->execute(context);
 		blitPass.execute(context);
 	}
 
 	{
-		RENDER_SCOPE(ImGui)
+		RENDER_SCOPE(context, ImGui)
 		imGuiPass.execute(context);
 	}
 
 	{
-		RENDER_SCOPE(Swap)
+		RENDER_SCOPE(context, Swap)
 		Engine::getMainDeviceSurface()->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
 	}
 }
