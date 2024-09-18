@@ -52,7 +52,7 @@ void TerrainRender::render(RenderInfo& info)
         command.mesh = meshPart;
         command.instanceID = instanceID;
         command.instanceIDCount = instanceCount;
-        ViewCulledMeshBatchDrawData batchDrawData = context.sceneRenderData->getViewCulledBatchDrawData(context.cameraRenderData, isStatic);
+        MeshBatchDrawData batchDrawData = context.sceneRenderData->getBatchDrawData(isStatic);
         command.batchDrawData = batchDrawData;
         MeshBatchDrawKey renderKey(command.mesh, command.materialRenderData, batchDrawData.transformData->getMeshTransform(instanceID).isNegativeScale());
         command.meshBatchDrawCall = batchDrawData.batchDrawCommandArray->setMeshBatchDrawCall(renderKey, instanceID, instanceCount);

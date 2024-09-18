@@ -115,7 +115,7 @@ void DeferredLightingPass::execute(IRenderContext& context)
 		if (taskContext.surface.renderTarget != task.surface.renderTarget) {
 			taskContext.surface = task.surface;
 
-			task.surface.bind(context);
+			task.surface.bindAndClear(context);
 			blitSceneColor(context, *task.surface.renderTarget, task.gBufferRT->getTexture(0), task.gBufferRT->getTexture(1));
 			taskContext.program = blitProgram;
 		}

@@ -236,6 +236,7 @@ int RenderCommandWorkerPool::calMaxTaskNumPerWorker(int taskCount) const
 
 bool RenderCommandList::addRenderTask(const IRenderCommand& cmd, RenderTask& task)
 {
+	task.cameraData->applyValidViewCullingContext(task.batchDrawData);
 	task.hashCode = RenderTask::Hasher()(task);
 
 	RenderTask* pTask = NULL;
@@ -390,7 +391,7 @@ void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 		if (renderTarget != task.surface.renderTarget) {
 			renderTarget = task.surface.renderTarget;
 
-			task.surface.bind(context, executionInfo.plusClearFlags, executionInfo.minusClearFlags);
+			task.surface.bindAndClear(context, executionInfo.plusClearFlags, executionInfo.minusClearFlags);
 
 			if (executionInfo.outputTextures) {
 				IRenderTarget* renderTargetVendor = renderTarget->getVendorRenderTarget();

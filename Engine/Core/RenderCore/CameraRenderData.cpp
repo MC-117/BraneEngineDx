@@ -11,7 +11,7 @@ size_t SurfaceData::Hasher::operator()(const SurfaceData* s) const
 	return (size_t)s->renderTarget;
 }
 
-void SurfaceData::bind(IRenderContext& context, Enum<ClearFlags> plusClearFlags, Enum<ClearFlags> minusClearFlags)
+void SurfaceData::bindAndClear(IRenderContext& context, Enum<ClearFlags> plusClearFlags, Enum<ClearFlags> minusClearFlags)
 {
 	context.bindFrame(renderTarget->getVendorRenderTarget());
 	Enum<ClearFlags> flag = (clearFlags | plusClearFlags) & ~minusClearFlags;
@@ -38,6 +38,12 @@ void CameraRenderData::setDebugProbeIndex(int probeIndex)
 int CameraRenderData::getDebugProbeIndex() const
 {
 	return probeGridInfo.debugProbeIndex;
+}
+
+void CameraRenderData::applyValidViewCullingContext(BatchDrawData& batchDrawData)
+{
+	cullingContext.applyValidViewCullingContext(batchDrawData);
+	staticCullingContext.applyValidViewCullingContext(batchDrawData);
 }
 
 void CameraRenderData::create()

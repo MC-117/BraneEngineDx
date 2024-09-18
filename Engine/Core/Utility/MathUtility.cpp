@@ -189,6 +189,26 @@ Matrix4f Math::getTransformMatrix(const Vector3f& position, const Quaternionf& r
 	return getTransitionMatrix(position) * getRotationMatrix(rotation) * getScaleMatrix(scale);
 }
 
+Vector3f Math::getForwardVector(const Matrix4f& transMat)
+{
+	return Vector3f(transMat * Vector4f::UnitX()).normalized();
+}
+
+Vector3f Math::getLeftwardVector(const Matrix4f& transMat)
+{
+	return Vector3f(transMat * Vector4f::UnitY()).normalized();
+}
+
+Vector3f Math::getUpwardVector(const Matrix4f& transMat)
+{
+	return Vector3f(transMat * Vector4f::UnitZ()).normalized();
+}
+
+Vector3f Math::getPosition(const Matrix4f& transMat)
+{
+	return Vector3f(transMat * Vector4f::UnitW());
+}
+
 Matrix4f Math::perspective(float fovy, float aspect, float zNear, float zFar)
 {
 	DirectX::XMFLOAT4X4 xmf44;

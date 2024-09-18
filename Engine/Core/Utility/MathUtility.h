@@ -34,7 +34,13 @@ namespace Math
 	ENGINE_API Matrix4f getRotationMatrix(const Quaternionf& rotation);
 	ENGINE_API Matrix4f getScaleMatrix(const Vector3f& scale);
 	ENGINE_API Matrix4f getTransformMatrix(const Vector3f& position, const Quaternionf& rotation, const Vector3f& scale);
-		
+
+	ENGINE_API Vector3f getForwardVector(const Matrix4f& transMat);
+	ENGINE_API Vector3f getLeftwardVector(const Matrix4f& transMat);
+	ENGINE_API Vector3f getUpwardVector(const Matrix4f& transMat);
+
+	ENGINE_API Vector3f getPosition(const Matrix4f& transMat);
+
 	ENGINE_API Matrix4f perspective(float fovy, float aspect, float zNear, float zFar);
 	ENGINE_API Matrix4f orthotropic(float left, float right, float bottom, float top, float zNear, float zFar);
 	ENGINE_API Matrix4f lookAt(Vector3f const& eye, Vector3f const& center, Vector3f const& up);

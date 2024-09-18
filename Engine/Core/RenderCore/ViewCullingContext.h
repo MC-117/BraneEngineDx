@@ -33,6 +33,7 @@ public:
     
     ViewCullingContext();
     void init();
+    bool applyValidViewCullingContext(BatchDrawData& batchDrawData);
     void setSourceBatchDrawCommandArray(IMeshBatchDrawCommandArray* array);
     void executeCulling(IRenderContext& context, IRenderData& cameraRenderData, MeshTransformRenderData& transformRenderData);
     virtual void bindInstanceBuffer(IRenderContext& context);

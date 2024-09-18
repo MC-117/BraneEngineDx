@@ -1117,7 +1117,7 @@ void Gizmo::onRender3D(RenderInfo& info)
 		lines = std::move(lines), meshes = std::move(meshes), screenHits = std::move(screenHits)] (RenderThreadContext& context)
 	{
 		context.sceneRenderData->debugRenderData.updateLineData = std::move(lines);
-		ViewCulledMeshBatchDrawData batchDrawData = context.sceneRenderData->getViewCulledBatchDrawData(context.cameraRenderData, false);
+		MeshBatchDrawData batchDrawData = context.sceneRenderData->getBatchDrawData(false);
 	
 		for (auto draw : meshes) {
 			if (draw.instanceID < 0) {

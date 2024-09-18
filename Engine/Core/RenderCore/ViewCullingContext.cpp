@@ -47,6 +47,15 @@ void ViewCullingContext::init()
     loadDefaultResource();
 }
 
+bool ViewCullingContext::applyValidViewCullingContext(BatchDrawData& batchDrawData)
+{
+    if (sourceBatchDrawCommandArray && sourceBatchDrawCommandArray == batchDrawData.batchDrawCommandArray) {
+        batchDrawData.batchDrawCommandArray = this;
+        return true;
+    }
+    return false;
+}
+
 void ViewCullingContext::setSourceBatchDrawCommandArray(IMeshBatchDrawCommandArray* array)
 {
     sourceBatchDrawCommandArray = array;

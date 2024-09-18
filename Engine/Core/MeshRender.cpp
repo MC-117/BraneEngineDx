@@ -223,7 +223,7 @@ void MeshMaterialCollection::dispatchMeshDraw(const DispatchData& data)
 						collectRenderData(context.renderGraph, *updateableRenderData);
 				}
 				else {
-					batchDrawData = context.sceneRenderData->getViewCulledBatchDrawData(context.cameraRenderData, data.isStatic);
+					batchDrawData = context.sceneRenderData->getBatchDrawData(data.isStatic);
 				}
 				command.batchDrawData = batchDrawData;
 				MeshBatchDrawKey renderKey(part, materialRenderData, batchDrawData.transformData->getMeshTransform(instanceID).isNegativeScale());

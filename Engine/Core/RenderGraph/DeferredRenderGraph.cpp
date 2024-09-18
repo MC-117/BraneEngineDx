@@ -156,7 +156,7 @@ SerializeInstance(DeferredRenderGraph);
 
 DeferredRenderGraph::DeferredRenderGraph()
 {
-	defaultPreDepthSurfaceData.clearFlags = Clear_Depth | Clear_Stencil;;
+	defaultPreDepthSurfaceData.clearFlags = Clear_Depth | Clear_Stencil;
 
 	defaultGeometrySurfaceData.clearFlags = Clear_Colors;
 	defaultGeometrySurfaceData.clearColors.resize(5, { 0, 0, 0, 0 });
@@ -468,6 +468,19 @@ void DeferredRenderGraph::execute(IRenderContext& context, long long renderFrame
 		RENDER_SCOPE(context, SceneViewCulling)
 		for (auto sceneData : sceneDatas) {
 			sceneData->executeViewCulling(context);
+		}
+	}
+
+	{
+		RENDER_SCOPE(context, ClearDepthStencilOfSurfaceBuffers)
+		for (auto sceneData : sceneDatas) {
+			for (auto& cameraRenderData : sceneData->cameraRenderDatas) {
+				if (DeferredSurfaceBuffer* surfaceBuffer = dynamic_cast<DeferredSurfaceBuffer*>(cameraRenderData->surfaceBuffer)) {
+					context.bindFrame(surfaceBuffer->renderTarget.getVendorRenderTarget());
+					context.clearFrameDepth(cameraRenderData->surface.clearDepth);
+					context.clearFrameStencil(cameraRenderData->surface.clearStencil);
+				}
+			}
 		}
 	}
 

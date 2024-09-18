@@ -19,7 +19,7 @@ struct SurfaceData
 	float clearDepth = 1;
 	int clearStencil = 0;
 
-	void bind(IRenderContext& context, Enum<ClearFlags> plusClearFlags = Clear_None, Enum<ClearFlags> minusClearFlags = Clear_None);
+	void bindAndClear(IRenderContext& context, Enum<ClearFlags> plusClearFlags = Clear_None, Enum<ClearFlags> minusClearFlags = Clear_None);
 };
 
 class CameraRenderData : public IRenderData
@@ -53,6 +53,8 @@ public:
 
 	void setDebugProbeIndex(int probeIndex);
 	int getDebugProbeIndex() const;
+
+	void applyValidViewCullingContext(BatchDrawData& batchDrawData);
 
 	virtual void create();
 	virtual void release();
