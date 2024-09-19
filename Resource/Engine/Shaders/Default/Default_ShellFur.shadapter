@@ -27,6 +27,7 @@ DefaultVertexOut MESH_MAIN
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
     vout.InstanceID = ins[0];
+    vout.svClipDist = dot(camData.clipPlane, _WorldPos);
     return vout;
 }
 #vertex skeleton
@@ -56,6 +57,7 @@ DefaultVertexOut SKELETON_MAIN
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
     vout.InstanceID = ins[0];
+    vout.svClipDist = dot(camData.clipPlane, _WorldPos);
     return vout;
 }
 #vertex skeleton morph
@@ -87,5 +89,6 @@ DefaultVertexOut SKELETON_MAIN
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
     vout.InstanceID = ins[0];
+    vout.svClipDist = dot(camData.clipPlane, _WorldPos);
     return vout;
 }

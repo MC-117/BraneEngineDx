@@ -306,8 +306,7 @@ struct ENGINE_API RenderMode
 	{
 		struct : DepthStencilMode
 		{
-			uint16_t renderStage : 12;
-			uint8_t blendMode : 4;
+			uint16_t renderStage_blendMode : 16;
 		} mode;
 		uint64_t bits;
 	};

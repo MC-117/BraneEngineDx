@@ -7,9 +7,10 @@
 DefaultVertexOut MESH_MAIN
 {
     DefaultVertexOut vout;
-    vout.svPos = mul(float4(pos, 1.0), getFinalMat(ins[0]));
-    vout.svPos = mul(vout.svPos, camData.pmat);
+    float4 _WorldPos = mul(float4(pos, 1.0), getFinalMat(ins[0]));
+    vout.svPos = mul(_WorldPos, camData.pmat);
     vout.LocalPos = pos;
+    vout.svClipDist = dot(camData.clipPlane, _WorldPos);
     return vout;
 }
 #vertex skeleton
@@ -20,9 +21,11 @@ DefaultVertexOut MESH_MAIN
 DefaultVertexOut SKELETON_MAIN
 {
     DefaultVertexOut vout;
-    vout.svPos = mul(mul(float4(pos, 1.0), getFinalMat(ins[0], weights, boneId)), camData.pmat);
+    float4 _WorldPos = mul(float4(pos, 1.0), getFinalMat(ins[0], weights, boneId));
+    vout.svPos = mul(_WorldPos, camData.pmat);
     vout.LocalPos = pos;
     vout.InstanceID = ins[0];
+    vout.svClipDist = dot(camData.clipPlane, _WorldPos);
     return vout;
 }
 #vertex skeleton morph
@@ -34,11 +37,12 @@ DefaultVertexOut SKELETON_MAIN
 DefaultVertexOut SKELETON_MAIN
 {
     uint vid = ins[1] + vertexID;
-    float4 worldPos = mul(float4(morphPos(vid, pos), 1.0), getFinalMat(ins[0], weights, boneId));
+    float4 _WorldPos = mul(float4(morphPos(vid, pos), 1.0), getFinalMat(ins[0], weights, boneId));
     DefaultVertexOut vout;
-    vout.svPos = mul(worldPos, camData.pmat);
+    vout.svPos = mul(_WorldPos, camData.pmat);
     vout.LocalPos = pos;
     vout.InstanceID = ins[0];
+    vout.svClipDist = dot(camData.clipPlane, _WorldPos);
     return vout;
 }
 #vertex terrain
@@ -57,6 +61,7 @@ DefaultTerrainVertexOut TERRAIN_MAIN
     vout.TexCoords = uv;
     vout.WorldScale = getWorldScale(fm);
     vout.InstanceID = ins[0];
+    vout.svClipDist = 0;
     return vout;
 }
 #tess_ctrl terrain
@@ -108,9 +113,11 @@ DefaultVertexOut main(DefaultTerrainPatchTess patchTess, float2 uv : SV_DomainLo
 
     vout.WorldScale = quad[0].WorldScale;
     
-    vout.svPos = mul(float4(vout.WorldPos, 1.0), camData.pmat);
+    float4 worldPos = float4(vout.WorldPos, 1.0);
+    vout.svPos = mul(worldPos, camData.pmat);
     
     vout.InstanceID = quad[0].InstanceID;
+    vout.svClipDist = dot(camData.clipPlane, worldPos);
 
     return vout;
 }

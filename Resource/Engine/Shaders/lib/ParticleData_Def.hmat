@@ -25,6 +25,7 @@ struct PGOut
     Particle particle : PARTICLE;
     float2 UV : TEXCOORD;
     float4 svPos : SV_POSITION;
+    float svClipDist : SV_ClipDistance;
 };
 
 StructuredBuffer<Particle> Particles : register(PARTICLE_BIND_INDEX);

@@ -19,6 +19,7 @@ struct CameraData
 	float fovy;
 	Vector3f cameraLeft;
 	float aspect;
+	Vector4f clipPlane;
 	Vector2f viewSize;
 	float distance;
 	float user;

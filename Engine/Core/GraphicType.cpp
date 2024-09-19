@@ -78,8 +78,7 @@ RenderMode::RenderMode()
 
 RenderMode::RenderMode(uint16_t renderStage, uint8_t blendMode) : RenderMode()
 {
-	mode.renderStage = renderStage;
-	mode.blendMode = blendMode;
+	mode.renderStage_blendMode = (renderStage << 4) | (blendMode & 0xF);
 
 	setDepthStateFromRenderOrder(mode, renderStage);
 
@@ -98,8 +97,8 @@ RenderMode::RenderMode(const RenderMode& mode) { bits = mode.bits; }
 
 RenderMode& RenderMode::operator=(const RenderMode& mode) { bits = mode.bits; return *this; }
 
-uint16_t RenderMode::getRenderStage() const { return mode.renderStage; }
-BlendMode RenderMode::getBlendMode() const { return (BlendMode)mode.blendMode; }
+uint16_t RenderMode::getRenderStage() const { return mode.renderStage_blendMode >> 4; }
+BlendMode RenderMode::getBlendMode() const { return (BlendMode)(mode.renderStage_blendMode & 0xF); }
 
 uint64_t RenderMode::getOrder() const { return bits; }
 

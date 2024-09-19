@@ -67,9 +67,11 @@ VERTEX_OUT VERTEX_MAIN
     
     transformToVirtualPage(vout.clipPos, vout.pageClipPos, pageInfo.viewIndex, _WorldPos);
 #elif defined(DEPTH_SHADER_FEATURE)
-    vout.svPos = mul(mul(float4(pos, 1.0), fm), camData.pmat);
+    float4 _WorldPos = mul(float4(_pos, 1.0), fm);
+    vout.svPos = mul(_WorldPos, camData.pmat);
     vout.LocalPos = pos;
     vout.InstanceID = objID;
+    vout.svClipDist = dot(camData.clipPlane, _WorldPos);
 #else
     float4 _WorldPos = mul(float4(_pos, 1.0), fm);
     vout.TransMat = fm;
@@ -82,6 +84,7 @@ VERTEX_OUT VERTEX_MAIN
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
     vout.InstanceID = ins[0];
+    vout.svClipDist = dot(camData.clipPlane, _WorldPos);
 #endif
     return vout;
 }
@@ -101,6 +104,8 @@ DefaultTerrainVertexOut TERRAIN_MAIN
     vout.TexCoords = uv;
     vout.WorldScale = getWorldScale(fm);
     vout.InstanceID = ins[0];
+    vout.svClipDist = 0;
+
     return vout;
 }
 #tess_ctrl terrain
@@ -155,6 +160,7 @@ DefaultVertexOut main(DefaultTerrainPatchTess patchTess, float2 uv : SV_DomainLo
     vout.svPos = mul(float4(vout.WorldPos, 1.0), camData.pmat);
     vout.TransMat = quad[0].TransMat;
     vout.InstanceID = quad[0].InstanceID;
+    vout.svClipDist = dot(camData.clipPlane, float4(vout.WorldPos, 1.0));
 
     return vout;
 }

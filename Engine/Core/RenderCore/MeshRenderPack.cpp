@@ -36,7 +36,8 @@ RenderMode MeshRenderCommand::getRenderMode(const Name& passName, const CameraRe
 	RenderMode renderMode = RenderMode(renderOrder, BM_Default);
 	renderMode.mode.stencilTest = materialRenderData->desc.enableStencilTest;
 
-	bool cameraForceStencilTest = cameraRenderData->forceStencilTest && (passName == "Geometry"_N || passName == "Translucent"_N);
+	bool cameraForceStencilTest = cameraRenderData->forceStencilTest &&
+		(passName == "PreDepth"_N || passName == "Geometry"_N || passName == "Translucent"_N);
 	
 	if (cameraForceStencilTest) {
 		renderMode.mode.stencilTest = true;

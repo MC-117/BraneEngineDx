@@ -52,5 +52,6 @@ DefaultVertexOut VERTEX_MAIN
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
     vout.InstanceID = ins[0];
+    vout.svClipDist = dot(camData.clipPlane, _WorldPos);
     return vout;
 }

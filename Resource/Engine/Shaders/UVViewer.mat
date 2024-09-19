@@ -10,6 +10,7 @@ DefaultVertexOut MESH_MAIN
     DefaultVertexOut vout;
     vout.svPos.xy = uv * 2.0 - 1.0;
     vout.svPos.zw = float2(0.5f, 1);
+    vout.svClipDist = 0;
     return vout;
 }
 
@@ -21,6 +22,7 @@ DefaultVertexOut SKELETON_MAIN
     DefaultVertexOut vout;
     vout.svPos.xy = uv * 2.0 - 1.0;
     vout.svPos.zw = float2(0.5f, 1);
+    vout.svClipDist = 0;
     return vout;
 }
 
@@ -32,6 +34,7 @@ DefaultVertexOut SKELETON_MAIN
     DefaultVertexOut vout;
     vout.svPos.xy = uv * 2.0 - 1.0;
     vout.svPos.zw = float2(0.5f, 1);
+    vout.svClipDist = 0;
     return vout;
 }
 

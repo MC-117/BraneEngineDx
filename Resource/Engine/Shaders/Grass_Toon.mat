@@ -76,6 +76,7 @@ DefaultVertexOut MESH_MAIN
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - uv.y;
     vout.InstanceID = ins[0];
+    vout.svClipDist = dot(camData.clipPlane, _WorldPos);
     return vout;
 }
 

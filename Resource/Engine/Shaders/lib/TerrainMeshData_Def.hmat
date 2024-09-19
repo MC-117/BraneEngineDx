@@ -10,6 +10,7 @@ struct DefaultTerrainVertexOut
     float3 LocalPos : LOCALPOS;
     float2 TexCoords : TEXCOORD;
     float2 InstanceID : INSTANCEID;
+    float svClipDist : SV_ClipDistance;
 };
 
 struct DefaultTerrainPatchTess

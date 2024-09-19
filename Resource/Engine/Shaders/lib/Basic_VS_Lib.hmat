@@ -9,6 +9,7 @@ struct DefaultVertexOut
     float3 LocalPos : LOCALPOS;
     float2 TexCoords : TEXCOORD;
     uint InstanceID : INSTANCEID;
+    float svClipDist : SV_ClipDistance;
 };
 
 float3 getWorldScale(float4x4 tmat)

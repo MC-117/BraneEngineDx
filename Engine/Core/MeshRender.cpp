@@ -466,6 +466,7 @@ MeshRender::MeshRender()
 	collection.setMesh(NULL);
 	outlineCollection.setMesh(NULL);
 	canCastShadow = true;
+	hasPrePass = true;
 }
 
 MeshRender::MeshRender(Mesh& mesh, Material& material)
@@ -473,6 +474,7 @@ MeshRender::MeshRender(Mesh& mesh, Material& material)
 	collection.setMesh(&mesh);
 	outlineCollection.setMesh(&mesh);
 	canCastShadow = true;
+	hasPrePass = true;
 }
 
 
