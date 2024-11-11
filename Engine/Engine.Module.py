@@ -28,7 +28,6 @@ class EngineModule(Module):
             'ImGui',
             'ImPlot',
             'Live2DCubism',
-            'MemTracer',
             'NvCloth',
             'OpenAlSoft',
             'Physx4',
