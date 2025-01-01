@@ -3,6 +3,8 @@
 #include "../Render.h"
 #include "TerrainGeometry.h"
 
+struct TerrainRenderData;
+
 class ENGINE_API TerrainRender : public Render
 {
 public:
@@ -28,7 +30,11 @@ public:
 	virtual unsigned int getInstanceID() const;
 	virtual unsigned int getInstanceCount() const;
 	virtual Shader* getShader() const;
+
+	TerrainRenderData* getRenderData();
 protected:
 	unsigned int instanceID = -1;
 	unsigned int instanceCount = -1;
+
+	TerrainRenderData* terrainRenderData = NULL;
 };

@@ -18,6 +18,7 @@ size_t RenderTask::Hasher::operator()(const RenderTask& t) const
 	hash_combine(hash, (size_t)t.surface.renderTarget);
 	hash_combine(hash, (size_t)t.cameraData->cameraRenderID);
 	hash_combine(hash, (size_t)t.materialVariant);
+	hash_combine(hash, t.renderMode.bits);
 	hash_combine(hash, (size_t)t.meshData);
 	for (auto data : t.extraData)
 		hash_combine(hash, (size_t)data);

@@ -12,9 +12,12 @@ public:
 	EditorInfoMethod();
 	virtual void setInspectedObject(void* object);
 
+	virtual void onPersistentGizmo(GizmoInfo& info);
 	virtual void onLightGUI(EditorInfo& info);
 
 	virtual void onDetailGUI(EditorInfo & info);
 protected:
 	Light* light = NULL;
+
+	virtual Texture2D* getIcon();
 };

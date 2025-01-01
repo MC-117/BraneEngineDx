@@ -11,6 +11,7 @@
 #include "../InstancedMeshActor.h"
 #include "../DirectLight.h"
 #include "../PointLight.h"
+#include "../SpotLight.h"
 #include "../ObjectUltility.h"
 #include "../ParticleSystem.h"
 #include "../Character.h"
@@ -407,6 +408,16 @@ void EditorWindow::objectContextMenu(Object * obj)
 				if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
 					if (ImGui::Button("Create", { -1, 36 })) {
 						PointLight* t = new PointLight(newObjectName);
+						target.addChild(*t);
+					}
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("SpotLight")) {
+				ImGui::InputText("Name", &newObjectName);
+				if (Engine::getCurrentWorld()->findChild(newObjectName) == NULL) {
+					if (ImGui::Button("Create", { -1, 36 })) {
+						SpotLight* t = new SpotLight(newObjectName);
 						target.addChild(*t);
 					}
 				}

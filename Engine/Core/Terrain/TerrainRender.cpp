@@ -1,6 +1,7 @@
 #include "TerrainRender.h"
 #include "../RenderCore/RenderCore.h"
 #include "../RenderCore/RenderCoreUtility.h"
+#include "../RenderCore/TerrainRenderData.h"
 #include "../Camera.h"
 
 TerrainRender::TerrainRender() : Render()
@@ -26,7 +27,7 @@ void TerrainRender::setInstanceInfo(unsigned int instanceID, unsigned int instan
 
 void TerrainRender::getMeshTransformData(MeshTransformData* data) const
 {
-    if (geometry && !geometry->isValid())
+    if (geometry == NULL || !geometry->isValid())
         return;
     data->localCenter = geometry->getCenter();
     data->localExtent = geometry->getExtent();
@@ -100,4 +101,13 @@ unsigned int TerrainRender::getInstanceCount() const
 Shader* TerrainRender::getShader() const
 {
     return material ? material->getShader() : NULL;
+}
+
+TerrainRenderData* TerrainRender::getRenderData()
+{
+    if (terrainRenderData == NULL) {
+        terrainRenderData = new TerrainRenderData();
+    }
+    // terrainRenderData->quadTree.setTerrainData(data);
+    return terrainRenderData;
 }

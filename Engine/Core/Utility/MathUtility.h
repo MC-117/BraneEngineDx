@@ -9,6 +9,11 @@ bool IntersectAABB8Plane(const Vector3f& center, const Vector3f& extent, const V
 namespace Math
 {
 	constexpr float PI = 3.141592653589793238462643383279502884197169399375105820974944592307816406L;
+	constexpr float PI_2 = PI * 2.0;
+	constexpr float PI_half = PI * 0.5;
+
+	constexpr float Rad2Deg = 180.f / PI;
+	constexpr float Deg2Rad = PI / 180.f;
 
 	ENGINE_API Vector2f abs(const Vector2f& a);
 	ENGINE_API Vector2f min(const Vector2f& a, const Vector2f& b);
@@ -45,4 +50,11 @@ namespace Math
 	ENGINE_API Matrix4f orthotropic(float left, float right, float bottom, float top, float zNear, float zFar);
 	ENGINE_API Matrix4f lookAt(Vector3f const& eye, Vector3f const& center, Vector3f const& up);
 	ENGINE_API Matrix4f viewport(float x, float y, float width, float height, float zNear, float zFar);
+
+	ENGINE_API uint32_t mortonCode2(uint32_t x);
+	ENGINE_API uint32_t invertMortonCode2(uint32_t x);
+	ENGINE_API uint64_t mortonCode2_64(uint64_t x);
+	ENGINE_API uint64_t invertMortonCode2_64(uint64_t x);
+	ENGINE_API uint32_t mortonCode3(uint32_t x);
+	ENGINE_API uint32_t invertMortonCode3(uint32_t x);
 }

@@ -24,7 +24,11 @@ public:
     const RenderDurationScope* getChild() const;
     const RenderDurationScope* getSibling() const;
     int getDepth() const;
+
+    void write(ostream& os);
+    bool read(istream& is);
 protected:
+    uint64_t id;
     string name;
     string desc;
     Time startCPUTime;
@@ -39,8 +43,11 @@ protected:
     RenderDurationScope* child = NULL;
     RenderDurationScope* sibling = NULL;
 
-    RenderDurationScope();
-    RenderDurationScope(const string& name, const string& desc, GPUQuery& startQuery, GPUQuery& endQuery);
+    uint64_t chileId;
+    uint64_t siblingId;
+
+    RenderDurationScope(uint64_t id);
+    RenderDurationScope(uint64_t id, const string& name, const string& desc, GPUQuery& startQuery, GPUQuery& endQuery);
 
     void begin(); 
     void end();
@@ -66,6 +73,9 @@ public:
     const vector<RenderDurationScope*>& getScopes() const;
     Time getStartTime() const;
     int getMaxDepth() const;
+
+    void write(ostream& os);
+    void read(istream& is);
 protected:
     vector<RenderDurationScope*> scopes;
     stack<RenderDurationScope*> stacks;
@@ -85,6 +95,7 @@ class RenderDurationProfiler : public IProfiler
 {
 public:
     RenderDurationProfiler();
+    virtual ~RenderDurationProfiler();
 
     static RenderDurationProfiler& GInstance();
     const RenderDurationFrame& getDurationFrame();
@@ -116,9 +127,13 @@ protected:
     bool doNextCapture = false;
     bool recording = false;
     WaitHandle queryWaitHandle;
+    WaitHandle flushWaitHandle;
     queue<GPUQuery*> queryPool;
     RenderDurationFrame finishedFrame;
     RenderDurationFrame workingFrame;
+    ofstream* stream = NULL;
     GPUQuery* allocateGPUQuery();
     void fetchGPUQuery();
+    void flushFrameData();
+    void closeFrameData();
 };

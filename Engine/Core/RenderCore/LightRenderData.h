@@ -29,7 +29,7 @@ struct LightRenderData : public IRenderData
 	MainLightData mainLightData;
 	vector<VirtualShadowMapClipmap*> mainLightClipmaps;
 	vector<VirtualShadowMapLightEntry*> localLightShadows;
-	vector<int> pointLightProbeIndices;
+	vector<int> localLightProbeIndices;
 	GPUBuffer mainLightBuffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(MainLightData));
 
 	RenderTarget* shadowTarget = NULL;

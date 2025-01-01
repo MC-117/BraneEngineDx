@@ -17,7 +17,11 @@ struct LocalLightData
 	float radius;
 	Vector3f color;
 	float intensity = 0;
+	Vector3f direction;
 	int vsmID;
+	int type;
+	float sinConeAngle;
+	float cosConeAngle;
 };
 
 struct ReflectionProbeData

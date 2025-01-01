@@ -15,6 +15,7 @@ public:
     virtual void release();
 protected:
     GUI& gui;
+    WaitHandle renderThreadWaitHandle;
 };
 
 class ENGINE_API GUIEngineLoop : public RenderEngineLoop

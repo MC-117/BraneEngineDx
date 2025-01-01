@@ -3,6 +3,7 @@
 #include "../Unit.h"
 #include "WUIWindow.h"
 #include "../IRenderTarget.h"
+#include "../Utility/Parallel.h"
 
 class ENGINE_API WUIImGuiWindow : public WUIWindow
 {
@@ -24,6 +25,7 @@ protected:
 	ImGuiViewport* viewport;
 	DeviceSurfaceDesc deviceSurfaceDesc;
 	IDeviceSurface* deviceSurface;
+	WaitHandle renderWaitHandle;
 	virtual void onResize(WPARAM wParam, const Unit2Di& size);
 	virtual void onResizeExit();
 	virtual void onImGuiRender();

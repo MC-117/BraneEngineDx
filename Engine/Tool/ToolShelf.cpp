@@ -1,5 +1,6 @@
 #include "ToolShelf.h"
 #include "../Core/Engine.h"
+#include "../Core/WUI/WUIMainWindow.h"
 
 ToolShelf::ToolShelf(string name, bool defaultShow)
 	: UIWindow(*Engine::getCurrentWorld(), name, defaultShow)
@@ -25,9 +26,6 @@ void ToolShelf::onWindowGUI(GUIRenderInfo & info)
 		}
 	}
 	if (ImGui::Button("Quit", { -1, 40 })) {
-		Engine::getCurrentWorld()->quit();
-	}
-	if (ImGui::Button("Restart", { -1, 40 })) {
-		Engine::getCurrentWorld()->quit(1);
+		Engine::getMainWindow()->close();
 	}
 }

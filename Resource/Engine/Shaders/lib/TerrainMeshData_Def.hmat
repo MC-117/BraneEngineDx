@@ -1,3 +1,4 @@
+#include "Bindings_Def.hmat"
 #include "Basic_VS_Lib.hmat"
 #define TERRAIN_MAIN main(uint2 ins : INS, float3 pos : POSITION, float2 uv : TEXCOORD, uint vertexID : SV_VertexID)
 
@@ -21,9 +22,13 @@ struct DefaultTerrainPatchTess
 
 cbuffer TerrainData : register(MAT_BASE_BIND_INDEX)
 {
-    float terrainUnitSize;
+    float terrainWidthPerGrid;
+    float terrainWidthPerTriangle;
     float terrainHeight;
+    int terrainTilesPerGrid;
+    int terrainTrianglesPerTile;
+    int terrainTileLevels;
     int2 terrainGrid;
-    float terrainTessTriSize;
-    float3 terrainPading;
+    float terrainDistanceForFirstTileLevel;
+    float3 terrainPad;
 };

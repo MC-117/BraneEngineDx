@@ -15,8 +15,8 @@ public:
 	virtual void onPersistentGizmo(GizmoInfo& info);
 	virtual void onLightGUI(EditorInfo& info);
 protected:
-	static Texture2D* icon;
+	static Texture2D* directLightIcon;
 	DirectLight* directLight = NULL;
 
-	Texture2D* getIcon();
+	virtual Texture2D* getIcon();
 };

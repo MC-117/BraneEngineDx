@@ -26,6 +26,7 @@ class VSTargetConfig:
         self.optimize : bool = config.optimize
         self.enableDebug : bool = config.enableDebug
         self.needDebugInfo : bool = config.needDebugInfo
+        self.multiProcessCompile : bool = True
 
         self.intermediatePath = config.intermediatePath
         self.outputPath = config.outputPath
@@ -98,6 +99,7 @@ class VisualStudioProjectGenerator(ProjectGenerator, name = "VS"):
     def __init__(self):
         ProjectGenerator.__init__(self)
         self.platformToolSet = 'v142'
+        self.preferredToolArch = 'x64'
         self.sdlCheck = True
         self.warningLevel = 'Level3'
         self.conformanceMode = False
@@ -319,6 +321,7 @@ f'''
                 w.wl(f'<UseDebugLibraries>{config.enableDebug}</UseDebugLibraries>')
                 w.wl(f'<WholeProgramOptimization>{not config.enableDebug}</WholeProgramOptimization>')
                 w.wl(f'<CharacterSet>{charSetName}</CharacterSet>')
+                w.wl(f'<PreferredToolArchitecture>{self.preferredToolArch}</PreferredToolArchitecture>')
                 w.se('</PropertyGroup>')
             
             w.wl('<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />')
@@ -364,6 +367,7 @@ f'''
                 w.wl(f'<ConformanceMode>{self.conformanceMode}</ConformanceMode>')
                 w.wl(f'<LanguageStandard>{cppStandardName}</LanguageStandard>')
                 w.wl(f'<AdditionalOptions>{config.additionalOptionStr}</AdditionalOptions>')
+                w.wl(f'<MultiProcessorCompilation>{config.multiProcessCompile}</MultiProcessorCompilation>')
                 w.se('</ClCompile>')
 
                 w.ss('<Link>')

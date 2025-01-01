@@ -5,6 +5,7 @@
 #include "../Utility/hash.h"
 #include "../Utility/Parallel.h"
 #include "../Utility/RenderUtility.h"
+#include "Core/Profile/RenderProfile.h"
 
 size_t ViewCullingKey::Hasher::operator()(const ViewCullingKey& k) const
 {
@@ -77,6 +78,8 @@ void ViewCullingContext::executeCulling(IRenderContext& context, IRenderData& ca
 
     if (instanceCount == 0 || commandCount == 0)
         return;
+
+    RENDER_SCOPE(context, ViewCulling);
     
     instanceCullingResultBuffer.resize(transformCount);
     instanceDataBuffer.resize(instanceCount);

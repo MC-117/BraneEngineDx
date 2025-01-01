@@ -3,7 +3,7 @@
 
 RegistEditor(DirectLight);
 
-Texture2D* DirectLightEditor::icon = NULL;
+Texture2D* DirectLightEditor::directLightIcon = NULL;
 
 void DirectLightEditor::setInspectedObject(void* object)
 {
@@ -13,17 +13,9 @@ void DirectLightEditor::setInspectedObject(void* object)
 
 void DirectLightEditor::onPersistentGizmo(GizmoInfo& info)
 {
-	Texture2D* icon = getIcon();
-
-	Vector3f dirPos = directLight->getPosition(WORLD);
+	LightEditor::onPersistentGizmo(info);
+	Vector3f dirPos = light->getPosition(WORLD);
 	Vector3f dirFW = directLight->getForward(WORLD);
-
-	if (icon != NULL) {
-		info.gizmo->drawIcon(*icon, dirPos, getFitIconSize(info), directLight->color);
-		if (info.gizmo->pickIcon(dirPos, Vector2f::Zero(),
-			{ (float)icon->getWidth(), (float)icon->getHeight() }))
-			EditorManager::selectObject(directLight);
-	}
 	info.gizmo->drawLine(dirPos, dirPos + dirFW * 10, directLight->color);
 }
 
@@ -46,7 +38,7 @@ void DirectLightEditor::onLightGUI(EditorInfo& info)
 
 Texture2D* DirectLightEditor::getIcon()
 {
-	if (icon == NULL)
-		icon = getAssetByPath<Texture2D>("Engine/Icons/DirectLight_Icon.png");
-	return icon;
+	if (directLightIcon == NULL)
+		directLightIcon = getAssetByPath<Texture2D>("Engine/Icons/DirectLight_Icon.png");
+	return directLightIcon;
 }

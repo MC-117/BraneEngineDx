@@ -12,13 +12,14 @@ public:
 	EditorInfoMethod();
 	virtual void setInspectedObject(void* object);
 
-	virtual void onPersistentGizmo(GizmoInfo& info);
 	virtual void onHandleGizmo(GizmoInfo& info);
+
+	virtual void onLocalLightShapeGizmo(GizmoInfo& info);
 
 	virtual void onLightGUI(EditorInfo& info);
 protected:
-	static Texture2D* icon;
+	static Texture2D* pointLightIcon;
 	PointLight* pointLight = NULL;
 
-	Texture2D* getIcon();
+	virtual Texture2D* getIcon();
 };

@@ -630,6 +630,11 @@ void Vst2PluginManger::threadMain()
 
 bool Vst2PluginManger::initialize()
 {
+    int enableVST = 0;
+    Engine::engineConfig.configInfo.get("vst", enableVST);
+    if (!enableVST) {
+        return true;
+    }
     vstPluginThread = thread(&Vst2PluginManger::threadMain, this);
     return true;
 }

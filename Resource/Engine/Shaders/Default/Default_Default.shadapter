@@ -83,7 +83,7 @@ VERTEX_OUT VERTEX_MAIN
     vout.TexCoords = uv;
     vout.TexCoords.y = 1 - vout.TexCoords.y;
     vout.WorldScale = getWorldScale(fm);
-    vout.InstanceID = ins[0];
+    vout.InstanceID = objID;
     vout.svClipDist = dot(camData.clipPlane, _WorldPos);
 #endif
     return vout;
@@ -95,15 +95,37 @@ VERTEX_OUT VERTEX_MAIN
 DefaultTerrainVertexOut TERRAIN_MAIN
 {
     DefaultTerrainVertexOut vout;
-    float4x4 fm = getFinalMat(ins[0]);
-    vout.LocalPos = pos * terrainUnitSize;
+    uint objID = ins[0];
+    float4x4 fm = getFinalMat(objID);
+    vout.LocalPos = pos * terrainWidthPerGrid;
     float4 _WorldPos = mul(float4(vout.LocalPos, 1.0), fm);
     vout.TransMat = fm;
     vout.WorldPos = _WorldPos.xyz;
     vout.Normal = normalize(mul(float4(0.0, 0.0, 1.0, 0.0), fm).xyz);
     vout.TexCoords = uv;
     vout.WorldScale = getWorldScale(fm);
-    vout.InstanceID = ins[0];
+    vout.InstanceID = objID;
+    vout.svClipDist = 0;
+
+    return vout;
+}
+#vertex terrain custom1
+#include "../lib/TransformData_Def.hmat"
+#include "../lib/TerrainMeshData_Def.hmat"
+
+DefaultTerrainVertexOut TERRAIN_MAIN
+{
+    DefaultTerrainVertexOut vout;
+    uint objID = ins[0];
+    float4x4 fm = getFinalMat(objID);
+    vout.LocalPos = pos * terrainWidthPerGrid;
+    float4 _WorldPos = mul(float4(vout.LocalPos, 1.0), fm);
+    vout.TransMat = fm;
+    vout.WorldPos = _WorldPos.xyz;
+    vout.Normal = normalize(mul(float4(0.0, 0.0, 1.0, 0.0), fm).xyz);
+    vout.TexCoords = uv;
+    vout.WorldScale = getWorldScale(fm);
+    vout.InstanceID = objID;
     vout.svClipDist = 0;
 
     return vout;
@@ -123,6 +145,7 @@ DefaultTerrainVertexOut main(InputPatch<DefaultTerrainVertexOut, 4> patch, uint 
 }
 #tess_eval terrain
 #include "../lib/TransformData_Def.hmat"
+#include "../lib/Terrain_TessCtrl_Lib.hmat"
 #include "../lib/TerrainMeshData_Def.hmat"
 #include "../lib/Light_Def.hmat"
 #include "../lib/CameraData_Def.hmat"
@@ -147,7 +170,19 @@ DefaultVertexOut main(DefaultTerrainPatchTess patchTess, float2 uv : SV_DomainLo
     float3 LocalPosV2 = lerp(quad[0].LocalPos, quad[3].LocalPos, uv.x);
     vout.LocalPos = lerp(LocalPosV1, LocalPosV2, uv.y);
 
-    float4 terrainData = SAMPLE_TEX_LOD(terrainMap, vout.TexCoords, 0);
+    float resolution = min(terrainGrid.x, terrainGrid.y) * MAX_TERRAIN_TESS_FACTOR;
+    float mipCount = max(log2(resolution) - 1, 0);
+
+    float tileSize = distance(WorldPosV1, WorldPosV2);
+    float sphereD = tileSize * 2.0f;
+    float scale = 1 - saturate(calcEdgeTessellationSphere(WorldPosV1, WorldPosV2, sphereD, terrainWidthPerTriangle) * (1 / MAX_TERRAIN_TESS_FACTOR));
+
+    //float scale = 1 - saturate((patchTess.svInside[0] + patchTess.svInside[1]) * 0.5 * (1 / MAX_TERRAIN_TESS_FACTOR));
+    float lodBias = scale * mipCount;
+    float lod0 = lodBias, lod1 = max(lodBias - 1, 0);
+    float4 terrainData0 = SAMPLE_TEX_LOD(terrainMap, vout.TexCoords, lod0);
+    float4 terrainData1 = SAMPLE_TEX_LOD(terrainMap, vout.TexCoords, lod1);
+    float4 terrainData = lerp(terrainData0, terrainData1, 0.5f);
     vout.LocalNormal = terrainData.xyz;
     vout.Normal = normalize(mul(float4(vout.LocalNormal, 0.0), quad[0].TransMat).xyz);
 

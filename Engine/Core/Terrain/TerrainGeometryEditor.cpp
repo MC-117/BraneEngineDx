@@ -33,10 +33,16 @@ void TerrainGeometryEditor::onGeometryGUI(EditorInfo& info)
 	ImGui::Columns();
 	
 	TerrainData data = geometry->getTerrainData();
-	ImGui::InputFloat("GridUnit", &data.unit, 0.01f);
-	ImGui::InputFloat("Height", &data.height, 0.01f);
-	ImGui::InputFloat("TriSize", &data.triSize, 0.01f);
-	ImGui::DragInt2("Grid", (int*)data.grid.data(), 1.0f, 0, 128);
+	TerrainConfig config = Terrain::convertTerrainConfigFromData(data);
+	ImGui::InputFloat("WidthPerGrid", &config.widthPerGrid, 0.01f);
+	ImGui::InputFloat("Height", &config.height, 0.01f);
+	ImGui::InputInt("TriangleLevels", &config.triangleLevels);
+	ImGui::InputInt("TileLevels", &config.tileLevels);
+	ImGui::InputInt2("Grid", (int*)config.grid.data(), 1.0f);
+	
+	config.validate();
+	data = Terrain::getTerrainDataFromConfig(config);
+	
 	geometry->setTerrainData(data);
 }
 

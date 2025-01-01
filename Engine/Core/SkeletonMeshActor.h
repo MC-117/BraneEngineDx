@@ -7,6 +7,7 @@
 #include "Animation/AnimationClip.h"
 #include "Physics/SkeletonPhysics.h"
 #include "Bone.h"
+#include "Utility/Parallel.h"
 
 class ENGINE_API SkeletonMeshActor : public Actor
 {
@@ -64,6 +65,7 @@ public:
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
 protected:
+	WaitHandle destroyWaitHandle;
 	virtual void getMeshTransformData(MeshTransformData* data);
 };
 

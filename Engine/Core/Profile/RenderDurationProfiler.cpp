@@ -1,13 +1,23 @@
 #include "RenderDurationProfiler.h"
 
-#include "Core/IVendor.h"
+#include <fstream>
 
-RenderDurationScope::RenderDurationScope() : name("_Root")
+#include "Core/IVendor.h"
+#include "../Utility/IOUtility.h"
+
+uint64_t fetchNextRenderDurationScopeId()
+{
+    static uint64_t nextId = 0;
+    return nextId++;
+}
+
+RenderDurationScope::RenderDurationScope(uint64_t id) : id(id), name("_Root")
 {
 }
 
-RenderDurationScope::RenderDurationScope(const string& name, const string& desc, GPUQuery& startQuery, GPUQuery& endQuery)
-    : name(name)
+RenderDurationScope::RenderDurationScope(uint64_t id, const string& name, const string& desc, GPUQuery& startQuery, GPUQuery& endQuery)
+    : id(id)
+    , name(name)
     , desc(desc)
     , startQuery(&startQuery)
     , endQuery(&endQuery)
@@ -96,6 +106,48 @@ int RenderDurationScope::getDepth() const
     return depth;
 }
 
+int RenderDurationScopeMagic = 'BESP';
+
+void RenderDurationScope::write(ostream& os)
+{
+    writeStream(os, RenderDurationScopeMagic);
+    writeStream(os, id);
+    writeAlignedString(os, name);
+    writeAlignedString(os, desc);
+    writeStream(os, startCPUTime.toNanosecond());
+    writeStream(os, endCPUTime.toNanosecond());
+    writeStream(os, startGPUTime.toNanosecond());
+    writeStream(os, endGPUTime.toNanosecond());
+    writeStream(os, depth);
+    writeStream(os, child ? child->id : ~0ull);
+    writeStream(os, sibling ? sibling->id : ~0ull);
+}
+
+bool RenderDurationScope::read(istream& is)
+{
+    int magic;
+    readStream(is, magic);
+    if (RenderDurationScopeMagic != magic) {
+        return false;
+    }
+    readStream(is, id);
+    readAlignedString(is, name);
+    readAlignedString(is, desc);
+    int64_t nanoTime;
+    readStream(is, nanoTime);
+    startCPUTime = nanoTime;
+    readStream(is, nanoTime);
+    endCPUTime = nanoTime;
+    readStream(is, nanoTime);
+    startGPUTime = nanoTime;
+    readStream(is, nanoTime);
+    endGPUTime = nanoTime;
+    readStream(is, depth);
+    readStream(is, chileId);
+    readStream(is, siblingId);
+    return true;
+}
+
 void RenderDurationScope::begin()
 {
     assert(stage == 0);
@@ -115,7 +167,7 @@ void RenderDurationScope::end()
 RenderDurationScope* RenderDurationScope::newNext(const string& name, const string& desc, GPUQuery& startQuery, GPUQuery& endQuery)
 {
     assert(stage > 0);
-    RenderDurationScope* newScope = new RenderDurationScope(name, desc, startQuery, endQuery);
+    RenderDurationScope* newScope = new RenderDurationScope(fetchNextRenderDurationScopeId(), name, desc, startQuery, endQuery);
     switch (stage)
     {
     case 1:
@@ -209,12 +261,54 @@ int RenderDurationFrame::getMaxDepth() const
     return maxDepth;
 }
 
+void RenderDurationFrame::write(ostream& os)
+{
+    for (auto& scope : scopes) {
+        scope->write(os);
+    }
+}
+
+void RenderDurationFrame::read(istream& is)
+{
+    unordered_map<uint64_t, RenderDurationScope*> idToScope;
+
+    auto getScopeFromId = [&] (uint64_t id) -> RenderDurationScope*
+    {
+        if (id == ~0ull) {
+            return NULL;
+        }
+        auto iter = idToScope.find(id);
+        if (iter == idToScope.end()) {
+            return NULL;
+        }
+        return iter->second;
+    };
+
+    maxDepth = 0;
+    startTime = INT64_MAX;
+    while (!is.eof()) {
+        auto& scope = scopes.emplace_back(new RenderDurationScope(0));
+        if (!scope->read(is)) {
+            break;
+        }
+        maxDepth = std::max(maxDepth, scope->depth);
+        startTime = std::min(startTime, scope->getStartCPUTime());
+        startTime = std::min(startTime, scope->getStartGPUTime());
+        idToScope.emplace(scope->id, scope);
+    }
+
+    for (auto& scope : scopes) {
+        scope->child = getScopeFromId(scope->chileId);
+        scope->sibling = getScopeFromId(scope->siblingId);
+    }
+}
+
 void RenderDurationFrame::beginScope(const string& name, const string& desc, GPUQuery& startQuery, GPUQuery& endQuery)
 {
     if (curScope == NULL)
     {
         assert(stacks.empty());
-        rootScope = new RenderDurationScope(name, desc, startQuery, endQuery);
+        rootScope = new RenderDurationScope(fetchNextRenderDurationScopeId(), name, desc, startQuery, endQuery);
         curScope = rootScope;
         startTime = Time::now();
     }
@@ -253,6 +347,11 @@ RenderDurationProfiler::RenderDurationProfiler()
 {
     if (globalInstance == NULL)
         globalInstance = this;
+}
+
+RenderDurationProfiler::~RenderDurationProfiler()
+{
+    closeFrameData();
 }
 
 RenderDurationProfiler& RenderDurationProfiler::GInstance()
@@ -297,6 +396,7 @@ void RenderDurationProfiler::startRecording()
 void RenderDurationProfiler::stopRecording()
 {
     recording = false;
+    doCapture = true;
 }
 
 bool RenderDurationProfiler::isRecording() const
@@ -356,14 +456,19 @@ void RenderDurationProfiler::beginFrame()
     }
     if (queryWaitHandle)
         queryWaitHandle.wait();
+
+    finishedFrame = std::move(workingFrame);
 }
 
 void RenderDurationProfiler::endFrame()
 {
     if (!isValid() || (!doCapture && !recording))
         return;
-    doCapture = false;
     queryWaitHandle = asyncRun([this](){ fetchGPUQuery(); });
+    if (doCapture) {
+        doCapture = false;
+        closeFrameData();
+    }
 }
 
 GPUQuery* RenderDurationProfiler::allocateGPUQuery()
@@ -383,6 +488,41 @@ GPUQuery* RenderDurationProfiler::allocateGPUQuery()
 void RenderDurationProfiler::fetchGPUQuery()
 {
     workingFrame.fetchAndRecycle(queryPool);
-    if (doCapture && !recording)
-        workingFrame.reset();
+    if (doCapture || recording) {
+        flushWaitHandle.wait();
+        workingFrame.reset(&finishedFrame);
+        flushWaitHandle = asyncRun([this] { flushFrameData(); });
+    }
+}
+
+void RenderDurationProfiler::flushFrameData()
+{
+    if (stream == NULL) {
+        const char* traceFolder = "Profile";
+        if (!filesystem::exists(traceFolder)) {
+            filesystem::create_directory(traceFolder);
+        }
+        Time nowTime = Time::now();
+        string timeStr = nowTime.toString();
+        for (char& c : timeStr)
+            if (c == ':')
+                c = '_';
+        string filename = string(traceFolder) + '/' + timeStr + ".trace";
+        stream = new ofstream(filename, ios::binary | ios::app);
+        stream->seekp(0, ios::end);
+    }
+
+    if (!stream->fail()) {
+        finishedFrame.write(*stream);
+    }
+}
+
+void RenderDurationProfiler::closeFrameData()
+{
+    flushWaitHandle.wait();
+    if (stream) {
+        stream->close();
+        delete stream;
+        stream = NULL;
+    }
 }

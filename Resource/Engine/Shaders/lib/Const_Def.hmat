@@ -1,7 +1,10 @@
 #define MAX_SHARED_SIZE_1D 12288
 #define MAX_SHARED_SIZE_2D 96
 
-static const float PI = 3.14159265359;
+#define PI 3.14159265358979323846
+
+#define FLT_MIN	1.175494351e-38
+#define FLT_MAX	3.402823466e+38
 
 float2 Float2(float x) { return float2(x, x); }
 float3 Float3(float x) { return float3(x, x, x); }

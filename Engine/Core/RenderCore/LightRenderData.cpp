@@ -1,6 +1,8 @@
 #include "LightRenderData.h"
 #include "../DirectLight.h"
 #include "../PointLight.h"
+#include "../SpotLight.h"
+#include "../Utility/MathUtility.h"
 
 Vector3f toLinearColor(const Color& color)
 {
@@ -58,9 +60,21 @@ int LightRenderData::setLocalLight(Light* light)
 		data.intensity = pointLight->intensity;
 		data.color = toLinearColor(pointLight->color);
 		data.radius = pointLight->getRadius() * pointLight->getScale(WORLD).x();
+		data.direction = pointLight->getForward(WORLD);
 		data.vsmID = -1;
-		int lightID = pointLightProbeIndices.size();
-		pointLightProbeIndices.push_back(probeIndex);
+		SpotLight* spotLight = dynamic_cast<SpotLight*>(light);
+		data.type = spotLight ? 1 : 0;
+		if (spotLight) {
+			const float degree = spotLight->getConeAngle() * Math::Deg2Rad;
+			data.sinConeAngle = std::sin(degree);
+			data.cosConeAngle = std::cos(degree);
+		}
+		else {
+			data.sinConeAngle = 0;
+			data.cosConeAngle = 0;
+		}
+		int lightID = localLightProbeIndices.size();
+		localLightProbeIndices.push_back(probeIndex);
 		return lightID;
 	}
 	return -1;
@@ -68,7 +82,7 @@ int LightRenderData::setLocalLight(Light* light)
 
 void LightRenderData::create()
 {
-	mainLightData.pointLightCount = pointLightProbeIndices.size();
+	mainLightData.pointLightCount = localLightProbeIndices.size();
 }
 
 void LightRenderData::addVirtualShadowMapClipmap(VirtualShadowMapClipmap& clipmap)
@@ -83,22 +97,22 @@ void LightRenderData::addVirtualShadowMapLocalShadow(VirtualShadowMapLightEntry&
 
 int LightRenderData::getLocalLightCount() const
 {
-	return pointLightProbeIndices.size();
+	return localLightProbeIndices.size();
 }
 
 int LightRenderData::getProbeIndexByLocalLightIndex(int localLightIndex) const
 {
-	return pointLightProbeIndices[localLightIndex];
+	return localLightProbeIndices[localLightIndex];
 }
 
 LocalLightData& LightRenderData::getLocalLightData(int localLightIndex)
 {
-	return probePool.getProbeByteData(pointLightProbeIndices[localLightIndex]).localLightData;
+	return probePool.getProbeByteData(localLightProbeIndices[localLightIndex]).localLightData;
 }
 
 const LocalLightData& LightRenderData::getLocalLightData(int localLightIndex) const
 {
-	return probePool.getProbeByteData(pointLightProbeIndices[localLightIndex]).localLightData;
+	return probePool.getProbeByteData(localLightProbeIndices[localLightIndex]).localLightData;
 }
 
 void LightRenderData::release()
@@ -127,7 +141,7 @@ void LightRenderData::clean()
 	mainLightData.intensity = 0;
 	mainLightData.vsmID = -1;
 	mainLightData.pointLightCount = 0;
-	pointLightProbeIndices.clear();
+	localLightProbeIndices.clear();
 	mainLightClipmaps.clear();
 	localLightShadows.clear();
 }

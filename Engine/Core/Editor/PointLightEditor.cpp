@@ -4,7 +4,7 @@
 
 RegistEditor(PointLight);
 
-Texture2D* PointLightEditor::icon = NULL;
+Texture2D* PointLightEditor::pointLightIcon = NULL;
 
 void PointLightEditor::setInspectedObject(void* object)
 {
@@ -12,25 +12,16 @@ void PointLightEditor::setInspectedObject(void* object)
 	LightEditor::setInspectedObject(pointLight);
 }
 
-void PointLightEditor::onPersistentGizmo(GizmoInfo& info)
-{
-	Texture2D* icon = getIcon();
-
-	Vector3f pos = pointLight->getPosition(WORLD);
-
-	if (icon != NULL) {
-		info.gizmo->drawIcon(*icon, pos, getFitIconSize(info), pointLight->color);
-		if (info.gizmo->pickIcon(pos, Vector2f::Zero(),
-			{ (float)icon->getWidth(), (float)icon->getHeight() }))
-			EditorManager::selectObject(pointLight);
-	}
-}
-
 void PointLightEditor::onHandleGizmo(GizmoInfo& info)
 {
 	LightEditor::onHandleGizmo(info);
-	info.gizmo->drawSphere(Vector3f::Zero(), pointLight->getRadius(), pointLight->getTransformMat(), pointLight->color);
+	onLocalLightShapeGizmo(info);
 	info.camera->cameraRender.setDebugProbeIndex(pointLight->getProbeIndex());
+}
+
+void PointLightEditor::onLocalLightShapeGizmo(GizmoInfo& info)
+{
+	info.gizmo->drawSphere(Vector3f::Zero(), pointLight->getRadius(), pointLight->getTransformMat(), pointLight->color);
 }
 
 void PointLightEditor::onLightGUI(EditorInfo& info)
@@ -43,7 +34,7 @@ void PointLightEditor::onLightGUI(EditorInfo& info)
 
 Texture2D* PointLightEditor::getIcon()
 {
-	if (icon == NULL)
-		icon = getAssetByPath<Texture2D>("Engine/Icons/PointLight_Icon.png");
-	return icon;
+	if (pointLightIcon == NULL)
+		pointLightIcon = getAssetByPath<Texture2D>("Engine/Icons/PointLight_Icon.png");
+	return pointLightIcon;
 }

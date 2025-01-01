@@ -36,10 +36,10 @@ DefaultTerrainPatchTess terrainTessConstFunc(InputPatch<DefaultTerrainVertexOut,
     DefaultTerrainPatchTess constOut;
     float tileSize = distance(patch[0].WorldPos, patch[1].WorldPos);
     float sphereD = tileSize * 2.0f;
-    constOut.svEdge[0] = calcEdgeTessellationSphere(patch[0].WorldPos, patch[1].WorldPos, sphereD, terrainTessTriSize);
-    constOut.svEdge[1] = calcEdgeTessellationSphere(patch[1].WorldPos, patch[2].WorldPos, sphereD, terrainTessTriSize);
-    constOut.svEdge[2] = calcEdgeTessellationSphere(patch[2].WorldPos, patch[3].WorldPos, sphereD, terrainTessTriSize);
-    constOut.svEdge[3] = calcEdgeTessellationSphere(patch[3].WorldPos, patch[0].WorldPos, sphereD, terrainTessTriSize);
+    constOut.svEdge[0] = calcEdgeTessellationSphere(patch[0].WorldPos, patch[1].WorldPos, sphereD, terrainWidthPerTriangle);
+    constOut.svEdge[1] = calcEdgeTessellationSphere(patch[1].WorldPos, patch[2].WorldPos, sphereD, terrainWidthPerTriangle);
+    constOut.svEdge[2] = calcEdgeTessellationSphere(patch[2].WorldPos, patch[3].WorldPos, sphereD, terrainWidthPerTriangle);
+    constOut.svEdge[3] = calcEdgeTessellationSphere(patch[3].WorldPos, patch[0].WorldPos, sphereD, terrainWidthPerTriangle);
 
     constOut.svInside[0] = 0.5 * (constOut.svEdge[0] + constOut.svEdge[2]);
     constOut.svInside[1] = 0.5 * (constOut.svEdge[1] + constOut.svEdge[3]);

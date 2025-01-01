@@ -313,6 +313,25 @@ bool frustumCulling(const CameraData& camData, const BoundBox& bound, const Matr
 	return false;
 }
 
+bool boundBoxSphereIntersect(const Vector4f& sphere, const BoundBox& bound, const Matrix4f& mat)
+{
+	Vector3f t_pos, t_sca;
+	Quaternionf t_rot;
+	mat.decompose(t_pos, t_rot, t_sca);
+	Vector3f pos = Vector3f(Math::getTransformMatrix(t_pos, t_rot, Vector3f::Ones()).inverse() * Vector4f((Vector3f)sphere, 1));
+	float r2 = sphere.w() * sphere.w();
+	float dmin = 0;
+	Vector3f bmin = bound.minPoint.cwiseProduct(t_sca);
+	Vector3f bmax = bound.maxPoint.cwiseProduct(t_sca);
+	for(int i = 0; i < 3; i++ ) {
+		float dis = 0;
+		if( pos[i] < bound.minPoint[i] ) dis = pos[i] - bound.minPoint[i];
+		else if( pos[i] > bound.maxPoint[i] ) dis =pos[i] - bound.maxPoint[i];
+		dmin += dis * dis;
+	}
+	return dmin <= r2;
+}
+
 const Vector3f& getCubeFaceForwardVector(CubeFace face)
 {
 	static const Vector3f faceForwardVector[CF_Faces] = {

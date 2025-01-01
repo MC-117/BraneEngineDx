@@ -63,45 +63,28 @@ void SkeletonMeshRender::fillMaterialsByDefault()
 
 void SkeletonMeshRender::render(RenderInfo & info)
 {
-	Mesh* mesh = collection.getMesh();
-	if (mesh == NULL || hidden)
-		return;
+	bool hasMorphWeights = morphWeights.getMorphCount();
+	IRenderData* renderData = getRenderData();
+	IRenderData* morphWeightsRenderData = morphWeights.getRenderData();
 
-	for (int i = 0; i < collection.getMaterialCount(); i++) {
-		Material* material = collection.getMaterial(i).second;
+	MeshMaterialCollection::DispatchData dispatchData;
+	dispatchData.init<MeshRenderCommand>();
+	dispatchData.hidden = hidden;
+	dispatchData.isStatic = isStatic;
+	dispatchData.canCastShadow = canCastShadow;
+	dispatchData.hasPrePass = hasPrePass;
 
-		if (material == NULL || !collection.getPartEnable(i))
-			continue;
+	auto bindRenderData = [renderData, hasMorphWeights, morphWeightsRenderData](MeshRenderCommand& command)
+	{
+		command.bindings.push_back(renderData);
+		if (hasMorphWeights)
+			command.bindings.push_back(morphWeightsRenderData);
+	};
 
-		MeshPart* part = &mesh->meshParts[i];
+	dispatchData.renderDelegate += bindRenderData;
 
-		if (!part->isValid())
-			continue;
-
-		MaterialRenderData* materialRenderData = material->getMaterialRenderData();
-		Material* outlineMaterial = outlineCollection.getMaterial(i).second;
-		MaterialRenderData* outlineMaterialRenderData = outlineMaterial ? outlineMaterial->getMaterialRenderData() : NULL;
-		bool hasMorphWeights = morphWeights.getMorphCount();
-		IRenderData* renderData = getRenderData();
-		IRenderData* morphWeightsRenderData = morphWeights.getRenderData();
-
-		MeshMaterialCollection::DispatchData dispatchData;
-		dispatchData.init<MeshRenderCommand>();
-		dispatchData.hidden = hidden;
-		dispatchData.isStatic = isStatic;
-		dispatchData.canCastShadow = canCastShadow;
-		dispatchData.hasPrePass = hasPrePass;
-
-		dispatchData.renderDelegate += [=](MeshRenderCommand& command)
-		{
-			command.bindings.push_back(renderData);
-			if (hasMorphWeights)
-				command.bindings.push_back(morphWeightsRenderData);
-		};
-
-		collection.dispatchMeshDraw(dispatchData);
-		outlineCollection.dispatchMeshDraw(dispatchData);
-	}
+	collection.dispatchMeshDraw(dispatchData);
+	outlineCollection.dispatchMeshDraw(dispatchData);
 }
 
 vector<Matrix4f> & SkeletonMeshRender::getTransformMatrixs()

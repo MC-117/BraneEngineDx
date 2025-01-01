@@ -1,5 +1,6 @@
 ﻿#include "GUIEngineLoop.h"
 #include "../Engine.h"
+#include "../RenderCore/RenderThread.h"
 
 GUIOnlyEngineLoop::GUIOnlyEngineLoop(GUI& gui)
     : gui(gui)
@@ -18,6 +19,8 @@ void GUIOnlyEngineLoop::init()
 
 void GUIOnlyEngineLoop::loop(float deltaTime)
 {
+    renderThreadWaitHandle.wait();
+    
     RenderInfo info;
     info.camera = NULL;
     gui.onGUI(info);
@@ -33,13 +36,21 @@ void GUIOnlyEngineLoop::loop(float deltaTime)
     if (surface == NULL)
         throw runtime_error("MainDeviceSurface not initialized");
 
-    surface->bindSurface();
-    surface->clearColor(Color(0, 0, 0));
+    RenderThreadContext context;
+    CameraRenderData cameraRenderData;
+    context.renderGraph = RenderPool::get().renderGraph;
+    context.cameraRenderData = &cameraRenderData;
+    context.sceneRenderData = RenderPool::get().sceneData;
 
-    IVendor& Vendor = VendorManager::getInstance().getVendor();
-    Vendor.imGuiDrawFrame(Engine::engineConfig, Engine::windowContext);
-
-    surface->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
+    RENDER_CONTEXT_SCOPE(context);
+        
+    renderThreadWaitHandle = RENDER_THREAD_ENQUEUE_TASK(DrawImGUI, ([surface] (RenderThreadContext& context)
+    {
+        IRenderContext& renderContext = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
+        renderContext.bindSurface(surface);
+        renderContext.execteImGuiDraw(ImGui::GetDrawData());
+        surface->swapBuffer(Engine::engineConfig.vsnyc, Engine::engineConfig.maxFPS);
+    }));
 }
 
 void GUIOnlyEngineLoop::release()

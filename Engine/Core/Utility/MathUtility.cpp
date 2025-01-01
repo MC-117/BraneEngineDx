@@ -282,3 +282,67 @@ Matrix4f Math::viewport(float x, float y, float width, float height, float zNear
 	Result(3, 3) = 1;
 	return Result;
 }
+
+uint32_t Math::mortonCode2(uint32_t x)
+{
+	x &= 0x0000ffff;
+	x = (x ^ (x << 8)) & 0x00ff00ff;
+	x = (x ^ (x << 4)) & 0x0f0f0f0f;
+	x = (x ^ (x << 2)) & 0x33333333;
+	x = (x ^ (x << 1)) & 0x55555555;
+	return x;
+}
+
+
+uint32_t Math::invertMortonCode2(uint32_t x)
+{
+	x &= 0x55555555;
+	x = (x ^ (x >> 1)) & 0x33333333;
+	x = (x ^ (x >> 2)) & 0x0f0f0f0f;
+	x = (x ^ (x >> 4)) & 0x00ff00ff;
+	x = (x ^ (x >> 8)) & 0x0000ffff;
+	return x;
+}
+
+uint64_t Math::mortonCode2_64(uint64_t x)
+{
+	x &= 0x00000000ffffffff;
+	x = (x ^ (x << 16)) & 0x0000ffff0000ffff;
+	x = (x ^ (x << 8)) & 0x00ff00ff00ff00ff;
+	x = (x ^ (x << 4)) & 0x0f0f0f0f0f0f0f0f;
+	x = (x ^ (x << 2)) & 0x3333333333333333;
+	x = (x ^ (x << 1)) & 0x5555555555555555;
+	return x;
+}
+
+
+uint64_t Math::invertMortonCode2_64(uint64_t x)
+{
+	x &= 0x5555555555555555;
+	x = (x ^ (x >> 1)) & 0x3333333333333333;
+	x = (x ^ (x >> 2)) & 0x0f0f0f0f0f0f0f0f;
+	x = (x ^ (x >> 4)) & 0x00ff00ff00ff00ff;
+	x = (x ^ (x >> 8)) & 0x0000ffff0000ffff;
+	x = (x ^ (x >> 16)) & 0x00000000ffffffff;
+	return x;
+}
+
+uint32_t Math::mortonCode3(uint32_t x)
+{
+	x &= 0x000003ff;
+	x = (x ^ (x << 16)) & 0xff0000ff;
+	x = (x ^ (x <<  8)) & 0x0300f00f;
+	x = (x ^ (x <<  4)) & 0x030c30c3;
+	x = (x ^ (x <<  2)) & 0x09249249;
+	return x;
+}
+
+uint32_t Math::invertMortonCode3(uint32_t x)
+{
+	x &= 0x09249249;
+	x = (x ^ (x >>  2)) & 0x030c30c3;
+	x = (x ^ (x >>  4)) & 0x0300f00f;
+	x = (x ^ (x >>  8)) & 0xff0000ff;
+	x = (x ^ (x >> 16)) & 0x000003ff;
+	return x;
+}

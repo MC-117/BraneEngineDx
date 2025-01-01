@@ -32,6 +32,8 @@ public:
 
 	void endRender();
 
+	void waitForDestroyRender();
+
 	RenderPool& operator+=(Render& render);
 	RenderPool& operator-=(Render& render);
 

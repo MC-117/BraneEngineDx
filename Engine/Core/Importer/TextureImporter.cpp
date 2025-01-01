@@ -22,6 +22,13 @@ void getTexture2DInfo(const string& filename, Texture2DInfo& textureInfo, bool& 
 		textureInfo.minFilterType = TF_Linear;
 		textureInfo.magFilterType = TF_Linear;
 	}
+	if (filename.find("_terrain") != string::npos) {
+		isStd = false;
+		textureInfo.wrapSType = TW_Clamp;
+		textureInfo.wrapTType = TW_Clamp;
+		textureInfo.minFilterType = TF_Linear;
+		textureInfo.magFilterType = TF_Linear;
+	}
 	else {
 		textureInfo.minFilterType = TF_Linear_Mip_Linear;
 		textureInfo.magFilterType = TF_Linear_Mip_Linear;

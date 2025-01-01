@@ -6,6 +6,8 @@
 #undef max
 #include "Utility/half.hpp"
 #include "Asset.h"
+#include "Material.h"
+#include "Profile/ProfileCore.h"
 
 Texture2D Texture2D::blackRGBDefaultTex({ 0, 0, 0, 255 }, 2, 2, 3);
 Texture2D Texture2D::whiteRGBDefaultTex({ 255, 255, 255, 255 }, 2, 2, 3);
@@ -34,9 +36,9 @@ Texture2D::Texture2D(const Texture2DInfo & info, bool isStandard) : isStandard(i
 
 Texture2D::Texture2D(const string & file, bool isStandard)
 {
+	this->isStandard = isStandard;
 	if (!load(file))
 		throw runtime_error("Texture file load failed");
-	this->isStandard = isStandard;
 }
 
 Texture2D::Texture2D(Color color, unsigned int width, unsigned int height, unsigned int channel, bool isStandard)
@@ -322,28 +324,13 @@ unsigned int Texture2D::resize(unsigned int width, unsigned int height, unsigned
 
 bool Texture2D::copyFrom(const Texture2D& src, unsigned int width, unsigned int height)
 {
-	if (readOnly || src.desc.data == NULL)
+	if (readOnly || (src.desc.data == NULL && src.vendorTexture == NULL))
 		return false;
 	if (width == 0)
 		width = src.desc.width;
 	if (height == 0)
 		height = src.desc.height;
 	int srcPixels = width * height * src.desc.channel;
-	if (desc.data) {
-		int pixels = desc.width * desc.height * desc.channel;
-		if (pixels != srcPixels) {
-			desc.data = reallocTexture(desc.data, srcPixels);
-		}
-	}
-	else {
-		desc.data = mallocTexture(srcPixels);
-	}
-
-	if (src.desc.width != width || src.desc.height != height)
-		resizeTexture(src.desc.data, src.desc.width, src.desc.height, src.desc.channel,
-			desc.data, width, height, isStandard);
-	else
-		memcpy(desc.data, src.desc.data, sizeof(unsigned char) * srcPixels);
 	desc.autoGenMip = src.desc.autoGenMip;
 	desc.width = width;
 	desc.height = height;
@@ -353,6 +340,67 @@ bool Texture2D::copyFrom(const Texture2D& src, unsigned int width, unsigned int 
 	desc.mipLevel = src.desc.mipLevel;
 	desc.needUpdate = true;
 	desc.hasAssetData = false;
+	if (src.desc.data) {
+		if (desc.data) {
+			int pixels = desc.width * desc.height * desc.channel;
+			if (pixels != srcPixels) {
+				desc.data = reallocTexture(desc.data, srcPixels);
+			}
+		}
+		else {
+			desc.data = mallocTexture(srcPixels);
+		}
+
+		if (src.desc.width != width || src.desc.height != height)
+			resizeTexture(src.desc.data, src.desc.width, src.desc.height, src.desc.channel,
+				desc.data, width, height, isStandard);
+		else
+			memcpy(desc.data, src.desc.data, sizeof(unsigned char) * srcPixels);
+	}
+	else if (src.vendorTexture) {
+		bind();
+		Material* copyMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/CopyTex2D.mat");
+		if (copyMaterial == NULL)
+			throw runtime_error("Not found default shader");
+		ShaderProgram* copyProgram = copyMaterial->getShader()->getProgram(Shader_Default);
+		if (copyProgram == NULL)
+			throw runtime_error("Not found default shader");
+		copyProgram->init();
+		IVendor& vendor = VendorManager::getInstance().getVendor();
+		IRenderContext& context = *vendor.getDefaultRenderContext();
+		Vector3u localSize = copyMaterial->getLocalSize();
+
+		context.bindShaderProgram(copyProgram);
+
+		unsigned int mipWidth = width, mipHeight = height;
+		const int mipCount = getMipLevels();
+		for (int mip = 0; mip < mipCount; mip++) {
+			Image image;
+			image.texture = this;
+			image.level = mip;
+
+			MipOption option;
+			option.detailMip = mip;
+			option.mipCount = 1;
+			
+			Vector3u dispatchSize = Vector3u(
+				ceilf(mipWidth / (float)localSize.x()),
+				ceilf(mipHeight / (float)localSize.y()),
+				1
+			);
+		
+			static const ShaderPropertyName srcTexName = "srcTex";
+			static const ShaderPropertyName dstTexName = "dstTex";
+			context.bindTexture(src.vendorTexture, srcTexName, option);
+			context.bindImage(image, dstTexName);
+			context.dispatchCompute(dispatchSize.x(), dispatchSize.y(), dispatchSize.z());
+			context.unbindBufferBase(srcTexName);
+			context.unbindBufferBase(dstTexName);
+			
+			mipWidth = std::max(1u, mipWidth / 2);
+			mipHeight = std::max(1u, mipHeight / 2);
+		}
+	}
 	return true;
 }
 

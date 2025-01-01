@@ -1,14 +1,21 @@
 #include "Bindings_Def.hmat"
 #include "ProbeGrid_Def.hmat"
 
+#define LIGHT_TYPE_POINT 0
+#define LIGHT_TYPE_SPOT 1
+
 struct PointLight
 {
     float3 pos;
     float radius;
     float3 color;
     float intensity;
+    float3 direction;
     int vsmID;
-    uint3 pad;
+    uint type;
+    float sinConeAngle;
+    float cosConeAngle;
+    uint pad;
 };
 
 struct DirectLight
@@ -52,7 +59,12 @@ PointLight getPointLight(uint probeIndex)
     float4 color = asfloat(probeByteData.Load4(byteOffset + 16));
     light.color = color.rgb;
     light.intensity = color.a;
-    light.vsmID = asint(probeByteData.Load(byteOffset + 32));
+    light.direction = asfloat(probeByteData.Load3(byteOffset + 32));
+    light.vsmID = asint(probeByteData.Load(byteOffset + 44));
+    light.type = asint(probeByteData.Load(byteOffset + 48));
+    float2 sincos = asfloat(probeByteData.Load2(byteOffset + 52));
+    light.sinConeAngle = sincos.x;
+    light.cosConeAngle = sincos.y;
     light.pad = 0;
     return light;
 }
@@ -92,9 +104,18 @@ float3 getLightRadiance(in DirectLight light)
 float getLightIntensity(in PointLight light, float3 worldPos)
 {
     float intensity = light.intensity;
-    float distance = length(light.pos - worldPos);
-    float attenuation = distance / light.radius;
-    attenuation = max(1 - attenuation * attenuation, 0);
+    float3 localPos = worldPos - light.pos;
+
+    bool isSpot = light.type == LIGHT_TYPE_SPOT;
+    float dirCos = dot(normalize(localPos), light.direction);
+    float angleAtten = isSpot ? saturate((1 - dirCos) / (1 - light.cosConeAngle)) : 0.0f;
+    angleAtten = max(1 - angleAtten * angleAtten, 0);
+
+    float distance = length(localPos);
+    float distanceAtten = distance / light.radius;
+    distanceAtten = max(1 - distanceAtten * distanceAtten, 0);
+
+    float attenuation = distanceAtten * angleAtten;
     return intensity * attenuation;
 }
 

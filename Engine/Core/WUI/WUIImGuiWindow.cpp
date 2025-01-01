@@ -69,6 +69,8 @@ HWND WUIImGuiWindow::create()
 
 void WUIImGuiWindow::updateWindow()
 {
+    renderWaitHandle.wait();
+    
     DWORD style, exStyle;
     ImGui_ImplWin32_GetWin32StyleFromViewportFlags(viewport->Flags, &style, &exStyle);
 
@@ -93,6 +95,8 @@ void WUIImGuiWindow::updateWindow()
         ::ShowWindow(getHWnd(), SW_SHOWNA); // This is necessary when we alter the style
         viewport->PlatformRequestMove = viewport->PlatformRequestResize = true;
     }
+
+    onLoop();
 }
 
 void WUIImGuiWindow::setWindowAlpha(float alpha)
@@ -185,13 +189,14 @@ void WUIImGuiWindow::onLoop()
 {
     if (deviceSurface) {
         RenderThreadContext context;
+        CameraRenderData cameraRenderData;
         context.renderGraph = RenderPool::get().renderGraph;
-        context.cameraRenderData = RenderPool::get().sceneData->cameraRenderDatas.front();
+        context.cameraRenderData = &cameraRenderData;
         context.sceneRenderData = RenderPool::get().sceneData;
 
         RENDER_CONTEXT_SCOPE(context);
         
-        RENDER_THREAD_ENQUEUE_TASK(DrawImGUI, ([this] (RenderThreadContext& context)
+        renderWaitHandle = RENDER_THREAD_ENQUEUE_TASK(DrawImGUI, ([this] (RenderThreadContext& context)
         {
             IRenderContext& renderContext = *VendorManager::getInstance().getVendor().getDefaultRenderContext();
             renderContext.bindSurface(deviceSurface);

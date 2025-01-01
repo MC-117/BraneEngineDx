@@ -196,6 +196,7 @@ void SkeletonMeshActor::releasePhysics(PhysicalWorld& physicalWorld)
 
 void SkeletonMeshActor::destroy(bool applyToChild)
 {
+	destroyWaitHandle.wait();
 	Actor::destroy(applyToChild);
 	skeleton.destroy(applyToChild);
 }
@@ -209,7 +210,7 @@ void SkeletonMeshActor::prerender(SceneRenderData& sceneData)
 	data.localCenter = bound.getCenter();
 	data.localExtent = bound.getExtent();
 	data.localRadius = data.localExtent.norm();
-	RENDER_THREAD_ENQUEUE_TASK(MeshActorUpdateTransform, ([this, data] (RenderThreadContext& context)
+	destroyWaitHandle = RENDER_THREAD_ENQUEUE_TASK(MeshActorUpdateTransform, ([this, data] (RenderThreadContext& context)
 	{
 		unsigned int renderInstanceID = context.sceneRenderData->setMeshTransform(data);
 		for (int i = 0; i < skeletonMeshRenders.size(); i++) {

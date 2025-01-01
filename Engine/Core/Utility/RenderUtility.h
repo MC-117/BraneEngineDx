@@ -16,6 +16,7 @@ ENGINE_API int getGPUBufferFormatCellSize(GPUBufferFormat format);
 ENGINE_API int getPixelSize(TexInternalType type, int channels);
 ENGINE_API bool isFloatPixel(TexInternalType type);
 ENGINE_API bool frustumCulling(const CameraData& camData, const BoundBox& bound, const Matrix4f& mat);
+ENGINE_API bool boundBoxSphereIntersect(const Vector4f& sphere, const BoundBox& bound, const Matrix4f& mat);
 
 ENGINE_API const Vector3f& getCubeFaceForwardVector(CubeFace face);
 ENGINE_API const Vector3f& getCubeFaceLeftwardVector(CubeFace face);

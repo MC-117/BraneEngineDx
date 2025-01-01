@@ -181,6 +181,8 @@ void main(uint2 pixel : SV_DispatchThreadID, uint gidx : SV_GroupIndex)
 			float distSq = dot(localPos, localPos);
 			if (distSq > (localLight.radius * localLight.radius))
 				continue;
+			if (dot(normalize(localPos), localLight.direction) < localLight.cosConeAngle)
+				continue;
 			if (backFaceCull && isBackFaceCulled(worldNorm, normalize(-localPos)))
 				continue;
 			for (int i = 0; i < 6; i++) {

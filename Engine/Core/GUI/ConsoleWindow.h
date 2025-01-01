@@ -4,6 +4,7 @@
 
 #include "UIWindow.h"
 #include "../../ThirdParty/ImGui/imgui_TextEditor.h"
+#include "../Profile/RenderDurationProfiler.h"
 
 class ENGINE_API ConsoleWindow : public UIWindow
 {
@@ -34,6 +35,8 @@ protected:
 	};
 
 	map<Tag, Sampler<float>> timerSamples;
+
+	RenderDurationFrame renderDurationFrame;
 };
 
 #endif // !_CONSOLEWINDOW_H_

@@ -20,6 +20,7 @@
 #include "../ThirdParty/ImGui/ImPlot/implot.h"
 #include "EngineLoop/WorldEngineLoop.h"
 #include "GUI/GUIUtility.h"
+#include "Profile/RenderDurationProfiler.h"
 
 void (*pInitialWorldFunc)() = NULL;
 
@@ -219,6 +220,13 @@ void Engine::config(const string& workingSpace, const string& configPath)
 
 void Engine::setupBaseFramework()
 {
+	int trace = 0;
+	engineConfig.configInfo.get("trace", trace);
+
+	if (trace) {
+		RenderDurationProfiler::GInstance().startRecording();
+	}
+	
 	SerializationManager::finalizeSerializtion();
 	InitializationManager::instance().initialize(InitializeStage::BeforeEngineSetup);
 	if (enableMemTracer) {
@@ -414,6 +422,10 @@ void Engine::releaseBaseFramework()
 	CoUninitialize();
 
 	InitializationManager::instance().finalize(FinalizeStage::AfterEngineRelease);
+
+	if (RenderDurationProfiler::GInstance().isRecording()) {
+		RenderDurationProfiler::GInstance().stopRecording();
+	}
 }
 
 void Engine::changeWorld(World* world)
@@ -546,7 +558,8 @@ void Engine::mainLoop(float deltaTime)
 {
 	Timer timer;
 	if (engineLoop && engineLoop->willQuit()) {
-		PostQuitMessage(0);
+		context.getMainWindow()->close();
+		// PostQuitMessage(0);
 	}
 	Time::update();
 	input.update();

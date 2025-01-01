@@ -168,6 +168,11 @@ void RenderPool::endRender()
 	}));
 }
 
+void RenderPool::waitForDestroyRender()
+{
+	renderFence();
+}
+
 RenderPool& RenderPool::operator+=(Render & render)
 {
 	add(render);

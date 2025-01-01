@@ -53,7 +53,7 @@ DefaultTerrainVertexOut TERRAIN_MAIN
 {
     DefaultTerrainVertexOut vout;
     float4x4 fm = getFinalMat(ins[0]);
-    vout.LocalPos = pos * terrainUnitSize;
+    vout.LocalPos = pos * terrainWidthPerGrid;
     float4 _WorldPos = mul(float4(vout.LocalPos, 1.0), fm);
     vout.TransMat = fm;
     vout.WorldPos = _WorldPos.xyz;

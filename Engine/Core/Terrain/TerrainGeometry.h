@@ -4,19 +4,11 @@
 #include "../Mesh.h"
 #include "../Texture2D.h"
 #include "../GPUBuffer.h"
+#include "../RenderCore/TerrainData.h"
 
 #define MAX_TERRAIN_TESS_FACTOR 16
 
-struct TerrainData
-{
-	float unit = 500;
-	float height = 500;
-	Vector2u grid = { 8, 8 };
-	float triSize = 16;
-	Vector3f pading;
-};
-
-class ENGINE_API TerrainPatchMeshData : public MeshData
+class ENGINE_API TerrainBasePatchMeshData : public MeshData
 {
 public:
 	bool inited = false;
@@ -32,17 +24,22 @@ public:
 	GPUBuffer elementBuffer = GPUBuffer(GB_Index, GBF_UInt);
 	GPUBuffer terrainBuffer = GPUBuffer(GB_Constant, GBF_Struct, sizeof(TerrainData));
 
-	TerrainPatchMeshData();
-	virtual ~TerrainPatchMeshData();
+	TerrainBasePatchMeshData();
+	virtual ~TerrainBasePatchMeshData();
 
 	bool isValid() const;
 
 	Vector2u getPreferredResolution() const;
 
-	void setTerrainData(const TerrainData& inData);
+	virtual void setTerrainData(const TerrainData& inData);
 	void updateHeightMap(const Texture2D& src);
 
-	void updateMesh();
+	virtual void updateMesh() = 0;
+	virtual void bindDrawContext() = 0;
+	virtual void bindDrawContext(IRenderContext& context) = 0;
+
+	virtual int getLodCount() const = 0;
+	virtual MeshPart getLodMeshPart(int Lod) = 0;
 
 	void update();
 	void release();
@@ -53,6 +50,34 @@ public:
 	virtual void bindShapeWithContext(IRenderContext& context);
 };
 
+class ENGINE_API TerrainQuadPatchMeshData : public TerrainBasePatchMeshData
+{
+public:
+	TerrainQuadPatchMeshData();
+	
+	virtual void updateMesh();
+	virtual void bindDrawContext();
+	virtual void bindDrawContext(IRenderContext& context);
+
+	virtual int getLodCount() const;
+	virtual MeshPart getLodMeshPart(int lod);
+};
+
+class ENGINE_API TerrainTrianglePatchMeshData : public TerrainBasePatchMeshData
+{
+public:
+	TerrainTrianglePatchMeshData();
+
+	virtual void setTerrainData(const TerrainData& inData);
+	
+	virtual void updateMesh();
+	virtual void bindDrawContext();
+	virtual void bindDrawContext(IRenderContext& context);
+
+	virtual int getLodCount() const;
+	virtual MeshPart getLodMeshPart(int lod);
+};
+
 struct MeshTransformData;
 
 class ENGINE_API TerrainGeometry : public Shape
@@ -60,7 +85,7 @@ class ENGINE_API TerrainGeometry : public Shape
 public:
 	Serialize(TerrainGeometry, Shape);
 
-	TerrainPatchMeshData meshData;
+	TerrainQuadPatchMeshData meshData;
 	MeshPart meshPart;
 	PxHeightField* pxHeightField = NULL;
 

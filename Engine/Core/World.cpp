@@ -83,8 +83,12 @@ void World::tick(float deltaTime)
 	// 	renderPool.gui.gizmo.setCameraControl(Gizmo::CameraControlMode::Free);
 	// }
 	// renderPool.gui.gizmo.onUpdate(getCurrentCamera());
-	for (auto b = destroyList.rbegin(), e = destroyList.rend(); b != e; b++)
-		delete *b;
+	if (!destroyList.empty()) {
+		RenderPool::get().waitForDestroyRender();
+		for (auto b = destroyList.rbegin(), e = destroyList.rend(); b != e; b++) {
+			delete *b;
+		}
+	}
 	timer.record("Tick");
 #if ENABLE_PHYSICS
 	physicalWorld.updatePhysicalWorld(dt);

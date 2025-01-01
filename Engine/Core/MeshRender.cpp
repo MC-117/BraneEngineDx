@@ -4,6 +4,7 @@
 #include "GUI/Gizmo.h"
 #include "Editor/Editor.h"
 #include "Importer/MaterialImporter.h"
+#include "Profile/RenderProfile.h"
 #include "RenderCore/RenderCore.h"
 #include "RenderCore/RenderCoreUtility.h"
 
@@ -203,6 +204,7 @@ void MeshMaterialCollection::dispatchMeshDraw(const DispatchData& data)
 		auto func = ([this, part, materialRenderData, data, useCachedCommand = useCachedMeshCommand, meshCommandDirty = meshCommandDirty,
 			instanceID = instanceID, instanceCount = instanceCount, meshIndex = i] (RenderThreadContext& context)
 		{
+			RENDER_SCOPE_NO_CONTEXT(RenderMesh);
 			MeshRenderCommand& command = *accessCachedMeshCommand(meshIndex, data);
 			
 			command.sceneData = context.sceneRenderData;
@@ -364,13 +366,23 @@ void MeshMaterialCollection::resizeCachedMeshCommands(size_t newSize, const Disp
 	const size_t CellSize = data.commandByteSize;
 	const size_t oldSize = cachedMeshCommandBytes.size() / CellSize;
 
-	for (size_t i = newSize; i < oldSize; i++) {
+	// for (size_t i = newSize; i < oldSize; i++) {
+	// 	data.destructInplaceDelegate(cachedMeshCommandBytes.data() + i * CellSize);
+	// }
+	//
+	// cachedMeshCommandBytes.resize(newSize * CellSize);
+	//
+	// for (size_t i = oldSize; i < newSize; i++) {
+	// 	data.constructInplaceDelegate(cachedMeshCommandBytes.data() + i * CellSize);
+	// }
+
+	for (size_t i = 0; i < oldSize; i++) {
 		data.destructInplaceDelegate(cachedMeshCommandBytes.data() + i * CellSize);
 	}
 	
 	cachedMeshCommandBytes.resize(newSize * CellSize);
-
-	for (size_t i = oldSize; i < newSize; i++) {
+	
+	for (size_t i = 0; i < newSize; i++) {
 		data.constructInplaceDelegate(cachedMeshCommandBytes.data() + i * CellSize);
 	}
 }

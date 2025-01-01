@@ -229,6 +229,8 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 	if (!cmd.isValid())
 		return false;
 
+	RENDER_SCOPE_NO_CONTEXT(setRenderCommand);
+
 	if (cmd.sceneData)
 		sceneDatas.insert(cmd.sceneData);
 

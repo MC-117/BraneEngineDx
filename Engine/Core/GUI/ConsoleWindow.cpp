@@ -125,16 +125,29 @@ void ConsoleWindow::onWindowGUI(GUIRenderInfo & info)
 					}
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("ClearRenderFrame"))
+				if (ImGui::Button("OpenRenderFrame"))
 				{
-					profiler.clearCapture();
+					FileDlgDesc desc;
+					desc.title = "trace";
+					desc.filter = "trace(*.trace)|*.trace";
+					desc.initDir = "./Profile";
+					desc.save = true;
+					desc.defFileExt = "imat";
+					desc.addToRecent = true;
+					if (openFileDlg(desc)) {
+						ifstream file(desc.filePath, ios::binary);
+						if (!file.fail()) {
+							renderDurationFrame.reset();
+							renderDurationFrame.read(file);
+							file.close();
+						}
+					}
 				}
-				const RenderDurationFrame& frame = RenderDurationProfiler::GInstance().getDurationFrame();
 				ImPlot::ImPlotRenderFrameProfileContext context;
-				if (ImPlot::BeginPlotRenderFrameProfile(context, "RenderFrameGraph", (frame.getMaxDepth() + 1) * 2,
+				if (ImPlot::BeginPlotRenderFrameProfile(context, "RenderFrameGraph", (renderDurationFrame.getMaxDepth() + 1) * 2,
 					{ -1, -1 }, ImPlotFlags_NoTitle | ImPlotFlags_NoLegend | ImPlotFlags_NoMenus))
 				{
-					ImPlot::PlotRenderFrameProfile(context, "RenderFrame", frame);
+					ImPlot::PlotRenderFrameProfile(context, "RenderFrame", renderDurationFrame);
 					ImPlot::EndPlotRenderFrameProfile();
 				}
 			}
