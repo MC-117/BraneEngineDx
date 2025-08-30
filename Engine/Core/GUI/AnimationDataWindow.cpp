@@ -66,22 +66,13 @@ void AnimationDataWindow::onWindowGUI(GUIRenderInfo& info)
 				}
 			}
 			if (!path.empty()) {
-				struct AnimationWriterInfo
-				{
-					AnimationClipData* data;
-					string path;
-					ProgressUI ui = ProgressUI("Write Animation");
-					bool result;
-				};
-				AnimationWriterInfo info = { tar, path };
-				info.ui.doModelAsync([](WUIControl& ctrl, void* ptr) {
-					AnimationWriterInfo* info = (AnimationWriterInfo*)ptr;
-					info->result = AnimationLoader::writeAnimation(*info->data, info->path, &info->ui.work);
-				}, &info);
-				if (!info.result) {
+				ProgressUI ui = ProgressUI("Write Animation");
+				ui.doModelAsync();
+				const bool result = AnimationLoader::writeAnimation(*tar, path, &ui.work);
+				ui.close();
+				if (!result) {
 					MessageBox(NULL, "Serialize failed", "Error", MB_OK);
 				}
-				info.ui.close();
 			}
 		}, data, path);
 		td.detach();

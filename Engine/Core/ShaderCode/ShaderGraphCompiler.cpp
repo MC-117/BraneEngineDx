@@ -5,6 +5,7 @@
 #include "../Material.h"
 #include "ShaderCompiler.h"
 #include "Core/Utility/EngineUtility.h"
+#include "ShaderGraph/TextureNode.h"
 
 HLSLWriterShaderReader::HLSLWriterShaderReader(HLSLWriter& hlslWriter)
     : hlslWriter(hlslWriter)
@@ -88,11 +89,16 @@ ShaderGraph* ShaderGraphCompiler::compile(const string& path)
     SerializationInfo& info = sip.infos[0];
     wf.close();
 
+    return compile(info);
+}
+
+ShaderGraph* ShaderGraphCompiler::compile(const SerializationInfo& info)
+{
     Serializable* serializable = ShaderGraph::ShaderGraphSerialization::serialization.deserialize(info);
     ShaderGraph* graph = castTo<ShaderGraph>(serializable);
     bool success = false;
     if (graph) {
-        graph->setPath(path);
+        graph->setPath(info.path);
         success = compile(*graph);
     }
     if (!success) {
@@ -126,4 +132,19 @@ bool ShaderGraphCompiler::compile(ShaderGraph& graph)
     }
 
     return successed;
+}
+
+void ShaderGraphCompiler::gatherReferencedTextures(const SerializationInfo& info, vector<string>& texPaths)
+{
+    const SerializationInfo* variables = info.get("variables");
+    for (const auto& variable : variables->sublists) {
+        if (variable.serialization && variable.serialization->isChildOf(TextureParameterVariable::serialization())) {
+            string texPath;
+            if (variable.get("defaultValue", texPath)) {
+                if (!texPath.empty()) {
+                    texPaths.emplace_back(std::move(texPath));
+                }
+            }
+        }
+    }
 }

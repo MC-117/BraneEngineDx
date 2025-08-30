@@ -1,5 +1,6 @@
 #include "ScreenSpaceReflectionPass.h"
 #include "../Asset.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
 bool ScreenSpaceReflectionPass::loadDefaultResource()
 {
@@ -29,7 +30,7 @@ void ScreenSpaceReflectionPass::prepare()
 	if (useComputeShader) {
 		if (computeMaterialRenderData) {
 			computeMaterialVariant = computeMaterialRenderData->getVariant(Shader_Default);
-			computeMaterialVariant->init();
+			computePSO = fetchPSOIfDescChangedThenInit(computePSO, computeMaterialVariant->program);
 		}
 	}
 	else {
@@ -67,7 +68,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 		const ShaderPropertyName& gBufferBSlot = inTexture1Name;
 		const ShaderPropertyName& gBufferCSlot = inTexture2Name;
 		const ShaderPropertyName& gBufferDSlot = inTexture3Name;
-		const ShaderPropertyName& gBufferESlot = inTexture4Name;
+		const ShaderPropertyName& sceneDepthSlot = inTexture4Name;
 		const ShaderPropertyName& hiZMapSlot = inTexture5Name;
 
 		const ShaderPropertyName& inHitColorMapSlot = inTexture0Name;
@@ -89,7 +90,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				Texture* gBufferB = gbufferGetter->getGBufferB();
 				Texture* gBufferC = gbufferGetter->getGBufferC();
 				Texture* gBufferD = gbufferGetter->getGBufferD();
-				Texture* gBufferE = gbufferGetter->getGBufferE();
+				Texture* sceneDepthMap = gbufferGetter->getDepthTexture();
 
 				Texture* hiZMap = hiZGetter->getHiZTexture();
 
@@ -98,9 +99,9 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				RenderTarget* traceRenderTarget = ssrGetter->getTraceRenderTarget();
 				RenderTarget* resolveRenderTarget = ssrGetter->getResolveRenderTarget();
 
-				if (gBufferA == NULL || gBufferB == NULL || gBufferC == NULL ||
-					hiZMap == NULL || hitDataMap == NULL || hitColorMap == NULL ||
-					traceRenderTarget == NULL || resolveRenderTarget == NULL)
+				if (gBufferA == NULL || gBufferB == NULL || gBufferC == NULL || 
+					sceneDepthMap == NULL |hiZMap == NULL || hitDataMap == NULL ||
+					hitColorMap == NULL || traceRenderTarget == NULL || resolveRenderTarget == NULL)
 					continue;
 
 				int width = gBufferA->getWidth();
@@ -112,7 +113,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				int dimX = ceilf(width / float(localSize.x())) * localSize.x();
 				int dimY = ceilf(height / float(localSize.y())) * localSize.y();
 
-				context.bindShaderProgram(computeMaterialVariant->program);
+				context.bindPipelineState(computePSO);
 
 				sceneData->bind(context);
 
@@ -125,7 +126,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBSlot);
 				context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCSlot);
 				context.bindTexture((ITexture*)gBufferD->getVendorTexture(), gBufferDSlot);
-				context.bindTexture((ITexture*)gBufferE->getVendorTexture(), gBufferESlot);
+				context.bindTexture((ITexture*)sceneDepthMap->getVendorTexture(), sceneDepthSlot);
 				context.bindTexture((ITexture*)hiZMap->getVendorTexture(), hiZMapSlot);
 
 				Image image0, image1;
@@ -167,7 +168,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 		static const ShaderPropertyName gBufferBName = "gBufferB";
 		static const ShaderPropertyName gBufferCName = "gBufferC";
 		static const ShaderPropertyName gBufferDName = "gBufferD";
-		static const ShaderPropertyName gBufferEName = "gBufferE";
+		static const ShaderPropertyName sceneDepthMapName = "sceneDepthMap";
 		static const ShaderPropertyName hiZMapName = "hiZMap";
 		static const ShaderPropertyName hitDataMapName = "hitDataMap";
 		static const ShaderPropertyName hitColorMapName = "hitColorMap";
@@ -188,7 +189,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				Texture* gBufferB = gbufferGetter->getGBufferB();
 				Texture* gBufferC = gbufferGetter->getGBufferC();
 				Texture* gBufferD = gbufferGetter->getGBufferD();
-				Texture* gBufferE = gbufferGetter->getGBufferE();
+				Texture* sceneDepthMap = gbufferGetter->getDepthTexture();
 
 				Texture* hiZMap = hiZGetter->getHiZTexture();
 				Texture* sceneColorMips = sceneColorMipsGetter->getSceneColorMips();
@@ -199,7 +200,7 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				RenderTarget* resolveRenderTarget = ssrGetter->getResolveRenderTarget();
 
 				if (gBufferA == NULL || gBufferB == NULL || gBufferC == NULL ||
-					hiZMap == NULL || hitDataMap == NULL || hitColorMap == NULL ||
+					sceneDepthMap == NULL || hiZMap == NULL || hitDataMap == NULL || hitColorMap == NULL ||
 					sceneColorMips == NULL || traceRenderTarget == NULL || resolveRenderTarget == NULL)
 					continue;
 
@@ -212,9 +213,13 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				context.setViewport(0, 0, width, height);
 
 				// Trace
-				context.bindShaderProgram(traceProgram);
+				GraphicsPipelineStateDesc traceDesc = GraphicsPipelineStateDesc::forScreen(
+					traceProgram, traceRenderTarget, BM_Replace);
+				tracePSO = fetchPSOIfDescChangedThenInit(tracePSO, traceDesc);
+				context.bindPipelineState(tracePSO);
 
 				ssrBinding.ssrInfo.hiZUVScale = hiZUVScale;
+				ssrBinding.ssrInfo.hiZMaxMipLevel = hiZMap->getMipLevels() - 1;
 				ssrBinding.upload();
 
 				sceneData->bind(context);
@@ -224,18 +229,20 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 				context.bindTexture((ITexture*)gBufferB->getVendorTexture(), gBufferBName);
 				context.bindTexture((ITexture*)gBufferC->getVendorTexture(), gBufferCName);
 				context.bindTexture((ITexture*)gBufferD->getVendorTexture(), gBufferDName);
-				context.bindTexture((ITexture*)gBufferE->getVendorTexture(), gBufferEName);
+				context.bindTexture((ITexture*)sceneDepthMap->getVendorTexture(), sceneDepthMapName);
 				context.bindTexture((ITexture*)hiZMap->getVendorTexture(), hiZMapName);
 
 				context.bindFrame(traceRenderTarget->getVendorRenderTarget());
 
-				context.setRenderPostReplaceState();
 				context.postProcessCall();
 
 				context.clearFrameBindings();
 
 				// Resolve
-				context.bindShaderProgram(resolveProgram);
+				GraphicsPipelineStateDesc resolveDesc = GraphicsPipelineStateDesc::forScreen(
+					resolveProgram, resolveRenderTarget, BM_Additive);
+				resolvePSO = fetchPSOIfDescChangedThenInit(resolvePSO, resolveDesc);
+				context.bindPipelineState(resolvePSO);
 
 				sceneData->bind(context);
 				cameraData->bind(context);
@@ -252,7 +259,6 @@ void ScreenSpaceReflectionPass::execute(IRenderContext& context)
 
 				context.bindFrame(resolveRenderTarget->getVendorRenderTarget());
 
-				context.setRenderPostAddState();
 				context.postProcessCall();
 
 				outputTextures.push_back(make_pair("SSR_HitDataMap", hitDataMap));

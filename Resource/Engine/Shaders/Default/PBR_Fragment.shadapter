@@ -71,6 +71,7 @@ FragmentOut SURFACE_MAIN
     surf.ao = ao * SAMPLE_TEX(aoMap, surf.TexCoords).r;
     surf.radiosity = SAMPLE_TEX(emissionMap, surf.TexCoords);
     surf.radiosity.rgb *= emission;
+    surf.radiosity.a = 1.0f;
     surf.mask |= REFLECTION_MASK;
     #endif
 
@@ -101,7 +102,7 @@ FragmentOut SURFACE_MAIN
     float3 ambient = PBR_Ambient(surf.WorldPos, surf.Normal, surf.albedo.xyz, surf.ao);
     float3 color = ambient + Lo;
 
-    color = PBR_ColorCorrection(color) + (baseColor * surf.radiosity).rgb;
+    color = PBR_ColorCorrection(color) + surf.radiosity.rgb;
 
     fout.FragColor = float4(color, surf.albedo.a);
     #endif

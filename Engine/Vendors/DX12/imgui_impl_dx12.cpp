@@ -48,8 +48,8 @@ static ID3D10Blob*                  g_pPixelShaderBlob = NULL;
 static ID3D12RootSignature*         g_pRootSignature = NULL;
 static ID3D12PipelineState*         g_pPipelineState = NULL;
 static DXGI_FORMAT                  g_RTVFormat = DXGI_FORMAT_UNKNOWN;
-static Texture2DDesc                g_pFontTextureResourceDesc;
-static DX12Texture2D*                  g_pFontTexture2D = NULL;
+static TextureDesc                  g_pFontTextureResourceDesc;
+static DX12Texture2D*               g_pFontTexture2D = NULL;
 
 struct TextureDescriptor
 {

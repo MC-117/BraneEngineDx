@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <iostream>
-#include <unordered_map>
+#include <tbb/concurrent_unordered_map.h>
 
 typedef size_t NameHash;
 
@@ -15,7 +15,7 @@ public:
 
     std::pair<NameHash, const char*> registerString(const char* str);
 protected:
-    std::unordered_map<NameHash, std::string> nameMap;
+    tbb::concurrent_unordered_map<NameHash, std::vector<std::string>> nameTable;
 };
 
 struct ENGINE_API Name
@@ -30,6 +30,7 @@ struct ENGINE_API Name
     bool empty() const;
 
     bool operator==(const Name& name) const;
+    bool operator!=(const Name& name) const;
     bool operator<(const Name& name) const;
 
     NameHash getHash() const;

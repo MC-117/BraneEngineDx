@@ -4,6 +4,8 @@
 #include "../Asset.h"
 #include "../Console.h"
 #include "../RenderCore/RenderCore.h"
+#include "../InitializationManager.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
 Texture2D SMAAPass::areaTexture = Texture2D((unsigned char*)areaTexBytes,
 	AREATEX_WIDTH, AREATEX_HEIGHT, AREATEX_CHANNEL, false,
@@ -13,7 +15,33 @@ Texture2D SMAAPass::searchTexture = Texture2D((unsigned char*)searchTexBytes,
 	SEARCHTEX_WIDTH, SEARCHTEX_HEIGHT, SEARCHTEX_CHANNEL, false,
 	{ TW_Clamp, TW_Clamp, TF_Linear_Mip_Linear, TF_Linear_Mip_Linear, TIT_R8_UF }, true);
 
-SMAAPass::SMAAPass(const string& name, Material* material) : PostProcessPass(name, material)
+class SMAAInitialization : public Initialization
+{
+protected:
+	static SMAAInitialization instance;
+	SMAAInitialization::SMAAInitialization() : Initialization(
+		InitializeStage::BeforeGameSetup, 0,
+		FinalizeStage::BeforeRenderVenderRelease, 0)
+	{
+		
+	}
+
+	virtual bool initialize()
+	{
+		return true;
+	}
+	
+	virtual bool finalize()
+	{
+		SMAAPass::areaTexture.release();
+		SMAAPass::searchTexture.release();
+		return true;
+	}
+};
+
+SMAAInitialization SMAAInitialization::instance;
+
+SMAAPass::SMAAPass(const Name& name, Material* material) : PostProcessPass(name, material)
 {
 	areaTexture.setAutoGenMip(false);
 	searchTexture.setAutoGenMip(false);
@@ -76,17 +104,22 @@ void SMAAPass::execute(IRenderContext& context)
 	static const ShaderPropertyName blendTexName = "blendTex";
 
 	// Edge detection
-	context.bindShaderProgram(edgeDetectionProgram);
+	GraphicsPipelineStateDesc edgeDetectionDesc = GraphicsPipelineStateDesc::forScreen(
+		edgeDetectionProgram, &edgesRenderTarget, BM_Replace);
+	edgeDetectionPSO = fetchPSOIfDescChangedThenInit(edgeDetectionPSO, edgeDetectionDesc);
+	context.bindPipelineState(edgeDetectionPSO);
 	cameraRenderData->bind(context);
 	context.bindFrame(edgesRenderTarget.getVendorRenderTarget());
 	context.clearFrameColor({ 0, 0, 0, 0 });
 	context.bindTexture(screenTexture.getVendorTexture(), colorTexGammaName);
-	context.setRenderPostReplaceState();
 	context.setViewport(0, 0, size.x, size.y);
 	context.postProcessCall();
 
 	// Blending weight calculation
-	context.bindShaderProgram(blendingWeightCalculationProgram);
+	GraphicsPipelineStateDesc blendingWeightCalculationDesc = GraphicsPipelineStateDesc::forScreen(
+		blendingWeightCalculationProgram, &blendRenderTarget, BM_Replace);
+	blendingWeightCalculationPSO = fetchPSOIfDescChangedThenInit(blendingWeightCalculationPSO, blendingWeightCalculationDesc);
+	context.bindPipelineState(blendingWeightCalculationPSO);
 	context.bindFrame(blendRenderTarget.getVendorRenderTarget());
 	context.clearFrameColor({ 0, 0, 0, 0 });
 	context.bindTexture(areaTexture.getVendorTexture(), areaTexName);
@@ -95,7 +128,10 @@ void SMAAPass::execute(IRenderContext& context)
 	context.postProcessCall();
 
 	// Neighborhood blending
-	context.bindShaderProgram(neighborhoodBlendingProgram);
+	GraphicsPipelineStateDesc neighborhoodBlendingDesc = GraphicsPipelineStateDesc::forScreen(
+		neighborhoodBlendingProgram, resource->screenRenderTarget, BM_Replace);
+	neighborhoodBlendingPSO = fetchPSOIfDescChangedThenInit(neighborhoodBlendingPSO, neighborhoodBlendingDesc);
+	context.bindPipelineState(neighborhoodBlendingPSO);
 	context.bindFrame(resource->screenRenderTarget->getVendorRenderTarget());
 	context.bindTexture(screenTexture.getVendorTexture(), colorTexName);
 	context.bindTexture(blendTexture.getVendorTexture(), blendTexName);

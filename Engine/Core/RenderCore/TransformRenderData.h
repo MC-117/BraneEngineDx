@@ -221,6 +221,7 @@ struct MeshTransformRenderData : public IRenderData
 {
 	static Material* uploadTransformMaterial;
 	static ShaderProgram* uploadTransformProgram;
+	static ComputePipelineState* uploadTransformPSO;
 
 	bool frequentUpdate = true;
 	bool delayUpdate = false;

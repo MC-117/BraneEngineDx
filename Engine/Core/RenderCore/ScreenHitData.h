@@ -30,6 +30,7 @@ struct ENGINE_API ScreenHitRenderCommand : public IRenderCommand
 	MeshBatchDrawCall* meshBatchDrawCall = NULL;
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
+	virtual CullType getCullType() const;
 	virtual RenderMode getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const;
 	virtual bool canCastShadow() const;
 	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const;
@@ -42,7 +43,7 @@ struct ScreenHitRenderPack : public IRenderPack
 
 	ScreenHitRenderPack();
 
-	virtual bool setRenderCommand(const IRenderCommand& command);
+	virtual bool setRenderCommand(const IRenderCommand& command, const RenderTask& task);
 	virtual void excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext);
 	virtual void reset();
 };

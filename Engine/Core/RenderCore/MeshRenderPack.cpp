@@ -30,23 +30,38 @@ Enum<ShaderFeature> MeshRenderCommand::getShaderFeature() const
 	return shaderFeature;
 }
 
+CullType MeshRenderCommand::getCullType() const
+{
+	return getMaterialCullMode(materialRenderData, reverseCullMode);
+}
+
 RenderMode MeshRenderCommand::getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const
 {
 	const int renderOrder = materialRenderData->renderOrder;
-	RenderMode renderMode = RenderMode(renderOrder, BM_Default);
-	renderMode.mode.stencilTest = materialRenderData->desc.enableStencilTest;
+	RenderMode renderMode = RenderMode(renderOrder);
+	renderMode.dsMode.stencilTest = materialRenderData->desc.enableStencilTest;
 
+	bool isGeometry = passName == "Geometry"_N;
+	bool isTranslucent = passName == "Translucent"_N;
 	bool cameraForceStencilTest = cameraRenderData->forceStencilTest &&
-		(passName == "PreDepth"_N || passName == "Geometry"_N || passName == "Translucent"_N);
+		(passName == "PreDepth"_N || isGeometry || isTranslucent);
+
+	if (isGeometry) {
+		renderMode[3].setBlendMode(BM_Disable);
+	}
+
+	if (isTranslucent) {
+		renderMode.dsMode.accessFlag = DSA_DepthReadOnly;
+	}
 	
 	if (cameraForceStencilTest) {
-		renderMode.mode.stencilTest = true;
-		renderMode.mode.stencilComparion_front = cameraRenderData->stencilCompare;
-		renderMode.mode.stencilComparion_back = cameraRenderData->stencilCompare;
+		renderMode.dsMode.stencilTest = true;
+		renderMode.dsMode.stencilComparion_front = cameraRenderData->stencilCompare;
+		renderMode.dsMode.stencilComparion_back = cameraRenderData->stencilCompare;
 	}
 	else {
-		renderMode.mode.stencilComparion_front = materialRenderData->desc.stencilCompare;
-		renderMode.mode.stencilComparion_back = materialRenderData->desc.stencilCompare;
+		renderMode.dsMode.stencilComparion_front = materialRenderData->desc.stencilCompare;
+		renderMode.dsMode.stencilComparion_back = materialRenderData->desc.stencilCompare;
 	}
 	return renderMode;
 }
@@ -66,7 +81,7 @@ MeshDataRenderPack::MeshDataRenderPack(LightRenderData& lightDataPack)
 {
 }
 
-bool MeshDataRenderPack::setRenderCommand(const IRenderCommand& command)
+bool MeshDataRenderPack::setRenderCommand(const IRenderCommand& command, const RenderTask& task)
 {
 	const MeshRenderCommand* meshRenderCommand = dynamic_cast<const MeshRenderCommand*>(&command);
 	if (meshRenderCommand == NULL)
@@ -85,6 +100,7 @@ bool MeshDataRenderPack::setRenderCommand(const IRenderCommand& command)
 	return true;
 }
 
+#pragma optimize("", off)
 void MeshDataRenderPack::excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext)
 {
 	if (meshBatchDrawCalls.empty())
@@ -95,7 +111,6 @@ void MeshDataRenderPack::excute(IRenderContext& context, RenderTask& task, Rende
 	if (taskContext.materialVariant != task.materialVariant) {
 		taskContext.materialVariant = task.materialVariant;
 
-		bindMaterialCullMode(context, task.materialVariant, false);
 		bindMaterial(context, task.materialVariant);
 		if (lightDataPack.shadowTarget == NULL)
 			context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), depthMapName);
@@ -105,9 +120,6 @@ void MeshDataRenderPack::excute(IRenderContext& context, RenderTask& task, Rende
 
 	for (auto& item : meshBatchDrawCalls)
 	{
-		if (item->reverseCullMode) {
-			bindMaterialCullMode(context, task.materialVariant, true);
-		}
 		for (int passIndex = 0; passIndex < materialData->desc.passNum; passIndex++) {
 			materialData->desc.currentPass = passIndex;
 			context.setDrawInfo(passIndex, materialData->desc.passNum, materialData->desc.materialID);
@@ -119,11 +131,9 @@ void MeshDataRenderPack::excute(IRenderContext& context, RenderTask& task, Rende
 				context.drawMeshIndirect(taskContext.batchDrawData.batchDrawCommandArray->getCommandBuffer(), sizeof(DrawElementsIndirectCommand) * commandOffset);
 			}
 		}
-		if (item->reverseCullMode) {
-			bindMaterialCullMode(context, task.materialVariant, false);
-		}
 	}
 }
+#pragma optimize("", on)
 
 void MeshDataRenderPack::reset()
 {

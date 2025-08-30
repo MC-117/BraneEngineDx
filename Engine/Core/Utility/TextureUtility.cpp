@@ -4,6 +4,7 @@
 #define STBI_FREE(p)              freeTexture(p)
 #define STBI_WINDOWS_UTF8
 #define __STDC_LIB_EXT1__
+#define STBI_FAILURE_USERMSG
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../ThirdParty/STB/stb_image.h"
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -12,6 +13,7 @@
 #include "../../ThirdParty/STB/stb_image_write.h"
 #include "EngineUtility.h"
 #include "../GraphicType.h"
+#include "../Console.h"
 #include <fstream>
 
 const char* MipFileHeader::magicString = "BEMIPS";
@@ -139,7 +141,15 @@ uint8_t peakMipDimension(const string& file)
 
 unsigned char* loadTexture(const string& filename, int& width, int& height, int& channel)
 {
-	return stbi_load(filename.c_str(), &width, &height, &channel, 0);
+	string compatibleLongPath = ("\\\\?\\" + filesystem::absolute(filename).generic_u8string());
+	for (char& c : compatibleLongPath) {
+		if (c == '/') c = '\\';
+	}
+	unsigned char* data = stbi_load(compatibleLongPath.c_str(), &width, &height, &channel, 0);
+	if (!data) {
+		Console::error("stb: %s, when loading %s", stbi_failure_reason(), filename.c_str());
+	}
+	return data;
 }
 
 bool resizeTexture(const unsigned char* inData, int inWidth, int inHeight, int inChannel, unsigned char* outData, int outWidth, int outHeight, bool isStandard)

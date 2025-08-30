@@ -1,0 +1,62 @@
+#material
+#localsize 8 8 1
+#compute
+#include "VolumetricFog_Lib.hmat"
+#include "../../lib/FrustumCulling_Lib.hmat"
+
+Texture2D<float> hiZTexture;
+SamplerState hiZTextureSampler;
+RWTexture2D<float> outMaxDepthTexture;
+
+ScreenRect computeVolCullRect(uint2 gridIndex, float footPrintMargin)
+{
+    const float2 invCullSize = fogGridSize.xy / camData.viewSize;
+    const float2 tileSize = float2(2.0f, -2.0f) * invCullSize;
+    const float2 unitPlaneMin = float2(-1.0f, 1.0f);
+
+    float2 unitPlaneTileMin = (gridIndex - footPrintMargin) * tileSize + unitPlaneMin;
+    float2 unitPlaneTileMax = (gridIndex + 1 + footPrintMargin) * tileSize + unitPlaneMin;
+
+    float3 cullRectMin;
+    cullRectMin.x = min(unitPlaneTileMin.x, unitPlaneTileMax.x);
+    cullRectMin.y = min(unitPlaneTileMin.y, unitPlaneTileMax.y);
+    cullRectMin.z = 0;
+
+    float3 cullRectMax;
+    cullRectMax.x = max(unitPlaneTileMin.x, unitPlaneTileMax.x);
+    cullRectMax.y = max(unitPlaneTileMin.y, unitPlaneTileMax.y);
+    cullRectMax.z = 0;
+
+    return getScreenRect(int4(0, 0, camData.viewSize.x, camData.viewSize.y), cullRectMin, cullRectMax, 4);
+}
+
+float getMaxDepthFromHiZ(ScreenRect rect)
+{
+    float2 texelSize = (1 / hiZSize) * exp2(rect.hzbLevel);
+    float mipLevel = (float)rect.hzbLevel;
+	
+    float4 uv = (rect.hzbLevel + 0.5f) * texelSize.xyxy;
+
+    float4 depth;
+
+    depth.x = SAMPLE_TEX_LOD(hiZTexture, uv.xw, mipLevel).r;
+    depth.y = SAMPLE_TEX_LOD(hiZTexture, uv.zw, mipLevel).r;
+    depth.z = SAMPLE_TEX_LOD(hiZTexture, uv.zy, mipLevel).r;
+    depth.w = SAMPLE_TEX_LOD(hiZTexture, uv.xy, mipLevel).r;
+
+    depth.yz = (rect.hzbTexels.x == rect.hzbTexels.z) ? 1.0f : depth.yz;
+    depth.xy = (rect.hzbTexels.y == rect.hzbTexels.w) ? 1.0f : depth.xy;
+
+    return max(max(max(depth.x, depth.y), depth.z), depth.w);
+}
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 gridIndex : SV_DispatchThreadID)
+{
+    if (any(gridIndex >= fogGridSize.xy)) {
+        return;
+    }
+
+    ScreenRect rect = computeVolCullRect(gridIndex, 0.5f);
+    outMaxDepthTexture[gridIndex] = getMaxDepthFromHiZ(rect);
+}

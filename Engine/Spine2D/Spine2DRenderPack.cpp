@@ -1,6 +1,7 @@
 #include "Spine2DRenderPack.h"
 
 #include "../Core/RenderCore/RenderTask.h"
+#include "../Core/RenderCore/RenderCoreUtility.h"
 
 bool Spine2DRenderCommand::isValid() const
 {
@@ -10,6 +11,11 @@ bool Spine2DRenderCommand::isValid() const
 Enum<ShaderFeature> Spine2DRenderCommand::getShaderFeature() const
 {
 	return ShaderFeature::Shader_Default;
+}
+
+CullType Spine2DRenderCommand::getCullType() const
+{
+	return resource.cullType;
 }
 
 uint16_t Spine2DRenderCommand::getRenderStage() const
@@ -36,7 +42,7 @@ Spine2DRenderPack::Spine2DRenderPack()
 {
 }
 
-bool Spine2DRenderPack::setRenderCommand(const IRenderCommand& command)
+bool Spine2DRenderPack::setRenderCommand(const IRenderCommand& command, const RenderTask& task)
 {
 	const Spine2DRenderCommand* spine2dCommand = dynamic_cast<const Spine2DRenderCommand*>(&command);
 	if (spine2dCommand == NULL)
@@ -62,8 +68,6 @@ bool Spine2DRenderPack::setRenderCommand(const IRenderCommand& command)
 void Spine2DRenderPack::excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext)
 {
 	for (const auto& draw : drawList) {
-		context.setCullState(draw.resource.cullType);
-
 		auto iter = task.materialVariant->desc.colorField.find("baseColor");
 		if (iter != task.materialVariant->desc.colorField.end()) {
 			iter->second.val = draw.resource.color;

@@ -4,12 +4,17 @@
 #include "../Console.h"
 #include "../GUI/UIControl.h"
 #include "../RenderCore/RenderCore.h"
+#include "../RenderCore/RenderCoreUtility.h"
+#include "../RenderCore/SurfaceBufferGetter.h"
+#include "../Profile/RenderProfile.h"
 
-BloomPass::BloomPass(const string & name, Material * material)
+constexpr int maxBloomLevel = 5;
+
+BloomPass::BloomPass(const Name & name, Material * material)
 	: PostProcessPass(name, material)
 {
 	int newBloomLevel = 1 + floor(log2(max(size.x, size.y)));
-	newBloomLevel = min(newBloomLevel, 5);
+	newBloomLevel = min(newBloomLevel, maxBloomLevel);
 	resizeBloomLevel(newBloomLevel);
 }
 
@@ -25,8 +30,20 @@ void BloomPass::prepare()
 	materialVaraint->init();
 	
 	for (int i = 0; i < bloomLevel; i++) {
-		bloomRenderTargets[i]->init();
-		screenRenderTargets[i]->init();
+		bloomSampleRenderTargets[i]->init();
+	}
+
+	if (materialVaraint->program->isComputable()) {
+		pipelineState = fetchPSOIfDescChangedThenInit(pipelineState, materialVaraint->program);
+	}
+	else {
+		GraphicsPipelineStateDesc desc0 = GraphicsPipelineStateDesc::forScreen(
+			materialVaraint->program, bloomSampleRenderTargets[0], BM_Default);
+		pipelineState = fetchPSOIfDescChangedThenInit(pipelineState, desc0);
+		
+		GraphicsPipelineStateDesc desc1 = GraphicsPipelineStateDesc::forScreen(
+			materialVaraint->program, resource->screenRenderTarget, BM_Additive);
+		additivePipelineState = fetchPSOIfDescChangedThenInit(additivePipelineState, desc1);
 	}
 }
 
@@ -38,8 +55,8 @@ void BloomPass::execute(IRenderContext& context)
 	materialRenderData->upload();
 
 	ShaderProgram* program = materialVaraint->program;
-	
-	context.bindShaderProgram(program);
+
+	context.bindPipelineState(pipelineState);
 	context.bindMaterialBuffer(materialVaraint);
 
 	if (program->isComputable()) {
@@ -48,7 +65,7 @@ void BloomPass::execute(IRenderContext& context)
 		context.setDrawInfo(0, 4, 0);
 		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), sampleMapName);
 		Image image;
-		image.texture = &bloomMap;
+		image.texture = &bloomSampleMap;
 		for (int i = 0; i < bloomLevel; i++) {
 			image.level = i;
 			context.bindImage(image, imageMapName);
@@ -70,67 +87,80 @@ void BloomPass::execute(IRenderContext& context)
 		}
 
 		context.setDrawInfo(3, 4, 0);
-		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), sampleMapName);
+		context.bindTexture((ITexture*)bloomSampleMap.getVendorTexture(), sampleMapName);
 		image.texture = resource->screenTexture;
 		image.level = 0;
 		context.dispatchCompute(ceilf(size.x / (float)localSize.x()), ceilf(size.y / (float)localSize.y()), 1);
 	}
 	else {
 		context.clearFrameBindings();
-		context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), sampleMapName);
+
+		{
+			RENDER_SCOPE(context, BloomFilterPixel);
+
+			context.bindPipelineState(pipelineState);
+			
+			context.bindTexture(resource->screenTexture->getVendorTexture(), sampleMapName);
+			context.bindFrame(bloomSampleRenderTargets[0]->getVendorRenderTarget());
+			context.clearFrameColor({ 0, 0, 0, 255 });
+			
+			context.setDrawInfo(0, 0, 0);
+			context.setViewport(0, 0, size.x, size.y);
+			context.postProcessCall();
+			
+			context.bindTexture(NULL, sampleMapName);
+			context.clearFrameBindings();
+		}
+
+		{
+			RENDER_SCOPE(context, BloomDownSamplePixel);
+
+			context.bindPipelineState(pipelineState);
+			
+			for (int i = 1; i < bloomLevel; ++i) {
+				MipOption mipOption;
+				mipOption.mipCount = 1;
+				mipOption.detailMip = i - 1;
+				context.bindTexture(bloomSampleMap.getVendorTexture(), sampleMapName, mipOption);
+			
+				context.bindFrame(bloomSampleRenderTargets[i]->getVendorRenderTarget());
+				context.clearFrameColor({ 0, 0, 0, 255 });
+			
+				context.setDrawInfo(i == 1 ? 1 : 2, mipOption.detailMip, 0);
+				context.setViewport(0, 0, size.x >> i, size.y >> i);
+				context.postProcessCall();
+			
+				context.bindTexture(NULL, sampleMapName);
+				context.clearFrameBindings();
+			}
+		}
+
+		{
+			RENDER_SCOPE(context, BloomUpSamplePixel);
+
+			context.bindPipelineState(additivePipelineState);
+			
+			for (int i = bloomLevel - 2; i >= 0; --i) {
+				MipOption mipOption;
+				mipOption.mipCount = 1;
+				mipOption.detailMip = i + 1;
+				context.bindTexture((ITexture*)bloomSampleMap.getVendorTexture(), sampleMapName, mipOption);
+
+				IRenderTarget* renderTarget = i == 0 ? resource->screenRenderTarget->getVendorRenderTarget() :
+					bloomSampleRenderTargets[i]->getVendorRenderTarget();
+				
+				context.bindFrame(renderTarget);
+
+				context.setDrawInfo(3, mipOption.detailMip, 0);
+				context.setViewport(0, 0, size.x >> i, size.y >> i);
+				context.postProcessCall();
+			
+				context.bindTexture(NULL, sampleMapName);
+				context.clearFrameBindings();
+			}
+		}
 
 		context.setDrawInfo(0, 1, 0);
-		context.setRenderPostState();
-		for (int i = 0; i < bloomLevel; i++) {
-			int scalar = pow(2, i);
-
-			context.bindFrame(bloomRenderTargets[i]->getVendorRenderTarget());
-			context.clearFrameColor({ 0, 0, 0, 255 });
-
-			context.setViewport(0, 0, size.x / scalar, size.y / scalar);
-			context.postProcessCall();
-		}
-
-		context.clearFrameBindings();
-		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), sampleMapName);
-
-		for (int i = 0; i < bloomLevel; i++) {
-			int scalar = pow(2, i);
-
-			context.setDrawInfo(1, i, 0);
-
-			context.bindFrame(screenRenderTargets[i]->getVendorRenderTarget());
-
-			context.setViewport(0, 0, size.x / scalar, size.y / scalar);
-			context.postProcessCall();
-		}
-
-		context.clearFrameBindings();
-		context.bindTexture((ITexture*)screenMap.getVendorTexture(), sampleMapName);
-
-		for (int i = 0; i < bloomLevel; i++) {
-			int scalar = pow(2, i);
-
-			context.setDrawInfo(2, i, 0);
-
-			context.bindFrame(bloomRenderTargets[i]->getVendorRenderTarget());
-
-			context.setViewport(0, 0, size.x / scalar, size.y / scalar);
-			context.postProcessCall();
-		}
-
-		context.setDrawInfo(3, 1, 0);
-
-		context.bindTexture(NULL, sampleMapName);
-		context.bindFrame(resource->screenRenderTarget->getVendorRenderTarget());
-
-		context.bindTexture((ITexture*)bloomMap.getVendorTexture(), sampleMapName);
-
-		context.setViewport(0, 0, size.x, size.y);
-		context.setRenderPostAddState();
-		context.postProcessCall();
-
-		context.clearFrameBindings();
 	}
 }
 
@@ -168,39 +198,33 @@ void BloomPass::resize(const Unit2Di & size)
 {
 	PostProcessPass::resize(size);
 	int newBloomLevel = 1 + floor(log2(max(size.x, size.y)));
-	newBloomLevel = min(newBloomLevel, 5);
+	newBloomLevel = min(newBloomLevel, maxBloomLevel);
 	resizeBloomLevel(newBloomLevel);
 }
 
 void BloomPass::resizeBloomLevel(int levels)
 {
-	int diffLevel = levels - bloomRenderTargets.size();
+	int diffLevel = levels - bloomSampleRenderTargets.size();
 	bloomLevel = levels;
 	if (diffLevel > 0) {
-		bloomRenderTargets.reserve(bloomLevel);
+		bloomSampleRenderTargets.reserve(bloomLevel);
 		for (int i = 0; i < diffLevel; i++) {
-			RenderTarget* bloomRT = new RenderTarget(size.x, size.y, 4);
-			RenderTarget* screenRT = new RenderTarget(size.x, size.y, 4);
+			RenderTarget* bloomDownRT = new RenderTarget(size.x, size.y, 4);
 
-			bloomRT->addTexture("sampleMap", bloomMap);
-			screenRT->addTexture("screenMap", screenMap);
+			bloomDownRT->addTexture("sampleMap", bloomSampleMap);
 
-			bloomRenderTargets.push_back(bloomRT);
-			screenRenderTargets.push_back(screenRT);
+			bloomSampleRenderTargets.push_back(bloomDownRT);
 		}
 	}
 	else {
 		for (int i = 0; i < -diffLevel; i++) {
-			delete bloomRenderTargets[i];
+			delete bloomSampleRenderTargets[i];
 		}
-		bloomRenderTargets.resize(bloomLevel);
+		bloomSampleRenderTargets.resize(bloomLevel);
 	}
 	for (int level = 0; level < bloomLevel; level++) {
-		RenderTarget*& bloomRT = bloomRenderTargets[level];
-		RenderTarget*& screenRT = screenRenderTargets[level];
-		bloomRT->setTextureMipLevel(0, level);
-		bloomRT->resize(size.x, size.y);
-		screenRT->setTextureMipLevel(0, level);
-		screenRT->resize(size.x, size.y);
+		RenderTarget*& bloomDownRT = bloomSampleRenderTargets[level];
+		bloomDownRT->setTextureMipLevel(0, level);
+		bloomDownRT->resize(size.x, size.y);
 	}
 }

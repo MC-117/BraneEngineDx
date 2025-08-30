@@ -100,7 +100,7 @@ Material* MaterialLoader::loadMaterialGraph(ShaderGraph& graph)
 		else if (type == Code::Color_t || type == Code::Vector4f_t)
 			material->addColor({ variable->getName(), MatAttribute(getValue<Color>(variable)) });
 		else if (type == ShaderCode::Texture2D_t || type == ShaderCode::TextureCube_t)
-			material->addDefaultTexture({ variable->getName(), MatAttribute(getValue<Texture*>(variable)) });
+			material->addDefaultTexture({ variable->getName(), MatAttribute(getValue<AssetRef<Texture>>(variable)) });
 	}
 	return material;
 }
@@ -198,11 +198,19 @@ Material * MaterialLoader::loadMaterialInstance(istream & is, const string & mat
 					}
 					else if (v[0] == "Texture") {
 						auto p = parseTexture(v[1]);
-						Texture2D* tex = getAssetByPath<Texture2D>(p.second.val);
-						if (tex == NULL)
-							Console::warn("When loading %s, '%s' is not found.", matName.c_str(), p.second.val.c_str());
+						Texture2D* tex = NULL;
+						if (p.second.val == "white")
+							tex = &Texture2D::whiteRGBADefaultTex;
+						else if (p.second.val == "black")
+							tex = &Texture2D::blackRGBADefaultTex;
 						else
+							tex = getAssetByPath<Texture2D>(p.second.val);
+						if (tex) {
 							material->setTexture(p.first, *tex);
+						}
+						else {
+							material->setTexture(p.first, p.second.val);
+						}
 					}
 					else if (v[0] == "Image") {
 						auto p = parseImage(v[1]);
@@ -240,6 +248,34 @@ Material* MaterialLoader::loadMaterialInstance(const string& file)
 {
 	ifstream f(filesystem::u8path(file));
 	return loadMaterialInstance(f, file);
+}
+
+bool MaterialLoader::peekMaterialBaseOfInstance(const string& file, ImportInfo& importInfo)
+{
+	ifstream f(filesystem::u8path(file));
+
+	if (!f)
+		return false;
+	string clip, line;
+	bool success = false;
+	while (getline(f, line)) {
+		if (line.empty())
+			continue;
+		vector<string> s = split(line, ' ');
+		if (s.empty()) {
+			continue;
+		}
+		if (s[0] == "#material") {
+			if (s.size() != 2) {
+				break;
+			}
+			success = true;
+			importInfo = ImportInfo(s[1]);
+			break;
+		}
+	}
+	f.close();
+	return success;
 }
 
 bool MaterialLoader::saveMaterialInstanceToString(string & text, Material& material)
@@ -494,7 +530,7 @@ bool MaterialLoader::parseMaterialAttribute(Material& material, const string& li
 
 ImporterRegister<MaterialImporter> matImporter(".mat");
 ImporterRegister<MaterialGraphImporter> gmatImporter(".gmat");
-ImporterRegister<MaterialInstanceImporter> imatImporter(".imat", true);
+ImporterRegister<MaterialInstanceImporter> imatImporter(".imat");
 ImporterRegister<ShaderHeaderImporter> hmatImporter(".hmat");
 
 bool MaterialImporter::loadInternal(const ImportInfo& info, ImportResult& result)
@@ -509,9 +545,9 @@ bool MaterialImporter::loadInternal(const ImportInfo& info, ImportResult& result
 	}
 
 	Asset* asset = new Asset(&MaterialAssetInfo::assetInfo, info.filename, info.path);
-	asset->asset[0] = mat;
+	asset->setActualAsset(mat);
 	if (AssetManager::registAsset(*asset)) {
-		result.assets.push_back(asset);
+		result.asset = asset;
 		return true;
 	}
 	else {
@@ -525,8 +561,6 @@ bool MaterialImporter::loadInternal(const ImportInfo& info, ImportResult& result
 
 bool MaterialGraphImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 {
-	ShaderGraph* shd = new ShaderGraph();
-	Material* mat = new Material(*shd);
 	Material* material = MaterialLoader::loadMaterialGraph(info.path);
 	if (material == NULL) {
 		result.status = ImportResult::LoadFailed;
@@ -534,17 +568,19 @@ bool MaterialGraphImporter::loadInternal(const ImportInfo& info, ImportResult& r
 	}
 
 	Asset* asset = new Asset(&MaterialAssetInfo::assetInfo, info.filename, info.path);
-	asset->asset[0] = material;
-	if (AssetManager::registAsset(*asset)) {
-		result.assets.push_back(asset);
-		return true;
-	}
-	else {
-		delete material;
-		delete asset;
-		result.status = ImportResult::RegisterFailed;
+	asset->setActualAsset(material);
+	result.asset = asset;
+	return true;
+}
+
+bool MaterialInstanceImporter::analyzeDependentImports(const ImportInfo& info, vector<ImportInfo>& dependentInfos)
+{
+	ImportInfo baseMaterialInfo;
+	if (!MaterialLoader::peekMaterialBaseOfInstance(info.path, baseMaterialInfo)) {
 		return false;
 	}
+	dependentInfos.emplace_back(baseMaterialInfo);
+	return true;
 }
 
 bool MaterialInstanceImporter::loadInternal(const ImportInfo& info, ImportResult& result)
@@ -557,17 +593,9 @@ bool MaterialInstanceImporter::loadInternal(const ImportInfo& info, ImportResult
 	}
 
 	Asset* asset = new Asset(&MaterialAssetInfo::assetInfo, info.filename, info.path);
-	asset->asset[0] = mat;
-	if (AssetManager::registAsset(*asset)) {
-		result.assets.push_back(asset);
-		return true;
-	}
-	else {
-		delete mat;
-		delete asset;
-		result.status = ImportResult::RegisterFailed;
-		return false;
-	}
+	asset->setActualAsset(mat);
+	result.asset = asset;
+	return true;
 }
 
 bool ShaderHeaderImporter::loadInternal(const ImportInfo& info, ImportResult& result)

@@ -3,8 +3,9 @@
 #include "../Console.h"
 #include "../GUI/UIControl.h"
 #include "../RenderCore/RenderCore.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
-ToneMapPass::ToneMapPass(const string & name, Material * material)
+ToneMapPass::ToneMapPass(const Name & name, Material * material)
 	: PostProcessPass(name, material)
 {
 	screenMap.setAutoGenMip(false);
@@ -20,19 +21,27 @@ void ToneMapPass::prepare()
 		return;
 	}
 	materialVaraint->init();
+
+	if (materialVaraint->program->isComputable()) {
+		pipelineState = fetchPSOIfDescChangedThenInit(pipelineState, materialVaraint->program);
+	}
+	else {
+		GraphicsPipelineStateDesc desc = GraphicsPipelineStateDesc::forScreen(
+			materialVaraint->program, &screenRenderTarget, BM_Default);
+		pipelineState = fetchPSOIfDescChangedThenInit(pipelineState, desc);
+	}
 }
 
 void ToneMapPass::execute(IRenderContext& context)
 {
 	materialRenderData->upload();
 
-	ShaderProgram* program = materialVaraint->program;
-	context.bindShaderProgram(program);
+	context.bindPipelineState(pipelineState);
 
 	context.bindMaterialBuffer(materialVaraint);
 	context.bindMaterialTextures(materialVaraint);
 
-	if (program->isComputable()) {
+	if (materialVaraint->program->isComputable()) {
 		static const ShaderPropertyName imageMapName = "imageMap";
 
 		Image image;
@@ -55,7 +64,6 @@ void ToneMapPass::execute(IRenderContext& context)
 		context.bindFrame(screenRenderTarget.getVendorRenderTarget());
 
 		context.setDrawInfo(0, 1, 0);
-		context.setRenderPostState();
 		context.postProcessCall();
 
 		context.clearFrameBindings();

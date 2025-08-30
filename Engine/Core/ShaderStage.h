@@ -157,7 +157,13 @@ public:
 	list<ShaderAdapter*> adapters;
 	unordered_set<ShaderFile*> includeFiles;
 
+	mutex adapterMutex;
+	mutex includedFileMutex;
+
 	ShaderFile(const string& path);
+
+	void addAdapter(ShaderAdapter* adapter);
+	void addIncludedFile(ShaderFile* file);
 
 	bool checkDirty() const;
 
@@ -166,7 +172,7 @@ public:
 
 class ENGINE_API ShaderManager
 {
-	friend struct ShaderCompiler;
+	friend class ShaderCompiler;
 public:
 	struct Tag
 	{
@@ -194,6 +200,7 @@ public:
 	set<ProgramStageLink> programStageLinks;
 
 	ShaderFile* getShaderFile(const string& path);
+	ShaderFile* getOrNewShaderFile(const string& path);
 
 	ShaderAdapter* addShaderAdapter(const string& name, const string& path, ShaderStageType stageType, const string& tagName = "");
 	ShaderAdapter* getShaderAdapterByPath(const string& path, ShaderStageType stageType);
@@ -213,9 +220,14 @@ public:
 	static ShaderStage* getScreenVertexShader();
 	static ShaderManager& getInstance();
 protected:
+	mutex shaderFileMutex;
+	mutex shaderAdapterMutex;
+	mutex shaderProgramMutex;
 	unordered_set<ShaderFile*> processedDirtyShaderFiles;
 	unordered_set<ShaderAdapter*> dirtyAdapters;
 	static ShaderStage* screenShaderStage;
+
+	ShaderFile* getShaderFileInternal(const string& path);
 };
 
 #endif // !_SHADERSTAGE_H_

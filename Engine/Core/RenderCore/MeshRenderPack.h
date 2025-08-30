@@ -22,6 +22,7 @@ struct ENGINE_API MeshRenderCommand : public IRenderCommand
 
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
+	virtual CullType getCullType() const;
 	virtual RenderMode getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const;
 	virtual bool canCastShadow() const;
 	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const;
@@ -36,7 +37,7 @@ struct MeshDataRenderPack : public IRenderPack
 
 	MeshDataRenderPack(LightRenderData& lightDataPack);
 
-	virtual bool setRenderCommand(const IRenderCommand& command);
+	virtual bool setRenderCommand(const IRenderCommand& command, const RenderTask& task);
 	virtual void excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext);
 	virtual void reset();
 };

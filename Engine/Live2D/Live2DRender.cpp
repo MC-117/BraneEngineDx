@@ -1,4 +1,5 @@
 ﻿#include "Live2DRender.h"
+#include "../Core/Utility/MathUtility.h"
 
 Live2DClipContext::Live2DClipContext(const int* clippingDrawableIndices, int clipCount)
 	: _clippingIdList(clippingDrawableIndices), _clippingIdCount(clipCount)
@@ -404,7 +405,7 @@ Matrix4f Live2DRender::getMvpMatrix(const ::Camera& camera)
         float aspect = viewSize.y() / viewSize.x();
         Matrix4f projMat = Matrix4f::Identity();
         projMat(0, 0) = aspect;
-        Matrix4f viewMat = Camera::viewport(-1, -1, 2, 2, 0, 0);
+        Matrix4f viewMat = Math::viewport(-1, -1, 2, 2, 0, 0);
         return projMat * viewMat * transformMat;
     }
 }

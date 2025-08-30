@@ -26,3 +26,4 @@ ENGINE_API Matrix4f&& getCubeFaceProjectionMatrix(float zNear, float zFar);
 ENGINE_API Matrix4f&& getCubeFaceViewMatrix(CubeFace face, const Vector3f& position = Vector3f::Zero());
 
 ENGINE_API void setDepthStateFromRenderOrder(DepthStencilMode& mode, int renderOrder);
+ENGINE_API BlendMode getBlendModeFromRenderOrder(int renderOrder);

@@ -10,9 +10,9 @@ struct DX12Texture2DInfo
 	D3D12_RESOURCE_DESC texture2DDesc;
 	D3D12_SAMPLER_DESC samplerDesc;
 	DX12Texture2DInfo() = default;
-	DX12Texture2DInfo(const Texture2DInfo& info);
+	DX12Texture2DInfo(const TextureInfo& info);
 
-	DX12Texture2DInfo& operator=(const Texture2DInfo& info);
+	DX12Texture2DInfo& operator=(const TextureInfo& info);
 
 	static D3D12_TEXTURE_ADDRESS_MODE toDX12WrapType(const TexWrapType& type);
 	static D3D12_FILTER toDX12FilterType(const TexFilter& minType, const TexFilter& magType);
@@ -24,6 +24,7 @@ class DX12Texture2D : public ITexture2D
 {
 public:
 	DX12Context& dxContext;
+	TextureDesc& desc;
 	DX12Texture2DInfo info;
 	DX12Buffer* dx12Texture2D = NULL;
 	DX12Buffer* dx12Texture2DUpload = NULL;
@@ -36,7 +37,7 @@ public:
 	DX12Descriptor dx12DSV;
 	int dsvMipLevel = 0;
 
-	DX12Texture2D(DX12Context& context, Texture2DDesc& desc);
+	DX12Texture2D(DX12Context& context, TextureDesc& desc);
 	virtual ~DX12Texture2D();
 
 	virtual bool isValid() const;
@@ -52,6 +53,9 @@ public:
 	virtual DX12ResourceView getSampler();
 	virtual DX12ResourceView getUAV(unsigned int mipLevel);
 	virtual DX12Descriptor getDSV(unsigned int mipLevel);
+
+	virtual TextureDesc& getDesc() { return desc; }
+	virtual const TextureDesc& getDesc() const { return desc; }
 protected:
 	static DXGI_FORMAT getColorType(unsigned int channel, DXGI_FORMAT internalType);
 };

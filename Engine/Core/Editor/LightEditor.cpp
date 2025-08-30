@@ -32,7 +32,7 @@ void LightEditor::onLightGUI(EditorInfo& info)
 		light->color = color;
 	float val = light->intensity;
 	if (ImGui::DragFloat("Intensity", &val, 0.01f))
-		light->intensity = max(val, 0);
+		light->intensity = max(val, 0.0f);
 }
 
 void LightEditor::onDetailGUI(EditorInfo& info)

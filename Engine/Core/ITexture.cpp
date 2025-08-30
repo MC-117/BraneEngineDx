@@ -1,11 +1,11 @@
 ﻿#include "ITexture.h"
 
-bool Texture2DDesc::hasOwnedSourceData() const
+bool TextureDesc::hasOwnedSourceData() const
 {
     return !externalData && data;
 }
 
-bool Texture2DDesc::canReleaseAssetData() const
+bool TextureDesc::canReleaseAssetData() const
 {
     return data && hasAssetData;
 }

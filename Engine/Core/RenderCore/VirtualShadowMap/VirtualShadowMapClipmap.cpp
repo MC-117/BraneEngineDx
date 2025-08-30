@@ -12,8 +12,8 @@ Matrix4f getOrthoMatrix(float width, float height, float zScale, float zOffset)
 	Matrix4f Result = Matrix4f::Identity();
 	Result(0, 0) = 1 / width;
 	Result(1, 1) = 1 / height;
-	Result(2, 2) = zScale;
-	Result(2, 3) = zOffset * zScale;
+	Result(2, 2) = -zScale;
+	Result(2, 3) = 1 - zOffset * zScale;
 	return Result;
 }
 
@@ -216,7 +216,9 @@ void VirtualShadowMapClipmap::getProjectData(unsigned int clipmapIndex, VirtualS
 		projData.viewOriginToClip = MATRIX_UPLOAD_OP(viewOriginToClip);
 		Matrix4f uvMatrix = Math::getTransitionMatrix(Vector3f(0.5f, 0.5f, 0.0f)) * 
 			Math::getScaleMatrix(Vector3f(0.5f, -0.5f, 1.0f));
-		projData.viewOriginToUV = MATRIX_UPLOAD_OP(uvMatrix * viewOriginToClip);
+		Matrix4f viewOriginToUV = uvMatrix * viewOriginToClip;
+		projData.viewOriginToUV = MATRIX_UPLOAD_OP(viewOriginToUV);
+		projData.viewOriginToUVNormal = MATRIX_UPLOAD_OP(viewOriginToUV.transpose().inverse());
 
 		projData.clipmapWorldOrigin = worldOrigin;
 		projData.resolutionLodBias = resolutionLodBias;
@@ -234,8 +236,5 @@ void VirtualShadowMapClipmap::getProjectData(unsigned int clipmapIndex, VirtualS
 		projData.lightType = VSM_DirectLight;
 
 		projData.uncached = 0;
-
-		VirtualShadowMapConfig& config = VirtualShadowMapConfig::instance();
-		projData.screenRayLength = config.screenRayLength;
 	}
 }

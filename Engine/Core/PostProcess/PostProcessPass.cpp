@@ -61,7 +61,7 @@ void PostProcessResource::reset()
 	blurTexture = NULL;
 }
 
-PostProcessPass::PostProcessPass(const string & name, Material * material)
+PostProcessPass::PostProcessPass(const Name & name, Material * material)
 	: name(name), material(material)
 {
 }
@@ -93,11 +93,6 @@ void PostProcessPass::setEnable(bool enable)
 bool PostProcessPass::getEnable()
 {
 	return enable;
-}
-
-string PostProcessPass::getName()
-{
-	return name;
 }
 
 bool PostProcessPass::loadDefaultResource()
@@ -155,6 +150,11 @@ void PostProcessPass::onGUI(EditorInfo& info)
 
 void PostProcessPass::reset()
 {
+}
+
+Name PostProcessPass::getPassName() const
+{
+	return name;
 }
 
 Serializable * PostProcessPass::instantiate(const SerializationInfo & from)

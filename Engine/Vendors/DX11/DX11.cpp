@@ -122,84 +122,67 @@ void DX11Context::createRenderState()
 
 	rastDesc.CullMode = D3D11_CULL_FRONT;
 	device->CreateRasterizerState(&rastDesc, &rasterizerCullFront);
+}
 
-	D3D11_BLEND_DESC blendDesc;
-	ZeroMemory(&blendDesc, sizeof(blendDesc));
-	auto& rt0 = blendDesc.RenderTarget[0];
-	auto& rt1 = blendDesc.RenderTarget[1];
-	auto& rt2 = blendDesc.RenderTarget[2];
-	auto& rt3 = blendDesc.RenderTarget[3];
-	auto& rt4 = blendDesc.RenderTarget[4];
-	blendDesc.AlphaToCoverageEnable = false;
-	blendDesc.IndependentBlendEnable = false;
-	rt0.BlendEnable = false;
-	rt0.SrcBlend = D3D11_BLEND_ZERO;
-	rt0.DestBlend = D3D11_BLEND_ONE;
-	rt0.BlendOp = D3D11_BLEND_OP_ADD;
-	rt0.SrcBlendAlpha = D3D11_BLEND_ZERO;
-	rt0.DestBlendAlpha = D3D11_BLEND_ONE;
-	rt0.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-	rt0.RenderTargetWriteMask = 0;
-	device->CreateBlendState(&blendDesc, &blendOffWriteOff);
+static D3D11_BLEND_OP blendOpMap[5] = {
+	D3D11_BLEND_OP_ADD,
+	D3D11_BLEND_OP_SUBTRACT,
+	D3D11_BLEND_OP_REV_SUBTRACT,
+	D3D11_BLEND_OP_MIN,
+	D3D11_BLEND_OP_MAX
+};
 
-	rt0.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-	device->CreateBlendState(&blendDesc, &blendOffWriteOn);
+static D3D11_BLEND blendFactorMap[16] = {
+	D3D11_BLEND_ZERO,
+	D3D11_BLEND_ONE,
+	D3D11_BLEND_SRC_COLOR,
+	D3D11_BLEND_INV_SRC_COLOR,
+	D3D11_BLEND_SRC_ALPHA,
+	D3D11_BLEND_INV_SRC_ALPHA,
+	D3D11_BLEND_DEST_ALPHA,
+	D3D11_BLEND_INV_DEST_ALPHA,
+	D3D11_BLEND_DEST_COLOR,
+	D3D11_BLEND_INV_DEST_COLOR,
+	D3D11_BLEND_BLEND_FACTOR,
+	D3D11_BLEND_INV_BLEND_FACTOR,
+	D3D11_BLEND_SRC1_COLOR,
+	D3D11_BLEND_INV_SRC1_COLOR,
+	D3D11_BLEND_SRC1_ALPHA,
+	D3D11_BLEND_INV_SRC1_ALPHA
+};
 
-	blendDesc.AlphaToCoverageEnable = true;
-	device->CreateBlendState(&blendDesc, &blendOffWriteOnAlphaTest);
+ComPtr<ID3D11BlendState> DX11Context::getOrCreateBlendState(const RenderTargetModes& modes)
+{
+	auto iter = blendStateMap.find(modes);
+	if (iter != blendStateMap.end())
+		return iter->second;
 
-	blendDesc.AlphaToCoverageEnable = false;
-	rt0.BlendEnable = true;
-	rt0.SrcBlend = D3D11_BLEND_SRC_ALPHA;
-	rt0.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-	rt0.BlendOp = D3D11_BLEND_OP_ADD;
-	rt0.SrcBlendAlpha = D3D11_BLEND_ONE;
-	rt0.DestBlendAlpha = D3D11_BLEND_ZERO;
-	rt0.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-	device->CreateBlendState(&blendDesc, &blendOnWriteOn);
+	D3D11_BLEND_DESC desc;
+	ZeroMemory(&desc, sizeof desc);
 
-	rt0.SrcBlend = D3D11_BLEND_ONE;
-	rt0.DestBlend = D3D11_BLEND_ONE;
-	rt0.SrcBlendAlpha = D3D11_BLEND_ZERO;
-	rt0.DestBlendAlpha = D3D11_BLEND_ONE;
-	device->CreateBlendState(&blendDesc, &blendAddWriteOn);
+	desc.IndependentBlendEnable = true;
 
-	rt0.SrcBlend = D3D11_BLEND_ONE;
-	rt0.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-	rt0.SrcBlendAlpha = D3D11_BLEND_ONE;
-	rt0.DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-	device->CreateBlendState(&blendDesc, &blendPremultiplyAlphaWriteOn);
+	for (int index = 0; index < MaxRenderTargets; index++) {
+		const RenderTargetMode& mode = modes[index];
+		auto& rt = desc.RenderTarget[index];
 
-	rt0.SrcBlend = D3D11_BLEND_DEST_COLOR;
-	rt0.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-	rt0.SrcBlendAlpha = D3D11_BLEND_ZERO;
-	rt0.DestBlendAlpha = D3D11_BLEND_ONE;
-	device->CreateBlendState(&blendDesc, &blendMultiplyWriteOn);
+		desc.AlphaToCoverageEnable |= mode.enableAlphaTest;
 
-	rt0.SrcBlend = D3D11_BLEND_ZERO;
-	rt0.DestBlend = D3D11_BLEND_INV_SRC_COLOR;
-	rt0.SrcBlendAlpha = D3D11_BLEND_ZERO;
-	rt0.DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-	device->CreateBlendState(&blendDesc, &blendMaskWriteOn);
+		rt.BlendEnable = mode.enableBlend;
+		rt.BlendOp = blendOpMap[mode.colorOp];
+		rt.BlendOpAlpha = blendOpMap[mode.alphaOp];
+		rt.SrcBlend = blendFactorMap[mode.srcColorFactor];
+		rt.DestBlend = blendFactorMap[mode.destColorFactor];
+		rt.SrcBlendAlpha = blendFactorMap[mode.srcAlphaFactor];
+		rt.DestBlendAlpha = blendFactorMap[mode.destAlphaFactor];
+		rt.RenderTargetWriteMask = mode.writeMask;
+	}
 
-	rt0.BlendEnable = true;
-	rt0.SrcBlend = D3D11_BLEND_SRC_ALPHA;
-	rt0.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-	rt0.SrcBlendAlpha = D3D11_BLEND_ONE;
-	rt0.DestBlendAlpha = D3D11_BLEND_ZERO;
-	rt0.BlendOp = D3D11_BLEND_OP_ADD;
-	rt0.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-	rt1 = rt0;
-	rt1.BlendEnable = false;
-	rt4 = rt3 = rt2 = rt1;
-	device->CreateBlendState(&blendDesc, &blendOnWriteOn);
+	ComPtr<ID3D11BlendState> blendState;
+	device->CreateBlendState(&desc, &blendState);
 
-	D3D11_DEPTH_STENCIL_DESC dsDesc;
-	ZeroMemory(&dsDesc, sizeof dsDesc);
-	dsDesc.DepthEnable = false;
-	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
-	device->CreateDepthStencilState(&dsDesc, &depthWriteOffTestOffLEqual);
+	blendStateMap.emplace(modes, blendState);
+	return blendState;
 }
 
 ComPtr<ID3D11DepthStencilState> DX11Context::getOrCreateDepthStencilState(DepthStencilMode mode)
@@ -215,7 +198,7 @@ ComPtr<ID3D11DepthStencilState> DX11Context::getOrCreateDepthStencilState(DepthS
 
 	dsDesc.DepthEnable = mode.depthTest;
 	dsDesc.DepthWriteMask = mode.depthWrite ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
-	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	dsDesc.DepthFunc = (D3D11_COMPARISON_FUNC)(mode.depthComparion + 1);
 
 	dsDesc.StencilEnable = mode.stencilTest;
 	dsDesc.StencilReadMask = mode.stencilReadMask;
@@ -351,25 +334,8 @@ void DX11Context::cleanupRenderState()
 	if (rasterizerCullFront != NULL) {
 		rasterizerCullFront.Reset();
 	}
-	if (blendOffWriteOff != NULL) {
-		blendOffWriteOff.Reset();
-	}
-	if (blendOffWriteOn != NULL) {
-		blendOffWriteOn.Reset();
-	}
-	if (blendOffWriteOnAlphaTest != NULL) {
-		blendOffWriteOnAlphaTest.Reset();
-	}
-	if (blendOnWriteOn != NULL) {
-		blendOnWriteOn.Reset();
-	}
-	if (blendAddWriteOn != NULL) {
-		blendAddWriteOn.Reset();
-	}
-	if (depthWriteOffTestOffLEqual != NULL) {
-		depthWriteOffTestOffLEqual.Reset();
-	}
 
+	blendStateMap.clear();
 	depthStencilStateMap.clear();
 }
 
@@ -404,7 +370,7 @@ void DX11Context::clearSRV()
 void DX11Context::clearUAV()
 {
 	ID3D11UnorderedAccessView* srvs[D3D11_PS_CS_UAV_REGISTER_COUNT] = { NULL };
-	unsigned int offs[D3D11_PS_CS_UAV_REGISTER_COUNT] = { -1 };
+	unsigned int offs[D3D11_PS_CS_UAV_REGISTER_COUNT] = { ~0u };
 	deviceContext->CSSetUnorderedAccessViews(0, D3D11_PS_CS_UAV_REGISTER_COUNT, srvs, offs);
 }
 

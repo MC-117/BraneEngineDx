@@ -8,6 +8,7 @@
 #include "IGPUQuery.h"
 #include "SkeletonMeshData.h"
 #include "IRenderExecution.h"
+#include "PipelineState.h"
 
 struct RenderContextDesc
 {
@@ -62,7 +63,6 @@ public:
 	virtual void copyTexture2D(ITexture* srcTex, ITexture* dstTex) = 0;
 	virtual void copySubTexture2D(ITexture* srcTex, unsigned int srcMip, ITexture* dstTex, unsigned int dstMip) = 0;
 
-	virtual unsigned int bindShaderProgram(ShaderProgram* program) = 0;
 	virtual unsigned int dispatchCompute(unsigned int dimX, unsigned int dimY, unsigned int dimZ) = 0;
 	virtual unsigned int dispatchComputeIndirect(IGPUBuffer* buffer, unsigned int byteOffset) = 0;
 	
@@ -79,30 +79,13 @@ public:
 	virtual void bindMeshData(MeshData* meshData) = 0;
 
 	virtual void setStencilRef(uint8_t stencil) = 0;
-
-	virtual void setRenderPreState(DepthStencilMode depthStencilMode) = 0;
-	virtual void setRenderGeomtryState(DepthStencilMode depthStencilMode) = 0;
-	virtual void setRenderOpaqueState(DepthStencilMode depthStencilMode) = 0;
-	virtual void setRenderAlphaState(DepthStencilMode depthStencilMode) = 0;
-	virtual void setRenderTransparentState(DepthStencilMode depthStencilMode) = 0;
-	virtual void setRenderOverlayState() = 0;
-	virtual void setRenderPostState() = 0;
-	virtual void setRenderPostState(DepthStencilMode depthStencilMode) = 0;
-	virtual void setRenderPostAddState() = 0;
-	virtual void setRenderPostPremultiplyAlphaState() = 0;
-	virtual void setRenderPostMultiplyState() = 0;
-	virtual void setRenderPostMaskState() = 0;
-	virtual void setRenderPostReplaceState() = 0;
-	virtual void setCullState(CullType type) = 0;
+	
 	virtual void setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h) = 0;
-
-	virtual void setLineDrawContext() = 0;
-	virtual void setMeshDrawContext() = 0;
-	virtual void setSkeletonMeshDrawContext() = 0;
-	virtual void setTerrainDrawContext() = 0;
 
 	virtual void setDrawInfo(int passIndex, int passNum, unsigned int materialID) = 0;
 	virtual void bindDrawInfo() = 0;
+
+	virtual void bindPipelineState(IPipelineState* pipelineState) = 0;
 
 	virtual void meshDrawCall(const MeshPartDesc& mesh) = 0;
 	virtual void postProcessCall() = 0;

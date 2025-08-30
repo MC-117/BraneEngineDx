@@ -184,4 +184,4 @@ if __name__ == '__main__':
     searcher.addPath(basePath, True)
     ignoredAbsPaths = set()
     ignoredAbsPaths.add(Path(thirdPartyPath).as_posix())
-    searcher.search('', '^.*\.(h|hpp|c|cpp|inl)$', ignoredAbsPaths)
+    searcher.search('', f'^.*\.(h|hpp|c|cpp|inl)$', ignoredAbsPaths)

@@ -9,7 +9,8 @@ enum TexDimension
 	TD_Single = 0,
 	TD_Array = 1,
 	TD_Cube = 2,
-	TD_CubeArray = 3
+	TD_CubeArray = 3,
+	TD_Volume = 4
 };
 
 enum TexWrapType
@@ -32,7 +33,7 @@ enum TexFilter
 	TF_Linear_Mip_Linear
 };
 
-enum TexInternalType
+enum TexInternalType : uint8_t
 {
 	TIT_Default,
 	TIT_R8_UF,
@@ -155,7 +156,15 @@ enum GPUAccessFlag
 	GAF_ReadWrite = 1
 };
 
-enum CullType
+enum DepthStencilAccessFlag : uint8_t
+{
+	DSA_Default = 0,
+	DSA_DepthReadOnly = 1 << 0,
+	DSA_StencilReadOnly = 1 << 1,
+	DSA_DepthStencilReadOnly = DSA_DepthReadOnly | DSA_StencilReadOnly,
+};
+
+enum CullType : uint8_t
 {
 	Cull_Off,
 	Cull_Back,
@@ -208,11 +217,14 @@ enum ShaderStageType
 	Compute_Shader_Stage
 };
 
-enum MeshType
+enum MeshType : uint8_t
 {
 	MT_Mesh,
 	MT_SkeletonMesh,
-	MT_Terrain
+	MT_Terrain,
+	MT_Lines,
+	MT_Screen,
+	MT_Particle
 };
 
 enum ClearFlags : uint8_t
@@ -231,18 +243,24 @@ enum RenderStage : uint16_t
 	RS_Opaque = 1000,
 	RS_Aplha = 2450,
 	RS_Transparent = 2500,
-	RS_Post = 0x1000,
+	RS_Post = 0xFFF,
 	RS_Max = 0x1000,
 	RS_Count = 6
 };
 
 enum BlendMode : uint8_t
 {
-	BM_Default = 0,
-	BM_Additive = 1,
-	BM_Multipy = 2,
-	BM_PremultiplyAlpha = 3,
-	BM_Mask = 4
+	BM_Default,
+	BM_Disable,
+	BM_DepthOnly,
+	BM_AlphaTest,
+	BM_Additive,
+	BM_Multiply,
+	BM_PremultiplyAlpha,
+	BM_Mask,
+	BM_Replace,
+	BM_MultiplyAlpha,
+	BM_Custom,
 };
 
 enum StencilOperationType : uint8_t
@@ -264,64 +282,215 @@ enum RenderComparionType : uint8_t
 	RCT_Equal,
 	RCT_LessEqual,
 	RCT_Greater,
+	RCT_NotEqual,
 	RCT_GreaterEqual,
 	RCT_Always,
+};
+
+enum BlendOperation : uint8_t
+{
+	BO_Add,
+	BO_Sub,
+	BO_RevSub,
+	BO_Min,
+	BO_Max,
+
+	BO_Num,
+};
+
+enum BlendFactor : uint8_t
+{
+	BF_Zero,
+	BF_One,
+	BF_SrcColor,
+	BF_InvSrcColor,
+	BF_SrcAlpha,
+	BF_InvSrcAlpha,
+	BF_DestAplha,
+	BF_InvDestAplha,
+	BF_DestColor,
+	BF_InvDestColor,
+	BF_ConstFactor,
+	BF_InvConstFactor,
+	BF_Src1Color,
+	BF_InvSrc1Color,
+	BF_Src1Alpha,
+	BF_InvSrc1Alpha,
+
+	BF_BitMask = 0xF,
+	BF_Num,
+};
+
+enum ColorWriteMask : uint8_t
+{
+	CWM_None = 0,
+	
+	CWM_R = 1 << 0,
+	CWM_G = 1 << 1,
+	CWM_B = 1 << 2,
+	CWM_A = 1 << 3,
+
+	CWM_RG = CWM_R | CWM_G,
+	CWM_RB = CWM_R | CWM_B,
+	CWM_RA = CWM_R | CWM_A,
+	CWM_GB = CWM_G | CWM_B,
+	CWM_GA = CWM_G | CWM_A,
+	CWM_BA = CWM_B | CWM_A,
+	
+	CWM_RGB = CWM_R | CWM_G | CWM_B,
+	CWM_RBA = CWM_R | CWM_B | CWM_A,
+	CWM_RGA = CWM_R | CWM_G | CWM_A,
+	CWM_GBA = CWM_G | CWM_B | CWM_A,
+	
+	CWM_RGBA = CWM_R | CWM_G | CWM_B | CWM_A,
+};
+
+enum DecalMask : uint8_t
+{
+	Decal_None      = 0,
+	Decal_BaseColor = 1 << 0,
+	Decal_Normal    = 1 << 1,
+	Decal_Roughness = 1 << 2,
+	Decal_Metallic  = 1 << 3,
+	Decal_Specular  = 1 << 4,
+	Decal_AO        = 1 << 5,
+	Decal_Emission  = 1 << 6,
 };
 
 #pragma pack(push, 1)
 struct DepthStencilMode
 {
-	uint8_t stencilReadMask : 8;
-	uint8_t stencilWriteMask : 8;
+	union 
+	{
+		struct
+		{
+			uint8_t stencilReadMask : 8;
+			uint8_t stencilWriteMask : 8;
 
-	StencilOperationType stencilFailedOp_front : 4;
-	StencilOperationType stencilDepthFailedOp_front : 4;
-	StencilOperationType stencilPassOp_front : 4;
-	RenderComparionType stencilComparion_front : 3;
+			StencilOperationType stencilFailedOp_front : 4;
+			StencilOperationType stencilDepthFailedOp_front : 4;
+			StencilOperationType stencilPassOp_front : 4;
+			RenderComparionType stencilComparion_front : 4;
 
-	bool stencilTest : 1;
+			StencilOperationType stencilFailedOp_back : 4;
+			StencilOperationType stencilDepthFailedOp_back : 4;
+			StencilOperationType stencilPassOp_back : 4;
+			RenderComparionType stencilComparion_back : 4;
 
-	StencilOperationType stencilFailedOp_back : 4;
-	StencilOperationType stencilDepthFailedOp_back : 4;
-	StencilOperationType stencilPassOp_back : 3;
+			RenderComparionType depthComparion : 4;
 
-	bool depthWrite : 1;
-	
-	RenderComparionType stencilComparion_back : 3;
-
-	bool depthTest : 1;
+			bool stencilTest : 1;
+			bool depthWrite : 1;
+			bool depthTest : 1;
+			uint8_t pad1 : 1;
+			DepthStencilAccessFlag accessFlag : 4;
+			uint8_t pad2 : 4;
+		};
+		uint64_t word;
+	};
 
 	DepthStencilMode();
 
 	operator uint64_t() const;
+
+	DepthStencilMode& operator=(const DepthStencilMode& mode);
 
 	static DepthStencilMode DepthTestWritable();
 	static DepthStencilMode DepthTestNonWritable();
 	static DepthStencilMode DepthNonTestNonWritable();
 };
 
+template <>
+struct ENGINE_API std::hash<DepthStencilMode>
+{
+	std::size_t operator()(const DepthStencilMode& mode) const noexcept;
+};
+
+struct RenderTargetMode
+{
+	bool enableBlend : 1;
+	BlendOperation colorOp : 3;
+	bool enableAlphaTest : 1;
+	BlendOperation alphaOp : 3;
+	BlendFactor srcColorFactor : 8;
+	BlendFactor destColorFactor : 8;
+	BlendFactor srcAlphaFactor : 8;
+	BlendFactor destAlphaFactor : 8;
+	ColorWriteMask writeMask : 4;
+	BlendMode blendMode : 4;
+
+	RenderTargetMode();
+	RenderTargetMode(BlendMode mode);
+
+	void setBlendMode(BlendMode mode);
+
+	operator uint64_t() const;
+
+	RenderTargetMode& operator=(const RenderTargetMode& mode);
+};
+
+constexpr int MaxRenderTargets = 8;
+
+struct RenderTargetModes
+{
+	RenderTargetMode rtModes[MaxRenderTargets];
+
+	RenderTargetModes();
+	RenderTargetModes(BlendMode blendMode);
+
+	void setBlendModes(BlendMode blendMode);
+
+	bool operator==(const RenderTargetModes& mode) const;
+
+	RenderTargetMode& operator[](uint8_t rtIndex);
+	const RenderTargetMode& operator[](uint8_t rtIndex) const;
+};
+
+template <>
+struct ENGINE_API std::hash<RenderTargetModes>
+{
+	std::size_t operator()(const RenderTargetModes& modes) const noexcept;
+};
+
 struct ENGINE_API RenderMode
 {
 	union
 	{
-		struct : DepthStencilMode
+		struct
 		{
-			uint16_t renderStage_blendMode : 16;
-		} mode;
-		uint64_t bits;
+			uint32_t renderStage;
+			uint32_t subRenderStage;
+			DepthStencilMode dsMode;
+			RenderTargetModes rtModes;
+		};
+		struct
+		{
+			uint64_t words[8];
+		};
 	};
 	RenderMode();
-	RenderMode(uint16_t renderStage, uint8_t blendMode);
+	RenderMode(uint16_t renderStage);
+	RenderMode(uint16_t renderStage, BlendMode blendMode);
 	RenderMode(const RenderMode& mode);
 	RenderMode& operator=(const RenderMode& mode);
 
 	uint16_t getRenderStage() const;
-	BlendMode getBlendMode() const;
 	uint64_t getOrder() const;
 
-	DepthStencilMode getDepthStencilMode() const;
+	void setDepthStencilMode(DepthStencilMode depthStencilMode);
+	const DepthStencilMode& getDepthStencilMode() const;
+	const RenderTargetModes& getRenderTargetModes() const;
 
-	operator uint64_t() const;
+	RenderTargetMode& operator[](uint8_t rtIndex);
+	const RenderTargetMode& operator[](uint8_t rtIndex) const;
+
+	bool operator==(const RenderMode& mode) const;
+};
+
+template<>
+struct ENGINE_API std::hash<RenderMode>
+{
+	size_t operator()(const RenderMode& mode) const noexcept;
 };
 #pragma pack(pop)
 

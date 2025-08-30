@@ -197,7 +197,7 @@ void Spine2DRender::render(RenderInfo& info)
             break;
 
         case spine::BlendMode_Multiply:
-            blendMode = BlendMode::BM_Multipy;
+            blendMode = BlendMode::BM_Multiply;
             break;
         }
 

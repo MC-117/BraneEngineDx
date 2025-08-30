@@ -145,6 +145,7 @@ protected:
 	ImDrawList* drawList = NULL;
 	ImVec2 windowPos = { 0, 0 };
 	Matrix4f projMatrix;
+	Matrix4f projMatrixReversedZ;
 	Matrix4f viewMatrix;
 	Camera* camera = NULL;
 	bool enableGUI = true;

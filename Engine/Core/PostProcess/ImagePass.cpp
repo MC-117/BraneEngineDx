@@ -1,9 +1,10 @@
 #include "ImagePass.h"
 #include "../Asset.h"
 #include "../RenderCore/RenderCore.h"
+#include "../RenderCore/RenderCoreUtility.h"
 #include "../Console.h"
 
-ImagePass::ImagePass(const string& name, Material* material) : PostProcessPass(name, material)
+ImagePass::ImagePass(const Name& name, Material* material) : PostProcessPass(name, material)
 {
 	screenMap.setAutoGenMip(false);
 	screenRenderTarget.addTexture("image", screenMap);
@@ -24,14 +25,17 @@ void ImagePass::prepare()
 	if (sceneMap)
 		screenMap.setTextureInfo(sceneMap->getTextureInfo());
 	screenRenderTarget.init();
+	
+	GraphicsPipelineStateDesc desc = GraphicsPipelineStateDesc::forScreen(
+		materialVaraint->program, &screenRenderTarget, BM_Default);
+	pipelineState = fetchPSOIfDescChangedThenInit(pipelineState, desc);
 }
 
 void ImagePass::execute(IRenderContext& context)
 {
-	context.bindShaderProgram(materialVaraint->program);
+	context.bindPipelineState(pipelineState);
 	context.bindFrame(screenRenderTarget.getVendorRenderTarget());
 	context.bindMaterialTextures(materialVaraint);
-	context.setRenderPostState();
 	context.postProcessCall();
 	context.clearFrameBindings();
 	resource->screenTexture = &screenMap;
@@ -44,9 +48,8 @@ bool ImagePass::loadDefaultResource()
 		material = getAssetByPath<Material>("Engine/Shaders/Editor/ImagePPTest.mat");
 	if (material == NULL || resource == NULL || resource->screenTexture == NULL)
 		return false;
-	image = *material->getTexture("image");
 	materialRenderData = material->getMaterialRenderData();
-	return image && materialRenderData;
+	return materialRenderData;
 }
 
 void ImagePass::render(RenderInfo& info)

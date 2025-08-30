@@ -1,0 +1,15 @@
+#material
+#localsize 4 4 4
+#compute
+#include "VolumetricFog_Lib.hmat"
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint3 gridIndex : SV_DispatchThreadID)
+{
+    if (all(gridIndex < fogGridSize)) {
+        float3 viewPos = calFogGridViewPosition(gridIndex, 0.5f);
+        float3 worldPos = viewPosToWorld(viewPos);
+
+        outFogScatteringVolume[gridIndex] = calExpFogScattering(worldPos);
+    }
+}

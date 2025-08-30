@@ -47,8 +47,10 @@ public:
 protected:
     static Material* instanceCullingMaterial;
     static ShaderProgram* instanceCullingProgram;
+    static ComputePipelineState* instanceCullingPSO;
     static Material* pruneCommandMaterial;
     static ShaderProgram* pruneCommandProgram;
+    static ComputePipelineState* pruneCommandPSO;
     static void loadDefaultResource();
     IMeshBatchDrawCommandArray* sourceBatchDrawCommandArray;
 };

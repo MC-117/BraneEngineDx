@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../RenderCore/SurfaceBufferGetter.h"
+#include "../PipelineState.h"
 
 class GenMipPass : public RenderPass
 {
@@ -15,6 +16,7 @@ public:
 protected:
 	Material* material;
 	ShaderProgram* program;
+	ComputePipelineState* pipelineState;
 
 	vector<pair<string, Texture*>> outputTextures;
 };

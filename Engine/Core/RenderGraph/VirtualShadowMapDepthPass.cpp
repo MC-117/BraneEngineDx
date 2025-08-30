@@ -1,5 +1,6 @@
 #include "VirtualShadowMapDepthPass.h"
 #include "../RenderCore/SceneRenderData.h"
+#include "../RenderCore/RenderCoreUtility.h"
 #include "../Asset.h"
 #include "../Profile/ProfileCore.h"
 #include "../Profile/RenderProfile.h"
@@ -46,11 +47,19 @@ bool VirtualShadowMapDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	data.instanceID = meshCmd->instanceID;
 	data.baseVertex = meshCmd->mesh->vertexFirst;
 
+	GraphicsPipelineStateDesc desc;
+	desc.program = materialVariant->program;
+	desc.meshType = meshData->type;
+	desc.renderMode = RenderMode(RS_Opaque);
+	desc.renderMode.setDepthStencilMode(DepthStencilMode::DepthTestWritable());
+	desc.cullType = meshCmd->getCullType();
+
 	VSMMeshBatchDrawCall* call = sceneData.virtualShadowMapRenderData.meshBatchDrawCallCollection.setMeshBatchDrawCall(
 		VSMMeshBatchDrawKey(meshCmd->mesh, meshCmd->materialRenderData, meshCmd->reverseCullMode),
 		data, meshCmd->instanceID, meshCmd->instanceIDCount);
 	call->materialVariant = materialVariant;
 	call->transformData = meshCmd->batchDrawData.transformData;
+	call->graphicsPipelineState = fetchPSOIfDescChangedThenInit(NULL, desc);
 	call->bindings = meshCmd->bindings;
 
 	return true;

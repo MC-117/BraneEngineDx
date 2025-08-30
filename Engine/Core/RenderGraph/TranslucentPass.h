@@ -6,7 +6,6 @@
 struct TranslucentSSRBinding : public SSRBinding
 {
 	Texture* gBufferA;
-	Texture* gBufferB;
 	Texture* hiZTexture;
 
 	TranslucentSSRBinding();

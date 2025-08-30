@@ -51,11 +51,11 @@ float3 fresnelSchlick(float cosTheta, float3 F0, float roughness)
 
 float3 AOMultiBounce(float AO,float3 albedo)
 {
-	float3 a = 2.0404 * albedo - 0.3324;
-	float3 b = -4.7951 * albedo + 0.6417;
-	float3 c = 2.7552 * albedo + 0.6903;
+    float3 a = 2.0404 * albedo - 0.3324;
+    float3 b = -4.7951 * albedo + 0.6417;
+    float3 c = 2.7552 * albedo + 0.6903;
 
-	return max(AO, ((AO * a + b) * AO + c) * AO);
+    return max(AO, ((AO * a + b) * AO + c) * AO);
 }
 
 float2 getTexureSize(in Texture2D tex)
@@ -126,6 +126,61 @@ float ShadowCalculation(in Texture2D depthMap, in SamplerState depthMapSampler, 
     return shadow;
 }
 
+float ShadowCalculation(in Texture2D depthMap, in SamplerState depthMapSampler, float3 worldPos, in DirectLight directLight)
+{
+    float3 posWS = worldPos;
+    float4 posLS = mul(float4(posWS, 1.0f), directLight.worldToLightClip);
+
+    float3 projCoords = posLS.xyz / posLS.w;
+
+    if (projCoords.z >= 1.0) {
+        return 1.0;
+    }
+    
+    //projCoords = projCoords * 0.5 + 0.5;
+    projCoords.xy = projCoords.xy * 0.5 + 0.5;
+
+    float currentDepth = projCoords.z;
+    
+    float shadow = 0.0;
+    
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
+            float2 uv = projCoords.xy;
+            uv.y = 1 - uv.y;
+            float pcfDepth = GATHER_TEX(depthMap, uv, float2(x, y)).r; 
+            shadow += currentDepth > pcfDepth ? 0.0 : 1.0;
+        }
+    }
+    shadow /= 9.0;
+    return shadow;
+}
+
+float ShadowCalculationNoPCF(in Texture2D depthMap, in SamplerState depthMapSampler, float3 worldPos, in DirectLight directLight)
+{
+    float3 posWS = worldPos;
+    float4 posLS = mul(float4(posWS, 1.0f), directLight.worldToLightClip);
+
+    float3 projCoords = posLS.xyz / posLS.w;
+
+    if (projCoords.z >= 1.0) {
+        return 1.0;
+    }
+    
+    //projCoords = projCoords * 0.5 + 0.5;
+    projCoords.xy = projCoords.xy * 0.5 + 0.5;
+
+    float currentDepth = projCoords.z;
+    
+    float shadow = 0.0;
+    float2 uv = projCoords.xy;
+    uv.y = 1 - uv.y;
+    float depth = GATHER_TEX(depthMap, uv, 0).r;
+    return currentDepth > depth ? 0.0 : 1.0;
+}
+
 float2 sphereProj(float3 v)
 {
     float3 zp = normalize(float3(v.xy, 0.0f));
@@ -142,14 +197,14 @@ float luminance(float3 linearColor)
 
 float3x3 getTangentBasis( float3 TangentZ )
 {
-	const float Sign = TangentZ.z >= 0 ? 1 : -1;
-	const float a = -rcp( Sign + TangentZ.z );
-	const float b = TangentZ.x * TangentZ.y * a;
-	
-	float3 TangentX = { 1 + Sign * a * TangentZ.x * TangentZ.x, Sign * b, -Sign * TangentZ.x };
-	float3 TangentY = { b,  Sign + a * TangentZ.y * TangentZ.y, -TangentZ.y };
+    const float Sign = TangentZ.z >= 0 ? 1 : -1;
+    const float a = -rcp( Sign + TangentZ.z );
+    const float b = TangentZ.x * TangentZ.y * a;
+    
+    float3 TangentX = { 1 + Sign * a * TangentZ.x * TangentZ.x, Sign * b, -Sign * TangentZ.x };
+    float3 TangentY = { b,  Sign + a * TangentZ.y * TangentZ.y, -TangentZ.y };
 
-	return float3x3( TangentX, TangentY, TangentZ );
+    return float3x3( TangentX, TangentY, TangentZ );
 }
 
 float3 encodeNormal(float3 n)
@@ -164,38 +219,93 @@ float3 decodeNormal(float3 n)
 
 uint MurmurMix(uint Hash)
 {
-	Hash ^= Hash >> 16;
-	Hash *= 0x85ebca6b;
-	Hash ^= Hash >> 13;
-	Hash *= 0xc2b2ae35;
-	Hash ^= Hash >> 16;
-	return Hash;
+    Hash ^= Hash >> 16;
+    Hash *= 0x85ebca6b;
+    Hash ^= Hash >> 13;
+    Hash *= 0xc2b2ae35;
+    Hash ^= Hash >> 16;
+    return Hash;
 }
 
 float3 IntToColor(uint Index)
 {
-	uint Hash = MurmurMix(Index);
+    uint Hash = MurmurMix(Index);
 
-	float3 Color = float3
-	(
-		(Hash >>  0) & 255,
-		(Hash >>  8) & 255,
-		(Hash >> 16) & 255
-	);
+    float3 Color = float3
+    (
+        (Hash >>  0) & 255,
+        (Hash >>  8) & 255,
+        (Hash >> 16) & 255
+    );
 
-	return Color * (1.0f / 255.0f);
+    return Color * (1.0f / 255.0f);
+}
+
+uint3 Rand3DPCG16(int3 p)
+{
+    uint3 v = uint3(p);
+    
+    v = v * 1664525u + 1013904223u;
+    v.x += v.y*v.z;
+    v.y += v.z*v.x;
+    v.z += v.x*v.y;
+    v.x += v.y*v.z;
+    v.y += v.z*v.x;
+    v.z += v.x*v.y;
+    
+    return v >> 16u;
+}
+
+uint3 Rand3DPCG32(int3 p)
+{
+    uint3 v = uint3(p);
+
+    v = v * 1664525u + 1013904223u;
+
+    v.x += v.y*v.z;
+    v.y += v.z*v.x;
+    v.z += v.x*v.y;
+
+    v ^= v >> 16u;
+
+    v.x += v.y*v.z;
+    v.y += v.z*v.x;
+    v.z += v.x*v.y;
+
+    return v;
+}
+
+uint4 Rand4DPCG32(int4 p)
+{
+    uint4 v = uint4(p);
+
+    v = v * 1664525u + 1013904223u;
+
+    v.x += v.y*v.w;
+    v.y += v.z*v.x;
+    v.z += v.x*v.y;
+    v.w += v.y*v.z;
+
+    v ^= (v >> 16u);
+
+    v.x += v.y*v.w;
+    v.y += v.z*v.x;
+    v.z += v.x*v.y;
+    v.w += v.y*v.z;
+
+    return v;
 }
 
 float2 Hammersley( uint Index, uint NumSamples, uint2 Random )
 {
-	float E1 = frac( (float)Index / NumSamples + float( Random.x & 0xffff ) / (1<<16) );
-	float E2 = float( reversebits(Index) ^ Random.y ) * 2.3283064365386963e-10;
-	return float2( E1, E2 );
+    float E1 = frac( (float)Index / NumSamples + float( Random.x & 0xffff ) / (1<<16) );
+    float E2 = float( reversebits(Index) ^ Random.y ) * 2.3283064365386963e-10;
+    return float2( E1, E2 );
 }
 
 float2 Hammersley16( uint Index, uint NumSamples, uint2 Random )
 {
-	float E1 = frac( (float)Index / NumSamples + float( Random.x ) * (1.0 / 65536.0) );
-	float E2 = float( ( reversebits(Index) >> 16 ) ^ Random.y ) * (1.0 / 65536.0);
-	return float2( E1, E2 );
+    float E1 = frac( (float)Index / NumSamples + float( Random.x ) * (1.0 / 65536.0) );
+    float E2 = float( ( reversebits(Index) >> 16 ) ^ Random.y ) * (1.0 / 65536.0);
+    return float2( E1, E2 );
 }

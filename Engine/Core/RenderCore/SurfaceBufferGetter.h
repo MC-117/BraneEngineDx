@@ -15,7 +15,7 @@ struct IGBufferGetter
 	virtual Texture* getGBufferC() = 0;
 	virtual Texture* getGBufferD() = 0;
 	virtual Texture* getGBufferE() = 0;
-	virtual Texture* getGBufferF() = 0;
+	virtual Texture* getDepthTexture() = 0;
 };
 
 struct IHiZBufferGetter

@@ -46,6 +46,7 @@ struct EnvLightProbeRenderData : public IRenderData
 protected:
 	static Material* material;
 	static ShaderProgram* program;
+	static ComputePipelineState* pipelineState;
 	static bool isInited;
 
 	static void loadDefaultResource();

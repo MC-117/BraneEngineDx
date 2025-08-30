@@ -117,9 +117,15 @@ IDeviceSurface* DX12Vendor::newDeviceSurface(DeviceSurfaceDesc& desc)
 	return nullptr;
 }
 
-ITexture2D* DX12Vendor::newTexture2D(Texture2DDesc& desc)
+ITexture2D* DX12Vendor::newTexture2D(TextureDesc& desc)
 {
 	return new DX12Texture2D(dxContext, desc);
+}
+
+ITexture3D* DX12Vendor::newTexture3D(TextureDesc& desc)
+{
+	throw runtime_error("Not Implemented");
+	return nullptr;
 }
 
 ShaderStage* DX12Vendor::newShaderStage(const ShaderStageDesc& desc)
@@ -148,6 +154,18 @@ IGPUBuffer* DX12Vendor::newGPUBuffer(GPUBufferDesc& desc)
 }
 
 IGPUQuery* DX12Vendor::newGPUQuery(GPUQueryDesc& desc)
+{
+	throw runtime_error("Not Implemented");
+	return nullptr;
+}
+
+GraphicsPipelineState* DX12Vendor::fetchGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
+{
+	throw runtime_error("Not Implemented");
+	return nullptr;
+}
+
+ComputePipelineState* DX12Vendor::fetchComputePipelineState(const ComputePipelineStateDesc& desc)
 {
 	throw runtime_error("Not Implemented");
 	return nullptr;
@@ -312,12 +330,12 @@ void DX12Vendor::postProcessCall()
 	dxContext.graphicContext.setTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-void DX12Vendor::readBackTexture2D(ITexture2D* texture, void* data)
+void DX12Vendor::readBackTexture(ITexture* texture, void* data)
 {
 	DX12Texture2D* dxTexture = dynamic_cast<DX12Texture2D*>(texture);
 	if (dxTexture == NULL || data == NULL)
 		return;
-	Texture2DDesc desc = dxTexture->desc;
+	TextureDesc desc = dxTexture->desc;
 	desc.info.cpuAccessFlag = CAF_Read;
 	desc.mipLevel = 1;
 	desc.autoGenMip = false;

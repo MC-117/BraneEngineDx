@@ -447,6 +447,19 @@ void ParticleRender::update(float deltaTime, const Vector3f & spawnPosition, con
 	}
 }
 
+struct ParticleNullMeshData : public MeshData
+{
+	ParticleNullMeshData() { type = MT_Particle; }
+	
+	virtual bool isValid() const { return true; }
+	virtual bool isGenerated() const { return true; }
+	virtual void init() { }
+	virtual void bindShape() { }
+};
+
+static ParticleNullMeshData particleNullMeshData;
+static MeshPart particleNullMeshPart = MeshPartDesc { &particleNullMeshData };
+
 void ParticleRender::render(RenderInfo & info)
 {
 	for (auto b = particleEmtters.begin(), e = particleEmtters.end(); b != e; b++)
@@ -458,7 +471,7 @@ void ParticleRender::render(RenderInfo & info)
 				ParticleRenderCommand command;
 				command.sceneData = context.sceneRenderData;
 				command.materialRenderData = materialRenderData;
-				command.mesh = NULL;
+				command.mesh = &particleNullMeshPart;
 				command.particles = particles;
 				collectRenderDataInCommand(context.renderGraph, command);
 				context.renderGraph->setRenderCommand(command);

@@ -19,7 +19,7 @@ public:
 	virtual ~PostProcessGraph();
 
 	void addPostProcessPass(PostProcessPass& pass);
-	void removePostProcessPass(const string& name);
+	void removePostProcessPass(const Name& name);
 	void addDefaultPasses();
 
 	virtual PostProcessPass* getPostProcessPass(const string& name);

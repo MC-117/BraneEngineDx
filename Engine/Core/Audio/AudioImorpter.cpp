@@ -17,17 +17,9 @@ bool AudioImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 	}
 
 	Asset* asset = new Asset(&AudioDataAssetInfo::assetInfo, info.filename, info.path);
-	asset->asset[0] = audio;
-	if (AssetManager::registAsset(*asset)) {
-		result.assets.push_back(asset);
-		return true;
-	}
-	else {
-		delete audio;
-		delete asset;
-		result.status = ImportResult::RegisterFailed;
-		return false;
-	}
+	asset->setActualAsset(audio);
+	result.asset = asset;
+	return true;
 #endif // AUDIO_USE_OPENAL
 	result.status = ImportResult::UnknownFormat;
 	return false;

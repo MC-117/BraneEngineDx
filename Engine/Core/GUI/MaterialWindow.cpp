@@ -91,13 +91,13 @@ void MaterialWindow::onWindowGUI(GUIRenderInfo & info)
 	if (ImGui::BeginPopup("TexSelectPopup")) {
 		for (auto _b = Texture2DAssetInfo::assetInfo.assets.begin(), _e = Texture2DAssetInfo::assetInfo.assets.end();
 			_b != _e; _b++) {
-			if (_b->second->asset[0] == NULL)
+			if (_b->second->getActualAsset() == NULL)
 				continue;
-			unsigned long long id = ((Texture2D*)_b->second->asset[0])->bind();
+			unsigned long long id = ((Texture2D*)_b->second->getActualAsset())->bind();
 			if (id == 0)
 				id = Texture2D::blackRGBDefaultTex.bind();
 			if (ImGui::Selectable(_b->first.c_str(), false, 0, { 0, 60 })) {
-				material->setTexture(choice, *((Texture2D*)_b->second->asset[0]));
+				material->setTexture(choice, *((Texture2D*)_b->second->getActualAsset()));
 			}
 			ImGui::SameLine(100);
 			ImGui::Image((ImTextureID)id, { 56, 56 });

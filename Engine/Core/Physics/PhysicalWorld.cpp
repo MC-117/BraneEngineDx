@@ -184,7 +184,6 @@ struct NvClothChunkTask
 		done = true;
 	}
 
-#pragma optimize( "", off )
 	void start()
 	{
 		taskThread = new thread([](NvClothChunkTask* t) {
@@ -192,7 +191,6 @@ struct NvClothChunkTask
 		}, this);
 		taskThread->detach();
 	}
-#pragma optimize( "", on ) 
 };
 #endif
 
@@ -547,7 +545,7 @@ void PhysicalWorld::drawDedug(ImDrawList * list, const PxRenderBuffer & buffer, 
 {
 	if (list == NULL)
 		return;
-	Matrix4f pvm = cam.getProjectionMatrix() * cam.getViewMatrix();
+	Matrix4f pvm = cam.getProjectionMatrixReversedZ() * cam.getViewMatrix();
 	Vector3f camDir = cam.getForward(WORLD);
 	Vector3f camPos = cam.getPosition(WORLD);
 	for (PxU32 i = 0; i < buffer.getNbLines(); i++)

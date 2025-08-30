@@ -77,7 +77,7 @@ FragmentOut DEFAULT_SCREEN_MAIN
                 if ((centerFactor > 0 ^ depth > focusDistance))
                     continue;
                 float3 sampleColor = SAMPLE_TEX_LOD(screenMap, uv, 0).rgb;
-                float w = length(sampleColor) + 0.1;
+                float w = 1 / (1 + luminance(sampleColor));
                 weight += w;
                 color += sampleColor * w;
             }

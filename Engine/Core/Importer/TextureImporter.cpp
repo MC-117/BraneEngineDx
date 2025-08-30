@@ -10,7 +10,7 @@ ImporterRegister<TextureImporter> tgaImporter(".tga");
 ImporterRegister<TextureImporter> jpgImporter(".jpg");
 ImporterRegister<TextureImporter> bmpImporter(".bmp");
 
-void getTexture2DInfo(const string& filename, Texture2DInfo& textureInfo, bool& isStd)
+void getTexture2DInfo(const string& filename, TextureInfo& textureInfo, bool& isStd)
 {
 	isStd = true;
 	textureInfo.wrapSType = TW_Repeat;
@@ -37,7 +37,7 @@ void getTexture2DInfo(const string& filename, Texture2DInfo& textureInfo, bool& 
 
 bool TextureMipImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 {
-	Texture2DInfo textureInfo;
+	TextureInfo textureInfo;
 	bool isStd;
 	getTexture2DInfo(info.filename, textureInfo, isStd);
 
@@ -72,22 +72,14 @@ bool TextureMipImporter::loadInternal(const ImportInfo& info, ImportResult& resu
 	}
 
 	Asset* asset = new Asset(assetInfo, info.filename, info.path);
-	asset->asset[0] = texture;
-	if (AssetManager::registAsset(*asset)) {
-		result.assets.push_back(asset);
-		return true;
-	}
-	else {
-		delete texture;
-		delete asset;
-		result.status = ImportResult::RegisterFailed;
-		return false;
-	}
+	asset->setActualAsset(texture);
+	result.asset = asset;
+	return true;
 }
 
 bool TextureImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 {
-	Texture2DInfo textureInfo;
+	TextureInfo textureInfo;
 	bool isStd;
 	getTexture2DInfo(info.filename, textureInfo, isStd);
 
@@ -99,15 +91,7 @@ bool TextureImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 	}
 
 	Asset* asset = new Asset(&Texture2DAssetInfo::assetInfo, info.filename, info.path);
-	asset->asset[0] = texture2D;
-	if (AssetManager::registAsset(*asset)) {
-		result.assets.push_back(asset);
-		return true;
-	}
-	else {
-		delete texture2D;
-		delete asset;
-		result.status = ImportResult::RegisterFailed;
-		return false;
-	}
+	asset->setActualAsset(texture2D);
+	result.asset = asset;
+	return true;
 }

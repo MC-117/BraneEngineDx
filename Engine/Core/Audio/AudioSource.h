@@ -43,7 +43,7 @@ protected:
 	ALCcontext* context;
 };
 
-class ENGINE_API AudioData
+class ENGINE_API AudioData : public IAssetBase
 {
 public:
 	string name;
@@ -51,7 +51,7 @@ public:
 
 	AudioData(const string& name = "");
 	AudioData(const string& name, const string& file);
-	~AudioData();
+	virtual ~AudioData();
 
 	bool isLoad() const;
 

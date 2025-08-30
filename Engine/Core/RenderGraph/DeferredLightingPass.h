@@ -15,6 +15,7 @@ struct DeferredLightingTask
 	int age = 0;
 	SceneRenderData* sceneData = NULL;
 	ShaderProgram* program = NULL;
+	GraphicsPipelineState* pipelineState = NULL;
 	SurfaceData surface;
 	RenderTarget* gBufferRT = NULL;
 	CameraRenderData* cameraRenderData = NULL;
@@ -38,6 +39,7 @@ protected:
 	Timer timer;
 	static ShaderProgram* blitProgram;
 	static ShaderStage* blitFragmentShader;
+	static GraphicsPipelineState* blitPSO;
 
-	void blitSceneColor(IRenderContext& context, RenderTarget& target, Texture* gBufferA, Texture* gBufferB);
+	void blitSceneColor(IRenderContext& context, RenderTarget& target, Texture* gBufferA, Texture* sceneDepthMap);
 };

@@ -27,6 +27,8 @@ void fillSurface(inout Surface surf, PBRParameter param)
     surf.metallic = param.metallic;
     surf.ao = param.ao;
     surf.radiosity = float4(param.emission, 1.0f);
+    TransformData tansData = getTransformData(fin.InstanceID);
+    surf.mask = canReceiveDecal(tansData) ? RECEIVE_DECAL_MASK : 0;
     surf.mask |= REFLECTION_MASK;
 }
 

@@ -26,7 +26,6 @@ struct DeferredSurfaceBuffer
 	Texture2D gBufferC;
 	Texture2D gBufferD;
 	Texture2D gBufferE;
-	Texture2D gBufferF;
 	RenderTarget renderTarget;
 
 	Texture2D hizTexture;
@@ -55,7 +54,6 @@ struct DeferredSurfaceBuffer
 	virtual Texture* getGBufferC();
 	virtual Texture* getGBufferD();
 	virtual Texture* getGBufferE();
-	virtual Texture* getGBufferF();
 
 	virtual Texture* getHiZTexture();
 
@@ -121,6 +119,7 @@ public:
 	virtual void execute(IRenderContext& context, long long renderFrame);
 	virtual void reset();
 
+	bool triggerPersistentDebugDrawThisFrame = false;
 	void triggerPersistentDebugDraw();
 
 	virtual void getPasses(vector<pair<string, RenderPass*>>& passes);

@@ -11,6 +11,7 @@ public:
 	float localRadius = 0;
 	BoundBox bound;
 	int resolution = 128;
+	bool needWarmup = false;
 
 	CaptureProbeRender() = default;
 

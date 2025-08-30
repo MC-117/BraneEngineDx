@@ -30,10 +30,10 @@ void PostProcessGraph::addPostProcessPass(PostProcessPass & pass)
 	pass.setEnable(true);
 }
 
-void PostProcessGraph::removePostProcessPass(const string& name)
+void PostProcessGraph::removePostProcessPass(const Name& name)
 {
 	for (auto b = passes.begin(), e = passes.end(); b != e; b++) {
-		if ((*b)->getName() == name) {
+		if ((*b)->getPassName() == name) {
 			delete *b;
 			passes.erase(b);
 			break;
@@ -46,9 +46,9 @@ void PostProcessGraph::addDefaultPasses()
 	//addPostProcessPass(*new ImagePass());
 	//addPostProcessPass(*new CMAA2Pass());
 	addPostProcessPass(*new SSAOPass());
+	addPostProcessPass(*new VolumetricLightPass());
 	addPostProcessPass(*new DOFPass());
 	addPostProcessPass(*new BloomPass());
-	addPostProcessPass(*new VolumetricLightPass());
 	addPostProcessPass(*new ToneMapPass());
 	addPostProcessPass(*new SMAAPass());
 	//addPostProcessPass(*new BlurPass());
@@ -57,7 +57,7 @@ void PostProcessGraph::addDefaultPasses()
 PostProcessPass* PostProcessGraph::getPostProcessPass(const string& name)
 {
 	for (auto b = passes.begin(), e = passes.end(); b != e; b++) {
-		if ((*b)->getName() == name)
+		if ((*b)->getPassName() == name)
 			return *b;
 	}
 	return NULL;
@@ -88,7 +88,7 @@ Serializable * PostProcessGraph::instantiate(const SerializationInfo & from)
 bool PostProcessGraph::deserialize(const SerializationInfo & from)
 {
 	for (auto b = passes.begin(), e = passes.end(); b != e; b++) {
-		from.get((*b)->getName(), *(PostProcessPass*)(*b));
+		from.get((*b)->getPassName().c_str(), *(PostProcessPass*)(*b));
 	}
 	return true;
 }
@@ -97,7 +97,7 @@ bool PostProcessGraph::serialize(SerializationInfo & to)
 {
 	serializeInit(this, to);
 	for (auto b = passes.begin(), e = passes.end(); b != e; b++) {
-		to.set((*b)->getName(), **b);
+		to.set((*b)->getPassName().c_str(), **b);
 	}
 	return true;
 }

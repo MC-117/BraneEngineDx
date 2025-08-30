@@ -4,8 +4,9 @@
 #include "../Camera.h"
 #include "../GUI/UIControl.h"
 #include "../RenderCore/RenderCore.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
-DOFPass::DOFPass(const string & name, Material * material)
+DOFPass::DOFPass(const Name & name, Material * material)
 	: PostProcessPass(name, material)
 {
 	dofRenderTarget.addTexture("dofMap", dofMap);
@@ -31,6 +32,10 @@ void DOFPass::prepare()
 	if (sceneMap)
 		dofMap.setTextureInfo(sceneMap->getTextureInfo());
 	dofRenderTarget.init();
+
+	GraphicsPipelineStateDesc desc = GraphicsPipelineStateDesc::forScreen(
+		materialVaraint->program, &dofRenderTarget, BM_Default);
+	pipelineState = fetchPSOIfDescChangedThenInit(pipelineState, desc);
 }
 
 void DOFPass::execute(IRenderContext& context)
@@ -40,8 +45,7 @@ void DOFPass::execute(IRenderContext& context)
 
 	materialRenderData->upload();
 
-	ShaderProgram* program = materialVaraint->program;
-	context.bindShaderProgram(program);
+	context.bindPipelineState(pipelineState);
 
 	context.bindMaterialBuffer(materialVaraint);
 	cameraRenderData->bind(context);

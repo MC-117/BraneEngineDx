@@ -120,3 +120,52 @@ FrustumCullData frustumCullBox(float3 center, float3 extent, float3 preWorldTran
 		return frustumCullBoxPersp(center, extent, preWorldTranslation, localToWorld, viewOriginToClip);
 	}
 }
+
+int calcMipLevel(int4 rect, int coveredPixels)
+{
+    const int maxPixelOffset = coveredPixels - 1;
+	const int mipOffset = (int)log2((float)coveredPixels) - 1;
+
+    int2 mipLevelXY = firstbithigh(rect.zw - rect.xy);
+
+	int mipLevel = max(max(mipLevelXY.x, mipLevelXY.y) - mipOffset, 0);
+
+	mipLevel += any((rect.zw >> mipLevel) - (rect.xy >> mipLevel) > maxPixelOffset) ? 1 : 0;
+
+	return mipLevel;
+}
+
+struct ScreenRect
+{
+    int4 pixels;
+    int4 hzbTexels;
+    int hzbLevel;
+    int depth;
+};
+
+ScreenRect getScreenRect(int4 viewRect, float3 rectMin, float3 rectMax, int coveredPixels)
+{
+    ScreenRect rect;
+    rect.depth = rectMax.z;
+    float4 rectUV = saturate(float4(rectMin.xy, rectMax.xy) *
+        float2(0.5, -0.5).xyxy + 0.5).xwzy;
+    float2 viewSize = viewRect.zw - viewRect.xy;
+	rect.pixels = int4( rectUV * viewSize.xyxy + viewRect.xyxy +
+        float4(0.5f, 0.5f, -0.5f, -0.5f));
+	rect.pixels.xy = max(rect.pixels.xy, viewRect.xy);
+	rect.pixels.zw = min(rect.pixels.zw, viewRect.zw - 1);
+
+    rect.hzbTexels = int4(rect.pixels.xy, max(rect.pixels.xy, rect.pixels.zw));	
+    rect.hzbTexels = rect.hzbTexels >> 1;
+
+    rect.hzbLevel = calcMipLevel(rect.hzbTexels, coveredPixels);
+
+	rect.hzbTexels >>= rect.hzbLevel;
+
+	return rect;
+}
+
+ScreenRect getScreenRect(int4 viewRect, FrustumCullData cullData, int coveredPixels)
+{
+    return getScreenRect(viewRect, cullData.rectMin, cullData.rectMax, coveredPixels);
+}

@@ -54,24 +54,13 @@ protected:
         Pending
     } state = Stopped;
     
-    class Task : public IWaitable
+    class Task : public CustomWaitableTask
     {
-        friend class RenderThread;
     public:
-        virtual bool canCancel();
-        virtual bool isPending();
-        virtual bool isCompleted();
-        virtual bool isCancel();
-        virtual bool wait();
-        virtual void cancel();
-    protected:
         RenderThreadContext context;
         std::function<void(RenderThreadContext&)> taskFunction;
-        bool pending = true;
-        bool completed = false;
-        bool canceled = false;
 
-        void doTask();
+        virtual void executeInternal();
     };
 
     typedef std::shared_ptr<Task> TaskPtr;

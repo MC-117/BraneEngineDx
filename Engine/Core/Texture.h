@@ -2,10 +2,11 @@
 #ifndef _TEXTURE_H_
 #define _TEXTURE_H_
 
+#include "AssetBase.h"
 #include "Unit.h"
 #include "ITexture.h"
 
-class ENGINE_API Texture
+class ENGINE_API Texture : public IAssetBase
 {
 public:
 	Texture();
@@ -21,6 +22,8 @@ public:
 	virtual int getChannel() const;
 	virtual int getArrayCount() const;
 	virtual int getMipLevels() const;
+	
+	virtual TexInternalType getFormat() const;
 
 	virtual unsigned int bind();
 	virtual unsigned int bindBase(unsigned int index);

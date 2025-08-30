@@ -51,6 +51,11 @@ int Texture::getMipLevels() const
 	return 1;
 }
 
+TexInternalType Texture::getFormat() const
+{
+	return TIT_Default;
+}
+
 unsigned int Texture::bind()
 {
 	return 0;

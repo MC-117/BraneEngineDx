@@ -242,22 +242,13 @@ void AnimationConverter::onWindowGUI(GUIRenderInfo & info)
 						ofs.close();
 					}
 					if (animationData != NULL) {
-						struct AnimationWriterInfo
-						{
-							AnimationClipData* data;
-							string path;
-							ProgressUI ui = ProgressUI("Write Animation");
-							bool result;
-						};
-						AnimationWriterInfo info = { animationData, desc.filePath };
-						info.ui.doModelAsync([](WUIControl& ctrl, void* ptr) {
-							AnimationWriterInfo* info = (AnimationWriterInfo*)ptr;
-							info->result = AnimationLoader::writeAnimation(*info->data, info->path, &info->ui.work);
-							}, & info);
-						if (!info.result) {
+						ProgressUI ui = ProgressUI("Write Animation");
+						ui.doModelAsync();
+						bool result = AnimationLoader::writeAnimation(*animationData, desc.filePath, &ui.work);
+						ui.close();
+						if (!result) {
 							MessageBox(NULL, "Serialize failed", "Error", MB_OK);
 						}
-						info.ui.close();
 					}
 				}
 			});
@@ -377,19 +368,11 @@ void AnimationConverter::showVmdLoad()
 				else {
 					AnimationClipData data("anim");
 					getAnimation(data, *vmdMotion, camMotionScale, camFovScale);
-					struct AnimationInfo
-					{
-						AnimationClipData& data;
-						ofstream& file;
-						ProgressUI ui = ProgressUI("Write Animation");
-					};
-					AnimationInfo info = { data, file };
-					info.ui.doModelAsync([](WUIControl& ctrl, void* ptr) {
-						AnimationInfo* info = (AnimationInfo*)ptr;
-						info->data.write(info->file, &info->ui.work);
-					}, & info);
+					ProgressUI ui = ProgressUI("Write Animation");
+					ui.doModelAsync();
+					animationData->write(file, &ui.work);
+					ui.close();
 					MessageBoxA(NULL, "Save Complete", "Info", MB_OK);
-					info.ui.close();
 				}
 			}
 		}

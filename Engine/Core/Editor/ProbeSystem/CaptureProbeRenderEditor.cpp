@@ -48,7 +48,7 @@ void CaptureProbeRenderEditor::onCaptureProbeRenderGUI(EditorInfo& info)
 
 	float radius = captureProbeRender->getRadius();
 	if (ImGui::DragFloat("Radius", &radius, 0.01f)) {
-		radius = max(radius, 0);
+		radius = max(radius, 0.0f);
 		captureProbeRender->setRadius(radius);
 	}
 	int curResolution = captureProbeRender->getResolution();

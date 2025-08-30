@@ -144,9 +144,14 @@ IDeviceSurface* DX11Vendor::newDeviceSurface(DeviceSurfaceDesc& desc)
 	return new DX11DeviceSurface(dxContext, desc);
 }
 
-ITexture2D * DX11Vendor::newTexture2D(Texture2DDesc& desc)
+ITexture2D * DX11Vendor::newTexture2D(TextureDesc& desc)
 {
 	return new DX11Texture2D(dxContext, desc);
+}
+
+ITexture3D* DX11Vendor::newTexture3D(TextureDesc& desc)
+{
+	return new DX11Texture3D(dxContext, desc);
 }
 
 ShaderStage* DX11Vendor::newShaderStage(const ShaderStageDesc& desc)
@@ -177,6 +182,26 @@ IGPUBuffer* DX11Vendor::newGPUBuffer(GPUBufferDesc& desc)
 IGPUQuery* DX11Vendor::newGPUQuery(GPUQueryDesc& desc)
 {
 	return new DX11GPUQuery(dxContext, desc);
+}
+
+GraphicsPipelineState* DX11Vendor::fetchGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
+{
+	auto iter = dxGraphicsPSOs.try_emplace(desc.id, nullptr);
+	auto& pso = iter.first->second;
+	if (pso == NULL) {
+		pso = new DX11GraphicsPipelineState(dxContext, desc);
+	}
+	return pso;
+}
+
+ComputePipelineState* DX11Vendor::fetchComputePipelineState(const ComputePipelineStateDesc& desc)
+{
+	auto iter = dxComputePSOs.try_emplace(desc.id, nullptr);
+	auto& pso = iter.first->second;
+	if (pso == NULL) {
+		pso = new DX11ComputePipelineState(dxContext, desc);
+	}
+	return pso;
 }
 
 MeshPartDesc DX11Vendor::newMeshPart(unsigned int vertCount, unsigned int elementCount)
@@ -230,68 +255,68 @@ IRenderExecution* DX11Vendor::newRenderExecution()
 
 void DX11Vendor::setRenderPreState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOff.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetBlendState(dxContext.getOrCreateBlendState(RenderTargetModes(BM_DepthOnly)).Get(), NULL, 0xFFFFFFFF);
 	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
 }
 
 void DX11Vendor::setRenderGeomtryState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendGBuffer.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetBlendState(dxContext.getOrCreateBlendState(RenderTargetModes(BM_Replace)).Get(), NULL, 0xFFFFFFFF);
 	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
 }
 
 void DX11Vendor::setRenderOpaqueState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetBlendState(dxContext.getOrCreateBlendState(RenderTargetModes(BM_Replace)).Get(), NULL, 0xFFFFFFFF);
 	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
 }
 
 void DX11Vendor::setRenderAlphaState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOffWriteOnAlphaTest.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetBlendState(dxContext.getOrCreateBlendState(RenderTargetModes(BM_AlphaTest)).Get(), NULL, 0xFFFFFFFF);
 	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
 }
 
 void DX11Vendor::setRenderTransparentState(DepthStencilMode depthStencilMode, uint8_t stencilValue)
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetBlendState(dxContext.getOrCreateBlendState(RenderTargetModes(BM_Default)).Get(), NULL, 0xFFFFFFFF);
 	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(depthStencilMode).Get(), stencilValue);
 }
 
 void DX11Vendor::setRenderOverlayState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.getOrCreateBlendState(RenderTargetModes(BM_Default)).Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(DepthStencilMode::DepthNonTestNonWritable()).Get(), 0);
 }
 
 void DX11Vendor::setRenderPostState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.getOrCreateBlendState(RenderTargetModes(BM_Default)).Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(DepthStencilMode::DepthNonTestNonWritable()).Get(), 0);
 }
 
 void DX11Vendor::setRenderPostAddState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendAddWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.getOrCreateBlendState(RenderTargetModes(BM_Additive)).Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(DepthStencilMode::DepthNonTestNonWritable()).Get(), 0);
 }
 
 void DX11Vendor::setRenderPostPremultiplyAlphaState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendPremultiplyAlphaWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.getOrCreateBlendState(RenderTargetModes(BM_PremultiplyAlpha)).Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(DepthStencilMode::DepthNonTestNonWritable()).Get(), 0);
 }
 
 void DX11Vendor::setRenderPostMultiplyState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendMultiplyWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.getOrCreateBlendState(RenderTargetModes(BM_Multiply)).Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(DepthStencilMode::DepthNonTestNonWritable()).Get(), 0);
 }
 
 void DX11Vendor::setRenderPostMaskState()
 {
-	dxContext.deviceContext->OMSetBlendState(dxContext.blendMaskWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dxContext.deviceContext->OMSetDepthStencilState(dxContext.depthWriteOffTestOffLEqual.Get(), 0);
+	dxContext.deviceContext->OMSetBlendState(dxContext.getOrCreateBlendState(RenderTargetModes(BM_Mask)).Get(), NULL, 0xFFFFFFFF);
+	dxContext.deviceContext->OMSetDepthStencilState(dxContext.getOrCreateDepthStencilState(DepthStencilMode::DepthNonTestNonWritable()).Get(), 0);
 }
 
 void DX11Vendor::setCullState(CullType type)
@@ -356,20 +381,26 @@ void DX11Vendor::postProcessCall()
 	dxContext.deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-void DX11Vendor::readBackTexture2D(ITexture2D* texture, void* data)
+void DX11Vendor::readBackTexture(ITexture* texture, void* data)
 {
-	DX11Texture2D* dxTexture = dynamic_cast<DX11Texture2D*>(texture);
-	if (dxTexture == NULL || data == NULL)
+	DX11Texture* dxTexture = (DX11Texture*)texture;
+	if (texture == NULL || data == NULL)
 		return;
-	Texture2DDesc desc = dxTexture->desc;
+	TextureDesc desc = texture->getDesc();
 	desc.info.cpuAccessFlag = CAF_Read;
 	desc.mipLevel = 1;
 	desc.autoGenMip = false;
 	desc.textureHandle = 0;
 	desc.data = NULL;
-	DX11Texture2D* buffer = (DX11Texture2D*)newTexture2D(desc);
+	DX11Texture* buffer = NULL;
+	if (texture->is3D()) {
+		buffer = (DX11Texture*)newTexture2D(desc);
+	}
+	else {
+		buffer = (DX11Texture*)newTexture3D(desc);
+	}
 
-	dxTexture->bind();
+	texture->bind();
 	buffer->bind();
 
 	D3D11_BOX hSrcBox;
@@ -379,19 +410,19 @@ void DX11Vendor::readBackTexture2D(ITexture2D* texture, void* data)
 	hSrcBox.bottom = desc.height;
 	hSrcBox.front = 0;
 	hSrcBox.back = 1;
-	dxContext.deviceContext->CopySubresourceRegion(buffer->dx11Texture2D.Get(), 0, 0, 0, 0,
-		dxTexture->dx11Texture2D.Get(), 0, &hSrcBox);
+	dxContext.deviceContext->CopySubresourceRegion(buffer->getDX11Resource(), 0, 0, 0, 0,
+		dxTexture->getDX11Resource(), 0, &hSrcBox);
 
 	int bytesPerPixel = getPixelSize(desc.info.internalType, desc.channel);
 	int bytesPerRow = desc.width * bytesPerPixel;
 
 	D3D11_MAPPED_SUBRESOURCE mpd;
-	dxContext.deviceContext->Map(buffer->dx11Texture2D.Get(), 0, D3D11_MAP_READ, 0, &mpd);
+	dxContext.deviceContext->Map(buffer->getDX11Resource(), 0, D3D11_MAP_READ, 0, &mpd);
 	for (int i = 0; i < desc.height; ++i) {
 		memcpy_s((char*)data + bytesPerRow * i, bytesPerRow,
 			(char*)mpd.pData + mpd.RowPitch * i, bytesPerRow);
 	}
-	dxContext.deviceContext->Unmap(buffer->dx11Texture2D.Get(), 0);
+	dxContext.deviceContext->Unmap(buffer->getDX11Resource(), 0);
 	delete buffer;
 }
 

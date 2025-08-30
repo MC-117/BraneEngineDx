@@ -17,6 +17,7 @@ public:
 protected:
 	static MaterialRenderData* materialRenderData;
 	static IMaterial* materialVariant;
+	static GraphicsPipelineState* pipelineState;
 };
 
 #endif // !_BLITPASS_H_

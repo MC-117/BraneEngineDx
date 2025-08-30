@@ -17,7 +17,7 @@ public:
 	RenderTarget blendRenderTarget = RenderTarget(size.x, size.y, 4);
 	RenderTarget screenRenderTarget = RenderTarget(size.x, size.y, 4);
 
-	SMAAPass(const string& name = "SMAA", Material* material = NULL);
+	SMAAPass(const Name& name = "SMAA", Material* material = NULL);
 
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);
@@ -34,7 +34,11 @@ protected:
 	Material* debugDrawEdgesMaterial = NULL;
 
 	ShaderProgram* edgeDetectionProgram = NULL;
+	GraphicsPipelineState* edgeDetectionPSO = NULL;
 	ShaderProgram* blendingWeightCalculationProgram = NULL;
+	GraphicsPipelineState* blendingWeightCalculationPSO = NULL;
 	ShaderProgram* neighborhoodBlendingProgram = NULL;
+	GraphicsPipelineState* neighborhoodBlendingPSO = NULL;
 	ShaderProgram* debugDrawEdgesProgram = NULL;
+	GraphicsPipelineState* debugDrawEdgesPSO = NULL;
 };

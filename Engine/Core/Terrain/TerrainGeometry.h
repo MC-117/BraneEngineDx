@@ -35,8 +35,6 @@ public:
 	void updateHeightMap(const Texture2D& src);
 
 	virtual void updateMesh() = 0;
-	virtual void bindDrawContext() = 0;
-	virtual void bindDrawContext(IRenderContext& context) = 0;
 
 	virtual int getLodCount() const = 0;
 	virtual MeshPart getLodMeshPart(int Lod) = 0;
@@ -56,8 +54,6 @@ public:
 	TerrainQuadPatchMeshData();
 	
 	virtual void updateMesh();
-	virtual void bindDrawContext();
-	virtual void bindDrawContext(IRenderContext& context);
 
 	virtual int getLodCount() const;
 	virtual MeshPart getLodMeshPart(int lod);
@@ -71,8 +67,6 @@ public:
 	virtual void setTerrainData(const TerrainData& inData);
 	
 	virtual void updateMesh();
-	virtual void bindDrawContext();
-	virtual void bindDrawContext(IRenderContext& context);
 
 	virtual int getLodCount() const;
 	virtual MeshPart getLodMeshPart(int lod);

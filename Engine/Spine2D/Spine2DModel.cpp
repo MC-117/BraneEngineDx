@@ -186,8 +186,8 @@ void Spine2DModel::TextureLoader::unload(void* texture)
 {
 }
 
-ImporterRegister<Spine2DModelImporter> spine2djsonImporter(".spine2djson", true);
-ImporterRegister<Spine2DModelImporter> spine2dbinImporter(".spine2dbin", true);
+ImporterRegister<Spine2DModelImporter> spine2djsonImporter(".spine2djson");
+ImporterRegister<Spine2DModelImporter> spine2dbinImporter(".spine2dbin");
 
 bool Spine2DModelImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 {
@@ -199,15 +199,7 @@ bool Spine2DModelImporter::loadInternal(const ImportInfo& info, ImportResult& re
     }
 
     Asset* asset = new Asset(&Spine2DModelAssetInfo::assetInfo, info.filename, info.path);
-    asset->asset[0] = model;
-    if (AssetManager::registAsset(*asset)) {
-        result.assets.push_back(asset);
-        return true;
-    }
-    else {
-        delete model;
-        delete asset;
-        result.status = ImportResult::RegisterFailed;
-        return false;
-    }
+    asset->setActualAsset(model);
+    result.asset = asset;
+    return true;
 }

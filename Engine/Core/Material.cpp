@@ -153,7 +153,7 @@ void Material::setCullFront(bool b)
 
 void Material::setPassNum(unsigned int num)
 {
-	desc.passNum = max(num, 1);
+	desc.passNum = max(num, 1u);
 }
 
 void Material::setPass(unsigned int pass)
@@ -218,6 +218,15 @@ bool Material::setTexture(const Name & name, Texture & value)
 	if (iter == desc.textureField.end())
 		return false;
 	iter->second.val = &value;
+	return true;
+}
+
+bool Material::setTexture(const Name& name, const AssetRef<Texture>& textureRef)
+{
+	auto iter = desc.textureField.find(name);
+	if (iter == desc.textureField.end())
+		return false;
+	iter->second.val = textureRef;
 	return true;
 }
 
@@ -297,12 +306,12 @@ Matrix4f * Material::getMatrix(const Name & name)
 	return &iter->second.val;
 }
 
-Texture ** Material::getTexture(const Name & name)
+Texture* Material::getTexture(const Name & name)
 {
 	auto iter = desc.textureField.find(name);
 	if (iter == desc.textureField.end())
 		return NULL;
-	return &iter->second.val;
+	return iter->second.val;
 }
 
 Image * Material::getImage(const Name & name)
@@ -333,7 +342,7 @@ map<Name, MatAttribute<Matrix4f>>& Material::getMatrixField()
 	return desc.matrixField;
 }
 
-map<Name, MatAttribute<Texture*>>& Material::getTextureField()
+map<Name, MatAttribute<AssetRef<Texture>>>& Material::getTextureField()
 {
 	return desc.textureField;
 }
@@ -363,7 +372,7 @@ const map<Name, MatAttribute<Matrix4f>>& Material::getMatrixField() const
 	return desc.matrixField;
 }
 
-const map<Name, MatAttribute<Texture*>>& Material::getTextureField() const
+const map<Name, MatAttribute<AssetRef<Texture>>>& Material::getTextureField() const
 {
 	return desc.textureField;
 }
@@ -396,20 +405,20 @@ void Material::addMatrix(const pair<Name, MatAttribute<Matrix4f>>& attr)
 void Material::addDefaultTexture(const pair<Name, MatAttribute<string>>& attr)
 {
 	if (attr.second.val == "black")
-		desc.textureField[attr.first] = &Texture2D::blackRGBADefaultTex;
+		desc.textureField[attr.first].val = &Texture2D::blackRGBADefaultTex;
 	else if (attr.second.val == "white")
-		desc.textureField[attr.first] = &Texture2D::whiteRGBADefaultTex;
+		desc.textureField[attr.first].val = &Texture2D::whiteRGBADefaultTex;
 	else if (attr.second.val == "brdfLUT")
-		desc.textureField[attr.first] = &Texture2D::brdfLUTTex;
+		desc.textureField[attr.first].val = &Texture2D::brdfLUTTex;
 	else if (attr.second.val == "defaultLut")
-		desc.textureField[attr.first] = &Texture2D::defaultLUTTex;
+		desc.textureField[attr.first].val = &Texture2D::defaultLUTTex;
 	else
-		desc.textureField[attr.first] = &Texture2D::whiteRGBADefaultTex;
+		desc.textureField[attr.first].val = &Texture2D::whiteRGBADefaultTex;
 }
 
-void Material::addDefaultTexture(const pair<Name, MatAttribute<Texture*>>& attr)
+void Material::addDefaultTexture(const pair<Name, MatAttribute<AssetRef<Texture>>>& attr)
 {
-	desc.textureField[attr.first] = attr.second;
+	desc.textureField[attr.first].val = attr.second.val;
 }
 
 void Material::addDefaultImage(const pair<Name, unsigned int>& attr)
@@ -510,6 +519,42 @@ bool Material::loadDefaultMaterial()
 	AssetManager::registAsset(*ass);*/
 	isLoadDefaultMaterial = true;
 	return true;
+}
+
+bool Material::isStreamed(bool includedSubAsset) const
+{
+	if (isNull()) {
+		return false;
+	}
+
+	if (includedSubAsset) {
+		for (auto b = desc.textureField.begin(), e = desc.textureField.end(); b != e; b++) {
+			const AssetRef<Texture>& texAsset = b->second.val;
+			if (!texAsset.isValid()) {
+				return false;
+			}
+		}
+	}
+	
+	return true;
+}
+
+void Material::streamIn()
+{
+	if (isNull()) {
+		return;
+	}
+
+	for (auto b = desc.textureField.begin(), e = desc.textureField.end(); b != e; b++) {
+		AssetRef<Texture>& texAsset = b->second.val;
+		if (!texAsset.isValid()) {
+			texAsset.loadAsync();
+		}
+	}
+}
+
+void Material::streamOut()
+{
 }
 
 IRenderData* Material::getRenderData()

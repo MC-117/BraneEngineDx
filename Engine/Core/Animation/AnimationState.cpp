@@ -46,7 +46,7 @@ AnimationTransition::AnimationTransition()
 
 void AnimationTransition::setDuration(float duration)
 {
-    this->duration = max(duration, 0);
+    this->duration = max(duration, 0.0f);
 }
 
 float AnimationTransition::getDuration() const

@@ -131,7 +131,6 @@ void Live2DMeshData::bindShapeWithContext(IRenderContext& context)
         return;
     if (context.currentMeshData == this)
         return;
-    context.setMeshDrawContext();
     context.bindBufferBase(vertexBuffer.getVendorGPUBuffer(), 1);
     context.bindBufferBase(uvBuffer.getVendorGPUBuffer(), 2);
     context.bindBufferBase(elementBuffer.getVendorGPUBuffer(), 0);

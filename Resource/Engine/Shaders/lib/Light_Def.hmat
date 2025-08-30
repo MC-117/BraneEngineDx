@@ -75,6 +75,12 @@ void initLocalLightIterator(out ProbeGridIterator iter, float3 worldPos)
         getProbeGridIndex(worldPos),PROBE_TYPE_LIGHT);
 }
 
+void initLocalLightIteratorInView(out ProbeGridIterator iter, float3 viewPos)
+{
+    initProbeGridIterator(iter,
+        getProbeGridIndexInView(viewPos),PROBE_TYPE_LIGHT);
+}
+
 bool iterateLocalLight(inout ProbeGridIterator iter, out PointLight light)
 {
     if (iterateProbeGrid(iter)) {
@@ -87,6 +93,11 @@ bool iterateLocalLight(inout ProbeGridIterator iter, out PointLight light)
 #define ITER_LOCAL_LIGHT(worldPos, localLight) \
 ProbeGridIterator _localIter; \
 initLocalLightIterator(_localIter, worldPos); \
+while(iterateLocalLight(_localIter, localLight))
+
+#define ITER_LOCAL_LIGHT_IN_VIEW(viewPos, localLight) \
+ProbeGridIterator _localIter; \
+initLocalLightIteratorInView(_localIter, viewPos); \
 while(iterateLocalLight(_localIter, localLight))
 
 #define ITER_LOCAL_LIGHT_BEGIN(worldPos, localLight) \

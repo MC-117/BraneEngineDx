@@ -300,30 +300,25 @@ unsigned int DX11RenderContext::bindFrame(IRenderTarget* target)
 	if (currentRenderTarget == dxTarget)
 		return dxTarget->desc.frameID;
 
-	DX11Texture2D* depthTex = NULL;
-	if (dxTarget->desc.depthOnly)
-		depthTex = (DX11Texture2D*)dxTarget->desc.depthTexure->getVendorTexture();
-	else if (dxTarget->desc.withDepthStencil) {
-		if (dxTarget->desc.multisampleLevel > 1)
-			depthTex = dxTarget->multisampleDepthTex;
-		else
-			depthTex = dxTarget->dx11DepthTex;
-	}
-	else
-		depthTex = NULL;
-
-	if (depthTex) {
+	if (DX11Texture2D* depthTex = dxTarget->getValidDepthTexture()) {
+		currentDSVAccessFlag = dxTarget->desc.depthStencilAccessFlag;
+		if (currentGraphicsPSO) {
+			currentDSVAccessFlag = DepthStencilAccessFlag(currentDSVAccessFlag |
+				currentGraphicsPSO->desc.renderMode.dsMode.accessFlag);
+		}
 #if TEX_BINGING_REC
 		if (canBindRTV(depthTex))
-			dx11DSV = depthTex->getDSV(0);
+			dx11DSV = depthTex->getDSV(0, currentDSVAccessFlag);
 		else
 			throw runtime_error("Texture is still binded as SRV or UAV");
 #else
-		dx11DSV = depthTex->getDSV(0);
+		dx11DSV = depthTex->getDSV(0, currentDSVAccessFlag);
 #endif
 	}
-	else
+	else {
+		currentDSVAccessFlag = DSA_Default;
 		dx11DSV = nullptr;
+	}
 
 	dx11RTVs.resize(dxTarget->desc.textureList.size());
 	bool isMs = dxTarget->desc.multisampleLevel > 1;
@@ -381,8 +376,6 @@ void DX11RenderContext::clearOutputBufferBindings()
 void DX11RenderContext::clearFrameBindings()
 {
 	clearRTV();
-	dx11RTVs.clear();
-	dx11DSV = nullptr;
 }
 
 void DX11RenderContext::resolveMultisampleFrame(IRenderTarget* target)
@@ -415,7 +408,6 @@ void DX11RenderContext::resolveMultisampleFrame(IRenderTarget* target)
 			clearUAV();
 		}
 	}
-	clearRTV();
 }
 
 void DX11RenderContext::clearFrameColor(const Color& color)
@@ -614,14 +606,22 @@ void DX11RenderContext::bindMaterialTextures(IMaterial* material)
 	if (dxMaterial == NULL)
 		return;
 	for (auto b = dxMaterial->desc.textureField.begin(), e = dxMaterial->desc.textureField.end(); b != e; b++) {
-		if (b->second.val == NULL)
+		Texture* tex = NULL;
+		
+		const AssetRef<Texture>& texAsset = b->second.val;
+		tex = texAsset.get();
+
+		if (tex == NULL) {
+			//throw runtime_error("Texture not loaded");
 			continue;
-		if (b->second.val->getVendorTexture() == NULL) {
+		}
+		
+		if (tex->getVendorTexture() == NULL) {
 			throw runtime_error("Texture is not ready");
 			continue;
 		}
 
-		bindTexture((ITexture*)b->second.val->getVendorTexture(), b->first);
+		bindTexture((ITexture*)tex->getVendorTexture(), b->first);
 	}
 }
 
@@ -773,7 +773,7 @@ void DX11RenderContext::bindTexture(ITexture* texture, const ShaderPropertyName&
 {
 	if (currentProgram == NULL)
 		return;
-	DX11Texture2D* dxTex = dynamic_cast<DX11Texture2D*>(texture);
+	DX11Texture* dxTex = dynamic_cast<DX11Texture*>(texture);
 	ComPtr<ID3D11ShaderResourceView> tex = NULL;
 	ComPtr<ID3D11SamplerState> sample = NULL;
 
@@ -809,10 +809,10 @@ void DX11RenderContext::bindImage(const Image& image, const ShaderPropertyName& 
 {
 	if (currentProgram == NULL)
 		return;
-	DX11Texture2D* dxTex = NULL;
+	DX11Texture* dxTex = NULL;
 	ComPtr<ID3D11UnorderedAccessView> tex = NULL;
 	if (image.texture) {
-		dxTex = dynamic_cast<DX11Texture2D*>((ITexture*)image.texture->getVendorTexture());
+		dxTex = dynamic_cast<DX11Texture*>((ITexture*)image.texture->getVendorTexture());
 		if (dxTex) {
 			RWOption rwOption;
 			rwOption.mipLevel = image.level;
@@ -874,6 +874,9 @@ void DX11RenderContext::clearRTV()
 	DX11RenderTarget::currentRenderTarget = nullptr;
 	currentRenderTarget = nullptr;
 	currentDeviceSurface = nullptr;
+	dx11RTVs.clear();
+	dx11DSV = nullptr;
+	currentDSVAccessFlag = DSA_Default;
 }
 
 void DX11RenderContext::bindMeshData(MeshData* meshData)
@@ -941,107 +944,6 @@ void DX11RenderContext::setStencilRef(uint8_t stencil)
 	deviceContext->OMSetDepthStencilState(dx11DSState.Get(), currentStencilRef);
 }
 
-void DX11RenderContext::setRenderPreState(DepthStencilMode depthStencilMode)
-{
-	deviceContext->OMSetBlendState(dxContext.blendOffWriteOff.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderGeomtryState(DepthStencilMode depthStencilMode)
-{
-	deviceContext->OMSetBlendState(dxContext.blendGBuffer.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderOpaqueState(DepthStencilMode depthStencilMode)
-{
-	deviceContext->OMSetBlendState(dxContext.blendOffWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderAlphaState(DepthStencilMode depthStencilMode)
-{
-	deviceContext->OMSetBlendState(dxContext.blendOffWriteOnAlphaTest.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderTransparentState(DepthStencilMode depthStencilMode)
-{
-	deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderOverlayState()
-{
-	deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderPostState()
-{
-	deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderPostState(DepthStencilMode depthStencilMode)
-{
-	deviceContext->OMSetBlendState(dxContext.blendOnWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.getOrCreateDepthStencilState(depthStencilMode);
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderPostAddState()
-{
-	deviceContext->OMSetBlendState(dxContext.blendAddWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderPostPremultiplyAlphaState()
-{
-	deviceContext->OMSetBlendState(dxContext.blendPremultiplyAlphaWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderPostMultiplyState()
-{
-	deviceContext->OMSetBlendState(dxContext.blendMultiplyWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderPostMaskState()
-{
-	deviceContext->OMSetBlendState(dxContext.blendMaskWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setRenderPostReplaceState()
-{
-	deviceContext->OMSetBlendState(dxContext.blendOffWriteOn.Get(), NULL, 0xFFFFFFFF);
-	dx11DSState = dxContext.depthWriteOffTestOffLEqual;
-	setStencilRef(currentStencilRef);
-}
-
-void DX11RenderContext::setCullState(CullType type)
-{
-	if (type == Cull_Back)
-		deviceContext->RSSetState(dxContext.rasterizerCullBack.Get());
-	else if (type == Cull_Front)
-		deviceContext->RSSetState(dxContext.rasterizerCullFront.Get());
-	else
-		deviceContext->RSSetState(dxContext.rasterizerCullOff.Get());
-}
-
 void DX11RenderContext::setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h)
 {
 	D3D11_VIEWPORT vp;
@@ -1052,30 +954,6 @@ void DX11RenderContext::setViewport(unsigned int x, unsigned int y, unsigned int
 	vp.MinDepth = 0;
 	vp.MaxDepth = 1;
 	deviceContext->RSSetViewports(1, &vp);
-}
-
-void DX11RenderContext::setLineDrawContext()
-{
-	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-	deviceContext->IASetInputLayout(dxContext.screenInputLayout.Get());
-}
-
-void DX11RenderContext::setMeshDrawContext()
-{
-	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	deviceContext->IASetInputLayout(dxContext.meshInputLayout.Get());
-}
-
-void DX11RenderContext::setSkeletonMeshDrawContext()
-{
-	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	deviceContext->IASetInputLayout(dxContext.skeletonMeshInputLayout.Get());
-}
-
-void DX11RenderContext::setTerrainDrawContext()
-{
-	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
-	deviceContext->IASetInputLayout(dxContext.terrainInputLayout.Get());
 }
 
 void DX11RenderContext::setDrawInfo(int passIndex, int passNum, unsigned int materialID)
@@ -1107,8 +985,76 @@ void DX11RenderContext::bindDrawInfo()
 	currentProgram->bindCBV(deviceContext, DX11ShaderStage::drawInfoBufferName, drawInfoBuf);
 }
 
+void DX11RenderContext::bindPipelineState(IPipelineState* pipelineState)
+{
+	if (DX11GraphicsPipelineState* dxPSO = dynamic_cast<DX11GraphicsPipelineState*>(pipelineState)) {
+		assert(dxPSO->isValid());
+
+		if (currentGraphicsPSO == dxPSO) {
+			return;
+		}
+
+		if (currentGraphicsPSO == NULL || currentGraphicsPSO->dx11ShaderProgram != dxPSO->dx11ShaderProgram) {
+			bindShaderProgram(dxPSO->dx11ShaderProgram);
+		}
+
+		if (currentGraphicsPSO == NULL || currentGraphicsPSO->dx11BlendState != dxPSO->dx11BlendState)
+			deviceContext->OMSetBlendState(dxPSO->dx11BlendState.Get(), NULL, 0xFFFFFFFFu);
+
+		if (currentGraphicsPSO == NULL || currentGraphicsPSO->dx11DepthStencilState != dxPSO->dx11DepthStencilState) {
+			dx11DSState = dxPSO->dx11DepthStencilState.Get();
+			setStencilRef(currentStencilRef);
+		}
+
+		if (currentGraphicsPSO == NULL || currentGraphicsPSO->dx11RasterizerState != dxPSO->dx11RasterizerState) {
+			deviceContext->RSSetState(dxPSO->dx11RasterizerState.Get());
+		}
+
+		if (currentGraphicsPSO == NULL || currentGraphicsPSO->dx11PrimitiveTopology != dxPSO->dx11PrimitiveTopology) {
+			deviceContext->IASetPrimitiveTopology(dxPSO->dx11PrimitiveTopology);
+		}
+		
+		if (currentGraphicsPSO == NULL || currentGraphicsPSO->dx11InputLayout != dxPSO->dx11InputLayout) {
+			deviceContext->IASetInputLayout(dxPSO->dx11InputLayout.Get());
+		}
+
+		if (dx11DSV && currentRenderTarget) {
+			DepthStencilAccessFlag accessFlag = (DepthStencilAccessFlag)(dxPSO->desc.renderMode.dsMode.accessFlag |
+				currentRenderTarget->desc.depthStencilAccessFlag);
+			if (accessFlag != currentDSVAccessFlag) {
+				if (DX11Texture2D* depthTex = currentRenderTarget->getValidDepthTexture()) {
+					dx11DSV = depthTex->getDSV(0, accessFlag);
+					deviceContext->OMSetRenderTargets(dx11RTVs.size(), (ID3D11RenderTargetView* const*)dx11RTVs.data(), dx11DSV.Get());
+					currentDSVAccessFlag = accessFlag;
+				}
+			}
+		}
+
+		currentGraphicsPSO = dxPSO;
+		currentComputePSO = NULL;
+	}
+
+	if (DX11ComputePipelineState* dxPSO = dynamic_cast<DX11ComputePipelineState*>(pipelineState)) {
+		assert(dxPSO->isValid());
+
+		if (currentComputePSO == dxPSO) {
+			return;
+		}
+		
+		if (currentComputePSO == NULL || currentComputePSO->dx11ShaderProgram != dxPSO->dx11ShaderProgram) {
+			bindShaderProgram(dxPSO->dx11ShaderProgram);
+		}
+		
+		currentComputePSO = dxPSO;
+		currentGraphicsPSO = NULL;
+	}
+}
+
 void DX11RenderContext::meshDrawCall(const MeshPartDesc& mesh)
 {
+	assert(currentGraphicsPSO->dx11InputLayout == dxContext.meshInputLayout
+		|| currentGraphicsPSO->dx11InputLayout == dxContext.skeletonMeshInputLayout);
+	assert(currentGraphicsPSO->dx11PrimitiveTopology == D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	if (mesh.meshData == NULL) {
 		currentMeshData = NULL;
 	}
@@ -1122,11 +1068,10 @@ void DX11RenderContext::meshDrawCall(const MeshPartDesc& mesh)
 void DX11RenderContext::postProcessCall()
 {
 	currentMeshData = NULL;
-	deviceContext->IASetInputLayout(dxContext.screenInputLayout.Get());
-	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	assert(currentGraphicsPSO->dx11InputLayout == dxContext.screenInputLayout);
+	assert(currentGraphicsPSO->dx11PrimitiveTopology == D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	bindDrawInfo();
 	deviceContext->Draw(4, 0);
-	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void DX11RenderContext::execteParticleDraw(IRenderExecution* execution, const vector<DrawArraysIndirectCommand>& cmds)
@@ -1134,7 +1079,8 @@ void DX11RenderContext::execteParticleDraw(IRenderExecution* execution, const ve
 	// DX11RenderExecution* dxExec = dynamic_cast<DX11RenderExecution*>(execution);
 	// if (dxExec == NULL)
 	// 	return;
-	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+	assert(currentGraphicsPSO->dx11InputLayout == dxContext.screenInputLayout);
+	assert(currentGraphicsPSO->dx11PrimitiveTopology == D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 #if INDIRECT_DRAW
 	size_t size = sizeof(DrawArraysIndirectCommand) * cmds.size();
 	if (dxExec->cmdBufferDesc.ByteWidth != size) {
@@ -1162,6 +1108,9 @@ void DX11RenderContext::execteParticleDraw(IRenderExecution* execution, const ve
 
 void DX11RenderContext::execteMeshDraw(IRenderExecution* execution, const vector<DrawElementsIndirectCommand>& cmds)
 {
+	assert(currentGraphicsPSO->dx11InputLayout == dxContext.meshInputLayout
+		|| currentGraphicsPSO->dx11InputLayout == dxContext.skeletonMeshInputLayout);
+	assert(currentGraphicsPSO->dx11PrimitiveTopology == D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	DX11RenderExecution* dxExec = dynamic_cast<DX11RenderExecution*>(execution);
 	if (dxExec == NULL)
 		return;

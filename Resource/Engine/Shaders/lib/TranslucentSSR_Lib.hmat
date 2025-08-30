@@ -2,7 +2,6 @@
 #include "ReflectionProbe_def.hmat"
 
 DEF_TEX2D_AUTO(gBufferA);
-DEF_TEX2D_AUTO(gBufferB);
 DEF_TEX2D_AUTO(hiZMap);
 
 float3 getSSRColor(float3 startUVZ, float3 worldNorm, float roughness)
@@ -26,11 +25,11 @@ float3 getSSRColor(float3 startUVZ, float3 worldNorm, float roughness)
     float3 dirUVZ = normalize(endUVZ - startUVZ);
     if (rayTraceHiZ_UVZ(hiZMap, hiZMapSampler,
         hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
-        startUVZ, dirUVZ, hitUVZ, fadeFactor))
+        hiZMaxMipLevel, startUVZ, dirUVZ, hitUVZ, fadeFactor))
 #else
     if (rayTraceHiZ_View(hiZMap, hiZMapSampler,
         hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
-        startView, L, hitUVZ))
+        hiZMaxMipLevel, startView, L, hitUVZ))
 #endif
     {
         hitColor = SAMPLE_TEX_LOD(gBufferA, hitUVZ.xy, 0);

@@ -1,6 +1,7 @@
 #include "GenMipPass.h"
 #include "../RenderCore/SceneRenderData.h"
 #include "../Asset.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
 bool GenMipPass::loadDefaultResource()
 {
@@ -14,7 +15,7 @@ void GenMipPass::prepare()
 {
 	if (material) {
 		program = material->getShader()->getProgram(Shader_Default);
-		program->init();
+		pipelineState = fetchPSOIfDescChangedThenInit(pipelineState, program);
 	}
 	outputTextures.clear();
 }
@@ -37,7 +38,7 @@ void GenMipPass::execute(IRenderContext& context)
 			int miplevel = sceneColorMips->getMipLevels();
 			int width = sceneColorTexture->getWidth();
 			int height = sceneColorTexture->getHeight();
-			context.bindShaderProgram(program);
+			context.bindPipelineState(pipelineState);
 
 			Vector3u localSize = material->getLocalSize();
 

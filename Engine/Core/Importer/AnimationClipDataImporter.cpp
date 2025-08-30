@@ -20,13 +20,8 @@ bool AnimationClipDataImporter::loadInternal(const ImportInfo& info, ImportResul
 	}
 	if (data) {
 		Asset* asset = new Asset(&AnimationClipDataAssetInfo::assetInfo, data->name, info.path);
-		asset->asset[0] = data;
-		if (AssetManager::registAsset(*asset))
-			result.assets.push_back(asset);
-		else {
-			delete asset;
-			result.status = ImportResult::RegisterFailed;
-		}
+		asset->setActualAsset(data);
+		result.asset = asset;
 	}
 	else {
 		result.status = ImportResult::LoadFailed;

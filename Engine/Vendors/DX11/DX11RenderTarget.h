@@ -19,10 +19,10 @@ public:
 	DX11Context& dxContext;
 	vector<ComPtr<ID3D11RenderTargetView>> dx11RTVs;
 	ComPtr<ID3D11DepthStencilView> dx11DSV = NULL;
-	Texture2DDesc dx11DepthTexDesc;
+	TextureDesc dx11DepthTexDesc;
 	DX11Texture2D* dx11DepthTex = NULL;
 
-	Texture2DDesc multisampleDepthTexDesc;
+	TextureDesc multisampleDepthTexDesc;
 	DX11Texture2D* multisampleDepthTex = NULL;
 
 	static string depthBlitName;
@@ -33,7 +33,7 @@ public:
 
 	struct MSTex
 	{
-		Texture2DDesc desc;
+		TextureDesc desc;
 		DX11Texture2D* tex = NULL;
 	};
 
@@ -41,6 +41,8 @@ public:
 
 	DX11RenderTarget(DX11Context& context, RenderTargetDesc& desc);
 	virtual ~DX11RenderTarget();
+
+	DX11Texture2D* getValidDepthTexture() const;
 
 	virtual ITexture2D* getInternalDepthTexture();
 	virtual unsigned int bindFrame();

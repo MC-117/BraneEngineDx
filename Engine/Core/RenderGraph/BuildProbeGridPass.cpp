@@ -2,6 +2,7 @@
 #include "../RenderCore/SceneRenderData.h"
 #include "../Asset.h"
 #include "../Utility/MathUtility.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
 bool BuildProbeGridPass::loadDefaultResource()
 {
@@ -16,14 +17,14 @@ void BuildProbeGridPass::prepare()
 {
 	if (buildMaterial) {
 		buildProgram = buildMaterial->getShader()->getProgram(Shader_Default);
-		buildProgram->init();
+		buildPSO = fetchPSOIfDescChangedThenInit(buildPSO, buildProgram);
 		buildDebugProgram = buildMaterial->getShader()->getProgram(Shader_Debug);
-		buildDebugProgram->init();
+		buildDebugPSO = fetchPSOIfDescChangedThenInit(buildDebugPSO, buildDebugProgram);
 	}
 	
 	if (compactMaterial) {
 		compactProgram = compactMaterial->getShader()->getProgram(Shader_Default);
-		compactProgram->init();
+		compactPSO = fetchPSOIfDescChangedThenInit(compactPSO, compactProgram);
 	}
 }
 
@@ -59,9 +60,9 @@ void BuildProbeGridPass::execute(IRenderContext& context)
 			if (cameraData->flags.has(CameraRender_DebugDraw) &&
 				(sceneData->debugRenderData.isTriggerPersistentDebugDraw() ||
 					cameraData->getDebugProbeIndex() > 0))
-				context.bindShaderProgram(buildDebugProgram);
+				context.bindPipelineState(buildDebugPSO);
 			else
-				context.bindShaderProgram(buildProgram);
+				context.bindPipelineState(buildPSO);
 			sceneData->debugRenderData.bind(context);
 			cameraData->bindCameraBuffOnly(context);
 			cameraData->probeGrid.probePool->bind(context);
@@ -74,7 +75,7 @@ void BuildProbeGridPass::execute(IRenderContext& context)
 			sceneData->debugRenderData.unbind(context);
 
 			// Compact link list to array
-			context.bindShaderProgram(compactProgram);
+			context.bindPipelineState(compactPSO);
 			cameraData->bindCameraBuffOnly(context);
 			context.bindBufferBase(probeGrid.probeGridLinkListBuffer.getVendorGPUBuffer(), probeGrid.probeGridLinkListName);
 			context.bindBufferBase(probeGrid.probeGridLinkHeadBuffer.getVendorGPUBuffer(), probeGrid.probeGridLinkHeadName);

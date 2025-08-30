@@ -36,8 +36,10 @@ public:
 protected:
 	static Material* copyMaterial;
 	static ShaderProgram* copyProgram;
+	static ComputePipelineState* copyPSO;
 	static Material* genMipsMaterial;
 	static ShaderProgram* genMipsProgram;
+	static ComputePipelineState* genMipsPSO;
 	static bool isInited;
 
 	static void loadDefaultResource();

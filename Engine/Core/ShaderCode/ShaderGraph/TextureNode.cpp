@@ -53,22 +53,22 @@ bool TextureParameterVariable::isGlobalVariable() const
     return true;
 }
 
-Texture* TextureParameterVariable::getValue() const
+AssetRef<Texture> TextureParameterVariable::getValue() const
 {
     return defaultTexture;
 }
 
-Texture* TextureParameterVariable::getDefaultValue() const
+AssetRef<Texture> TextureParameterVariable::getDefaultValue() const
 {
     return defaultTexture;
 }
 
-void TextureParameterVariable::setValue(Texture* const& value)
+void TextureParameterVariable::setValue(AssetRef<Texture> const& value)
 {
     defaultTexture = value;
 }
 
-void TextureParameterVariable::setDefaultValue(Texture* const& value)
+void TextureParameterVariable::setDefaultValue(AssetRef<Texture> const& value)
 {
     defaultTexture = value;
 }
@@ -83,8 +83,8 @@ void TextureParameterVariable::applyToMaterial(Material& material)
 {
     ShaderVariable::applyToMaterial(material);
     const Name& name = getName();
-    if (!name.isNone() && defaultTexture) {
-        material.setTexture(name, *defaultTexture);
+    if (!name.isNone() && (defaultTexture.isPending() || defaultTexture.isValid())) {
+        material.setTexture(name, defaultTexture);
     }
 }
 

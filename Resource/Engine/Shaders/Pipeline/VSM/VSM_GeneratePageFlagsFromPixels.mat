@@ -15,7 +15,7 @@ cbuffer GenPageFlagInfo
     int backFaceCull;
 }
 
-DEF_TEX2D_AUTO(sceneDepthMap)
+Texture2D sceneDepthMap;
 DEF_TEX2D_AUTO(sceneNormalMap)
 
 Buffer<uint> directLightVSMIDs;
@@ -26,11 +26,45 @@ bool isBackFaceCulled(float3 worldNorm, float3 lightDir)
 	return dot(worldNorm, lightDir) < -sinAlpha;
 }
 
-uint getMipLevelLocal(uint vsmID, float3 viewOriginPos, float sceneDepth)
+bool isBackFaceCulled(float3 worldNorm, float3 toLight, float radius)
+{
+	float distSqr = dot(toLight, toLight);
+	float falloff = rcp(distSqr + 1);
+	float invDist = rsqrt(distSqr);
+	float sinAlphaSqr = saturate(radius * radius * falloff);
+	float sinAlpha = sqrt(sinAlphaSqr);
+	return dot(worldNorm, toLight * invDist) < -sinAlpha;
+}
+
+float calcPixelFootprintLocal(
+	VSMProjData projData,
+	float3 localPosLightSpace,
+	float sceneDepth)
+{
+	// Compute footprint by projecting the approximate size of a camera pixel at the given depth to shadow space
+	// NOTE: This doesn't take the screen XY position/FOV into account, which may or may not be desirable.
+
+	// TODO: Roll into a uniform
+	float2 radiusXY = 1.0f / (camData.viewSize * camData.promat._m00_m11);
+	float radiusScreen = min(radiusXY.x, radiusXY.y);
+	float depthScale = sceneDepth * camData.promat[2][3] + camData.promat[3][3];
+
+	float radiusWorld = depthScale * radiusScreen;
+
+	float4 shadowUVz = mul(float4(localPosLightSpace, 1.0f), projData.viewOriginToUV);
+
+	float4 radiusClipH = mul(float4(radiusWorld, 0.0f, shadowUVz.w, 1.0f), projData.viewToClip);
+	float radiusClip = abs(radiusClipH.x / radiusClipH.w);
+	float footprint = radiusClip * float(2 * VSM_MAX_SIZE);
+
+	return footprint;
+}
+
+uint getMipLevelLocal(uint vsmID, float3 localPosLightSpace, float sceneDepth)
 {
 	VSMProjData projData = getVSMProjData(vsmID);
 
-	float footprint = calcPixelFootprintLocal(projData, viewOriginPos, sceneDepth);
+	float footprint = calcPixelFootprintLocal(projData, localPosLightSpace, sceneDepth);
 
 	float mipLevelFloat = log2(footprint) + projData.resolutionLodBias;
 	uint mipLevel = uint(max(floor(mipLevelFloat), 0.0f));
@@ -177,17 +211,18 @@ void main(uint2 pixel : SV_DispatchThreadID, uint gidx : SV_GroupIndex)
     ITER_LOCAL_LIGHT(worldPos, localLight)
     {
         if (localLight.intensity != 0 && localLight.vsmID != NONE_VSMID) {
-			float3 localPos = worldPos - localLight.pos;
-			float distSq = dot(localPos, localPos);
+			float3 localPosLightSpace = worldPos - localLight.pos;
+			float3 toLight = normalize(localPosLightSpace);
+			float distSq = dot(localPosLightSpace, localPosLightSpace);
 			if (distSq > (localLight.radius * localLight.radius))
 				continue;
-			if (dot(normalize(localPos), localLight.direction) < localLight.cosConeAngle)
-				continue;
-			if (backFaceCull && isBackFaceCulled(worldNorm, normalize(-localPos)))
+			if (localLight.type == LIGHT_TYPE_SPOT && dot(toLight, localLight.direction) < localLight.cosConeAngle)
+			 	continue;
+			if (backFaceCull && isBackFaceCulled(worldNorm, -toLight))
 				continue;
 			for (int i = 0; i < 6; i++) {
 				uint vsmID = localLight.vsmID + i;
-				uint mipLevel = getMipLevelLocal(vsmID, localPos, screenDepth);
+				uint mipLevel = getMipLevelLocal(vsmID, localPosLightSpace, screenDepth);
 				markPage(vsmID
 				, mipLevel
 				, worldPos

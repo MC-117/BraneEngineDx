@@ -1,0 +1,90 @@
+#include "../../lib/TerrainMeshData_Def.hmat"
+
+cbuffer Parameters
+{
+    float4x4 terrainLocalToWorld;
+    float4x4 terrainWorldToLocal;
+    float widthPerGrid;
+    float widthPerTile;
+    float widthPerTriangle;
+    float heightPerGrid;
+    int tilesFromAllLevelPerGrid;
+    int tilesPerGrid;
+    int trianglesPerTile;
+    int tileLevels;
+    float distanceForFirstTileLevel;
+    int allGrids;
+    int2 grid;
+}
+
+void min_max(inout float2 ref, float v)
+{
+    ref = float2(min(ref.x, v), max(ref.y, v));
+}
+
+void min_max2(inout float2 ref, float2 v)
+{
+    ref = float2(min(ref.x, v.x), max(ref.y, v.y));
+}
+
+float2 min_max4(float4 min4, float4 max4)
+{
+    return float2(min(min(min4.x, min4.y), min(min4.z, min4.w)),
+        max(max(max4.x, max4.y), max(max4.z, max4.w)));
+}
+
+float2 getUVGridOffset(int2 gridIndex)
+{
+    return (float2)gridIndex / (float2)terrainGrid;
+}
+
+float2 getUVTileOffset(int2 gridIndex, int2 tileIndex)
+{
+    return ((float2)gridIndex + float2(tileIndex) / tilesPerGrid) / float2(grid);
+}
+
+float square(float x)
+{
+    return x * x;
+}
+
+uint getLevelOffset(uint level)
+{
+    uint offset = 0;
+    for (int l = 0; l < level; l++) {
+        uint size = tilesPerGrid >> l;
+        offset += size;
+    }
+}
+
+uint getLevelOffsetWithCounter(uint level)
+{
+    return getLevelOffset(level) + level;
+}
+
+uint getGridOffset(uint2 gridIndex)
+{
+    return (gridIndex.x + gridIndex.y * grid.x) * tilesFromAllLevelPerGrid;
+}
+
+uint getGridOffsetWithCounter(uint2 gridIndex)
+{
+    return (gridIndex.x + gridIndex.y * grid.x) * (tilesFromAllLevelPerGrid + tileLevels);
+}
+
+uint getLevelOffsetCounter(uint level)
+{
+    return getLevelOffsetWithCounter(level + 1) - 1;
+}
+
+uint encodeTile(int x, int y, int level)
+{
+    return x << 18 | y << 4 | (level & 0xF);
+}
+
+void decodeTile(uint code, inout int x, inout int y, inout int level)
+{
+    x = code >> 18;
+    y = code & 0x3FFFu;
+    level = code & 0xF;
+}

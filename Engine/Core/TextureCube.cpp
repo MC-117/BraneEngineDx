@@ -2,7 +2,7 @@
 #include "Utility/TextureUtility.h"
 #include "Utility/EngineUtility.h"
 
-TextureCube::TextureCube(const TextureCubeInfo& info, bool isStandard) : isStandard(isStandard)
+TextureCube::TextureCube(const TextureInfo& info, bool isStandard) : isStandard(isStandard)
 {
 	desc.info = info;
 	desc.info.dimension = TD_Cube;
@@ -13,12 +13,12 @@ TextureCube::TextureCube(const string& file, bool isStandard)
 {
 	desc.info.dimension = TD_Cube;
 	desc.arrayCount = 6;
-	if (!load(file))
+	if (!TextureCube::load(file))
 		throw runtime_error("Texture file load failed");
 	this->isStandard = isStandard;
 }
 
-TextureCube::TextureCube(unsigned int width, unsigned int channel, bool isStandard, const TextureCubeInfo& info)
+TextureCube::TextureCube(unsigned int width, unsigned int channel, bool isStandard, const TextureInfo& info)
 {
 	desc.info = info;
 	desc.info.dimension = TD_Cube;
@@ -41,6 +41,11 @@ TextureCube::TextureCube(unsigned int width, unsigned int channel, bool isStanda
 }
 
 TextureCube::~TextureCube()
+{
+	release();
+}
+
+void TextureCube::release()
 {
 	if (!readOnly && vendorTexture != NULL)
 		delete vendorTexture;
@@ -83,6 +88,11 @@ int TextureCube::getMipLevels() const
 	return desc.mipLevel;
 }
 
+TexInternalType TextureCube::getFormat() const
+{
+	return desc.info.internalType;
+}
+
 unsigned long long TextureCube::getTextureID()
 {
 	newVendorTexture();
@@ -111,9 +121,12 @@ void TextureCube::setViewAsArray(bool value)
 	}
 }
 
-void TextureCube::setTextureInfo(const TextureCubeInfo& info)
+void TextureCube::setTextureInfo(const TextureInfo& info)
 {
 	desc.info = info;
+	if (info.dimension != TD_Cube && info.dimension != TD_CubeArray) {
+		desc.info.dimension = TD_Cube;
+	}
 	desc.needUpdate = true;
 }
 
@@ -244,7 +257,7 @@ bool TextureCube::save(const string& file)
 	else {
 		IVendor& vendor = VendorManager::getInstance().getVendor();
 		outData = mallocTexture(desc.width * desc.height * desc.channel);
-		vendor.readBackTexture2D(vendorTexture, outData);
+		vendor.readBackTexture(vendorTexture, outData);
 	}
 
 	MipFileHeader header;

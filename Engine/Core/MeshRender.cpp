@@ -178,6 +178,16 @@ void MeshMaterialCollection::gatherInstanceInfo(InstancedTransformRenderDataHand
 	handle.instanceCount = instanceCount;
 }
 
+void MeshMaterialCollection::streamInAssets()
+{
+	for (int i = 0; i < materials.size(); i++) {
+		Material* material = materials[i];
+		if (material == NULL || !meshPartsEnable[i])
+			continue;
+		material->streamIn();
+	}
+}
+
 void MeshMaterialCollection::dispatchMeshDraw(const DispatchData& data)
 {
 	if (mesh == NULL || data.hidden || instanceCount == 0)
@@ -192,7 +202,7 @@ void MeshMaterialCollection::dispatchMeshDraw(const DispatchData& data)
 
 	for (int i = 0; i < materials.size(); i++) {
 		Material* material = materials[i];
-		if (material == NULL || !meshPartsEnable[i])
+		if (material == NULL || !meshPartsEnable[i] || !material->isStreamed(true))
 			continue;
 		MeshPart* part = &mesh->meshParts[i];
 
@@ -549,13 +559,16 @@ void MeshRender::preRender(PreRenderInfo& info)
 
 void MeshRender::render(RenderInfo& info)
 {
+	collection.streamInAssets();
+	outlineCollection.streamInAssets();
+	
 	MeshMaterialCollection::DispatchData dispatchData;
 	dispatchData.init<MeshRenderCommand>();
 	dispatchData.hidden = hidden;
 	dispatchData.isStatic = isStatic;
 	dispatchData.canCastShadow = canCastShadow;
 	dispatchData.hasPrePass = hasPrePass;
-
+	
 	collection.dispatchMeshDraw(dispatchData);
 	outlineCollection.dispatchMeshDraw(dispatchData);
 }

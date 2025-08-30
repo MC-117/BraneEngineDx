@@ -302,7 +302,7 @@ Object* Live2DModelAssetInfo::createObject(Asset& asset) const
     return actor;
 }
 
-ImporterRegister<Live2DModelImporter> live2dImporter(".live2d", true);
+ImporterRegister<Live2DModelImporter> live2dImporter(".live2d");
 
 bool Live2DModelImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 {
@@ -314,15 +314,7 @@ bool Live2DModelImporter::loadInternal(const ImportInfo& info, ImportResult& res
     }
 
     Asset* asset = new Asset(&PythonScriptAssetInfo::assetInfo, info.filename, info.path);
-    asset->asset[0] = model;
-    if (AssetManager::registAsset(*asset)) {
-        result.assets.push_back(asset);
-        return true;
-    }
-    else {
-        delete model;
-        delete asset;
-        result.status = ImportResult::RegisterFailed;
-        return false;
-    }
+    asset->setActualAsset(model);
+    result.asset = asset;
+    return true;
 }

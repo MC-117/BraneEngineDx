@@ -66,7 +66,7 @@ void TerrainBasePatchMeshData::updateHeightMap(const Texture2D& src)
 	sourceMap = &src;
 	
 	Vector2u preferredSize = getPreferredResolution();
-	heightMap.setTextureInfo(Texture2DInfo{ TW_Clamp, TW_Clamp });
+	heightMap.setTextureInfo(TextureInfo{ TW_Clamp, TW_Clamp });
 	heightMap.copyFrom(src, preferredSize.x(), preferredSize.y());
 }
 
@@ -115,7 +115,6 @@ void TerrainBasePatchMeshData::bindShape()
 	update();
 	if (currentMeshData == this)
 		return;
-	bindDrawContext();
 	vertexBuffer.bindBase(1);
 	uvBuffer.bindBase(2);
 	elementBuffer.bindBase(0);
@@ -133,7 +132,6 @@ void TerrainBasePatchMeshData::bindShapeWithContext(IRenderContext& context)
 	static const ShaderPropertyName TerrainDataName = "TerrainData";
 	static const ShaderPropertyName terrainMapName = "terrainMap";
 
-	bindDrawContext(context);
 	context.bindBufferBase(vertexBuffer.getVendorGPUBuffer(), 1);
 	context.bindBufferBase(uvBuffer.getVendorGPUBuffer(), 2);
 	context.bindBufferBase(elementBuffer.getVendorGPUBuffer(), 0);
@@ -144,6 +142,7 @@ void TerrainBasePatchMeshData::bindShapeWithContext(IRenderContext& context)
 
 TerrainQuadPatchMeshData::TerrainQuadPatchMeshData()
 {
+	type = MT_Terrain;
 	vertexPerFace = 4;
 }
 
@@ -179,16 +178,6 @@ void TerrainQuadPatchMeshData::updateMesh()
 	needUpdateMesh = true;
 }
 
-void TerrainQuadPatchMeshData::bindDrawContext()
-{
-	VendorManager::getInstance().getVendor().setTerrainDrawContext();
-}
-
-void TerrainQuadPatchMeshData::bindDrawContext(IRenderContext& context)
-{
-	context.setTerrainDrawContext();
-}
-
 int TerrainQuadPatchMeshData::getLodCount() const
 {
 	return 0;
@@ -215,6 +204,7 @@ MeshPart TerrainQuadPatchMeshData::getLodMeshPart(int lod)
 
 TerrainTrianglePatchMeshData::TerrainTrianglePatchMeshData()
 {
+	type = MT_Mesh;
 	vertexPerFace = 3;
 }
 
@@ -263,16 +253,6 @@ void TerrainTrianglePatchMeshData::updateMesh()
 	}
 	
 	needUpdateMesh = true;
-}
-
-void TerrainTrianglePatchMeshData::bindDrawContext()
-{
-	VendorManager::getInstance().getVendor().setMeshDrawContext();
-}
-
-void TerrainTrianglePatchMeshData::bindDrawContext(IRenderContext& context)
-{
-	context.setMeshDrawContext();
 }
 
 int TerrainTrianglePatchMeshData::getLodCount() const

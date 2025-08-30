@@ -796,6 +796,7 @@ void Gizmo::beginFrame(ImDrawList* drawList)
 	ImGuizmo::SetDrawlist(drawList);
 
 	projMatrix = camera->getProjectionMatrix();
+	projMatrixReversedZ = camera->getProjectionMatrixReversedZ();
 	viewMatrix = camera->getViewMatrix();
 
 	ScreenHitInfo hitInfo;
@@ -876,11 +877,17 @@ void Gizmo::onGUI(Object* root)
 		return;
 	GizmoInfo info = { this, camera };
 	ObjectIterator iter(root);
-	do{
+	do {
 		Editor* editor = EditorManager::getEditor(iter.current());
 		if (editor != NULL)
 			editor->onGizmo(info);
 	} while (iter.next());
+	
+	if (ImGui::IsWindowFocused() && ImGui::IsKeyReleased(ImGuiKey_Delete)) {
+		if (Object* selectedObject = EditorManager::getSelectedObject()) {
+			selectedObject->destroy(true);
+		}
+	}
 }
 
 void Gizmo::onUpdate(Camera& camera)
@@ -1051,7 +1058,7 @@ void Gizmo::onRender2D(ImDrawList* drawList)
 
 		Vector4f p = pvm * Vector4f(text.position.x(), text.position.y(), text.position.z(), 1);
 
-		if ((p.z() < camera.zNear || p.z() > camera.zFar))
+		if (p.z() < camera.zNear || p.z() > camera.zFar)
 			continue;
 
 		p /= p.w();
@@ -1076,7 +1083,7 @@ void Gizmo::onRender2D(ImDrawList* drawList)
 
 		Vector4f p = pvm * Vector4f(icon.position.x(), icon.position.y(), icon.position.z(), 1);
 
-		if ((p.z() < camera.zNear || p.z() > camera.zFar))
+		if (p.z() < camera.zNear || p.z() > camera.zFar)
 			continue;
 
 		p /= p.w();

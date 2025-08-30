@@ -19,10 +19,10 @@ void main(uint2 tileID : SV_GroupThreadID, uint gidx : SV_GroupID)
 		outPhysPagePool[basePos + uint3(1U, 1U, 0U)] = outPhysPagePool[basePos + uint3(1U, 1U, 1U)];
 	}
 	else {
-		// Clear the page to 1.0
-		outPhysPagePool[basePos + uint3(0U, 0U, 0U)] = asuint(1.0f);
-		outPhysPagePool[basePos + uint3(1U, 0U, 0U)] = asuint(1.0f);
-		outPhysPagePool[basePos + uint3(0U, 1U, 0U)] = asuint(1.0f);
-		outPhysPagePool[basePos + uint3(1U, 1U, 0U)] = asuint(1.0f);
+		// Clear the page to 0.0
+		outPhysPagePool[basePos + uint3(0U, 0U, 0U)] = asuint(0.0f);
+		outPhysPagePool[basePos + uint3(1U, 0U, 0U)] = asuint(0.0f);
+		outPhysPagePool[basePos + uint3(0U, 1U, 0U)] = asuint(0.0f);
+		outPhysPagePool[basePos + uint3(1U, 1U, 0U)] = asuint(0.0f);
 	}
 }

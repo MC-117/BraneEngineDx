@@ -1,0 +1,49 @@
+#material
+#localsize 64 1 1
+#compute
+
+#include "CalTerrainTileBounds_Lib.hmat"
+#include "../../lib/CameraData_Def.hmat"
+#include "../../lib/FrustumCulling_Lib.hmat"
+
+DEF_TEX2D(tileBounds, 0);
+RWBuffer<uint> selectedGrids;
+RWBuffer<uint> selectTileArgs;
+
+void addSelectedGrid(int gridId)
+{
+    int index;
+    InterlockedAdd(selectTileArgs[1], 1, index);
+    selectedGrids[index] = gridId;
+}
+
+bool selectGrid(int gridId)
+{
+    int2 gridIndex = int2(gridId % grid.x, gridId / grid.x);
+    int level = tileLevels - 1;
+    float2 bounds = tileBounds.Load(int3(0, 0, level));
+    float halfWidthPerGrid = widthPerGrid * 0.5f;
+    float halfHeightPerGrid = (bounds.y - bounds.x) * heightPerGrid * 0.5f;
+    float3 extent = float3(halfWidthPerGrid, halfWidthPerGrid, halfHeightPerGrid);
+    float3 center = float3(gridIndex * widthPerGrid, bounds.x * heightPerGrid) + extent;
+
+    FrustumCullData cullData = frustumCullBox(center, extent, 0, terrainLocalToWorld, camData.pmat, false);
+    return cullData.visiable;
+}
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint gridId : SV_DispatchThreadID)
+{
+    if (gridId >= allGrids) {
+        return;
+    }
+
+    if (gridId == 0) {
+        selectTileArgs[0] = ceil(tilesFromAllLevelPerGrid / 64);
+        selectTileArgs[2] = 1;
+    }
+
+    if (selectGrid(gridId)) {
+        addSelectedGrid(gridId);
+    }
+}

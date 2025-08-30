@@ -43,7 +43,7 @@ void ReflectionCaptureProbeRender::render(RenderInfo& info)
 {
 	if (reflectionCubeMap == NULL)
 		return;
-	if (update) {
+	if (!needWarmup && update) {
 		sceneCaptureCube.setTexture(*reflectionCubeMap);
 		sceneCaptureCube.setSize({ resolution, resolution });
 		sceneCaptureCube.render(info);

@@ -1,0 +1,35 @@
+#material
+#vertex use postprocess
+#fragment postprocess
+#include "../../lib/VolumetricFog_Def.hmat"
+#include "../../lib/ScreenPass_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_COLOR(FragColor, 0);
+FS_DEF_OUT_END
+
+DEF_TEX2D(sceneDepthMap, 0);
+
+FragmentOut DEFAULT_SCREEN_MAIN
+{
+    FragmentOut fout;
+
+    float deviceZ = SAMPLE_TEX_LOD(sceneDepthMap, fin.UV, 0).r;
+    float viewDepth = depthFromNDCToView(deviceZ);
+
+    uint3 rand3D = Rand3DPCG16(int3(fin.svPos.xy, gameTime * 10000));
+    float3 offset = (float3(rand3D) / float(uint(0xffff))) * 2.0f - 1.0f;
+    float3 vUV = getVolumetricFogUV(fin.svPos.xy + offset * 16 * vfogNoiseScalar, viewDepth);
+
+    float3 fogPosInViewOrigin = uvzPosToViewOrigin(float3(fin.UV, max(1.5e-10, deviceZ)));
+    
+    float cosAngle = dot(normalize(fogPosInViewOrigin), camData.camDir);
+    float invCosAngle = (cosAngle > 0.001f) ? rcp(cosAngle) : 0;
+    float camToEFogDistance = vfogMaxDistance * invCosAngle;
+
+    float4 efog = getExponentialHeightFog(fogPosInViewOrigin, camToEFogDistance);
+    float4 vfog = getVolumetricFog(vUV, viewDepth);
+
+    fout.FragColor = combineFog(efog, vfog);
+    return fout;
+}

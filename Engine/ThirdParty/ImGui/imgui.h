@@ -218,14 +218,15 @@ struct ImTextureID
 {
     void* ptr;
     float mipLevel;
+    unsigned int channelMask;
 
-    ImTextureID() = default;
-    ImTextureID(void* handle, float mipLevel = 0) : ptr((void*)handle), mipLevel(mipLevel) {}
-    ImTextureID(unsigned long long handle, float mipLevel = 0) : ptr((void*)handle), mipLevel(mipLevel) {}
-    ImTextureID(int handle, float mipLevel = 0) : ptr((void*)handle), mipLevel(mipLevel) {}
+    ImTextureID() : ptr(NULL), mipLevel(0), channelMask(0xFFFFFFFFu) {}
+    ImTextureID(void* handle, float mipLevel = 0, unsigned int channelMask = 0xFFFFFFFFu) : ptr((void*)handle), mipLevel(mipLevel), channelMask(channelMask) {}
+    ImTextureID(unsigned long long handle, float mipLevel = 0, unsigned int channelMask = 0xFFFFFFFFu) : ptr((void*)handle), mipLevel(mipLevel), channelMask(channelMask) {}
+    ImTextureID(int handle, float mipLevel = 0, unsigned int channelMask = 0xFFFFFFFFu) : ptr((void*)handle), mipLevel(mipLevel), channelMask(channelMask) {}
 
-    bool operator==(const ImTextureID& other) const { return ptr == other.ptr && mipLevel == other.mipLevel; }
-    bool operator!=(const ImTextureID& other) const { return ptr != other.ptr || mipLevel != other.mipLevel; }
+    bool operator==(const ImTextureID& other) const { return ptr == other.ptr && mipLevel == other.mipLevel && channelMask == other.channelMask; }
+    bool operator!=(const ImTextureID& other) const { return ptr != other.ptr || mipLevel != other.mipLevel || channelMask != other.channelMask; }
 
     operator void* () const { return ptr; }
     operator void* () { return ptr; }

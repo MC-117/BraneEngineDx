@@ -89,7 +89,7 @@ void ShaderGraphEditor::onCompileGUI(EditorInfo& info)
 				Material* material = MaterialLoader::loadMaterialGraph(*shaderGraph);
 				if (newMaterial) {
 					Asset* asset = new Asset(&MaterialAssetInfo::assetInfo, shaderName.c_str(), path.c_str());
-					asset->asset[0] = material;
+					asset->setActualAsset(material);
 					AssetManager::registAsset(*asset);
 				}
 			}

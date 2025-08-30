@@ -69,6 +69,8 @@ public:
 
 	virtual void gatherInstanceInfo(InstancedTransformRenderDataHandle& handle) const;
 
+	virtual void streamInAssets();
+	
 	virtual void dispatchMeshDraw(const DispatchData& data);
 
 	virtual void deserialize(const SerializationInfo & from);

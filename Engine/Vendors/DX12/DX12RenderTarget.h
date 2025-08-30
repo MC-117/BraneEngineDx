@@ -16,10 +16,10 @@ public:
 	DX12Context& dxContext;
 	vector<DX12Descriptor> dx12RTVs;
 	DX12Descriptor dx12DSV;
-	Texture2DDesc dx12DepthTexDesc;
+	TextureDesc dx12DepthTexDesc;
 	DX12Texture2D* dx12DepthTex = NULL;
 
-	Texture2DDesc multisampleDepthTexDesc;
+	TextureDesc multisampleDepthTexDesc;
 	DX12Texture2D* multisampleDepthTex = NULL;
 
 	static string depthBlitName;
@@ -32,7 +32,7 @@ public:
 
 	struct MSTex
 	{
-		Texture2DDesc desc;
+		TextureDesc desc;
 		DX12Texture2D* tex = NULL;
 	};
 

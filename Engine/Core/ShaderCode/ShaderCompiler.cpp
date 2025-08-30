@@ -677,8 +677,7 @@ bool ShaderCompiler::readHeadFile(const string& envPath)
 	}
 
 	if (shaderFile == NULL) {
-		shaderFile = new ShaderFile(filePath);
-		manager.shaderFiles.insert(make_pair(filePath, shaderFile));
+		shaderFile = manager.getOrNewShaderFile(filePath);
 	}
 
 	localHeadFiles.insert(shaderFile);
@@ -723,7 +722,7 @@ void ShaderCompiler::compileAdapter()
 	if (stageType != None_Shader_Stage && !clip.empty()) {
 		adapter = getAdapterInternal(stageType);
 		if (adapter == NULL) {
-			adapter = ShaderManager::getInstance().addShaderAdapter(getName(), reader->getPath(), stageType, adapterName);
+			adapter = manager.addShaderAdapter(getName(), reader->getPath(), stageType, adapterName);
 			if (adapter == NULL) {
 				return;
 			}
@@ -736,9 +735,13 @@ void ShaderCompiler::compileAdapter()
 				"#define LOCAL_SIZE_Z " + to_string(localSize.z()) + '\n';
 			clip = localString + clip;
 		}
+#if 0
 		for (const auto& condition : conditions) {
 			adapter->compileShaderStage(condition.first, condition.second, clip);
 		}
+#else
+		ShaderCompilerManager::get().compileShaderAsync(adapter, move(conditions), move(clip));
+#endif
 		clip.clear();
 		localHeadFiles.clear();
 		conditions.clear();
@@ -752,9 +755,9 @@ ShaderAdapter* ShaderCompiler::useAdapter(ShaderStageType stageType, const vecto
 	ShaderAdapter* adapter = NULL;
 	const string& adapterTag = command[2];
 	if (adapterTag.find('.') == string::npos)
-		adapter = ShaderManager::getInstance().getShaderAdapterByName(adapterTag, stageType);
+		adapter = manager.getShaderAdapterByName(adapterTag, stageType);
 	else
-		adapter = ShaderManager::getInstance().getShaderAdapterByPath(adapterTag, stageType);
+		adapter = manager.getShaderAdapterByPath(adapterTag, stageType);
 	if (adapter == NULL) {
 		if (forceExist) {
 			Console::error("Not found adapter %s, when load \"%s\" at %s", adapterTag.c_str(), reader->getPath(), ShaderStage::enumShaderStageType(stageType));
@@ -803,17 +806,132 @@ void ShaderCompiler::finalize()
 {
 	if (successed) {
 		if (shaderFile == NULL) {
-			shaderFile = new ShaderFile(reader->getPath());
-			manager.shaderFiles.insert(make_pair(reader->getPath(), shaderFile));
+			shaderFile = manager.getOrNewShaderFile(reader->getPath());
 		}
 		shaderFile->reset();
 		for (auto b = adapters.begin(), e = adapters.end(); b != e; b++) {
-			shaderFile->adapters.push_back(b->second);
+			shaderFile->addAdapter(b->second);
 		}
 		for (auto b = globalHeadFiles.begin(), e = globalHeadFiles.end(); b != e; b++) {
-			shaderFile->includeFiles.insert(*b);
+			shaderFile->addIncludedFile(*b);
 		}
 	}
 	if (reader)
 		reader->close();
+}
+
+ShaderCompilerManager& ShaderCompilerManager::get()
+{
+	return instance;
+}
+
+WaitHandle ShaderCompilerManager::compileShaderAsync(ShaderAdapter* adapter, map<Enum<ShaderFeature>, ShaderMacroSet>&& conditions, string&& code)
+{
+	TaskPtr task = std::make_shared<Task>(adapter, move(conditions), move(code));
+	std::lock_guard lock(requestMutex);
+	requestQueue.push(task);
+	++pendingRequests;
+	return WaitHandle(task);
+}
+
+void ShaderCompilerManager::startShaderCompileThread()
+{
+	stopShaderCompileThread();
+	thread = new std::thread(ShaderCompilerManager::shaderCompileThreadMain, this);
+	state = Running;
+	thread->detach();
+}
+
+void ShaderCompilerManager::stopShaderCompileThread()
+{
+	if (state != Running)
+		return;
+	state = Pending;
+	while (state == Pending)
+		std::this_thread::yield();
+	if (thread) {
+		delete thread;
+		thread = NULL;
+	}
+}
+
+void ShaderCompilerManager::waitUntilAllShadersCompiled() const
+{
+	while (pendingRequests > 0) {
+		std::this_thread::yield();
+	}
+}
+
+ShaderCompilerManager ShaderCompilerManager::instance;
+
+ShaderCompilerManager::ShaderCompilerManager()
+	: Initialization(InitializeStage::BeforeGameSetup, -1, FinalizeStage::BeforeRenderVenderRelease, -1)
+{
+}
+
+bool ShaderCompilerManager::initialize()
+{
+	startShaderCompileThread();
+	return true;
+}
+
+bool ShaderCompilerManager::finalize()
+{
+	stopShaderCompileThread();
+	return true;
+}
+
+ShaderCompilerManager::Task::Task(ShaderAdapter* adapter, map<Enum<ShaderFeature>, ShaderMacroSet>&& conditions, string&& code)
+	: adapter(adapter), conditions(move(conditions)), code(move(code))
+{
+}
+
+void ShaderCompilerManager::Task::executeInternal()
+{
+	for (const auto& condition : conditions) {
+		// Console::log("Compile shader stage %s of shader %s", getShaderFeatureNames(condition.first).c_str(), adapter->path.c_str());
+		adapter->compileShaderStage(condition.first, condition.second, code);
+	}
+}
+
+void ShaderCompilerManager::shaderCompileThreadLoop()
+{
+	{
+		std::lock_guard lock(requestMutex);
+		while (!requestQueue.empty()) {
+			workingQueue.push(requestQueue.front());
+			requestQueue.pop();
+		}
+	}
+
+	if (workingQueue.empty()) {
+		std::this_thread::yield();
+	}
+	else {
+		TaskPtr task = workingQueue.front();
+		workingQueue.pop();
+		if (!task->isCancel() && !task->isCompleted())
+			task->execute();
+		--pendingRequests;
+	}
+}
+
+void ShaderCompilerManager::shaderCompileThreadMain(ShaderCompilerManager* manager)
+{
+	registerCurrentThread("ShaderCompileThread");
+	while (manager->state == Running) {
+		manager->shaderCompileThreadLoop();
+	}
+	std::lock_guard<std::mutex> lock(manager->requestMutex);
+	while (!manager->requestQueue.empty()) {
+		manager->requestQueue.front()->cancel();
+		manager->requestQueue.pop();
+	}
+	while (!manager->workingQueue.empty()) {
+		manager->workingQueue.front()->cancel();
+		manager->workingQueue.pop();
+	}
+	manager->state = Stopped;
+	manager->pendingRequests = 0;
+	unregisterCurrentThread();
 }

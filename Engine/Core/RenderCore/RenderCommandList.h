@@ -33,8 +33,8 @@ class ImmediateRenderCommandWorker : public IRenderCommandWorker
 {
 public:
 	IRenderContext* renderContext = NULL;
-	RenderTaskContext taskContext = { 0 };
-	RenderTaskParameter taskParameter = { 0 };
+	RenderTaskContext taskContext;
+	RenderTaskParameter taskParameter;
 
 	virtual void start();
 	virtual void stop();
@@ -61,8 +61,8 @@ public:
 	queue<RenderTask*> taskQueue;
 	queue<RenderTask*> workingQueue;
 	IRenderContext* renderContext = NULL;
-	RenderTaskContext taskContext = { 0 };
-	RenderTaskParameter taskParameter = { 0 };
+	RenderTaskContext taskContext;
+	RenderTaskParameter taskParameter;
 	thread* workThread = NULL;
 	mutex workMutex;
 	atomic<int> unfinishedTaskCount = 0;

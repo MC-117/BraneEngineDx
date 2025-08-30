@@ -22,11 +22,12 @@ ShaderPropertyName::ShaderPropertyName(const Name& name) : Name(name)
 
 DepthStencilMode::DepthStencilMode()
 {
-	memset(this, 0, sizeof(DepthStencilMode));
+	word = 0;
 	stencilReadMask = 0xFF;
 	stencilWriteMask = 0xFF;
 	depthTest = true;
 	depthWrite = true;
+	depthComparion = RCT_GreaterEqual;
 
 	stencilComparion_front = RCT_Always;
 	stencilPassOp_front = SOT_Replace;
@@ -41,9 +42,13 @@ DepthStencilMode::DepthStencilMode()
 
 DepthStencilMode::operator uint64_t() const
 {
-	uint64_t value;
-	memcpy(&value, this, sizeof(DepthStencilMode));
-	return value;
+	return word;
+}
+
+DepthStencilMode& DepthStencilMode::operator=(const DepthStencilMode& mode)
+{
+	word = mode.word;
+	return *this;
 }
 
 DepthStencilMode DepthStencilMode::DepthTestWritable()
@@ -67,44 +72,287 @@ DepthStencilMode DepthStencilMode::DepthNonTestNonWritable()
 	return mode;
 }
 
+std::size_t hash<DepthStencilMode>::operator()(const DepthStencilMode& mode) const noexcept
+{
+	return mode;
+}
+
+RenderTargetMode::RenderTargetMode()
+{
+	setBlendMode(BM_Default);
+}
+
+RenderTargetMode::RenderTargetMode(BlendMode mode)
+{
+	setBlendMode(mode);
+}
+
+void RenderTargetMode::setBlendMode(BlendMode mode)
+{
+	switch (mode) {
+	case BM_Default:
+		enableBlend = true;
+		enableAlphaTest = false;
+		srcColorFactor = BF_SrcAlpha;
+		destColorFactor = BF_InvSrcAlpha;
+		colorOp = BO_Add;
+		srcAlphaFactor = BF_One;
+		destAlphaFactor = BF_Zero;
+		alphaOp = BO_Add;
+		writeMask = CWM_RGBA;
+		break;
+	case BM_Disable:
+		enableBlend = false;
+		enableAlphaTest = false;
+		srcColorFactor = BF_Zero;
+		destColorFactor = BF_One;
+		colorOp = BO_Add;
+		srcAlphaFactor = BF_Zero;
+		destAlphaFactor = BF_One;
+		alphaOp = BO_Add;
+		writeMask = CWM_RGBA;
+		break;
+	case BM_DepthOnly:
+		enableBlend = false;
+		enableAlphaTest = false;
+		srcColorFactor = BF_Zero;
+		destColorFactor = BF_One;
+		colorOp = BO_Add;
+		srcAlphaFactor = BF_Zero;
+		destAlphaFactor = BF_One;
+		alphaOp = BO_Add;
+		writeMask = CWM_None;
+		break;
+	case BM_Replace:
+		enableBlend = true;
+		enableAlphaTest = false;
+		srcColorFactor = BF_One;
+		destColorFactor = BF_Zero;
+		colorOp = BO_Add;
+		srcAlphaFactor = BF_One;
+		destAlphaFactor = BF_Zero;
+		alphaOp = BO_Add;
+		writeMask = CWM_RGBA;
+		break;
+	case BM_AlphaTest:
+		enableBlend = false;
+		enableAlphaTest = true;
+		srcColorFactor = BF_Zero;
+		destColorFactor = BF_One;
+		colorOp = BO_Add;
+		srcAlphaFactor = BF_Zero;
+		destAlphaFactor = BF_One;
+		alphaOp = BO_Add;
+		writeMask = CWM_RGBA;
+		break;
+	case BM_Additive:
+		enableBlend = true;
+		enableAlphaTest = false;
+		srcColorFactor = BF_One;
+		destColorFactor = BF_One;
+		colorOp = BO_Add;
+		srcAlphaFactor = BF_Zero;
+		destAlphaFactor = BF_One;
+		alphaOp = BO_Add;
+		writeMask = CWM_RGBA;
+		break;
+	case BM_PremultiplyAlpha:
+		enableBlend = true;
+		enableAlphaTest = false;
+		srcColorFactor = BF_One;
+		destColorFactor = BF_InvSrcAlpha;
+		colorOp = BO_Add;
+		srcAlphaFactor = BF_One;
+		destAlphaFactor = BF_InvSrcAlpha;
+		alphaOp = BO_Add;
+		writeMask = CWM_RGBA;
+		break;
+	case BM_MultiplyAlpha:
+		enableBlend = true;
+		enableAlphaTest = false;
+		srcColorFactor = BF_One;
+		destColorFactor = BF_SrcAlpha;
+		colorOp = BO_Add;
+		srcAlphaFactor = BF_Zero;
+		destAlphaFactor = BF_One;
+		alphaOp = BO_Add;
+		writeMask = CWM_RGBA;
+		break;
+	case BM_Multiply:
+		enableBlend = true;
+		enableAlphaTest = false;
+		srcColorFactor = BF_DestColor;
+		destColorFactor = BF_InvSrcAlpha;
+		colorOp = BO_Add;
+		srcAlphaFactor = BF_Zero;
+		destAlphaFactor = BF_One;
+		alphaOp = BO_Add;
+		writeMask = CWM_RGBA;
+		break;
+	case BM_Mask:
+		enableBlend = true;
+		enableAlphaTest = false;
+		srcColorFactor = BF_Zero;
+		destColorFactor = BF_InvSrcColor;
+		colorOp = BO_Add;
+		srcAlphaFactor = BF_Zero;
+		destAlphaFactor = BF_InvSrcAlpha;
+		alphaOp = BO_Add;
+		writeMask = CWM_RGBA;
+		break;
+	default:
+		assert(false);
+	}
+	blendMode = mode;
+}
+
+RenderTargetMode::operator unsigned long long() const
+{
+	uint64_t value;
+	memcpy(&value, this, sizeof(DepthStencilMode));
+	return value;
+}
+
+RenderTargetMode& RenderTargetMode::operator=(const RenderTargetMode& mode)
+{
+	enableBlend = mode.enableBlend;
+	colorOp = mode.colorOp;
+	enableAlphaTest = mode.enableAlphaTest;
+	alphaOp = mode.alphaOp;
+	srcColorFactor = mode.srcColorFactor;
+	destColorFactor = mode.destColorFactor;
+	srcAlphaFactor = mode.srcAlphaFactor;
+	destAlphaFactor = mode.destAlphaFactor;
+	writeMask = mode.writeMask;
+	blendMode = mode.blendMode;
+
+	return *this;
+}
+
+RenderTargetModes::RenderTargetModes()
+{
+	for (auto& rtMode : rtModes) {
+		rtMode.setBlendMode(BM_Default);
+	}
+}
+
+RenderTargetModes::RenderTargetModes(BlendMode blendMode)
+{
+	setBlendModes(blendMode);
+}
+
+void RenderTargetModes::setBlendModes(BlendMode blendMode)
+{
+	for (auto& rtMode : rtModes) {
+		rtMode.setBlendMode(blendMode);
+	}
+}
+
+bool RenderTargetModes::operator==(const RenderTargetModes& mode) const
+{
+	for (int index = 0; index < MaxRenderTargets; index++) {
+		if (rtModes[index] != mode.rtModes[index])
+			return false;
+	}
+	return true;
+}
+
+RenderTargetMode& RenderTargetModes::operator[](uint8_t rtIndex)
+{
+	return rtModes[rtIndex];
+}
+
+const RenderTargetMode& RenderTargetModes::operator[](uint8_t rtIndex) const
+{
+	return rtModes[rtIndex];
+}
+
+std::size_t hash<RenderTargetModes>::operator()(const RenderTargetModes& modes) const noexcept
+{
+	size_t hash = 0;
+	for (auto& rtMode : modes.rtModes) {
+		hash_combine(hash, (uint64_t)rtMode);
+	}
+	return hash;
+}
+
 RenderMode::RenderMode()
 {
-	bits = 0;
-	mode.stencilReadMask = 0xFF;
-	mode.stencilWriteMask = 0xFF;
-	mode.depthTest = true;
-	mode.depthWrite = true;
+	memset(words, 0, sizeof(words));
+	rtModes.setBlendModes(BM_Default);
+	dsMode = DepthStencilMode::DepthTestWritable();
 }
 
-RenderMode::RenderMode(uint16_t renderStage, uint8_t blendMode) : RenderMode()
+RenderMode::RenderMode(uint16_t renderStage) : RenderMode()
 {
-	mode.renderStage_blendMode = (renderStage << 4) | (blendMode & 0xF);
+	this->renderStage = renderStage;
 
-	setDepthStateFromRenderOrder(mode, renderStage);
+	BlendMode blendMode = getBlendModeFromRenderOrder(renderStage);
+	rtModes.setBlendModes(blendMode);
+	setDepthStateFromRenderOrder(dsMode, renderStage);
 
-	mode.stencilComparion_front = RCT_Always;
-	mode.stencilPassOp_front = SOT_Replace;
-	mode.stencilFailedOp_front = SOT_Keep;
-	mode.stencilDepthFailedOp_front = SOT_Keep;
+	dsMode.stencilComparion_front = RCT_Always;
+	dsMode.stencilPassOp_front = SOT_Replace;
+	dsMode.stencilFailedOp_front = SOT_Keep;
+	dsMode.stencilDepthFailedOp_front = SOT_Keep;
 
-	mode.stencilComparion_back = RCT_Always;
-	mode.stencilPassOp_back = SOT_Replace;
-	mode.stencilFailedOp_back = SOT_Keep;
-	mode.stencilDepthFailedOp_back = SOT_Keep;
+	dsMode.stencilComparion_back = RCT_Always;
+	dsMode.stencilPassOp_back = SOT_Replace;
+	dsMode.stencilFailedOp_back = SOT_Keep;
+	dsMode.stencilDepthFailedOp_back = SOT_Keep;
 }
 
-RenderMode::RenderMode(const RenderMode& mode) { bits = mode.bits; }
+RenderMode::RenderMode(uint16_t renderStage, BlendMode blendMode) : RenderMode(renderStage)
+{
+	rtModes.setBlendModes(blendMode);
+}
 
-RenderMode& RenderMode::operator=(const RenderMode& mode) { bits = mode.bits; return *this; }
+RenderMode::RenderMode(const RenderMode& mode) { memcpy_s(words, sizeof(words), mode.words, sizeof(mode.words)); }
 
-uint16_t RenderMode::getRenderStage() const { return mode.renderStage_blendMode >> 4; }
-BlendMode RenderMode::getBlendMode() const { return (BlendMode)(mode.renderStage_blendMode & 0xF); }
+RenderMode& RenderMode::operator=(const RenderMode& mode) { memcpy_s(words, sizeof(words), mode.words, sizeof(mode.words)); return *this; }
 
-uint64_t RenderMode::getOrder() const { return bits; }
+uint16_t RenderMode::getRenderStage() const { return renderStage; }
 
-DepthStencilMode RenderMode::getDepthStencilMode() const { return mode; }
+uint64_t RenderMode::getOrder() const { return renderStage; }
 
-RenderMode::operator uint64_t() const { return bits; }
+void RenderMode::setDepthStencilMode(DepthStencilMode depthStencilMode)
+{
+	dsMode = depthStencilMode;
+}
+
+const DepthStencilMode& RenderMode::getDepthStencilMode() const
+{
+	return dsMode;
+}
+
+const RenderTargetModes& RenderMode::getRenderTargetModes() const
+{
+	return rtModes;
+}
+
+RenderTargetMode& RenderMode::operator[](uint8_t rtIndex)
+{
+	return rtModes[rtIndex];
+}
+
+const RenderTargetMode& RenderMode::operator[](uint8_t rtIndex) const
+{
+	return rtModes[rtIndex];
+}
+
+bool RenderMode::operator==(const RenderMode& mode) const
+{
+	return memcmp(words, mode.words, sizeof(words)) == 0;
+}
+
+size_t hash<RenderMode>::operator()(const RenderMode& mode) const noexcept
+{
+	size_t hash = 0;
+	for (uint64_t word : mode.words) {
+		hash_combine(hash, word);
+	}
+	return hash;
+}
 
 const ShaderPropertyName& ShaderPropertyDesc::getName() const
 {

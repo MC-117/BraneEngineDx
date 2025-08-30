@@ -159,7 +159,7 @@ void CameraEditor::onPostprocess(EditorInfo& info)
 			(*b)->setEnable(enable);
 		}
 		ImGui::SameLine();
-		if (ImGui::CollapsingHeader((*b)->getName().c_str())) {
+		if (ImGui::CollapsingHeader((*b)->getPassName().c_str())) {
 			ImGui::Indent(20);
 			(*b)->onGUI(info);
 			Editor* editor = EditorManager::getEditor("Material", (*b)->getMaterial());

@@ -23,11 +23,14 @@ protected:
 
 	bool useComputeShader = false;
 
-	MaterialRenderData* computeMaterialRenderData;
-	IMaterial* computeMaterialVariant;
+	MaterialRenderData* computeMaterialRenderData = NULL;
+	IMaterial* computeMaterialVariant = NULL;
+	ComputePipelineState* computePSO = NULL;
 
 	Material* traceMaterial = NULL;
 	ShaderProgram* traceProgram = NULL;
+	GraphicsPipelineState* tracePSO = NULL;
 	Material* resolveMaterial = NULL;
 	ShaderProgram* resolveProgram = NULL;
+	GraphicsPipelineState* resolvePSO = NULL;
 };

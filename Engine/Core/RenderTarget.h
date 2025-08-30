@@ -20,7 +20,8 @@ public:
 	virtual void addTexture(const string& name, Texture& texture, unsigned int mipLevel = 0, unsigned int arrayBase = 0, unsigned int arrayCount = 1);
 	virtual Texture* getTexture(const string& name);
 	virtual Texture* getTexture(unsigned int index);
-	virtual unsigned int getTextureCount();
+	virtual TexInternalType getTextureFormat(unsigned int index) const;
+	virtual unsigned int getTextureCount() const;
 	virtual bool setTextureMipLevel(const string& name, unsigned int mipLevel);
 	virtual bool setTextureMipLevel(unsigned int index, unsigned int mipLevel);
 	virtual void setMultisampleLevel(unsigned int level);
@@ -28,6 +29,7 @@ public:
 	virtual void setDepthTexture(Texture& depthTexture);
 	virtual Texture2D* getDepthTexture();
 	virtual Texture2D* getInternalDepthTexture();
+	virtual TexInternalType getDepthTextureFormat() const;
 	virtual void setTexture(Material& mat);
 	virtual void SetMultisampleFrame();
 	unsigned int getFBO();

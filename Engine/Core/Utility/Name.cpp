@@ -31,13 +31,31 @@ std::pair<NameHash, const char*> NamePool::registerString(const char* str)
 {
     if (str == NULL)
         return { 0, NULL };
-    const NameHash hash = calHash(str);
+    const size_t HashMask = 0xFFFF'FFFF'FFFF'FF00u;
+    const uint16_t SlotMask = 0xFFu;
+    const NameHash hash = calHash(str) & HashMask;
     if (hash == 0)
         return { 0, "" };
-    std::string& name = nameMap[hash];
-    if (name.empty())
-        name = str;
-    return { hash, name.c_str() };
+
+    NameHash highHash = hash & HashMask;
+    
+    std::vector<std::string>& slots = nameTable[highHash];
+    uint16_t slotIndex = 0;
+    for (; slotIndex < slots.size(); slotIndex++) {
+        if (slots[slotIndex] == str) {
+            break;
+        }
+    }
+    if (slotIndex > SlotMask) {
+        throw std::out_of_range("Hash conflictions are too much");
+    }
+    if (slotIndex == slots.size()) {
+        str = slots.emplace_back(str).c_str();
+    }
+    else {
+        str = slots[slotIndex].c_str();
+    }
+    return { highHash | slotIndex, str };
 }
 
 const Name Name::none;
@@ -87,6 +105,11 @@ bool Name::empty() const
 bool Name::operator==(const Name& name) const
 {
     return hash == name.hash;
+}
+
+bool Name::operator!=(const Name& name) const
+{
+    return hash != name.hash;
 }
 
 bool Name::operator<(const Name& name) const

@@ -5,6 +5,7 @@
 #include "Utility/Utility.h"
 #include "Utility/Decimal.h"
 #include "Utility/Name.h"
+#include "AssetBase.h"
 #include <filesystem>
 
 class Serializable;
@@ -22,7 +23,7 @@ public:
 	static Serialization* getSerialization(const Name& type);
 };
 
-class ENGINE_API SerializationInfo
+class ENGINE_API SerializationInfo : public IAssetBase
 {
 public:
 	string type;
@@ -76,7 +77,7 @@ public:
 	SerializationInfo* get(const size_t i);
 };
 
-class ENGINE_API Serializable
+class ENGINE_API Serializable : public IAssetBase
 {
 public:
 	static Serializable* instantiate(const SerializationInfo& from);

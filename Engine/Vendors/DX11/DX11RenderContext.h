@@ -10,6 +10,7 @@
 #include "DX11MeshData.h"
 #include "DX11SkeletonMeshData.h"
 #include "DX11RenderExecution.h"
+#include "DX11PipelineState.h"
 #include "../../Core/IRenderContext.h"
 
 class DX11RenderContext : public IRenderContext
@@ -33,6 +34,7 @@ public:
 
 	vector<ComPtr<ID3D11RenderTargetView>> dx11RTVs;
 	ComPtr<ID3D11DepthStencilView> dx11DSV = NULL;
+	DepthStencilAccessFlag currentDSVAccessFlag = DSA_Default;
 
 	uint8_t currentStencilRef = 0;
 	ComPtr<ID3D11DepthStencilState> dx11DSState = NULL;
@@ -40,6 +42,8 @@ public:
 	DX11ShaderProgram* currentProgram = NULL;
 	DX11RenderTarget* currentRenderTarget = NULL;
 	DX11DeviceSurface* currentDeviceSurface = NULL;
+	DX11GraphicsPipelineState* currentGraphicsPSO = NULL;
+	DX11ComputePipelineState* currentComputePSO = NULL;
 
 	DX11RenderContext(DX11Context& context, RenderContextDesc& desc);
 
@@ -106,30 +110,13 @@ public:
 	virtual void bindMeshData(MeshData* meshData);
 
 	virtual void setStencilRef(uint8_t stencil);
-
-	virtual void setRenderPreState(DepthStencilMode depthStencilMode);
-	virtual void setRenderGeomtryState(DepthStencilMode depthStencilMode);
-	virtual void setRenderOpaqueState(DepthStencilMode depthStencilMode);
-	virtual void setRenderAlphaState(DepthStencilMode depthStencilMode);
-	virtual void setRenderTransparentState(DepthStencilMode depthStencilMode);
-	virtual void setRenderOverlayState();
-	virtual void setRenderPostState();
-	virtual void setRenderPostState(DepthStencilMode depthStencilMode);
-	virtual void setRenderPostAddState();
-	virtual void setRenderPostPremultiplyAlphaState();
-	virtual void setRenderPostMultiplyState();
-	virtual void setRenderPostMaskState();
-	virtual void setRenderPostReplaceState();
-	virtual void setCullState(CullType type);
+	
 	virtual void setViewport(unsigned int x, unsigned int y, unsigned int w, unsigned int h);
-
-	virtual void setLineDrawContext();
-	virtual void setMeshDrawContext();
-	virtual void setSkeletonMeshDrawContext();
-	virtual void setTerrainDrawContext();
 
 	virtual void setDrawInfo(int passIndex, int passNum, unsigned int materialID);
 	virtual void bindDrawInfo();
+
+	virtual void bindPipelineState(IPipelineState* pipelineState);
 
 	virtual void meshDrawCall(const MeshPartDesc& mesh);
 	virtual void postProcessCall();

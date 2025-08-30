@@ -1,4 +1,6 @@
 #include "ViewCullingContext.h"
+
+#include "RenderCoreUtility.h"
 #include "SceneRenderData.h"
 #include "../Asset.h"
 #include "../Mesh.h"
@@ -33,8 +35,10 @@ bool ViewCullingKey::operator==(const ViewCullingKey& k) const
 
 Material* ViewCullingContext::instanceCullingMaterial = NULL;
 ShaderProgram* ViewCullingContext::instanceCullingProgram = NULL;
+ComputePipelineState* ViewCullingContext::instanceCullingPSO = NULL;
 Material* ViewCullingContext::pruneCommandMaterial = NULL;
 ShaderProgram* ViewCullingContext::pruneCommandProgram = NULL;
+ComputePipelineState* ViewCullingContext::pruneCommandPSO = NULL;
 
 ViewCullingContext::ViewCullingContext()
     : instanceCullingResultBuffer(GB_Storage, GBF_UInt, 0, GAF_ReadWrite, CAF_None)
@@ -85,7 +89,7 @@ void ViewCullingContext::executeCulling(IRenderContext& context, IRenderData& ca
     instanceDataBuffer.resize(instanceCount);
     commandBuffer.resize(commandCount * sizeof(DrawElementsIndirectCommand) / sizeof(unsigned int));
 
-    context.bindShaderProgram(instanceCullingProgram);
+    context.bindPipelineState(instanceCullingPSO);
     cameraRenderData.bind(context);
     transformRenderData.bind(context);
     context.bindBufferBase(instanceCullingResultBuffer.getVendorGPUBuffer(), instanceCullingResultName, { true });
@@ -93,7 +97,7 @@ void ViewCullingContext::executeCulling(IRenderContext& context, IRenderData& ca
 
     context.unbindBufferBase(instanceCullingResultName);
 
-    context.bindShaderProgram(pruneCommandProgram);
+    context.bindPipelineState(pruneCommandPSO);
     context.bindBufferBase(instanceCullingResultBuffer.getVendorGPUBuffer(), instanceCullingResultName);
     context.bindBufferBase(sourceBatchDrawCommandArray->getInstanceBuffer(), instanceDataName);
     context.bindBufferBase(sourceBatchDrawCommandArray->getCommandBuffer(), commandsName);
@@ -155,7 +159,7 @@ void ViewCullingContext::loadDefaultResource()
     }
     if (instanceCullingProgram == NULL)
         throw runtime_error("instanceCulling shader program is invalid");
-    instanceCullingProgram->init();
+    instanceCullingPSO = fetchPSOIfDescChangedThenInit(instanceCullingPSO, instanceCullingProgram);
 
     if (pruneCommandProgram == NULL) {
         pruneCommandMaterial = getAssetByPath<Material>("Engine/Shaders/Pipeline/PruneCommandWithCullingData.mat");
@@ -165,5 +169,5 @@ void ViewCullingContext::loadDefaultResource()
     }
     if (pruneCommandProgram == NULL)
         throw runtime_error("PruneCommandWithCullingData shader program is invalid");
-    pruneCommandProgram->init();
+    pruneCommandPSO = fetchPSOIfDescChangedThenInit(pruneCommandPSO, pruneCommandProgram);
 }

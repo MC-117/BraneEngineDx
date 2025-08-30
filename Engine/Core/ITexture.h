@@ -5,7 +5,7 @@
 #include "Unit.h"
 #include "GraphicType.h"
 
-struct ENGINE_API Texture2DInfo
+struct ENGINE_API TextureInfo
 {
 	TexWrapType wrapSType;
 	TexWrapType wrapTType;
@@ -17,7 +17,7 @@ struct ENGINE_API Texture2DInfo
 	CPUAccessFlag cpuAccessFlag = CAF_None;
 	TexDimension dimension = TD_Single;
 
-	Texture2DInfo(
+	TextureInfo(
 		TexWrapType wrapSType = TW_Repeat,
 		TexWrapType wrapTType = TW_Repeat,
 		TexFilter minFilterType = TF_Linear,
@@ -37,7 +37,7 @@ struct ENGINE_API Texture2DInfo
 		cpuAccessFlag(cpuAccessFlag),
 		dimension(dimension) { }
 
-	Texture2DInfo(const Texture2DInfo& info)
+	TextureInfo(const TextureInfo& info)
 	{
 		wrapSType = info.wrapSType;
 		wrapTType = info.wrapTType;
@@ -49,7 +49,7 @@ struct ENGINE_API Texture2DInfo
 		dimension = info.dimension;
 	}
 
-	bool operator==(const Texture2DInfo& info) const
+	bool operator==(const TextureInfo& info) const
 	{
 		return wrapSType == info.wrapSType &&
 		wrapTType == info.wrapTType &&
@@ -68,31 +68,7 @@ struct TextureDesc
 	int width = 0, height = 0, channel = 0, arrayCount = 1;
 	bool needUpdate = false;
 	string name;
-};
-
-class ENGINE_API ITexture
-{
-public:
-	TextureDesc& desc;
-
-	ITexture(TextureDesc& desc) : desc(desc) { }
-	virtual ~ITexture() { }
-
-	virtual bool isValid() const = 0;
-
-	virtual void release() { }
-
-	virtual unsigned long long getTextureID() = 0;
-
-	virtual unsigned int bind() { return 0; }
-	virtual unsigned int bindBase(unsigned int index) { return 0; }
-	virtual unsigned int resize(unsigned int width, unsigned int height)
-	{ desc.width = width; desc.height = height; return 0; }
-};
-
-struct Texture2DDesc : public TextureDesc
-{
-	Texture2DInfo info;
+	TextureInfo info;
 	unsigned char* data = NULL;
 	unsigned int mipLevel = 1;
 	bool autoGenMip = true;
@@ -104,12 +80,45 @@ struct Texture2DDesc : public TextureDesc
 	bool canReleaseAssetData() const;
 };
 
+class ENGINE_API ITexture
+{
+public:
+
+	ITexture() = default;
+	virtual ~ITexture() { }
+
+	virtual bool isValid() const = 0;
+	virtual bool is3D() const = 0;
+
+	virtual void release() { }
+
+	virtual TextureDesc& getDesc() = 0;
+	virtual const TextureDesc& getDesc() const = 0;
+
+	virtual unsigned long long getTextureID() = 0;
+
+	virtual unsigned int bind() { return 0; }
+	virtual unsigned int bindBase(unsigned int index) { return 0; }
+	virtual unsigned int resize(unsigned int width, unsigned int height)
+	{ getDesc().width = width; getDesc().height = height; return 0; }
+	virtual unsigned int resize(unsigned int width, unsigned int height, unsigned int depth)
+	{ getDesc().width = width; getDesc().height = height; getDesc().arrayCount = depth; return 0; }
+};
+
 class ENGINE_API ITexture2D : public ITexture
 {
 public:
-	Texture2DDesc& desc;
-	ITexture2D(Texture2DDesc& desc) : ITexture(desc), desc(desc){ }
+	ITexture2D() = default;
 	virtual ~ITexture2D() { }
+	virtual bool is3D() const { return false; }
+};
+
+class ENGINE_API ITexture3D : public ITexture
+{
+public:
+	ITexture3D() = default;
+	virtual ~ITexture3D() { }
+	virtual bool is3D() const { return true; }
 };
 
 #endif // !_ITEXTURE_H_

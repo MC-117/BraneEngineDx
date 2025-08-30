@@ -105,6 +105,12 @@ uint3 getProbeGridIndex(float3 worldPos)
 	return getProbeGridIndex(screenPos, -viewPos.z);
 }
 
+uint3 getProbeGridIndexInView(float3 viewPos)
+{
+	float2 screenPos = viewPosToUVZ(viewPos).xy * camData.viewSize;
+	return getProbeGridIndex(screenPos, -viewPos.z);
+}
+
 struct ProbeGridIterator
 {
 	uint indexBegin;

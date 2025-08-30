@@ -1,0 +1,48 @@
+#include "../../lib/VolumetricFog_Def.hmat"
+
+Texture3D fogScatteringVolume;
+RWTexture3D<float4> outFogScatteringVolume;
+RWTexture3D<float4> outFogIntegratedVolume;
+
+float calFogDepthFromZSlice(float zSlice)
+{
+    float sliceDepth = (exp2(zSlice / fogGridZParams.z) - fogGridZParams.y) / fogGridZParams.x;
+    return sliceDepth;
+}
+
+float3 calFogGridViewPosition(uint3 index, float3 cellOffset, out float depth)
+{
+    float2 uv = (index.xy + cellOffset.xy) / fogGridSize.xy;
+    float2 clipPos = uvToClip(uv);
+
+    depth = calFogDepthFromZSlice(index.z + cellOffset.z);
+
+    float deviceZ = depthFromViewToNDC(depth);
+    float3 viewPos = clipPosToView(float3(clipPos, deviceZ));
+
+    return viewPos;
+}
+
+float3 calFogGridViewPosition(uint3 index, float3 cellOffset)
+{
+    float depth;
+    return calFogGridViewPosition(index, cellOffset, depth);
+}
+
+float calScattering(float lightDotView)
+{
+    float numer = 1.0f - vfogScatteringDistribution * vfogScatteringDistribution;
+    float denom = 1.0f + vfogScatteringDistribution * vfogScatteringDistribution + 2.0f * vfogScatteringDistribution * lightDotView;
+    return numer / (4.0f * PI * denom * sqrt(denom));
+}
+
+float4 calExpFogScattering(float3 worldPos)
+{
+    float density = efogDensity * exp2(-efogHeightFalloff * (worldPos.z - efogHeight));
+
+    float extinction = max(density * vfogExtinctionScale * 0.5f, 0);
+    float3 scattering = vfogColor * extinction;
+    float absortion = max(extinction - luminance(scattering), 0.0f);
+
+    return float4(scattering, absortion);
+}

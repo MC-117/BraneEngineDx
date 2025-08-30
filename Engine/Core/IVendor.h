@@ -86,13 +86,16 @@ public:
 	virtual IRenderContext* newRenderContext() = 0;
 
 	virtual IDeviceSurface* newDeviceSurface(DeviceSurfaceDesc& desc) = 0;
-	virtual ITexture2D* newTexture2D(Texture2DDesc& desc) = 0;
+	virtual ITexture2D* newTexture2D(TextureDesc& desc) = 0;
+	virtual ITexture3D* newTexture3D(TextureDesc& desc) = 0;
 	virtual ShaderStage* newShaderStage(const ShaderStageDesc& desc) = 0;
 	virtual ShaderProgram* newShaderProgram() = 0;
 	virtual IMaterial* newMaterial(MaterialDesc& desc) = 0;
 	virtual IRenderTarget* newRenderTarget(RenderTargetDesc& desc) = 0;
 	virtual IGPUBuffer* newGPUBuffer(GPUBufferDesc& desc) = 0;
 	virtual IGPUQuery* newGPUQuery(GPUQueryDesc& desc) = 0;
+	virtual GraphicsPipelineState* fetchGraphicsPipelineState(const GraphicsPipelineStateDesc& desc) = 0;
+	virtual ComputePipelineState* fetchComputePipelineState(const ComputePipelineStateDesc& desc) = 0;
 	virtual MeshPartDesc newMeshPart(unsigned int vertCount, unsigned int elementCount) = 0;
 	virtual SkeletonMeshPartDesc newSkeletonMeshPart(unsigned int vertCount, unsigned int elementCount,
 		unsigned int boneCount, unsigned int morphVertCount, unsigned int morphCount) = 0;
@@ -118,7 +121,7 @@ public:
 	virtual void meshDrawCall(const MeshPartDesc& mesh) = 0;
 	virtual void postProcessCall() = 0;
 
-	virtual void readBackTexture2D(ITexture2D* texture, void* data) = 0;
+	virtual void readBackTexture(ITexture* texture, void* data) = 0;
 protected:
 	string name;
 };

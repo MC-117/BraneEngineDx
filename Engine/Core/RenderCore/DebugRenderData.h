@@ -38,11 +38,15 @@ struct DebugRenderData : public IRenderData
 protected:
     bool firstTick = true;
     bool persistentDebugDraw = false;
+    GraphicsPipelineState* drawLinePSO = NULL;
+    GraphicsPipelineState* drawUploadLinePSO = NULL;
     static bool isInit;
     static Material* packFreeMaterial;
     static ShaderProgram* packFreeProgram;
+    static ComputePipelineState* packFreePSO;
     static Material* initDrawArgsMaterial;
     static ShaderProgram* initDrawArgsProgram;
+    static ComputePipelineState* initDrawArgsPSO;
     static Material* drawLineMaterial;
     static ShaderProgram* drawLineProgram;
     static ShaderProgram* drawUploadLineProgram;

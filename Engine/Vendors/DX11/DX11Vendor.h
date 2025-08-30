@@ -36,13 +36,16 @@ public:
 	virtual IRenderContext* newRenderContext();
 
 	virtual IDeviceSurface* newDeviceSurface(DeviceSurfaceDesc& desc);
-	virtual ITexture2D* newTexture2D(Texture2DDesc& desc);
+	virtual ITexture2D* newTexture2D(TextureDesc& desc);
+	virtual ITexture3D* newTexture3D(TextureDesc& desc);
 	virtual ShaderStage* newShaderStage(const ShaderStageDesc& desc);
 	virtual ShaderProgram* newShaderProgram();
 	virtual IMaterial* newMaterial(MaterialDesc& desc);
 	virtual IRenderTarget* newRenderTarget(RenderTargetDesc& desc);
 	virtual IGPUBuffer* newGPUBuffer(GPUBufferDesc& desc);
 	virtual IGPUQuery* newGPUQuery(GPUQueryDesc& desc);
+	virtual GraphicsPipelineState* fetchGraphicsPipelineState(const GraphicsPipelineStateDesc& desc);
+	virtual ComputePipelineState* fetchComputePipelineState(const ComputePipelineStateDesc& desc);
 	virtual MeshPartDesc newMeshPart(unsigned int vertCount, unsigned int elementCount);
 	virtual SkeletonMeshPartDesc newSkeletonMeshPart(unsigned int vertCount, unsigned int elementCount,
 		unsigned int boneCount, unsigned int morphVertCount, unsigned int morphCount);
@@ -68,7 +71,7 @@ public:
 	virtual void meshDrawCall(const MeshPartDesc& mesh);
 	virtual void postProcessCall();
 	
-	virtual void readBackTexture2D(ITexture2D* texture, void* data);
+	virtual void readBackTexture(ITexture* texture, void* data);
 protected:
 	unsigned int defaultMultisampleLevels = 0;
 	DX11Context dxContext;
@@ -76,6 +79,8 @@ protected:
 	DX11MeshData StaticMeshData;
 	RenderContextDesc defaultRenderContextDesc;
 	DX11RenderContext defaultRenderContext;
+	unordered_map<GraphicsPipelineStateId, DX11GraphicsPipelineState*> dxGraphicsPSOs;
+	unordered_map<ComputePipelineStateId, DX11ComputePipelineState*> dxComputePSOs;
 };
 
 #endif // !_DX11VENDOR_H_

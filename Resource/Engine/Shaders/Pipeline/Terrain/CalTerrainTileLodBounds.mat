@@ -1,0 +1,24 @@
+#material
+#localsize 8 8 1
+#compute
+
+#include "CalTerrainTileBounds_Lib.hmat"
+#include "../../lib/Bindings_Def.hmat"
+
+DEF_TEX2DARRAY(inTileBounds, 0);
+RWTexture2DArray<float2> outTileBounds;
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint3 tid : SV_DispatchThreadID)
+{
+    uint3 size;
+    inTileBounds.GetDimensions(size.x, size.y, size.z);
+    if (all(tid < size))
+    {
+        float2 UV = ((tid + 0.5) * 2.0f + float2(-0.25f, -0.25f)) / size;
+        float3 UVI = float3(UV, tid.z);
+        float4 min4 = inTileBounds.GatherRed(inTileBoundsSampler, UVI, 0);
+        float4 max4 = inTileBounds.GatherGreen(inTileBoundsSampler, UVI, 0);
+        outTileBounds[tid] = min_max4(min4, max4);
+    }
+}

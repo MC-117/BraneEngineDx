@@ -8,7 +8,7 @@
 
 DEF_TEX2D(gBufferB, 0);
 DEF_TEX2D(gBufferC, 1);
-DEF_TEX2D(gBufferD, 2);
+DEF_TEX2D(sceneDepthMap, 2);
 DEF_TEX2D(hitDataMap, 3);
 DEF_TEX2D(hitColorMap, 4);
 DEF_TEX2D(sceneColorMips, 5);
@@ -30,13 +30,13 @@ FragmentOut DEFAULT_SCREEN_MAIN
     FragmentOut fout;
 
     float2 UV = fin.UV;
-    float depth = SAMPLE_TEX_LOD(gBufferB, UV, 0);
+    float depth = SAMPLE_TEX_LOD(sceneDepthMap, UV, 0);
+    float4 B = SAMPLE_TEX_LOD(gBufferB, UV, 0);
     float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
-    float4 D = SAMPLE_TEX_LOD(gBufferD, UV, 0);
-    float roughness = D.r;
-    float metallic = D.g;
-    float ao = D.a;
-    float3 viewN = normalize(worldDirToView(decodeNormal(C.xyz)));
+    float roughness = C.r;
+    float metallic = C.g;
+    float ao = C.a;
+    float3 viewN = normalize(worldDirToView(decodeNormal(B.xyz)));
     float3 viewPos = uvzPosToView(float3(UV, depth));
     float3 viewDir = normalize(viewPos);
     float3 color = 0;
@@ -50,8 +50,9 @@ FragmentOut DEFAULT_SCREEN_MAIN
 
     if (hitData0.a > 0) {
         for (int i = 0; i < ssrResolveSamples; i++) {
-            float2 offUV = Hammersley16(i, ssrResolveSamples, uint2(0x0f3a, 0xd20c)) *
-                float2(1, rcp(camData.aspect)) * radius * 10;
+            uint3 rand3D = Rand3DPCG16(int3(fin.svPos.xy, i));
+            float2 offUV = Hammersley16(i, ssrResolveSamples, rand3D.xy) *
+                float2(1, rcp(camData.aspect)) * radius;
             float2 sampleUV = UV + offUV;
             float4 hitData = SAMPLE_TEX_LOD(hitDataMap, sampleUV, 0);
             float2 hitUV = hitData.xy + offUV;

@@ -24,7 +24,7 @@ int2 getHiZCellIndex(float2 curUV, float2 cellSize)
 float2 snapPixelCenter(float2 uv, float2 scale, float mipLevel)
 {
     scale *= exp2(mipLevel);
-    return floor(uv / scale) * scale + 0.25 * scale;
+    return (floor(uv / scale) + 0.5f) * scale;
 }
 
 bool in01Range(float2 uv)
@@ -34,9 +34,8 @@ bool in01Range(float2 uv)
 
 bool rayTraceHiZ_UVZ(Texture2D hiZMap, SamplerState hiZMapSampler,
     int hiZStartLevel, int hiZStopLevel, int hiZMaxStep, float4 hiZUVScale,
-    float3 startUVZ, float3 dirUVZ, out float3 hitUVZ, out float fade)
+    int hiZMaxMipLevel, float3 startUVZ, float3 dirUVZ, out float3 hitUVZ, out float fade)
 {
-    float3 dirUVZ_Z = dirUVZ / dirUVZ.z;
     float3 stepScale = abs(dirUVZ);
     bool vOrH = stepScale.x > stepScale.y;
     stepScale = vOrH
@@ -50,43 +49,47 @@ bool rayTraceHiZ_UVZ(Texture2D hiZMap, SamplerState hiZMapSampler,
     int stepNum = 0;
     float minZ;
     float stepSize;
-    float3 stepUVZ;
-    float deltaDepth;
-    float3 curUVZ = float3(snapPixelCenter(startUVZ.xy, hiZUVScale.zw, 0), startUVZ.z);
+    float3 stepUVZ, hitStepUVZ;
+    float deltaDepth, hitDeltaDepth;
+    // float3 curUVZ = float3(snapPixelCenter(startUVZ.xy, hiZUVScale.zw, 0), startUVZ.z);
+    float3 curUVZ = startUVZ;
     float hitDistance = 0;
     while (mipLevel > hiZStopLevel) {
         stepSize = getHiZCellSize(uvzScale, mipLevel);
         stepUVZ = dirUVZ * stepSize;
         float3 nextUVZ = curUVZ + stepUVZ;
-        minZ = SAMPLE_TEX_LOD(hiZMap, nextUVZ.xy * hiZUVScale.xy, mipLevel);
-        deltaDepth = nextUVZ.z - minZ;
+        float2 snappedNextUV = snapPixelCenter(nextUVZ.xy, hiZUVScale.zw, mipLevel);
+        minZ = SAMPLE_TEX_LOD(hiZMap, snappedNextUV * hiZUVScale.xy, mipLevel);
+        deltaDepth = minZ - nextUVZ.z;
         if (deltaDepth > 0 && hitDistance > 0) {
             hit = true;
             //hit = deltaDepth < abs(stepUVZ.z);
-            hitUVZ = curUVZ - deltaDepth * dirUVZ_Z;
+            hitStepUVZ = stepUVZ;
+            hitDeltaDepth = deltaDepth;
+            hitUVZ = curUVZ - deltaDepth * rcp(stepUVZ.z) * stepUVZ;
+            mipLevel--;
         }
         else {
-            mipLevel = min(mipLevel + 2, hiZStartLevel);
+            mipLevel = min(mipLevel + 1, hiZMaxMipLevel);
             curUVZ = nextUVZ;
             hitDistance += stepSize;
         }
-        mipLevel--;
         stepNum++;
 
-        if (stepNum >= hiZMaxStep) {
-            hit = false;
+        if (stepNum > hiZMaxStep) {
+            //hit = false;
             break;
         }
     }
     //float minStepSize = getHiZCellSize(uvzScale, hiZStopLevel + 1);
-    float minDepthErr = abs(stepUVZ.z) * 10.0f;
-    fade = hit ? (1 - saturate(deltaDepth / minDepthErr)) : 0;
+    float minDepthErr = abs(hitStepUVZ.z) * 10.0f;
+    fade = hit ? (1 - saturate(hitDeltaDepth / minDepthErr)) : 0;
     return hit;
 }
 
 bool rayTraceHiZ_View(Texture2D hiZMap, SamplerState hiZMapSampler,
     int hiZStartLevel, int hiZStopLevel, int hiZMaxStep, float4 hiZUVScale,
-    float3 startViewPos, float3 viewDir, out float3 hitUVZ)
+    int hiZMaxMipLevel, float3 startViewPos, float3 viewDir, out float3 hitUVZ)
 {
     bool hit = false;
     int mipLevel = hiZStartLevel;

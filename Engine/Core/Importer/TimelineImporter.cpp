@@ -4,7 +4,7 @@
 #include "../Console.h"
 #include "../Timeline/Timeline.h"
 
-ImporterRegister<TimelineImporter> timelineImporter(".timeline", true);
+ImporterRegister<TimelineImporter> timelineImporter(".timeline");
 
 bool TimelineImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 {
@@ -36,15 +36,7 @@ bool TimelineImporter::loadInternal(const ImportInfo& info, ImportResult& result
 	}
 
 	Asset* asset = new Asset(&TimelineAssetInfo::assetInfo, info.filename, info.path);
-	asset->asset[0] = timeline;
-	if (AssetManager::registAsset(*asset)) {
-		result.assets.push_back(asset);
-		return true;
-	}
-	else {
-		delete timeline;
-		delete asset;
-		result.status = ImportResult::RegisterFailed;
-		return false;
-	}
+	asset->setActualAsset(timeline);
+	result.asset = asset;
+	return true;
 }

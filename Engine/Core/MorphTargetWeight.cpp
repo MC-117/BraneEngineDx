@@ -25,7 +25,7 @@ void MorphTargetWeight::setMesh(Mesh& mesh)
 
 int MorphTargetWeight::getMorphCount() const
 {
-	return max(0, morphWeights.size() - 1);
+	return max(0llu, morphWeights.size() - 1);
 }
 
 bool MorphTargetWeight::getMorphWeight(unsigned int index, float& weight)

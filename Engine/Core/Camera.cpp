@@ -38,9 +38,22 @@ Matrix4f Camera::getProjectionMatrix() const
 	switch (mode)
 	{
 	case Perspective:
-		return Camera::perspective(fov, aspect, zNear, zFar);
+		return Math::perspective(fov, aspect, zNear, zFar);
 	case Orthotropic:
-		return Camera::orthotropic(left, right, bottom, top, zNear, zFar);
+		return Math::orthotropic(left, right, bottom, top, zNear, zFar);
+	default:
+		return Matrix4f::Identity();
+	}
+}
+
+Matrix4f Camera::getProjectionMatrixReversedZ() const
+{
+	switch (mode)
+	{
+	case Perspective:
+		return Math::perspectiveReversedZ(fov, aspect, zNear, zFar);
+	case Orthotropic:
+		return Math::orthotropicReversedZ(left, right, bottom, top, zNear, zFar);
 	default:
 		return Matrix4f::Identity();
 	}
@@ -48,14 +61,14 @@ Matrix4f Camera::getProjectionMatrix() const
 
 Matrix4f Camera::getViewMatrix() const
 {
-	return Camera::lookAt(cameraRender.cameraData.cameraLoc,
+	return Math::lookAt(cameraRender.cameraData.cameraLoc,
 		cameraRender.cameraData.cameraLoc + cameraRender.cameraData.cameraDir,
 		cameraRender.cameraData.cameraUp);
 }
 
 Matrix4f Camera::getViewOriginMatrix() const
 {
-	return Camera::lookAt(Vector3f::Zero(), cameraRender.cameraData.cameraDir, cameraRender.cameraData.cameraUp);
+	return Math::lookAt(Vector3f::Zero(), cameraRender.cameraData.cameraDir, cameraRender.cameraData.cameraUp);
 }
 
 Vector3f Camera::getFinalWorldPosition()
@@ -171,7 +184,7 @@ void Camera::afterTick()
 		cameraRender.cameraData.cameraLoc = getPosition(WORLD);
 		cameraRender.transformMat = transformMat;
 	}
-	cameraRender.cameraData.projectionMat = getProjectionMatrix();
+	cameraRender.cameraData.projectionMat = getProjectionMatrixReversedZ();
 	cameraRender.cameraData.viewMat = getViewMatrix();
 	cameraRender.cameraData.viewOriginMat = getViewOriginMatrix();
 	projectionViewMat = cameraRender.cameraData.projectionMat * cameraRender.cameraData.viewMat;
@@ -229,26 +242,6 @@ void Camera::setActive(bool active)
 bool Camera::isActive()
 {
 	return active;
-}
-
-Matrix4f Camera::perspective(float fovy, float aspect, float zNear, float zFar)
-{
-	return Math::perspective(fovy, aspect, zNear, zFar);
-}
-
-Matrix4f Camera::orthotropic(float left, float right, float bottom, float top, float zNear, float zFar)
-{
-	return Math::orthotropic(left, right, bottom, top, zNear, zFar);
-}
-
-Matrix4f Camera::lookAt(Vector3f const & eye, Vector3f const & center, Vector3f const & up)
-{
-	return Math::lookAt(eye, center, up);
-}
-
-Matrix4f Camera::viewport(float x, float y, float width, float height, float zNear, float zFar)
-{
-	return Math::viewport(x, y, width, height, zNear, zFar);
 }
 
 Serializable* Camera::instantiate(const SerializationInfo& from)

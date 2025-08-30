@@ -3,7 +3,7 @@
 #include "../Console.h"
 #include "../GUI/UIControl.h"
 
-BlurPass::BlurPass(const string& name, Material* material)
+BlurPass::BlurPass(const Name& name, Material* material)
     : PostProcessPass(name, material)
 {
 }
@@ -13,12 +13,6 @@ bool BlurPass::loadDefaultResource()
 	if (material == NULL)
 		material = getAssetByPath<Material>("Engine/Shaders/PostProcess/BlurPass.mat");
 	if (material == NULL || resource == NULL || resource->screenTexture == NULL)
-		return false;
-	screenMapSlot = material->getTexture("screenMap");
-	if (screenMapSlot == NULL)
-		return false;
-	blurMapSlot = material->getImage("blurMap");
-	if (blurMapSlot == NULL)
 		return false;
 	return true;
 }
@@ -41,16 +35,16 @@ void BlurPass::render(RenderInfo& info)
 		Vector3u localSize = material->getLocalSize();
 		localSize.x() = ceilf(size.x / (float)localSize.x());
 		localSize.y() = ceilf(size.y / (float)localSize.y());
-
-		*screenMapSlot = resource->screenTexture;
-		blurMapSlot->texture = &blurXMap;
+		
+		// *screenMapSlot = resource->screenTexture;
+		// blurMapSlot->texture = &blurXMap;
 
 		material->setPass(0);
 		material->processInstanceData();
 		program->dispatchCompute(localSize.x(), localSize.y(), 1);
 
-		*screenMapSlot = &blurXMap;
-		blurMapSlot->texture = &blurYMap;
+		// *screenMapSlot = &blurXMap;
+		// blurMapSlot->texture = &blurYMap;
 
 		material->setPass(1);
 		material->processInstanceData();

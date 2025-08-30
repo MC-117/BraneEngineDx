@@ -37,6 +37,11 @@ uint16_t IRenderCommand::getRenderStage() const
 	return materialRenderData->renderOrder;
 }
 
+CullType IRenderCommand::getCullType() const
+{
+	return getMaterialCullMode(materialRenderData, false);
+}
+
 void IRenderCommand::collectRenderData(IRenderDataCollector* collectorMainThread, IRenderDataCollector* collectorRenderThread)
 {
 	if (collectorMainThread) {
@@ -101,6 +106,11 @@ void RenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)
 Serializable* RenderGraph::instantiate(const SerializationInfo& from)
 {
 	return nullptr;
+}
+
+Name RenderPass::getPassName() const
+{
+	return Name::none;
 }
 
 void RenderPass::getOutputTextures(vector<pair<string, Texture*>>& textures)

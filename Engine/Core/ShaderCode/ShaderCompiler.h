@@ -1,7 +1,10 @@
 #pragma once
 
 #include "../ShaderStage.h"
+#include "../Utility/Parallel.h"
+#include "../InitializationManager.h"
 #include <fstream>
+
 
 class IShaderCodeReader
 {
@@ -123,4 +126,56 @@ protected:
 	virtual void addCondition(Enum<ShaderFeature> feature, const string& macro);
 	virtual Enum<ShaderFeature> addCondition(const vector<string>& command);
 	virtual void finalize();
+};
+
+class ENGINE_API ShaderCompilerManager : public Initialization
+{
+public:
+	static ShaderCompilerManager& get();
+
+	WaitHandle compileShaderAsync(ShaderAdapter* adapter, map<Enum<ShaderFeature>, ShaderMacroSet>&& conditions, string&& code);
+
+	void startShaderCompileThread();
+	void stopShaderCompileThread();
+
+	void waitUntilAllShadersCompiled() const;
+protected:
+	static ShaderCompilerManager instance;
+	
+	ShaderCompilerManager();
+
+	virtual bool initialize();
+	virtual bool finalize();
+
+	enum State {
+		Stopped,
+		Running,
+		Pending
+	} state = Stopped;
+
+	class Task : public CustomWaitableTask
+	{
+	public:
+		Task(ShaderAdapter* adapter, map<Enum<ShaderFeature>, ShaderMacroSet>&& conditions, string&& code);
+	protected:
+		ShaderAdapter* adapter;
+		map<Enum<ShaderFeature>, ShaderMacroSet> conditions;
+		string code;
+
+		virtual void executeInternal();
+	};
+
+	typedef std::shared_ptr<Task> TaskPtr;
+	
+	std::mutex requestMutex;
+	std::queue<TaskPtr> requestQueue;
+	std::queue<TaskPtr> workingQueue;
+	std::atomic_int pendingRequests;
+
+	std::thread* thread = NULL;
+	bool willStop = false;
+	bool isStopped = false;
+
+	void shaderCompileThreadLoop();
+	static void shaderCompileThreadMain(ShaderCompilerManager* manager);
 };

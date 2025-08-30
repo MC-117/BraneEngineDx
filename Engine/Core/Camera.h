@@ -63,6 +63,7 @@ public:
 	void setAnimationClip(AnimationClipData& data);
 
 	Matrix4f getProjectionMatrix() const;
+	Matrix4f getProjectionMatrixReversedZ() const;
 	Matrix4f getViewMatrix() const;
 	Matrix4f getViewOriginMatrix() const;
 
@@ -84,11 +85,6 @@ public:
 	void setActive(bool active);
 
 	bool isActive();
-
-	static Matrix4f perspective(float fovy, float aspect, float zNear, float zFar);
-	static Matrix4f orthotropic(float left, float right, float bottom, float top, float zNear, float zFar);
-	static Matrix4f lookAt(Vector3f const& eye, Vector3f const& center, Vector3f const& up);
-	static Matrix4f viewport(float x, float y, float width, float height, float zNear, float zFar);
 
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);

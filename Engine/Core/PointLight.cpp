@@ -54,7 +54,9 @@ void PointLight::render(RenderInfo & info)
 
 Serializable* PointLight::instantiate(const SerializationInfo& from)
 {
-	return new PointLight(from.name);
+	PointLight* L = new PointLight(from.name);
+	ChildrenInstantiate(Object, from, L);
+	return L;
 }
 
 bool PointLight::deserialize(const SerializationInfo& from)

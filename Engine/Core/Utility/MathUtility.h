@@ -48,6 +48,9 @@ namespace Math
 
 	ENGINE_API Matrix4f perspective(float fovy, float aspect, float zNear, float zFar);
 	ENGINE_API Matrix4f orthotropic(float left, float right, float bottom, float top, float zNear, float zFar);
+	ENGINE_API Matrix4f perspectiveReversedZ(float fovy, float aspect, float zNear, float zFar);
+	ENGINE_API Matrix4f orthotropicReversedZ(float left, float right, float bottom, float top, float zNear, float zFar);
+	
 	ENGINE_API Matrix4f lookAt(Vector3f const& eye, Vector3f const& center, Vector3f const& up);
 	ENGINE_API Matrix4f viewport(float x, float y, float width, float height, float zNear, float zFar);
 

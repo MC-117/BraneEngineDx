@@ -12,12 +12,14 @@ public:
 
 	Texture2D(bool isStandard = false);
 	Texture2D(ITexture2D* vendorTexture);
-	Texture2D(const Texture2DInfo& info, bool isStandard = false);
+	Texture2D(const TextureInfo& info, bool isStandard = false);
 	Texture2D(const string& file, bool isStandard = false);
 	Texture2D(Color color, unsigned int width, unsigned int height, unsigned int channel, bool isStandard = false);
-	Texture2D(unsigned char* bytes, unsigned int width, unsigned int height, unsigned int channel, bool isStandard = false, const Texture2DInfo& info = Texture2DInfo(), bool externalBytes = false);
-	Texture2D(unsigned int width, unsigned int height, unsigned int channel, bool isStandard = false, const Texture2DInfo& info = Texture2DInfo());
+	Texture2D(unsigned char* bytes, unsigned int width, unsigned int height, unsigned int channel, bool isStandard = false, const TextureInfo& info = TextureInfo(), bool externalBytes = false);
+	Texture2D(unsigned int width, unsigned int height, unsigned int channel, bool isStandard = false, const TextureInfo& info = TextureInfo());
 	virtual ~Texture2D();
+
+	void release();
 
 	virtual bool isValid() const;
 	virtual bool isStatic() const;
@@ -27,14 +29,15 @@ public:
 	virtual int getChannel() const;
 	virtual int getArrayCount() const;
 	virtual int getMipLevels() const;
-	Texture2DInfo getTextureInfo() const;
+	virtual TexInternalType getFormat() const;
+	TextureInfo getTextureInfo() const;
 
 	virtual unsigned long long getTextureID();
 	virtual ITexture* getVendorTexture() const;
 
 	void setAutoGenMip(bool value);
 	void setViewAsArray(bool value);
-	void setTextureInfo(const Texture2DInfo& info);
+	void setTextureInfo(const TextureInfo& info);
 
 	virtual bool assign(ITexture2D* venderTex);
 	virtual bool load(const string& file);
@@ -61,7 +64,7 @@ public:
 	static bool loadDefaultTexture();
 protected:
 	bool readOnly = false;
-	Texture2DDesc desc;
+	TextureDesc desc;
 	ITexture2D* vendorTexture = NULL;
 	static bool isLoadDefaultTexture;
 

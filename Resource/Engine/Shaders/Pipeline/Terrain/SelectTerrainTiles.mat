@@ -1,0 +1,207 @@
+#material
+#localsize 64 1 1
+#compute
+
+#include "CalTerrainTileBounds_Lib.hmat"
+#include "../../lib/CameraData_Def.hmat"
+#include "../../lib/FrustumCulling_Lib.hmat"
+#include "../../lib/Const_Def.hmat"
+
+DEF_TEX2D(tileBounds, 0);
+Buffer<uint> selectedGrids;
+RWBuffer<uint> selectedTiles;
+RWBuffer<uint> drawArgs;
+
+// #define MAX_TILE 1023
+// groupshared uint tileTask[1024];
+
+void addSelectedTile(int x, int y, int level)
+{
+    int index;
+    InterlockedAdd(drawArgs[DRAW_INDIRECT_INS_COUNT_IDX], 1, index);
+
+    selectedTiles[index] = encodeTile(x, y, level);
+}
+
+// void addTaskTile(int x, int y, int level)
+// {
+//     int index;
+//     InterlockedAdd(tileTask[MAX_TILE], 1, index);
+//     if (index < MAX_TILE) {
+//         tileTask[index] = encodeTile(x, y);
+//     }
+// }
+
+// void resetTaskTile(uint tid)
+// {
+//     if (tid == 0) {
+//         tileTask[MAX_TILE] = 0;
+//     }
+// }
+
+bool boxSphereIntersect(float3 center, float3 extent, float4x4 worldToLocal, float4 sphere)
+{
+    float4 localSphere = mul(sphere, worldToLocal);
+    float3 minPoint = center - extent;
+    float3 maxPoint = center + extent;
+
+    float d = 0;
+
+    #define EVAL_AXIS(Axis) \
+        if (sphere.Axis < minPoint.Axis) { \
+            d += square(sphere.Axis - minPoint.Axis); \
+        } \
+        else if (sphere.Axis > maxPoint.Axis) { \
+            d += square(sphere.Axis - maxPoint.Axis); \
+        }
+    
+    EVAL_AXIS(x)
+    EVAL_AXIS(y)
+    EVAL_AXIS(z)
+
+    #undef EVAL_AXIS
+
+    return d <= square(sphere.w);
+}
+
+// void selectTile(int x, int y, int level, float levelDistance)
+// {
+//     float2 bounds = tileBounds[int3(x, y, level)];
+//     float levelTileSize = tileSize >> level;
+//     float halfLevelTileSize = levelTileSize * 0.5f;
+//     float3 extent = float3(halfTileSize, halfTileSize, (bounds.x + bounds.y) * 0.5f);
+//     float3 center = float3(x, y, 0.0f) * levelTileSize + extent;
+
+//     FrustumCullData cullData = frustumCullBox(center, extent, 0, terrainLocalToWorld, camData.pmat, false);
+//     if (!cullData.visiable) {
+//         return;
+//     }
+
+//     if (boxSphereIntersect(center, extent, terrainWorldToLocal, float4(camData.camPos, levelDistance))) {
+//         addTaskTile(x, y, level);
+//     }
+//     else {
+//         addSelectedTile(x, y, level);
+//     }
+// }
+
+void selectTile(int x, int y, int level, float3 gridOffset, float levelDistance, out bool visiable, out bool selected)
+{
+    float2 bounds = tileBounds.Load(int3(x, y, level));
+    float levelWidthPerTile = widthPerTile * pow(0.5, level);
+    float halfWidthPerGrid = levelWidthPerTile * 0.5f;
+    float halfHeightPerGrid = (bounds.y - bounds.x) * heightPerGrid * 0.5f;
+    float3 extent = float3(halfWidthPerGrid, halfWidthPerGrid, halfHeightPerGrid);
+    float3 center = float3(x * levelWidthPerTile, y * levelWidthPerTile, bounds.x * heightPerGrid) + gridOffset + extent;
+
+    selected = false;
+
+    FrustumCullData cullData = frustumCullBox(center, extent, 0, terrainLocalToWorld, camData.pmat, false);
+    visiable = cullData.visiable;
+    if (!cullData.visiable) {
+        return;
+    }
+
+    selected = !boxSphereIntersect(center, extent, terrainWorldToLocal, float4(camData.camPos, levelDistance));
+}
+
+void decodeTask(uint2 tid, out int x, out int y, out int level, out int2 gridIndex)
+{
+    uint offset = 0;
+    uint levelTiles = tilesPerGrid;
+    for (level = 0; level < tileLevels; level++) {
+        uint limit = offset + levelTiles * levelTiles;
+        if (tid.x < limit) {
+            break;
+        }
+        levelTiles >>= 1;
+        offset = limit;
+    }
+    uint localId = tid.x - offset;
+    x = localId % levelTiles;
+    y = localId / levelTiles;
+
+    uint gridId = selectedGrids[tid.y];
+    gridIndex = int2(gridId % grid.x, gridId / grid.x);
+}
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 tid : SV_DispatchThreadID)
+{
+    int x, y, level;
+    int2 gridIndex;
+    decodeTask(tid, x, y, level, gridIndex);
+    if (level >= tileLevels) {
+        return;
+    }
+
+    if (all(tid == 0)) {
+        drawArgs[DRAW_INDIRECT_COUNT_IDX] = trianglesPerTile * trianglesPerTile * 6;
+    }
+
+    float3 gridOffset = float3(gridIndex * widthPerGrid, 0.0f);
+
+    const float levelDistance = distanceForFirstTileLevel * (1 << level);
+
+    bool visiable, selected;
+    if (level > 0) {
+        float levelDistance = distanceForFirstTileLevel * pow(2, level - 1);
+        selectTile(x >> 1, y >> 1, level - 1, gridOffset, levelDistance * 2, visiable, selected);
+        if (!visiable || selected) {
+            return;
+        }
+    }
+
+    selectTile(x, y, level, gridOffset, levelDistance, visiable, selected);
+
+    if (selected) {
+        addSelectedTile(x, y, level);
+    }
+}
+
+// [numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+// void main(uint tid : SV_DispatchThreadID)
+// {
+//     int level = tileLevels - 1;
+
+//     resetTaskTile(tid);
+
+//     GroupMemoryBarrierWithGroupSync();
+
+//     if (level >= 0) {
+//         int levelTiles = max(1, tilesPerGrid >> level);
+//         float levelDistance = distanceForFirstTileLevel * pow(2, level);
+//         uint levelOffset = getLevelOffset(level);
+
+//         int x = tid % levelTiles;
+//         int y = tid / levelTiles;
+//         if (x < levelTiles && y < levelTiles) {
+//             selectTile(x, y, levelOffset, levelDistance);
+//         }
+//         level--;
+//     }
+
+//     for (; level >= 0; level++) {
+
+//         GroupMemoryBarrierWithGroupSync();
+
+//         int count = tileTask[MAX_TILE];
+
+//         uint tile = -1;
+//         if (tid < count) {
+//             tile = tileTask[tid];
+//         }
+
+//         resetTaskTile(tid);
+
+//         GroupMemoryBarrierWithGroupSync();
+
+//         if (tid < count) {
+//             float levelDistance = distanceForFirstTileLevel * pow(2, level);
+//             uint levelOffset = getLevelOffset(level);
+//             int x, y;
+//             decodeTile(tile, x, y);
+//             selectTile(x, y, levelOffset, levelDistance);
+//         }
+//     }
+// }

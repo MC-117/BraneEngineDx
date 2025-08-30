@@ -1,4 +1,5 @@
 #include "WUIControl.h"
+#include "../Utility/Parallel.h"
 
 bool WUIControl::isRegistClass = false;
 unsigned int WUIControl::nextHMenuID = 1001;
@@ -242,37 +243,46 @@ bool WUIControl::doModel(bool showDefault)
 	return true;
 }
 
-bool WUIControl::doModelAsync(void(*workFunc)(WUIControl& control, void* ptr), void* ptr)
+bool WUIControl::doModelAsync(void(*updateFunc)(WUIControl& control, void* ptr), void* ptr)
 {
-	create();
-	isAsync = true;
-	show();
-	if (asyncThread)
+	if (asyncThread) {
 		delete asyncThread;
-	asyncThread = new thread([&]() { workFunc(*this, ptr); closing = true; });
-	asyncThread->detach();
-	MSG msg = {};
-	while (!closing) {
-		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-			if (msg.message == WM_QUIT)
-				closing = true;
-		}
-		onLoop();
 	}
-	close();
-	isAsync = false;
+	isAsync = true;
+	asyncThread = new thread([&]() {
+		registerCurrentThread("WUIThread");
+		create();
+		show();
+		MSG msg = {};
+		while (!closing) {
+			while (!closing && PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+				if (msg.message == WM_QUIT)
+					closing = true;
+			}
+			onLoop();
+			if (updateFunc) {
+				updateFunc(*this, ptr);
+			}
+		}
+		unregisterCurrentThread();
+	});
+	asyncThread->detach();
 	return true;
 }
 
 void WUIControl::close()
 {
-	CloseWindow(hWnd);
-	closing = true;
 	if (isAsync) {
-		ShowWindow(hWnd, SW_HIDE);
-		DestroyWindow(hWnd);
+		closing = true;
+		isAsync = false;
+		delete asyncThread;
+		CloseWindow(hWnd);
+	}
+	else {
+		CloseWindow(hWnd);
+		closing = true;
 	}
 }
 

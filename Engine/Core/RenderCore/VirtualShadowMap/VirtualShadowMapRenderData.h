@@ -22,5 +22,5 @@ public:
 	void clean();
 
 	virtual void bind(IRenderContext& context);
-	void bindForLighting(IRenderContext& context);
+	void bindForLighting(IRenderContext& context, Texture* sceneDepth);
 };

@@ -26,6 +26,7 @@ public:
 #define RENDER_DESC_SCOPE_NO_CONTEXT(name, text, ...) RenderProfileScope name##_RenderScope(#name, text, ##__VA_ARGS__);
 
 #define RENDER_SCOPE(context, name) RenderProfileScopeWithContext name##_RenderScope(context, #name, "");
+#define RENDER_NAME_SCOPE(context, name) RenderProfileScopeWithContext __FILE__##__LINE__##_RenderScope(context, name, "");
 #define RENDER_DESC_SCOPE(context, name, text, ...) RenderProfileScopeWithContext name##_RenderScope(context, #name, text, ##__VA_ARGS__);
 
 namespace ImPlot

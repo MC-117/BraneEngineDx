@@ -16,7 +16,7 @@ public:
 	GPUBuffer workingControlBuffer = GPUBuffer(GB_Storage, GBF_Raw, sizeof(unsigned int), GAF_ReadWrite, CAF_None);
 	GPUBuffer workingExecuteIndirectBuffer = GPUBuffer(GB_Command, GBF_Raw, sizeof(unsigned int), GAF_ReadWrite, CAF_None);
 
-	CMAA2Pass(const string& name = "CMAA2", Material* material = NULL);
+	CMAA2Pass(const Name& name = "CMAA2", Material* material = NULL);
 
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);
@@ -34,8 +34,13 @@ protected:
 	Material* debugDrawEdgesMaterial = NULL;
 
 	ShaderProgram* edgesColor2x2Program = NULL;
+	ComputePipelineState* edgesColor2x2PSO = NULL;
 	ShaderProgram* processCandidatesProgram = NULL;
+	ComputePipelineState* processCandidatesPSO = NULL;
 	ShaderProgram* computeDispatchArgsProgram = NULL;
+	ComputePipelineState* computeDispatchArgsPSO = NULL;
 	ShaderProgram* deferredColorApply2x2Program = NULL;
+	ComputePipelineState* deferredColorApply2x2PSO = NULL;
 	ShaderProgram* debugDrawEdgesProgram = NULL;
+	ComputePipelineState* debugDrawEdgesPSO = NULL;
 };

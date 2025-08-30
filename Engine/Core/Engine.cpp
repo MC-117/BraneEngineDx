@@ -21,6 +21,7 @@
 #include "EngineLoop/WorldEngineLoop.h"
 #include "GUI/GUIUtility.h"
 #include "Profile/RenderDurationProfiler.h"
+#include "ShaderCode/ShaderCompiler.h"
 
 void (*pInitialWorldFunc)() = NULL;
 
@@ -317,13 +318,15 @@ bool Engine::loadAssets(ImportContext& context)
 	}
 
 	if (context.sourceFlags.has(ImportSourceFlags::Import_Source_Engine))
-		IImporter::loadFolder("Engine", context);
+		IImporter::loadFolderAsync("Engine", context);
 	if (context.sourceFlags.has(ImportSourceFlags::Import_Source_Content)
 		&& !testCompilingShaders) {
 		if (FS::exists("Content")) {
-			IImporter::loadFolder("Content", context);
+			IImporter::loadFolderAsync("Content", context);
 		}
 	}
+	IImporter::waitAllImportTasks();
+	ShaderCompilerManager::get().waitUntilAllShadersCompiled();
 	return true;
 }
 

@@ -19,6 +19,7 @@ struct RenderTargetDesc
 	int width = 0, height = 0, channel = 0;
 	bool depthOnly = false;
 	bool withDepthStencil = false;
+	DepthStencilAccessFlag depthStencilAccessFlag = DSA_Default;
 	int multisampleLevel = 0;
 	bool inited = false;
 	unsigned int frameID = 0;

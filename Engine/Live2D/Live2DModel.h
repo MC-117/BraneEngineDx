@@ -7,7 +7,7 @@
 
 class AssetInfo;
 
-class ENGINE_API Live2DModel
+class ENGINE_API Live2DModel : public IAssetBase
 {
 public:
 	Live2DModel();

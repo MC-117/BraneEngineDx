@@ -2,6 +2,7 @@
 #include "../RenderCore/DirectShadowRenderPack.h"
 #include "../RenderCore/MeshRenderPack.h"
 #include "../Asset.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
 bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 {
@@ -54,6 +55,10 @@ bool ShadowDepthPass::setRenderCommand(const IRenderCommand& cmd)
 	task.surface = cameraRenderData.surface;
 	task.meshData = meshData;
 	task.extraData = command.bindings;
+
+	GraphicsPipelineStateDesc desc;
+	setupPSODescFromRenderTask(desc, task, command.getCullType());
+	task.graphicsPipelineState = fetchPSOIfDescChangedThenInit(NULL, desc);
 
 	return commandList.addRenderTask(command, task);
 }

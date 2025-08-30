@@ -1,6 +1,7 @@
 #material
 Scalar worldRadius: 5
 Scalar ssaoIntensity: 1.0
+Scalar spatialFilterWeight: 1.0
 Count numAngles: 4
 Count GTAO_NUMTAPS: 5
 Texture ssaoMap
@@ -23,6 +24,7 @@ uniform int numAngles = 8;
 uniform int GTAO_NUMTAPS = 10;
 uniform float worldRadius;
 uniform float ssaoIntensity;
+uniform float spatialFilterWeight;
 uniform int ssaoBlurIter;
 uniform float screenScale;
 DEF_MAT_END
@@ -115,21 +117,19 @@ float3 GetRandomVector(uint2 iPos)
 	return RandomVec;
 }
 
-float2 SearchForLargestAngleDual(uint NumSteps, float2 BaseUV, float2 ScreenDir, float3 ViewPos, float3 ViewDir)
+float2 SearchForLargestAngleDual(uint NumSteps, float2 BaseUV, float2 ScreenDir, float SearchRadius, float InitialOffset, float3 ViewPos, float3 ViewDir, float AttenFactor)
 {
 	float LenDsSquare, LenDsInv,Ang,FallOff;
 	float3 Ds;
 	float2 SceneDepths = 0;
 	float2 BestAng = float2(-1, -1);
 	
-	float AttenFactor = 2.0 / (worldRadius * worldRadius);
-	
 	float Thickness = 0.9f;
 	for (uint i = 0; i < NumSteps; i++)
 	{
 		float fi = (float) i;
 		
-		float2 UVOffset = ScreenDir * (fi + 1.0) / camData.viewSize; 
+		float2 UVOffset = ScreenDir * max(SearchRadius * (fi + InitialOffset), (fi + 1.0f)); 
 		UVOffset.y *= -1;
 		
 		float4 UV2 = BaseUV.xyxy + float4(UVOffset.xy, -UVOffset.xy);
@@ -266,6 +266,15 @@ FragmentOut DEFAULT_SCREEN_MAIN
         float sinDeltaAngle = sin(PI / numAngles);
         float cosDeltaAngle = cos(PI / numAngles);
 
+		float invTanHalfFov = 1 / tan((camData.fovy / 180.0f * PI) * 0.5f);
+		float fovScale = camData.viewSize.y * invTanHalfFov;
+
+		// Get Radius in ScreenSpace (in pixels)
+		float worldRadiusAdj		= worldRadius * fovScale;	
+		float pixelRadius			= max( min( worldRadiusAdj / posVS.z, 256.0f ), (float) GTAO_NUMTAPS );
+		float stepRadius			= pixelRadius / ( (float) GTAO_NUMTAPS + 1 );
+		float attenFactor			= 2.0 / (worldRadius * worldRadius);
+
         float3 random = GetRandomVector(int2(fin.UV * camData.viewSize));
         float2 randomVec = random.xy;
         float offset = random.z;
@@ -275,23 +284,83 @@ FragmentOut DEFAULT_SCREEN_MAIN
         float2 screenDir = randomVec;
         for (int angle = 0; angle < numAngles; angle++)
         {
-            float2 Angles = SearchForLargestAngleDual(GTAO_NUMTAPS, fin.UV, screenDir, posVS, viewDir);
+            float2 Angles = SearchForLargestAngleDual(GTAO_NUMTAPS, fin.UV, screenDir / camData.viewSize, stepRadius, offset, posVS, viewDir, attenFactor);
             ao += ComputeInnerIntegral(fin.UV, Angles, screenDir, viewDir, normVS, viewDepth);
 		
 		    // Rotate for the next angle
 		    float2 TempScreenDir = screenDir.xy;
 		    screenDir.x = (TempScreenDir.x * cosDeltaAngle) + (TempScreenDir.y * -sinDeltaAngle);
 		    screenDir.y = (TempScreenDir.x * sinDeltaAngle) + (TempScreenDir.y * cosDeltaAngle);
+
+			offset = frac(offset + 0.617f);
         }
 
         ao /= numAngles;
         ao *= 2.0f / PI;
 
         ao = 1 - (1 - ao) * ssaoIntensity * 0.3;
+		//ao = smoothstep(0.5f, 0.8f, ao);
 
         fout.FragColor = float4(ao, ao, ao, 1);
     }
-    else if (passID == 1) {
+	else if (passID == 1) {
+		float2 offset = 1.0f / camData.viewSize;
+		float2 offset2 = offset * 2;
+
+		float ao_c  = SAMPLE_TEX_LOD(ssaoMap, fin.UV, 0);
+		float ao_m1 = SAMPLE_TEX_LOD(ssaoMap, fin.UV - offset, 0);
+		float ao_p1 = SAMPLE_TEX_LOD(ssaoMap, fin.UV + offset, 0);
+		float ao_m2 = SAMPLE_TEX_LOD(ssaoMap, fin.UV - offset2, 0);
+		float ao_p2 = SAMPLE_TEX_LOD(ssaoMap, fin.UV + offset2, 0);
+
+		float z_c  = depthFromNDCToView(SAMPLE_TEX_LOD(depthMap, fin.UV, 0).r);
+		float z_m1 = depthFromNDCToView(SAMPLE_TEX_LOD(depthMap, fin.UV - offset, 0).r);
+		float z_p1 = depthFromNDCToView(SAMPLE_TEX_LOD(depthMap, fin.UV + offset, 0).r);
+		float z_m2 = depthFromNDCToView(SAMPLE_TEX_LOD(depthMap, fin.UV - offset2, 0).r);
+		float z_p2 = depthFromNDCToView(SAMPLE_TEX_LOD(depthMap, fin.UV + offset2, 0).r);
+
+		float diffZ = min(abs(z_c - z_m1), abs(z_c - z_p1));
+
+		const float sfWeight = spatialFilterWeight * 1000;
+		float sampleZDiff=0;
+		float weight=0;
+
+		float sumWeight = 1.0f;
+		float totalAO = ao_c;
+
+		// Minus 2
+		sampleZDiff = abs(z_c - z_m2);
+		sampleZDiff -= diffZ * 2;
+		weight = 1.0f - saturate(sampleZDiff * sfWeight);
+		totalAO += ao_m2 * weight;
+		sumWeight += weight;
+
+		// Minus 2
+		sampleZDiff = abs(z_c - z_m1);
+		sampleZDiff -= diffZ;
+		weight = 1.0f - saturate(sampleZDiff * sfWeight);
+		totalAO += ao_m1 * weight;
+		sumWeight += weight;
+
+		// Plus 2
+		sampleZDiff = abs(z_c - z_p2);
+		sampleZDiff -= diffZ * 2;
+		weight = 1.0f - saturate(sampleZDiff * sfWeight);
+		totalAO += ao_p2 * weight;
+		sumWeight += weight;
+
+		// Plus 1
+		sampleZDiff = abs(z_c - z_p1);
+		sampleZDiff -= diffZ;
+		weight = 1.0f - saturate(sampleZDiff * sfWeight);
+		totalAO += ao_p1 * weight;
+		sumWeight += weight;
+
+		totalAO /= sumWeight;
+
+		fout.FragColor = float4(totalAO, totalAO, totalAO, 1);
+	}
+    else if (passID == 2) {
         float4 albedo = SAMPLE_TEX_LOD(screenMap, fin.UV, 0);
         float ao = SAMPLE_TEX_LOD(ssaoMap, fin.UV, 0);
         albedo.rgb *= AOMultiBounce(ao, albedo.rgb);

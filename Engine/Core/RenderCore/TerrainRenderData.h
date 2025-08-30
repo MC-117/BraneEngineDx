@@ -79,12 +79,16 @@ protected:
 
     static Material* calTileBoundsMaterial;
     static ShaderProgram* calTileBoundsProgram;
+    static ComputePipelineState* calTileBoundsPSO;
     static Material* calTileLodBoundsMaterial;
     static ShaderProgram* calTileLodBoundsProgram;
+    static ComputePipelineState* calTileLodBoundsPSO;
     static Material* selectGridsMaterial;
     static ShaderProgram* selectGridsProgram;
+    static ComputePipelineState* selectGridsPSO;
     static Material* selectTilesMaterial;
     static ShaderProgram* selectTilesProgram;
+    static ComputePipelineState* selectTilesPSO;
     static bool isInited;
 
     static void loadDefaultResource();

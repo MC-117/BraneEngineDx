@@ -520,8 +520,7 @@ bool AssetBrowser::refreshNewAsset(const string& path)
 				ImportInfo info(assetPath);
 				ImportResult result;
 				if (IImporter::load(info, result)) {
-					for (Asset* asset : result.assets)
-						assets.push_back(asset);
+					assets.push_back(result.asset);
 				}
 			}
 		}

@@ -1,0 +1,90 @@
+#include "Basic_FS_Lib.hmat"
+
+cbuffer FogParameters
+{
+    float efogDensity;
+    float efogHeight;
+    float efogHeightFalloff;
+    float efogStartDistance;
+    float3 efogColor;
+    float efogCutoffDistance;
+    float efogMaxOpacity;
+    float vfogScatteringDistribution;
+    float vfogExtinctionScale;
+    float vfogStartDistance;
+    float3 vfogColor;
+    float vfogMaxDistance;
+    float3 fogGridZParams;
+    float fogMaxWorldViewHeight;
+    int3 fogGridSize;
+    float vfogNoiseScalar;
+    float2 fogScreenToUV;
+    float2 hiZSize;
+};
+
+DEF_TEX3D_AUTO(fogIntegratedVolume);
+
+float calLineIntegralShared(float fogHeightFalloff, float rayDirectionZ, float rayOriginTerms)
+{
+	float falloff = max(-127.0f, fogHeightFalloff * rayDirectionZ);
+	float lineIntegral = (1.0f - exp2(-falloff)) / falloff;
+	float lineIntegralTaylor = log(2.0) - (0.5 * log(2.0) * log(2.0)) * falloff;
+	
+	return rayOriginTerms * (abs(falloff) > 0.01f ? lineIntegral : lineIntegralTaylor);
+}
+
+float4 getExponentialHeightFog(float3 fogPosInViewOrigin, float camToFogDistance)
+{
+    float3 camWorldPos = float3(camData.camPos.xy, min(camData.camPos.z, fogMaxWorldViewHeight));
+
+    float3 camToEnd = float3(fogPosInViewOrigin.xy, fogPosInViewOrigin.z + camData.camPos.z - camWorldPos.z);
+
+    float camToEndLengthSpr = dot(camToEnd, camToEnd);
+    float camToEndLengthInv = rsqrt(max(camToEndLengthSpr, 0.00000001f));
+    float camToEndLength = camToEndLengthSpr * camToEndLengthInv;
+    float3 camEndDir = camToEnd * camToEndLengthInv;
+
+    camToFogDistance = max(camToFogDistance, efogStartDistance);
+
+    float camToFogRadio = camToFogDistance * camToEndLengthInv;
+    float camToFogZ = camToFogRadio * camToEnd.z;
+    float fogWorldZ = camToFogZ + camWorldPos.z;
+
+    float rayDirectionZ = camToEnd.z - camToFogZ;
+    float rayLength = (1 - camToFogRadio) * camToEndLength;
+
+    float exponent = max(-127.0f, efogHeightFalloff * (fogWorldZ - efogHeight));
+    float rayOriginTerms = efogDensity * exp2(-exponent);
+    
+    float exponentHeightLineIntegral = calLineIntegralShared(efogHeightFalloff, rayDirectionZ, rayOriginTerms) * rayLength;
+
+    float efogExpFactor = max(saturate(exp2(-exponentHeightLineIntegral)), efogMaxOpacity);
+
+    if (efogCutoffDistance > 0 && camToEndLength > efogCutoffDistance)
+    {
+        efogExpFactor = 0;
+    }
+
+    float3 fogColor = efogColor * (1 - efogExpFactor);
+
+    return float4(fogColor, efogExpFactor);
+}
+
+float3 getVolumetricFogUV(float2 screenPos, float viewDepth)
+{
+    float zSlice = log2(viewDepth * fogGridZParams.x + fogGridZParams.y) * fogGridZParams.z / fogGridSize.z;
+	float2 vUV = screenPos * fogScreenToUV;
+    return float3(vUV, zSlice);
+}
+
+float4 getVolumetricFog(float3 vUV, float viewDepth)
+{
+    float4 vFog = SAMPLE_TEX_LOD(fogIntegratedVolume, vUV, 0);
+    vFog = lerp(float4(0, 0, 0, 1.0f), vFog, saturate((viewDepth - vfogStartDistance) * 100000000.0f));
+    return vFog;
+}
+
+float4 combineFog(float4 efog, float4 vfog)
+{
+    return float4(vfog.rgb + efog.rgb * vfog.a, vfog.a * efog.a);
+}

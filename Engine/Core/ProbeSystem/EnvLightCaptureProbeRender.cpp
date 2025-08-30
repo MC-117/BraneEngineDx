@@ -46,7 +46,7 @@ int EnvLightCaptureProbeRender::getCaptureIndex() const
 
 void EnvLightCaptureProbeRender::render(RenderInfo& info)
 {
-	if (update) {
+	if (!needWarmup && update) {
 		if (lightCubeMap) {
 			sceneCaptureCube.setTexture(*lightCubeMap);
 			sceneCaptureCube.setSize({ resolution, resolution });

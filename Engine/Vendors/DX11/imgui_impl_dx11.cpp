@@ -67,10 +67,10 @@ struct VERTEX_CONSTANT_BUFFER
 
 struct PIXEL_CONSTANT_BUFFER
 {
-    float   mipLevel;
-    int     channels;
-    float   pad1;
-    float   pad2;
+    float       mipLevel;
+    uint32_t    channelMask;
+    float       pad1;
+    float       pad2;
 };
 
 // Backend data stored in io.BackendRendererUserData to allow support for multiple Dear ImGui contexts
@@ -284,21 +284,24 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data, ID3D11DeviceContext* d
                 ctx->RSSetScissorRects(1, &r);
 
                 ID3D11ShaderResourceView* texture_srv = NULL;
-                int mipLevel = 0;
-                int channels = 4;
+                ID3D11SamplerState* texture_sample = NULL;
+                float mipLevel = 0;
+                uint32_t channelMask = 0xFFFFFFFFu;
                 if (pcmd->TextureId.ptr == bd->pFontTextureView) {
                     texture_srv = bd->pFontTextureView;
+                    texture_sample = bd->pFontSampler;
                 }
                 else {
                     DX11Texture2D* dx11Tex = (DX11Texture2D*)pcmd->TextureId.ptr;
                     texture_srv = dx11Tex->getSRV().Get();
+                    texture_sample = dx11Tex->getSampler().Get();
                     mipLevel = pcmd->TextureId.mipLevel;
-                    channels = dx11Tex->desc.channel;
+                    channelMask = pcmd->TextureId.channelMask;
                 }
 
                 // Setup mipLevel into our constant buffer
                 {
-                    PIXEL_CONSTANT_BUFFER mipInfo = { mipLevel, channels, 0, 0 };
+                    PIXEL_CONSTANT_BUFFER mipInfo = { mipLevel, channelMask, 0, 0 };
                     D3D11_MAPPED_SUBRESOURCE mapped_resource;
                     if (ctx->Map(bd->pPixelConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource) != S_OK)
                         return;
@@ -307,7 +310,9 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data, ID3D11DeviceContext* d
                 }
 
                 // Bind texture, Draw
+                ctx->PSSetConstantBuffers(0, 1, &bd->pPixelConstantBuffer);
                 ctx->PSSetShaderResources(0, 1, &texture_srv);
+                ctx->PSSetSamplers(0, 1, &texture_sample);
                 ctx->DrawIndexed(pcmd->ElemCount, pcmd->IdxOffset + global_idx_offset, pcmd->VtxOffset + global_vtx_offset);
             }
         }
@@ -490,10 +495,10 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
     // Create the pixel shader
     {
         static const char* pixelShader =
-            "cbuffer mipBuffer : register(b1) \
+            "cbuffer mipBuffer : register(b0) \
             {\
               float mipLevel; \
-              int   channels; \
+              uint   channelMask; \
               float pad1; \
               float pad2; \
             };\
@@ -503,18 +508,17 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
             float4 col : COLOR0;\
             float2 uv  : TEXCOORD0;\
             };\
-            sampler sampler0;\
-            Texture2D texture0;\
+            sampler sampler0 : register(s0);\
+            Texture2D texture0 : register(t0);\
             \
             float4 main(PS_INPUT input) : SV_Target\
             {\
             float4 out_col = texture0.SampleLevel(sampler0, input.uv, mipLevel); \
-            if (channels == 1)\
-            {\
-                out_col.g = out_col.r;\
-                out_col.b = out_col.r;\
-                out_col.a = 1;\
-            }\
+            float4 color_mask = float4(channelMask & 0xFF000000 ? 1 : 0, channelMask & 0xFF0000 ? 1 : 0, \
+                channelMask & 0xFF00 ? 1 : 0, channelMask & 0xFF ? 1 : 0);\
+            out_col *= color_mask;\
+            if (color_mask.a == 0) { out_col.a = 1.f; }\
+            if (dot(color_mask, color_mask) == 1) { float value = dot(color_mask, out_col); out_col = float4(value, value, value, 1.0f); }\
             return out_col * input.col; \
             }";
 
@@ -652,7 +656,7 @@ void ImGui_ImplDX11_NewFrame()
     IM_ASSERT(bd != NULL && "Did you call ImGui_ImplDX11_Init()?");
 
     if (!bd->pFontSampler)
-        ImGui_ImplDX11_CreateDeviceObjects();
+        IM_ASSERT(ImGui_ImplDX11_CreateDeviceObjects());
 }
 
 static void ImGui_ImplDX11_CreateWindow(ImGuiViewport* viewport)

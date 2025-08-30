@@ -1,0 +1,69 @@
+#material
+#localsize 4 4 4
+#compute
+#condition vsm
+#include "VolumetricFog_Lib.hmat"
+
+#include "../../lib/Light_Def.hmat"
+
+DEF_TEX2D_AUTO(maxDepthTexture);
+#if !defined(VSM_SHADER_FEATURE)
+DEF_TEX2D(depthMap, 0);
+#endif
+
+#include "../../lib/Shadow_Lib.hmat"
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint3 gridIndex : SV_DispatchThreadID)
+{
+    if (any(gridIndex >= fogGridSize)) {
+        return;
+    }
+
+    float depth = 0.0f;
+    uint3 rand3D = Rand4DPCG32(uint4(gridIndex, gameTime * 10000)).xyz;
+    float offset = (float3(rand3D) / float(uint(0xffffffff))) * 2.0f - 1.0f;
+    float3 viewPos = calFogGridViewPosition(gridIndex, offset * vfogNoiseScalar, depth);
+    float3 worldPos = viewPosToWorld(viewPos);
+    float3 camVector = normalize(worldPos - camData.camPos);
+
+    float3 uvzPos = viewPosToUVZ(viewPos);
+    float maxDepth = SAMPLE_TEX_LOD(maxDepthTexture, uvzPos.xy, 0);
+    if (depth < maxDepth) {
+        outFogScatteringVolume[gridIndex] = float4(0, 0, 0, 0);
+        return;
+    }
+
+    float3 lightScattering = 0;
+
+    if (directLight.intensity != 0) {
+        float shadowFactor = 1.0f;
+#if defined(VSM_SHADER_FEATURE)
+        float rayLength = camData.promatInv[1][1] * (1 - depth);
+        shadowFactor *= vsmSampleDirectShadowPCF(directLight.vsmID, worldPos);
+#else
+        shadowFactor *= ShadowCalculationNoPCF(depthMap, depthMapSampler, worldPos, directLight);
+#endif
+        float3 radiance = getLightRadiance(directLight);
+        lightScattering += radiance * (shadowFactor *
+            calScattering(dot(normalize(directLight.direction), -camVector)));
+    }
+
+    PointLight localLight;
+    ITER_LOCAL_LIGHT(worldPos, localLight)
+    {
+        float shadowFactor = 1.0f;
+#if defined(VSM_SHADER_FEATURE)
+        if (localLight.type != LIGHT_TYPE_SPOT)
+            shadowFactor *= vsmSampleLocalShadow(localLight.vsmID, worldPos);
+#endif
+        float3 radiance = getLightRadiance(localLight, worldPos);
+        lightScattering += radiance * (shadowFactor *
+            calScattering(dot(normalize(localLight.pos - worldPos), -camVector)));
+    }
+
+    float4 expFogScattering = calExpFogScattering(worldPos);
+    float extinction = expFogScattering.w + luminance(expFogScattering.rgb);
+
+    outFogScatteringVolume[gridIndex] = float4(lightScattering * expFogScattering.rgb, extinction);
+}

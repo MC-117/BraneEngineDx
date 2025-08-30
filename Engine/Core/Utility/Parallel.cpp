@@ -1,4 +1,6 @@
 ﻿#include "Parallel.h"
+
+#include <assert.h>
 #include <filesystem>
 #include "../StaticVar.h"
 
@@ -110,85 +112,300 @@ Name getCurrentThreadName()
     return info ? info->name : Name::none;
 }
 
-WaitHandle::WaitHandle(std::shared_ptr<IWaitable> ptr)
-    : ptr(ptr)
+bool CustomWaitableTask::canCancel()
+{
+    return !pending;
+}
+
+bool CustomWaitableTask::isPending()
+{
+    return pending && !completed && !canceled;
+}
+
+bool CustomWaitableTask::isCompleted()
+{
+    return completed || canceled;
+}
+
+bool CustomWaitableTask::isCancel()
+{
+    return canceled;
+}
+
+bool CustomWaitableTask::wait()
+{
+    while (!completed)
+        std::this_thread::yield();
+    return true;
+}
+
+void CustomWaitableTask::cancel()
+{
+    if (canCancel()) {
+        return;
+    }
+    canceled = pending;
+    completed |= canceled;
+    pending = !canceled;
+}
+
+void CustomWaitableTask::execute()
+{
+    pending = false;
+    executeInternal();
+    completed = true;
+}
+
+TaskEvent::TaskEvent()
+    : pending(true)
+    , completed(false)
+    , canceled(false)
 {
 }
 
-WaitHandle::WaitHandle(const WaitHandle& handle)
+TaskEvent::TaskEvent(const std::shared_ptr<TaskFlow>& task)
+    : pending(true)
+    , completed(false)
+    , canceled(false)
+    , task(task)
 {
-    ptr = handle.ptr;
 }
 
-WaitHandle::WaitHandle(WaitHandle&& handle)
+TaskEvent::~TaskEvent()
 {
-    ptr = std::move(handle.ptr);
+    canceled = true;
+    completed = true;
 }
 
-bool WaitHandle::isValid() const
+bool TaskEvent::canCancel()
 {
-    return ptr.get();
+    return pending;
 }
 
-bool WaitHandle::canCancel()
+bool TaskEvent::isPending()
 {
-    if (isValid())
-        return ptr->canCancel();
-    return false;
+    return pending;
 }
 
-bool WaitHandle::isPending()
+bool TaskEvent::isCompleted()
 {
-    if (isValid())
-        return ptr->isPending();
-    return false;
+    return completed;
 }
 
-bool WaitHandle::isCompleted()
+bool TaskEvent::isCancel()
 {
-    if (isValid())
-        return ptr->isCompleted();
-    return false;
+    return canceled;
 }
 
-bool WaitHandle::isCancel()
+bool TaskEvent::wait()
 {
-    if (isValid())
-        return ptr->isCancel();
-    return false;
+    while (!completed) {
+        std::this_thread::yield();
+    }
+    return true;
 }
 
-bool WaitHandle::wait() const
+void TaskEvent::cancel()
 {
-    if (!isValid())
+    if (task.expired()) {
+        canceled = true;
+    }
+    else {
+        task.lock()->cancel();
+    }
+}
+
+bool TaskEvent::isPreEventsCompleted()
+{
+    for (auto& preEvent : preEvents) {
+        if (!preEvent.isCompleted()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool TaskEvent::addPreEvents(const std::vector<TaskEventHandle>& inPreEvents)
+{
+    if (!isPending()) {
         return false;
-    return ptr->wait();
+    }
+
+    preEvents.reserve(preEvents.size() + inPreEvents.size());
+    for (auto& preEvent : inPreEvents) {
+        preEvents.emplace_back(preEvent);
+    }
+
+    return true;
 }
 
-void WaitHandle::cancel() const
+bool TaskEvent::addNextTask(const std::shared_ptr<TaskFlow>& nextTask)
 {
-    if (isValid())
-        ptr->cancel();
+    if (isCompleted() || !nextTask) {
+        return false;
+    }
+    nextTasks.push(nextTask);
+    return true;
 }
 
-WaitHandle::operator bool() const
+bool TaskEvent::dispatchNextTasks()
 {
-    return isValid();
+    if (!preEvents.empty()) {
+        TaskFlow::forwardTask<EmptyTask>(TaskEventHandle(shared_from_this()), {});
+        return false;
+    }
+
+    completed = true;
+    bool hasTaskDispatched = false;
+    while (!nextTasks.empty()) {
+        std::weak_ptr<TaskFlow> nextTask;
+        if (nextTasks.try_pop(nextTask) && !nextTask.expired()) {
+            hasTaskDispatched |= nextTask.lock()->dispatchConditionally();
+        }
+    }
+    return hasTaskDispatched;
 }
 
-WaitHandle& WaitHandle::operator=(const WaitHandle& handle)
+void TaskEvent::cancelFlags()
 {
-    ptr = handle.ptr;
-    return *this;
+    canceled = (bool)pending;
+    completed = true;
+    pending = !canceled;
 }
 
-WaitHandle& WaitHandle::operator=(WaitHandle&& handle)
+void TaskEvent::resetFlags()
 {
-    ptr = std::move(handle.ptr);
-    return *this;
+    pending = true;
+    canceled = false;
+    completed = false;
 }
 
-bool WaitHandle::operator==(const WaitHandle& handle)
+void TaskBase::internalInitialize(const std::shared_ptr<TaskFlow>& task, tbb::detail::d1::small_object_allocator&& allocator)
 {
-    return ptr == handle.ptr;
+    taskFlow = task;
+    m_allocator = std::move(allocator);
+}
+
+void TaskBase::finalize(const tbb::detail::d1::execution_data& data)
+{
+    tbb::detail::d1::wait_context& wo = taskFlow->waitContext;
+    auto allocator = m_allocator;
+    this->~TaskBase();
+    wo.release();
+    allocator.deallocate(this, data);
+}
+
+tbb::detail::d1::task* TaskBase::execute(tbb::detail::d1::execution_data& data)
+{
+    TaskFlow* pTaskFlow = taskFlow.get();
+    taskFlow->taskEvent->pending = false;
+    execute(pTaskFlow);
+    taskFlow->taskEvent->dispatchNextTasks();
+    finalize(data);
+    return NULL;
+}
+
+tbb::detail::d1::task* TaskBase::cancel(tbb::detail::d1::execution_data& data)
+{
+    TaskFlow* pTaskFlow = taskFlow.get();
+    taskFlow->taskEvent->cancelFlags();
+    cancel(pTaskFlow);
+    finalize(data);
+    return NULL;
+}
+
+TaskFlow::TaskFlow()
+    : isSpawned(false)
+    , taskObject(NULL)
+    , dependenciesCount(1)
+    , waitContext(0)
+    , taskContext(tbb::task_group_context::bound,
+        tbb::task_group_context::default_traits | tbb::task_group_context::concurrent_wait)
+{
+}
+
+TaskFlow::~TaskFlow()
+{
+}
+
+void TaskFlow::dispatch(bool force)
+{
+    if (force) {
+        dispatchImmediately();
+    }
+    else {
+        dispatchConditionally();
+    }
+}
+
+TaskEventHandle TaskFlow::getEvent() const
+{
+    return taskEvent;
+}
+
+bool TaskFlow::canDispatchImmediately() const
+{
+    return dependenciesCount == 1;
+}
+
+void TaskFlow::setupDependencies(const TaskEventHandle& forwardTaskEvent, const std::vector<TaskEventHandle>& dependencies)
+{
+    int _dependenciesCount = 0;
+
+    if (forwardTaskEvent.isValid()) {
+        std::vector<TaskEventHandle> preEvents = std::move(forwardTaskEvent->preEvents);
+        for (auto& preEvent : preEvents) {
+            if (preEvent.isValid() && preEvent->addNextTask(shared_from_this())) {
+                ++_dependenciesCount;
+            }
+        }
+    }
+        
+    for (auto& dependency : dependencies) {
+        if (dependency.isValid() && dependency->addNextTask(shared_from_this())) {
+            ++_dependenciesCount;
+        }
+    }
+    dependenciesCount += _dependenciesCount;
+}
+
+void TaskFlow::dispatchImmediately()
+{
+    assert(taskObject);
+
+    dependenciesCount = 0;
+    tbb::detail::r1::enqueue(*taskObject, taskContext, NULL);
+    isSpawned = true;
+    taskObject = NULL;
+}
+
+bool TaskFlow::dispatchConditionally()
+{
+    assert(taskObject);
+
+    if (--dependenciesCount == 0) {
+        tbb::detail::r1::enqueue(*taskObject, taskContext, NULL);
+        isSpawned = true;
+        taskObject = NULL;
+        return true;
+    }
+    return false;
+}
+
+bool TaskFlow::wait()
+{
+    bool cancellation_status = false;
+    tbb::detail::d0::try_call([&] {
+        tbb::detail::d1::wait(waitContext, taskContext);
+    }).on_completion([&] {
+        // TODO: the reset method is not thread-safe. Ensure the correct behavior.
+        cancellation_status = taskContext.is_group_execution_cancelled();
+        taskContext.reset();
+    });
+    return !cancellation_status;
+}
+
+void TaskFlow::cancel()
+{
+    taskContext.cancel_group_execution();
 }

@@ -38,5 +38,7 @@ class ENGINE_API ShaderGraphCompiler
 {
 public:
     static ShaderGraph* compile(const string& path);
+    static ShaderGraph* compile(const SerializationInfo& info);
     static bool compile(ShaderGraph& graph);
+	static void gatherReferencedTextures(const SerializationInfo& info, vector<string>& texPaths);
 };

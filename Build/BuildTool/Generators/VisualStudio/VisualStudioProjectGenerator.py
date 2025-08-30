@@ -250,6 +250,23 @@ f'''
 '''
                 )
         
+        manifestFileAbsPath = f'{target.entry.basePath}/{target.name}.manifest'
+        manifestFilePath = Path(os.path.relpath(os.path.abspath(manifestFileAbsPath), target.getPath())).as_posix()
+        Log.log(f'[VS]Generate Manifest file {manifestFileAbsPath}')
+        with open(manifestFileAbsPath, 'w') as manifestFile:
+            manifestFile.write(
+'''<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3">
+...
+    <asmv3:application>
+        <asmv3:windowsSettings xmlns:ws2="http://schemas.microsoft.com/SMI/2016/WindowsSettings">
+            <ws2:longPathAware>true</ws2:longPathAware>
+        </asmv3:windowsSettings>
+    </asmv3:application>
+...
+</assembly>
+'''
+            )
+        
         vsTargetConfigs = [VSTargetConfig(config) for config in target.configs]
 
         projGUID = VisualStudioProjectGenerator.genGUID("__" + target.name + "__VS__PROJ")
@@ -312,7 +329,7 @@ f'''
             w.wl('<WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>')
             w.se('</PropertyGroup>')
 
-            w.wl('<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />')
+            w.wl(f'<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />')
 
             for config in vsTargetConfigs:
                 w.ss(f'<PropertyGroup Condition="\'$(Configuration)|$(Platform)\'==\'{config.conditionStr}\'" Label="Configuration">')
@@ -324,7 +341,7 @@ f'''
                 w.wl(f'<PreferredToolArchitecture>{self.preferredToolArch}</PreferredToolArchitecture>')
                 w.se('</PropertyGroup>')
             
-            w.wl('<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />')
+            w.wl(f'<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />')
             w.wl('<ImportGroup Label="ExtensionSettings">')
             w.wl('</ImportGroup>')
             w.wl('<ImportGroup Label="Shared">')
@@ -332,7 +349,7 @@ f'''
 
             for config in vsTargetConfigs:
                 w.ss(f'<ImportGroup Label="PropertySheets" Condition="\'$(Configuration)|$(Platform)\'==\'{config.conditionStr}\'">')
-                w.wl('<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists(\'$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props\')" Label="LocalAppDataPlatform" />')
+                w.wl(f'<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists(\'$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props\')" Label="LocalAppDataPlatform" />')
                 w.se('</ImportGroup>')
             
             w.wl('<PropertyGroup Label="UserMacros" />')
@@ -381,6 +398,7 @@ f'''
 
                 w.ss('<Manifest>')
                 w.wl(f'<EnableDpiAwareness>{target.enableDpiAwareness}</EnableDpiAwareness>')
+                w.wl(f'<AdditionalManifestFiles>{manifestFilePath} %(AdditionalManifestFiles)</AdditionalManifestFiles>')
                 w.se('</Manifest>')
 
                 w.ss('<CustomBuildStep>')
@@ -415,7 +433,7 @@ f'''
                 w.wl(f'<ResourceCompile Include="{target.name}.rc" />')
                 w.se('</ItemGroup>')
             
-            w.wl('<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />')
+            w.wl(f'<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />')
             w.wl('<ImportGroup Label="ExtensionTargets">')
             w.wl('</ImportGroup>')
 

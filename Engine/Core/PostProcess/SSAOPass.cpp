@@ -5,13 +5,16 @@
 #include "../GUI/UIControl.h"
 #include "../RenderCore/RenderTask.h"
 #include "../RenderCore/RenderThread.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
-SSAOPass::SSAOPass(const string & name, Material * material)
+SSAOPass::SSAOPass(const Name & name, Material * material)
 	: PostProcessPass(name, material)
 {
 	gtaoMap.setAutoGenMip(false);
+	gtaoSpacialFilteredMap.setAutoGenMip(false);
 	screenMap.setAutoGenMip(false);
 	gtaoRenderTarget.addTexture("ssaoMap", gtaoMap);
+	gtaoSpacialFilteredRenderTarget.addTexture("ssaoMap", gtaoSpacialFilteredMap);
 	screenRenderTarget.addTexture("screenMap", screenMap);
 }
 
@@ -38,8 +41,17 @@ void SSAOPass::prepare()
 	if (sceneMap)
 		screenMap.setTextureInfo(sceneMap->getTextureInfo());
 	gtaoRenderTarget.init();
+	gtaoSpacialFilteredRenderTarget.init();
 	screenRenderTarget.init();
 	Texture2D::whiteRGBADefaultTex.bind();
+
+	GraphicsPipelineStateDesc desc0 = GraphicsPipelineStateDesc::forScreen(
+		materialVaraint->program, &gtaoRenderTarget, BM_Default);
+	gtaoPipelineState = fetchPSOIfDescChangedThenInit(gtaoPipelineState, desc0);
+	
+	GraphicsPipelineStateDesc desc1 = GraphicsPipelineStateDesc::forScreen(
+		materialVaraint->program, &screenRenderTarget, BM_Default);
+	pipelineState = fetchPSOIfDescChangedThenInit(pipelineState, desc1);
 }
 
 void SSAOPass::execute(IRenderContext& context)
@@ -52,7 +64,7 @@ void SSAOPass::execute(IRenderContext& context)
 
 	materialRenderData->upload();
 
-	context.bindShaderProgram(materialVaraint->program);
+	context.bindPipelineState(gtaoPipelineState);
 	cameraRenderData->bind(context);
 
 	context.bindMaterialBuffer(materialVaraint);
@@ -64,24 +76,45 @@ void SSAOPass::execute(IRenderContext& context)
 	context.bindTexture((ITexture*)Texture2D::whiteRGBADefaultTex.getVendorTexture(), screenMapName);
 	context.bindFrame(gtaoRenderTarget.getVendorRenderTarget());
 
-	context.setDrawInfo(0, 2, 0);
+	context.setDrawInfo(0, 3, 0);
 
 	context.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
-	context.setRenderPostState();
 	context.postProcessCall();
 
 	context.clearFrameBindings();
 
-	// Pass 1 Add
+	// Pass 1 GTAO SpacialFilter1
+	context.bindTexture((ITexture*)gtaoMap.getVendorTexture(), ssaoMapName);
+	context.bindFrame(gtaoSpacialFilteredRenderTarget.getVendorRenderTarget());
+
+	context.setDrawInfo(1, 3, 0);
+
+	context.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
+	context.postProcessCall();
+
+	context.clearFrameBindings();
+
+	// Pass 1 GTAO SpacialFilter2
+	context.bindTexture((ITexture*)gtaoSpacialFilteredMap.getVendorTexture(), ssaoMapName);
+	context.bindFrame(gtaoRenderTarget.getVendorRenderTarget());
+
+	context.setDrawInfo(1, 3, 0);
+
+	context.setViewport(0, 0, ssaoSize.x, ssaoSize.y);
+	context.postProcessCall();
+
+	context.clearFrameBindings();
+
+	// Pass 2 Add
+	context.bindPipelineState(pipelineState);
 	context.bindTexture((ITexture*)gtaoMap.getVendorTexture(), ssaoMapName);
 	context.bindTexture((ITexture*)resource->screenTexture->getVendorTexture(), screenMapName);
 
 	context.bindFrame(screenRenderTarget.getVendorRenderTarget());
 
-	context.setDrawInfo(1, 2, 0);
+	context.setDrawInfo(2, 3, 0);
 
 	context.setViewport(0, 0, size.x, size.y);
-	context.setRenderPostState();
 	context.postProcessCall();
 
 	context.clearFrameBindings();
@@ -123,6 +156,7 @@ void SSAOPass::resize(const Unit2Di& size)
 {
 	PostProcessPass::resize(size);
 	gtaoRenderTarget.resize(size.x * screenScale, size.y * screenScale);
+	gtaoSpacialFilteredRenderTarget.resize(size.x * screenScale, size.y * screenScale);
 	screenRenderTarget.resize(size.x, size.y);
 }
 

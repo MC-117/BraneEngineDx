@@ -3,6 +3,9 @@
 #include <string>
 #include "Importer/AssimpImporter.h"
 #include <filesystem>
+#include <oneapi/tbb/concurrent_queue.h>
+#include <oneapi/tbb/concurrent_vector.h>
+
 #include "Timeline/Timeline.h"
 #include "Utility/EngineUtility.h"
 #include "Script/PythonScript.h"
@@ -16,25 +19,57 @@
 
 StaticVar<map<string, AssetInfo*>> AssetManager::assetInfoList;
 
-Asset::Asset(const AssetInfo * assetInfo, const string & name, const string & path)
-	: assetInfo(*assetInfo), name(name), path(path)
+struct DelayedAssetRegister
 {
-	asset.push_back(NULL);
+	Asset* asset = NULL;
+	function<void(Asset*, bool)> callback;
+
+	DelayedAssetRegister() = default;
+
+	DelayedAssetRegister(Asset* inAsset, const function<void(Asset*, bool)>& inCallback)
+		: asset(inAsset), callback(inCallback)
+	{
+	}
+};
+
+tbb::concurrent_queue<DelayedAssetRegister> delayedRegisterAssets;
+
+Asset::Asset(const AssetInfo * assetInfo, const string & name, const string & path)
+	: assetInfo(*assetInfo), name(name), path(path), asset(NULL)
+{
+}
+
+void Asset::setActualAsset(IAssetBase* assetBase)
+{
+	if (asset != NULL) {
+		delete asset;
+	}
+	asset = assetBase;
+}
+
+IAssetBase* Asset::getActualAsset()
+{
+	return asset;
 }
 
 void * Asset::reload()
 {
 	ImportResult result;
 	IImporter::reload(*this, result);
-	return asset[0];
+	return asset;
 }
 
 void * Asset::load()
 {
-	void* ptr = asset[0];
-	if (ptr == NULL)
+	if (asset == NULL)
 		reload();
-	return ptr;
+	return asset;
+}
+
+void Asset::release()
+{
+	delete asset;
+	asset = NULL;
 }
 
 Object* Asset::createObject()
@@ -92,9 +127,8 @@ string AssetInfo::getPath(void * asset)
 	if (asset == NULL)
 		return string();
 	for (auto b = assetsByPath.begin(), e = assetsByPath.end(); b != e; b++) {
-		for (int i = 0; i < b->second->asset.size(); i++) {
-			if (b->second->asset[i] == asset)
-				return b->first;
+		if (b->second->getActualAsset() == asset) {
+			return b->first;
 		}
 	}
 	return string();
@@ -105,10 +139,8 @@ Asset * AssetInfo::getAsset(void * asset)
 	if (asset == NULL)
 		return NULL;
 	for (auto b = assets.begin(), e = assets.end(); b != e; b++) {
-		for (int i = 0; i < b->second->asset.size(); i++) {
-			if (b->second->asset[i] == asset)
-				return b->second;
-		}
+		if (b->second->getActualAsset() == asset)
+			return b->second;
 	}
 	return NULL;
 }
@@ -154,9 +186,9 @@ Texture2DAssetInfo Texture2DAssetInfo::assetInfo;
 Texture2DAssetInfo::Texture2DAssetInfo() : AssetInfo("Texture2D")
 {
 	Asset* w = new Asset(this, "white", "");
-	w->asset[0] = &Texture2D::whiteRGBADefaultTex;
+	w->setActualAsset(&Texture2D::whiteRGBADefaultTex);
 	Asset* b = new Asset(this, "black", "");
-	w->asset[0] = &Texture2D::blackRGBADefaultTex;
+	b->setActualAsset(&Texture2D::blackRGBADefaultTex);
 
 	regist(*w);
 	regist(*b);
@@ -268,6 +300,22 @@ AssetInfo& TimelineAssetInfo::getInstance()
 	return assetInfo;
 }
 
+void AssetManager::tick()
+{
+	std::vector<DelayedAssetRegister> requests;
+	while (!delayedRegisterAssets.empty()) {
+		DelayedAssetRegister delayedAsset;
+		if (delayedRegisterAssets.try_pop(delayedAsset)) {
+			requests.emplace_back(std::move(delayedAsset));
+		}
+	}
+	
+	for (auto request : requests) {
+		const bool succeeded = registAsset(*request.asset);
+		request.callback(request.asset, succeeded);
+	}
+}
+
 void AssetManager::addAssetInfo(AssetInfo & info)
 {
 	assetInfoList->insert(pair<string, AssetInfo*>(info.type, &info));
@@ -280,6 +328,11 @@ bool AssetManager::registAsset(Asset & assets)
 	if (re == assetInfoList->end())
 		assetInfoList->insert(pair<string, AssetInfo*>(string(assets.assetInfo.type), (AssetInfo*)&assets.assetInfo));
 	return (*assetInfoList)[assets.assetInfo.type]->regist(assets);
+}
+
+void AssetManager::registAssetAsync(Asset& assets, const function<void(Asset*, bool)>& callback)
+{
+	delayedRegisterAssets.emplace(&assets, callback);
 }
 
 Asset * AssetManager::registAsset(const string & type, const string & name, const string & path)
@@ -353,11 +406,11 @@ Asset* AssetManager::saveAsset(Serializable& serializable, const string& path)
 	if (assetInfo == NULL)
 		assetInfo = &AssetFileAssetInfo::assetInfo;
 	Asset* asset = new Asset(assetInfo, name, goodPath);
-	asset->asset[0] = &info;
+	asset->setActualAsset(&info);
 	if (AssetFileAssetInfo::assetInfo.regist(*asset))
 		return asset;
 	else {
-		delete& info;
+		asset->release();
 		delete asset;
 		return NULL;
 	}

@@ -22,7 +22,7 @@ struct CameraData
 	Vector4f clipPlane;
 	Vector2f viewSize;
 	float distance;
-	float user;
+	int flags;
 };
 
 struct ScreenHitInfo

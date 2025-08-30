@@ -7,9 +7,10 @@ cbuffer SSRInfo
     int hiZStartLevel;
     int hiZStopLevel;
     int hiZMaxStep;
+	int hiZMaxMipLevel;
     int ssrResolveSamples;
 	float ssrResolveRadius;
-	float3 ssrPad;
+	float2 ssrPad;
 }
 
 float SSR_BRDF(float3 V, float3 L, float3 N, float roughness)

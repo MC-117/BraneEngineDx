@@ -10,13 +10,13 @@ struct PortalMeshRenderCommand : public MeshRenderCommand
     virtual RenderMode getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const
     {
         const int renderOrder = 2499;
-        RenderMode renderMode = RenderMode(renderOrder, BM_Default);
-        renderMode.mode.depthWrite = false;
-        renderMode.mode.stencilTest = materialRenderData->desc.enableStencilTest;
-        renderMode.mode.stencilPassOp_front = SOT_Replace;
-        renderMode.mode.stencilPassOp_back = SOT_Replace;
-        renderMode.mode.stencilComparion_front = RCT_Less;
-        renderMode.mode.stencilComparion_back = RCT_Less;
+        RenderMode renderMode = RenderMode(renderOrder);
+        renderMode.dsMode.depthWrite = false;
+        renderMode.dsMode.stencilTest = materialRenderData->desc.enableStencilTest;
+        renderMode.dsMode.stencilPassOp_front = SOT_Replace;
+        renderMode.dsMode.stencilPassOp_back = SOT_Replace;
+        renderMode.dsMode.stencilComparion_front = RCT_Less;
+        renderMode.dsMode.stencilComparion_back = RCT_Less;
         return renderMode;
     }
     

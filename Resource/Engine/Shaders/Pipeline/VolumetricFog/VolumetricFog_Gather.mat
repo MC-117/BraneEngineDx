@@ -1,0 +1,36 @@
+#material
+#localsize 8 8 1
+#compute
+#include "../../lib/VolumetricFog_Def.hmat"
+#include "../../lib/ScreenPass_Def.hmat"
+
+DEF_TEX2D(sceneDepthMap, 0);
+RWTexture2D<float4> outFogTexture;
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 tid : SV_DispatchThreadID)
+{
+    if (any(tid >= camData.viewSize)) {
+        return;
+    }
+
+    float2 uv = tid / camData.viewSize;
+
+    float deviceZ = SAMPLE_TEX_LOD(sceneDepthMap, uv, 0).r;
+    float viewDepth = depthFromNDCToView(deviceZ);
+
+    uint3 rand3D = Rand3DPCG16(int3(tid, gameTime * 10000));
+    float3 offset = (float3(rand3D) / float(uint(0xffff))) * 2.0f - 1.0f;
+    float3 vUV = getVolumetricFogUV(tid + offset * 16 * vfogNoiseScalar, viewDepth);
+
+    float3 fogPosInViewOrigin = uvzPosToViewOrigin(float3(uv, max(1.5e-10, deviceZ)));
+    
+    float cosAngle = dot(normalize(fogPosInViewOrigin), camData.camDir);
+    float invCosAngle = (cosAngle > 0.001f) ? rcp(cosAngle) : 0;
+    float camToEFogDistance = vfogMaxDistance * invCosAngle;
+
+    float4 efog = getExponentialHeightFog(fogPosInViewOrigin, camToEFogDistance);
+    float4 vfog = getVolumetricFog(vUV, viewDepth);
+
+    outFogTexture[tid] = combineFog(efog, vfog);
+}

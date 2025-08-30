@@ -1,0 +1,39 @@
+#material
+#localsize 4 4 1
+#compute
+#include "VolumetricFog_Lib.hmat"
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint2 tid : SV_DispatchThreadID)
+{
+    if (any(tid >= fogGridSize.xy)) {
+        return;
+    }
+
+    float3 totalLighting = 0;
+    float totalTransmittance = 1;
+    float totalDepth = 0;
+    float3 preViewOriginPos = calFogGridViewPosition(uint3(tid, 0), float3(0.5f, 0.5f, 0.0f));
+    preViewOriginPos = viewPosToViewOrigin(preViewOriginPos);
+    for (int sliceIndex = 0; sliceIndex < fogGridSize.z; sliceIndex++) {
+        int3 gridIndex = int3(tid, sliceIndex);
+        float4 scatteringAndExtinction = fogScatteringVolume[gridIndex];
+
+        float3 viewOriginPos = calFogGridViewPosition(gridIndex, 0.5f);
+        viewOriginPos = viewPosToViewOrigin(viewOriginPos);
+
+        float stepLength = length(viewOriginPos - preViewOriginPos);
+        preViewOriginPos = viewOriginPos;
+
+        float transmittance = exp(-scatteringAndExtinction.w * stepLength);
+
+        totalDepth += stepLength;
+
+        float3 scatteringIntegratedOverSlice = (scatteringAndExtinction.rgb - scatteringAndExtinction.rgb * transmittance) / max(scatteringAndExtinction.w, .00001f);
+		totalLighting += scatteringIntegratedOverSlice * totalTransmittance;
+
+        totalTransmittance *= transmittance;
+
+        outFogIntegratedVolume[gridIndex] = float4(totalLighting, totalTransmittance);
+    }
+}

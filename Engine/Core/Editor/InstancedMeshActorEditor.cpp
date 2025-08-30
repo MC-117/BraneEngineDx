@@ -34,7 +34,7 @@ void InstancedMeshActorEditor::onPersistentGizmo(GizmoInfo& info)
 
 				if (mouseUV.x() > 0 && mouseUV.x() < 1 && mouseUV.y() > 0 && mouseUV.y() < 1) {
 					Vector4f mouseNDC { mouseUV.x() * 2.0f - 1.0f, 1.0f - mouseUV.y() * 2.0f, 1.0f, 1.0f };
-					Vector4f mouseView = info.camera->getProjectionMatrix().inverse() * mouseNDC;
+					Vector4f mouseView = info.camera->getProjectionMatrixReversedZ().inverse() * mouseNDC;
 					mouseView /= mouseView.w();
 					mouseView.w() = 0;
 					Vector3f mouseRay = info.camera->getViewMatrix().inverse() * mouseView;

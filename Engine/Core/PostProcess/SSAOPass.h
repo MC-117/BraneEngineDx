@@ -8,14 +8,17 @@ class SSAOPass : public PostProcessPass
 {
 protected:
 	float screenScale = 1.0f;
+	GraphicsPipelineState* gtaoPipelineState = NULL;
 public:
 	Texture2D gtaoMap = Texture2D(size.x * screenScale, size.y * screenScale, 1, false, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear });
+	Texture2D gtaoSpacialFilteredMap = Texture2D(size.x * screenScale, size.y * screenScale, 1, false, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear });
 	Texture2D screenMap = Texture2D(size.x, size.y, 4, false);
 
 	RenderTarget gtaoRenderTarget = RenderTarget(size.x * screenScale, size.y * screenScale, 1);
+	RenderTarget gtaoSpacialFilteredRenderTarget = RenderTarget(size.x * screenScale, size.y * screenScale, 1);
 	RenderTarget screenRenderTarget = RenderTarget(size.x, size.y, 4);
 
-	SSAOPass(const string& name = "SSAO", Material* material = NULL);
+	SSAOPass(const Name& name = "SSAO", Material* material = NULL);
 
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);

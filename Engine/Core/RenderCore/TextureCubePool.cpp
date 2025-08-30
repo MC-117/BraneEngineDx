@@ -1,4 +1,6 @@
 #include "TextureCubePool.h"
+
+#include "RenderCoreUtility.h"
 #include "../Asset.h"
 #include "../Material.h"
 #include "../Profile/ProfileCore.h"
@@ -86,8 +88,8 @@ void TextureCubePool::prepare()
 	if (refreshMapes.empty())
 		return;
 	loadDefaultResource();
-	copyProgram->init();
-	genMipsProgram->init();
+	copyPSO = fetchPSOIfDescChangedThenInit(copyPSO, copyProgram);
+	genMipsPSO = fetchPSOIfDescChangedThenInit(genMipsPSO, genMipsProgram);
 }
 
 void TextureCubePool::refreshCubePool(IRenderContext& context)
@@ -116,7 +118,7 @@ void TextureCubePool::refreshCubePool(IRenderContext& context)
 		ceilf(6 / (float)localSize.z())
 	);
 
-	context.bindShaderProgram(copyProgram);
+	context.bindPipelineState(copyPSO);
 	for (auto& cubeMap : refreshMapes) {
 		int index = getCubeMapIndex(cubeMap);
 		if (index < 0)
@@ -132,7 +134,7 @@ void TextureCubePool::refreshCubePool(IRenderContext& context)
 	// GenMips
 	int mipLevelsToProcess = cubeMapArray.getMipLevels() - 1;
 	if (mipLevelsToProcess > 0) {
-		context.bindShaderProgram(genMipsProgram);
+		context.bindPipelineState(genMipsPSO);
 		for (auto& cubeMap : refreshMapes) {
 			int index = getCubeMapIndex(cubeMap);
 			if (index < 0)
@@ -160,8 +162,10 @@ void TextureCubePool::refreshCubePool(IRenderContext& context)
 
 Material* TextureCubePool::copyMaterial = NULL;
 ShaderProgram* TextureCubePool::copyProgram = NULL;
+ComputePipelineState* TextureCubePool::copyPSO = NULL;
 Material* TextureCubePool::genMipsMaterial = NULL;
 ShaderProgram* TextureCubePool::genMipsProgram = NULL;
+ComputePipelineState* TextureCubePool::genMipsPSO = NULL;
 bool TextureCubePool::isInited = false;
 
 void TextureCubePool::loadDefaultResource()

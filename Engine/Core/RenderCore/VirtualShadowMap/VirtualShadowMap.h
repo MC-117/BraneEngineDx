@@ -50,6 +50,7 @@ public:
 	static constexpr unsigned int maxPerInstanceCmdCount = 64;
 
 	bool enable = false;
+	bool useCache = true;
 	bool useStaticCache = false;
 	unsigned int physPoolWidth = 128 * 128;
 	unsigned int maxPhysPages = 4096;
@@ -98,6 +99,7 @@ struct VirtualShadowMapProjectionData
 	Matrix4f viewToClip;
 	Matrix4f viewOriginToClip;
 	Matrix4f viewOriginToUV;
+	Matrix4f viewOriginToUVNormal;
 
 	Vector3f clipmapWorldOrigin;
 	int resolutionLodBias;
@@ -116,9 +118,7 @@ struct VirtualShadowMapProjectionData
 
 	int uncached;
 
-	float screenRayLength;
-
-	int pad;
+	int pad[2];
 };
 
 struct VirtualShadowMapInfo
@@ -133,8 +133,9 @@ struct VirtualShadowMapInfo
 	unsigned int pcfPixel;
 	unsigned int pcfStep;
 	float pcfRadiusScale;
+	float screenRayLength;
 	unsigned int flag;
-	unsigned int pad[3];
+	unsigned int pad[2];
 };
 
 struct VirtualShadowMapPhysicalPageData
@@ -179,6 +180,8 @@ public:
 #define VSM_SHADER(name) \
 static ShaderProgram* name##Program; \
 static ShaderProgram* name##DebugProgram; \
+static ComputePipelineState* name##PSO; \
+static ComputePipelineState* name##DebugPSO; \
 static Vector3u name##ProgramDim;
 
 	VSM_SHADER(procInvalidations);
@@ -300,6 +303,7 @@ struct VSMInstanceDrawResource
 	ShaderProgram* shaderProgram = NULL;
 	IMaterial* materialVariant = NULL;
 	MeshData* meshData = NULL;
+	GraphicsPipelineState* graphicsPipelineState = NULL;
 	list<IRenderData*> extraData;
 };
 
@@ -313,6 +317,7 @@ struct TVSMMeshBatchDrawCall : TDrawCallBase<Data>
 	bool reverseCullMode = false;
 	IRenderData* transformData = NULL;
 	IMaterial* materialVariant = NULL;
+	GraphicsPipelineState* graphicsPipelineState = NULL;
 	list<IRenderData*> bindings;
 	
 	template<class K>

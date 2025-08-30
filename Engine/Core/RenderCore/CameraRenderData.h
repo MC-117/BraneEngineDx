@@ -16,10 +16,13 @@ struct SurfaceData
 	Enum<ClearFlags> clearFlags = Clear_None;
 	RenderTarget* renderTarget = NULL;
 	vector<Color> clearColors;
-	float clearDepth = 1;
+	float clearDepth = 0;
 	int clearStencil = 0;
 
 	void bindAndClear(IRenderContext& context, Enum<ClearFlags> plusClearFlags = Clear_None, Enum<ClearFlags> minusClearFlags = Clear_None);
+
+	TexInternalType getDepthStencilFormat() const;
+	TexInternalType getRenderTargetFormat(uint8_t index) const;
 };
 
 class CameraRenderData : public IRenderData

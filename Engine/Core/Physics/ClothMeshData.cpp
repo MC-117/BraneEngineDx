@@ -184,7 +184,6 @@ void ClothMeshData::bindShape()
 
 void ClothMeshData::bindShapeWithContext(IRenderContext& context)
 {
-    context.setMeshDrawContext();
     context.bindBufferBase(vertexBuffer.getVendorGPUBuffer(), 1);
     context.bindBufferBase(uvBuffer.getVendorGPUBuffer(), 2);
     context.bindBufferBase(normalBuffer.getVendorGPUBuffer(), 3);

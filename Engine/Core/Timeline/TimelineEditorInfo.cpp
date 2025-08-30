@@ -40,6 +40,6 @@ int TimelineEditorInfo::getFramePreUnit() const
 	float viewSize = getViewSize();
 	float framePerUnit = floor(viewSize);
 
-	framePerUnit = max(framePerUnit, 1);
+	framePerUnit = max(framePerUnit, 1.0f);
 	return framePerUnit;
 }

@@ -20,7 +20,7 @@ protected:
 	spine::Animation* animation = NULL;
 };
 
-class ENGINE_API Spine2DModel
+class ENGINE_API Spine2DModel : public IAssetBase
 {
 public:
 	Spine2DModel();

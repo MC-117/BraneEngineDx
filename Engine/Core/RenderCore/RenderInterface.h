@@ -13,20 +13,35 @@ struct MeshData;
 struct Shader;
 struct ShaderProgram;
 class CameraRender;
-class RenderTask;
+struct RenderTask;
 class CameraRenderData;
 class SceneRenderData;
 class MaterialRenderData;
 class RenderCommandList;
 class IGPUBuffer;
+class ITexture;
 class IMaterial;
+class GraphicsPipelineState;
 
 struct IUpdateableRenderData
 {
 	long long usedFrameMainThread = -1;
 	long long usedFrameRenderThread = -1;
+	
+	virtual ~IUpdateableRenderData() = default;
 	virtual void updateMainThread() = 0;
 	virtual void updateRenderThread() = 0;
+};
+
+struct IRenderDataBinder
+{
+	virtual ~IRenderDataBinder() = default;
+	virtual bool bindBufferBase(IGPUBuffer* buffer, const ShaderPropertyName& name, BufferOption bufferOption = BufferOption()) = 0;
+	virtual bool bindBufferBase(IGPUBuffer* buffer, unsigned int index, BufferOption bufferOption = BufferOption()) = 0;
+	virtual bool bindTexture(ITexture* texture, ShaderStageType stage, unsigned int index, unsigned int sampleIndex, const MipOption& mipOption = MipOption()) = 0;
+	virtual bool bindTexture(ITexture* texture, const ShaderPropertyName& name, const MipOption& mipOption = MipOption()) = 0;
+	virtual bool bindImage(ITexture* texture, unsigned int index, const RWOption& rwOption) = 0;
+	virtual bool bindImage(ITexture* texture, const ShaderPropertyName& name, const RWOption& rwOption) = 0;
 };
 
 struct IRenderData : IUpdateableRenderData
@@ -124,6 +139,7 @@ struct IRenderCommand
 	virtual bool isValid() const = 0;
 	virtual Enum<ShaderFeature> getShaderFeature() const = 0;
 	virtual uint16_t getRenderStage() const;
+	virtual CullType getCullType() const;
 	virtual RenderMode getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const = 0;
 	virtual bool canCastShadow() const = 0;
 	virtual void collectRenderData(IRenderDataCollector* collectorMainThread, IRenderDataCollector* collectorRenderThread);
@@ -132,21 +148,22 @@ struct IRenderCommand
 
 struct RenderTaskContext
 {
-	SceneRenderData* sceneData;
+	SceneRenderData* sceneData = NULL;
 	BatchDrawData batchDrawData;
-	RenderTarget* renderTarget;
-	IRenderData* cameraData;
-	ShaderProgram* shaderProgram;
+	RenderTarget* renderTarget = NULL;
+	IRenderData* cameraData = NULL;
+	ShaderProgram* shaderProgram = NULL;
 	RenderMode renderMode;
-	IMaterial* materialVariant;
-	MeshData* meshData;
-	uint8_t stencilValue;
+	IMaterial* materialVariant = NULL;
+	MeshData* meshData = NULL;
+	GraphicsPipelineState* graphicsPipelineState = NULL;
+	uint8_t stencilValue = 0;
 };
 
 struct IRenderPack
 {
 	virtual ~IRenderPack();
-	virtual bool setRenderCommand(const IRenderCommand& command) = 0;
+	virtual bool setRenderCommand(const IRenderCommand& command, const RenderTask& task) = 0;
 	virtual void excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext) = 0;
 	virtual void reset() = 0;
 };
@@ -164,6 +181,7 @@ public:
 	virtual void execute(IRenderContext& context) = 0;
 	virtual void reset() = 0;
 
+	virtual Name getPassName() const;
 	virtual void getOutputTextures(vector<pair<string, Texture*>>& textures);
 };
 

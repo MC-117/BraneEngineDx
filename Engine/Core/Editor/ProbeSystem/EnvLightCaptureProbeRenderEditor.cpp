@@ -30,13 +30,13 @@ void EnvLightCaptureProbeRenderEditor::onCaptureProbeRenderGUI(EditorInfo& info)
 
 	float falloff = envLightCaptureProbeRender->falloff;
 	if (ImGui::DragFloat("Falloff", &falloff, 0.01f)) {
-		falloff = max(falloff, 0);
+		falloff = max(falloff, 0.0f);
 		envLightCaptureProbeRender->falloff = falloff;
 	}
 
 	float cutoff = envLightCaptureProbeRender->cutoff;
 	if (ImGui::DragFloat("Cutoff", &cutoff, 0.01f)) {
-		cutoff = max(cutoff, 0);
+		cutoff = max(cutoff, 0.0f);
 		envLightCaptureProbeRender->cutoff = cutoff;
 	}
 

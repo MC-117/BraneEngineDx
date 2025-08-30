@@ -22,7 +22,7 @@ void ImmediateRenderCommandWorker::setup(IRenderContext* context)
 	else
 		renderContext = VendorManager::getInstance().getVendor().getDefaultRenderContext();
 	taskParameter.renderContext = renderContext;
-	taskContext = { 0 };
+	taskContext = RenderTaskContext();
 	taskParameter.taskContext = &taskContext;
 }
 
@@ -53,7 +53,7 @@ void ImmediateRenderCommandWorker::waitForComplete()
 	if (taskContext.cameraData) {
 		taskParameter.renderContext->endEvent();
 	}
-	taskContext = { 0 };
+	taskContext = RenderTaskContext();
 }
 
 ParallelRenderCommandWorker::~ParallelRenderCommandWorker()
@@ -89,7 +89,7 @@ void ParallelRenderCommandWorker::setup(IRenderContext* context)
 	else
 		renderContext = VendorManager::getInstance().getVendor().newRenderContext();
 	taskParameter.renderContext = renderContext;
-	taskContext = { 0 };
+	taskContext = RenderTaskContext();
 	taskParameter.taskContext = &taskContext;
 }
 
@@ -139,7 +139,7 @@ void ParallelRenderCommandWorker::waitForComplete()
 {
 	while (unfinishedTaskCount > 0)
 		this_thread::yield();
-	taskContext = { 0 };
+	taskContext = RenderTaskContext();
 }
 
 void ParallelRenderCommandWorker::threadEntry(ParallelRenderCommandWorker* worker)
@@ -236,6 +236,8 @@ int RenderCommandWorkerPool::calMaxTaskNumPerWorker(int taskCount) const
 
 bool RenderCommandList::addRenderTask(const IRenderCommand& cmd, RenderTask& task)
 {
+	assert(task.materialVariant != NULL);
+	assert(task.graphicsPipelineState != NULL);
 	task.cameraData->applyValidViewCullingContext(task.batchDrawData);
 	task.hashCode = RenderTask::Hasher()(task);
 
@@ -258,11 +260,13 @@ bool RenderCommandList::addRenderTask(const IRenderCommand& cmd, RenderTask& tas
 		}
 	}
 
+	assert(task.materialVariant != NULL);
+
 	if (pTask->renderPack == NULL) {
 		task.renderPack = pTask->renderPack = cmd.createRenderPack(*cmd.sceneData, *this);
 	}
 
-	if (!pTask->renderPack->setRenderCommand(cmd))
+	if (!pTask->renderPack->setRenderCommand(cmd, *pTask))
 		return false;
 
 	pTask->age = 0;
@@ -409,7 +413,7 @@ void RenderCommandList::excuteCommand(RenderCommandExecutionInfo& executionInfo)
 	workerPool.waitForComplete();
 	workerPool.submitContext();
 
-	context.setCullState(CullType::Cull_Back);
+	// context.setCullState(CullType::Cull_Back);
 	context.setStencilRef(0);
 
 	/*if (executionInfo.timer) {

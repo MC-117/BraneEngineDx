@@ -15,7 +15,7 @@ struct RenderTaskParameter
 	Timer* timer = NULL;
 };
 
-struct RenderTask
+struct ENGINE_API RenderTask
 {
 	struct Hasher
 	{
@@ -38,6 +38,7 @@ struct RenderTask
 	ShaderProgram* shaderProgram = NULL;
 	IMaterial* materialVariant = NULL;
 	MeshData* meshData = NULL;
+	GraphicsPipelineState* graphicsPipelineState = NULL;
 	list<IRenderData*> extraData;
 	IRenderPack* renderPack = NULL;
 

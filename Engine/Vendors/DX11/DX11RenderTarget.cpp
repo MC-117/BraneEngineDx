@@ -24,6 +24,18 @@ DX11RenderTarget::~DX11RenderTarget()
 		delete dx11DepthTex;
 }
 
+DX11Texture2D* DX11RenderTarget::getValidDepthTexture() const
+{
+	if (desc.depthOnly)
+		return (DX11Texture2D*)desc.depthTexure->getVendorTexture();
+	if (desc.withDepthStencil) {
+		if (desc.multisampleLevel > 1)
+			return multisampleDepthTex;
+		return dx11DepthTex;
+	}
+	return NULL;
+}
+
 ITexture2D* DX11RenderTarget::getInternalDepthTexture()
 {
 	return dx11DepthTex;
@@ -36,15 +48,8 @@ unsigned int DX11RenderTarget::bindFrame()
 		currentRenderTarget = NULL;
 	}
 	else {
-		if (desc.depthOnly) {
-			DX11Texture2D* dxdt = (DX11Texture2D*)desc.depthTexure->getVendorTexture();
-			dx11DSV = dxdt->getDSV(0);
-		}
-		else if (desc.withDepthStencil) {
-			if (desc.multisampleLevel > 1)
-				dx11DSV = multisampleDepthTex->getDSV(0);
-			else
-				dx11DSV = dx11DepthTex->getDSV(0);
+		if (DX11Texture2D* depthTex = getValidDepthTexture()) {
+			dx11DSV = depthTex->getDSV(0, desc.depthStencilAccessFlag);
 		}
 	}
 	if (currentRenderTarget == this)
@@ -93,7 +98,7 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 			if (desc.depthTexure->resize(width, height) == 0)
 				throw runtime_error("DX11: Resize depth texture failed");
 			DX11Texture2D* dxdt = (DX11Texture2D*)desc.depthTexure->getVendorTexture();
-			dx11DSV = dxdt->getDSV(0);
+			dx11DSV = dxdt->getDSV(0, desc.depthStencilAccessFlag);
 		}
 	}
 	else {
@@ -174,12 +179,12 @@ void DX11RenderTarget::resize(unsigned int width, unsigned int height)
 			else
 				multisampleDepthTex->release();
 			multisampleDepthTex->resize(width, height);
-			dx11DSV = multisampleDepthTex->getDSV(0);
+			dx11DSV = multisampleDepthTex->getDSV(0, desc.depthStencilAccessFlag);
 			if (dx11DSV == NULL)
 				throw runtime_error("DX11: Create DSV failed");
 		}
 		else {
-			dx11DSV = dx11DepthTex->getDSV(0);
+			dx11DSV = dx11DepthTex->getDSV(0, desc.depthStencilAccessFlag);
 			if (dx11DSV == NULL)
 				throw runtime_error("DX11: Create DSV failed");
 		}

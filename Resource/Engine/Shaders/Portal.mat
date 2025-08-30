@@ -1,0 +1,56 @@
+#order 2499
+#material
+Color baseColor: 0, 0, 0, 255
+#vertex use default
+#fragment
+#condition depth
+#condition deferred
+#condition lighting
+
+#include "lib/CameraData_Def.hmat"
+#include "lib/TransformData_Def.hmat"
+#include "lib/GBuffer_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 baseColor;
+DEF_MAT_END
+
+#if defined(DEFERRED_SHADER_FEATURE)
+#elif defined(LIGHTING_SHADER_FEATURE)
+DEF_GBUFFER
+#else
+#endif
+
+#include "lib/Surface_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
+
+FragmentOut SURFACE_MAIN
+{
+    FragmentOut fout;
+
+    #ifdef DEPTH_SHADER_FEATURE
+    outputDepth(fin, 1, 0.5f);
+    #else
+    Surface surf = getSurface(fin);
+
+    #ifndef LIGHTING_SHADER_FEATURE
+    surf.albedo = baseColor;
+    surf.roughness = 1;
+    surf.metallic = 0;
+    surf.ao = 1;
+    surf.radiosity = 0;
+    #endif
+
+    #ifdef DEFERRED_SHADER_FEATURE
+    outputSurface(surf, GBUFFER_OUT_PARAMS(fout));
+    #else
+    fout.FragColor = surf.albedo;
+    #endif
+
+    #endif
+    
+    return fout;
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../RenderCore/SurfaceBufferGetter.h"
+#include "../PipelineState.h"
 
 class HiZPass : public RenderPass
 {
@@ -14,6 +15,7 @@ public:
 	virtual void getOutputTextures(vector<pair<string, Texture*>>& textures);
 protected:
 	vector<pair<string, Texture*>> outputTextures;
-	Material* material;
-	ShaderProgram* program;
+	Material* material = NULL;
+	ShaderProgram* program = NULL;
+	ComputePipelineState* pipelineState = NULL;
 };

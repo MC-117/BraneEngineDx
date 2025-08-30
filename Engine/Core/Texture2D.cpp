@@ -8,6 +8,7 @@
 #include "Asset.h"
 #include "Material.h"
 #include "Profile/ProfileCore.h"
+#include "RenderCore/RenderCoreUtility.h"
 
 Texture2D Texture2D::blackRGBDefaultTex({ 0, 0, 0, 255 }, 2, 2, 3);
 Texture2D Texture2D::whiteRGBDefaultTex({ 255, 255, 255, 255 }, 2, 2, 3);
@@ -16,7 +17,7 @@ Texture2D Texture2D::blackRGBADefaultTex({ 0, 0, 0, 255 }, 2, 2, 4);
 Texture2D Texture2D::whiteRGBADefaultTex({ 255, 255, 255, 255 }, 2, 2, 4);
 
 Texture2D Texture2D::brdfLUTTex;
-Texture2D Texture2D::defaultLUTTex(Texture2DInfo(TW_Repeat, TW_Repeat, TF_Linear, TF_Linear), false);
+Texture2D Texture2D::defaultLUTTex(TextureInfo(TW_Repeat, TW_Repeat, TF_Linear, TF_Linear), false);
 
 bool Texture2D::isLoadDefaultTexture = false;
 
@@ -29,7 +30,7 @@ Texture2D::Texture2D(ITexture2D* vendorTexture)
 	assign(vendorTexture);
 }
 
-Texture2D::Texture2D(const Texture2DInfo & info, bool isStandard) : isStandard(isStandard)
+Texture2D::Texture2D(const TextureInfo & info, bool isStandard) : isStandard(isStandard)
 {
 	desc.info = info;
 }
@@ -71,7 +72,7 @@ Texture2D::Texture2D(Color color, unsigned int width, unsigned int height, unsig
 	desc.data = data;
 }
 
-Texture2D::Texture2D(unsigned char* bytes, unsigned int width, unsigned int height, unsigned int channel, bool isStandard, const Texture2DInfo& info, bool externalBytes)
+Texture2D::Texture2D(unsigned char* bytes, unsigned int width, unsigned int height, unsigned int channel, bool isStandard, const TextureInfo& info, bool externalBytes)
 {
 	desc.width = width;
 	desc.height = height;
@@ -92,7 +93,7 @@ Texture2D::Texture2D(unsigned char* bytes, unsigned int width, unsigned int heig
 	}
 }
 
-Texture2D::Texture2D(unsigned int width, unsigned int height, unsigned int channel, bool isStandard, const Texture2DInfo& info)
+Texture2D::Texture2D(unsigned int width, unsigned int height, unsigned int channel, bool isStandard, const TextureInfo& info)
 {
 	desc.width = width;
 	desc.height = height;
@@ -112,6 +113,11 @@ Texture2D::Texture2D(unsigned int width, unsigned int height, unsigned int chann
 }
 
 Texture2D::~Texture2D()
+{
+	release();
+}
+
+void Texture2D::release()
 {
 	if (!readOnly && vendorTexture != NULL)
 		delete vendorTexture;
@@ -154,7 +160,12 @@ int Texture2D::getMipLevels() const
 	return max(1u, desc.mipLevel);
 }
 
-Texture2DInfo Texture2D::getTextureInfo() const
+TexInternalType Texture2D::getFormat() const
+{
+	return desc.info.internalType;
+}
+
+TextureInfo Texture2D::getTextureInfo() const
 {
 	return desc.info;
 }
@@ -187,20 +198,23 @@ void Texture2D::setViewAsArray(bool value)
 	}
 }
 
-void Texture2D::setTextureInfo(const Texture2DInfo& info)
+void Texture2D::setTextureInfo(const TextureInfo& info)
 {
 	if (desc.info == info)
 		return;
 	desc.info = info;
+	if (info.dimension != TD_Single && info.dimension != TD_Array) {
+		desc.info.dimension = TD_Single;
+	}
 	desc.needUpdate = true;
 }
 
 bool Texture2D::assign(ITexture2D* venderTex)
 {
-	if (vendorTexture != NULL && &vendorTexture->desc == &desc)
+	if (vendorTexture != NULL && &vendorTexture->getDesc() == &desc)
 		return false;
 	vendorTexture = venderTex;
-	desc = venderTex->desc;
+	desc = venderTex->getDesc();
 	readOnly = true;
 	return true;
 }
@@ -314,12 +328,8 @@ unsigned int Texture2D::resize(unsigned int width, unsigned int height, unsigned
 {
 	if (readOnly)
 		return 0;
-	if (desc.arrayCount != arrayCount) {
-		desc.arrayCount = arrayCount;
-		desc.needUpdate = true;
-	}
 	newVendorTexture();
-	return vendorTexture ? vendorTexture->resize(width, height) : 0;
+	return vendorTexture ? vendorTexture->resize(width, height, arrayCount) : 0;
 }
 
 bool Texture2D::copyFrom(const Texture2D& src, unsigned int width, unsigned int height)
@@ -365,12 +375,13 @@ bool Texture2D::copyFrom(const Texture2D& src, unsigned int width, unsigned int 
 		ShaderProgram* copyProgram = copyMaterial->getShader()->getProgram(Shader_Default);
 		if (copyProgram == NULL)
 			throw runtime_error("Not found default shader");
-		copyProgram->init();
+		ComputePipelineState* copyPSO = fetchPSOIfDescChangedThenInit(NULL, copyProgram);
+
 		IVendor& vendor = VendorManager::getInstance().getVendor();
 		IRenderContext& context = *vendor.getDefaultRenderContext();
 		Vector3u localSize = copyMaterial->getLocalSize();
 
-		context.bindShaderProgram(copyProgram);
+		context.bindPipelineState(copyPSO);
 
 		unsigned int mipWidth = width, mipHeight = height;
 		const int mipCount = getMipLevels();
@@ -450,7 +461,7 @@ bool Texture2D::save(const string& file)
 		const int pixelSize = getPixelSize(desc.info.internalType, desc.channel);
 		const int unitSize = pixelSize / desc.channel;
 		rawData = mallocTexture(desc.width * desc.height * pixelSize);
-		vendor.readBackTexture2D(vendorTexture, rawData);
+		vendor.readBackTexture(vendorTexture, rawData);
 
 		if (desc.info.internalType == TIT_RGB10A2_UF) {
 			outData = mallocTexture(pixelsByChannels * sizeof(unsigned char));
@@ -546,12 +557,12 @@ bool Texture2D::loadDefaultTexture()
 	if (!brdfLUTTex.load("Engine/Textures/ibl_brdf_lut.png"))
 		return false;
 	Asset* ass = new Asset(&Texture2DAssetInfo::assetInfo, "ibl_brdf_lut", "Engine/Textures/ibl_brdf_lut.png");
-	ass->asset[0] = &brdfLUTTex;
+	ass->setActualAsset(&brdfLUTTex);
 	AssetManager::registAsset(*ass);
 	if (!defaultLUTTex.load("Engine/Textures/default_lut.png"))
 		return false;
 	ass = new Asset(&Texture2DAssetInfo::assetInfo, "default_lut", "Engine/Textures/default_lut.png");
-	ass->asset[0] = &defaultLUTTex;
+	ass->setActualAsset(&defaultLUTTex);
 	AssetManager::registAsset(*ass);
 	blackRGBADefaultTex.bind();
 	whiteRGBADefaultTex.bind();

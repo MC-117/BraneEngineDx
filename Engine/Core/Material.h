@@ -4,9 +4,10 @@
 
 #include "IVendor.h"
 #include "Texture2D.h"
+#include "Texture3D.h"
 #include "RenderCore/RenderInterface.h"
 
-class ENGINE_API Material
+class ENGINE_API Material : public IStreamableAssetBase
 {
 	friend class MaterialRenderData;
 	friend class MaterialLoader;
@@ -51,6 +52,7 @@ public:
 	bool setColor(const Name& name, const Color& value);
 	bool setMatrix(const Name& name, const Matrix4f& value);
 	bool setTexture(const Name& name, Texture& value);
+	bool setTexture(const Name& name, const AssetRef<Texture>& textureRef);
 	bool setImage(const Name& name, const Image& value);
 	bool getTwoSide() const;
 	bool getCullFront() const;
@@ -63,21 +65,21 @@ public:
 	int* getCount(const Name& name);
 	Color* getColor(const Name& name);
 	Matrix4f* getMatrix(const Name& name);
-	Texture** getTexture(const Name& name);
+	Texture* getTexture(const Name& name);
 	Image* getImage(const Name& name);
 
 	map<Name, MatAttribute<float>>& getScalarField();
 	map<Name, MatAttribute<int>>& getCountField();
 	map<Name, MatAttribute<Color>>& getColorField();
 	map<Name, MatAttribute<Matrix4f>>& getMatrixField();
-	map<Name, MatAttribute<Texture*>>& getTextureField();
+	map<Name, MatAttribute<AssetRef<Texture>>>& getTextureField();
 	map<Name, MatAttribute<Image>>& getImageField() ;
 
 	const map<Name, MatAttribute<float>>& getScalarField() const;
 	const map<Name, MatAttribute<int>>& getCountField() const;
 	const map<Name, MatAttribute<Color>>& getColorField() const;
 	const map<Name, MatAttribute<Matrix4f>>& getMatrixField() const;
-	const map<Name, MatAttribute<Texture*>>& getTextureField() const;
+	const map<Name, MatAttribute<AssetRef<Texture>>>& getTextureField() const;
 	const map<Name, MatAttribute<Image>>& getImageField() const;
 
 	void addScalar(const pair<Name, MatAttribute<float>>& attr);
@@ -85,7 +87,7 @@ public:
 	void addColor(const pair<Name, MatAttribute<Color>>& attr);
 	void addMatrix(const pair<Name, MatAttribute<Matrix4f>>& attr);
 	void addDefaultTexture(const pair<Name, MatAttribute<string>>& attr);
-	void addDefaultTexture(const pair<Name, MatAttribute<Texture*>>& attr);
+	void addDefaultTexture(const pair<Name, MatAttribute<AssetRef<Texture>>>& attr);
 	void addDefaultImage(const pair<Name, unsigned int>& attr);
 
 	void preprocess();
@@ -100,6 +102,10 @@ public:
 	void processInstanceData();
 
 	static bool loadDefaultMaterial();
+
+	virtual bool isStreamed(bool includedSubAsset) const;
+	virtual void streamIn();
+	virtual void streamOut();
 
 	IRenderData* getRenderData();
 

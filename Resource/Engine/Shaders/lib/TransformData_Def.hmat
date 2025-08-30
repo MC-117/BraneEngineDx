@@ -15,6 +15,10 @@ struct TransformData
     uint pad;
 };
 
+#define TRANSFORM_DATA_FLAG_DYNAMIC (1 << 0)
+#define TRANSFORM_DATA_FLAG_NEG_SCALE (1 << 1)
+#define TRANSFORM_DATA_FLAG_REC_DECAL (1 << 2)
+
 StructuredBuffer<TransformData> Transforms : register(TRANS_BIND_INDEX);
 
 uint getTransformCount()
@@ -36,7 +40,12 @@ TransformData getTransformData(in uint insID)
 
 bool isStaticTransform(in TransformData data)
 {
-    return (data.flag & 1) == 1;
+    return (data.flag & TRANSFORM_DATA_FLAG_DYNAMIC) == 0;
+}
+
+bool canReceiveDecal(in TransformData data)
+{
+    return (data.flag & TRANSFORM_DATA_FLAG_REC_DECAL) != 0;
 }
 
 uint getStencilValue(in TransformData data)

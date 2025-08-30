@@ -1,0 +1,72 @@
+#material
+#localsize 32 32 1
+#compute
+
+#include "CalTerrainTileBounds_Lib.hmat"
+#include "../../lib/Bindings_Def.hmat"
+#include "../../lib/Const_Def.hmat"
+
+DEF_TEX2D(heightMap, 0);
+RWTexture2DArray<float2> tileBounds;
+
+groupshared float2 caches[LOCAL_SIZE_X * LOCAL_SIZE_Y];
+
+void stride_minmax_tex(inout int2 minmax, int stride, float2 uvOffset)
+{
+    int pixels = stride * stride;
+    for (int i = 0; i < pixels; i++) {
+        float2 pixelIndex = float2(pixels % stride, pixels / pixels);
+        float2 uv = uvOffset + (pixelIndex / widthPerGrid) / float2(grid);
+        min_max(minmax, SAMPLE_TEX_LOD(heightMap, uv, 0).w);
+    }
+}
+
+[numthreads(LOCAL_SIZE_X, LOCAL_SIZE_Y, LOCAL_SIZE_Z)]
+void main(uint3 tileIndex : SV_GROUPID, uint2 pixelIndex : SV_GROUPTHREADID, uint3 tid : SV_DispatchThreadID)
+{
+    int baseStride = trianglesPerTile / LOCAL_SIZE_X;
+    int baseSize = min(LOCAL_SIZE_X, trianglesPerTile);
+
+    int2 gridIndex = int2(tileIndex.z % grid.x, tileIndex.z / grid.x);
+
+    uint levelCount = 0;
+    float2 gridUVSize = 1 / float2(grid);
+    float2 uvOffset = getUVTileOffset(gridIndex, tileIndex.xy);
+
+    float2 minmax = float2(FLT_MAX, -FLT_MAX);
+
+    bool isValid = all(pixelIndex < baseSize.xx);
+    
+    if (isValid) {
+        if (baseStride > 1) {
+            stride_minmax_tex(minmax, baseStride, uvOffset);
+        }
+        else {
+            float2 uv = uvOffset + (pixelIndex / float2(trianglesPerTile.xx));
+            minmax = SAMPLE_TEX_LOD(heightMap, uv, 0).ww;
+        }
+
+        caches[pixelIndex.x + pixelIndex.y * baseSize] = minmax;
+    }
+
+    GroupMemoryBarrierWithGroupSync();
+
+    levelCount = log2(baseSize) + 1;
+    for (uint level = 0; level < levelCount; level++) {
+        uint stride = 1 << level;
+
+        if (isValid && all(pixelIndex % stride.xx == 0)) {
+            int index = pixelIndex.x + pixelIndex.y * stride;
+            minmax = caches[index];
+            min_max2(minmax, caches[index + 1]);
+            min_max2(minmax, caches[index + stride]);
+            min_max2(minmax, caches[index + stride + 1]);
+            caches[index] = minmax;
+        }
+        GroupMemoryBarrierWithGroupSync();
+    }
+
+    if (all(tid == 0)) {
+        tileBounds[tileIndex] = caches[0];
+    }
+}

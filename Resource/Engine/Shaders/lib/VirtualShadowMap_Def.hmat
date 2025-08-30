@@ -117,26 +117,13 @@ uint calcPageOffset(uint vsmID, uint level, uint2 pageAddress)
 	return calcPageTableLevelOffset(vsmID, level) + calcPageOffsetInLevel(level, pageAddress);
 }
 
-int calcMipLevel(int4 rect, int coveredPixels)
-{
-    const int maxPixelOffset = coveredPixels - 1;
-	const int mipOffset = (int)log2((float)coveredPixels) - 1;
-
-    int2 mipLevelXY = firstbithigh(rect.zw - rect.xy);
-
-	int mipLevel = max(max(mipLevelXY.x, mipLevelXY.y) - mipOffset, 0);
-
-	mipLevel += any((rect.zw >> mipLevel) - (rect.xy >> mipLevel) > maxPixelOffset) ? 1 : 0;
-
-	return mipLevel;
-}
-
 struct VSMProjData
 {
 	float4x4 viewOriginToView;
 	float4x4 viewToClip;
 	float4x4 viewOriginToClip;
 	float4x4 viewOriginToUV;
+	float4x4 viewOriginToUVNormal;
 
 	float3 clipmapWorldOrigin;
 	int resolutionLodBias;
@@ -155,9 +142,7 @@ struct VSMProjData
 
 	int uncached;
 
-	float screenRayLength;
-
-	int pad;
+	int2 pad;
 };
 
 bool isViewOrtho(VSMProjData projData)
@@ -177,8 +162,9 @@ struct VSMInfo
 	uint pcfPixel;
 	uint pcfStep;
 	float pcfRadiusScale;
+	float screenRayLength;
 	uint flag;
-	uint3 pad;
+	uint2 pad;
 };
 
 cbuffer VSMInfoBuff
@@ -198,36 +184,6 @@ struct VSMPrevData
 	int pad;
 };
 
-struct ScreenRect
-{
-    int4 pixels;
-    int4 hzbTexels;
-    int hzbLevel;
-    int depth;
-};
-
-ScreenRect getScreenRect(int4 viewRect, FrustumCullData cullData, int coveredPixels)
-{
-    ScreenRect rect;
-    rect.depth = cullData.rectMax.z;
-    float4 rectUV = saturate(float4(cullData.rectMin.xy, cullData.rectMax.xy) *
-        float2(0.5, -0.5).xyxy + 0.5).xwzy;
-    float2 viewSize = viewRect.zw - viewRect.xy;
-	rect.pixels = int4( rectUV * viewSize.xyxy + viewRect.xyxy +
-        float4(0.5f, 0.5f, -0.5f, -0.5f));
-	rect.pixels.xy = max(rect.pixels.xy, viewRect.xy);
-	rect.pixels.zw = min(rect.pixels.zw, viewRect.zw - 1);
-
-    rect.hzbTexels = int4(rect.pixels.xy, max(rect.pixels.xy, rect.pixels.zw));	
-    rect.hzbTexels = rect.hzbTexels >> 1;
-
-    rect.hzbLevel = calcMipLevel(rect.hzbTexels, coveredPixels);
-
-	rect.hzbTexels >>= rect.hzbLevel;
-
-	return rect;
-}
-
 float calcAbsClipmapLevel(VSMProjData baseProjData, float3 worldPos)
 {
 	float distToClipmapOrigin = length(worldPos - baseProjData.clipmapWorldOrigin);
@@ -238,30 +194,6 @@ int calcClipmapLevel(VSMProjData baseProjData, float3 worldPos)
 {
 	float biasedLevel = calcAbsClipmapLevel(baseProjData, worldPos) + baseProjData.resolutionLodBias;
 	return int(floor(biasedLevel));
-}
-
-float calcPixelFootprintLocal(
-	VSMProjData projData,
-	float3 viewOriginPos,
-	float sceneDepth)
-{
-	// Compute footprint by projecting the approximate size of a camera pixel at the given depth to shadow space
-	// NOTE: This doesn't take the screen XY position/FOV into account, which may or may not be desirable.
-
-	// TODO: Roll into a uniform
-	float2 radiusXY = 1.0f / (camData.viewSize * camData.promat._m00_m11);
-	float radiusScreen = min(radiusXY.x, radiusXY.y);
-	float depthScale = sceneDepth * camData.promat[2][3] + camData.promat[3][3];
-
-	float radiusWorld = depthScale * radiusScreen;
-
-	float4 shadowUVz = mul(float4(viewOriginPos, 1.0f), projData.viewOriginToUV);
-
-	float4 radiusClipH = mul(float4(radiusWorld, 0.0f, shadowUVz.w, 1.0f), projData.viewToClip);
-	float radiusClip = abs(radiusClipH.x / radiusClipH.w);
-	float footprint = radiusClip * float(2 * VSM_MAX_SIZE);
-
-	return footprint;
 }
 
 struct VSMPhysPageMetaData
@@ -598,7 +530,7 @@ void transformToVirtualPage(inout float4 clipPos, inout float4 pageClipPos, uint
 
 	clipPos = mul( float4( worldPos - viewInfo.worldCenter, 1 ), viewInfo.viewOriginToClip );
 
-	if (clipPos.z > clipPos.w)
+	if (isViewOrtho(viewInfo) && clipPos.z > clipPos.w)
 	{
 		clipPos.z = 0.999999f;
 		clipPos.w = 1.0f;
@@ -761,7 +693,7 @@ float computeVSMOptimalSlopeBias(
 
 	// Transform geometry world-space plane eq to shadow 'UV' texture space [0-1] ranges
 	float4 NormalPlaneTranslatedWorld = float4(EstimatedGeoWorldNormal, -dot(EstimatedGeoWorldNormal, viewOriginPos));
-	float4 NormalPlaneUV = mul(NormalPlaneTranslatedWorld, projData.viewOriginToUV);
+	float4 NormalPlaneUV = mul(NormalPlaneTranslatedWorld, projData.viewOriginToUVNormal);
 
 	float2 DepthSlopeUV = -NormalPlaneUV.xy / NormalPlaneUV.z;
 	float MipLevelDim = float(calcLevelTexels(vsmSample.mipLevel));
@@ -799,10 +731,10 @@ float vsmSampleDirectShadow(int vsmID, float3 worldPos, float3 worldNormal = flo
 
 			VSMSample vsmSample;
 			if (vsmSampleClipmap(clipmapVSMID, shadowUVz.xy, vsmSample)) {
-				float rayBias = projData.screenRayLength * max(rayLength, 0.0f) * baseProjData.viewToClip._33;
+				float rayBias = max(rayLength, 0.0f) * baseProjData.viewToClip._33;
 				float optimalSlopeBias = all(worldNormal == float3(0, 0, 0)) ? 0 : computeVSMOptimalSlopeBias(clipmapVSMID, vsmSample, viewOriginPos, worldNormal);
 				float biasedDepth = vsmSample.depth - rayBias;// - optimalSlopeBias * normalBiasScale;
-				return shadowUVz.z > biasedDepth ? 0.0f : 1.0f;
+				return shadowUVz.z < biasedDepth ? 0.0f : 1.0f;
 			}
 		}
 	}
@@ -843,10 +775,10 @@ float vsmSampleDirectShadowPCF(int vsmID, float3 worldPos, float3 worldNormal = 
 					float2 shadowUV = shadowUVz.xy + scaledOffset * radius;
 					shadowUV = saturate(shadowUV);
 					if (vsmSampleClipmap(clipmapVSMID, shadowUV, vsmSample)) {
-						float rayBias = projData.screenRayLength * max(rayLength, 0.0f) * baseProjData.viewToClip._33;
+						float rayBias = max(rayLength, 0.0f) * baseProjData.viewToClip._33;
 						// float optimalSlopeBias = all(worldNormal == float3(0, 0, 0)) ? 0 : computeVSMOptimalSlopeBias(clipmapVSMID, vsmSample, viewOriginPos, worldNormal);
 						float biasedDepth = vsmSample.depth - rayBias;// - optimalSlopeBias * normalBiasScale;
-						shadow += shadowUVz.z > biasedDepth ? 0.0f : 1.0f;
+						shadow += shadowUVz.z < biasedDepth ? 0.0f : 1.0f;
 					}
 					else shadow += 1.0f;
 				}
@@ -882,7 +814,7 @@ float vsmRayCast(int vsmID, float3 rayStartUVz, float3 rayVecUVz, int steps, out
 		float3 rayUVz = rayStartUVz + rayDirUVz * curlen;
 		VSMSample vsmSample;
 		if (vsmSampleClipmap(vsmID, rayUVz.xy, vsmSample)) {
-			if (rayUVz.z > vsmSample.depth) {
+			if (rayUVz.z < vsmSample.depth) {
 				hitDepth = rayUVz.z;
 				return curlen / rayLenUVz;
 			}
@@ -940,13 +872,47 @@ float vsmSampleLocalShadow(int vsmID, float3 worldPos, float3 worldNormal = floa
         
         VSMSample vsmSample;
 		if (vsmSampleLocal(vsmID, shadowUVz.xy, vsmSample)) {
-			float rayBias = baseProjData.screenRayLength * max(rayLength, 0.0f) * baseProjData.viewToClip._33;
-			float optimalSlopeBias = all(worldNormal == float3(0, 0, 0)) ? 0 : computeVSMOptimalSlopeBias(vsmID, vsmSample, viewOriginPos, worldNormal);
-			float biasedDepth = vsmSample.depth - rayBias;
-			return shadowUVz.z > biasedDepth ? 0.0f : 1.0f;
+			float rayBias = max(rayLength, 0.0f) * baseProjData.viewToClip._33;
+			// float optimalSlopeBias = all(worldNormal == float3(0, 0, 0)) ? 0 : computeVSMOptimalSlopeBias(vsmID, vsmSample, viewOriginPos, worldNormal);
+			float biasedDepth = vsmSample.depth - rayBias;// - optimalSlopeBias;
+			return shadowUVz.z < biasedDepth ? 0.0f : 1.0f;
 		}
     }
     return 1.0f;
+}
+
+float vsmScreenRayCast(Texture2D inSceneDepthMap, SamplerState inSceneDepthMapSampler, float3 viewOriginPos, float3 rayDir, float rayLength, float dither)
+{
+	float3 rayStartUVZ	= viewOriginPosToUVZ(viewOriginPos);
+	float3 rayStepUVZ	= viewOriginDirToUVZ(rayDir * rayLength);
+
+	const int steps = 4;
+	float stepOffset = dither - 0.5f;
+	const float step = 1.0 / steps;
+	float sampleTime = stepOffset * step + step;
+
+	const float startDepth = SAMPLE_TEX_LOD(inSceneDepthMap, rayStartUVZ.xy, 0).r;
+
+	for (int i = 0; i < steps; i++)
+	{
+		float3 sampleUVz = rayStartUVZ + rayStepUVZ * sampleTime;
+		float sampleDepth = SAMPLE_TEX_LOD(inSceneDepthMap, sampleUVz.xy, 0).r;
+
+		// Avoid self-intersection with the start pixel (exact comparison due to point sampling depth buffer)
+		if (sampleDepth != startDepth)
+		{
+			if (sampleUVz.z < sampleDepth)
+			{
+				// Behind geometry. Back up a bit along the ray and do the VSM sample from there.
+				return rayLength * max(0.0, sampleTime - 1.5f * step);
+			}
+		}
+
+		sampleTime += step;
+	}
+
+	// Got to the end of the ray without going behind or hitting anything
+	return rayLength;
 }
 
 void writeVSMDepth(DefaultVSMVertexOut fin)
@@ -963,7 +929,7 @@ void writeVSMDepth(DefaultVSMVertexOut fin)
     if (page.isThisLODValid) {
         uint2 pAddress = page.physAddress * VSM_PAGE_SIZE + (vAddress & VSM_PAGE_SIZE_MASK);
 		uint arrayIndex = pageInfo.isStaticPage ? 1 : 0;
-		InterlockedMin( outPhysPagePool[ uint3(pAddress, arrayIndex) ], asuint( deviceZ ) );
+		InterlockedMax( outPhysPagePool[ uint3(pAddress, arrayIndex) ], asuint( deviceZ ) );
     }
 }
 

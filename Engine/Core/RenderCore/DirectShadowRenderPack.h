@@ -11,6 +11,7 @@ struct ENGINE_API DirectShadowRenderCommand : public IRenderCommand
 	MainLightData* mainLightData = NULL;
 	virtual bool isValid() const;
 	virtual Enum<ShaderFeature> getShaderFeature() const;
+	virtual CullType getCullType() const;
 	virtual RenderMode getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const;
 	virtual bool canCastShadow() const;
 	virtual IRenderPack* createRenderPack(SceneRenderData& sceneData, RenderCommandList& commandList) const;
@@ -23,7 +24,7 @@ struct DirectShadowRenderPack : public IRenderPack
 
 	DirectShadowRenderPack();
 
-	virtual bool setRenderCommand(const IRenderCommand& command);
+	virtual bool setRenderCommand(const IRenderCommand& command, const RenderTask& task);
 	virtual void excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext);
 	virtual void reset();
 };

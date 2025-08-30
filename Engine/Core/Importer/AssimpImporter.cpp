@@ -4,9 +4,9 @@
 #include "../Utility/MathUtility.h"
 #include "../Asset.h"
 
-ImporterRegister<AssimpImporter> objImporter(".obj");
-ImporterRegister<AssimpImporter> fbxImporter(".fbx");
-ImporterRegister<AssimpImporter> pmxImporter(".pmx");
+ImporterRegister<AssimpImporter> objImporter(".obj", true);
+ImporterRegister<AssimpImporter> fbxImporter(".fbx", true);
+ImporterRegister<AssimpImporter> pmxImporter(".pmx", true);
 
 AssimpImporter::AssimpImporter()
 {
@@ -417,7 +417,8 @@ bool AssimpImporter::toSkeletonMeshParts()
 {
 	bound = BoundBox::none;
 	meshParts.resize(nMesh);
-	SkeletonMeshPart _totalMesh = VendorManager::getInstance().getVendor().newSkeletonMeshPart(nVert, nFace * 3, boneList.size(), nMorphVert, nMorph);
+	SkeletonMeshPart _totalMesh;
+	_totalMesh = VendorManager::getInstance().getVendor().newSkeletonMeshPart(nVert, nFace * 3, boneList.size(), nMorphVert, nMorph);
 	totalMesh = _totalMesh;
 	unsigned int baseVertex = _totalMesh.vertexFirst, baseElement = _totalMesh.elementFirst;
 	for (int i = 0; i < meshSortedList.size(); i++) {
@@ -489,15 +490,8 @@ bool AssimpImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 				SkeletonMesh* mesh = new SkeletonMesh();
 				if (getSkeletonMesh(*mesh)) {
 					Asset* asset = new Asset(&SkeletonMeshAssetInfo::assetInfo, info.filename, info.path);
-					asset->asset[0] = mesh;
-					if (AssetManager::registAsset(*asset)) {
-						result.assets.push_back(asset);
-					}
-					else {
-						delete asset;
-						delete mesh;
-						result.status = ImportResult::RegisterFailed;
-					}
+					asset->setActualAsset(mesh);
+					result.asset = asset;
 				}
 				else {
 					delete mesh;
@@ -508,15 +502,8 @@ bool AssimpImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 				Mesh* mesh = new Mesh();
 				if (getMesh(*mesh)) {
 					Asset* asset = new Asset(&MeshAssetInfo::assetInfo, info.filename, info.path);
-					asset->asset[0] = mesh;
-					if (AssetManager::registAsset(*asset)) {
-						result.assets.push_back(asset);
-					}
-					else {
-						delete asset;
-						delete mesh;
-						result.status = ImportResult::RegisterFailed;
-					}
+					asset->setActualAsset(mesh);
+					result.asset = asset;
 				}
 				else {
 					delete mesh;
@@ -529,18 +516,9 @@ bool AssimpImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 			if (getAnimation(anims, true)) {
 				for (int i = 0; i < anims.size(); i++) {
 					Asset* asset = new Asset(&AnimationClipDataAssetInfo::assetInfo, info.filename + ":" + anims[i]->name, info.path + ":Animation" + to_string(i));
-					asset->asset[0] = anims[i];
-					if (AssetManager::registAsset(*asset)) {
-						result.assets.push_back(asset);
-						result.status = ImportResult::Successed;
-					}
-					else {
-						delete asset;
-						if (result.status == ImportResult::Successed)
-							result.status = ImportResult::PartSuccessed;
-						else
-							result.status = ImportResult::RegisterFailed;
-					}
+					asset->setActualAsset(anims[i]);
+					result.asset = asset;
+					result.status = ImportResult::Successed;
 				}
 			}
 			else {

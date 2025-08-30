@@ -10,7 +10,7 @@ public:
 	Texture2D screenMap = Texture2D(size.x, size.y, 4, false, { TW_Clamp_Edge, TW_Clamp_Edge, TF_Linear, TF_Linear, TIT_RGB10A2_UF });
 	RenderTarget screenRenderTarget = RenderTarget(size.x, size.y, 4);
 
-	ToneMapPass(const string& name = "ToneMap", Material* material = NULL);
+	ToneMapPass(const Name& name = "ToneMap", Material* material = NULL);
 
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);

@@ -3,6 +3,7 @@
 #include "../Console.h"
 #include "../RenderCore/SurfaceBufferGetter.h"
 #include "../RenderCore/VirtualShadowMap/VirtualShadowMap.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
 TranslucentSSRBinding::TranslucentSSRBinding() : SSRBinding()
 {
@@ -16,7 +17,6 @@ void TranslucentSSRBinding::release()
 {
 	SSRBinding::release();
 	gBufferA = NULL;
-	gBufferB = NULL;
 	hiZTexture = NULL;
 }
 
@@ -24,12 +24,10 @@ void TranslucentSSRBinding::bind(IRenderContext& context)
 {
 	SSRBinding::bind(context);
 	static const ShaderPropertyName gBufferAName = "gBufferA";
-	static const ShaderPropertyName gBufferBName = "gBufferB";
 	static const ShaderPropertyName hiZMapName = "hiZMap";
 	static const ShaderPropertyName SSRInfoName = "SSRInfo";
 
 	context.bindTexture(gBufferA ? gBufferA->getVendorTexture() : NULL, gBufferAName);
-	context.bindTexture(gBufferB ? gBufferB->getVendorTexture() : NULL, gBufferBName);
 	context.bindTexture(hiZTexture ? hiZTexture->getVendorTexture() : NULL, hiZMapName);
 }
 
@@ -95,8 +93,11 @@ bool TranslucentPass::setRenderCommand(const IRenderCommand& command)
 			if (ssrBinding) {
 				task.extraData.push_back(ssrBinding);
 			}
-			commandList.addRenderTask(command, task);
 		}
+		GraphicsPipelineStateDesc desc;
+		setupPSODescFromRenderTask(desc, task, command.getCullType());
+		task.graphicsPipelineState = fetchPSOIfDescChangedThenInit(NULL, desc);
+		commandList.addRenderTask(command, task);
 	}
 
 	return true;
@@ -141,9 +142,8 @@ TranslucentSSRBinding* TranslucentPass::getSSRBinding(const SceneRenderData& sce
 	if (gBufferGetter == NULL || hiZBufferGetter == NULL)
 		return NULL;
 	Texture* gBufferA = gBufferGetter->getGBufferA();
-	Texture* gBufferB = gBufferGetter->getGBufferB();
 	Texture* hiZTexture = hiZBufferGetter->getHiZTexture();
-	if (gBufferA == NULL || gBufferB == NULL || hiZTexture == NULL)
+	if (gBufferA == NULL || hiZTexture == NULL)
 		return NULL;
 
 	size_t hash = (size_t)&sceneData;
@@ -165,12 +165,12 @@ TranslucentSSRBinding* TranslucentPass::getSSRBinding(const SceneRenderData& sce
 	Vector4f hiZUVScale = { width * 0.5f / hiZWidth, height * 0.5f / hiZHeight, 2.0f / width, 2.0f / height };
 
 	ssrBinding->gBufferA = gBufferA;
-	ssrBinding->gBufferB = gBufferB;
 	ssrBinding->hiZTexture = hiZTexture;
 	ssrBinding->ssrInfo.hiZStartLevel = 5;
 	ssrBinding->ssrInfo.hiZStopLevel = -1;
 	ssrBinding->ssrInfo.hiZMaxStep = 48;
 	ssrBinding->ssrInfo.hiZUVScale = hiZUVScale;
+	ssrBinding->ssrInfo.hiZMaxMipLevel = hiZTexture->getMipLevels() - 1;
 
 	ssrBinding->create();
 	renderGraph->getRenderDataCollectorRenderThread()->add(*ssrBinding);

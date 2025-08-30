@@ -18,7 +18,6 @@ public:
 	Serialize(World, Transform);
 #if ENABLE_PHYSICS
 	PhysicalWorld physicalWorld;
-	thread* renderThread = NULL;
 #endif
 
 	Unit2Di screenSize = { 1280, 720 };

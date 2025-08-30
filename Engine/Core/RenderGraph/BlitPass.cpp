@@ -6,9 +6,11 @@
 #include "../GUI/UIControl.h"
 #include "../RenderCore/SceneRenderData.h"
 #include "../GUI/GUISurface.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
 MaterialRenderData* BlitPass::materialRenderData = NULL;
 IMaterial* BlitPass::materialVariant = NULL;
+GraphicsPipelineState* BlitPass::pipelineState = NULL;
 
 bool BlitPass::loadDefaultResource()
 {
@@ -31,18 +33,22 @@ void BlitPass::prepare()
 	materialVariant = materialRenderData->getVariant(Shader_Postprocess);
 	if (materialVariant == NULL)
 		throw runtime_error("Load Engine/Shaders/PostProcess/BlitPass.mat failed");
-	materialVariant->init();
+
+	GraphicsPipelineStateDesc desc = GraphicsPipelineStateDesc::forScreen(
+		materialVariant->program, NULL, BM_Default);
+	desc.renderTargetCount = 1;
+	desc.rtvFormats[0] = TIT_BGRA8_UF;
+	pipelineState = fetchPSOIfDescChangedThenInit(pipelineState, desc);
 }
 
 void BlitPass::execute(IRenderContext& context)
 {
 	CameraRender* cameraRender = GUISurface::getFullScreenGUISurface().getCameraRender();
+	SceneRenderData* sceneRenderData  = renderGraph->sceneDatas.empty() ? NULL : *renderGraph->sceneDatas.begin();
+
+	bool canBlit = cameraRender && sceneRenderData && !sceneRenderData->WarmupData.needWarmup();
 	
-	if (cameraRender == NULL) {
-		context.bindSurface(Engine::getMainDeviceSurface());
-		context.clearSurfaceColor({ 0, 0, 0, 0 });
-	}
-	else {
+	if (canBlit) {
 		Texture* sceneTexture = cameraRender->getSceneTexture();
 		static const ShaderPropertyName screenMapName = "screenMap";
 
@@ -50,7 +56,7 @@ void BlitPass::execute(IRenderContext& context)
 
 		context.clearFrameBindings();
 
-		context.bindShaderProgram(materialVariant->program);
+		context.bindPipelineState(pipelineState);
 
 		context.bindMaterialBuffer(materialVariant);
 
@@ -64,6 +70,10 @@ void BlitPass::execute(IRenderContext& context)
 		context.clearSurfaceColor({ 0, 0, 0, 0 });
 		context.setViewport(0, 0, cameraRender->size.x, cameraRender->size.y);
 		context.postProcessCall();
+	}
+	else {
+		context.bindSurface(Engine::getMainDeviceSurface());
+		context.clearSurfaceColor({ 0, 0, 0, 0 });
 	}
 }
 

@@ -67,11 +67,11 @@ void main(uint2 tid : SV_DispatchThreadID)
                     float3 dirUVZ = normalize(endUVZ - startUVZ);
                     if (rayTraceHiZ_UVZ(hiZMap, hiZMapSampler,
                         hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
-                        startUVZ, dirUVZ, hitUVZ, fadeFactor))
+                        hiZMaxMipLevel, startUVZ, dirUVZ, hitUVZ, fadeFactor))
 #else
                     if (rayTraceHiZ_View(hiZMap, hiZMapSampler,
                         hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
-                        startView, L, hitUVZ))
+                        hiZMaxMipLevel, startView, L, hitUVZ))
 #endif
                     {
                         hitColor = SAMPLE_TEX_LOD(gBufferA, hitUVZ.xy, 0);

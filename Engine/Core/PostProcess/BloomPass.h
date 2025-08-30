@@ -7,12 +7,10 @@
 class BloomPass : public PostProcessPass
 {
 public:
-	Texture2D bloomMap = Texture2D(size.x, size.y, 4, false, { TW_Clamp, TW_Clamp, TF_Linear_Mip_Point, TF_Linear_Mip_Point, TIT_RGB10A2_UF });
-	Texture2D screenMap = Texture2D(size.x, size.y, 4, false, { TW_Clamp, TW_Clamp, TF_Linear_Mip_Point, TF_Linear_Mip_Point, TIT_RGB10A2_UF });
-	vector<RenderTarget*> bloomRenderTargets;
-	vector<RenderTarget*> screenRenderTargets;
-	unsigned int bloomLevel = 5;
-	BloomPass(const string& name = "Bloom", Material* material = NULL);
+	Texture2D bloomSampleMap = Texture2D(size.x, size.y, 4, false, { TW_Clamp, TW_Clamp, TF_Linear_Mip_Point, TF_Linear_Mip_Point, TIT_RGBA16_FF });
+	vector<RenderTarget*> bloomSampleRenderTargets;
+	unsigned int bloomLevel = 6;
+	BloomPass(const Name& name = "Bloom", Material* material = NULL);
 
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);
@@ -21,6 +19,7 @@ public:
 	virtual void render(RenderInfo& info);
 	virtual void resize(const Unit2Di& size);
 protected:
+	GraphicsPipelineState* additivePipelineState = NULL;
 	void resizeBloomLevel(int levels);
 };
 

@@ -1,5 +1,6 @@
 #include "ScreenHitPass.h"
 #include "../Asset.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
 bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 {
@@ -49,6 +50,10 @@ bool ScreenHitPass::setRenderCommand(const IRenderCommand& cmd)
 		task.surface = cameraRenderData->surface;
 		task.surface.clearFlags = Clear_Depth;
 		task.surface.renderTarget = cameraRenderData->hitData->renderTarget;
+
+		GraphicsPipelineStateDesc desc;
+		setupPSODescFromRenderTask(desc, task, command.getCullType());
+		task.graphicsPipelineState = fetchPSOIfDescChangedThenInit(NULL, desc);
 
 		commandList.addRenderTask(command, task);
 	}

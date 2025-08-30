@@ -1,9 +1,11 @@
 ﻿#include "SkeletonRenderData.h"
 #include "RenderCommandList.h"
+#include "RenderCoreUtility.h"
 #include "../Asset.h"
 
 Material* SkeletonRenderData::uploadTransformMaterial = NULL;
 ShaderProgram* SkeletonRenderData::uploadTransformProgram = NULL;
+ComputePipelineState* SkeletonRenderData::uploadTransformPSO = NULL;
 
 void SkeletonRenderData::setBoneCount(unsigned int count)
 {
@@ -25,7 +27,7 @@ void SkeletonRenderData::loadDefaultResource()
 	}
 	if (uploadTransformProgram == NULL)
 		throw runtime_error("UploadMatrix shader program is invalid");
-	uploadTransformProgram->init();
+	uploadTransformPSO = fetchPSOIfDescChangedThenInit(uploadTransformPSO, uploadTransformProgram);
 }
 
 void SkeletonRenderData::create()
@@ -56,7 +58,7 @@ void SkeletonRenderData::upload()
 			skeletonTransformArray.uploadIndices[0] = uploadSize;
 			transformUploadBuffer.uploadData(uploadSize, skeletonTransformArray.uploadTransformDatas.data());
 			transformUploadIndexBuffer.uploadData(uploadSize + 1, skeletonTransformArray.uploadIndices.data());
-			context.bindShaderProgram(uploadTransformProgram);
+			context.bindPipelineState(uploadTransformPSO);
 			context.bindBufferBase(transformUploadIndexBuffer.getVendorGPUBuffer(), indexBufName);
 			context.bindBufferBase(transformUploadBuffer.getVendorGPUBuffer(), srcBufName);
 			context.bindTexture(NULL, Vertex_Shader_Stage, TRANS_BIND_INDEX, -1);

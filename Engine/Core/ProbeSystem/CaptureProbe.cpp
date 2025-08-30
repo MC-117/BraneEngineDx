@@ -1,5 +1,6 @@
 #include "CaptureProbe.h"
 #include "../Asset.h"
+#include "Core/RenderCore/SceneRenderData.h"
 
 SerializeInstance(CaptureProbe);
 
@@ -47,6 +48,7 @@ void CaptureProbe::prerender(SceneRenderData& sceneData)
 	Vector3f position = getPosition(WORLD);
 	float scale = getScale(WORLD).x();
 	captureProbeRender->setWorldPositionAndScale(position, scale);
+	captureProbeRender->needWarmup = sceneData.WarmupData.needWarmup();
 }
 
 Render* CaptureProbe::getRender()

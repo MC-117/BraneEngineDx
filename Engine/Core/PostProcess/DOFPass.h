@@ -10,7 +10,7 @@ public:
 	Texture2D dofMap = Texture2D(size.x, size.y, 4, false);
 	RenderTarget dofRenderTarget = RenderTarget(size.x, size.y, 4);
 
-	DOFPass(const string& name = "DOF", Material* material = NULL);
+	DOFPass(const Name& name = "DOF", Material* material = NULL);
 
 	virtual void prepare();
 	virtual void execute(IRenderContext& context);

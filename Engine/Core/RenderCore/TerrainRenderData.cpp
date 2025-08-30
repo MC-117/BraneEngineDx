@@ -1,6 +1,7 @@
 ﻿#include "TerrainRenderData.h"
 
 #include "CameraRenderData.h"
+#include "RenderCoreUtility.h"
 #include "../Utility/RenderUtility.h"
 #include "../Asset.h"
 #include "../Material.h"
@@ -43,12 +44,16 @@ unsigned TerrainBatchDrawArray::getCommandCount() const
 
 Material* TerrainQuadTree::calTileBoundsMaterial = NULL;
 ShaderProgram* TerrainQuadTree::calTileBoundsProgram = NULL;
+ComputePipelineState* TerrainQuadTree::calTileBoundsPSO = NULL;
 Material* TerrainQuadTree::calTileLodBoundsMaterial = NULL;
 ShaderProgram* TerrainQuadTree::calTileLodBoundsProgram = NULL;
+ComputePipelineState* TerrainQuadTree::calTileLodBoundsPSO = NULL;
 Material* TerrainQuadTree::selectGridsMaterial = NULL;
 ShaderProgram* TerrainQuadTree::selectGridsProgram = NULL;
+ComputePipelineState* TerrainQuadTree::selectGridsPSO = NULL;
 Material* TerrainQuadTree::selectTilesMaterial = NULL;
 ShaderProgram* TerrainQuadTree::selectTilesProgram = NULL;
+ComputePipelineState* TerrainQuadTree::selectTilesPSO = NULL;
 bool TerrainQuadTree::isInited = false;
 
 TerrainQuadTree::TerrainQuadTree()
@@ -98,9 +103,10 @@ void TerrainQuadTree::setTerrainData(const TerrainData& data, const Matrix4f& lo
 void TerrainQuadTree::create()
 {
 	loadDefaultResource();
-	calTileBoundsProgram->init();
-	calTileLodBoundsProgram->init();
-	selectTilesProgram->init();
+	calTileBoundsPSO = fetchPSOIfDescChangedThenInit(calTileBoundsPSO, calTileBoundsProgram);
+	calTileLodBoundsPSO = fetchPSOIfDescChangedThenInit(calTileLodBoundsPSO, calTileLodBoundsProgram);
+	selectGridsPSO = fetchPSOIfDescChangedThenInit(selectGridsPSO, selectGridsProgram);
+	selectTilesPSO = fetchPSOIfDescChangedThenInit(selectTilesPSO, selectTilesProgram);
 }
 
 void TerrainQuadTree::update()
@@ -145,7 +151,7 @@ void TerrainQuadTree::calTileBounds(IRenderContext& context)
 	RENDER_SCOPE(context, TerrainCalTileBounds);
 
 	{
-		context.bindShaderProgram(calTileBoundsProgram);
+		context.bindPipelineState(calTileBoundsPSO);
 		context.bindBufferBase(parameterBuffer.getVendorGPUBuffer(), parametersName);
 		
 		Image image;
@@ -164,7 +170,7 @@ void TerrainQuadTree::calTileBounds(IRenderContext& context)
 	for (int level = 1; level < parameters.tileLevels; level++) {
 		const uint32_t tileLodSize = parameters.tilesPerGrid >> level;
 		
-		context.bindShaderProgram(calTileLodBoundsProgram);
+		context.bindPipelineState(calTileLodBoundsPSO);
 		context.bindBufferBase(parameterBuffer.getVendorGPUBuffer(), parametersName);
 		
 		Image image;
@@ -206,7 +212,7 @@ void TerrainQuadTree::selectTile(IRenderContext& context, CameraRenderData& came
 		
 		context.clearOutputBufferUint(drawArray.selectTileArgs.getVendorGPUBuffer(), Vector4u::Zero());
 
-		context.bindShaderProgram(selectGridsProgram);
+		context.bindPipelineState(selectGridsPSO);
 		context.bindBufferBase(parameterBuffer.getVendorGPUBuffer(), parametersName);
 		cameraRenderData.bindCameraBuffOnly(context);
 		context.bindTexture(tileBounds.getVendorTexture(), tileBoundsName);
@@ -221,7 +227,7 @@ void TerrainQuadTree::selectTile(IRenderContext& context, CameraRenderData& came
 	{
 		context.clearOutputBufferUint(drawArray.drawArgs.getVendorGPUBuffer(), Vector4u::Zero());
 		
-		context.bindShaderProgram(selectTilesProgram);
+		context.bindPipelineState(selectTilesPSO);
 		context.bindBufferBase(parameterBuffer.getVendorGPUBuffer(), parametersName);
 		cameraRenderData.bindCameraBuffOnly(context);
 		context.bindTexture(tileBounds.getVendorTexture(), tileBoundsName);

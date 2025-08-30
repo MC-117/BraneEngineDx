@@ -1,12 +1,14 @@
 #include "Basic_FS_Lib.hmat"
 #include "ScreenPass_Def.hmat"
 #include "CameraData_Def.hmat"
+#include "TransformData_Def.hmat"
 
 #if defined(VSM_SHADER_FEATURE)
 #include "VirtualShadowMap_Def.hmat"
 #endif
 
-#define REFLECTION_MASK 1
+#define REFLECTION_MASK 0x1
+#define RECEIVE_DECAL_MASK 0x2
 
 struct Surface
 {
@@ -24,19 +26,18 @@ struct Surface
     uint mask;
 };
 
-void outputSurface(in Surface surf, out float4 A, out float B, out float4 C, out float4 D, out int4 E, out float4 F)
+void outputSurface(in Surface surf, out float4 A, out float4 B, out float4 C, out int4 D, out float4 E)
 {
     A = surf.albedo;
-    B = surf.depth;
-    C.xyz = encodeNormal(surf.Normal);
-    C.a = 1;
-    D.r = surf.roughness;
-    D.g = surf.metallic;
-    D.b = surf.specular;
-    D.a = surf.ao;
-    E.rgb = packUIntToUInt3(surf.matID);
-    E.a = surf.mask;
-    F = surf.radiosity;
+    B.xyz = encodeNormal(surf.Normal);
+    B.a = 1;
+    C.r = surf.roughness;
+    C.g = surf.metallic;
+    C.b = surf.specular;
+    C.a = surf.ao;
+    D.rgb = packUIntToUInt3(surf.matID);
+    D.a = surf.mask;
+    E = surf.radiosity;
 }
 
 #if defined(LIGHTING_SHADER_FEATURE)
@@ -45,27 +46,27 @@ void outputSurface(in Surface surf, out float4 A, out float B, out float4 C, out
 Surface getSurface(in ScreenVertexOut fin)
 {
     Surface surf;
-    uint4 E = LOAD_TEX(gBufferE, int3(fin.UV * camData.viewSize, 0));
-    uint matID = unpackUInt3ToUInt(E);
+    uint4 D = LOAD_TEX(gBufferD, int3(fin.UV * camData.viewSize, 0));
+    uint matID = unpackUInt3ToUInt(D);
     if (matID != materialID)
         discard;
     float4 A = SAMPLE_TEX(gBufferA, fin.UV);
-    float B = SAMPLE_TEX(gBufferB, fin.UV);
+    float4 B = SAMPLE_TEX(gBufferB, fin.UV);
     float4 C = SAMPLE_TEX(gBufferC, fin.UV);
-    float4 D = SAMPLE_TEX(gBufferD, fin.UV);
-    float4 F = SAMPLE_TEX(gBufferF, fin.UV);
+    float4 E = SAMPLE_TEX(gBufferE, fin.UV);
+    float depth = SAMPLE_TEX(sceneDepthMap, fin.UV);
     surf.albedo = A;
-    surf.depth = B;
-    surf.WorldPos = uvzPosToWorld(float3(fin.UV, surf.depth));
+    surf.depth = depth;
+    surf.WorldPos = uvzPosToWorld(float3(fin.UV, depth));
     surf.TexCoords = fin.UV;
-    surf.Normal = decodeNormal(C.xyz);
-    surf.roughness = D.r;
-    surf.metallic = D.g;
-    surf.specular = D.b;
-    surf.ao = D.a;
+    surf.Normal = decodeNormal(B.xyz);
+    surf.roughness = C.r;
+    surf.metallic = C.g;
+    surf.specular = C.b;
+    surf.ao = C.a;
     surf.matID = matID;
-    surf.mask = E.a;
-    surf.radiosity = F;
+    surf.mask = D.a;
+    surf.radiosity = E;
     return surf;
 }
 #elif defined(DEPTH_SHADER_FEATURE) && defined(VSM_SHADER_FEATURE)
@@ -73,6 +74,7 @@ Surface getSurface(in ScreenVertexOut fin)
 
 Surface getSurface(in DefaultVSMVertexOut fin)
 {
+    TransformData tansData = getTransformData(fin.InstanceID);
     Surface surf;
     surf.albedo = float4(1, 1, 1, 1);
     surf.WorldPos = float3(0, 0, 0);
@@ -84,7 +86,7 @@ Surface getSurface(in DefaultVSMVertexOut fin)
     surf.specular = 1.0f;
     surf.ao = 1.0f;
     surf.matID = -1;
-    surf.mask = 0;
+    surf.mask = canReceiveDecal(tansData) ? RECEIVE_DECAL_MASK : 0;
     surf.radiosity = float4(0, 0, 0, 0);
     return surf;
 }
@@ -93,6 +95,7 @@ Surface getSurface(in DefaultVSMVertexOut fin)
 
 Surface getSurface(in DefaultVertexOut fin)
 {
+    TransformData tansData = getTransformData(fin.InstanceID);
     Surface surf;
     surf.albedo = float4(1, 1, 1, 1);
     surf.WorldPos = fin.WorldPos;
@@ -104,7 +107,7 @@ Surface getSurface(in DefaultVertexOut fin)
     surf.specular = 1.0f;
     surf.ao = 1.0f;
     surf.matID = materialID;
-    surf.mask = 0;
+    surf.mask = canReceiveDecal(tansData) ? RECEIVE_DECAL_MASK : 0;
     surf.radiosity = float4(0, 0, 0, 0);
     return surf;
 }

@@ -3,6 +3,7 @@
 #include "ShaderNode.h"
 #include "../../Graph/ValuePin.h"
 #include "../../Graph/Variable.h"
+#include "../../Utility/AssetRef.h"
 
 class Texture;
 class Texture2D;
@@ -24,7 +25,7 @@ protected:
     Texture* defaultTexture;
 };
 
-class TextureParameterVariable : public ShaderVariable, public IGraphVariableValueAccessor<Texture*>
+class TextureParameterVariable : public ShaderVariable, public IGraphVariableValueAccessor<AssetRef<Texture>>
 {
 public:
     Serialize(TextureParameterVariable, ShaderVariable);
@@ -33,11 +34,11 @@ public:
 
     virtual bool isGlobalVariable() const;
 
-    virtual Texture* getValue() const;
-    virtual Texture* getDefaultValue() const;
+    virtual AssetRef<Texture> getValue() const;
+    virtual AssetRef<Texture> getDefaultValue() const;
 
-    virtual void setValue(Texture* const& value);
-    virtual void setDefaultValue(Texture* const& value);
+    virtual void setValue(AssetRef<Texture> const& value);
+    virtual void setDefaultValue(AssetRef<Texture> const& value);
 
     virtual bool generate(GraphCodeGenerationContext& context);
 
@@ -47,7 +48,7 @@ public:
     virtual bool deserialize(const SerializationInfo& from);
     virtual bool serialize(SerializationInfo& to);
 protected:
-    Texture* defaultTexture;
+    AssetRef<Texture> defaultTexture;
 };
 
 #define DEC_TEX_PARAM_CLASS(TexClass) \

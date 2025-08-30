@@ -97,19 +97,19 @@ Enum<ShaderFeature> ParticleRenderCommand::getShaderFeature() const
 RenderMode ParticleRenderCommand::getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const
 {
 	const int renderOrder = materialRenderData->renderOrder;
-	RenderMode renderMode = RenderMode(renderOrder, BM_Default);
-	renderMode.mode.stencilTest = materialRenderData->desc.enableStencilTest;
+	RenderMode renderMode = RenderMode(renderOrder);
+	renderMode.dsMode.stencilTest = materialRenderData->desc.enableStencilTest;
 
 	bool cameraForceStencilTest = cameraRenderData->forceStencilTest && (passName == "Geometry"_N || passName == "Translucent"_N);
 	
 	if (cameraForceStencilTest) {
-		renderMode.mode.stencilTest = true;
-		renderMode.mode.stencilComparion_front = cameraRenderData->stencilCompare;
-		renderMode.mode.stencilComparion_back = cameraRenderData->stencilCompare;
+		renderMode.dsMode.stencilTest = true;
+		renderMode.dsMode.stencilComparion_front = cameraRenderData->stencilCompare;
+		renderMode.dsMode.stencilComparion_back = cameraRenderData->stencilCompare;
 	}
 	else {
-		renderMode.mode.stencilComparion_front = materialRenderData->desc.stencilCompare;
-		renderMode.mode.stencilComparion_back = materialRenderData->desc.stencilCompare;
+		renderMode.dsMode.stencilComparion_front = materialRenderData->desc.stencilCompare;
+		renderMode.dsMode.stencilComparion_back = materialRenderData->desc.stencilCompare;
 	}
 	return renderMode;
 }
@@ -129,7 +129,7 @@ ParticleRenderPack::ParticleRenderPack(ParticleRenderData& particleRenderData)
 {
 }
 
-bool ParticleRenderPack::setRenderCommand(const IRenderCommand& command)
+bool ParticleRenderPack::setRenderCommand(const IRenderCommand& command, const RenderTask& task)
 {
 	const ParticleRenderCommand* particleRenderCommand = dynamic_cast<const ParticleRenderCommand*>(&command);
 	materialData = command.materialRenderData;
@@ -145,7 +145,6 @@ void ParticleRenderPack::excute(IRenderContext& context, RenderTask& task, Rende
 	if (taskContext.materialVariant != task.materialVariant) {
 		taskContext.materialVariant = task.materialVariant;
 		
-		bindMaterialCullMode(context, task.materialVariant, false);
 		bindMaterial(context, task.materialVariant);
 	}
 

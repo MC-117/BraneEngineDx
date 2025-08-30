@@ -1,4 +1,6 @@
 #include "EnvLightData.h"
+
+#include "RenderCoreUtility.h"
 #include "../ProbeSystem/EnvLightCaptureProbeRender.h"
 #include "../Asset.h"
 #include "../Profile/ProfileCore.h"
@@ -57,6 +59,7 @@ RGBASHCoeff3Data& RGBASHCoeff3Data::operator+=(const RGBASHCoeff3Data& v)
 
 Material* EnvLightProbeRenderData::material = NULL;
 ShaderProgram* EnvLightProbeRenderData::program = NULL;
+ComputePipelineState* EnvLightProbeRenderData::pipelineState = NULL;
 bool EnvLightProbeRenderData::isInited = false;
 
 int EnvLightProbeRenderData::setLightCapture(const EnvLightProbeData& data)
@@ -70,7 +73,7 @@ void EnvLightProbeRenderData::create()
 	envSHDataBuffer.resize(CF_Faces);
 	readBackBuffer.resize(CF_Faces);
 	loadDefaultResource();
-	program->init();
+	pipelineState = fetchPSOIfDescChangedThenInit(pipelineState, program);
 }
 
 void EnvLightProbeRenderData::release()
@@ -101,7 +104,7 @@ void EnvLightProbeRenderData::computeEnvLight(IRenderContext& context, EnvLightP
 	static const ShaderPropertyName lightCubeMapName = "lightCubeMap";
 	static const ShaderPropertyName outSHCoeffsName = "outSHCoeffs";
 
-	context.bindShaderProgram(program);
+	context.bindPipelineState(pipelineState);
 	MipOption mipOption;
 	mipOption.dimension = TD_Array;
 	mipOption.arrayCount = CF_Faces;

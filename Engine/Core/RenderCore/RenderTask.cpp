@@ -14,11 +14,11 @@ size_t RenderTask::Hasher::operator()(const RenderTask& t) const
 	size_t hash = (size_t)t.sceneData;
 	hash_combine(hash, (size_t)t.batchDrawData.transformData);
 	hash_combine(hash, (size_t)t.batchDrawData.batchDrawCommandArray);
-	hash_combine(hash, (size_t)t.shaderProgram);
+	hash_combine(hash, (size_t)t.graphicsPipelineState);
 	hash_combine(hash, (size_t)t.surface.renderTarget);
 	hash_combine(hash, (size_t)t.cameraData->cameraRenderID);
 	hash_combine(hash, (size_t)t.materialVariant);
-	hash_combine(hash, t.renderMode.bits);
+	hash_combine(hash, std::hash<RenderMode>()(t.renderMode));
 	hash_combine(hash, (size_t)t.meshData);
 	for (auto data : t.extraData)
 		hash_combine(hash, (size_t)data);
@@ -49,9 +49,9 @@ bool RenderTask::ExecutionOrder::operator()(const RenderTask& t0, const RenderTa
 					if (order0 < order1)
 						return true;
 					if (order0 == order1) {
-						if (t0.shaderProgram < t1.shaderProgram)
+						if (t0.graphicsPipelineState < t1.graphicsPipelineState)
 							return true;
-						if (t0.shaderProgram == t1.shaderProgram) {
+						if (t0.graphicsPipelineState == t1.graphicsPipelineState) {
 							if (t0.batchDrawData.transformData < t1.batchDrawData.transformData)
 								return true;
 							if (t0.batchDrawData.transformData == t1.batchDrawData.transformData) {
@@ -89,12 +89,17 @@ void RenderTask::execute(RenderTaskParameter& parameter)
 		context.bindFrame(renderTarget);
 	}
 
-	if (taskContext.shaderProgram != shaderProgram) {
-		taskContext.shaderProgram = shaderProgram;
-		context.bindShaderProgram(shaderProgram);
+	if (taskContext.graphicsPipelineState != graphicsPipelineState) {
+		taskContext.graphicsPipelineState = graphicsPipelineState;
+		
+		context.bindPipelineState(graphicsPipelineState);
 
-		shaderSwitch = true;
-		sceneData->bind(context);
+		if (taskContext.shaderProgram != shaderProgram) {
+			taskContext.shaderProgram = shaderProgram;
+
+			shaderSwitch = true;
+			sceneData->bind(context);
+		}
 	}
 
 	if (taskContext.cameraData != cameraData || shaderSwitch) {
@@ -126,43 +131,43 @@ void RenderTask::execute(RenderTaskParameter& parameter)
 			batchDrawData.batchDrawCommandArray->bindInstanceBuffer(context);
 	}
 
-	if (taskContext.renderMode != renderMode) {
-		taskContext.renderMode = renderMode;
-		
-		uint16_t stage = renderMode.getRenderStage();
-		if (stage < RenderStage::RS_Opaque)
-			context.setRenderPreState(renderMode.getDepthStencilMode());
-		else if (stage < RenderStage::RS_Aplha)
-			context.setRenderOpaqueState(renderMode.getDepthStencilMode());
-		else if (stage < RenderStage::RS_Transparent)
-			context.setRenderAlphaState(renderMode.getDepthStencilMode());
-		else if (stage < RenderStage::RS_Post)
-			context.setRenderTransparentState(renderMode.getDepthStencilMode());
-		else {
-			BlendMode blendMode = renderMode.getBlendMode();
-			switch (blendMode)
-			{
-			case BM_Default:
-				context.setRenderPostState();
-				break;
-			case BM_Additive:
-				context.setRenderPostAddState();
-				break;
-			case BM_Multipy:
-				context.setRenderPostMultiplyState();
-				break;
-			case BM_PremultiplyAlpha:
-				context.setRenderPostPremultiplyAlphaState();
-				break;
-			case BM_Mask:
-				context.setRenderPostMaskState();
-				break;
-			default:
-				throw runtime_error("Invalid blend mode");
-				break;
-			}
-		}
-	}
+	// if (taskContext.renderMode != renderMode) {
+	// 	taskContext.renderMode = renderMode;
+	// 	
+	// 	uint16_t stage = renderMode.getRenderStage();
+	// 	if (stage < RenderStage::RS_Opaque)
+	// 		context.setRenderPreState(renderMode.getDepthStencilMode());
+	// 	else if (stage < RenderStage::RS_Aplha)
+	// 		context.setRenderOpaqueState(renderMode.getDepthStencilMode());
+	// 	else if (stage < RenderStage::RS_Transparent)
+	// 		context.setRenderAlphaState(renderMode.getDepthStencilMode());
+	// 	else if (stage < RenderStage::RS_Post)
+	// 		context.setRenderTransparentState(renderMode.getDepthStencilMode());
+	// 	else {
+	// 		BlendMode blendMode = renderMode.getBlendMode();
+	// 		switch (blendMode)
+	// 		{
+	// 		case BM_Default:
+	// 			context.setRenderPostState();
+	// 			break;
+	// 		case BM_Additive:
+	// 			context.setRenderPostAddState();
+	// 			break;
+	// 		case BM_Multipy:
+	// 			context.setRenderPostMultiplyState();
+	// 			break;
+	// 		case BM_PremultiplyAlpha:
+	// 			context.setRenderPostPremultiplyAlphaState();
+	// 			break;
+	// 		case BM_Mask:
+	// 			context.setRenderPostMaskState();
+	// 			break;
+	// 		default:
+	// 			throw runtime_error("Invalid blend mode");
+	// 			break;
+	// 		}
+	// 	}
+	// }
 
 	for (auto data : extraData) {
 		data->bind(context);

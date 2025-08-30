@@ -62,15 +62,18 @@ void VirtualShadowMapRenderData::clean()
 
 void VirtualShadowMapRenderData::bind(IRenderContext& context)
 {
-	bindForLighting(context);
+	bindForLighting(context, NULL);
 }
 
-void VirtualShadowMapRenderData::bindForLighting(IRenderContext& context)
+void VirtualShadowMapRenderData::bindForLighting(IRenderContext& context, Texture* sceneDepth)
 {
 	if (shadowMapArray.isAllocated()) {
 		context.bindTexture(shadowMapArray.physPagePool->getVendorTexture(), VirtualShadowMapShaders::physPagePoolName);
 		context.bindBufferBase(shadowMapArray.frameData->projData.getVendorGPUBuffer(), VirtualShadowMapShaders::projDataName);
 		context.bindBufferBase(shadowMapArray.frameData->pageTable.getVendorGPUBuffer(), VirtualShadowMapShaders::pageTableName);
 		context.bindBufferBase(shadowMapArray.frameData->vsmInfo.getVendorGPUBuffer(), VirtualShadowMapShaders::VSMInfoBuffName);
+		if (sceneDepth) {
+			context.bindTexture(sceneDepth->getVendorTexture(), VirtualShadowMapShaders::sceneDepthMapName);
+		}
 	}
 }

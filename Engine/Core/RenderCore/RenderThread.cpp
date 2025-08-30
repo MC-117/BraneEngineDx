@@ -56,45 +56,9 @@ void RenderThread::endFrame()
     ++renderFrame;
 }
 
-bool RenderThread::Task::canCancel()
+void RenderThread::Task::executeInternal()
 {
-    return !pending;
-}
-
-bool RenderThread::Task::isPending()
-{
-    return pending && !completed && !canceled;
-}
-
-bool RenderThread::Task::isCompleted()
-{
-    return completed || canceled;
-}
-
-bool RenderThread::Task::isCancel()
-{
-    return canceled;
-}
-
-bool RenderThread::Task::wait()
-{
-    while (!completed)
-        std::this_thread::yield();
-    return true;
-}
-
-void RenderThread::Task::cancel()
-{
-    canceled = pending;
-    completed |= canceled;
-    pending = !canceled;
-}
-
-void RenderThread::Task::doTask()
-{
-    pending = false;
     taskFunction(context);
-    completed = true;
 }
 
 void RenderThread::pushContext(const RenderThreadContext& context)
@@ -124,7 +88,7 @@ void RenderThread::renderThreadLoop()
         TaskPtr task = workingQueue.front();
         workingQueue.pop();
         if (!task->isCancel() && !task->isCompleted())
-            task->doTask();
+            task->execute();
     }
 }
 

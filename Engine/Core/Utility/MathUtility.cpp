@@ -240,6 +240,16 @@ Matrix4f Math::orthotropic(float left, float right, float bottom, float top, flo
 	return Result;
 }
 
+Matrix4f Math::perspectiveReversedZ(float fovy, float aspect, float zNear, float zFar)
+{
+	return perspective(fovy, aspect, zFar, zNear);
+}
+
+Matrix4f Math::orthotropicReversedZ(float left, float right, float bottom, float top, float zNear, float zFar)
+{
+	return orthotropic(left, right, bottom, top, zFar, zNear);
+}
+
 Matrix4f Math::lookAt(Vector3f const& eye, Vector3f const& center, Vector3f const& up)
 {
 	DirectX::XMFLOAT4X4 xmf44;

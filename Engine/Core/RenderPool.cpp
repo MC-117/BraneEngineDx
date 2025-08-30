@@ -93,7 +93,7 @@ void RenderPool::beginRender()
 {
 	renderFence();
 
-	RENDER_THREAD_ENQUEUE_TASK(BeginRenderGraph, ([] (RenderThreadContext& context)
+	auto BeginRenderGraphFunc = [] (RenderThreadContext& context)
 	{
 		context.renderGraph->reset();
 		if (!context.renderGraph->loadDefaultResource()) {
@@ -101,7 +101,9 @@ void RenderPool::beginRender()
 		}
 		Engine::getMainDeviceSurface()->frameFence();
 		ProfilerManager::instance().beginFrame();
-	}));
+	};
+
+	RENDER_THREAD_ENQUEUE_TASK(BeginRenderGraph, BeginRenderGraphFunc);
 }
 
 void RenderPool::render(bool guiOnly)

@@ -71,7 +71,7 @@ protected:
 class DX12ComputePipelineState
 {
 public:
-	typedef uint8_t ID;
+	typedef uint32_t ID;
 	DX12ComputePipelineState();
 	virtual ~DX12ComputePipelineState();
 	void reset();

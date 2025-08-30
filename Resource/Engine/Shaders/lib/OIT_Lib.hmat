@@ -1,0 +1,64 @@
+#include "Bindings_Def.hmat"
+#include "CameraData_Def.hmat"
+
+struct OITSample
+{
+    float3 color;
+    float transmittance;
+    float depth;
+};
+
+uint3 packOITSample(OITSample sample)
+{
+    uint3 packed;
+    packed.x = asuint(sample.color.r) << 16 | asuint(sample.color.g);
+    packed.y = asuint(sample.color.b) << 16 | asuint(sample.transmittance);
+    packed.z = asuint(sample.depth);
+    return packed;
+}
+
+OITSample unpackOITSample(uint3 packed)
+{
+    OITSample sample;
+    sample.color = float3(asfloat(packed.x >> 16), asfloat(packed.x & 0xFFFF), asfloat(packed.y >> 16));
+    sample.transmittance = asfloat(packed.y & 0xFFFF);
+    sample.depth = asfloat(packed.z);
+}
+
+cbuffer OITInfo
+{
+    uint OITSampleSidePixels;
+    float OITTransmittanceThreshold
+}
+
+RasterizerOrderedTexture2D<uint> OITSampleCount;
+RWTexture2D<uint3> OITSamples;
+
+void getBaseOITCoords(uint2 pixelCoords)
+{
+    return pixelCoords * OITSampleSidePixels;
+}
+
+void getOITCoords(uint2 pixelCoords, uint sampleIndex)
+{
+    return getBaseOITCoords(pixelCoords) + uint2(sampleIndex / OITSampleSidePixels, sampleIndex % OITSampleSidePixels);
+}
+
+OITSample loadOITSample(uint2 pixelCoords)
+{
+    return unpackOITSample(OITSamples.Load(pixelCoords));
+}
+
+void storeOITSample(uint2 pixelCoords, OITSample sample)
+{
+    OITSamples[pixelCoords] = packOITSample(sample);
+}
+
+void drawOITSample(uint2 pixelCoords, OITSample sample)
+{
+    uint sampleIndex = 0;
+	InterlockedAdd(OITSampleCount[pixelCoords], 1u, sampleIndex);
+    
+    uint2 sampleCoords = getOITCoords(pixelCoords);
+    if (
+}

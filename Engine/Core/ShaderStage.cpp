@@ -407,6 +407,18 @@ ShaderFile::ShaderFile(const string& path) : path(path)
 	}
 }
 
+void ShaderFile::addAdapter(ShaderAdapter* adapter)
+{
+	lock_guard lockScope(adapterMutex);
+	adapters.push_back(adapter);
+}
+
+void ShaderFile::addIncludedFile(ShaderFile* file)
+{
+	lock_guard lockScope(includedFileMutex);
+	includeFiles.insert(file);
+}
+
 bool ShaderFile::checkDirty() const
 {
 	if (!filesystem::exists(filesystem::u8path(path)))
@@ -418,8 +430,14 @@ bool ShaderFile::checkDirty() const
 
 void ShaderFile::reset()
 {
-	adapters.clear();
-	includeFiles.clear();
+	{
+		lock_guard lockScope(adapterMutex);
+		adapters.clear();
+	}
+	{
+		lock_guard lockScope(includedFileMutex);
+		includeFiles.clear();
+	}
 	if (filesystem::exists(filesystem::u8path(path))) {
 		lastWriteTime = Time(chrono::duration_cast<chrono::steady_clock::duration>
 			(filesystem::last_write_time(path).time_since_epoch()));
@@ -433,15 +451,24 @@ ShaderStage* ShaderManager::screenShaderStage = NULL;
 
 ShaderFile* ShaderManager::getShaderFile(const string& path)
 {
-	auto iter = shaderFiles.find(path);
-	if (iter == shaderFiles.end())
-		return NULL;
-	else
-		return iter->second;
+	lock_guard lockScope(shaderFileMutex);
+	return getShaderFileInternal(path);
+}
+
+ShaderFile* ShaderManager::getOrNewShaderFile(const string& path)
+{
+	lock_guard lockScope(shaderFileMutex);
+	ShaderFile* shaderFile = getShaderFileInternal(path);
+	if (shaderFile == NULL) {
+		shaderFile = new ShaderFile(path);
+		shaderFiles.insert(make_pair(path, shaderFile));
+	}
+	return shaderFile;
 }
 
 ShaderAdapter * ShaderManager::addShaderAdapter(const string& name, const string & path, ShaderStageType stageType, const string& tagName)
 {
+	lock_guard lockScope(shaderAdapterMutex);
 	Tag tag = { path, stageType };
 	auto iter = shaderAdapterTags.find(tag);
 	if (iter == shaderAdapterTags.end()) {
@@ -460,6 +487,7 @@ ShaderAdapter * ShaderManager::addShaderAdapter(const string& name, const string
 
 ShaderAdapter * ShaderManager::getShaderAdapterByPath(const string& path, ShaderStageType stageType)
 {
+	lock_guard lockScope(shaderAdapterMutex);
 	Tag tag = { path, stageType };
 	auto iter = shaderAdapterTags.find(tag);
 	if (iter != shaderAdapterTags.end())
@@ -469,6 +497,7 @@ ShaderAdapter * ShaderManager::getShaderAdapterByPath(const string& path, Shader
 
 ShaderAdapter * ShaderManager::getShaderAdapterByName(const string & name, ShaderStageType stageType)
 {
+	lock_guard lockScope(shaderAdapterMutex);
 	Tag tag = { name, stageType };
 	auto iter = shaderAdapterNames.find(tag);
 	if (iter != shaderAdapterNames.end())
@@ -488,8 +517,11 @@ bool ShaderManager::registProgram(ShaderProgram* program)
 {
 	if (program == NULL)
 		return false;
-	shaderPrograms.insert(program);
-	for each (const auto & b in program->shaderStages)
+	{
+		lock_guard lockScope(shaderProgramMutex);
+		shaderPrograms.insert(program);
+	}
+	for (const auto & b : program->shaderStages)
 	{
 		linkProgram(b.second, program);
 	}
@@ -500,7 +532,8 @@ bool ShaderManager::removeProgram(ShaderProgram* program)
 {
 	if (program == NULL)
 		return false;
-	for each (const auto & b in program->shaderStages)
+	lock_guard lockScope(shaderProgramMutex);
+	for (const auto & b : program->shaderStages)
 	{
 		programStageLinks.erase({ b.second, program });
 	}
@@ -512,6 +545,7 @@ void ShaderManager::linkProgram(ShaderStage* stage, ShaderProgram* program)
 {
 	if (program == NULL && stage != NULL)
 		return;
+	lock_guard lockScope(shaderProgramMutex);
 	programStageLinks.insert({ stage, program });
 }
 
@@ -554,8 +588,8 @@ void ShaderManager::refreshShader()
 
 	unordered_set<string> dirtyShaderPath;
 
-	for each (auto adapter in dirtyAdapters) {
-		for each (const auto & iter in adapter->shaderStageVersions) {
+	for (auto adapter : dirtyAdapters) {
+		for (const auto & iter : adapter->shaderStageVersions) {
 			auto range = programStageLinks.equal_range({ iter.second, 0 });
 			if (range.first == programStageLinks.end())
 				continue;
@@ -572,7 +606,7 @@ void ShaderManager::refreshShader()
 	Console::log("Dirty %d shader adapters", dirtyAdapters.size());
 	Console::log("Dirty %d shader files", dirtyShaderPath.size());
 
-	for each (const auto & path in dirtyShaderPath) {
+	for (const auto & path : dirtyShaderPath) {
 		Console::log("Reload shader file '%s'", path.c_str());
 		ShaderAdapterCompiler::compile(path);
 	}
@@ -645,4 +679,13 @@ ShaderManager & ShaderManager::getInstance()
 {
 	static ShaderManager manager;
 	return manager;
+}
+
+ShaderFile* ShaderManager::getShaderFileInternal(const string& path)
+{
+	auto iter = shaderFiles.find(path);
+	if (iter == shaderFiles.end())
+		return NULL;
+	else
+		return iter->second;
 }

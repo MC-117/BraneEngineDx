@@ -23,9 +23,14 @@ Enum<ShaderFeature> DirectShadowRenderCommand::getShaderFeature() const
 	return shaderFeature;
 }
 
+CullType DirectShadowRenderCommand::getCullType() const
+{
+	return getMaterialCullMode(materialRenderData, reverseCullMode);
+}
+
 RenderMode DirectShadowRenderCommand::getRenderMode(const Name& passName, const CameraRenderData* cameraRenderData) const
 {
-	return RenderMode(materialRenderData->renderOrder, BM_Default);
+	return RenderMode(materialRenderData->renderOrder);
 }
 
 bool DirectShadowRenderCommand::canCastShadow() const
@@ -42,7 +47,7 @@ DirectShadowRenderPack::DirectShadowRenderPack()
 {
 }
 
-bool DirectShadowRenderPack::setRenderCommand(const IRenderCommand& command)
+bool DirectShadowRenderPack::setRenderCommand(const IRenderCommand& command, const RenderTask& task)
 {
 	const DirectShadowRenderCommand* directShadowRenderCommand = dynamic_cast<const DirectShadowRenderCommand*>(&command);
 	if (directShadowRenderCommand == NULL || directShadowRenderCommand->meshBatchDrawCall == NULL)
@@ -69,15 +74,11 @@ void DirectShadowRenderPack::excute(IRenderContext& context, RenderTask& task, R
 	if (taskContext.materialVariant != task.materialVariant) {
 		taskContext.materialVariant = task.materialVariant;
 
-		bindMaterialCullMode(context, task.materialVariant, false);
 		bindMaterial(context, task.materialVariant);
 	}
 
 	for (auto& item : meshBatchDrawCalls)
 	{
-		if (item->reverseCullMode) {
-			bindMaterialCullMode(context, task.materialVariant, true);
-		}
 		for (int passIndex = 0; passIndex < materialData->desc.passNum; passIndex++) {
 			materialData->desc.currentPass = passIndex;
 			context.setDrawInfo(passIndex, materialData->desc.passNum, materialData->desc.materialID);
@@ -87,9 +88,6 @@ void DirectShadowRenderPack::excute(IRenderContext& context, RenderTask& task, R
 			for (; commandOffset < commandEnd; commandOffset++) {
 				context.drawMeshIndirect(taskContext.batchDrawData.batchDrawCommandArray->getCommandBuffer(), sizeof(DrawElementsIndirectCommand) * commandOffset);
 			}
-		}
-		if (item->reverseCullMode) {
-			bindMaterialCullMode(context, task.materialVariant, false);
 		}
 	}
 }

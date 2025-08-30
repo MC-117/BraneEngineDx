@@ -105,7 +105,15 @@ Texture * RenderTarget::getTexture(unsigned int index)
 	return desc.textureList[index].texture;
 }
 
-unsigned int RenderTarget::getTextureCount()
+TexInternalType RenderTarget::getTextureFormat(unsigned index) const
+{
+	if (index >= desc.textureList.size())
+		return TIT_Default;
+	const Texture* texture = desc.textureList[index].texture;
+	return texture ? texture->getFormat() : TIT_Default;
+}
+
+unsigned int RenderTarget::getTextureCount() const
 {
 	return desc.textureList.size();
 }
@@ -173,6 +181,16 @@ Texture2D * RenderTarget::getInternalDepthTexture()
 	else
 		internalDepthTexure->assign(vendorTex);
 	return internalDepthTexure;
+}
+
+TexInternalType RenderTarget::getDepthTextureFormat() const
+{
+	if (desc.depthOnly) {
+		return desc.depthTexure ? desc.depthTexure->getFormat() : TIT_Default;
+	}
+	else {
+		return internalDepthTexure ? internalDepthTexure->getFormat() : TIT_Default;
+	}
 }
 
 void RenderTarget::setTexture(Material & mat)

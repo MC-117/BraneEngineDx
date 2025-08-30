@@ -1,14 +1,17 @@
 #include "DebugRenderData.h"
 
 #include "CameraRenderData.h"
+#include "RenderCoreUtility.h"
 #include "../Asset.h"
 #include "../Material.h"
 
 bool DebugRenderData::isInit = false;
 Material* DebugRenderData::packFreeMaterial = NULL;
 ShaderProgram* DebugRenderData::packFreeProgram = NULL;
+ComputePipelineState* DebugRenderData::packFreePSO = NULL;
 Material* DebugRenderData::initDrawArgsMaterial = NULL;
 ShaderProgram* DebugRenderData::initDrawArgsProgram = NULL;
+ComputePipelineState* DebugRenderData::initDrawArgsPSO = NULL;
 Material* DebugRenderData::drawLineMaterial = NULL;
 ShaderProgram* DebugRenderData::drawLineProgram = NULL;
 ShaderProgram* DebugRenderData::drawUploadLineProgram = NULL;
@@ -21,8 +24,10 @@ DebugRenderData::DebugRenderData()
 void DebugRenderData::create()
 {
     loadDefaultResource();
-    packFreeProgram->init();
-    initDrawArgsProgram->init();
+    
+    packFreePSO = fetchPSOIfDescChangedThenInit(packFreePSO, packFreeProgram);
+    initDrawArgsPSO = fetchPSOIfDescChangedThenInit(initDrawArgsPSO, initDrawArgsProgram);
+
     drawLineProgram->init();
     drawUploadLineProgram->init();
 }
@@ -103,7 +108,7 @@ void DebugRenderData::initBuffer(IRenderContext& context, bool forceClearAll)
     }
 
     unsigned int packSize = packFreeMaterial->getLocalSize().x();
-    context.bindShaderProgram(packFreeProgram);
+    context.bindPipelineState(packFreePSO);
     context.bindBufferBase(flagBuffer->getVendorGPUBuffer(), outDebugFlagsName, { true });
     context.bindBufferBase(lastFlagBuffer->getVendorGPUBuffer(), lastDebugFlagsName, { true });
     context.dispatchCompute(ceilf(maxSize* 0.5f / (float)packSize), 1, 1);
@@ -118,7 +123,7 @@ void DebugRenderData::debugDraw(IRenderContext& context, CameraRenderData& camer
 {
     static const ShaderPropertyName commandBufferName = "commandBuffer";
 
-    context.bindShaderProgram(initDrawArgsProgram);
+    context.bindPipelineState(initDrawArgsPSO);
     context.bindBufferBase(flagBuffer->getVendorGPUBuffer(), outDebugFlagsName, { true });
     context.bindBufferBase(commandBuffer.getVendorGPUBuffer(), commandBufferName, { true });
     context.dispatchCompute(1, 1, 1);
@@ -126,14 +131,16 @@ void DebugRenderData::debugDraw(IRenderContext& context, CameraRenderData& camer
     context.unbindBufferBase(outDebugFlagsName);
     context.unbindBufferBase(commandBufferName);
 
-    context.bindShaderProgram(drawLineProgram);
+    GraphicsPipelineStateDesc desc = GraphicsPipelineStateDesc::forLines(drawLineProgram,
+        cameraRenderData.surface.renderTarget, DepthStencilMode::DepthTestWritable());
+    drawLinePSO = fetchPSOIfDescChangedThenInit(drawLinePSO, desc);
+
+    context.bindPipelineState(drawLinePSO);
     context.bindBufferBase(lineBuffer.getVendorGPUBuffer(), debugLinesName);
     context.bindBufferBase(flagBuffer->getVendorGPUBuffer(), debugFlagsName);
     cameraRenderData.bindCameraBuffOnly(context);
     context.setViewport(0, 0, cameraRenderData.data.viewSize.x(),  cameraRenderData.data.viewSize.y());
-    context.setLineDrawContext();
     cameraRenderData.surface.bindAndClear(context, Clear_None, Clear_All);
-    context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable());
 	context.setStencilRef(0);
     context.drawArrayIndirect(commandBuffer.getVendorGPUBuffer(), 0);
 
@@ -143,13 +150,15 @@ void DebugRenderData::debugDraw(IRenderContext& context, CameraRenderData& camer
 
 void DebugRenderData::gizmoDraw(IRenderContext& context, CameraRenderData& cameraRenderData)
 {
-    context.bindShaderProgram(drawUploadLineProgram);
+    GraphicsPipelineStateDesc desc = GraphicsPipelineStateDesc::forLines(drawUploadLineProgram,
+        cameraRenderData.surface.renderTarget, DepthStencilMode::DepthTestWritable());
+    drawUploadLinePSO = fetchPSOIfDescChangedThenInit(drawUploadLinePSO, desc);
+
+    context.bindPipelineState(drawUploadLinePSO);
     context.bindBufferBase(uploadLineBuffer.getVendorGPUBuffer(), debugLinesName);
     cameraRenderData.bindCameraBuffOnly(context);
     context.setViewport(0, 0, cameraRenderData.data.viewSize.x(),  cameraRenderData.data.viewSize.y());
-    context.setLineDrawContext();
     cameraRenderData.surface.bindAndClear(context, Clear_None, Clear_All);
-    context.setRenderOpaqueState(DepthStencilMode::DepthTestWritable());
     context.setStencilRef(0);
     DrawArraysIndirectCommand cmd;
     cmd.count = uploadLineBuffer.size();

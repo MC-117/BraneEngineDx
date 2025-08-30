@@ -538,7 +538,7 @@ Serializable* QuaternionfNormalizeNode::instantiate(const SerializationInfo& fro
     return new QuaternionfNormalizeNode();
 }
 
-SerializeInstance(Vector2fScaleNode);
+SerializeInstance(Vector2fScaleNode, DEF_ATTR(CodeFunctionName, Code::mul_op));
 
 Vector2fScaleNode::Vector2fScaleNode()
 {
@@ -565,7 +565,7 @@ Serializable* Vector2fScaleNode::instantiate(const SerializationInfo& from)
     return new Vector2fScaleNode();
 }
 
-SerializeInstance(Vector3fScaleNode);
+SerializeInstance(Vector3fScaleNode, DEF_ATTR(CodeFunctionName, Code::mul_op));
 
 Vector3fScaleNode::Vector3fScaleNode()
 {

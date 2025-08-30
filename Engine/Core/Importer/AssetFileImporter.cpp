@@ -19,15 +19,7 @@ bool AssetFileImporter::loadInternal(const ImportInfo& info, ImportResult& resul
 	wf.close();
 
 	Asset* asset = new Asset(&AssetFileAssetInfo::assetInfo, info.filename, info.path);
-	asset->asset[0] = assetFile;
-	if (AssetManager::registAsset(*asset)) {
-		result.assets.push_back(asset);
-		return true;
-	}
-	else {
-		delete assetFile;
-		delete asset;
-		result.status = ImportResult::RegisterFailed;
-		return false;
-	}
+	asset->setActualAsset(assetFile);
+	result.asset = asset;
+	return true;
 }

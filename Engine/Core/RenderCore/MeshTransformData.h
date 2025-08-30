@@ -7,6 +7,7 @@ enum MeshTransformFlags : unsigned int
 	MeshTransform_None = 0,
 	MeshTransform_Dynamic = 1 << 0,
 	MeshTransform_NegScale = 1 << 1,
+	MeshTransform_ReceiveDecal = 1 << 2,
 	MeshTransform_Bit_Mask = 0xFFFFFFFCU,
 };
 

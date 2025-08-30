@@ -45,7 +45,7 @@ class PostProcessPass : public RenderPass, public Serializable
 public:
 	Serialize(PostProcessPass,);
 
-	PostProcessPass(const string& name = "None", Material* material = NULL);
+	PostProcessPass(const Name& name = Name::none, Material* material = NULL);
 	virtual ~PostProcessPass();
 
 	void setResource(PostProcessResource& resource);
@@ -55,8 +55,6 @@ public:
 	void setEnable(bool enable);
 	bool getEnable();
 
-	string getName();
-
 	virtual bool loadDefaultResource();
 	virtual void render(RenderInfo& info);
 	virtual void resize(const Unit2Di& size);
@@ -64,16 +62,19 @@ public:
 	virtual void onGUI(EditorInfo& info);
 	virtual void reset();
 
+	virtual Name getPassName() const;
+
 	static Serializable* instantiate(const SerializationInfo& from);
 	virtual bool deserialize(const SerializationInfo& from);
 	virtual bool serialize(SerializationInfo& to);
 protected:
 	Unit2Di size = { 1280, 720 };
 	PostProcessResource* resource = NULL;
-	string name;
+	Name name;
 	Material* material = NULL;
 	MaterialRenderData* materialRenderData = NULL;
 	IMaterial* materialVaraint = NULL;
+	IPipelineState* pipelineState = NULL;
 	IRenderData* cameraRenderData = NULL;
 	bool enable = false;
 };

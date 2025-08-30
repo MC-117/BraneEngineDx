@@ -46,8 +46,9 @@ void MaterialRenderData::create()
 	renderOrder = material->getRenderOrder();
 	canCastShadow = material->canCastShadow;
 	for (auto attr : desc.textureField) {
-		if (attr.second.val)
+		if (attr.second.val.isValid()) {
 			attr.second.val->bind();
+		}
 	}
 	for (auto attr : desc.imageField) {
 		if (attr.second.val.isValid())

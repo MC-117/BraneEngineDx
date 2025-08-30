@@ -7,6 +7,7 @@ struct SkeletonRenderData : public IRenderData
 {
     static Material* uploadTransformMaterial;
     static ShaderProgram* uploadTransformProgram;
+    static ComputePipelineState* uploadTransformPSO;
 
     SkeletonTransformArray skeletonTransformArray;
 

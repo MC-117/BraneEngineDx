@@ -1,0 +1,84 @@
+#adapter name decal_fragment
+#fragment
+#condition depth
+#condition deferred
+#include "../lib/Light_Def.hmat"
+#include "../lib/CameraData_Def.hmat"
+
+#include "../lib/PBR_Lib.hmat"
+#include "../lib/GBuffer_Def.hmat"
+
+DEF_MAT_BEGIN
+uniform float4 baseColor;
+uniform float metallic;
+uniform float roughness;
+uniform float ao;
+uniform float normalScale;
+uniform float emission;
+uniform float clipValue;
+uniform float4x4 localToDecalClip;
+DEF_MAT_END
+
+#if defined(DEPTH_SHADER_FEATURE)
+DEF_TEX2D(colorMap, 0);
+#endif
+
+#if defined(DEFERRED_SHADER_FEATURE)
+DEF_TEX2D(colorMap, 0);
+DEF_TEX2D(metallicMap, 1);
+DEF_TEX2D(roughnessMap, 2);
+DEF_TEX2D(aoMap, 3);
+DEF_TEX2D(normalMap, 4);
+DEF_TEX2D(emissionMap, 5);
+DEF_TEX2D(sceneDepthMap, 6);
+#endif
+
+#include "../lib/Surface_Def.hmat"
+
+FS_DEF_OUT_BEGIN
+FS_DEF_OUT_SURFACE
+FS_DEF_OUT_END
+
+//[earlydepthstencil]
+FragmentOut SURFACE_MAIN
+{
+    FragmentOut fout;
+
+    #ifdef DEPTH_SHADER_FEATURE
+    outputDepth(fin, 1.0, clipValue);
+    #endif
+
+    #ifdef DEFERRED_SHADER_FEATURE
+    Surface surf = getSurface(fin);
+
+    float2 screenUV = fin.svPos.xy / camData.viewSize;
+    float3 worldPos = uvzPosToWorld(float3(screenUV, SAMPLE_TEX(sceneDepthMap, screenUV).r));
+    float4 localPos = mul(float4(worldPos, 1.0f), inverse(fin.TransMat));
+    surf.TexCoords = clipToUV(localPos.zy * 2);
+
+    float3 rawNormal = surf.Normal;
+    float decalFade = 1.0f;//saturate(dot(rawNormal, getUpward(fin.TransMat)));
+
+    float3x3 TBN = cotangent(surf.Normal, surf.WorldPos, surf.TexCoords);
+    float3 tN = normalize(SAMPLE_TEX(normalMap, surf.TexCoords).xyz * 2 - 1) * normalScale;
+    surf.Normal = normalize(mul(tN, TBN));
+    surf.albedo = baseColor * SAMPLE_TEX(colorMap, surf.TexCoords);
+    //surf.albedo.rgb = pow(surf.albedo.rgb, 2.2);
+    surf.roughness = roughness * SAMPLE_TEX(roughnessMap, surf.TexCoords).r;
+    surf.metallic = metallic * SAMPLE_TEX(metallicMap, surf.TexCoords).r;
+    surf.ao = ao * SAMPLE_TEX(aoMap, surf.TexCoords).r;
+    surf.radiosity = SAMPLE_TEX(emissionMap, surf.TexCoords);
+    surf.radiosity.rgb *= emission;
+    
+    outputSurface(surf, GBUFFER_OUT_PARAMS(fout));
+
+    float alpha = surf.albedo.a * decalFade;
+    
+    fout.gBufferA.a = alpha;
+    fout.gBufferB.a = alpha;
+    fout.gBufferC.a = alpha;
+    fout.gBufferE.a = alpha;
+    #endif
+
+    return fout;
+}

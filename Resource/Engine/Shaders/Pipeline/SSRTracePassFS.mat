@@ -8,8 +8,8 @@
 
 DEF_TEX2D(gBufferB, 0);
 DEF_TEX2D(gBufferC, 1);
-DEF_TEX2D(gBufferD, 2);
-DEF_TEX2D_UINT(gBufferE, 3);
+DEF_TEX2D(sceneDepthMap, 2)
+DEF_TEX2D_UINT(gBufferD, 3);
 DEF_TEX2D(hiZMap, 4);
 
 FS_DEF_OUT_BEGIN
@@ -23,15 +23,15 @@ FragmentOut DEFAULT_SCREEN_MAIN
     float2 UV = fin.UV;
     float4 hitData = 0.0f.rrrr;
     float4 hitColor = 0.0f.rrrr;
-    uint mask = LOAD_TEX(gBufferE, int3(UV * camData.viewSize, 0)).a;
+    uint mask = LOAD_TEX(gBufferD, int3(UV * camData.viewSize, 0)).a;
     if (mask & REFLECTION_MASK) {
-        float depth = SAMPLE_TEX_LOD(gBufferB, UV, 0);
+        float depth = SAMPLE_TEX_LOD(sceneDepthMap, UV, 0);
 
         if ((1.0f - depth) > 1 / camData.zFar) {
+            float4 B = SAMPLE_TEX_LOD(gBufferB, UV, 0);
             float4 C = SAMPLE_TEX_LOD(gBufferC, UV, 0);
-            float4 D = SAMPLE_TEX_LOD(gBufferD, UV, 0);
-            float3 N = normalize(worldDirToView(decodeNormal(C.xyz)));
-            float roughness = D.r;
+            float3 N = normalize(worldDirToView(decodeNormal(B.xyz)));
+            float roughness = C.r;
 
             float3 startUVZ = float3(UV, depth);
             float3 startView = uvzPosToView(startUVZ);
@@ -49,11 +49,11 @@ FragmentOut DEFAULT_SCREEN_MAIN
             float3 dirUVZ = normalize(endUVZ - startUVZ);
             if (rayTraceHiZ_UVZ(hiZMap, hiZMapSampler,
                 hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
-                startUVZ, dirUVZ, hitUVZ, fadeFactor))
+                hiZMaxMipLevel, startUVZ, dirUVZ, hitUVZ, fadeFactor))
 #else
             if (rayTraceHiZ_View(hiZMap, hiZMapSampler,
                 hiZStartLevel, hiZStopLevel, hiZMaxStep, hiZUVScale,
-                startView, L, hitUVZ))
+                hiZMaxMipLevel, startView, L, hitUVZ))
 #endif
             {
                 fadeFactor *= GetScreenFadeBord(uvToClip(hitUVZ.xy));

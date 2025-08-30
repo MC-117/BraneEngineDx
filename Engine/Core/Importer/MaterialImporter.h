@@ -12,6 +12,7 @@ public:
 	static Material* loadMaterialGraph(ShaderGraph& graph);
 	static Material* loadMaterialInstance(istream& is, const string& matName);
 	static Material* loadMaterialInstance(const string& file);
+	static bool peekMaterialBaseOfInstance(const string& file, ImportInfo& importInfo);
 	static bool saveMaterialInstanceToString(string& text, Material& material);
 	static bool saveMaterialInstance(const string& file, Material& material);
 protected:
@@ -45,6 +46,7 @@ class MaterialInstanceImporter : public IImporter
 public:
 	MaterialInstanceImporter() = default;
 protected:
+	virtual bool analyzeDependentImports(const ImportInfo& info, vector<ImportInfo>& dependentInfos);
 	virtual bool loadInternal(const ImportInfo& info, ImportResult& result);
 };
 

@@ -29,6 +29,7 @@ uniform float metallicScale;
 uniform float waterOpacity;
 DEF_MAT_END
 
+DEF_TEX2D_AUTO(sceneDepthMap);
 DEF_TEX2D_AUTO(waterDepthMap);
 DEF_TEX2D_AUTO(waterNormalMap);
 #if !defined(VSM_SHADER_FEATURE)
@@ -99,7 +100,7 @@ FragmentOut SURFACE_MAIN
     tN = lerp(float3(0, 0, 1), tN, tNAlpha);
     surf.Normal = normalize(mul(tN, TBN));
 
-    float opaqueViewDepth = depthFromNDCToView(SAMPLE_TEX(gBufferB, screenUV));
+    float opaqueViewDepth = depthFromNDCToView(SAMPLE_TEX(sceneDepthMap, screenUV));
     float viewDepth = depthFromNDCToView(surf.depth);
     float depthDiff = opaqueViewDepth - viewDepth;
     float depthFadeDistance1 = 200.0f;

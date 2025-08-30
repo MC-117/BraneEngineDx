@@ -14,15 +14,7 @@ bool PythonScriptImporter::loadInternal(const ImportInfo& info, ImportResult& re
 	}
 
 	Asset* asset = new Asset(&PythonScriptAssetInfo::assetInfo, info.filename, info.path);
-	asset->asset[0] = script;
-	if (AssetManager::registAsset(*asset)) {
-		result.assets.push_back(asset);
-		return true;
-	}
-	else {
-		delete script;
-		delete asset;
-		result.status = ImportResult::RegisterFailed;
-		return false;
-	}
+	asset->setActualAsset(script);
+	result.asset = asset;
+	return true;
 }

@@ -3,6 +3,7 @@
 #define _IMATERIAL_H_
 
 #include "Utility/Name.h"
+#include "Utility/AssetRef.h"
 #include "Texture.h"
 #include "Shader.h"
 
@@ -38,7 +39,7 @@ struct MaterialDesc
 	map<Name, MatAttribute<int>> countField;
 	map<Name, MatAttribute<Color>> colorField;
 	map<Name, MatAttribute<Matrix4f>> matrixField;
-	map<Name, MatAttribute<Texture*>> textureField;
+	map<Name, MatAttribute<AssetRef<Texture>>> textureField;
 	map<Name, MatAttribute<Image>> imageField;
 };
 

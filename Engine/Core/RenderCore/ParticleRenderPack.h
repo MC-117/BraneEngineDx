@@ -47,7 +47,7 @@ struct ParticleRenderPack : public IRenderPack
 
 	ParticleRenderPack(ParticleRenderData& particleRenderData);
 
-	virtual bool setRenderCommand(const IRenderCommand& command);
+	virtual bool setRenderCommand(const IRenderCommand& command, const RenderTask& task);
 	virtual void excute(IRenderContext& context, RenderTask& task, RenderTaskContext& taskContext);
 	virtual void reset();
 };

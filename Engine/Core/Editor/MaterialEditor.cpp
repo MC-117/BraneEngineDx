@@ -44,7 +44,7 @@ void MaterialEditor::onMaterialGUI(EditorInfo& info)
 						}
 						string filename = getFileName(goodPath);
 						Asset* asset = new Asset(&MaterialAssetInfo::assetInfo, filename, goodPath);
-						asset->asset[0] = mat;
+						asset->setActualAsset(mat);
 						MaterialAssetInfo::assetInfo.regist(*asset);
 					}
 				}, material);

@@ -14,7 +14,41 @@ void TextureViewer::setTexture(Texture & tex)
 
 void TextureViewer::onWindowGUI(GUIRenderInfo & info)
 {
+	float offColor = 0.2f, onColor = 0.7f;
 	if (texture != NULL) {
+		ImGui::PushStyleColor(ImGuiCol_Button, {channelMask & 0xFF000000 ? onColor : offColor, 0.0f, 0.0f, 1.0f});
+		if (ImGui::Button("R")) {
+			channelMask ^= 0xFF000000;
+		}
+		ImGui::PopStyleColor();
+
+		ImGui::SameLine();
+		
+		ImGui::PushStyleColor(ImGuiCol_Button, {0.0f, channelMask & 0xFF0000 ? onColor : offColor, 0.0f, 1.0f});
+		if (ImGui::Button("G")) {
+			channelMask ^= 0xFF0000;
+		}
+		ImGui::PopStyleColor();
+
+		ImGui::SameLine();
+		
+		ImGui::PushStyleColor(ImGuiCol_Button, {0.0f, 0.0f, channelMask & 0xFF00 ? onColor : offColor, 1.0f});
+		if (ImGui::Button("B")) {
+			channelMask ^= 0xFF00;
+		}
+		ImGui::PopStyleColor();
+
+		ImGui::SameLine();
+
+		float alphaCol = channelMask & 0xFF ? onColor : offColor;
+		ImGui::PushStyleColor(ImGuiCol_Button, {alphaCol, alphaCol, alphaCol, 1.0f});
+		if (ImGui::Button("A")) {
+			channelMask ^= 0xFF;
+		}
+		ImGui::PopStyleColor();
+
+		ImGui::SameLine();
+		
 		ImGui::Checkbox("Invert", &invert);
 		ImGui::SameLine();
 		if (ImGui::Button("CaptureToDisk")) {
@@ -81,6 +115,7 @@ void TextureViewer::onWindowGUI(GUIRenderInfo & info)
 		ImTextureID id;
 		id.ptr = (void*)texture->getTextureID();
 		id.mipLevel = mipLevel;
+		id.channelMask = channelMask;
 		ImVec2 uv_min, uv_max;
 		if (invert) {
 			uv_min = { 0, 1 };

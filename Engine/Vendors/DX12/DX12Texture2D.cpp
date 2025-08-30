@@ -1,6 +1,6 @@
 #include "DX12Texture2D.h"
 
-DX12Texture2DInfo::DX12Texture2DInfo(const Texture2DInfo& info)
+DX12Texture2DInfo::DX12Texture2DInfo(const TextureInfo& info)
 {
 	texture2DDesc.Format = toDX12InternalType(info.internalType);
 	texture2DDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
@@ -26,7 +26,7 @@ DX12Texture2DInfo::DX12Texture2DInfo(const Texture2DInfo& info)
 	memcpy(samplerDesc.BorderColor, &info.borderColor, sizeof(float) * 4);
 }
 
-DX12Texture2DInfo& DX12Texture2DInfo::operator=(const Texture2DInfo& info)
+DX12Texture2DInfo& DX12Texture2DInfo::operator=(const TextureInfo& info)
 {
 	texture2DDesc.Format = toDX12InternalType(info.internalType);
 	texture2DDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
@@ -199,8 +199,8 @@ DXGI_FORMAT DX12Texture2DInfo::toDX12ColorType(const TexInternalType& type)
 	}
 }
 
-DX12Texture2D::DX12Texture2D(DX12Context& context, Texture2DDesc& desc)
-	: dxContext(context), ITexture2D(desc)
+DX12Texture2D::DX12Texture2D(DX12Context& context, TextureDesc& desc)
+	: dxContext(context), desc(desc)
 {
 }
 

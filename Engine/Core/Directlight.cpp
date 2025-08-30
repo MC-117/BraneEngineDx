@@ -2,6 +2,7 @@
 #include "World.h"
 #include "GUI/Gizmo.h"
 #include "RenderCore/RenderCore.h"
+#include "Utility/MathUtility.h"
 
 #define DEPTHSIZE 8192
 
@@ -86,7 +87,7 @@ Vector4f DirectLight::getShadowBias() const
 
 RenderTarget* DirectLight::getShadowRenderTarget() const
 {
-	return (RenderTarget*)&depthRenderTarget;
+	return VirtualShadowMapConfig::isEnable() ? NULL : (RenderTarget*)&depthRenderTarget;
 }
 
 void DirectLight::afterTick()
@@ -107,9 +108,9 @@ void DirectLight::afterTick()
 		lightPos = getPosition(WORLD);
 	}
 
-	Matrix4f promat = Camera::orthotropic(shadowData.left, shadowData.right, shadowData.bottom,
+	Matrix4f promat = Math::orthotropic(shadowData.left, shadowData.right, shadowData.bottom,
 		shadowData.top, shadowData.cameraData.zNear, shadowData.cameraData.zFar);
-	Matrix4f vmat = Camera::lookAt(lightPos, lightPos + lightFW, lightUW);
+	Matrix4f vmat = Math::lookAt(lightPos, lightPos + lightFW, lightUW);
 	worldToLightViewMatrix = vmat;
 	viewToLightClipMatrix = promat;
 	worldToLightClipMatrix = promat * vmat;
@@ -120,7 +121,7 @@ void DirectLight::afterTick()
 	Matrix4f vmatInv = vmat.inverse();
 	shadowData.cameraData.viewMat = vmat;
 	shadowData.cameraData.viewMatInv = vmatInv;
-	Matrix4f vomat = Camera::lookAt(Vector3f::Zero(), lightFW, lightUW);
+	Matrix4f vomat = Math::lookAt(Vector3f::Zero(), lightFW, lightUW);
 	Matrix4f vomatInv = vomat.inverse();
 	viewOriginToLightViewMatrix = vomat;
 	shadowData.cameraData.viewOriginMat = vomat;

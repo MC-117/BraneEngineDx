@@ -2,18 +2,18 @@
 
 #include "Texture2D.h"
 
-typedef Texture2DInfo TextureCubeInfo;
-
 class ENGINE_API TextureCube : public Texture
 {
 public:
 	bool isStandard = false;
 
-	TextureCube(const TextureCubeInfo& info, bool isStandard = true);
+	TextureCube(const TextureInfo& info, bool isStandard = true);
 	TextureCube(const string& file, bool isStandard = true);
-	TextureCube(unsigned int width, unsigned int channel, bool isStandard = false, const TextureCubeInfo& info = TextureCubeInfo());
+	TextureCube(unsigned int width, unsigned int channel, bool isStandard = false, const TextureInfo& info = TextureInfo());
 
 	virtual ~TextureCube();
+
+	void release();
 
 	virtual bool isValid() const;
 	virtual bool isStatic() const;
@@ -23,13 +23,14 @@ public:
 	virtual int getChannel() const;
 	virtual int getArrayCount() const;
 	virtual int getMipLevels() const;
+	virtual TexInternalType getFormat() const;
 
 	virtual unsigned long long getTextureID();
 	virtual ITexture* getVendorTexture() const;
 
 	void setAutoGenMip(bool value);
 	void setViewAsArray(bool value);
-	void setTextureInfo(const TextureCubeInfo& info);
+	void setTextureInfo(const TextureInfo& info);
 
 	virtual bool load(const string& file);
 	virtual unsigned int bind();
@@ -41,7 +42,7 @@ public:
 
 protected:
 	bool readOnly = false;
-	Texture2DDesc desc;
+	TextureDesc desc;
 	ITexture2D* vendorTexture = NULL;
 	static bool isLoadDefaultTexture;
 

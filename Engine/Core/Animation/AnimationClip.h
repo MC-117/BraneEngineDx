@@ -46,8 +46,9 @@ protected:
 	TransformData transformData;
 };
 
-struct ENGINE_API AnimationClipData
+class ENGINE_API AnimationClipData : public IAssetBase
 {
+public:
 	string name;
 	float duration = 0;
 	map<string, unsigned int> transformAnimationNames;

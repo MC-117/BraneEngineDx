@@ -103,10 +103,21 @@ void DX11Material::processTextureData()
 	if (program == NULL)
 		return;
 	for (auto b = desc.textureField.begin(), e = desc.textureField.end(); b != e; b++) {
-		if (b->second.val == NULL || b->second.val->bind() == 0)
+		Texture* tex = NULL;
+		
+		const AssetRef<Texture>& texAsset = b->second.val;
+		tex = texAsset.get();
+		if (tex && tex->bind() == 0) {
+			tex = NULL;
+		}
+
+		if (tex == NULL) {
+			throw runtime_error("Texture not loaded");
 			continue;
-		DX11Texture2D* tex = (DX11Texture2D*)b->second.val->getVendorTexture();
-		uploadTexture(b->first, tex->getSRV(), tex->getSampler());
+		}
+		
+		DX11Texture* texVendor = (DX11Texture*)tex->getVendorTexture();
+		uploadTexture(b->first, texVendor->getSRV(), texVendor->getSampler());
 	}
 }
 

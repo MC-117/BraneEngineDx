@@ -51,9 +51,9 @@ class Module(BuildObject):
         self.preprocessorDefinitions : list[str] = []
 
         self.fileSearcher : FileSearcher = FileSearcher()
-        self.headFileSearchPattern : str = '^.*\.(h|hh|hpp|hxx|hm|inl|inc|ipp|xsd)$'
-        self.sourceFileSearchPattern : str = '^.*\.(cpp|c|cc|cxx|cppm|ixx|def|ams|asmx)$'
-        self.otherFileSearchPattern : str = '^.*\.(py)'
+        self.headFileSearchPattern : str = f'^.*\.(h|hh|hpp|hxx|hm|inl|inc|ipp|xsd)$'
+        self.sourceFileSearchPattern : str = f'^.*\.(cpp|c|cc|cxx|cppm|ixx|def|ams|asmx)$'
+        self.otherFileSearchPattern : str = f'^.*\.(py)'
     
     def instance(self):
         param = BuildParam()

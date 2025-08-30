@@ -4,14 +4,15 @@
 #include "../Engine.h"
 #include "../Asset.h"
 #include "../Profile/RenderProfile.h"
+#include "../RenderCore/RenderCoreUtility.h"
+#include "../Utility/RenderUtility.h"
 
 DeferredSurfaceBuffer::DeferredSurfaceBuffer()
 	: gBufferA(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGB10A2_UF })
-	, gBufferB(1280, 720, 1, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_R32_F })
-	, gBufferC(1280, 720, 3, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGB10A2_UF })
-	, gBufferD(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F })
-	, gBufferE(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_UI })
-	, gBufferF(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F })
+	, gBufferB(1280, 720, 3, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGB10A2_UF })
+	, gBufferC(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_F })
+	, gBufferD(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA8_UI })
+	, gBufferE(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Point, TF_Point, TIT_RGBA16_FF })
 	, renderTarget(1280, 720, 4, true)
 	, hizTexture(1280, 720, 1, false, { TW_Border, TW_Border, TF_Point, TF_Point, TIT_R32_F, { 255, 255, 255, 255 } })
 	, hitDataMap(1280, 720, 4, false, { TW_Clamp, TW_Clamp, TF_Linear, TF_Linear, TIT_RGBA16_FF })
@@ -35,7 +36,6 @@ DeferredSurfaceBuffer::DeferredSurfaceBuffer()
 	renderTarget.addTexture("gBufferC", gBufferC);
 	renderTarget.addTexture("gBufferD", gBufferD);
 	renderTarget.addTexture("gBufferE", gBufferE);
-	renderTarget.addTexture("gBufferF", gBufferF);
 	traceRenderTarget.addTexture("hitDataMap", hitDataMap);
 	traceRenderTarget.addTexture("hitColorMap", hitColorMap);
 	debugRenderTarget.addTexture("debugBuffer", debugBuffer);
@@ -62,7 +62,7 @@ void DeferredSurfaceBuffer::resize(unsigned int width, unsigned int height)
 
 	int mipLevel = max(widthMips, heightMips);
 	mipLevel = min(mipLevel, 5);
-	Texture2DInfo info = sceneColorMips.getTextureInfo();
+	TextureInfo info = sceneColorMips.getTextureInfo();
 	info.sampleCount = mipLevel;
 	sceneColorMips.setTextureInfo(info);
 	sceneColorMips.resize(width / 2, height / 2);
@@ -79,7 +79,7 @@ RenderTarget* DeferredSurfaceBuffer::getRenderTarget()
 
 Texture* DeferredSurfaceBuffer::getDepthTexture()
 {
-	return &gBufferB;
+	return renderTarget.getDepthTexture();
 }
 
 Texture* DeferredSurfaceBuffer::getGBufferA()
@@ -105,11 +105,6 @@ Texture* DeferredSurfaceBuffer::getGBufferD()
 Texture* DeferredSurfaceBuffer::getGBufferE()
 {
 	return &gBufferE;
-}
-
-Texture* DeferredSurfaceBuffer::getGBufferF()
-{
-	return &gBufferF;
 }
 
 Texture* DeferredSurfaceBuffer::getHiZTexture()
@@ -160,7 +155,7 @@ DeferredRenderGraph::DeferredRenderGraph()
 
 	defaultGeometrySurfaceData.clearFlags = Clear_Colors;
 	defaultGeometrySurfaceData.clearColors.resize(5, { 0, 0, 0, 0 });
-	defaultGeometrySurfaceData.clearColors[1] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	//defaultGeometrySurfaceData.clearColors[1] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	defaultLightingSurfaceData.clearFlags = Clear_All;
 
@@ -361,7 +356,7 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 
 		DeferredLightingTask lightingTask;
 		lightingTask.sceneData = cmd.sceneData;
-		lightingTask.program = lightingMaterial->program;
+		lightingTask.program = hasLightingPass ? lightingMaterial->program : NULL;
 		lightingTask.materialVariant = lightingMaterial;
 		lightingTask.surface = defaultLightingSurfaceData;
 
@@ -375,6 +370,12 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 				preTask.renderMode = preCommand.getRenderMode("PreDepth"_N, cameraRenderData);
 				preTask.cameraData = cameraRenderData;
 				preTask.surface.renderTarget = &surfaceBuffer->renderTarget;
+				
+				GraphicsPipelineStateDesc desc;
+				setupPSODescFromRenderTask(desc, preTask, preCommand.getCullType());
+				desc.renderTargetCount = 0;
+				preTask.graphicsPipelineState = fetchPSOIfDescChangedThenInit(NULL, desc);
+				
 				preDepthPass.commandList.addRenderTask(preCommand, preTask);
 			}
 
@@ -383,6 +384,11 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 				geoTask.cameraData = cameraRenderData;
 				geoTask.surface.renderTarget = &surfaceBuffer->renderTarget;
 				geoTask.surface.clearColors[0] = cameraRenderData->surface.clearColors[0];
+				
+				GraphicsPipelineStateDesc desc;
+				setupPSODescFromRenderTask(desc, geoTask, meshCommand->getCullType());
+				geoTask.graphicsPipelineState = fetchPSOIfDescChangedThenInit(NULL, desc);
+				
 				geometryPass.commandList.addRenderTask(cmd, geoTask);
 			}
 
@@ -390,6 +396,20 @@ bool DeferredRenderGraph::setRenderCommand(const IRenderCommand& cmd)
 				lightingTask.gBufferRT = &surfaceBuffer->renderTarget;
 				lightingTask.surface.renderTarget = cameraRenderData->surface.renderTarget;
 				lightingTask.cameraRenderData = cameraRenderData;
+
+				DepthStencilMode depthStencilMode;
+				setDepthStateFromRenderOrder(depthStencilMode, RS_Post);
+				depthStencilMode.depthTest = cameraRenderData->forceStencilTest;
+				depthStencilMode.stencilWriteMask = 0;
+				depthStencilMode.stencilComparion_front = RCT_Equal;
+				depthStencilMode.stencilComparion_back = RCT_Equal;
+				
+				GraphicsPipelineStateDesc desc = GraphicsPipelineStateDesc::forScreen(
+					lightingTask.program, cameraRenderData->surface.renderTarget, BM_Default);
+				desc.renderMode.setDepthStencilMode(depthStencilMode);
+				
+				lightingTask.pipelineState = fetchPSOIfDescChangedThenInit(NULL, desc);
+				
 				lightingPass.addTask(lightingTask);
 			}
 		}
@@ -412,8 +432,12 @@ void DeferredRenderGraph::prepare()
 {
 	if (preDepthMaterialRenderData)
 		renderDataCollectorRenderThread.add(*preDepthMaterialRenderData);
-	for (auto sceneData : sceneDatas)
+	for (auto sceneData : sceneDatas) {
 		sceneData->create();
+		if (triggerPersistentDebugDrawThisFrame) {
+			sceneData->debugRenderData.triggerPersistentDebugDraw();
+		}
+	}
 	screenHitPass.prepare();
 	preDepthPass.prepare();
 	buildProbeGridPass.prepare();
@@ -585,8 +609,10 @@ void DeferredRenderGraph::execute(IRenderContext& context, long long renderFrame
 
 	{
 		RENDER_SCOPE(context, PostProcess)
-		for (auto pass : passes)
+		for (auto pass : passes) {
+			RENDER_NAME_SCOPE(context, pass->getPassName().c_str());
 			pass->execute(context);
+		}
 		blitPass.execute(context);
 	}
 
@@ -603,6 +629,7 @@ void DeferredRenderGraph::execute(IRenderContext& context, long long renderFrame
 
 void DeferredRenderGraph::reset()
 {
+	triggerPersistentDebugDrawThisFrame = false;
 	renderDataCollectorMainThread.clear();
 	renderDataCollectorRenderThread.clear();
 	for (auto sceneData : sceneDatas)
@@ -633,9 +660,7 @@ void DeferredRenderGraph::reset()
 
 void DeferredRenderGraph::triggerPersistentDebugDraw()
 {
-	for (auto sceneData : sceneDatas) {
-		sceneData->debugRenderData.triggerPersistentDebugDraw();
-	}
+	triggerPersistentDebugDrawThisFrame = true;
 }
 
 void DeferredRenderGraph::getPasses(vector<pair<string, RenderPass*>>& passes)

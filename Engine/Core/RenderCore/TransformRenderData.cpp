@@ -1,5 +1,6 @@
 #include "TransformRenderData.h"
 
+#include "RenderCoreUtility.h"
 #include "../Engine.h"
 
 MeshTransformData MeshTransformDataUploadOp::operator()(const MeshTransformData& data)
@@ -17,6 +18,7 @@ Matrix4f MatrixUploadOp::operator()(const Matrix4f& mat)
 
 Material* MeshTransformRenderData::uploadTransformMaterial = NULL;
 ShaderProgram* MeshTransformRenderData::uploadTransformProgram = NULL;
+ComputePipelineState* MeshTransformRenderData::uploadTransformPSO = NULL;
 
 void MeshTransformRenderData::setFrequentUpdate(bool value)
 {
@@ -72,7 +74,7 @@ void MeshTransformRenderData::loadDefaultResource()
 	}
 	if (uploadTransformProgram == NULL)
 		throw runtime_error("UploadTransform shader program is invalid");
-	uploadTransformProgram->init();
+	uploadTransformPSO = fetchPSOIfDescChangedThenInit(uploadTransformPSO, uploadTransformProgram);
 }
 
 void MeshTransformRenderData::create()
@@ -113,7 +115,7 @@ void MeshTransformRenderData::upload()
 			meshTransformDataArray.uploadIndices[0] = uploadSize;
 			transformUploadBuffer.uploadData(uploadSize, meshTransformDataArray.uploadTransformDatas.data());
 			transformUploadIndexBuffer.uploadData(uploadSize + 1, meshTransformDataArray.uploadIndices.data());
-			context.bindShaderProgram(uploadTransformProgram);
+			context.bindPipelineState(uploadTransformPSO);
 			context.bindBufferBase(transformUploadIndexBuffer.getVendorGPUBuffer(), indexBufName);
 			context.bindBufferBase(transformUploadBuffer.getVendorGPUBuffer(), srcBufName);
 			context.bindTexture(NULL, Vertex_Shader_Stage, TRANS_BIND_INDEX, -1);

@@ -1,7 +1,7 @@
 #include "SSRBindings.h"
 
 SSRBinding::SSRInfo::SSRInfo()
-	: hiZStartLevel(5)
+	: hiZStartLevel(0)
 	, hiZStopLevel(-1)
 	, hiZMaxStep(48)
 	, ssrResolveSamples(9)

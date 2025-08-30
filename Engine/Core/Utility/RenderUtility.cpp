@@ -373,7 +373,7 @@ const Vector3f& getCubeFaceUpwardVector(CubeFace face)
 
 Matrix4f&& getCubeFaceProjectionMatrix(float zNear, float zFar)
 {
-	return std::move(Math::perspective(90, 1, zNear, zFar));
+	return std::move(Math::perspectiveReversedZ(90, 1, zNear, zFar));
 }
 
 Matrix4f&& getCubeFaceViewMatrix(CubeFace face, const Vector3f& position)
@@ -383,11 +383,11 @@ Matrix4f&& getCubeFaceViewMatrix(CubeFace face, const Vector3f& position)
 
 void setDepthStateFromRenderOrder(DepthStencilMode& mode, int renderOrder)
 {
-	if (renderOrder < 2500) {
+	if (renderOrder < RS_Transparent) {
 		mode.depthTest = true;
 		mode.depthWrite = true;
 	}
-	else if (renderOrder < 5000) {
+	else if (renderOrder < RS_Post) {
 		mode.depthTest = true;
 		mode.depthWrite = false;
 	}
@@ -395,4 +395,15 @@ void setDepthStateFromRenderOrder(DepthStencilMode& mode, int renderOrder)
 		mode.depthTest = false;
 		mode.depthWrite = false;
 	}
+}
+
+BlendMode getBlendModeFromRenderOrder(int renderOrder)
+{
+	if (renderOrder < RS_Opaque)
+		return BM_DepthOnly;
+	if (renderOrder < RS_Aplha)
+		return BM_Replace;
+	if (renderOrder < RS_Transparent)
+		return BM_AlphaTest;
+	return BM_Default;
 }

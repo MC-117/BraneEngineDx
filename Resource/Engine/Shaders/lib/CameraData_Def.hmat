@@ -20,7 +20,7 @@ struct CameraData
     float4 clipPlane;
     float2 viewSize;
 	float distance;
-    float user;
+	int flags;
 };
 
 cbuffer CameraDataBuf : register(CAM_BIND_INDEX)
@@ -38,6 +38,11 @@ cbuffer CameraDataBuf : register(CAM_BIND_INDEX)
     int3 probePad;
 };
 
+float2 svPosToUV(float4 svPos)
+{
+    return svPos.xy / camData.viewSize;
+}
+
 float2 clipToUV(float2 clip)
 {
     return clip * float2(0.5f, -0.5f) + float2(0.5f, 0.5f);
@@ -50,12 +55,12 @@ float2 uvToClip(float2 UV)
 
 float depthFromNDCToView(float depth)
 {
-    return camData.zNear * camData.zFar / (camData.zFar - depth * (camData.zFar - camData.zNear));
+    return camData.zNear * camData.zFar / (camData.zNear + depth * (camData.zFar - camData.zNear));
 }
 
 float depthFromViewToNDC(float depth)
 {
-    return (camData.zFar - camData.zNear * camData.zFar / depth) / (camData.zFar - camData.zNear);
+    return (camData.zNear * camData.zFar / depth - camData.zNear) / (camData.zFar - camData.zNear);
 }
 
 float3 clipToUVZ(float3 clip)
@@ -87,6 +92,22 @@ float3 viewPosToViewOrigin(float3 viewPos)
 float3 viewOriginPosToView(float3 viewOriginPos)
 {
     return mul(float4(viewOriginPos, 1.0f), camData.vomat).xyz;
+}
+
+float3 viewOriginPosToClip(float3 viewOriginPos)
+{
+    float4 viewPos = mul(float4(viewOriginPos, 1.0f), camData.vomat);
+    float4 clipPos = mul(viewPos, camData.promat);
+    clipPos /= clipPos.w;
+    return clipPos.xyz;
+}
+
+float3 viewOriginDirToClip(float3 viewOriginDir)
+{
+    float4 viewPos = mul(float4(viewOriginDir, 0.0f), camData.vomat);
+    float4 clipPos = mul(viewPos, camData.promat);
+    clipPos /= clipPos.w;
+    return clipPos.xyz;
 }
 
 float3 uvzPosToWorld(float3 UVZ)
@@ -131,6 +152,22 @@ float3 viewPosToClip(float3 viewPos)
 float3 viewPosToUVZ(float3 viewPos)
 {
     float4 clipPos = mul(float4(viewPos, 1), camData.promat);
+    clipPos /= clipPos.w;
+    return clipToUVZ(clipPos.xyz);
+}
+
+float3 viewOriginPosToUVZ(float3 viewOriginPos)
+{
+    float4 viewPos = mul(float4(viewOriginPos, 1.0f), camData.vomat);
+    float4 clipPos = mul(viewPos, camData.promat);
+    clipPos /= clipPos.w;
+    return clipToUVZ(clipPos.xyz);
+}
+
+float3 viewOriginDirToUVZ(float3 viewOriginDir)
+{
+    float4 viewPos = mul(float4(viewOriginDir, 0.0f), camData.vomat);
+    float4 clipPos = mul(viewPos, camData.promat);
     clipPos /= clipPos.w;
     return clipToUVZ(clipPos.xyz);
 }

@@ -15,12 +15,16 @@ public:
 	const AssetInfo& assetInfo;
 	string name;
 	string path;
-	vector<void*> asset;
+	IAssetBase* asset;
 
 	Asset(const AssetInfo* assetInfo, const string& name, const string& path);
 
+	void setActualAsset(IAssetBase* assetBase);
+	IAssetBase* getActualAsset();
+
 	void* reload();
 	void* load();
+	void release();
 	Object* createObject();
 };
 
@@ -130,8 +134,11 @@ static class ENGINE_API AssetManager {
 public:
 	static StaticVar<map<string, AssetInfo*>> assetInfoList;
 
+	static void tick();
+
 	static void addAssetInfo(AssetInfo& info);
 	static bool registAsset(Asset& assets);
+	static void registAssetAsync(Asset& assets, const function<void(Asset*, bool)>& callback);
 	static Asset* registAsset(const string& type, const string& name, const string& path);
 	static Asset* getAsset(const string& type, const string& name);
 	static AssetInfo* getAssetInfo(const string& type);

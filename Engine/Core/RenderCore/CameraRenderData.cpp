@@ -1,5 +1,6 @@
 #include "CameraRenderData.h"
 #include "../CameraRender.h"
+#include "Core/Utility/MathUtility.h"
 
 size_t SurfaceData::Hasher::operator()(const SurfaceData& s) const
 {
@@ -21,6 +22,24 @@ void SurfaceData::bindAndClear(IRenderContext& context, Enum<ClearFlags> plusCle
 		context.clearFrameDepth(clearDepth);
 	if (flag.has(Clear_Stencil))
 		context.clearFrameStencil(clearStencil);
+}
+
+TexInternalType SurfaceData::getDepthStencilFormat() const
+{
+	if (renderTarget == NULL) {
+		return TIT_Default;
+	}
+
+	return renderTarget->getDepthTextureFormat();
+}
+
+TexInternalType SurfaceData::getRenderTargetFormat(uint8_t index) const
+{
+	if (renderTarget == NULL) {
+		return TIT_Default;
+	}
+
+	return renderTarget->getTextureFormat(index);
 }
 
 void CameraRenderData::updateSurfaceBuffer(RenderGraph* renderGraph)

@@ -48,7 +48,7 @@ public:
 	virtual void show(bool active = true);
 	virtual void hide();
 	virtual bool doModel(bool showDefault = true);
-	virtual bool doModelAsync(void(*workFunc)(WUIControl& control, void* ptr), void* ptr = NULL);
+	virtual bool doModelAsync(void(*updateFunc)(WUIControl& control, void* ptr) = NULL, void* ptr = NULL);
 	virtual void close();
 	virtual LRESULT WndProc(UINT msg, WPARAM wParam, LPARAM lParam);
 protected:

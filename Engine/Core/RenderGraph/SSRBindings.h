@@ -10,9 +10,10 @@ struct SSRBinding : public IRenderData
 		int hiZStartLevel;
 		int hiZStopLevel;
 		int hiZMaxStep;
+		int hiZMaxMipLevel;
 		int ssrResolveSamples;
 		float ssrResolveRadius;
-		float ssrPad[3];
+		float ssrPad[2];
 
 		SSRInfo();
 	} ssrInfo;

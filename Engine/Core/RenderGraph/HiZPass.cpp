@@ -1,6 +1,7 @@
 #include "HiZPass.h"
 #include "../RenderCore/SceneRenderData.h"
 #include "../Asset.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
 bool HiZPass::loadDefaultResource()
 {
@@ -14,14 +15,14 @@ void HiZPass::prepare()
 {
 	if (material) {
 		program = material->getShader()->getProgram(Shader_Default);
-		program->init();
+		pipelineState = fetchPSOIfDescChangedThenInit(pipelineState, program);
 	}
 	outputTextures.clear();
 }
 
 void HiZPass::execute(IRenderContext& context)
 {
-	if (renderGraph == NULL || program == NULL)
+	if (renderGraph == NULL || program == NULL || pipelineState == NULL)
 		return;
 	for (auto sceneData : renderGraph->sceneDatas) {
 		for (auto cameraData : sceneData->cameraRenderDatas) {
@@ -35,7 +36,7 @@ void HiZPass::execute(IRenderContext& context)
 			int miplevel = hizTexture->getMipLevels();
 			int width = hizTexture->getWidth();
 			int height = hizTexture->getHeight();
-			context.bindShaderProgram(program);
+			context.bindPipelineState(pipelineState);
 
 			Image image;
 			image.level = 0;

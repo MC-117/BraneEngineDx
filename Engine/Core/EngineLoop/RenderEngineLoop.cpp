@@ -19,6 +19,8 @@ void RenderEngineLoop::init()
 
 void RenderEngineLoop::loop(float deltaTime)
 {
+    IImporter::tick();
+    
     onTick(deltaTime);
     
     Camera* currentCamera = GUISurface::getMainGUISurface().getCamera();

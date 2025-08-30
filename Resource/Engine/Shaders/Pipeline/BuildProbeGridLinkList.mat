@@ -37,10 +37,10 @@ void calCellViewAABB(uint3 GridCoordinate, out float3 ViewTileMin, out float3 Vi
 	// Compute extent of tiles in clip-space. Note that the last tile may extend a bit outside of view if view size is not evenly divisible tile size.
 	const float2 InvCulledGridSizeF = (1u << probeGridPixelSizeShift) / camData.viewSize;
 
-	float2 UnitPlaneTileMin = uvToClip(GridCoordinate.xy * InvCulledGridSizeF);
+	float2 UnitPlaneTileMin = uvToClip((GridCoordinate.xy + 0) * InvCulledGridSizeF);
 	float2 UnitPlaneTileMax = uvToClip((GridCoordinate.xy + 1) * InvCulledGridSizeF);
 
-	float MinTileZ = calGridNearViewZFromZSlice(GridCoordinate.z);
+	float MinTileZ = calGridNearViewZFromZSlice(GridCoordinate.z + 0);
 	float MaxTileZ = calGridNearViewZFromZSlice(GridCoordinate.z + 1);
 
 	float MinTileDeviceZ = depthFromViewToNDC(MinTileZ);

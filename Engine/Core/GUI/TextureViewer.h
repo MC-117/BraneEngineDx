@@ -18,6 +18,7 @@ public:
 	static void showTexture(GUI& gui, Texture& tex);
 protected:
 	float mipLevel = 0;
+	uint32_t channelMask = 0xFFFFFFFFu;
 	bool invert = false;
 };
 

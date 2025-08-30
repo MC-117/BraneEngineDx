@@ -160,12 +160,10 @@ void WorldApplication::loadAssets()
 {
     LoadingUI loadingUI("Engine/Banner/Banner.bmp", engine.windowContext.hinstance);
     loadingUI.setText("Start BraneEngine");
-    loadingUI.doModelAsync([](WUIControl& control, void* ptr)
-    {
-        LoadingUI& ui = dynamic_cast<LoadingUI&>(control);
-        UIImportContext importContext(ui);
-        Engine::get().loadAssets(importContext);
-    });
+    loadingUI.doModelAsync();
+    UIImportContext importContext(loadingUI);
+    Engine::get().loadAssets(importContext);
+    loadingUI.close();
 }
 
 void WorldApplication::initializeEngineLoop()

@@ -63,7 +63,7 @@ void AssetLoadWindow::onWindowGUI(GUIRenderInfo & info)
 		str += b->first + '\0';
 	}
 	if (ImGui::Combo("Base Material", &selectedId, str.c_str())) {
-		selectedMat = (Material*)(MaterialAssetInfo::assetInfo.assets[items[selectedId]]->asset[0]);
+		selectedMat = (Material*)(MaterialAssetInfo::assetInfo.assets[items[selectedId]]->getActualAsset());
 	}
 	ImGui::Checkbox("TwoSides", &twoSides);
 	ImGui::Checkbox("CastShadow", &castShadow);

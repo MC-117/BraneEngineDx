@@ -108,7 +108,7 @@ void TimelinePlayer::setTime(float time)
         return;
     float duration = timeline->getDuration();
     time = min(time, duration);
-    time = max(time, 0);
+    time = max(time, 0.0f);
     playInfo.currentTime = time;
     playInfo.normalizedTime = playInfo.currentTime / duration;
     playInfo.deltaTime = 0;

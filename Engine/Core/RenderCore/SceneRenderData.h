@@ -10,10 +10,22 @@
 
 class Render;
 
+struct SceneWarmupData
+{
+	int warmupFrameCount = 3;
+	int warmupFrameRemained = 3;
+
+	bool needWarmup() const;
+
+	void update();
+};
+
 class ENGINE_API SceneRenderData
 {
 public:
 	vector<CameraRenderData*> cameraRenderDatas;
+
+	SceneWarmupData WarmupData;
 	
 	MeshTransformRenderData meshTransformRenderData;
 	MeshTransformRenderData staticMeshTransformRenderData;

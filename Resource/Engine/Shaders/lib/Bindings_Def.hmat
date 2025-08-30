@@ -78,6 +78,12 @@ SamplerState tex##Sampler;
 #define DEF_TEX2DARRAY(tex, id) \
 Texture2DArray tex : TEX_BINDING(id);\
 SamplerState tex##Sampler : SAMPLE_BINDING(id);
+#define DEF_TEX3D(tex, id) \
+Texture3D tex : TEX_BINDING(id);\
+SamplerState tex##Sampler : SAMPLE_BINDING(id);
+#define DEF_TEX3D_AUTO(tex) \
+Texture3D tex;\
+SamplerState tex##Sampler;
 #define DEF_TEXCUBE(tex, id) \
 TextureCube tex : TEX_BINDING(id);\
 #define DEF_TEXCUBE_AUTO(tex) \
@@ -101,7 +107,11 @@ Texture2DArray<uint4> tex;
 #define SAMPLE_TEX_OFFSET(tex, uv, off) (tex.Sample(tex##Sampler, (uv), (off)))
 #define SAMPLE_TEX_LOD(tex, uv, lod) (tex.SampleLevel(tex##Sampler, (uv), (lod)))
 #define SAMPLE_TEX_LOD_OFFSET(tex, uv, lod, off) (tex.SampleLevel(tex##Sampler, (uv), (lod), (off)))
-#define GATHER_TEX(tex, uv, off) (tex.Gather(tex##Sampler, (uv), (off)))
+#define GATHER_TEX(tex, uv, off) (tex.GatherRed(tex##Sampler, (uv), (off)))
+#define GATHER_R_TEX(tex, uv, off) (tex.GatherRed(tex##Sampler, (uv), (off)))
+#define GATHER_G_TEX(tex, uv, off) (tex.GatherGreen(tex##Sampler, (uv), (off)))
+#define GATHER_B_TEX(tex, uv, off) (tex.GatherBlue(tex##Sampler, (uv), (off)))
+#define GATHER_A_TEX(tex, uv, off) (tex.GatherAlpha(tex##Sampler, (uv), (off)))
 #define LOAD_TEX(tex, pos) (tex.Load((pos)))
 
 #define DEF_MAT_BEGIN cbuffer MatInsBuf : register(MAT_INS_BIND_INDEX) {

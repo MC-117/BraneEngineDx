@@ -7,7 +7,7 @@ float getFitIconSize(GizmoInfo& info)
         return 50;
     float size = max(info.camera->size.x, info.camera->size.y);
     size *= 0.025f;
-    size = max(size, 10);
+    //size = max(size, 10.0f);
     return size;
 }
 

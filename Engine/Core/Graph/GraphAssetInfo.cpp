@@ -70,15 +70,7 @@ bool GraphImporter::loadInternal(const ImportInfo& info, ImportResult& result)
 	}
 
 	Asset* asset = new Asset(&GraphAssetInfo::assetInfo, info.filename, info.path);
-	asset->asset[0] = graph;
-	if (AssetManager::registAsset(*asset)) {
-		result.assets.push_back(asset);
-		return true;
-	}
-	else {
-		delete graph;
-		delete asset;
-		result.status = ImportResult::RegisterFailed;
-		return false;
-	}
+	asset->setActualAsset(graph);
+	result.asset = asset;
+	return true;
 }

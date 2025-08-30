@@ -10,6 +10,18 @@
 #include "../ProbeSystem/EnvLightCaptureProbeRender.h"
 #include "../Utility/RenderUtility.h"
 
+bool SceneWarmupData::needWarmup() const
+{
+	return warmupFrameRemained > 0;
+}
+
+void SceneWarmupData::update()
+{
+	if (warmupFrameRemained > 0) {
+		--warmupFrameRemained;
+	}
+}
+
 SceneRenderData::SceneRenderData()
 	: lightDataPack(probePoolPack)
 	, reflectionProbeDataPack(probePoolPack)
@@ -215,6 +227,8 @@ void SceneRenderData::release()
 
 void SceneRenderData::upload()
 {
+	WarmupData.update();
+	
 	meshTransformRenderData.upload();
 	staticMeshTransformRenderData.upload();
 	meshBatchDrawCommandArray.upload();

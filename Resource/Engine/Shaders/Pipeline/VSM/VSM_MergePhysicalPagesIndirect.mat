@@ -8,7 +8,7 @@ Buffer<uint> physPagesToMerge;
 void MergePhysicalPixel(uint2 pixelCoord)
 {
 	// 1:1 pixels so this is safe RMW
-	outPhysPagePool[uint3(pixelCoord, 0)] = min(
+	outPhysPagePool[uint3(pixelCoord, 0)] = max(
 		outPhysPagePool[uint3(pixelCoord, 0)],
 		outPhysPagePool[uint3(pixelCoord, vsmInfo.staticPageIndex)]);
 }

@@ -2,8 +2,9 @@
 #include "../Asset.h"
 #include "../Console.h"
 #include "../RenderCore/RenderThread.h"
+#include "../RenderCore/RenderCoreUtility.h"
 
-CMAA2Pass::CMAA2Pass(const string& name, Material* material) : PostProcessPass(name, material)
+CMAA2Pass::CMAA2Pass(const Name& name, Material* material) : PostProcessPass(name, material)
 {
 	workingEdgesTexture.setAutoGenMip(false);
 	workingDeferredBlendItemListHeadsTexture.setAutoGenMip(false);
@@ -25,27 +26,26 @@ void CMAA2Pass::prepare()
 		return;
 	}
 
-	if (edgesColor2x2Program->isComputable() &&
-		processCandidatesProgram->isComputable() &&
-		computeDispatchArgsProgram->isComputable() &&
-		deferredColorApply2x2Program->isComputable() &&
-		debugDrawEdgesProgram->isComputable()) {
-		edgesColor2x2Program->init();
-		processCandidatesProgram->init();
-		computeDispatchArgsProgram->init();
-		deferredColorApply2x2Program->init();
-		debugDrawEdgesProgram->init();
-	}
-	else {
+	if (!edgesColor2x2Program->isComputable() ||
+		!processCandidatesProgram->isComputable() ||
+		!computeDispatchArgsProgram->isComputable() ||
+		!deferredColorApply2x2Program->isComputable() ||
+		!debugDrawEdgesProgram->isComputable()) {
 		throw runtime_error("Shader type mismatch");
 		return;
 	}
+	
+	edgesColor2x2PSO = fetchPSOIfDescChangedThenInit(edgesColor2x2PSO, edgesColor2x2Program);
+	processCandidatesPSO = fetchPSOIfDescChangedThenInit(processCandidatesPSO, processCandidatesProgram);
+	computeDispatchArgsPSO = fetchPSOIfDescChangedThenInit(computeDispatchArgsPSO, computeDispatchArgsProgram);
+	deferredColorApply2x2PSO = fetchPSOIfDescChangedThenInit(deferredColorApply2x2PSO, deferredColorApply2x2Program);
+	debugDrawEdgesPSO = fetchPSOIfDescChangedThenInit(debugDrawEdgesPSO, debugDrawEdgesProgram);
 }
 
 void CMAA2Pass::execute(IRenderContext& context)
 {
 	// first pass edge detect
-	context.bindShaderProgram(edgesColor2x2Program);
+	context.bindPipelineState(edgesColor2x2PSO);
 
 	Image image;
 	image.texture = &workingEdgesTexture;
@@ -68,19 +68,19 @@ void CMAA2Pass::execute(IRenderContext& context)
 	context.dispatchCompute(threadGroupCountX, threadGroupCountY, 1);
 
 	// Set up for the first DispatchIndirect
-	context.bindShaderProgram(computeDispatchArgsProgram);
+	context.bindPipelineState(computeDispatchArgsPSO);
 	context.dispatchCompute(2, 1, 1);
 
 	// Process shape candidates DispatchIndirect
-	context.bindShaderProgram(processCandidatesProgram);
+	context.bindPipelineState(processCandidatesPSO);
 	context.dispatchComputeIndirect(workingExecuteIndirectBuffer.getVendorGPUBuffer(), 0);
 
 	// Set up for the second DispatchIndirect
-	context.bindShaderProgram(computeDispatchArgsProgram);
+	context.bindPipelineState(computeDispatchArgsPSO);
 	context.dispatchCompute(1, 2, 1);
 
 	// Resolve & apply blended colors
-	context.bindShaderProgram(deferredColorApply2x2Program);
+	context.bindPipelineState(deferredColorApply2x2PSO);
 
 	context.bindTexture(NULL, Compute_Shader_Stage, 0, 0);
 	image.texture = resource->screenTexture;
@@ -95,7 +95,7 @@ void CMAA2Pass::execute(IRenderContext& context)
 		int tgcX = (size.x + 16 - 1) / 16;
 		int tgcY = (size.y + 16 - 1) / 16;
 
-		context.bindShaderProgram(debugDrawEdgesProgram);
+		context.bindPipelineState(debugDrawEdgesPSO);
 		context.dispatchCompute(tgcX, tgcY, 1);
 	}
 

@@ -22,20 +22,9 @@ struct DX11Context
 	ComPtr<ID3D11RasterizerState> rasterizerCullOff = NULL;
 	ComPtr<ID3D11RasterizerState> rasterizerCullBack = NULL;
 	ComPtr<ID3D11RasterizerState> rasterizerCullFront = NULL;
-	// Render Order:
-	ComPtr<ID3D11BlendState> blendOffWriteOff = NULL;                  //    0 - 500
-	ComPtr<ID3D11BlendState> blendOffWriteOn = NULL;                   //  500 - 2449
-	ComPtr<ID3D11BlendState> blendOffWriteOnAlphaTest = NULL;          // 2450 - 2499
-	ComPtr<ID3D11BlendState> blendOnWriteOn = NULL;                    // 2500 -
-	ComPtr<ID3D11BlendState> blendAddWriteOn = NULL;                   // Post
-	ComPtr<ID3D11BlendState> blendPremultiplyAlphaWriteOn = NULL;      // Post
-	ComPtr<ID3D11BlendState> blendMultiplyWriteOn = NULL;              // Post
-	ComPtr<ID3D11BlendState> blendMaskWriteOn = NULL;                  // Post
-	ComPtr<ID3D11BlendState> blendGBuffer = NULL;                      // GBuffer
 
-	map<DepthStencilMode, ComPtr<ID3D11DepthStencilState>> depthStencilStateMap;
-	
-	ComPtr<ID3D11DepthStencilState> depthWriteOffTestOffLEqual = NULL; // 5000 - 
+	unordered_map<RenderTargetModes, ComPtr<ID3D11BlendState>> blendStateMap;
+	unordered_map<DepthStencilMode, ComPtr<ID3D11DepthStencilState>> depthStencilStateMap;
 
 	ComPtr<ID3D11InputLayout> screenInputLayout = NULL;
 	ComPtr<ID3D11InputLayout> meshInputLayout = NULL;
@@ -50,6 +39,7 @@ struct DX11Context
 	void cleanupDevice();
 	void fetchGPUFrrequency();
 	void createRenderState();
+	ComPtr<ID3D11BlendState> getOrCreateBlendState(const RenderTargetModes& modes);
 	ComPtr<ID3D11DepthStencilState> getOrCreateDepthStencilState(DepthStencilMode mode);
 	void createInputLayout();
 	void cleanupRenderState();
