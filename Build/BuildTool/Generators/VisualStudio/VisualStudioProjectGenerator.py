@@ -484,8 +484,8 @@ f'''
             w.se('</Project>')
         
         userPath = projPath + '.user'
-        with open(filterPath, 'w') as filterFile:
-            w = VSProjFileWriter(filterFile)
+        with open(userPath, 'w') as userFile:
+            w = VSProjFileWriter(userFile)
             w.wl('<?xml version="1.0" encoding="utf-8"?>')
             w.ss('<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">')
 
