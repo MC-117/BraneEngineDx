@@ -202,6 +202,11 @@ bool IImporter::load(const ImportInfo& info, ImportResult& result)
 	}
 	
 	if (result.asset != NULL) {
+		if (const SerializationInfo* redirectInfo = info.config.get("redirection")) {
+			for (const string& path : redirectInfo->stringList) {
+				result.asset->addRedirectPath(path);
+			}
+		}
 		if (!AssetManager::registAsset(*result.asset)) {
 			result.releaseAsset();
 			result.status = ImportResult::RegisterFailed;
@@ -266,6 +271,11 @@ TaskEventHandle IImporter::loadAsync(const ImportInfo& info, ImportContext& cont
 				result.status = ImportResult::LoadFailed;
 			}
 			if (succeeded && result.asset != NULL) {
+				if (const SerializationInfo* redirectInfo = info.config.get("redirection")) {
+					for (const string& path : redirectInfo->stringList) {
+						result.asset->addRedirectPath(path);
+					}
+				}
 				AssetManager::registAssetAsync(*result.asset, [result, info = info](Asset* asset, bool isRegistered) {
 					ImportResult finalResult = result;
 					if (!isRegistered) {

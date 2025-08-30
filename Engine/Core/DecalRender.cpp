@@ -21,7 +21,7 @@ void DecalRender::setDecalMask(Enum<DecalMask> mask)
 
 void DecalRender::setDecalBoxMesh()
 {
-    if (Mesh* mesh = getAssetByPath<Mesh>("Engine/Shapes/UnitBox.obj")) {
+    if (Mesh* mesh = getAssetByPath<Mesh>("Engine/Shapes/UnitBox.fbx")) {
         setMesh(mesh);
     }
 }

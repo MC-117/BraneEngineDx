@@ -816,12 +816,8 @@ bool SerializationInfoParser::array(SerializationInfo & info)
 		}
 		if (token == COMMA) {
 			match(COMMA);
-			if (token == RSBR) {
-				match(RSBR);
-				break;
-			}
 		}
-		else {
+		else if (token != RSBR) {
 			findError("Unexpected token: " + tokenString);
 			return false;
 		}
@@ -845,12 +841,8 @@ bool SerializationInfoParser::object_array(SerializationInfo & info)
 			return false;
 		if (token == COMMA) {
 			match(COMMA);
-			if (token == RSBR) {
-				match(RSBR);
-				break;
-			}
 		}
-		else {
+		else if (token != RSBR) {
 			findError("Unexpected token: " + tokenString);
 			return false;
 		}

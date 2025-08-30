@@ -15,9 +15,12 @@ public:
 	const AssetInfo& assetInfo;
 	string name;
 	string path;
+	set<string> redirectPaths;
 	IAssetBase* asset;
 
 	Asset(const AssetInfo* assetInfo, const string& name, const string& path);
+
+	void addRedirectPath(const string& path);
 
 	void setActualAsset(IAssetBase* assetBase);
 	IAssetBase* getActualAsset();

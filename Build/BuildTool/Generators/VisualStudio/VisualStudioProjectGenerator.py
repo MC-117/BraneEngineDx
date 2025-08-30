@@ -31,6 +31,7 @@ class VSTargetConfig:
         self.intermediatePath = config.intermediatePath
         self.outputPath = config.outputPath
         self.outputName = config.outputName
+        self.debugArguments = config.debugArguments
 
         self.conditionStr : str = self.name + '|' + self.plaformName
 
@@ -481,6 +482,23 @@ f'''
             w.se('</ItemGroup>')
             
             w.se('</Project>')
+        
+        userPath = projPath + '.user'
+        with open(filterPath, 'w') as filterFile:
+            w = VSProjFileWriter(filterFile)
+            w.wl('<?xml version="1.0" encoding="utf-8"?>')
+            w.ss('<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">')
+
+            for config in vsTargetConfigs:
+                w.ss(f'<PropertyGroup Condition="\'$(Configuration)|$(Platform)\'==\'{config.conditionStr}\'">')
+                
+                w.wl(f'<LocalDebuggerCommandArguments>{config.debugArguments}</LocalDebuggerCommandArguments>')
+                w.wl('<DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>')
+                
+                w.se('</PropertyGroup>')
+            
+            w.se('</Project>')
+
         
         info = VisualStudioProjectGenerator.VSProjectInfo()
         info.name = target.name

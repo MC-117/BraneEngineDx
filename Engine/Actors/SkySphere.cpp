@@ -6,7 +6,7 @@ SerializeInstance(SkySphere);
 
 SkySphere::SkySphere(string name) : Actor(name)
 {
-	sphere = getAssetByPath<Mesh>("Engine/SkySphere/Sphere.obj");
+	sphere = getAssetByPath<Mesh>("Engine/SkySphere/Sphere.fbx");
 	meshRender.setMesh(sphere);
 	meshRender.frustumCulling = false;
 	material = getAssetByPath<Material>("Engine/SkySphere/Sky.mat");

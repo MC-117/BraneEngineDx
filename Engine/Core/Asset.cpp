@@ -39,6 +39,11 @@ Asset::Asset(const AssetInfo * assetInfo, const string & name, const string & pa
 {
 }
 
+void Asset::addRedirectPath(const string& path)
+{
+	redirectPaths.emplace(path);
+}
+
 void Asset::setActualAsset(IAssetBase* assetBase)
 {
 	if (asset != NULL) {
@@ -99,7 +104,12 @@ bool AssetInfo::regist(Asset & asset)
 		assets.insert(pair<string, Asset*>(asset.name, &asset));
 	}
 	if (!asset.path.empty() && assetsByPath.find(asset.path) == assetsByPath.end()) {
-		assetsByPath.insert(pair<string, Asset*>(asset.path, &asset));
+		assetsByPath.emplace(asset.path, &asset);
+		for (const string& path : asset.redirectPaths) {
+			if (!path.empty() && assetsByPath.find(path) == assetsByPath.end()) {
+				assetsByPath.emplace(path, &asset);
+			}
+		}
 	}
 	return true;
 }

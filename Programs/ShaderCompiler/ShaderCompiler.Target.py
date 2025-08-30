@@ -6,8 +6,8 @@ class ShaderCompilerTarget(Target):
         Target.__init__(self, param)
         self.subsystem = SubsystemType.Console
 
-        releaseConfig = TargetConfig(self, 'Release', PlaformType.Win64)
-        debugConfig = TargetConfig(self, 'Debug', PlaformType.Win64)
+        releaseConfig = TargetConfig(self, 'Release', PlaformType.Win64, '../../Resource')
+        debugConfig = TargetConfig(self, 'Debug', PlaformType.Win64, '../../Resource')
         debugConfig.enableDebug = True
         
         self.enableDpiAwareness = True

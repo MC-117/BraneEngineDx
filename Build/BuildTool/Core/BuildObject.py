@@ -98,7 +98,7 @@ class Module(BuildObject):
         pass
 
 class TargetConfig:        
-    def __init__(self, target : Target, name : str, plaform : PlaformType):
+    def __init__(self, target : Target, name : str, plaform : PlaformType, debugArguments : str = ''):
         self.target : Target = target
         self.name : str = name
         self.plaform : PlaformType = plaform
@@ -111,7 +111,7 @@ class TargetConfig:
         self.outputName : str = ''
         self.postBuildCommand : str = ''
         self.debugPath : str = ''
-        self.debugArguments : str = ''
+        self.debugArguments : str = debugArguments
         self.modules : list[Module] = []
         self.includeFiles : list[str] = []
         self.sourceFiles : list[str] = []
